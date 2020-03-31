@@ -44,10 +44,10 @@ public class PropertiesJoinLinesTest extends LightPlatformCodeInsightTestCase {
     checkResultByFile(getTestName(false) + "_after.properties");
   }
 
-  private static void performAction() {
+  private void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
   }
 }

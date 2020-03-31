@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 
-/**
- * @author nik
- */
 public class JpsJavaLibraryType extends JpsElementTypeWithDummyProperties implements JpsLibraryType<JpsDummyElement> {
   public static final JpsJavaLibraryType INSTANCE = new JpsJavaLibraryType();
 

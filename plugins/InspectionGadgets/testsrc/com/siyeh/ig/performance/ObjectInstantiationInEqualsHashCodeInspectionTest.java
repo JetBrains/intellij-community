@@ -17,14 +17,14 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectInstantiationInEqualsHashCodeInspectionTest extends LightInspectionTestCase {
+public class ObjectInstantiationInEqualsHashCodeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testObjectInstantiationInEqualsHashCode() {
     doTest();

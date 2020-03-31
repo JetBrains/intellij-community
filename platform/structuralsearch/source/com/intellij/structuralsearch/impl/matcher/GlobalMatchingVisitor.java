@@ -6,6 +6,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,7 @@ import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIte
  * Visitor class to manage pattern matching
  */
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
+  private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
   public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
   // the pattern element for visitor check
@@ -84,19 +85,19 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return LexicalNodesFilter.getInstance();
   }
 
-  public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
-    MatchingHandler handler = matchContext.getPattern().getHandler(typedElement);
-    final MatchingHandler initialHandler = handler;
+  public final boolean handleTypedElement(PsiElement typedElement, PsiElement match) {
+    final MatchingHandler initialHandler = matchContext.getPattern().getHandler(typedElement);
+    MatchingHandler handler = initialHandler;
     if (handler instanceof DelegatingHandler) {
       handler = ((DelegatingHandler)handler).getDelegate();
     }
-    assert handler instanceof SubstitutionHandler :
-      handler != null ? handler.getClass() : "null" + ' ' + (initialHandler != null ? initialHandler.getClass() : "null");
+    assert handler instanceof SubstitutionHandler : typedElement + " has handler " +
+                                                    (handler != null ? handler.getClass() : "null" + ' ' + initialHandler.getClass());
 
     return ((SubstitutionHandler)handler).handle(match, matchContext);
   }
 
-  public boolean allowsAbsenceOfMatch(final PsiElement element) {
+  public boolean allowsAbsenceOfMatch(PsiElement element) {
     final MatchingHandler handler = getMatchContext().getPattern().getHandler(element);
     return handler instanceof SubstitutionHandler && ((SubstitutionHandler)handler).getMinOccurs() == 0;
   }
@@ -109,7 +110,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @return true if equal and false otherwise
    */
   @Override
-  public boolean match(final PsiElement el1, final PsiElement el2) {
+  public boolean match(PsiElement el1, PsiElement el2) {
+    ProgressManager.checkCanceled();
     if (el1 == el2) return true;
     if (el1 == null) {
       // absence of pattern element is match

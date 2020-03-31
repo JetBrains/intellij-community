@@ -32,8 +32,7 @@ public class AssociationsGroup extends ActionGroup {
     }
 
     @Override
-    @NotNull
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (!isEnabled(e)) return AnAction.EMPTY_ARRAY;
 
         final Project project = getEventProject(e);

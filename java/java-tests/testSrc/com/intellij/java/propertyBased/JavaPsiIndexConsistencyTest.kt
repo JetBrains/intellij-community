@@ -26,7 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.*
@@ -40,7 +40,7 @@ import org.junit.Assert
  * @author peter
  */
 @SkipSlowTestLocally
-class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
+class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testFuzzActions() {
     val genAction: Generator<Action> = Generator.frequency(
@@ -107,6 +107,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
     override fun performAction(model: Model) {
       PostponedFormatting.performAction(model)
       IdeaTestUtil.setModuleLanguageLevel(model.fixture.module, level, model.fixture.testRootDisposable)
+      model.refs.clear()
     }
   }
 

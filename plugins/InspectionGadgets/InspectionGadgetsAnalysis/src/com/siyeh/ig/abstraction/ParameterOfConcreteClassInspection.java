@@ -37,13 +37,6 @@ public class ParameterOfConcreteClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "concrete.class.method.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "concrete.class.method.parameter.problem.descriptor",

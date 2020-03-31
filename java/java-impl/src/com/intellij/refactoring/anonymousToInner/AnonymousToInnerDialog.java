@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.anonymousToInner;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,7 +11,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class AnonymousToInnerDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerDialog");
+  private static final Logger LOG = Logger.getInstance(AnonymousToInnerDialog.class);
 
   private final Project myProject;
   private final PsiAnonymousClass myAnonClass;
@@ -44,7 +44,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myAnonClass = anonClass;
     myShowCanBeStatic = showCanBeStatic;
 
-    setTitle(AnonymousToInnerHandler.REFACTORING_NAME);
+    setTitle(AnonymousToInnerHandler.getRefactoringName());
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -128,7 +128,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     final String innerClassName = getClassName();
     final PsiManager manager = PsiManager.getInstance(myProject);
     if ("".equals(innerClassName)) {
-      errorString = RefactoringBundle.message("anonymousToInner.no.inner.class.name");
+      errorString = JavaRefactoringBundle.message("anonymousToInner.no.inner.class.name");
     }
     else {
       if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(innerClassName)) {
@@ -141,7 +141,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
           PsiClass[] innerClasses = targetClass.getInnerClasses();
           for (PsiClass innerClass : innerClasses) {
             if (innerClassName.equals(innerClass.getName())) {
-              errorString = RefactoringBundle.message("inner.class.exists", innerClassName, targetClass.getName());
+              errorString = JavaRefactoringBundle.message("inner.class.exists", innerClassName, targetClass.getName());
               break;
             }
           }
@@ -154,7 +154,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        AnonymousToInnerHandler.REFACTORING_NAME,
+        AnonymousToInnerHandler.getRefactoringName(),
         errorString,
         HelpID.ANONYMOUS_TO_INNER,
         myProject);
@@ -170,10 +170,10 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myNameField = new NameSuggestionsField(myProject);
 
     FormBuilder formBuilder = FormBuilder.createFormBuilder()
-      .addLabeledComponent(RefactoringBundle.message("anonymousToInner.class.name.label.text"), myNameField);
+      .addLabeledComponent(JavaRefactoringBundle.message("anonymousToInner.class.name.label.text"), myNameField);
 
     if(!myShowCanBeStatic) {
-      myCbMakeStatic = new NonFocusableCheckBox(RefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
+      myCbMakeStatic = new NonFocusableCheckBox(JavaRefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
       myCbMakeStatic.setSelected(true);
       formBuilder.addComponent(myCbMakeStatic);
     }
@@ -198,7 +198,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
       }
     };
     panel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false));
+      JavaRefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false));
     return panel;
   }
 

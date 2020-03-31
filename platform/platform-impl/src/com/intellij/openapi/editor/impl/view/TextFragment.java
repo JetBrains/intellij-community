@@ -4,13 +4,13 @@ package com.intellij.openapi.editor.impl.view;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * Fragment of text using a common font
  */
 abstract class TextFragment implements LineFragment {
-  @NotNull
-  final float[] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
   
   TextFragment(int charCount) {
     assert charCount > 0;
@@ -142,8 +142,8 @@ abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-      TextFragment.this.draw(g, x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
+    public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+      return TextFragment.this.draw(x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 
     @NotNull

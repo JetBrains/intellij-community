@@ -2,13 +2,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @see IfStatementMissingBreakInLoopInspection
  */
-public class IfStatementMissingBreakInLoopTest extends LightInspectionTestCase {
+public class IfStatementMissingBreakInLoopTest extends LightJavaInspectionTestCase {
 
   public void testIfStatementMissingBreakInLoop() {
     doTest();

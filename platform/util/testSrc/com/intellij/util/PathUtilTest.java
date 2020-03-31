@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.util.PathUtilRt.Platform;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PathUtilTest {
   @Test
@@ -62,5 +65,75 @@ public class PathUtilTest {
     assertTrue(PathUtilRt.isValidFileName("имя файла", Platform.UNIX, false, StandardCharsets.UTF_8));
     assertTrue(PathUtilRt.isValidFileName("název souboru", Platform.UNIX, false, StandardCharsets.UTF_8));
     assertTrue(PathUtilRt.isValidFileName("文件名", Platform.UNIX, false, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void windowsUNCPaths() {
+    IoTestUtil.assumeWindows();
+    windowsUNCPaths(true);
+    windowsUNCPaths(false);
+  }
+
+  private static void windowsUNCPaths(boolean convertToSystemDependentPaths) {
+    final Function<String, String> toPath = path -> convertToSystemDependentPaths ? FileUtil.toSystemDependentName(path) : path;
+
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/usr"))).isEqualTo("usr");
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/usr/"))).isEqualTo("usr");
+
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu"))).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/"))).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/usr/"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/usr/bin/gcc"))).isEqualTo(toPath.apply("//wsl$/Ubuntu/usr/bin"));
+  }
+
+  @Test
+  public void isAbsolute() {
+    assertThat(PathUtil.isAbsolute("/tmp")).isTrue();
+    assertThat(PathUtil.isAbsolute("/")).isTrue();
+    assertThat(PathUtil.isAbsolute("C:/")).isTrue();
+    assertThat(PathUtil.isAbsolute("d:\\x")).isTrue();
+    assertThat(PathUtil.isAbsolute("\\\\host")).isTrue();
+    assertThat(PathUtil.isAbsolute("\\\\")).isTrue();
+    assertThat(PathUtil.isAbsolute("//host")).isTrue();
+
+    assertThat(PathUtil.isAbsolute("")).isFalse();
+    assertThat(PathUtil.isAbsolute("\\a")).isFalse();
+    assertThat(PathUtil.isAbsolute("\\")).isFalse();
+    assertThat(PathUtil.isAbsolute("x:")).isFalse();
+  }
+
+  @Test
+  public void parentPath() {
+    assertThat(PathUtil.getParent("")).isNull();
+    assertThat(PathUtil.getParent("\\")).isNull();
+    assertThat(PathUtil.getParent("tmp\\a")).isEqualTo("tmp");
+    assertThat(PathUtil.getParent("tmp/a/")).isEqualTo("tmp");
+    assertThat(PathUtil.getParent("tmp")).isNull();
+
+    assertThat(PathUtil.getParent("/tmp/a")).isEqualTo("/tmp");
+    assertThat(PathUtil.getParent("/tmp/a/")).isEqualTo("/tmp");
+    assertThat(PathUtil.getParent("/tmp")).isEqualTo("/");
+    assertThat(PathUtil.getParent("/")).isNull();
+
+    assertThat(PathUtil.getParent("c:/tmp/a")).isEqualTo("c:/tmp");
+    assertThat(PathUtil.getParent("c:\\tmp\\a\\")).isEqualTo("c:\\tmp");
+    assertThat(PathUtil.getParent("c:/tmp\\a")).isEqualTo("c:/tmp");
+    assertThat(PathUtil.getParent("c:\\tmp/a/")).isEqualTo("c:\\tmp");
+    assertThat(PathUtil.getParent("c:/tmp")).isEqualTo("c:/");
+    assertThat(PathUtil.getParent("c:\\")).isNull();
+    assertThat(PathUtil.getParent("c:")).isNull();
+    assertThat(PathUtil.getParent("c:x")).isNull();
+
+    assertThat(PathUtil.getParent("//host/share/a")).isEqualTo("//host/share");
+    assertThat(PathUtil.getParent("\\\\host\\share/a/")).isEqualTo("\\\\host\\share");
+    assertThat(PathUtil.getParent("//host/share")).isNull();
+    assertThat(PathUtil.getParent("\\\\host\\share/")).isNull();
+    assertThat(PathUtil.getParent("//host")).isNull();
+    assertThat(PathUtil.getParent("\\\\")).isNull();
+
+    assertThat(PathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
+    assertThat(PathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
   }
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.jps.model.serialization.facet;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -11,17 +12,18 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author nik
-*/
 @Tag(JpsFacetSerializer.FACET_TAG)
-public class FacetState {
+public final class FacetState {
   private String myFacetType;
   private String myName;
   private String myExternalSystemId;
   private Element myConfiguration;
-  private List<FacetState> mySubFacets = new ArrayList<>();
+
+  @Property(surroundWithTag = false)
+  @XCollection
+  public final List<FacetState> subFacets = new ArrayList<>();
 
   @Attribute(JpsFacetSerializer.TYPE_ATTRIBUTE)
   public String getFacetType() {
@@ -43,16 +45,6 @@ public class FacetState {
     return myExternalSystemId;
   }
 
-  @Property(surroundWithTag = false)
-  @XCollection
-  public List<FacetState> getSubFacets() {
-    return mySubFacets;
-  }
-
-  public void setSubFacets(final List<FacetState> subFacets) {
-    mySubFacets = subFacets;
-  }
-
   public void setConfiguration(final Element configuration) {
     myConfiguration = configuration;
   }
@@ -67,5 +59,22 @@ public class FacetState {
 
   public void setExternalSystemId(String externalSystemId) {
     myExternalSystemId = externalSystemId;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FacetState state = (FacetState)o;
+    return Objects.equals(myFacetType, state.myFacetType) &&
+           Objects.equals(myName, state.myName) &&
+           Objects.equals(myExternalSystemId, state.myExternalSystemId) &&
+           JDOMUtil.areElementsEqual(myConfiguration, state.myConfiguration) &&
+           Objects.equals(subFacets, state.subFacets);
+  }
+
+  @Override
+  public int hashCode() {
+    return (31 * Objects.hash(myFacetType, myName, myExternalSystemId, subFacets)) + JDOMUtil.hashCode(myConfiguration, false);
   }
 }

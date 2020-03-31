@@ -1,9 +1,9 @@
 package org.intellij.plugins.markdown.folding;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 
-public class MarkdownFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownFoldingTest extends BasePlatformTestCase {
   public void testOrderedList() {
     doTest();
   }

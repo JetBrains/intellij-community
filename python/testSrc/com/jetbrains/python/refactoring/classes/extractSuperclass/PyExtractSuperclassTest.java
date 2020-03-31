@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -66,7 +66,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
       () -> {
-        configureMultiFile("abc");
         multiFileTestHelper(".foo_method", true);
       }
     );
@@ -109,7 +108,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // PY-12175
   public void testImportNotBroken() {
-    myFixture.copyFileToProject("/refactoring/extractsuperclass/shared.py", "shared.py");
+    myFixture.copyFileToProject("refactoring/extractsuperclass/shared.py", "shared.py");
     doSimpleTest("Source", "DestClass", null, true, false, "SharedClass");
   }
 
@@ -143,7 +142,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
                             final boolean sameFile,
                             boolean asAbstract, final String... membersName) {
     try {
-      String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
+      String baseName = "refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
       final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
@@ -167,9 +166,8 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     }
   }
 
-
   public void testMultifileNew() {
-    String baseName = "/refactoring/extractsuperclass/multifile/";
+    String baseName = "refactoring/extractsuperclass/multifile/";
     myFixture.configureByFile(baseName + "source.py");
     final String className = "Foo";
     final String superclassName = "Suppa";
@@ -196,14 +194,14 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
     PsiFile psi_file = psi_mgr.findFile(vfile);
     String result = psi_file.getText().trim();
-    File expected_file = new File(getTestDataPath() + baseName, "target.new.py");
+    File expected_file = new File(getTestDataPath(), baseName + "target.new.py");
     String expected = psi_mgr.findFile(LocalFileSystem.getInstance().findFileByIoFile(expected_file)).getText().trim();
     assertEquals(expected, result);
   }
 
   public void testMultifileAppend() {
     // this is half-copy-paste of testMultifileNew. generalization won't make either easier to follow.
-    String baseName = "/refactoring/extractsuperclass/multifile/";
+    String baseName = "refactoring/extractsuperclass/multifile/";
     myFixture.configureByFiles(
       baseName + "source.py",
       baseName + "a/__init__.py",
@@ -237,7 +235,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
     PsiFile psi_file = psi_mgr.findFile(vfile);
     String result = psi_file.getText().trim();
-    File expected_file = new File(getTestDataPath() + baseName, "target.append.py");
+    File expected_file = new File(getTestDataPath(), baseName + "target.append.py");
     String expected = psi_mgr.findFile(LocalFileSystem.getInstance().findFileByIoFile(expected_file)).getText().trim();
     assertEquals(expected, result);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
@@ -20,17 +20,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IJSwingUtilities;
-import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-/**
- * @author traff
- */
 public class PyConsoleUtil {
   public static final String ORDINARY_PROMPT = ">>>";
   public static final String INPUT_PROMPT = ">?";
@@ -253,7 +250,10 @@ public class PyConsoleUtil {
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {
     final AnAction printAction = ActionManager.getInstance().getAction("Print");
-    final DumbAwareAction newPrintAction = new DumbAwareAction() {
+    return new DumbAwareAction() {
+      {
+        ActionUtil.copyFrom(this, "Print");
+      }
       @Override
       public void update(@NotNull AnActionEvent e) {
         printAction.update(createActionEvent(e, consoleView));
@@ -264,8 +264,6 @@ public class PyConsoleUtil {
         printAction.actionPerformed(createActionEvent(e, consoleView));
       }
     };
-    newPrintAction.copyFrom(printAction);
-    return newPrintAction;
   }
 }
 

@@ -17,8 +17,8 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -61,15 +61,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     s_typesToCheck.add(CommonClassNames.JAVA_LANG_CHARACTER);
   }
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreNonOverflowingCompileTimeConstants = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "integer.multiplication.implicit.cast.to.long.display.name");
-  }
 
   @Nullable
   @Override
@@ -257,24 +250,25 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (dfr != null) {
         long min = 1, max = 1;
         for (PsiExpression operand : operands) {
-          LongRangeSet set = dfr.getExpressionFact(PsiUtil.skipParenthesizedExprDown(operand), DfaFactType.RANGE);
-          if (set == null) return false;
-          long nextMin = set.min();
-          long nextMax = set.max();
+          LongRangeSet set = DfLongType.extractRange(dfr.getDfType(PsiUtil.skipParenthesizedExprDown(operand)));
           if (operand == operands[0]) {
-            min = nextMin;
-            max = nextMax;
+            min = set.min();
+            max = set.max();
             continue;
           }
           long r1, r2, r3, r4;
           if (shift) {
-            nextMin &= 0x1F;
-            nextMax &= 0x1F;
+            set = set.bitwiseAnd(LongRangeSet.point(0x3F));
+            long nextMin = set.min();
+            long nextMax = set.max();
+            if (nextMax >= 0x20) return false;
             r1 = min << nextMin;
             r2 = max << nextMin;
             r3 = min << nextMax;
             r4 = max << nextMax;
           } else {
+            long nextMin = set.min();
+            long nextMax = set.max();
             if (intOverflow(nextMin) || intOverflow(nextMax)) return false;
             r1 = min * nextMin;
             r2 = max * nextMin;

@@ -16,7 +16,6 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PythonMockSdk;
-import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,8 +39,8 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
 
   @NotNull
   @Override
-  public ModuleType getModuleType() {
-    return PythonModuleTypeBase.getInstance();
+  public String getModuleTypeId() {
+    return "EMPTY_MODULE";
   }
 
   @Override
@@ -53,8 +51,7 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
   /**
    * @return additional roots to add to mock python
    */
-  @NotNull
-  protected VirtualFile[] getAdditionalRoots() {
+  protected VirtualFile @NotNull [] getAdditionalRoots() {
     return VirtualFile.EMPTY_ARRAY;
   }
 

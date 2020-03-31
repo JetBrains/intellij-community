@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,4 +34,12 @@ public interface FileBasedTestCaseHelper {
    */
   @Nullable
   String getFileSuffix(String fileName);
+
+  /**
+   * @return for 'after' files should return core file name or null otherwise
+   */
+  @Nullable
+  default String getBaseName(@NotNull String fileAfterSuffix) {
+    return null;
+  }
 }

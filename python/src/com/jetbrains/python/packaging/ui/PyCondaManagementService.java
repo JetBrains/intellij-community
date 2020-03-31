@@ -28,6 +28,7 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -97,7 +98,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           final List<String> channels = ContainerUtil.notNullize(PyCondaPackageService.getInstance().listChannels());
           consumer.consume(channels);
@@ -115,7 +116,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void addRepository(String repositoryUrl) {
     if (useConda()) {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Adding Conda Channel", true) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), PyBundle.message("python.packaging.adding.conda.channel"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -136,7 +137,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void removeRepository(String repositoryUrl) {
     if (useConda()) {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Removing Conda Channel", true) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), PyBundle.message("python.packaging.removing.conda.channel"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -162,7 +163,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           consumer.consume(PyCondaPackageService.getInstance().listPackageVersions(packageName));
         }
@@ -180,7 +181,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     final String packageName = pkg.getName();
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           final String latestVersion = ContainerUtil.getFirstItem(PyCondaPackageService.getInstance().listPackageVersions(packageName));
           consumer.consume(latestVersion);

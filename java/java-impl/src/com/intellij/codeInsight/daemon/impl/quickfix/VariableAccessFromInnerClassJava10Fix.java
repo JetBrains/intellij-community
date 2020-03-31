@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -48,7 +48,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Variable accessFromInnerClass";
+    return JavaBundle.message("intention.family.variable.access.from.inner.class");
   }
 
   @Override
@@ -63,7 +63,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (declarationStatement == null) return false;
     if (declarationStatement.getDeclaredElements().length != 1) return false;
     String name = variable.getName();
-    if (name == null) return false;
 
     PsiType type = variable.getType();
     if (!PsiTypesUtil.isDenotableType(type, variable)) {
@@ -179,11 +178,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       PsiElement rBrace = anonymousClass.getRBrace();
       if (lBrace == null || rBrace == null) return;
       StringBuilder expressionText = new StringBuilder();
-      for (PsiElement child : newExpression.getChildren()) {
+      for (PsiElement child = newExpression.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child == anonymousClass) break;
         expressionText.append(child.getText());
       }
-      for (PsiElement child : anonymousClass.getChildren()) {
+      for (PsiElement child = anonymousClass.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (!myIsBefore && child == rBrace) expressionText.append(variableText);
         expressionText.append(child.getText());
         if (myIsBefore && child == lBrace) expressionText.append(variableText);
@@ -206,7 +205,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       PsiLocalVariable localVariable = tryCast(declaredElements[0], PsiLocalVariable.class);
       if (localVariable == null) return null;
       String boxName = localVariable.getName();
-      if (boxName == null) return null;
       PsiNewExpression newExpression = tryCast(localVariable.getInitializer(), PsiNewExpression.class);
       if (newExpression == null) return null;
       PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
@@ -216,7 +214,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       if (!TypeUtils.isJavaLangObject(anonymousClass.getBaseClassType())) return null;
       if (Arrays.stream(anonymousClass.getFields())
         .map(field -> field.getName())
-        .filter(Objects::nonNull)
         .anyMatch(name -> name.equals(variableName))) {
         return null;
       }

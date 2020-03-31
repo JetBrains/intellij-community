@@ -39,6 +39,9 @@ public abstract class DiffContentFactory {
     return ServiceManager.getService(DiffContentFactory.class);
   }
 
+  /**
+   * Content for the 'missing' side of addition/deletion diff request.
+   */
   @NotNull
   public abstract EmptyContent createEmpty();
 
@@ -129,18 +132,18 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull FileType fileType,
                                               @NotNull String fileName) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
   @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,
-                                           @NotNull byte[] content,
+                                           byte @NotNull [] content,
                                            @NotNull FileType type,
                                            @NotNull String fileName) throws IOException;
 
@@ -149,7 +152,7 @@ public abstract class DiffContentFactory {
   @Deprecated
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull VirtualFile highlightFile,
-                                     @NotNull byte[] content) throws IOException {
+                                     byte @NotNull [] content) throws IOException {
     return createFromBytes(project, content, highlightFile);
   }
 
@@ -158,7 +161,7 @@ public abstract class DiffContentFactory {
   public DiffContent createBinary(@Nullable Project project,
                                   @NotNull String fileName,
                                   @NotNull FileType type,
-                                  @NotNull byte[] content) throws IOException {
+                                  byte @NotNull [] content) throws IOException {
     return createBinary(project, content, type, fileName);
   }
 }

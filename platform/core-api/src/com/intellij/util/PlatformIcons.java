@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -19,11 +21,11 @@ public interface PlatformIcons {
 
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
-  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
   Icon ENUM_ICON = AllIcons.Nodes.Enum;
+  Icon RECORD_ICON = AllIcons.Nodes.Record;
   Icon INTERFACE_ICON = AllIcons.Nodes.Interface;
   Icon METHOD_ICON = AllIcons.Nodes.Method;
   Icon FUNCTION_ICON = AllIcons.Nodes.Function;
@@ -44,6 +46,10 @@ public interface PlatformIcons {
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
   Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
+
+  /**
+   * @deprecated use {@link AllIcons.Nodes#Tag}
+   */
   @Deprecated
   Icon ADVICE_ICON = AllIcons.Nodes.Tag;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
@@ -55,11 +61,11 @@ public interface PlatformIcons {
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
   Icon SMALL_VCS_CONFIGURABLE = AllIcons.Actions.ShowAsTree;
   Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
-  Icon ADD_ICON = IconUtil.getAddIcon();
-  Icon DELETE_ICON = IconUtil.getRemoveIcon();
+  Icon ADD_ICON = AllIcons.General.Add;
+  Icon DELETE_ICON = AllIcons.General.Remove;
   Icon COPY_ICON = AllIcons.Actions.Copy;
-  Icon EDIT = IconUtil.getEditIcon();
-  Icon ANALYZE = IconUtil.getAnalyzeIcon();
+  Icon EDIT = AllIcons.Actions.Edit;
+  Icon ANALYZE = IconManager.getInstance().getAnalyzeIcon();
   Icon SELECT_ALL_ICON = AllIcons.Actions.Selectall;
   Icon UNSELECT_ALL_ICON = AllIcons.Actions.Unselectall;
   Icon PROPERTIES_ICON = AllIcons.Actions.Properties;
@@ -68,9 +74,13 @@ public interface PlatformIcons {
 
   Icon CHECK_ICON = AllIcons.Actions.Checked;
   Icon CHECK_ICON_SELECTED = AllIcons.Actions.Checked_selected;
-  Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked_small;
-  Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_small_selected;
+  Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked;
+  Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_selected;
 
+  /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
   Icon EDIT_IN_SECTION_ICON = AllIcons.Actions.Edit;
@@ -79,7 +89,7 @@ public interface PlatformIcons {
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
 
   Icon FOLDER_ICON = AllIcons.Nodes.Folder;
-  Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.SourceFolder;
+  Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.Package;
   Icon TEST_SOURCE_FOLDER = AllIcons.Nodes.TestSourceFolder;
   Icon INVALID_ENTRY_ICON = AllIcons.Nodes.PpInvalid;
 
@@ -87,7 +97,12 @@ public interface PlatformIcons {
   Icon MODULES_TEST_SOURCE_FOLDER = AllIcons.Modules.TestRoot;
 
   Icon CONTENT_ROOT_ICON_CLOSED = AllIcons.Nodes.Module;
-  @Deprecated Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
+
+  /**
+   * @deprecated use {@link #CONTENT_ROOT_ICON_CLOSED}
+   */
+  @Deprecated
+  Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
@@ -96,6 +111,15 @@ public interface PlatformIcons {
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
-  @Deprecated Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
-  @Deprecated Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
+  /**
+   * @deprecated use {@link #FOLDER_ICON}
+   */
+  @Deprecated
+  Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
+
+  /**
+   * @deprecated use {@link #FOLDER_ICON}
+   */
+  @Deprecated
+  Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

@@ -39,8 +39,7 @@ public abstract class MarkdownHtmlPanelProvider {
   @NotNull
   public abstract ProviderInfo getProviderInfo();
 
-  @NotNull
-  public static MarkdownHtmlPanelProvider[] getProviders() {
+  public static MarkdownHtmlPanelProvider @NotNull [] getProviders() {
     if (ourProviders == null) {
       ourProviders = EP_NAME.getExtensions();
     }

@@ -14,13 +14,22 @@ object GithubApiPagesLoader {
   @JvmStatic
   fun <T> loadAll(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, pagesRequest: Request<T>): List<T> {
     val result = mutableListOf<T>()
+    loadAll(executor, indicator, pagesRequest) { result.addAll(it) }
+    return result
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun <T> loadAll(executor: GithubApiRequestExecutor,
+                  indicator: ProgressIndicator,
+                  pagesRequest: Request<T>,
+                  pageItemsConsumer: (List<T>) -> Unit) {
     var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
     while (request != null) {
       val page = executor.execute(indicator, request)
-      result.addAll(page.items)
+      pageItemsConsumer(page.items)
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
-    return result
   }
 
   @Throws(IOException::class)

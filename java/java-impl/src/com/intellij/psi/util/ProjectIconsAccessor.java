@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -9,15 +9,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
-import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
@@ -53,14 +52,13 @@ public class ProjectIconsAccessor {
   }
 
   @Nullable
-  public VirtualFile resolveIconFile(PsiElement initializer) {
-    final List<FileReference> refs = new ArrayList<>();
-    UElement initializerElement = UastContextKt.toUElement(initializer);
+  public VirtualFile resolveIconFile(UElement initializerElement) {
     if (initializerElement == null) return null;
+    final List<FileReference> refs = new ArrayList<>();
     initializerElement.accept(new AbstractUastVisitor() {
       @Override
       public boolean visitLiteralExpression(@NotNull ULiteralExpression node) {
-        PsiElement psi = node.getPsi();
+        PsiElement psi = node.getJavaPsi();
         if (psi != null) {
           for (PsiReference ref : psi.getReferences()) {
             if (ref instanceof FileReference) {
@@ -133,8 +131,8 @@ public class ProjectIconsAccessor {
   }
 
   private static boolean hasProperSize(Icon icon) {
-    return icon.getIconHeight() <= JBUI.scale(ICON_MAX_HEIGHT) &&
-           icon.getIconWidth() <= JBUI.scale(ICON_MAX_WEIGHT);
+    return icon.getIconHeight() <= JBUIScale.scale(ICON_MAX_HEIGHT) &&
+           icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
 
   private static boolean isIdeaProject(@Nullable Project project) {

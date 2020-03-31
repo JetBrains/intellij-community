@@ -27,7 +27,7 @@
         </constraints>
         <properties>
           <labelFor value="29eaa"/>
-          <text value="&amp;Module Name:"/>
+          <text resource-bundle="messages/PyBundle" key="form.documentation.entry.module.name"/>
         </properties>
       </component>
       <component id="7e3f5" class="javax.swing.JLabel">
@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value="63296"/>
-          <text value="&amp;URL/Path Pattern:"/>
+          <text resource-bundle="messages/PyBundle" key="form.documentation.entry.url.path.pattern"/>
         </properties>
       </component>
       <component id="63296" class="javax.swing.JTextField" binding="myURLPatternTextField" default-binding="true">
@@ -58,7 +58,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Available Macros"/>
+        <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.documentation.entry.available.macros"/>
         <children>
           <scrollpane id="f705b" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
@@ -80,7 +80,7 @@
                     <item value="{class.name} - name of class containing element under caret"/>
                     <item value="{function.name} - name of function under caret"/>
                     <item value="{functionOrProp.name} - name of function or property (e.g. isEnabled reduced to enabled)"/>
-                    <item value="{functionIsProperty?} - boolean macros that checks whether function is property, "/>
+                    <item value="{functionIsProperty?} - boolean macros that checks whether function is property,"/>
                     <item value="if true substitutes with text between ? and }"/>
                     <item value="{python.version} - version of selected Python interpreter"/>
                     <item value=".lower - convert text to lower case"/>
@@ -98,7 +98,7 @@
             </constraints>
             <properties>
               <focusable value="false"/>
-              <text value="&amp;Insert"/>
+              <text resource-bundle="messages/PyBundle" key="form.documentation.entry.insert"/>
             </properties>
           </component>
         </children>

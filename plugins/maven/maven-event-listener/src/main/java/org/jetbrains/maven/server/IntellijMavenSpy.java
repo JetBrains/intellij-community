@@ -3,24 +3,24 @@ package org.jetbrains.maven.server;
 
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.apache.maven.execution.ExecutionEvent;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.DependencyResolutionRequest;
 import org.apache.maven.project.DependencyResolutionResult;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositoryEvent;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.eclipse.aether.RepositoryEvent.EventType.ARTIFACT_RESOLVED;
-import static org.eclipse.aether.RepositoryEvent.EventType.ARTIFACT_RESOLVING;
 import static org.jetbrains.maven.server.EventInfoPrinter.printMavenEventInfo;
 import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 
 @Named("Intellij Idea Maven Embedded Event Spy")
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
-
   @Override
   public void onEvent(Object event) {
     try {
@@ -74,9 +74,6 @@ public class IntellijMavenSpy extends AbstractEventSpy {
   }
 
   private static void onRepositoryEvent(RepositoryEvent event) {
-    if (event.getType() == ARTIFACT_RESOLVING || event.getType() == ARTIFACT_RESOLVED) {
-      return; //do not spam event log
-    }
     String errMessage = event.getException() == null ? "" : event.getException().getMessage();
     String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();
@@ -92,7 +89,30 @@ public class IntellijMavenSpy extends AbstractEventSpy {
                           errMessage);
     }
     else {
-      printMavenEventInfo(event.getType(), "id", projectId);
+      if (event.getType() == ExecutionEvent.Type.SessionStarted) {
+        printSessionStartedEventAndReactorData(event, projectId);
+      }
+      else {
+        printMavenEventInfo(event.getType(), "id", projectId);
+      }
+    }
+  }
+
+  private static void printSessionStartedEventAndReactorData(ExecutionEvent event, String projectId) {
+    MavenSession session = event.getSession();
+    if (session != null) {
+      List<MavenProject> projectsInReactor = session.getProjects();
+      if (projectsInReactor == null) {
+        projectsInReactor = new ArrayList<MavenProject>();
+      }
+      StringBuilder builder = new StringBuilder();
+      for (MavenProject project : projectsInReactor) {
+        builder.append(project.getGroupId()).append(":").append(project.getArtifactId()).append("&&");
+      }
+      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder.toString());
+    }
+    else {
+      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");
     }
   }
 }

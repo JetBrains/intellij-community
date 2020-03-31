@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -31,14 +17,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-@PlatformTestCase.WrapInCommand
-public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
+@HeavyPlatformTestCase.WrapInCommand
+public class ChangeSignatureGestureTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void doTest(final Runnable run) {
-    myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
+    myFixture.configureByFile("refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     myFixture.enableInspections(new UnusedDeclarationInspection());
     CommandProcessor.getInstance().executeCommand(
       myFixture.getProject(), () ->
@@ -48,7 +34,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
     IntentionAction action = myFixture.findSingleIntention("Changing signature of ");
     myFixture.launchAction(action);
-    myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
+    myFixture.checkResultByFile("refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
   }
 
   public void testSimple() {
@@ -79,9 +65,9 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       CaretModel model = myFixture.getEditor().getCaretModel();
       PsiElement element = myFixture.getElementAtCaret();
       PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-      assertTrue(method != null);
+      assertNotNull(method);
       PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-      assertTrue(returnTypeElement != null);
+      assertNotNull(returnTypeElement);
       model.moveToOffset(returnTypeElement.getTextRange().getEndOffset());
       int i = returnTypeElement.getTextLength();
       while (i-- > 0) {

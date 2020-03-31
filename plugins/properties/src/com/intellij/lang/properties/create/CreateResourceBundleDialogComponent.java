@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +6,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ReadAction;
@@ -91,7 +89,6 @@ public class CreateResourceBundleDialogComponent {
   }
 
   public static class Dialog extends DialogWrapper {
-    @NotNull private final Project myProject;
     @NotNull private final PsiDirectory myDirectory;
     private final CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
@@ -101,9 +98,8 @@ public class CreateResourceBundleDialogComponent {
       if (directory == null) {
         LOG.assertTrue(resourceBundle != null && getResourceBundlePlacementDirectory(resourceBundle) != null);
       }
-      myProject = project;
       myDirectory = directory == null ? resourceBundle.getDefaultPropertiesFile().getContainingFile().getContainingDirectory() : directory;
-      myComponent = new CreateResourceBundleDialogComponent(myProject, myDirectory, resourceBundle);
+      myComponent = new CreateResourceBundleDialogComponent(project, myDirectory, resourceBundle);
       init();
       initValidation();
       setTitle(resourceBundle == null ? "Create Resource Bundle" : "Add Locales to Resource Bundle " + resourceBundle.getBaseName());
@@ -163,7 +159,6 @@ public class CreateResourceBundleDialogComponent {
                                                                                           : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
                                                                                   if (isXml) {
                                                                                     FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-                                                                                    LOG.assertTrue(template != null);
                                                                                     try {
                                                                                       return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
                                                                                     }
@@ -174,7 +169,7 @@ public class CreateResourceBundleDialogComponent {
                                                                                     return myDirectory.createFile(n);
                                                                                   }
                                                                                 })));
-    combineToResourceBundleIfNeed(createdFiles);
+    combineToResourceBundleIfNeeded(createdFiles);
     return createdFiles;
   }
 
@@ -187,7 +182,7 @@ public class CreateResourceBundleDialogComponent {
                                    .getOrDefault(locale, locale.toString()))) + suffix);
   }
 
-  private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {
+  private void combineToResourceBundleIfNeeded(Collection<PsiFile> files) {
     Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, (NotNullFunction<PsiFile, PropertiesFile>)dom -> {
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
       LOG.assertTrue(file != null, dom.getName());
@@ -283,7 +278,7 @@ public class CreateResourceBundleDialogComponent {
 
   @SuppressWarnings("unchecked")
   private void createUIComponents() {
-    final JBList projectExistLocalesList = new JBList();
+    final JBList<Locale> projectExistLocalesList = new JBList<>();
     final MyExistLocalesListModel existLocalesListModel = new MyExistLocalesListModel();
     projectExistLocalesList.setModel(existLocalesListModel);
     projectExistLocalesList.setCellRenderer(getLocaleRenderer());
@@ -367,7 +362,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (clickCount == 1) {
-          myLocalesModel.add(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), o -> (Locale)o));
+          myLocalesModel.add(projectExistLocalesList.getSelectedValuesList());
           return true;
         }
         return false;
@@ -378,8 +373,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         final List<Locale> currentItems = myLocalesModel.getItems();
-        for (Object o : projectExistLocalesList.getSelectedValues()) {
-          Locale l = (Locale) o;
+        for (Locale l : projectExistLocalesList.getSelectedValuesList()) {
           if (!restrictedLocales.contains(l) && !currentItems.contains(l)) {
             myAddLocaleFromExistButton.setEnabled(true);
             return;
@@ -431,7 +425,7 @@ public class CreateResourceBundleDialogComponent {
                                                                                  }
                                                                                  return true;
                                                                                }, BundleNameEvaluator.DEFAULT);
-      Collections.sort(myLocales, LOCALE_COMPARATOR);
+      myLocales.sort(LOCALE_COMPARATOR);
     }
 
     @Override

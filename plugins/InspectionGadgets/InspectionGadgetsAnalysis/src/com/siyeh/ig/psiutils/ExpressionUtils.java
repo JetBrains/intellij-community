@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -548,6 +551,10 @@ public class ExpressionUtils {
             }
           }
         }
+      }
+      else if (FormatUtils.isFormatCall(methodCallExpression)) {
+        PsiExpression formatArgument = FormatUtils.getFormatArgument(expressionList);
+        return PsiTreeUtil.isAncestor(formatArgument, expression, false);
       } else {
         return true;
       }
@@ -669,7 +676,7 @@ public class ExpressionUtils {
     return null;
   }
 
-  public static boolean isConcatenation(PsiElement element) {
+  public static boolean isStringConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;
     }
@@ -935,12 +942,12 @@ public class ExpressionUtils {
     }
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.createReferenceExpression(memberClass);
+      }
       PsiClass containingClass = ClassUtils.getContainingClass(ref);
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
-      }
-      if (containingClass != null && member.hasModifierProperty(PsiModifier.STATIC)) {
-        return factory.createReferenceExpression(containingClass);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
         containingClass = ClassUtils.getContainingClass(containingClass);
@@ -1118,6 +1125,7 @@ public class ExpressionUtils {
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(call -> {
       if (call instanceof PsiNewExpression) return true;
+      if (call instanceof PsiArrayInitializerExpression) return true;
       if (call instanceof PsiMethodCallExpression) {
         ContractReturnValue returnValue =
           JavaMethodContractUtil.getNonFailingReturnValue(JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)call));
@@ -1138,11 +1146,28 @@ public class ExpressionUtils {
   public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
-    if (isZero(from) && PsiEquivalenceUtil.areElementsEquivalent(to, diff)) return true;
+    EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
+    if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
-      if (right != null && PsiEquivalenceUtil.areElementsEquivalent(to, left) && PsiEquivalenceUtil.areElementsEquivalent(from, right)) {
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(from, right)) {
+        return true;
+      }
+    }
+    if (from instanceof PsiBinaryExpression && ((PsiBinaryExpression)from).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      PsiExpression left = ((PsiBinaryExpression)from).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)from).getROperand();
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(diff, right)) {
+        return true;
+      }
+    }
+    if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
+      PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)to).getROperand();
+      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+          (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }
     }
@@ -1179,8 +1204,7 @@ public class ExpressionUtils {
    * @return an array or null if array could be modified after initialization
    * (empty array means that the initializer is known to be an empty array).
    */
-  @Nullable
-  public static PsiExpression[] getConstantArrayElements(PsiVariable array) {
+  public static PsiExpression @Nullable [] getConstantArrayElements(PsiVariable array) {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
@@ -1225,7 +1249,7 @@ public class ExpressionUtils {
    */
   public static boolean isLocallyDefinedExpression(PsiExpression expression) {
     return PsiTreeUtil.processElements(expression, e -> {
-      if (e instanceof PsiMethodCallExpression) return false;
+      if (e instanceof PsiCallExpression) return false;
       if (e instanceof PsiReferenceExpression) {
         PsiElement target = ((PsiReferenceExpression)e).resolve();
         if (target instanceof PsiField) {
@@ -1252,9 +1276,16 @@ public class ExpressionUtils {
     if (to < 0 || from > to) return null;
     if (expression == null || !TypeUtils.isJavaLangString(expression.getType())) return null;
     if (expression instanceof PsiLiteralExpression) {
-      String value = tryCast(((PsiLiteralExpression)expression).getValue(), String.class);
+      PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
+      String value = tryCast(literalExpression.getValue(), String.class);
       if (value == null || value.length() < from || value.length() < to) return null;
-      return CodeInsightUtilCore.mapBackStringRange(expression.getText(), from, to);
+      String text = expression.getText();
+      if (literalExpression.isTextBlock()) {
+        int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
+        if (indent == -1) return null;
+        return PsiLiteralUtil.mapBackTextBlockRange(text, from, to, indent);
+      }
+      return PsiLiteralUtil.mapBackStringRange(expression.getText(), from, to);
     }
     if (expression instanceof PsiParenthesizedExpression) {
       PsiExpression operand = ((PsiParenthesizedExpression)expression).getExpression();
@@ -1305,21 +1336,18 @@ public class ExpressionUtils {
       PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
       IElementType parentTokenType = parentPolyadic.getOperationTokenType();
       IElementType childTokenType = childPolyadic.getOperationTokenType();
-      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) ==
-          PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
-        int idx = ArrayUtil.indexOf(parentPolyadic.getOperands(), expressionToReplace);
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
+        PsiElement[] children = parentPolyadic.getChildren();
+        int idx = ArrayUtil.indexOf(children, expressionToReplace);
         if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
-          PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
-          copyParentPolyadic.getOperands()[idx].replace(replacement);
-          PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
-            .createExpressionFromText(copyParentPolyadic.getText(), parent);
-          PsiElement[] children = parent.getChildren();
-          for (PsiElement child : children) {
-            if (child != expressionToReplace) {
-              tracker.markUnchanged(child);
-            }
+          StringBuilder text = new StringBuilder();
+          for (int i = 0; i < children.length; i++) {
+            PsiElement child = children[i];
+            text.append(tracker.text((i == idx) ? replacement : child));
           }
-          return (PsiExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText);
+          PsiExpression newExpression =
+            JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
+          return (PsiExpression)tracker.replaceAndRestoreComments(parent, newExpression);
         }
       }
     }
@@ -1399,7 +1427,11 @@ public class ExpressionUtils {
     }
   }
 
-  public static PsiElement getPassThroughParent(PsiExpression expression) {
+  public static PsiElement getPassThroughParent(@NotNull PsiExpression expression) {
+    return getPassThroughExpression(expression).getParent();
+  }
+  
+  public static @NotNull PsiExpression getPassThroughExpression(@NotNull PsiExpression expression) {
     while (true) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
@@ -1420,14 +1452,14 @@ public class ExpressionUtils {
           }
         }
       }
-      else if (parent instanceof PsiBreakStatement) {
-        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-        if (exitedElement instanceof PsiSwitchExpression) {
-          expression = (PsiExpression)exitedElement;
+      else if (parent instanceof PsiYieldStatement) {
+        PsiSwitchExpression enclosing = ((PsiYieldStatement)parent).findEnclosingExpression();
+        if (enclosing != null) {
+          expression = enclosing;
           continue;
         }
       }
-      return parent;
+      return expression;
     }
   }
 
@@ -1491,5 +1523,111 @@ public class ExpressionUtils {
   private static boolean hasCharArrayParameter(PsiMethod method) {
     final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
     return parameter == null || parameter.getType().equalsToText("char[]");
+  }
+
+  /**
+   * Convert initializer expression to a normal expression that could be used in another context.
+   * Currently the only case when initializer cannot be used in another context is array initializer:
+   * in this case it's necessary to add explicit array creation like {@code new ArrayType[] {...}}.
+   *
+   * <p>
+   * If conversion is required a non-physical expression is created without affecting the original expression.
+   * No write action is required.
+   * @param initializer initializer to convert
+   * @param factory element factory to use
+   * @param type expected expression type
+   * @return the converted expression. May return the original expression if conversion is not necessary.
+   */
+  @Contract("null, _, _ -> null")
+  public static PsiExpression convertInitializerToExpression(@Nullable PsiExpression initializer,
+                                                             @NotNull PsiElementFactory factory,
+                                                             @Nullable PsiType type) {
+    if (initializer instanceof PsiArrayInitializerExpression && type instanceof PsiArrayType) {
+      PsiNewExpression result =
+        (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", null);
+      Objects.requireNonNull(result.getArrayInitializer()).replace(initializer);
+      return result;
+    }
+    return initializer;
+  }
+
+  /**
+   * Splits variable declaration and initialization. Currently works for single variable declarations only. Requires write action.
+   *
+   * @param declaration declaration to split
+   * @param project current project.
+   * @return the assignment expression created if the declaration was successfully split.
+   * In this case, the declaration is still valid and could be used afterwards.
+   * Returns null if it the splitting wasn't successful (no changes in the document are performed in this case).
+   */
+  @Nullable
+  public static PsiAssignmentExpression splitDeclaration(@NotNull PsiDeclarationStatement declaration, @NotNull Project project) {
+    if (declaration.getDeclaredElements().length == 1) {
+      PsiLocalVariable var = (PsiLocalVariable)declaration.getDeclaredElements()[0];
+      var.normalizeDeclaration();
+      final PsiTypeElement typeElement = var.getTypeElement();
+      if (typeElement.isInferredType()) {
+        PsiTypesUtil.replaceWithExplicitType(typeElement);
+      }
+      final String name = var.getName();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(name + "=xxx;", declaration);
+      statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
+      PsiExpression initializer = var.getInitializer();
+      assert initializer != null;
+      PsiExpression rExpression = convertInitializerToExpression(initializer, factory, var.getType());
+
+      final PsiExpression expression = assignment.getRExpression();
+      assert expression != null;
+      expression.replace(rExpression);
+
+      PsiElement block = declaration.getParent();
+      if (block instanceof PsiForStatement) {
+        final PsiDeclarationStatement varDeclStatement =
+          factory.createVariableDeclarationStatement(name, var.getType(), null);
+
+        // For index can't be final, right?
+        for (PsiElement varDecl : varDeclStatement.getDeclaredElements()) {
+          if (varDecl instanceof PsiModifierListOwner) {
+            final PsiModifierList modList = ((PsiModifierListOwner)varDecl).getModifierList();
+            assert modList != null;
+            modList.setModifierProperty(PsiModifier.FINAL, false);
+          }
+        }
+
+        final PsiElement parent = block.getParent();
+        PsiExpressionStatement replaced = (PsiExpressionStatement)new CommentTracker().replaceAndRestoreComments(declaration, statement);
+        if (!(parent instanceof PsiCodeBlock)) {
+          final PsiBlockStatement blockStatement =
+            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", block);
+          final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+          codeBlock.add(varDeclStatement);
+          codeBlock.add(block);
+          block.replace(blockStatement);
+        }
+        else {
+          parent.addBefore(varDeclStatement, block);
+        }
+        return (PsiAssignmentExpression)replaced.getExpression();
+      }
+      else {
+        try {
+          PsiElement declaredElement = declaration.getDeclaredElements()[0];
+          if (!PsiUtil.isJavaToken(declaredElement.getLastChild(), JavaTokenType.SEMICOLON)) {
+            TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, declaration.getManager());
+            CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration.addAfter(semicolon.getPsi(), declaredElement));
+          }
+          return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, declaration)).getExpression();
+        }
+        finally {
+          initializer.delete();
+        }
+      }
+    }
+    else {
+      ((PsiLocalVariable)declaration.getDeclaredElements()[0]).normalizeDeclaration();
+    }
+    return null;
   }
 }

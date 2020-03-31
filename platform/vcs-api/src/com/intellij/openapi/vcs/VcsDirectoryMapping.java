@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -47,7 +48,7 @@ public class VcsDirectoryMapping {
 
   public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
     myDirectory = FileUtil.normalize(directory);
-    myVcs = vcs;
+    myVcs = StringUtil.notNullize(vcs);
     myRootSettings = rootSettings;
   }
 
@@ -62,7 +63,16 @@ public class VcsDirectoryMapping {
     return myDirectory;
   }
 
-  @Nullable
+  /**
+   * @deprecated Use {@link #getDirectory()}
+   */
+  @NotNull
+  @Deprecated
+  public String systemIndependentPath() {
+    return myDirectory;
+  }
+
+  @NotNull
   public String getVcs() {
     return myVcs;
   }
@@ -89,8 +99,18 @@ public class VcsDirectoryMapping {
     myRootSettings = rootSettings;
   }
 
+  /**
+   * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
+   */
   public boolean isDefaultMapping() {
     return myDirectory.length() == 0;
+  }
+
+  /**
+   * @return if this mapping denotes "no vcs" aka "&lt;none&gt;".
+   */
+  public boolean isNoneMapping() {
+    return myVcs.isEmpty();
   }
 
   public boolean equals(final Object o) {

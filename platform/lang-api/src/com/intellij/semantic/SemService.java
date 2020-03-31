@@ -25,19 +25,4 @@ public abstract class SemService {
   }
 
   public abstract <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi);
-
-  @Nullable
-  public abstract <T extends SemElement> List<T> getCachedSemElements(SemKey<T> key, @NotNull PsiElement psi);
-
-  public abstract <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement);
-
-  public abstract void clearCache();
-
-  /**
-   * Caches won't be cleared on PSI changes inside this action
-   * @param change the action
-   */
-  public abstract void performAtomicChange(@NotNull Runnable change);
-
-  public abstract boolean isInsideAtomicChange();
 }

@@ -16,12 +16,12 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,11 +102,6 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean isRecursivelyDirty(VirtualFile vf) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void iterate(Processor<? super FilePath> iterator) {
     throw new UnsupportedOperationException();
   }
@@ -123,11 +118,12 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
 
   @Override
   public boolean belongsTo(FilePath path) {
-    throw new UnsupportedOperationException();
-  }
+    if (myDirtyFiles.contains(path)) return true;
 
-  @Override
-  public boolean belongsTo(FilePath path, Consumer<? super AbstractVcs> vcsConsumer) {
-    throw new UnsupportedOperationException();
+    for (FilePath parent : myDirtyDirs) {
+      if (FileUtil.startsWith(path.getPath(), parent.getPath())) return true;
+    }
+
+    return false;
   }
 }

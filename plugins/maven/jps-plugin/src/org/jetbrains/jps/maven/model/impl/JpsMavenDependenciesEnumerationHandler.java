@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class JpsMavenDependenciesEnumerationHandler extends JpsJavaDependenciesEnumerationHandler {
   private static final JpsMavenDependenciesEnumerationHandler INSTANCE = new JpsMavenDependenciesEnumerationHandler();
 

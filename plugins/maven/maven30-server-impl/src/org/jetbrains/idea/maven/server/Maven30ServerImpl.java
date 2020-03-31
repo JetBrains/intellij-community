@@ -23,10 +23,12 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
   @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) throws RemoteException {
+  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Maven3ServerGlobals.set(logger, downloadListener);
     }
@@ -36,7 +38,8 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Maven30ServerEmbedderImpl result = new Maven30ServerEmbedderImpl(settings.getSettings());
       UnicastRemoteObject.exportObject(result, 0);
@@ -48,7 +51,8 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenServerIndexer createIndexer() throws RemoteException {
+  public MavenServerIndexer createIndexer(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Maven3ServerIndexerImpl result = new Maven3ServerIndexerImpl(new Maven30ServerEmbedderImpl(new MavenServerSettings())) {
         @Override
@@ -66,7 +70,8 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
 
   @Override
   @NotNull
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       return Maven30ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);
     }
@@ -76,7 +81,8 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
+  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       return Maven30ServerEmbedderImpl.assembleInheritance(model, parentModel);
     }
@@ -89,7 +95,8 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles) {
+                                                Collection<String> alwaysOnProfiles, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       return Maven30ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.hint.HintManager;
@@ -33,7 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -57,7 +57,7 @@ import java.util.Set;
  */
 public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix");
+  private static final Logger LOG = Logger.getInstance(CreateNSDeclarationIntentionFix.class);
 
   private final String myNamespacePrefix;
   private final PsiAnchor myElement;
@@ -91,7 +91,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   public String getText() {
     final String alias = getXmlNamespaceHelper().getNamespaceAlias(getFile());
-    return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
+    return XmlErrorBundle.message("create.namespace.declaration.quickfix", alias);
   }
 
   private XmlNamespaceHelper getXmlNamespaceHelper() {
@@ -101,7 +101,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("create.namespace.declaration.quickfix.family");
+    return XmlErrorBundle.message("create.namespace.declaration.quickfix.family");
   }
 
   @Override
@@ -145,7 +145,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
-    final String[] namespaces = ArrayUtil.toStringArray(getNamespaces(element, xmlFile));
+    final String[] namespaces = ArrayUtilRt.toStringArray(getNamespaces(element, xmlFile));
 
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       namespaces,
@@ -201,7 +201,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private String getTitle() {
-    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
+    return XmlErrorBundle.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
   }
 
   @Override
@@ -246,13 +246,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
     if (name == null || name.isEmpty()) return true;
     final List<String> list = StringUtil.getWordsIn(name);
-    final String[] words = ArrayUtil.toStringArray(list);
+    final String[] words = ArrayUtilRt.toStringArray(list);
     final boolean[] wordsFound = new boolean[words.length];
     final int[] wordsFoundCount = new int[1];
 
     IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
       @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, int start, int end) {
+      public void run(final CharSequence chars, char @Nullable [] charsArray, int start, int end) {
         if (wordsFoundCount[0] == words.length) return;
         final int foundWordLen = end - start;
 
@@ -284,7 +284,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
 
-  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(@NotNull final String[] namespacesToChooseFrom,
+  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(final String @NotNull [] namespacesToChooseFrom,
                                                                                            final Project project, final StringToAttributeProcessor onSelection,
                                                                                            String title,
                                                                                            final IntentionAction requestor,
@@ -293,9 +293,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(ContainerUtil.newArrayList(namespacesToChooseFrom))
-        .setRenderer(XmlNSRenderer.INSTANCE)
+        .setRenderer(new XmlNSRenderer<>())
         .setTitle(title)
-        .setItemChosenCallback((selectedValue) -> {
+        .setItemChosenCallback(selectedValue -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           CommandProcessor.getInstance().executeCommand(
             project,
@@ -328,7 +328,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                          final ExternalUriProcessor processor) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
-      XmlErrorMessages.message("finding.acceptable.uri"),
+      XmlErrorBundle.message("finding.acceptable.uri"),
       false,
       file.getProject()
     );
@@ -372,7 +372,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final String searchFor = metaHandler.searchFor();
 
     if (pi != null) {
-      pi.setText(XmlErrorMessages.message("looking.in.schemas"));
+      pi.setText(XmlErrorBundle.message("looking.in.schemas"));
       pi.setIndeterminate(false);
     }
     final ExternalResourceManager instanceEx = ExternalResourceManager.getInstance();

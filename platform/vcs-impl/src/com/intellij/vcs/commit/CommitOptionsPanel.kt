@@ -15,8 +15,8 @@ import javax.swing.JPanel
 import kotlin.collections.set
 
 class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
-  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
-  private val vcsOptionsPanel = simplePanel()
+  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
+  private val vcsOptionsPanel = verticalPanel()
   private val beforeOptionsPanel = simplePanel()
   private val afterOptionsPanel = simplePanel()
 
@@ -49,17 +49,17 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
     setAfterOptions(options.afterOptions)
   }
 
-  override fun setVisible(vcses: Collection<AbstractVcs<*>>) =
-    perVcsOptionsPanels.forEach { vcs, vcsPanel -> vcsPanel.isVisible = vcs in vcses }
+  override fun setVisible(vcses: Collection<AbstractVcs>) =
+    perVcsOptionsPanels.forEach { (vcs, vcsPanel) -> vcsPanel.isVisible = vcs in vcses }
 
-  private fun setVcsOptions(newOptions: Map<AbstractVcs<*>, RefreshableOnComponent>) {
+  private fun setVcsOptions(newOptions: Map<AbstractVcs, RefreshableOnComponent>) {
     if (vcsOptions != newOptions) {
       vcsOptions.clear()
       perVcsOptionsPanels.clear()
       vcsOptionsPanel.removeAll()
 
       vcsOptions += newOptions
-      vcsOptions.forEach { vcs, options ->
+      vcsOptions.forEach { (vcs, options) ->
         val panel = verticalPanel(vcs.displayName).apply { add(options.component) }
         vcsOptionsPanel.add(panel)
         perVcsOptionsPanels[vcs] = panel
@@ -96,6 +96,8 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
   }
 
   companion object {
+    private fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
+
     fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
     }

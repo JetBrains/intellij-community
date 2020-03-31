@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.openapi.application.runWriteAction
@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
@@ -36,15 +37,8 @@ internal class TestManager(private val projectRule: ProjectRule, private val tem
                                   val status: Int = 200)
 
   override fun starting(description: Description) {
-    annotation = description.getAnnotation(TestDescriptor::class.java)
-    if (annotation == null) {
-      return
-    }
-
-    filePath = StringUtil.nullize(annotation!!.filePath)
-    if (filePath == null) {
-      return
-    }
+    annotation = description.getAnnotation(TestDescriptor::class.java) ?: return
+    filePath = StringUtil.nullize(annotation!!.filePath) ?: return
 
     // trigger project creation
     projectRule.project
@@ -65,7 +59,7 @@ internal class TestManager(private val projectRule: ProjectRule, private val tem
     runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
-        val root = projectRule.project.baseDir
+        val root = PlatformTestUtil.getOrCreateProjectTestBaseDir(projectRule.project)
         runWriteAction {
           fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }

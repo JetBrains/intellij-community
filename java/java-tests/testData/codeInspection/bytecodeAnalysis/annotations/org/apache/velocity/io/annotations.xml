@@ -1,4 +1,19 @@
 <root>
+    <item name='org.apache.velocity.io.UnicodeInputStream UTF16BE_BOM'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream UTF16LE_BOM'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream UTF32BE_BOM'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream UTF32LE_BOM'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream UTF8_BOM'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.velocity.io.UnicodeInputStream boolean isSkipBOM()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

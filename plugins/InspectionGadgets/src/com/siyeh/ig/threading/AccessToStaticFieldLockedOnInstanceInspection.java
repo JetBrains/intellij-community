@@ -59,12 +59,6 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.problem.descriptor");
   }

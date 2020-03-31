@@ -3,7 +3,6 @@ package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.text.StringUtil
-import kotlin.reflect.KProperty
 
 internal class FloatStoredProperty(private val defaultValue: Float, private val valueNormalizer: ((value: Float) -> Float)?) : StoredPropertyBase<Float>(), ScalarProperty {
   private var value = defaultValue
@@ -11,9 +10,9 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.NUMBER
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override fun getValue(thisRef: BaseState) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
+  override fun setValue(thisRef: BaseState, value: Float) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
       thisRef.intIncrementModificationCount()
@@ -51,7 +50,7 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
 private fun parseYamlFloat(_value: String): Float {
   var value = StringUtil.replace(_value, "_", "")
   var sign = +1
-  val first = value.get(0)
+  val first = value[0]
   if (first == '-') {
     sign = -1
     value = value.substring(1)

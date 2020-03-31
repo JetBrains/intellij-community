@@ -20,7 +20,6 @@ import java.util.List;
  * @author gregsh
  */
 public class CommentLanguageInjector implements MultiHostInjector {
-  private final LanguageInjectionSupport[] mySupports;
   private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
     @NotNull
     @Override
@@ -33,18 +32,14 @@ public class CommentLanguageInjector implements MultiHostInjector {
       return true;
     }
 
-    @NotNull
     @Override
-    public Class[] getPatternClasses() {
+    public Class @NotNull [] getPatternClasses() {
       return ArrayUtil.EMPTY_CLASS_ARRAY;
     }
   };
 
   public CommentLanguageInjector(@NotNull Project project) {
     Configuration.getProjectInstance(project);
-    List<LanguageInjectionSupport> supports = new ArrayList<>(InjectorUtils.getActiveInjectionSupports());
-    supports.add(myInjectorSupport);
-    mySupports = supports.toArray(new LanguageInjectionSupport[0]);
   }
 
   @Override
@@ -60,7 +55,7 @@ public class CommentLanguageInjector implements MultiHostInjector {
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
 
     boolean applicableFound = false;
-    for (LanguageInjectionSupport support : mySupports) {
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       if (!support.isApplicableTo(host)) continue;
       if (support == myInjectorSupport && applicableFound) continue;
       applicableFound = true;
@@ -72,5 +67,9 @@ public class CommentLanguageInjector implements MultiHostInjector {
       if (!InjectorUtils.registerInjectionSimple(host, injection, support, registrar)) continue;
       return;
     }
+
+    BaseInjection injection = !applicableFound ? myInjectorSupport.findCommentInjection(host, null) : null;
+    if (injection == null) return;
+    InjectorUtils.registerInjectionSimple(host, injection, myInjectorSupport, registrar);
   }
 }

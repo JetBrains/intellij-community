@@ -23,8 +23,7 @@ public class ImplementOrExtendFix extends BaseFix {
     myCompClassPointer = createPointer(compClass);
   }
 
-  @NotNull
-  public static LocalQuickFix[] createFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
+  public static LocalQuickFix @NotNull [] createFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
     ImplementOrExtendFix fix = null;
 
     if (compClass.isInterface() && compClass.getImplementsList() != null) {

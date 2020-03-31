@@ -24,7 +24,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -639,12 +639,11 @@ public class PsiAdapter {
      * @param clazz the class
      * @return the names.
      */
-    @NotNull
-    public static String[] getImplementsClassnames(PsiClass clazz) {
+    public static String @NotNull [] getImplementsClassnames(PsiClass clazz) {
         PsiClass[] interfaces = clazz.getInterfaces();
 
         if (interfaces == null || interfaces.length == 0) {
-          return ArrayUtil.EMPTY_STRING_ARRAY;
+          return ArrayUtilRt.EMPTY_STRING_ARRAY;
         }
 
         String[] names = new String[interfaces.length];

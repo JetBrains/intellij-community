@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
@@ -40,7 +39,7 @@ public class PublicElementsFilter implements Filter{
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.non.public"), null, PlatformIcons.PRIVATE_ICON);
+    return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.non.public"), null, PlatformIcons.PRIVATE_ICON);
   }
 
   @Override

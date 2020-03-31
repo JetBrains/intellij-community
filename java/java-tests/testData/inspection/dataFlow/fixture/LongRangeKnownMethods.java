@@ -22,7 +22,7 @@ public class LongRangeKnownMethods {
     if(<warning descr="Condition 'Integer.bitCount(i) == -1' is always 'false'">Integer.bitCount(i) == -1</warning>) {
       System.out.println("Impossible");
     }
-    if(Long.<error descr="Cannot resolve method 'numberOfLeadingZeroes(long)'">numberOfLeadingZeroes</error>(l) <= 64) {
+    if(Long.<error descr="Cannot resolve method 'numberOfLeadingZeroes' in 'Long'">numberOfLeadingZeroes</error>(l) <= 64) {
       System.out.println("Always");
     }
   }
@@ -38,7 +38,7 @@ public class LongRangeKnownMethods {
   }
 
   void test(String s) {
-    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached">s.length() > 2</warning></warning>) {
+    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached"><warning descr="Result of 's.length()' is always '0'">s.length()</warning> > 2</warning></warning>) {
       System.out.println("Never");
     }
   }
@@ -352,7 +352,15 @@ public class LongRangeKnownMethods {
       if (<warning descr="Condition 's.length() > 7' is always 'false'">s.length() > 7</warning>) {}
     }
   }
-  
+
+  void testChainCall() {
+    if (<warning descr="Condition 'getByte(0).intValue() == 256' is always 'false'">getByte(0).intValue() == 256</warning>) {
+
+    }
+  }
+
+  native Byte getByte(int x);
+
   void testNumberToStringExact(boolean b) {
     int i = b ? 123 : 456;
     String s = Integer.toString(i);

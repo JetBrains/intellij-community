@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -32,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleScheme> {
-
-  private static final String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
-
   CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
@@ -43,7 +41,8 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   protected void resetScheme(@NotNull CodeStyleScheme scheme) {
     if (Messages
           .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
-                              ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), "Restore", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()) ==
+                              ApplicationBundle.message("settings.code.style.reset.to.defaults.title"),
+                              LangBundle.message("button.restore"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()) ==
         Messages.OK) {
       getModel().restoreDefaults(scheme);
     }
@@ -84,7 +83,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   }
   
   private void chooseAndImport(@NotNull CodeStyleScheme currentScheme, @NotNull String importerName) {
-    if (importerName.equals(SHARED_IMPORT_SOURCE)) {
+    if (importerName.equals(getSharedImportSource())) {
       new SchemesToImportPopup<CodeStyleScheme>(getSchemesPanel()) {
         @Override
         protected void onSchemeSelected(CodeStyleScheme scheme) {
@@ -182,4 +181,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     return (CodeStyleSchemesModel)super.getModel();
   }
 
+  private static String getSharedImportSource() {
+    return ApplicationBundle.message("import.scheme.shared");
+  }
 }

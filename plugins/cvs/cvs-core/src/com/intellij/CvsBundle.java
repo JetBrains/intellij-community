@@ -19,20 +19,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-public class CvsBundle {
+public class CvsBundle extends DynamicBundle {
+  @NonNls public static final String BUNDLE = "messages.CvsBundle";
+  private static final CvsBundle INSTANCE = new CvsBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE_NAME) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  private CvsBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String BUNDLE_NAME = "com.intellij.cvsSupport2.CvsBundle";
-
-  private CvsBundle() {
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static String getCvsDisplayName() {
@@ -69,14 +71,5 @@ public class CvsBundle {
 
   public static String getAnnotateOperationName() {
     return message("operation.name.annotate");
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE_NAME);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }

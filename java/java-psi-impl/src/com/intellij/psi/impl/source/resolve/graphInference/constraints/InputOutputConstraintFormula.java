@@ -28,19 +28,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
+  private PsiType myT;
+
+  protected InputOutputConstraintFormula(PsiType t) {
+    myT = t;
+  }
 
   public abstract PsiExpression getExpression();
-  protected abstract PsiType getT();
-  protected abstract void setT(PsiType t);
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
   protected abstract void collectReturnTypeVariables(InferenceSession session,
                                                      PsiExpression psiExpression,
-                                                     PsiType returnType, 
-                                                     Set<InferenceVariable> result);
+                                                     PsiType returnType,
+                                                     Set<? super InferenceVariable> result);
 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();
-    final PsiType type = getT();
+    final PsiType type = myT;
     if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
@@ -111,7 +114,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   @Nullable
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
     final HashSet<InferenceVariable> mentionedVariables = new HashSet<>();
-    session.collectDependencies(getT(), mentionedVariables);
+    session.collectDependencies(myT, mentionedVariables);
     if (inputVariables != null) {
       mentionedVariables.removeAll(inputVariables);
     }
@@ -120,14 +123,15 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Override
   public void apply(PsiSubstitutor substitutor, boolean cache) {
-    setT(substitutor.substitute(getT()));
-    if (cache) {
-      LambdaUtil.getFunctionalTypeMap().put(getExpression(), getT());
-    }
+    myT = substitutor.substitute(myT);
+  }
+
+  public PsiType getCurrentType() {
+    return myT;
   }
 
   @Override
   public String toString() {
-    return getExpression().getText() + " -> " + getT().getPresentableText();
+    return getExpression().getText() + " -> " + myT.getPresentableText();
   }
 }

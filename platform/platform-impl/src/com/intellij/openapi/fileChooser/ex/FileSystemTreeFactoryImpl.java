@@ -3,9 +3,9 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.actions.SynchronizeAction;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
@@ -31,9 +31,8 @@ public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
     group.add(actionManager.getAction("FileChooser.Delete"));
     group.addSeparator();
     SynchronizeAction action1 = new SynchronizeAction();
-    AnAction original = actionManager.getAction(IdeActions.ACTION_SYNCHRONIZE);
-    action1.copyFrom(original);
-    action1.registerCustomShortcutSet(original.getShortcutSet(), fileSystemTree.getTree());
+    ActionUtil.copyFrom(action1, IdeActions.ACTION_SYNCHRONIZE);
+    action1.registerCustomShortcutSet(action1.getShortcutSet(), fileSystemTree.getTree());
     group.add(action1);
     group.addSeparator();
     group.add(actionManager.getAction("FileChooser.ShowHiddens"));

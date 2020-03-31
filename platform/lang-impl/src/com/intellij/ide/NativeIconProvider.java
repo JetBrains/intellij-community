@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide;
 
@@ -25,10 +11,10 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.ui.DeferredIconImpl;
-import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +30,7 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
   private final Map<Ext, Icon> myIconCache = new HashMap<>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
-    SystemInfo.isWindows ? new HashSet<>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<>();
+    SystemInfo.isWindows ? ContainerUtil.set(new Ext("exe"), new Ext("ico")) : new HashSet<>();
   private final Map<String, Icon> myCustomIconCache = new HashMap<>();
 
   private static final Ext NO_EXT = new Ext(null);
@@ -54,8 +40,8 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
   @Nullable
   @Override
   public Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    if (element instanceof PsiFileSystemItem) {
-      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+    if (element instanceof PsiFile) {
+      VirtualFile file = ((PsiFile)element).getVirtualFile();
       if (file != null) return doGetIcon(file, flags);
     }
     return null;
@@ -147,8 +133,7 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
     }
 
     @Override
-    @NotNull
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return myText;
     }
 

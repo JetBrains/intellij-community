@@ -16,31 +16,36 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private static final long serialVersionUID = 1L;
 
   private String name;
-  private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources;
-  private final Collection<ExternalDependency> dependencies;
+  private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
+  private final LinkedHashSet<ExternalDependency> dependencies;
   private Collection<File> artifacts;
   private String sourceCompatibility;
   private String targetCompatibility;
+  private boolean isPreview;
 
   public DefaultExternalSourceSet() {
-    sources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
-    dependencies = new LinkedHashSet<ExternalDependency>();
-    artifacts = new ArrayList<File>();
+    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(0);
+    dependencies = new LinkedHashSet<ExternalDependency>(0);
+    artifacts = new ArrayList<File>(0);
   }
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
-    this();
     name = sourceSet.getName();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
-    for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> entry : sourceSet.getSources().entrySet()) {
+    isPreview = sourceSet.isPreview();
+
+    Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
+    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(entrySet.size());
+    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
       sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
     }
 
+    dependencies = new LinkedHashSet<ExternalDependency>(sourceSet.getDependencies().size());
     for (ExternalDependency dependency : sourceSet.getDependencies()) {
       dependencies.add(ModelFactory.createCopy(dependency));
     }
-    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>() : new ArrayList<File>(sourceSet.getArtifacts());
+    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>(0) : new ArrayList<File>(sourceSet.getArtifacts());
   }
 
   @NotNull
@@ -62,6 +67,15 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   @Override
   public String getSourceCompatibility() {
     return sourceCompatibility;
+  }
+
+  @Override
+  public boolean isPreview() {
+    return isPreview;
+  }
+
+  public void setPreview(boolean preview) {
+    isPreview = preview;
   }
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
@@ -89,11 +103,11 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   @NotNull
   @Override
-  public Map<IExternalSystemSourceType, ExternalSourceDirectorySet> getSources() {
+  public Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> getSources() {
     return sources;
   }
 
-  public void setSources(Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources) {
+  public void setSources(Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
     this.sources = sources;
   }
 

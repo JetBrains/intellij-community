@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -16,51 +16,55 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-class SecureJarLoader extends JarLoader {
-  @Nullable private ProtectionDomain myProtectionDomain;
+final class SecureJarLoader extends JarLoader {
+  private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
+  SecureJarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
     super(url, index, configuration);
   }
 
+  @NotNull
   @Override
-  protected Resource instantiateResource(URL url, ZipEntry entry) throws IOException {
+  protected Resource instantiateResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
     return new MySecureResource(url, (JarEntry)entry);
   }
 
   @NotNull
   @Override
-  protected ZipFile createZipFile(String path) throws IOException {
+  protected ZipFile createZipFile(@NotNull String path) throws IOException {
     return new JarFile(path);
   }
 
-  private class MySecureResource extends JarLoader.MyResource {
-    MySecureResource(URL url, JarEntry entry) throws IOException {
+  private final class MySecureResource extends JarLoader.MyResource {
+    MySecureResource(@NotNull URL url, @NotNull JarEntry entry) throws IOException {
       super(url, entry);
     }
 
+    @NotNull
     @Override
     public byte[] getBytes() throws IOException {
       JarFile file = (JarFile)getZipFile();
-      InputStream stream = null;
-      byte[] result;
       try {
-        stream = file.getInputStream(myEntry);
-        result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
-        synchronized (myProtectionDomainMonitor) {
-          if (myProtectionDomain == null) {
-            JarEntry jarEntry = file.getJarEntry(myEntry.getName());
-            CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
-            myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+        InputStream stream = file.getInputStream(myEntry);
+        try {
+          byte[] result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+          synchronized (myProtectionDomainMonitor) {
+            if (myProtectionDomain == null) {
+              JarEntry jarEntry = file.getJarEntry(myEntry.getName());
+              CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
+              myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+            }
           }
+          return result;
+        }
+        finally {
+          stream.close();
         }
       }
       finally {
-        if (stream != null) stream.close();
         releaseZipFile(file);
       }
-      return result;
     }
 
     @Nullable

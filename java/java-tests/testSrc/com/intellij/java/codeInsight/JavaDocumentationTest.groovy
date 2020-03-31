@@ -9,14 +9,14 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
 /**
  * @author peter
  */
 @CompileStatic
-class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
+class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
   void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
@@ -207,13 +207,47 @@ class Bar {
     def actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
 
     def expected =
-      "<html><div class='content'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+      "<html><div class='content-only'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
       "<br>" +
       "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
       "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
       "</div>"
 
     assert actual == expected
+  }
+
+  void "test navigation updates decoration"() {
+    def input = """\
+      class Foo {
+        void foo(String s) {
+          s.region<caret>Matches()
+        } 
+      }""".stripIndent()
+
+    def documentationManager = DocumentationManager.getInstance(myFixture.project)
+    JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
+      def expected =
+        "<html><div class='content-only'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+        "<br>" +
+        "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
+        "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
+        "</div>"
+
+      assert component.decoratedText == expected
+
+      documentationManager.navigateByLink(component, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
+      try {
+        JavaExternalDocumentationTest.waitTillDone(documentationManager.getLastAction())
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e)
+      }
+
+      // Here we check that the covering module (SDK in this case) is rendered in decorated info
+      assert component.decoratedText.contains("<div class='bottom'><icon src='AllIcons.Nodes.PpLibFolder'>&nbsp;&lt; java 1.7 ></div>")
+    }
+
+
   }
 
   private void configure(String text) {

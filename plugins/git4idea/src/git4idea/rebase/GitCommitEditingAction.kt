@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository.State.*
@@ -28,7 +14,10 @@ import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.findProtectedRemoteBranch
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.Nls
 
 /**
  * Base class for Git action which is going to edit existing commits,
@@ -37,7 +26,6 @@ import git4idea.repo.GitRepository
 abstract class GitCommitEditingAction : DumbAwareAction() {
 
   private val LOG = logger<GitCommitEditingAction>()
-  private val COMMIT_NOT_IN_HEAD = "The commit is not in the current branch"
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -57,8 +45,9 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     val commit = log.selectedShortDetails[0]
-    val repository = getRepositoryManager(project).getRepositoryForRoot(commit.root)
-    if (repository == null) {
+    val repositoryManager = getRepositoryManager(project)
+    val repository = repositoryManager.getRepositoryForRootQuick(commit.root)
+    if (repository == null || repositoryManager.isExternal(repository)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -67,7 +56,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val parents = commit.parents.size
     if (parents != 1) {
       e.presentation.isEnabled = false
-      e.presentation.description = "Selected commit has $parents parents"
+      e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", parents)
       return
     }
 
@@ -76,7 +65,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
       if (!branches.contains(HEAD)) {
         e.presentation.isEnabled = false
-        e.presentation.description = COMMIT_NOT_IN_HEAD
+        e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
         return
       }
 
@@ -98,12 +87,13 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
     val commit = log.selectedShortDetails[0]
-    val repository = getRepositoryManager(project).getRepositoryForRoot(commit.root)!!
+    val repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.root)!!
 
     val branches = findContainingBranches(data, commit.root, commit.id)
 
     if (!branches.contains(HEAD)) {
-      Messages.showErrorDialog(project, COMMIT_NOT_IN_HEAD, getFailureTitle())
+      Messages.showErrorDialog(project, GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
+                               getFailureTitle())
       return
     }
 
@@ -127,7 +117,8 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
 
-  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
+  @CalledInAny
+  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRootQuick(getSelectedCommit(e).root)!!
 
   protected abstract fun getFailureTitle(): String
 
@@ -136,13 +127,13 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     return branchesGetter.getContainingBranchesQuickly(root, hash) ?:
            ProgressManager.getInstance().runProcessWithProgressSynchronously<List<String>, RuntimeException>({
                branchesGetter.getContainingBranchesSynchronously(root, hash)
-           }, "Searching for branches containing the selected commit", true, data.project)
+           }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
   }
 
-  protected fun commitPushedToProtectedBranchError(protectedBranch: String)
-    = "The commit is already pushed to protected branch '$protectedBranch'"
+  protected fun commitPushedToProtectedBranchError(protectedBranch: String) =
+    GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
 
-  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {
+  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, @Nls operation: String, allowRebaseIfHeadCommit: Boolean = false) {
     if (e.presentation.isEnabledAndVisible) {
       val message = getProhibitedStateMessage(e, operation, allowRebaseIfHeadCommit)
       if (message != null) {
@@ -152,18 +143,21 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected fun getProhibitedStateMessage(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false): String? {
+  protected fun getProhibitedStateMessage(e: AnActionEvent, @Nls operation: String, allowRebaseIfHeadCommit: Boolean = false): String? {
     val state = getRepository(e).state
-    if (state == NORMAL || state == DETACHED) return null
-    if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return null
+    if (state == NORMAL || state == DETACHED) {
+      return null
+    }
+    if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) {
+      return null
+    }
 
     return when (state) {
-      REBASING -> "Can't $operation during rebase"
-      MERGING -> "Can't $operation during merge"
-      else -> {
-        LOG.error(IllegalStateException("Unexpected state: $state"))
-        "Can't $operation during $state"
-      }
+      REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
+      MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)
+      GRAFTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.grafting", operation)
+      REVERTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.reverting", operation)
+      else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
     }
   }
 

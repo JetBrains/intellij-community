@@ -30,7 +30,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThrowStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThrowStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiThrowStatementImpl.class);
 
   public PsiThrowStatementImpl() {
     super(THROW_STATEMENT);

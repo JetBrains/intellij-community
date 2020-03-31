@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.SettingsProvider;
@@ -7,6 +6,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -22,26 +22,28 @@ import java.util.Objects;
 import static com.intellij.openapi.util.registry.Registry.is;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeStructureBase");
+  private static final Logger LOG = Logger.getInstance(AbstractTreeStructureBase.class);
   protected final Project myProject;
 
   protected AbstractTreeStructureBase(Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
-    Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
-    if (elements.stream().anyMatch(Objects::isNull)) LOG.error("node contains null child: " + treeNode + "; " + treeNode.getClass());
+    Collection<? extends AbstractTreeNode<?>> elements = treeNode.getChildren();
+    if (elements.stream().anyMatch(Objects::isNull)) {
+      LOG.error("node contains null child: " + treeNode + "; " + treeNode.getClass());
+    }
     List<TreeStructureProvider> providers = is("allow.tree.structure.provider.in.dumb.mode") ? getProviders() : getProvidersDumbAware();
     if (providers != null && !providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof SettingsProvider ? ((SettingsProvider)treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
+        ProgressManager.checkCanceled();
         try {
-          elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
+          elements = provider.modify(treeNode, (Collection<AbstractTreeNode<?>>)elements, settings);
           if (elements.stream().anyMatch(Objects::isNull)) LOG.error("provider creates null child: " + provider);
         }
         catch (IndexNotReadyException e) {
@@ -75,16 +77,16 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
-    return (NodeDescriptor)element;
+  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+    return (NodeDescriptor<?>)element;
   }
 
   @Nullable
   public abstract List<TreeStructureProvider> getProviders();
 
   @Nullable
-  public Object getDataFromProviders(@NotNull List<AbstractTreeNode> selectedNodes, @NotNull String dataId) {
-    final List<TreeStructureProvider> providers = getProvidersDumbAware();
+  public Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
+    List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (!providers.isEmpty()) {
       for (TreeStructureProvider treeStructureProvider : providers) {
         final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);

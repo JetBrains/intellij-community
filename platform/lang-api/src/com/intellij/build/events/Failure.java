@@ -17,7 +17,6 @@ package com.intellij.build.events;
 
 import com.intellij.notification.Notification;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface Failure {
   @Nullable
   String getMessage();

@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.TypingTest
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 
 /**
  * Created by Max Medvedev on 10/02/14
@@ -288,5 +290,126 @@ class B {
     private List method() { return null }
 }
 ''', GrMethodCall, 'java.util.List'
+  }
+
+  void 'test inference from explicit typed SAM argument'() {
+    doTest '''
+interface SAM<O> {
+    void accept(O out)
+}
+
+def <R> R samMethod(SAM<R> mapper) {
+}
+
+s<caret>amMethod({Integer i->})
+
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (nested generic)'() {
+    doTest '''
+interface SAM<O> {
+    void accept(Collection<List<O>> out)
+}
+
+def <R> R samMethod(SAM<R> mapper) {
+}
+
+s<caret>amMethod({Collection<List<Integer>> i->})
+
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (several type params)'() {
+    doTest '''
+public interface SAM<T, O> {
+    void flatMap(T value, Collection<O> out) throws Exception;
+}
+
+class C<T> {
+    public <R> R flatMap(SAM<T, R> f) {
+        return null
+    }
+}
+
+new C<String>().flat<caret>Map {
+    String s, Collection<Integer> c ->
+} 
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (with return type)'() {
+    doTest '''
+public interface SAM<T, O> {
+    void flatMap(T value, Collection<O> out) throws Exception;
+}
+
+class C<T> {
+    public <R> R flatMap(SAM<T, R> f) {
+        return null
+    }
+}
+
+new C<String>().flat<caret>Map {
+    String s, Collection<Integer> c -> new String[10]
+} 
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (with lambda)'() {
+    doTest '''
+public interface SAM<T, O> {
+    void flatMap(T value, Collection<O> out) throws Exception;
+}
+
+class C<T> {
+    public <R> R flatMap(SAM<T, R> f) {
+        return null
+    }
+}
+
+new C<String>().flat<caret>Map((String s, Collection<Integer> c) -> new String[10])
+    
+ 
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (with default values)'() {
+    doTest '''
+public interface SAM<T, O> {
+    void flatMap(T value, Collection<O> out) throws Exception;
+}
+
+class C<T> {
+    public <R> R flatMap(SAM<T, R> f) {
+        return null
+    }
+}
+
+new C<String>().flat<caret>Map {
+    String s, Collection<Integer> c, Double d = 1.0 -> new String[10]
+} 
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test inference from explicit typed SAM argument (with SAM inheritance)'() {
+    doTest '''
+public interface SAM<T, O> {
+    void flatMap(T value, Collection<O> out) throws Exception;
+}
+
+public interface Inheritor<U> extends SAM<String, U> {
+}
+
+class C {
+    public <R> R flatMap(Inheritor<R> f) {
+        return null
+    }
+}
+
+new C().flat<caret>Map {
+    String s, Collection<Integer> c -> new String[10]
+} 
+''', JAVA_LANG_INTEGER
   }
 }

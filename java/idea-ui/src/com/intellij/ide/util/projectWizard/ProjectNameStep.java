@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -10,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,17 +32,19 @@ public class ProjectNameStep extends ModuleWizardStep {
   public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;
     myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"),
-                                                IdeBundle.message("label.component.file.location", StringUtil.capitalize(myWizardContext.getPresentationName())),
-                                                IdeBundle.message("title.select.project.file.directory", myWizardContext.getPresentationName()),
-                                                IdeBundle.message("description.select.project.file.directory", myWizardContext.getPresentationName()));
+                                                JavaUiBundle.message("label.component.file.location", StringUtil.capitalize(myWizardContext.getPresentationName())),
+                                                JavaUiBundle.message("title.select.project.file.directory", myWizardContext.getPresentationName()),
+                                                JavaUiBundle.message("description.select.project.file.directory", myWizardContext.getPresentationName()));
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
     String appName = ApplicationNamesInfo.getInstance().getFullProductName();
-    myPanel.add(new JLabel(IdeBundle.message("label.please.enter.project.name", appName, wizardContext.getPresentationName())),
-                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
+    myPanel.add(new JLabel(JavaUiBundle.message("label.please.enter.project.name", appName, wizardContext.getPresentationName())),
+                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                       JBInsets.create(8, 10), 0, 0));
 
-    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
+    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                            JBInsets.create(8, 10), 0, 0));
   }
 
   @Override
@@ -93,16 +96,16 @@ public class ProjectNameStep extends ModuleWizardStep {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
       ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
-      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getFullProductName(), myWizardContext.getPresentationName()));
+      throw new ConfigurationException(JavaUiBundle.message("prompt.new.project.file.name", info.getFullProductName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
     if (projectFileDirectory.length() == 0) {
-      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
+      throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();
-    String prefix = IdeBundle.message("directory.project.file.directory", myWizardContext.getPresentationName());
+    String prefix = JavaUiBundle.message("directory.project.file.directory", myWizardContext.getPresentationName());
     if (!ProjectWizardUtil.createDirectoryIfNotExists(prefix, projectFileDirectory, shouldPromptCreation)) {
       return false;
     }
@@ -117,9 +120,9 @@ public class ProjectNameStep extends ModuleWizardStep {
                            ? IdeBundle.message("title.new.project")
                            : IdeBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
-                             ? IdeBundle.message("prompt.overwrite.project.folder",
+                             ? JavaUiBundle.message("prompt.overwrite.project.folder",
                                                  Project.DIRECTORY_STORE_FOLDER, projectFile.getParentFile().getAbsolutePath())
-                             : IdeBundle.message("prompt.overwrite.project.file",
+                             : JavaUiBundle.message("prompt.overwrite.project.file",
                                                  projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
       int answer = Messages.showYesNoDialog(message, title, Messages.getQuestionIcon());
       shouldContinue = answer == Messages.YES;

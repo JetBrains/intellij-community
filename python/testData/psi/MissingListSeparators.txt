@@ -9,12 +9,12 @@ PyFile:MissingListSeparators.py
       PsiElement(Py:LBRACKET)('[')
       PyNumericLiteralExpression
         PsiElement(Py:INTEGER_LITERAL)('1')
-      PsiErrorElement:expected ',' or ']'
+      PsiErrorElement:']' or ',' expected
         <empty list>
       PsiWhiteSpace(' ')
       PyNumericLiteralExpression
         PsiElement(Py:INTEGER_LITERAL)('2')
-      PsiErrorElement:expected ',' or ']'
+      PsiErrorElement:']' or ',' expected
         <empty list>
       PsiWhiteSpace(' ')
       PyNumericLiteralExpression

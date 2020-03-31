@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "1"
             },
@@ -61,9 +58,6 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {
@@ -115,10 +109,6 @@
                 "notes": "Specifying the <code>width</code> attribute has no layout effect."
               },
               "edge": {
-                "version_added": true,
-                "notes": "Specifying the <code>width</code> attribute has no layout effect."
-              },
-              "edge_mobile": {
                 "version_added": true,
                 "notes": "Specifying the <code>width</code> attribute has no layout effect."
               },
@@ -175,9 +165,6 @@
                 "version_added": null
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {

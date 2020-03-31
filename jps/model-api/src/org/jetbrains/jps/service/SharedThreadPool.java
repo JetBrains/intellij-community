@@ -17,17 +17,18 @@ package org.jetbrains.jps.service;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-/**
- * @author nik
- */
-public abstract class SharedThreadPool implements Executor {
+public abstract class SharedThreadPool implements ExecutorService {
   public static SharedThreadPool getInstance() {
     return JpsServiceManager.getInstance().getService(SharedThreadPool.class);
   }
 
+  /**
+   * @deprecated Use {@link #submit(Runnable)} instead
+   */
+  @Deprecated
   @NotNull
   public abstract Future<?> executeOnPooledThread(@NotNull Runnable action);
 }

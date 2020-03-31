@@ -17,6 +17,10 @@
       "description": "Marketing version of the product, e.g. '2018.3'",
       "type": "string"
     },
+    "versionSuffix": {
+      "description": "Specifies type of this product version which is shown after the version number in the UI, e.g. 'EAP', 'EAP 2', 'Preview', etc. May be omitted (e.g. for release builds).",
+      "type": "string"
+    },
     "buildNumber": {
       "description": "Build number of the product, e.g. '183.239' or '183.SNAPSHOT'",
       "type": "string"
@@ -25,8 +29,12 @@
       "description": "Product code (e.g. 'IC' for IntelliJ IDEA Community Edition) as used in full build number",
       "type": "string"
     },
+    "dataDirectoryName": {
+      "description": "Name of a directory used for storing settings, caches, etc. (e.g. 'IntelliJIdea2020.1' for IntelliJ IDEA 2020.1); the full path to the directory is OS-specific.",
+      "type": "string"
+    },
     "svgIconPath": {
-      "description": "Path to an svg file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
+      "description": "Path to an SVG file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
       "type": "string"
     },
     "launch": {

@@ -123,6 +123,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.sql.DriverManager SET_LOG_PERMISSION'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.sql.DriverManager boolean isDriverAllowed(java.sql.Driver, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;false&quot;"/>

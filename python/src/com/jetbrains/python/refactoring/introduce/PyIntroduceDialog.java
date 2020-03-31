@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -108,7 +108,7 @@ public class PyIntroduceDialog extends DialogWrapper {
     if (myOccurrencesCount > 1) {
       myReplaceAll.setSelected(false);
       myReplaceAll.setEnabled(true);
-      myReplaceAll.setText(myReplaceAll.getText() + " (" + myOccurrencesCount + " occurrences)");
+      myReplaceAll.setText(PyBundle.message("refactoring.occurrences.count", myReplaceAll.getText(), myOccurrencesCount));
     }
     else {
       myReplaceAll.setSelected(false);

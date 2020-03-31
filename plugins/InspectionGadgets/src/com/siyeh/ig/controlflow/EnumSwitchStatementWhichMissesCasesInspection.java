@@ -19,6 +19,8 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -27,12 +29,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,19 +46,13 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   @SuppressWarnings("PublicField")
   public boolean ignoreSwitchStatementsWithDefault = true;
 
-  @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.display.name");
-  }
-
-  @NotNull
-  String buildErrorString(String enumName, Set<String> names) {
+  static String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
     }
-    String namesString = CreateMissingSwitchBranchesFix.formatMissingBranches(names);
+    String namesString = CreateSwitchBranchesUtil.formatMissingBranches(names);
     return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.problem.descriptor", enumName, namesString);
   }
 
@@ -80,7 +78,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
 
       public void processSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
-        final PsiExpression expression = switchBlock.getExpression();
+        final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
         if (expression == null) return;
         final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
         if (aClass == null || !aClass.isEnum()) return;
@@ -120,7 +118,8 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         if (constants.isEmpty()) return;
         CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
         if (dataflow != null) {
-          Set<Object> notValues = dataflow.getValuesNotEqualToExpression(expression);
+          DfType type = dataflow.getDfType(expression);
+          Set<?> notValues = type instanceof DfAntiConstantType ? ((DfAntiConstantType<?>)type).getNotValues() : Collections.emptySet();
           for (Object value : notValues) {
             if (value instanceof PsiEnumConstant) {
               constants.remove(((PsiEnumConstant)value).getName());

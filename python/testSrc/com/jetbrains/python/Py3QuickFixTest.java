@@ -40,72 +40,72 @@ public class Py3QuickFixTest extends PyTestCase {
   // PY-13685
   public void testReplacePrintEnd() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true));
+                         () -> doInspectionTest(PyStatementEffectInspection.class, PyPsiBundle.message("QFIX.statement.effect"), true, true));
   }
 
   // PY-13685
   public void testReplacePrintComment() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true));
+                         () -> doInspectionTest(PyStatementEffectInspection.class, PyPsiBundle.message("QFIX.statement.effect"), true, true));
   }
 
   // PY-13685
   public void testReplaceExecComment() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true));
+                         () -> doInspectionTest(PyStatementEffectInspection.class, PyPsiBundle.message("QFIX.statement.effect"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInSuperInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInitAndVarargInInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-11561
   public void testAddCallSuperTypeAnnotationsPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-16036, PY-11561
   public void testAddCallSuperSelfNameAndAnnotationPreserved() {
-    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+    doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true);
   }
 
   // PY-15867
   public void testAddCallSuperNoRequiredKeywordOnlyParamAfterSingleStarInSuperInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-16421
   public void testAddCallSuperSingleStarParamPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
     // PY-15867
   public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
+                         () -> doInspectionTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-16428 
@@ -119,7 +119,7 @@ public class Py3QuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
@@ -131,7 +131,7 @@ public class Py3QuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
@@ -215,7 +215,7 @@ public class Py3QuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
+  protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,

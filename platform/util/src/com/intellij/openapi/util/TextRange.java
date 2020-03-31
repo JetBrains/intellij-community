@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 
 /**
- * A text range defined by start and end offset.
+ * A text range defined by start and end (exclusive) offset.
  *
  * @see ProperTextRange
  */
@@ -249,7 +249,7 @@ public class TextRange implements Segment, Serializable {
 
   public static void assertProperRange(int startOffset, int endOffset, @NotNull Object message) {
     if (!isProperRange(startOffset, endOffset)) {
-      LOG.error("Invalid range specified: (" + startOffset + ", " + endOffset + "); " + message);
+      throw new IllegalArgumentException("Invalid range specified: (" + startOffset + ", " + endOffset + "); " + message);
     }
   }
 

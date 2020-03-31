@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,7 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ui.update.Activatable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class DockableEditorTabbedContainer implements DockContainer.Persistent {
-
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
@@ -73,41 +73,40 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   }
 
   @Override
-  public RelativeRectangle getAcceptArea() {
+  public @NotNull RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(mySplitters);
   }
 
   @Override
-  public RelativeRectangle getAcceptAreaFallback() {
+  public @NotNull RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }
 
-  @NotNull
   @Override
-  public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+  public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     return getTabsAt(content, point) != null ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
   }
 
-  @Nullable
-  private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
-    if (content instanceof EditorTabbedContainer.DockableEditor) {
-      JBTabs targetTabs = mySplitters.getTabsAt(point);
-      if (targetTabs != null) {
-        return targetTabs;
-      } else {
-        EditorWindow wnd = mySplitters.getCurrentWindow();
-        if (wnd != null) {
-          EditorTabbedContainer tabs = wnd.getTabbedPane();
-          if (tabs != null) {
-            return tabs.getTabs();
-          }
-        } else {
-          EditorWindow[] windows = mySplitters.getWindows();
-          for (EditorWindow each : windows) {
-            if (each.getTabbedPane() != null && each.getTabbedPane().getTabs() != null) {
-              return each.getTabbedPane().getTabs();
-            }
+  private @Nullable JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {
+    if (!(content instanceof EditorTabbedContainer.DockableEditor)) {
+      return null;
+    }
+
+    JBTabs targetTabs = mySplitters.getTabsAt(point);
+    if (targetTabs != null) {
+      return targetTabs;
+    }
+    else {
+      EditorWindow window = mySplitters.getCurrentWindow();
+      if (window != null) {
+        return window.getTabbedPane().getTabs();
+      }
+      else {
+        EditorWindow[] windows = mySplitters.getWindows();
+        for (EditorWindow each : windows) {
+          if (each.getTabbedPane().getTabs() != null) {
+            return each.getTabbedPane().getTabs();
           }
         }
       }
@@ -142,11 +141,6 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
     window.setFilePinned(file, dockableEditor.isPinned());
-  }
-
-  @Override
-  public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
-    return null;
   }
 
   @Override
@@ -190,20 +184,19 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     return mySplitters;
   }
 
-  public void close(VirtualFile file) {
+  public void close(@NotNull VirtualFile file) {
     mySplitters.closeFile(file, false);
   }
 
   @Override
   public void closeAll() {
-    VirtualFile[] files = mySplitters.getOpenFiles();
-    for (VirtualFile each : files) {
+    for (VirtualFile each : mySplitters.getOpenFileList()) {
       close(each);
     }
   }
 
   @Override
-  public void addListener(final Listener listener, Disposable parent) {
+  public void addListener(@NotNull Listener listener, Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
       @Override
@@ -219,11 +212,6 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   }
 
   @Override
-  public void dispose() {
-    closeAll();
-  }
-
-  @Override
   public boolean isDisposeWhenEmpty() {
     return myDisposeWhenEmpty;
   }
@@ -234,9 +222,5 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
       myWasEverShown = true;
       getSplitters().openFiles();
     }
-  }
-
-  @Override
-  public void hideNotify() {
   }
 }

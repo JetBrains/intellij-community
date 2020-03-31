@@ -71,8 +71,9 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
       List<Integer> selectionToLoad = getSelectionToLoad();
       myCommitDetailsGetter.loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
-          LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
-                         "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+          if (selectionToLoad.size() != detailsList.size()) {
+            LOG.error("Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+          }
           myLastRequest = null;
           onDetailsLoaded(detailsList);
           stopLoading();
@@ -105,7 +106,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   protected abstract void onDetailsLoaded(@NotNull List<? extends T> detailsList);
 
   @CalledInAwt
-  protected abstract void onSelection(@NotNull int[] selection);
+  protected abstract void onSelection(int @NotNull [] selection);
 
   @CalledInAwt
   protected abstract void onEmptySelection();

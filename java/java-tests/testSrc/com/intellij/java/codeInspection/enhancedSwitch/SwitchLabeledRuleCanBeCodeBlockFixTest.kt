@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -14,7 +14,7 @@ class SwitchLabeledRuleCanBeCodeBlockFixTest : LightQuickFixParameterizedTestCas
 
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(SwitchLabeledRuleCanBeCodeBlockInspection())
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_13
 
   override fun getBasePath() = "/inspection/switchLabeledRuleCanBeCodeBlockFix"
 }

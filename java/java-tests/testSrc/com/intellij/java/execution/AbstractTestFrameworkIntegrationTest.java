@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestFrameworkRunnableState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -13,7 +16,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -45,8 +50,8 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     RunnerAndConfigurationSettingsImpl
       settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), configuration, false);
     ExecutionEnvironment
-      environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, project);
-    JavaTestFrameworkRunnableState state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
+      environment = new ExecutionEnvironment(executor, ProgramRunner.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings.getConfiguration()), settings, project);
+    JavaTestFrameworkRunnableState<?> state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
     state.appendForkInfo(executor);
     state.appendRepeatMode();
 
@@ -60,7 +65,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     if (searchForTestsTask != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
                                                                           searchForTestsTask.run(new EmptyProgressIndicator());
-                                                                          searchForTestsTask.onSuccess();
+                                                                          ApplicationManager.getApplication().invokeLater(() -> searchForTestsTask.onSuccess());
                                                                         },
                                                                         "", false, project, null);
     }
@@ -110,10 +115,16 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     return processOutput;
   }
 
-  protected void addLibs(Module module,
-                         JpsMavenRepositoryLibraryDescriptor descriptor,
-                         ArtifactRepositoryManager repoManager) throws Exception {
-    
+
+  protected static void addMavenLibs(Module module,
+                                     JpsMavenRepositoryLibraryDescriptor descriptor) throws Exception {
+    addMavenLibs(module, descriptor, getRepoManager());
+  }
+
+  protected static void addMavenLibs(Module module,
+                                     JpsMavenRepositoryLibraryDescriptor descriptor,
+                                     ArtifactRepositoryManager repoManager) throws Exception {
+
     Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
                                                            descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
     assertFalse("No files retrieved for: " + descriptor.getGroupId(), files.isEmpty());
@@ -125,11 +136,11 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     }
   }
 
-  protected ArtifactRepositoryManager getRepoManager() {
+  protected static ArtifactRepositoryManager getRepoManager() {
     final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,
-      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "http://maven.labs.intellij.net/repo1")),
+      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://repo.labs.intellij.net/repo1")),
       new ProgressConsumer() {
         @Override
         public void consume(String message) {

@@ -34,7 +34,7 @@ public class ReflectionAccessMethodBuilder {
   public PsiMethod build(@NotNull PsiElementFactory elementFactory,
                          @Nullable PsiElement context) {
     checkRequirements();
-    String parameters = StreamEx.of(myParameters).map(p -> p.type + " " + p.name).joining(", ", "(", ")");
+    String parameters = StreamEx.of(myParameters).map(p -> p.accessibleType + " " + p.name).joining(", ", "(", ")");
     String returnExpression =
       ("void".equals(myReturnType) ? "member." : "return (" + myReturnType + ")member.") + myMemberAccessor.getAccessExpression();
     String methodBody = "  java.lang.Class<?> klass = " + myMemberAccessor.getClassLookupExpression() + ";\n" +
@@ -120,18 +120,17 @@ public class ReflectionAccessMethodBuilder {
     PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      String name = parameter.getName();
       PsiType parameterType = parameter.getType();
       PsiType erasedType = TypeConversionUtil.erasure(parameterType);
       String typeName = typeName(parameterType, erasedType);
       String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
 
-      if (name == null) {
-        LOG.warn("Parameter name not found, index = " + i + ", type = " + typeName);
-        name = "arg" + i;
-      }
+      String name = parameter.getName();
 
-      myParameters.add(new ParameterInfo(typeName, name, jvmType));
+      PsiType accessedType = erasedType != null
+                             ? PsiReflectionAccessUtil.nearestAccessibleType(erasedType)
+                             : PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
+      myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
     }
 
     return this;
@@ -166,16 +165,12 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private static class ParameterInfo {
-    public final String type;
+    public final String accessibleType;
     public final String name;
     public final String jvmTypeName;
 
-    ParameterInfo(@NotNull String type, @NotNull String name) {
-      this(type, name, type);
-    }
-
-    ParameterInfo(@NotNull String type, @NotNull String name, @NotNull String jvmTypeName) {
-      this.type = type;
+    ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull String jvmTypeName) {
+      this.accessibleType = accessibleType;
       this.name = name;
       this.jvmTypeName = jvmTypeName;
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,8 +26,12 @@ public abstract class JobLauncher {
   }
 
   /**
-   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
-   * With checkCanceled in each thread delegated to our current progress
+   * Schedules concurrent execution of {@code thingProcessor} over each element of {@code things} and waits for completion
+   * with checkCanceled in each thread delegated to the {@code progress} (or the current global progress if null).
+   * Note: When the {@code thingProcessor} throws an exception or returns {@code false}  or the current indicator is canceled,
+   * the method is finished with {@code false} as soon as possible,
+   * which means some workers might still be in flight to completion. On the other hand, when the method returns {@code true},
+   * it's guaranteed that the whole list was processed and all tasks completed.
    *
    * @param things                      data to process concurrently
    * @param progress                    progress indicator
@@ -52,11 +42,11 @@ public abstract class JobLauncher {
    *         or we were unable to start read action in at least one thread
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
-                                           ((ApplicationEx)ApplicationManager.getApplication()).isInImpatientReader(), thingProcessor);
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
   /**
    * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
@@ -74,7 +64,7 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
@@ -83,7 +73,7 @@ public abstract class JobLauncher {
   }
 
 
-  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                               ProgressIndicator progress,
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
@@ -92,7 +82,7 @@ public abstract class JobLauncher {
   /**
    * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
-   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
+   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
   @NotNull
   public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);

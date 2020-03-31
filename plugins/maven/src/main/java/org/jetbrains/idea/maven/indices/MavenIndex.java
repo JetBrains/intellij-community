@@ -364,7 +364,16 @@ public class MavenIndex implements MavenSearchIndex {
 
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
+    if (myFailureMessage != null &&
+        myFailureMessage.contains("nexus-maven-repository-index.properties") &&
+        myFailureMessage.contains("FileNotFoundException")) {
+      myFailureMessage = "Repository is non-nexus repo, or does not indexed";
+      MavenLog.LOG.debug("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
+    }
+    else {
+      MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
+    }
+
   }
 
   private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {
@@ -544,8 +553,8 @@ public class MavenIndex implements MavenSearchIndex {
   @TestOnly
   public synchronized void printInfo() {
     doIndexTask(() -> {
-      System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
-      System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
+      MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
+      MavenLog.LOG.debug("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
       return null;
     }, null);
   }
@@ -671,7 +680,7 @@ public class MavenIndex implements MavenSearchIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
+      return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {

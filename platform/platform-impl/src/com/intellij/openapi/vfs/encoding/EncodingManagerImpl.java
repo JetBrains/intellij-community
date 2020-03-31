@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -40,9 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
@@ -64,9 +60,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       return v1 == v2;
     }
   };
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  static class State {
+  static final class State {
     @NotNull
     private Charset myDefaultEncoding = StandardCharsets.UTF_8;
 
@@ -91,8 +86,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     "EncodingManagerImpl Document Pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  public EncodingManagerImpl(@NotNull EditorFactory editorFactory, MessageBus messageBus) {
-    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+
+  public EncodingManagerImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         // should call before dispose in write action
@@ -101,6 +97,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         clearDocumentQueue();
       }
     });
+
+    EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -145,7 +143,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset, null);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -250,6 +248,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void clearDocumentQueue() {
+    if (((BoundedTaskExecutor)changedDocumentExecutor).isEmpty()) return;
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
     }
@@ -331,18 +330,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
   }
 
-  @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
-    Disposer.register(parentDisposable, () -> removePropertyChangeListener(listener));
-  }
-
-  private void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
-    myPropertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  void firePropertyChange(@Nullable Document document, @NotNull String propertyName, final Object oldValue, final Object newValue) {
-    Object source = document == null ? this : document;
-    myPropertyChangeSupport.firePropertyChange(new PropertyChangeEvent(source, propertyName, oldValue, newValue));
+  void firePropertyChange(@Nullable Document document,
+                          @NotNull String propertyName,
+                          final Object oldValue,
+                          final Object newValue,
+                          @Nullable Project project) {
+    MessageBus messageBus = (project != null ? project : ApplicationManager.getApplication()).getMessageBus();
+    EncodingManagerListener publisher = messageBus.syncPublisher(EncodingManagerListener.ENCODING_MANAGER_CHANGES);
+    publisher.propertyChanged(document, propertyName, oldValue, newValue);
   }
 }

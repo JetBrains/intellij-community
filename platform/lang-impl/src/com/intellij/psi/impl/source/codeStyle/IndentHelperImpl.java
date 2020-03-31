@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -143,7 +142,7 @@ public class IndentHelperImpl extends IndentHelper {
   }
 
   /**
-   * @Depreacted Do not use the implementation, see {@link IndentHelper}
+   * @deprecated Do not use the implementation, see {@link IndentHelper}
    */
   @Deprecated
   public static int getIndent(Project project, FileType fileType, String text, boolean includeNonSpace) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ class RootIndex {
     return name1.compareTo(name2);
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final Logger LOG = Logger.getInstance(RootIndex.class);
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
   private final Map<VirtualFile, String> myPackagePrefixByRoot;
@@ -542,7 +542,7 @@ class RootIndex {
       if (moduleContentRoot != null) {
         ContainerUtil.addIfNotNull(result, myRootInfo.getModuleSourceEntry(roots, moduleContentRoot, myLibClassRootEntries));
       }
-      Collections.sort(result, BY_OWNER_MODULE);
+      result.sort(BY_OWNER_MODULE);
       return ContainerUtil.immutableList(result);
     }
 
@@ -598,19 +598,31 @@ class RootIndex {
     for (VirtualFile each = file; each != null; each = each.getParent()) {
       int id = ((VirtualFileWithId)each).getId();
       if (!myNonInterestingIds.get(id)) {
-        DirectoryInfo info = myRootInfos.get(each);
-        if (info != null) {
-          return info;
-        }
-
-        if (ourFileTypes.isFileIgnored(each)) {
-          return NonProjectDirectoryInfo.IGNORED;
-        }
-        myNonInterestingIds.set(id);
+        DirectoryInfo info = handleInterestingId(id, each);
+        if (info != null) return info;
       }
     }
 
     return NonProjectDirectoryInfo.NOT_UNDER_PROJECT_ROOTS;
+  }
+
+  @Nullable
+  private DirectoryInfo handleInterestingId(int id, VirtualFile file) {
+    DirectoryInfo info = myRootInfos.get(file);
+    if (info != null) {
+      return info;
+    }
+
+    if (ourFileTypes.isFileIgnored(file)) {
+      return NonProjectDirectoryInfo.IGNORED;
+    }
+
+    if ((id > 500_000_000 || id < 0) && LOG.isDebugEnabled()) {
+      LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
+    }
+
+    myNonInterestingIds.set(id);
+    return null;
   }
 
   @NotNull
@@ -651,6 +663,9 @@ class RootIndex {
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
+  /**
+   * @return list of all super-directories which are marked as some kind of root, or {@code null} if {@code deepDir} is under the ignored folder (with no nested roots)
+   */
   @Nullable("returns null only if dir is under ignored folder")
   private static List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = new ArrayList<>();
@@ -677,9 +692,9 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
     @NotNull private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull private final Map<VirtualFile, SourceFolder> sourceFolders = new HashMap<>();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSet();
     @NotNull private final Set<VirtualFile> excludedFromProject = new HashSet<>();
     @NotNull private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
     @NotNull private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();

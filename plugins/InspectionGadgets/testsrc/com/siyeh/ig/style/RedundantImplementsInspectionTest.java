@@ -16,13 +16,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantImplementsInspectionTest extends LightInspectionTestCase {
+public class RedundantImplementsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testInterface() { doTest(); }
   public void testEnum() { doTest(); }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -20,12 +6,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +19,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @NonNls private static final String OUTPUT_TAG = JpsJavaModelSerializerExtension.OUTPUT_TAG;
@@ -304,7 +290,9 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
-    return Comparing.equal(p1 == null ? null : p1.getUrl(), p2 == null ? null : p2.getUrl());
+    String arg1 = p1 == null ? null : p1.getUrl();
+    String arg2 = p2 == null ? null : p2.getUrl();
+    return Objects.equals(arg1, arg2);
   }
 
   @Override
@@ -315,9 +303,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = null;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getOutputRoots(final boolean includeTests) {
+  public VirtualFile @NotNull [] getOutputRoots(final boolean includeTests) {
     List<VirtualFile> result = new ArrayList<>();
 
     final VirtualFile outputPathForTests = includeTests ? getCompilerOutputPathForTests() : null;
@@ -332,9 +319,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public String[] getOutputRootUrls(final boolean includeTests) {
+  public String @NotNull [] getOutputRootUrls(final boolean includeTests) {
     final List<String> result = new ArrayList<>();
 
     final String outputPathForTests = includeTests ? getCompilerOutputUrlForTests() : null;
@@ -346,6 +332,6 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (outputRoot != null && !outputRoot.equals(outputPathForTests)) {
       result.add(outputRoot);
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 }

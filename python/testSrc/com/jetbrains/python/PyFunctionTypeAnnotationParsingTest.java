@@ -8,7 +8,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
-import com.jetbrains.python.inspections.PythonVisitorFilter;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.impl.PythonASTFactory;

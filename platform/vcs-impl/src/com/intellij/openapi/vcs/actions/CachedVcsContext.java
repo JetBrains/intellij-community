@@ -34,7 +34,7 @@ public class CachedVcsContext implements VcsContext {
   private final VirtualFile mySelectedFile;
   private final VirtualFile[] mySelectedFiles;
   private final Collection<VirtualFile> mySelectedFilesCollection;
-  private final List<VirtualFile> mySelectedUnversionedFiles;
+  private final List<FilePath> mySelectedUnversionedFiles;
   private final Editor myEditor;
   private final File[] mySelectedIOFiles;
   private final int myModifiers;
@@ -52,7 +52,7 @@ public class CachedVcsContext implements VcsContext {
     mySelectedFile = baseContext.getSelectedFile();
     mySelectedFiles = baseContext.getSelectedFiles();
     mySelectedFilesCollection = baseContext.getSelectedFilesCollection();
-    mySelectedUnversionedFiles = baseContext.getSelectedUnversionedFiles();
+    mySelectedUnversionedFiles = baseContext.getSelectedUnversionedFilePaths();
     myEditor = baseContext.getEditor();
     mySelectedIOFiles = baseContext.getSelectedIOFiles();
     myModifiers = baseContext.getModifiers();
@@ -82,14 +82,13 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     return mySelectedFiles;
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> getSelectedUnversionedFiles() {
+  public List<FilePath> getSelectedUnversionedFilePaths() {
     return mySelectedUnversionedFiles;
   }
 
@@ -124,8 +123,7 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @NotNull
-  public FilePath[] getSelectedFilePaths() {
+  public FilePath @NotNull [] getSelectedFilePaths() {
     return mySelectedFilePaths;
   }
 
@@ -135,14 +133,12 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @Nullable
-  public ChangeList[] getSelectedChangeLists() {
+  public ChangeList @Nullable [] getSelectedChangeLists() {
     return mySelectedChangeLists;
   }
 
   @Override
-  @Nullable
-  public Change[] getSelectedChanges() {
+  public Change @Nullable [] getSelectedChanges() {
     return mySelectedChanges;
   }
 

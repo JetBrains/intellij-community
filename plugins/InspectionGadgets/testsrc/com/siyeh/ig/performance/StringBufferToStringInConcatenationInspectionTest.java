@@ -16,10 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class StringBufferToStringInConcatenationInspectionTest extends LightInspectionTestCase {
+public class StringBufferToStringInConcatenationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStringBufferToStringInConcatenation() {
     doTest();

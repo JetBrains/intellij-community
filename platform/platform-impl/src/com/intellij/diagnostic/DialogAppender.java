@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -22,9 +20,6 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author Mike
- */
 public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
@@ -40,7 +35,7 @@ public class DialogAppender extends AppenderSkeleton {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
-    if (IdeaApplication.isLoaded()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       LoggingEvent queued;
       while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
       queueAppend(event);
@@ -69,7 +64,7 @@ public class DialogAppender extends AppenderSkeleton {
     }
   }
 
-  void appendToLoggers(@NotNull LoggingEvent event, @NotNull ErrorLogger[] errorLoggers) {
+  void appendToLoggers(@NotNull LoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
     if (myDialogRunnable != null) {
       return;
     }
@@ -99,13 +94,7 @@ public class DialogAppender extends AppenderSkeleton {
           myDialogRunnable = null;
         }
       };
-      Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        new Thread(myDialogRunnable, "dialog appender logger").start();
-      }
-      else {
-        app.executeOnPooledThread(myDialogRunnable);
-      }
+      AppExecutorUtil.getAppExecutorService().execute(myDialogRunnable);
       break;
     }
   }

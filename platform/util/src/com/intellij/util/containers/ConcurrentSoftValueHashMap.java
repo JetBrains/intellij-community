@@ -48,8 +48,8 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      @SuppressWarnings("unchecked")
-      ValueReference<K,V> that = (ValueReference)o;
+      //noinspection unchecked
+      ValueReference<K,V> that = (ValueReference<K, V>)o;
 
       V v = get();
       V thatV = that.get();

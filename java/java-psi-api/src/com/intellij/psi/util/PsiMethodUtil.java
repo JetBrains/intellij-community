@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author mike
- */
 public class PsiMethodUtil {
   private static final List<JavaMainMethodProvider> myProviders = JavaMainMethodProvider.EP_NAME.getExtensionList();
 
@@ -67,11 +64,6 @@ public class PsiMethodUtil {
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
-    for (JavaMainMethodProvider provider : myProviders) {
-      if (provider.isApplicable(aClass)) {
-        return provider.findMainInClass(aClass);
-      }
-    }
     return findMainMethod(aClass);
   }
 }

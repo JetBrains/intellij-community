@@ -4,30 +4,29 @@ package git4idea.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.util.Functions.identity;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
-  private final static Logger LOG = Logger.getInstance("#git4idea.changes.GitOutgoingChangesProvider");
+  private final static Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;
 
   public GitOutgoingChangesProvider(Project project) {
@@ -55,69 +54,20 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   @Nullable
   public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final VirtualFile root = vcsManager.getVcsRootFor(anyFileUnderRoot);
-    if (root == null) {
+    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(anyFileUnderRoot);
+    if (repository == null) {
       LOG.info("VCS root not found");
       return null;
     }
 
-    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, root, true);
+    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, repository.getRoot(), true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       LOG.info("local or remote not found");
       return null;
     }
-    final GitRevisionNumber base = getMergeBase(myProject, root, searcher.getLocal(), searcher.getRemote());
+    final GitRevisionNumber base = getMergeBase(myProject, repository.getRoot(), searcher.getLocal(), searcher.getRemote());
     LOG.debug("found base: " + ((base == null) ? null : base.asString()));
     return base;
-  }
-
-  @Override
-  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot)
-    throws VcsException {
-    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
-    if (searcher.getLocal() == null || searcher.getRemote() == null) {
-      return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
-    }
-    final GitRevisionNumber base;
-    try {
-      base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return new ArrayList<>(localChanges);
-    }
-    if (base == null) {
-      return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
-    }
-
-    Set<String> localHashes = new HashSet<>();
-    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commit -> localHashes.add(commit.getId().asString()), base.asString() + "..HEAD");
-    if (localHashes.isEmpty()) return Collections.emptyList();
-
-    Collection<Change> result = new ArrayList<>();
-    for (Change change : localChanges) {
-      if (change.getBeforeRevision() != null) {
-        if (localHashes.contains(change.getBeforeRevision().getRevisionNumber().asString().trim())) {
-          result.add(change);
-        }
-      }
-    }
-    return result;
-  }
-
-  @Override
-  @Nullable
-  public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
-    if (VcsRevisionNumber.NULL.equals(revision)) return null;
-    try {
-      file = VcsUtil.getLastCommitPath(myProject, file);
-      VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
-      return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
-    }
-    catch (VcsException e) {
-      return null;
-    }
   }
 
   /**

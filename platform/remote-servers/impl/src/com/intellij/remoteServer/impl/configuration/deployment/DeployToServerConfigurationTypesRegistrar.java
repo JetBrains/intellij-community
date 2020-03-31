@@ -8,9 +8,6 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class DeployToServerConfigurationTypesRegistrar implements ApplicationInitializedListener {
   @Override
   public void componentsInitialized() {

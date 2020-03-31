@@ -1,7 +1,7 @@
 package p;
 
 public class B extends X {
-    private A outer;
+    private final A outer;
 
     {
         method();

@@ -8,20 +8,25 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,8 +92,13 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
+  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
+    return new ChangesBrowserFilePathNode(userObject, status);
+  }
+
+  @NotNull
   public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
-    return new ChangesBrowserFilePathNode(userObject);
+    return createFilePath(userObject, null);
   }
 
   @NotNull
@@ -323,8 +333,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return FileNameComparator.INSTANCE.compare(name1, name2);
   }
 
-  protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
-    return HierarchicalFilePathComparator.NATURAL.compare(path1, path2);
+  public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
+    return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
   }
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
@@ -353,15 +363,45 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
+  @Nullable
+  public Color getBackgroundColor(@NotNull Project project) {
+    return getBackgroundColorFor(project, getUserObject());
+  }
+
+  @Nullable
+  protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
+    VirtualFile file;
+    if (object instanceof FilePath) {
+      file = getScopeVirtualFileFor((FilePath)object);
+    }
+    else if (object instanceof Change) {
+      file = getScopeVirtualFileFor(ChangesUtil.getFilePath((Change)object));
+    }
+    else {
+      file = ObjectUtils.tryCast(object, VirtualFile.class);
+    }
+
+    if (file != null) {
+      return VfsPresentationUtil.getFileBackgroundColor(project, file);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
+    if (filePath.isNonLocal()) return null;
+    return ChangesUtil.findValidParentAccurately(filePath);
+  }
+
   @Deprecated
   public final int getCount() {
     return getFileCount();
   }
 
   private static class Tag {
-    @NotNull private final String myKey;
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
 
-    Tag(@NotNull String key) {
+    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 

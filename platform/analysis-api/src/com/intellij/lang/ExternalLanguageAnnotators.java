@@ -27,12 +27,7 @@ public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnota
     List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
     List<ExternalAnnotatorsFilter> filters = ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.getExtensionList();
     return ContainerUtil.findAll(annotators, annotator -> {
-      for (ExternalAnnotatorsFilter filter : filters) {
-        if (filter.isProhibited(annotator, file)) {
-          return false;
-        }
-      }
-      return true;
+      return filters.stream().noneMatch(filter -> filter.isProhibited(annotator, file));
     });
   }
 }

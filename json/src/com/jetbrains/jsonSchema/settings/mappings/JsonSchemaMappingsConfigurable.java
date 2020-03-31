@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,14 +31,13 @@ import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
-  public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema Mappings";
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
@@ -65,15 +65,19 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Nullable
   @Override
   protected String getEmptySelectionString() {
-    return myRoot.children().hasMoreElements() ? "Select JSON Schema to view" :
-           "Please add a JSON Schema file and configure its usage";
+    return myRoot.children().hasMoreElements()
+           ? JsonBundle.message("schema.configuration.mapping.empty.area.string")
+           : JsonBundle.message("schema.configuration.mapping.empty.area.alt.string");
   }
 
   @Nullable
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction(
+      JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.text.add"),
+      JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.description.add"),
+      IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
@@ -110,7 +114,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         }
         int i = tryParseInt(lastPart);
         if (i == -1) continue;
-        max = i > max ? i : max;
+        max = Math.max(i, max);
       }
     }
     return max == -1 ? s : (s + " " + (max + 1));
@@ -142,7 +146,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     for (UserDefinedJsonSchemaConfiguration info : list) {
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
-        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
+        new JsonSchemaConfigurable(myProject, isAbsoluteUrl(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater, myNameCreator);
       configurable.setError(myError, true);
       myRoot.add(new MyNode(configurable));
@@ -162,7 +166,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       list.addAll(projectState.values());
     }
 
-    Collections.sort(list, COMPARATOR);
+    list.sort(COMPARATOR);
     return list;
   }
 
@@ -189,7 +193,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     final Set<String> set = new HashSet<>();
     for (UserDefinedJsonSchemaConfiguration info : list) {
       if (set.contains(info.getName())) {
-        throw new ConfigurationException("Duplicate schema name: '" + info.getName() + "'");
+        throw new ConfigurationException(JsonBundle.message("schema.configuration.error.duplicate.name", info.getName()));
       }
       set.add(info.getName());
     }
@@ -231,16 +235,18 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
             if (ThreeState.NO.equals(similar)) continue;
 
             if (sb.length() > 0) sb.append('\n');
-            sb.append("'").append(pattern.getPresentation()).append("' for schema '")
-              .append(info.getName()).append("' and '").append(item.getPresentation()).append("' for schema '").append(entry.getKey())
-              .append("'");
+            sb.append(JsonBundle.message("schema.configuration.error.conflicting.mappings.desc",
+                                         pattern.getPresentation(),
+                                         info.getName(),
+                                         item.getPresentation(),
+                                         entry.getKey()));
           }
         }
       }
       patternsMap.put(info.getName(), patterns);
     }
     if (sb.length() > 0) {
-      myError = "Conflicting mappings:\n" + sb.toString();
+      myError = JsonBundle.message("schema.configuration.error.conflicting.mappings.title", sb.toString());
     } else {
       myError = null;
     }
@@ -278,7 +284,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         uiList.add(((JsonSchemaConfigurable) node.getConfigurable()).getUiSchema());
       }
     }
-    Collections.sort(uiList, COMPARATOR);
+    uiList.sort(COMPARATOR);
     return uiList;
   }
 
@@ -305,7 +311,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Nls
   @Override
   public String getDisplayName() {
-    return JSON_SCHEMA_MAPPINGS;
+    return JsonBundle.message("configurable.JsonSchemaMappingsConfigurable.display.name");
   }
 
 

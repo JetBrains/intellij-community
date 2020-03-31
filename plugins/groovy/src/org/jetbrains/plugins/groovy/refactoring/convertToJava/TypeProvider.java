@@ -90,8 +90,7 @@ public class TypeProvider {
     return types[((GrParameterList)parent).getParameterNumber((GrParameter)parameter)];
   }
 
-  @NotNull
-  private PsiType[] inferMethodParameters(@NotNull GrMethod method) {
+  private PsiType @NotNull [] inferMethodParameters(@NotNull GrMethod method) {
     PsiType[] psiTypes = inferredTypes.get(method);
     if (psiTypes != null) return psiTypes;
 

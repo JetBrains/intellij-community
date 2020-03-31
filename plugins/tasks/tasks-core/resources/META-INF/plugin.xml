@@ -5,6 +5,7 @@
 <idea-plugin>
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
+  <category>Other Tools</category>
   <description>Enables task and context management</description>
   <vendor>JetBrains</vendor>
 
@@ -94,13 +95,19 @@
   <extensionPoints>
     <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
     <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
-    <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider"/>
+    <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks" displayName="Tasks" nonDefaultProject="true">
-      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable" displayName="Servers" id="tasks.servers"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
+                         bundle="messages.TaskBundle"
+                         key="configurable.TaskConfigurable.display.name"
+                         nonDefaultProject="true">
+      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"
+                    bundle="messages.TaskBundle"
+                    key="configurable.TaskRepositoriesConfigurable.display.name"
+                    id="tasks.servers"/>
     </projectConfigurable>
     <tasks.dialogPanelProvider implementation="com.intellij.tasks.actions.vcs.VcsTaskDialogPanelProvider"/>
 
@@ -128,7 +135,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <!-- JQL support -->
-    <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
+    <fileType name="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlFileType" fieldName="INSTANCE" language="JQL" extensions="jql" />
     <lang.parserDefinition language="JQL"
                            implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
@@ -145,6 +152,9 @@
                             implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>
     <externalAnnotator language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
+
+    <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
+    <notificationWhitelist groupIds="Task Group;Tasks"/>
   </extensions>
 
 </idea-plugin>

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings
 
+import com.intellij.ide.JavaUiBundle
 import com.intellij.jarRepository.RepositoryLibrarySynchronizer
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -19,13 +20,10 @@ fun reloadAllRepositoryLibraries(project: Project) {
     .map { RepositoryUtils.reloadDependencies(project, it) }
     .collectResults()
     .onSuccess {
-      val description = when (it.size) {
-        0 -> "No libraries were"
-        1 -> "One library was"
-        else -> "${it.size} libraries were"
-      }
-      Notifications.Bus.notify(Notification("Repository", "Repository library synchronization",
-                                            "$description successfully reloaded", NotificationType.INFORMATION), project)
+      Notifications.Bus.notify(Notification("Repository",
+                                            JavaUiBundle.message("notification.title.repository.library.synchronization"),
+                                            JavaUiBundle.message("notification.content.libraries.reloaded", it.size),
+                                            NotificationType.INFORMATION), project)
     }
 
 }

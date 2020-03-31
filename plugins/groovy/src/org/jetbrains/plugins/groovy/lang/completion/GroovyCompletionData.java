@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -11,11 +11,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -212,10 +215,9 @@ public class GroovyCompletionData {
     }
   }
 
-  @NotNull
-  private static String[] addExtendsImplements(PsiElement context) {
+  private static String @NotNull [] addExtendsImplements(PsiElement context) {
     if (context.getParent() == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     PsiElement elem = context.getParent();
@@ -244,13 +246,13 @@ public class GroovyCompletionData {
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
     impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
-    if (!ext && !impl) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (!ext && !impl) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     PsiElement[] children = elem.getChildren();
     for (PsiElement child : children) {
       ext &= !(child instanceof GrExtendsClause && ((GrExtendsClause)child).getKeyword() != null);
       if (child instanceof GrImplementsClause && ((GrImplementsClause)child).getKeyword() != null || child instanceof GrTypeDefinitionBody) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+        return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
     }
     if (ext && impl) {

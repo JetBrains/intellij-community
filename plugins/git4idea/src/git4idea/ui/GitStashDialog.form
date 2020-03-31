@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="227eb"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="common.git.root"/>
+          <text resource-bundle="messages/GitBundle" key="common.git.root"/>
         </properties>
       </component>
       <vspacer id="c4933">
@@ -27,7 +27,7 @@
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.git.root.tooltip"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="common.git.root.tooltip"/>
         </properties>
       </component>
       <component id="29f64" class="javax.swing.JLabel">
@@ -35,7 +35,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="common.current.branch"/>
+          <text resource-bundle="messages/GitBundle" key="common.current.branch"/>
         </properties>
       </component>
       <component id="d22b6" class="javax.swing.JLabel" binding="myCurrentBranch">
@@ -44,7 +44,7 @@
         </constraints>
         <properties>
           <text value=""/>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.current.branch.tooltip"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="common.current.branch.tooltip"/>
         </properties>
       </component>
       <component id="d11aa" class="javax.swing.JLabel">
@@ -53,7 +53,7 @@
         </constraints>
         <properties>
           <labelFor value="4d538"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="stash.message"/>
+          <text resource-bundle="messages/GitBundle" key="stash.message"/>
         </properties>
       </component>
       <component id="4d538" class="javax.swing.JTextField" binding="myMessageTextField" default-binding="true">
@@ -63,7 +63,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="stash.message.tooltip"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="stash.message.tooltip"/>
         </properties>
       </component>
       <component id="be5c8" class="javax.swing.JCheckBox" binding="myKeepIndexCheckBox" default-binding="true">
@@ -71,8 +71,8 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="stash.keep.index"/>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="stash.keep.index.tooltip"/>
+          <text resource-bundle="messages/GitBundle" key="stash.keep.index"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="stash.keep.index.tooltip"/>
         </properties>
       </component>
     </children>

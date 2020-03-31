@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.WriteAction;
@@ -45,9 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class CreateNewLibraryAction extends DumbAwareAction {
   private final @Nullable LibraryType myType;
   private final BaseLibrariesConfigurable myLibrariesConfigurable;
@@ -112,7 +109,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
       return new AnAction[]{new CreateNewLibraryAction(text, PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
     List<AnAction> actions = new ArrayList<>();
-    actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project));
+    actions.add(new CreateNewLibraryAction(JavaUiBundle.message("create.default.library.type.action.name"), PlatformIcons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : suitableTypes) {
       final String actionName = type.getCreateActionName();
       if (actionName != null) {

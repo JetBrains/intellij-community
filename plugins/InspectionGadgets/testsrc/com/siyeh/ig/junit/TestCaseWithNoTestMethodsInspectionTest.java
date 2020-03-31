@@ -16,13 +16,13 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTestCase {
+public class TestCaseWithNoTestMethodsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTestCaseWithNoTestMethods() { doTest(); }
 
@@ -50,7 +50,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
       "package org.junit.jupiter.api;" +
       "public @interface Test {}",
       "package org.junit.jupiter.api;" +
-      "public @interface Nested {}"
+      "public @interface Nested {}",
+      "package org.junit.platform.commons.annotation;" +
+      "public @interface Testable {}"
     };
   }
 }

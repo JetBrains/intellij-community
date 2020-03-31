@@ -38,9 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PsiScopesUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
+  private static final Logger LOG = Logger.getInstance(PsiScopesUtil.class);
 
   private PsiScopesUtil() {
   }
@@ -70,16 +71,11 @@ public class PsiScopesUtil {
         return false; // resolved
       }
 
-      if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)) {
-        PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
-        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
-        }
-      }
       if (scope == maxScope) break;
       prevParent = scope;
-      scope = prevParent.getContext();
+      processor.handleEvent(JavaScopeProcessorEvent.EXIT_LEVEL, scope);
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
+      scope = scope.getContext();
     }
 
     return true;
@@ -164,9 +160,7 @@ public class PsiScopesUtil {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
-          if (type != null) {
-            assert type.isValid() : type.getClass() + "; " + qualifier;
-          }
+          assert type == null || type.isValid() : type.getClass() + "; " + qualifier;
           processTypeDeclarations(type, ref, processor);
         }
 
@@ -447,7 +441,7 @@ public class PsiScopesUtil {
                                               final MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {
-    LOG.assertTrue(type.isValid());
+    PsiUtil.ensureValidType(type);
     if (type instanceof PsiClassType) {
       JavaResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
@@ -508,7 +502,7 @@ public class PsiScopesUtil {
       final PsiMethod dummyConstructor = factory.createConstructor();
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier != null) {
-        dummyConstructor.getNameIdentifier().replace(nameIdentifier);
+        Objects.requireNonNull(dummyConstructor.getNameIdentifier()).replace(nameIdentifier);
       }
       processor.forceAddResult(dummyConstructor);
     }

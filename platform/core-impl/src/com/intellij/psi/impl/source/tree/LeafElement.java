@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.LeafElement");
+  private static final Logger LOG = Logger.getInstance(LeafElement.class);
   private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
   private static final int TEXT_MATCHES_THRESHOLD = 5;
@@ -81,7 +81,7 @@ public abstract class LeafElement extends TreeElement {
     return myText.charAt(position);
   }
 
-  public int copyTo(@Nullable char[] buffer, int start) {
+  public int copyTo(char @Nullable [] buffer, int start) {
     final int length = myText.length();
     if (buffer != null) {
       CharArrayUtil.getChars(myText, buffer, start, length);
@@ -90,8 +90,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     final char[] buffer = new char[myText.length()];
     CharArrayUtil.getChars(myText, buffer, 0);
     return buffer;
@@ -213,13 +212,11 @@ public abstract class LeafElement extends TreeElement {
   }
 
   static int leafHC(CharSequence text) {
-    final int len = text.length();
     int hc = 0;
-
-    for (int i = 0; i < len; i++) {
+    int length = text.length();
+    for (int i = 0; i < length; i++) {
       hc += text.charAt(i);
     }
-
     return hc;
   }
 
@@ -234,18 +231,12 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
+  public int getCachedLength() {
     return myText.length();
   }
 
   @Override
-  public int getCachedLength() {
-    return getNotCachedLength();
-  }
-
-  @NotNull
-  @Override
-  public ASTNode[] getChildren(TokenSet filter) {
+  public ASTNode @NotNull [] getChildren(TokenSet filter) {
     return EMPTY_ARRAY;
   }
 

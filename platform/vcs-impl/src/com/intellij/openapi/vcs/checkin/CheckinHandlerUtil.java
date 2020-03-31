@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.OutOfSourcesChecker;
@@ -20,9 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author oleg
- */
 public class CheckinHandlerUtil {
   public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
@@ -59,13 +57,8 @@ public class CheckinHandlerUtil {
   }
 
   private static boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile file) {
-    for (OutOfSourcesChecker checker : OutOfSourcesChecker.EP_NAME.getExtensions()) {
-      if (checker.getFileType() == file.getFileType()
-          && checker.isOutOfSources(project, file)) {
-        return true;
-      }
-    }
-    return false;
+    return OutOfSourcesChecker.EP_NAME.getExtensionList().stream()
+      .anyMatch(checker -> FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType()) && checker.isOutOfSources(project, file));
   }
 
   public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {

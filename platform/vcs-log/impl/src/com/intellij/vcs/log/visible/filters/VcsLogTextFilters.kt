@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters
 
+import com.intellij.openapi.util.Comparing
 import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
+import java.util.*
 import java.util.regex.Pattern
 
-class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
+data class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun matches(message: String): Boolean = pattern.matcher(message).find()
 
   override fun getText(): String = pattern.pattern()
@@ -33,6 +35,20 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
     return "containing at least one of the ${patterns.joinToString(", ") { s -> "'$s'" }} ${caseSensitiveText()}"
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as VcsLogMultiplePatternsTextFilter
+
+    return Comparing.haveEqualElements(patterns, other.patterns) &&
+           isMatchCase == other.isMatchCase
+  }
+
+  override fun hashCode(): Int {
+    return Objects.hash(Comparing.unorderedHashcode(patterns),
+                        isMatchCase)
+  }
 }
 
-internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})"
+internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})" // NON-NLS

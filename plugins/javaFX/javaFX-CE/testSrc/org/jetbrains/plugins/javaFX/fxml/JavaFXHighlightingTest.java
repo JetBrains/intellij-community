@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
@@ -23,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -155,7 +141,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   private void doTestNavigation(String resultClassName, String resultFieldName) {
-    doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
+    doTestNavigation(resultClassName, resultFieldName, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   private void doTestNavigation(String resultClassName, String resultFieldName, String... additionalPaths) {
@@ -249,7 +235,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
                        "    super(node);\n" +
                        "  }\n" +
                        "  public javafx.beans.property.Property<javafx.scene.Node> axis;" +
-                       "  public void setAxis() {}" + 
+                       "  public void setAxis() {}" +
                        "} ");
     doTest(getTestName(true) + ".fxml");
   }
@@ -435,7 +421,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
                                               "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
     doWarningsTest();
   }
-  
+
   public void testInjectedControllerFields() {
     myFixture.addFileToProject("sample.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                               "<?import javafx.scene.control.*?>\n" +
@@ -519,8 +505,8 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   @Override
   protected void enableInspections() {
-    myFixture.enableInspections(new XmlPathReferenceInspection(), 
-                                new RequiredAttributesInspection(), 
+    myFixture.enableInspections(new XmlPathReferenceInspection(),
+                                new RequiredAttributesInspection(),
                                 new UnusedDeclarationInspectionBase(true));
   }
 

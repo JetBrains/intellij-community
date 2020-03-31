@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TodoFilter implements Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoFilter");
+  private static final Logger LOG = Logger.getInstance(TodoFilter.class);
 
   private static final String ATTRIBUTE_NAME = "name";
   private static final String ELEMENT_PATTERN = "pattern";

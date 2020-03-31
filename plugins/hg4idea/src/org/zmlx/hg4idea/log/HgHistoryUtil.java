@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -36,8 +36,6 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class HgHistoryUtil {
 
   private static final Logger LOG = Logger.getInstance(HgHistoryUtil.class);
@@ -59,7 +57,7 @@ public class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
     templateList.add("{desc}");
-    String[] templates = ArrayUtil.toStringArray(templateList);
+    String[] templates = ArrayUtilRt.toStringArray(templateList);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
     HgBaseLogParser<VcsCommitMetadata> baseParser = new HgBaseLogParser<VcsCommitMetadata>() {
 
@@ -118,7 +116,7 @@ public class HgHistoryUtil {
     }
     catch (VcsException e) {
       if (!silent) {
-        VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
+        VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), e.getMessage());
       }
       throw e;
     }
@@ -236,7 +234,7 @@ public class HgHistoryUtil {
           secondPath = null;
           break;
       }
-      result.add(new VcsFileStatusInfo(type, notNull(firstPath), secondPath));
+      result.add(new VcsFileStatusInfo(type, Objects.requireNonNull(firstPath), secondPath));
     }
     return result;
   }
@@ -334,7 +332,7 @@ public class HgHistoryUtil {
           LOG.debug(errors.toString());
         }
         else {
-          VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
+          VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), errors.toString());
         }
         return Collections.emptyList();
       }
@@ -360,7 +358,7 @@ public class HgHistoryUtil {
     final HgVersion version = hgvcs.getVersion();
     List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
     templateList.add("{desc}");
-    final String[] templates = ArrayUtil.toStringArray(templateList);
+    final String[] templates = ArrayUtilRt.toStringArray(templateList);
 
     return VcsFileUtil.foreachChunk(prepareHashes(hashes), 2,
                                     strings -> {
@@ -392,8 +390,14 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
+                                                   @NotNull Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
+    return readHashes(project, root, userRegistry, -1, params);
+  }
 
+  @NotNull
+  public static List<TimedVcsCommit> readHashes(@NotNull Project project, @NotNull VirtualFile root,
+                                                @NotNull Consumer<? super VcsUser> userRegistry, int limit,
+                                                @NotNull List<String> params) {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -401,8 +405,8 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
-    String[] templates = ArrayUtil.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
-    HgCommandResult result = getLogResult(project, root, version, -1, params, HgChangesetUtil.makeTemplate(templates));
+    String[] templates = ArrayUtilRt.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
+    HgCommandResult result = getLogResult(project, root, version, limit, params, HgChangesetUtil.makeTemplate(templates));
     return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
 
       @Override

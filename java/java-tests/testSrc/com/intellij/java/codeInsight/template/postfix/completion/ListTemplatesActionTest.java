@@ -19,9 +19,9 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ListTemplatesActionTest extends LightCodeInsightFixtureTestCase {
+public class ListTemplatesActionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testListTemplates() {
     doTest();
   }

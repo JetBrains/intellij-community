@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +57,8 @@ public class GitCrlfDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[] { getHelpAction(), getOKAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET), getCancelAction() };
   }
 
@@ -75,7 +75,7 @@ public class GitCrlfDialog extends DialogWrapper {
 
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
-    myDontWarn = new JBCheckBox("Don't warn again");
+    myDontWarn = new JBCheckBox(GitBundle.message("checkbox.dont.warn.again"));
     myDontWarn.setMnemonic('w');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());

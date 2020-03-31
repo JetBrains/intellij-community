@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -9,7 +10,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -18,7 +19,7 @@ import java.util.*;
  * @author dsl
  */
 public abstract class AutomaticRenamer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
+  private static final Logger LOG = Logger.getInstance(AutomaticRenamer.class);
 
   private final LinkedHashMap<PsiNamedElement, String> myRenames = new LinkedHashMap<>();
   protected final List<PsiNamedElement> myElements;
@@ -159,10 +160,10 @@ public abstract class AutomaticRenamer {
     return false;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.DialogTitle
   public abstract String getDialogTitle();
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsUI.Button
   public abstract String getDialogDescription();
 
   public abstract String entityName();

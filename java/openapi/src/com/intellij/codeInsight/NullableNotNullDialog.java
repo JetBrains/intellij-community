@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -37,20 +37,20 @@ public class NullableNotNullDialog extends DialogWrapper {
     myNullablePanel = new AnnotationsPanel(project,
                                            "Nullable",
                                            manager.getDefaultNullable(),
-                                           manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES,
+                                           manager.getNullables(), manager.getDefaultNullables(),
                                            Collections.emptySet(), false, true);
     myNotNullPanel = new AnnotationsPanel(project,
                                           "NotNull",
                                           manager.getDefaultNotNull(),
-                                          manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS,
+                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
                                           new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
 
     init();
-    setTitle("Nullable/NotNull Configuration");
+    setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
   }
 
   public static JButton createConfigureAnnotationsButton(Component context) {
-    final JButton button = new JButton(InspectionsBundle.message("configure.annotations.option"));
+    final JButton button = new JButton(JavaBundle.message("configure.annotations.option"));
     button.addActionListener(createActionListener(context));
     return button;
   }

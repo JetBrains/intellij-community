@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -40,8 +41,8 @@ public final class StripeButtonUI extends MetalToggleButtonUI {
     AnchoredButton button = (AnchoredButton)c;
     Dimension dim = super.getPreferredSize(button);
 
-    dim.width = (int)(JBUI.scale(4) + dim.width * 1.1f);
-    dim.height += JBUI.scale(2);
+    dim.width = (int)(JBUIScale.scale(4) + dim.width * 1.1f);
+    dim.height += JBUIScale.scale(2);
 
     ToolWindowAnchor anchor = button.getAnchor();
     if (ToolWindowAnchor.LEFT == anchor || ToolWindowAnchor.RIGHT == anchor) {
@@ -100,10 +101,10 @@ public final class StripeButtonUI extends MetalToggleButtonUI {
       g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
       ButtonModel model = button.getModel();
-      int off = JBUI.scale(1);
+      int off = JBUIScale.scale(1);
 
-      myIconRect.x -= JBUI.scale(2);
-      myTextRect.x -= JBUI.scale(2);
+      myIconRect.x -= JBUIScale.scale(2);
+      myTextRect.x -= JBUIScale.scale(2);
       if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
         if (anchor == ToolWindowAnchor.LEFT) {
           g2.translate(-off, 0);

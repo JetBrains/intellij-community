@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
@@ -15,14 +15,16 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -34,9 +36,9 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class TogglePresentationModeAction extends AnAction implements DumbAware {
+public final class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
-  private static float ourSavedScaleFactor = JBUI.scale(1f);
+  private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static int ourSavedConsoleFontSize;
 
   @Override
@@ -54,13 +56,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     setPresentationMode(project, !settings.getPresentationMode());
   }
 
-  //public static void restorePresentationMode() {
-  //  UISettings instance = UISettings.getInstance();
-  //  tweakUIDefaults(instance, true);
-  //  tweakEditorAndFireUpdateUI(instance, true);
-  //}
-
-  public static void setPresentationMode(final Project project, final boolean inPresentation) {
+  public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
     settings.setPresentationMode(inPresentation);
 
@@ -68,31 +64,31 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
     tweakUIDefaults(settings, inPresentation);
 
-    ActionCallback callback = project == null ? ActionCallback.DONE : tweakFrameFullScreen(project, inPresentation);
-    callback.doWhenProcessed(() -> {
+    Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
+    callback.onProcessed(o -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       restoreToolWindows(project, layoutStored, inPresentation);
     });
   }
 
-  private static ActionCallback tweakFrameFullScreen(Project project, boolean inPresentation) {
-    Window window = IdeFrameImpl.getActiveFrame();
-    if (window instanceof IdeFrameImpl) {
-      IdeFrameImpl frame = (IdeFrameImpl)window;
-      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
-      if (inPresentation) {
-        propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
-        return frame.toggleFullScreen(true);
-      }
-      else {
-        if (frame.isInFullScreen()) {
-          final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
-          return frame.toggleFullScreen("true".equalsIgnoreCase(value));
-        }
-      }
+  @NotNull
+  private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
+    ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
+    if (frame == null) {
+      return Promises.resolvedPromise();
     }
-    return ActionCallback.DONE;
+
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    if (inPresentation) {
+      propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
+      return frame.toggleFullScreen(true);
+    }
+    else if (frame.isInFullScreen()) {
+      final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
+      return frame.toggleFullScreen("true".equalsIgnoreCase(value));
+    }
+    return Promises.resolvedPromise();
   }
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
@@ -132,17 +128,17 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor = JBUI.getFontScale(settings.getPresentationModeFontSize());
-      ourSavedScaleFactor = JBUI.scale(1f);
-      JBUI.setUserScaleFactor(scaleFactor);
+      float scaleFactor = JBUIScale.getFontScale(settings.getPresentationModeFontSize());
+      ourSavedScaleFactor = JBUIScale.scale(1f);
+      JBUIScale.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
           Font font = (Font)v;
-          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUI.scale(font.getSize())));
+          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUIScale.scale(font.getSize())));
         }
         else if (v instanceof Integer) {
-          defaults.put(key, JBUI.scale(((Integer)v).intValue()));
+          defaults.put(key, JBUIScale.scale(((Integer)v).intValue()));
         }
       }
     }
@@ -150,7 +146,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       for (Object key : ourSavedValues.keySet()) {
         defaults.put(key, ourSavedValues.get(key));
       }
-      JBUI.setUserScaleFactor(ourSavedScaleFactor);
+      JBUIScale.setUserScaleFactor(ourSavedScaleFactor);
       ourSavedValues.clear();
     }
   }
@@ -159,10 +155,9 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     // to clear windows stack
     manager.clearSideStack();
 
-    String[] ids = manager.getToolWindowIds();
     boolean hasVisible = false;
-    for (String id : ids) {
-      final ToolWindow toolWindow = manager.getToolWindow(id);
+    for (String id : manager.getToolWindowIds()) {
+      ToolWindow toolWindow = manager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);
         hasVisible = true;
@@ -175,8 +170,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     if (project == null) return false;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
-    DesktopLayout layout = new DesktopLayout();
-    layout.copyFrom(manager.getLayout());
+    DesktopLayout layout = manager.getLayout().copy();
     boolean hasVisible = hideAllToolWindows(manager);
 
     if (hasVisible) {
@@ -187,7 +181,10 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   }
 
   static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
-    if (project == null || !needsRestore) return;
+    if (project == null || !needsRestore) {
+      return;
+    }
+
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {

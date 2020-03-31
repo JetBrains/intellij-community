@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -54,7 +55,14 @@ public class TypeChooserManager {
     myClassChoosers.remove(aClass);
   }
 
+  @ApiStatus.Internal
   public final void copyFrom(TypeChooserManager manager) {
     myClassChoosers.putAll(manager.myClassChoosers);
   }
+
+  @ApiStatus.Internal
+  public void clearCache() {
+    myClassChoosers.clear();
+  }
+
 }

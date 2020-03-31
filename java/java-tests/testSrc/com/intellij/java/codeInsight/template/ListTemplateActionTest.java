@@ -12,11 +12,11 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
+public class ListTemplateActionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -95,6 +95,14 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
   
   public void testTemplateShouldNotBeReplacedByOtherTemplateMatchedByDescription() {
     doTest("template.with.desc");
+  }
+
+  public void testMulticaret() {
+    doTest("simple");
+  }
+
+  public void testMulticaretWithPrefix() {
+    doTest("simple");
   }
 
   private void doTest(@NotNull String lookupText) {

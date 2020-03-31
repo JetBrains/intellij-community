@@ -4,10 +4,14 @@ package org.jetbrains.plugins.groovy.config
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.plugins.groovy.config.AbstractConfigUtils.UNDEFINED_VERSION
 import org.jetbrains.plugins.groovy.util.LibrariesUtil
 import org.jetbrains.plugins.groovy.util.LibrariesUtil.SOME_GROOVY_CLASS
+import org.jetbrains.plugins.groovy.util.LibrariesUtil.findJarWithClass
+import java.util.jar.Attributes
 
 fun getSdkVersion(module: Module): String? {
   return CachedValuesManager.getManager(module.project).getCachedValue(module) {
@@ -16,11 +20,19 @@ fun getSdkVersion(module: Module): String? {
 }
 
 private fun doGetSdkVersion(module: Module): String? {
-  return JarVersionDetectionUtil.detectJarVersion(SOME_GROOVY_CLASS, module)
+  return fromJar(module)
          ?: getSdkVersionFromHome(module)
 }
 
+private fun fromJar(module: Module): String? {
+  val jar = findJarWithClass(module, SOME_GROOVY_CLASS) ?: return null
+  val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jar) ?: return null
+  return JarVersionDetectionUtil.getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION)
+}
+
 private fun getSdkVersionFromHome(module: Module): String? {
-  val path = LibrariesUtil.getGroovyHomePath(module)
-  return if (path == null) null else GroovyConfigUtils.getInstance().getSDKVersion(path)
+  val path = LibrariesUtil.getGroovyHomePath(module) ?: return null
+  return GroovyConfigUtils.getInstance().getSDKVersion(path).takeUnless {
+    it == UNDEFINED_VERSION
+  }
 }

@@ -7,19 +7,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 
 /**
- * @see Extensions#getArea(AreaInstance)
  * @see Extensions#getRootArea()
  */
 public interface ExtensionsArea  {
-  @TestOnly
-  void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
-                              @NotNull String extensionPointBeanClass,
-                              @NotNull ExtensionPoint.Kind kind,
-                              @NotNull Disposable parentDisposable);
-
+  /**
+   * @deprecated use {@link ExtensionsArea#registerExtensionPoint(BaseExtensionPointName, String, ExtensionPoint.Kind, Disposable)}
+   */
   @TestOnly
   @Deprecated
   default void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass) {
@@ -44,23 +39,7 @@ public interface ExtensionsArea  {
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
 
-  @NotNull
-  ExtensionPoint[] getExtensionPoints();
-
-  void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener, @Nullable Disposable parentDisposable);
-
-  @Deprecated
-  default void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
-    addAvailabilityListener(extensionPointName, listener, null);
-  }
-
-  @Deprecated
-  void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
-
-  @NotNull
-  MutablePicoContainer getPicoContainer();
-
-  void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
+  ExtensionPoint<?> @NotNull [] getExtensionPoints();
 
   /**
    * Registers a new extension.
@@ -71,7 +50,9 @@ public interface ExtensionsArea  {
   @TestOnly
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
 
-  void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement);
-
-  String getAreaClass();
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 }

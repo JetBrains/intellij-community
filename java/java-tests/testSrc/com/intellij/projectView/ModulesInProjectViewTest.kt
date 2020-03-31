@@ -7,9 +7,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 
-/**
- * @author nik
- */
 class ModulesInProjectViewTest : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()

@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class PsiLocation<E extends PsiElement> extends Location<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.PsiLocation");
+  private static final Logger LOG = Logger.getInstance(PsiLocation.class);
   private final E myPsiElement;
   private final Project myProject;
   private final Module myModule;

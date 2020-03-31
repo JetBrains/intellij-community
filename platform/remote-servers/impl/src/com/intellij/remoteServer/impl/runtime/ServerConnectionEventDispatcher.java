@@ -22,12 +22,12 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
-/**
- * @author nik
- */
 public class ServerConnectionEventDispatcher {
   private final MessageBus myMessageBus;
   private final MergingUpdateQueue myEventsQueue;
+
+  private static final int DEPLOYMENTS_PRIORITY = Update.LOW_PRIORITY;
+  private static final int CONNECTION_STATUS_PRIORITY = Update.HIGH_PRIORITY;
 
   public ServerConnectionEventDispatcher() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
@@ -40,7 +40,7 @@ public class ServerConnectionEventDispatcher {
 
   public void queueConnectionStatusChanged(final ServerConnectionImpl<?> connection) {
     myEventsQueue.activate();
-    myEventsQueue.queue(new Update(connection) {
+    myEventsQueue.queue(new Update(connection, CONNECTION_STATUS_PRIORITY) {
       @Override
       public void run() {
         myMessageBus.syncPublisher(ServerConnectionListener.TOPIC).onConnectionStatusChanged(connection);
@@ -50,7 +50,7 @@ public class ServerConnectionEventDispatcher {
 
   public void queueDeploymentsChanged(final ServerConnectionImpl<?> connection) {
     myEventsQueue.activate();
-    myEventsQueue.queue(new Update(connection) {
+    myEventsQueue.queue(new Update(connection, DEPLOYMENTS_PRIORITY) {
       @Override
       public void run() {
         myMessageBus.syncPublisher(ServerConnectionListener.TOPIC).onDeploymentsChanged(connection);

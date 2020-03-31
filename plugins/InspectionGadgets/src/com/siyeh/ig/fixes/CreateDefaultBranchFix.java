@@ -13,7 +13,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -41,7 +43,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Insert 'default' branch";
+    return InspectionGadgetsBundle.message("create.default.branch.fix.family.name");
   }
 
   @Override
@@ -57,7 +59,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
     PsiExpression switchExpression = switchBlock.getExpression();
     if (switchExpression == null) return;
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
-    PsiElement anchor = body.getLastChild();
+    PsiElement anchor = body.getRBrace();
     if (anchor == null) return;
     PsiElement parent = anchor.getParent();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
@@ -70,7 +72,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
   private static void adjustEditor(@NotNull PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
-    Editor editor = prepareForTemplateAndObtainEditor(block);
+    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
     if (editor == null) return;
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
     if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {

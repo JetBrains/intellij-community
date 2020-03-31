@@ -34,7 +34,7 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
   }
 
   @NotNull
-  public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull int[] passesToIgnore);
+  public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, int @NotNull [] passesToIgnore);
   @NotNull
   public abstract List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                          @NotNull Document document,

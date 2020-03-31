@@ -18,16 +18,15 @@ package com.intellij.ide.highlighter.custom
 import com.intellij.lang.cacheBuilder.WordOccurrence
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
+import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
-import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 /**
  * @author peter
@@ -467,7 +466,7 @@ IDENTIFIER ('foo')
     assert words == expectedWords
 
     // words searched by find usages should be the same as words produced by word scanner
-    assert StringUtil.getWordsIn(text) == expectedWords 
+    assert StringUtil.getWordsIn(text) == expectedWords
   }
 
   void "test quote block comment"() {
@@ -521,33 +520,31 @@ NUMBER ('0yabc0')
         text.append(s + "\n")
       }
     }
-    
-    CharSequence bombed = new SlowCharSequence(text)
-    ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest(name, 5_000, cl).assertTiming()
+
+    PlatformTestUtil.startPerformanceTest(name, 300, {
+      IntRef charAts = new IntRef()
+      LexerTestCase.printTokens(countingCharSequence(text, charAts), 0, new CustomFileTypeLexer(table))
+      assert charAts.get() < text.length() * 4
+    }).assertTiming()
   }
 
-}
+  private static CharSequence countingCharSequence(CharSequence text, IntRef charAts) {
+    new CharSequence() {
+      @Override
+      int length() {
+        return text.length()
+      }
 
-class SlowCharSequence extends StringUtil.BombedCharSequence {
-  SlowCharSequence(CharSequence sequence) {
-    super(sequence)
-  }
+      @Override
+      char charAt(int index) {
+        charAts.inc()
+        return text.charAt(index)
+      }
 
-  @NotNull
-  @Override
-  CharSequence subSequence(int i, int i1) {
-    return new SlowCharSequence(super.subSequence(i, i1))
+      @Override
+      CharSequence subSequence(int start, int end) {
+        return countingCharSequence(text.subSequence(start, end), charAts)
+      }
+    }
   }
-
-  @Override
-  char charAt(int i) {
-    (0..100).each {  }
-    return super.charAt(i)
-  }
-
-  @Override
-  protected void checkCanceled() {
-  }
-  
 }

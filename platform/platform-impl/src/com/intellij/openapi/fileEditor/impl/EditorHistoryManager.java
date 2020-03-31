@@ -28,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "editorHistoryManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
@@ -98,7 +101,8 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       oldProviders = new FileEditorProvider[] { fallbackProvider };
     }
     if (editors.length <= 0) {
-      LOG.error("No editors for file " + file.getPresentableUrl());
+      // fileOpened notification is asynchronous, file could have been closed by now due to some reason
+      return;
     }
     FileEditor selectedEditor = editorManager.getSelectedEditor(file);
     if (selectedEditor == null) {
@@ -205,8 +209,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * @return array of valid files that are in the history, oldest first.
    */
-  @NotNull
-  public synchronized VirtualFile[] getFiles() {
+  public synchronized VirtualFile @NotNull [] getFiles() {
     List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
     for (HistoryEntry entry : myEntriesList) {
       VirtualFile file = entry.getFile();
@@ -241,6 +244,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return result;
   }
 
+  /**
+   * @deprecated use {@link #getFileList()}
+   */
   @NotNull
   @Deprecated
   public synchronized LinkedHashSet<VirtualFile> getFileSet() {

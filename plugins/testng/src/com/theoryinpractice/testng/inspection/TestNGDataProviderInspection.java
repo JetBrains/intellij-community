@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.theoryinpractice.testng.DataProviderReference;
 import com.theoryinpractice.testng.TestNGFramework;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.DataProvider;
@@ -47,7 +48,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
                     fixes = LocalQuickFix.EMPTY_ARRAY;
                   }
 
-                  holder.registerProblem(provider, "Data provider does not exist", fixes);
+                  holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
                 } else {
                   Version version = TestNGUtil.detectVersion(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass));
                   if (version != null && version.isOrGreaterThan(6, 9, 13)) {
@@ -55,7 +56,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
                   }
                   final PsiMethod providerMethod = (PsiMethod)dataProviderMethod;
                   if (providerClass != topLevelClass && !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                    holder.registerProblem(provider, "Data provider from foreign class need to be static");
+                    holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
                   }
                 }
                 break;
@@ -78,7 +79,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
 
     String body = "";
     try {
-      final Properties attributes = new Properties();
+      final Properties attributes = FileTemplateManager.getInstance(provider.getProject()).getDefaultProperties();
       attributes.put(FileTemplate.ATTRIBUTE_NAME, name);
       body = fileTemplate.getText(attributes);
       body = body.replace("${BODY}\n", "");

@@ -29,13 +29,6 @@ public class InstantiationOfUtilityClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instantiation.utility.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "instantiation.utility.class.problem.descriptor");

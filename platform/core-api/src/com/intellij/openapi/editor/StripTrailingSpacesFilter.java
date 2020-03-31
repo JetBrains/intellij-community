@@ -55,6 +55,17 @@ public interface StripTrailingSpacesFilter {
   };
 
   /**
+   * Forcibly allows all trailing spaces to be removed regardless of other filters. The actual removal depends
+   * only on provided options.
+   */
+  StripTrailingSpacesFilter ENFORCED_REMOVAL = new StripTrailingSpacesFilter() {
+    @Override
+    public boolean isStripSpacesAllowedForLine(int line) {
+      return true;
+    }
+  };
+
+  /**
    * @param line  The document line. Lines are from 0 to {@link Document#getLineCount()} - 1 inclusive.
    * @return True if trailing spaces can be removed from the line, false otherwise.
    */

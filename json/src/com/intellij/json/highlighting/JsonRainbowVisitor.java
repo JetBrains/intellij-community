@@ -3,12 +3,34 @@ package com.intellij.json.highlighting;
 
 import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 public class JsonRainbowVisitor extends RainbowVisitor {
+  private static class Holder {
+    private static final Map<String, Set<String>> blacklist = createBlacklist();
+
+    private static Map<String, Set<String>> createBlacklist() {
+      Map<String, Set<String>> blacklist = new HashMap<>();
+      blacklist.put("package.json", ContainerUtil.set("/dependencies",
+                                                      "/devDependencies",
+                                                      "/peerDependencies",
+                                                      "/scripts",
+                                                      "/directories",
+                                                      "/optionalDependencies"));
+      return blacklist;
+    }
+  }
+
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
     return file instanceof JsonFile;
@@ -17,8 +39,13 @@ public class JsonRainbowVisitor extends RainbowVisitor {
   @Override
   public void visit(@NotNull PsiElement element) {
     if (element instanceof JsonProperty) {
-      String name = ((JsonProperty)element).getName();
       PsiFile file = element.getContainingFile();
+      String fileName = file.getName();
+      if (Holder.blacklist.containsKey(fileName)) {
+        JsonPointerPosition position = JsonOriginalPsiWalker.INSTANCE.findPosition(element, false);
+        if (position != null && Holder.blacklist.get(fileName).contains(position.toJsonPointer())) return;
+      }
+      String name = ((JsonProperty)element).getName();
       addInfo(getInfo(file, ((JsonProperty)element).getNameElement(), name, JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY));
       JsonValue value = ((JsonProperty)element).getValue();
       if (value instanceof JsonObject) {

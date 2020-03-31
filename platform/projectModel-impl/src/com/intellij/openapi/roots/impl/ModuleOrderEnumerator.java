@@ -22,18 +22,17 @@ import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 
-  ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
+  @ApiStatus.Internal
+  public ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
     super(cache);
     myRootModel = rootModel;
   }
@@ -44,13 +43,13 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()));
+  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    processEntries(myRootModel, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()), processor);
   }
 
   @Override
   public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
-    return rootModel.equals(myRootModel);
+    return rootModel.getModule() == myRootModel.getModule();
   }
 }
 

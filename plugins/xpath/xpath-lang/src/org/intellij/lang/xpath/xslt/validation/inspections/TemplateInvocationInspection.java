@@ -31,13 +31,7 @@ public class TemplateInvocationInspection extends XsltInspection {
         return HighlightDisplayLevel.ERROR;
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Template Invocation Problems";
-    }
-
-    @Override
+  @Override
     @NotNull
     public String getShortName() {
         return "XsltTemplateInvocation";

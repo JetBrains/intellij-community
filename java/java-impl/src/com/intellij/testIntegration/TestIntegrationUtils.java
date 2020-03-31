@@ -40,10 +40,22 @@ public class TestIntegrationUtils {
         return framework.getSetUpMethodFileTemplateDescriptor();
       }
     },
+    BEFORE_CLASS("beforeClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getBeforeClassMethodFileTemplateDescriptor();
+      }
+    },
     TEAR_DOWN("tearDown") {
       @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
+      }
+    },
+    AFTER_CLASS("afterClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getAfterClassMethodFileTemplateDescriptor();
       }
     },
     TEST("test") {
@@ -225,7 +237,7 @@ public class TestIntegrationUtils {
 
     String templateText;
     try {
-      Properties properties = new Properties();
+      Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
       if (sourceClass != null && sourceClass.isValid()) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, sourceClass.getQualifiedName());
       }

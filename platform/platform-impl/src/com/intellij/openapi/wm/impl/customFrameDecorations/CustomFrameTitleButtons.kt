@@ -2,18 +2,20 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
-import com.intellij.ui.JBColor
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUIScale
+import com.intellij.util.ui.JBUI.Borders
+import com.intellij.util.ui.JBUI.CurrentTheme
 import net.miginfocom.swing.MigLayout
-import java.awt.Color
-import java.awt.Dimension
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
@@ -30,27 +32,44 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
     fun freezeIconUserSize(icon: Icon): Icon {
-      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), JBUIScale.ScaleType.USR_SCALE.of(1.0))
+      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
     }
   }
 
   private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false
-    border = JBUI.Borders.empty()
+    border = Borders.empty()
   }.apply {
+    fun paintHover(g: Graphics, width: Int, height: Int, color: Color) {
+      g.color = color
+      g.fillRect(0, 0, width, height)
+    }
+
+    class MyBorder(val color: ()-> Color) : Border {
+      override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
+
+      override fun isBorderOpaque(): Boolean = false
+
+      override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+        paintHover(g, width, height, color())
+      }
+    }
+
+    val hoverBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonHoverBackground()}
+    val pressBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonPressBackground()}
+
     style(ComponentStyleState.HOVERED) {
-      isOpaque = true
-      background = JBColor(0xd1d1d1, 0x54585a)
+      this.border = hoverBorder
+
     }
     style(ComponentStyleState.PRESSED) {
-      isOpaque = true
-      background = JBColor(0xb5b5b5, 0x686e70)
+      this.border = pressBorder
     }
   }
 
   val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
-    border = JBUI.Borders.empty()
+    border = Borders.empty()
     icon = closeIcon
   }.apply {
     style(ComponentStyleState.HOVERED) {
@@ -109,7 +128,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun addComponent(component: JComponent) {
-    component.preferredSize = Dimension(47, 28)
+    component.preferredSize = Dimension((47 * UISettings.defFontScale).toInt(), (28 * UISettings.defFontScale).toInt())
     panel.add(component, "top")
   }
 
@@ -139,6 +158,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       }
     }
     button.action = action
+    button.isFocusable = false
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
     return button

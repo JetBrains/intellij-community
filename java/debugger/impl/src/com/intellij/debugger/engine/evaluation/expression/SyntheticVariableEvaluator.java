@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author lex
  */
 public class SyntheticVariableEvaluator implements Evaluator{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.SyntheticVariableEvaluator");
+  private static final Logger LOG = Logger.getInstance(SyntheticVariableEvaluator.class);
 
   private final CodeFragmentEvaluator myCodeFragmentEvaluator;
   private final String myLocalName;
@@ -58,7 +58,7 @@ public class SyntheticVariableEvaluator implements Evaluator{
           Type type = value.type();
           if (myTypeNameString != null && !DebuggerUtilsEx.isAssignableFrom(myTypeNameString, type)) {
             throw EvaluateExceptionUtil.createEvaluateException(
-              DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myTypeNameString));
+              JavaDebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myTypeNameString));
           }
         }
         myCodeFragmentEvaluator.setValue(myLocalName, value);

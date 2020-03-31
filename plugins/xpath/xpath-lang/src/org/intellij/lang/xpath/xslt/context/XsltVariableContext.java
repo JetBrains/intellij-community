@@ -49,8 +49,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     private final ResolveCache.Resolver RESOLVER = (psiReference, incompleteCode) -> resolveInner((XPathVariableReference)psiReference);
 
     @Override
-    @NotNull
-    public XsltVariable[] getVariablesInScope(XPathElement element) {
+    public XsltVariable @NotNull [] getVariablesInScope(XPathElement element) {
         final XmlTag context = getContextTagImpl(element);
         final VariantsProcessor processor = new VariantsProcessor(context);
 
@@ -102,8 +101,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     @Override
-    @NotNull
-    public IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference) {
+    public IntentionAction @NotNull [] getUnresolvedVariableFixes(XPathVariableReference reference) {
         return new IntentionAction[] {
                 new CreateVariableFix(reference),
                 new CreateParameterFix(reference)
@@ -117,6 +115,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             if (template == null || template.getMatchExpression() == null) return false;
 
             final XPathVariable t = reference.resolve();
+            if (t == null) return false;
             final PsiReference[] references = element.getReferences();
             for (PsiReference r : references) {
                 if (r.isReferenceTo(t)) return true;

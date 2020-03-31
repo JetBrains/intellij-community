@@ -28,13 +28,6 @@ public class ContinueOrBreakFromFinallyBlockInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "continue.or.break.from.finally.block.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -52,12 +52,6 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiElement element = (PsiElement)infos[0];
     if (element instanceof PsiNewExpression) {
@@ -340,7 +334,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         }
         return result;
       }
-      for (PsiElement child : element.getChildren()) {
+      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiExpressionList) {
           continue;
         }
@@ -548,7 +542,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (!myReplaceable) {
         return;
       }

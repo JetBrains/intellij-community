@@ -42,8 +42,8 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + myTabs.getInterTabSpaceLength();
-      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
+      eachX += size.width + myTabs.getTabHGap();
+      data.requiredWidth += size.width + myTabs.getTabHGap();
     }
 
     int selectedRow = -1;
@@ -70,7 +70,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width + myTabs.getInterTabSpaceLength();
+        eachX += size.width + myTabs.getTabHGap();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -99,7 +99,7 @@ public class TableLayout extends TabLayout {
   }
                                            
   public boolean isLastRow(TabInfo info) {
-    if (info == null || myLastTableLayout == null) return false;
+    if (info == null) return false;
     List<TableRow> rows = myLastTableLayout.table;
     if (rows.size() > 0) {
       for (TabInfo tabInfo : rows.get(rows.size() - 1).myColumns) {
@@ -112,46 +112,48 @@ public class TableLayout extends TabLayout {
 
   public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos) {
     myTabs.resetLayout(true);
-    final TablePassInfo data = computeLayoutTable(visibleInfos);
-    final Insets insets = myTabs.getLayoutInsets();
+    Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
-    int eachX;
-    int row = 0;
-    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
-    
-    for (TableRow eachRow : data.table) {
-      eachX = insets.left;
+    TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
 
-      int deltaToFit = 0;
-      boolean toAjust = false;
-      if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
-        deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
-        toAjust = true;
-      }
+    if (!myTabs.isHideTabs()) {
+      data = computeLayoutTable(visibleInfos);
+      insets = myTabs.getLayoutInsets();
+      eachY = insets.top;
+      int eachX;
 
-      for (int i = 0; i < eachRow.myColumns.size(); i++) {
-        TabInfo tabInfo = eachRow.myColumns.get(i);
-        final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+      for (TableRow eachRow : data.table) {
+        eachX = insets.left;
 
-        label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
-        
-        int width;
-        if (i < eachRow.myColumns.size() - 1 || !toAjust) {
-          width = label.getPreferredSize().width + deltaToFit;
-        }
-        else {
-          width = data.toFitRec.width + insets.left - eachX;
+        int deltaToFit = 0;
+        boolean toAjust = false;
+        if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
+          deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
+          toAjust = true;
         }
 
-        myTabs.layout(label, eachX, eachY, width, row < data.table.size() - 1 ? myTabs.myHeaderFitSize.height - tabUnderlineFix :  myTabs.myHeaderFitSize.height);
-        label.setAlignmentToCenter(deltaToFit > 0);
+        for (int i = 0; i < eachRow.myColumns.size(); i++) {
+          TabInfo tabInfo = eachRow.myColumns.get(i);
+          final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
 
-        boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
+          label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
+
+          int width;
+          if (i < eachRow.myColumns.size() - 1 || !toAjust) {
+            width = label.getPreferredSize().width + deltaToFit;
+          }
+          else {
+            width = data.toFitRec.width + insets.left - eachX;
+          }
+
+          myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+          label.setAlignmentToCenter(deltaToFit > 0);
+
+          boolean lastCell = i == eachRow.myColumns.size() - 1;
+          eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
+        }
+        eachY += myTabs.myHeaderFitSize.height;
       }
-      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
-      
-      row++;
     }
 
     if (myTabs.getSelectedInfo() != null) {
@@ -160,7 +162,7 @@ public class TableLayout extends TabLayout {
       final int componentY = eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top;
       if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         final int toolbarWidth = selectedToolbar.getPreferredSize().width;
-        final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
+        final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
         if (myTabs.isSideComponentBefore()) {
           Rectangle compRect = myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
           myTabs.layout(selectedToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);

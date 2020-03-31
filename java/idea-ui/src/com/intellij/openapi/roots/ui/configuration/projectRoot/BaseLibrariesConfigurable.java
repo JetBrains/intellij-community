@@ -4,12 +4,12 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   @NotNull
@@ -82,7 +84,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void checkCanApply() throws ConfigurationException {
     super.checkCanApply();
-    checkForEmptyAndDuplicatedNames("Library", CommonBundle.getErrorTitle(), LibraryConfigurable.class);
+    checkForEmptyAndDuplicatedNames(JavaUiBundle.message("configurable.library.prefix"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
@@ -195,8 +197,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(getAddText()) {
       @Override
-      @NotNull
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
         return CreateNewLibraryAction.createActionOrGroup(getAddText(), BaseLibrariesConfigurable.this, myProject);
       }
     };
@@ -248,7 +249,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       }
     }
     myContext.getDaemonAnalyzer().removeElements(libraries);
-    removePaths(pathsToRemove.toArray(new TreePath[0]));
+    removePaths(toTreePathArray(pathsToRemove));
   }
 
   @Override
@@ -310,11 +311,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
             message = firstLibraryUsageDescription + ".\nAre you sure you want to delete this library?";
           }
           else {
-            message = ProjectBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);
+            message = JavaUiBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);
           }
 
           if (Messages.OK != Messages.showOkCancelDialog(myProject, message,
-                                                         ProjectBundle.message("libraries.remove.confirmation.title", librariesWithUsages), Messages.getQuestionIcon())) {
+                                                         JavaUiBundle.message("libraries.remove.confirmation.title", librariesWithUsages), Messages.getQuestionIcon())) {
             return false;
           }
         }
@@ -345,12 +346,12 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   @Nullable
   protected String getEmptySelectionString() {
-    return "Select a library to view or edit its details here";
+    return JavaUiBundle.message("configurable.empty.text.select.library");
   }
 
   private class CopyLibraryAction extends AnAction {
-    private CopyLibraryAction() {
-      super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
+   private CopyLibraryAction() {
+      super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }
 
     @Override
@@ -358,7 +359,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx) {
         final LibraryEx selected = (LibraryEx)o;
-        final String newName = Messages.showInputDialog("Enter library name:", "Copy Library", null, selected.getName() + "2", new NonEmptyInputValidator());
+        final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
+          "dialog.title.copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;
 
         BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.this;

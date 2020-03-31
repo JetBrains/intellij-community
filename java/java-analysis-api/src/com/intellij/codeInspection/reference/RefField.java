@@ -17,7 +17,6 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiField;
-import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UField;
 
 /**

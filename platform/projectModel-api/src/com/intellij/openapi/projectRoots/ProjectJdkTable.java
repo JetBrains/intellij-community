@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.EventListener;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
     return ServiceManager.getService(ProjectJdkTable.class);
@@ -26,8 +28,7 @@ public abstract class ProjectJdkTable {
   @Nullable
   public abstract Sdk findJdk(@NotNull String name, @NotNull String type);
 
-  @NotNull
-  public abstract Sdk[] getAllJdks();
+  public abstract Sdk @NotNull [] getAllJdks();
 
   @NotNull
   public abstract List<Sdk> getSdksOfType(@NotNull SdkTypeId type);
@@ -37,8 +38,9 @@ public abstract class ProjectJdkTable {
     return getSdksOfType(type).stream().max(type.versionComparator()).orElse(null);
   }
 
-  /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
+  /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public Sdk findMostRecentSdk(@NotNull Condition<? super Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
@@ -73,18 +75,6 @@ public abstract class ProjectJdkTable {
     @Override public void jdkRemoved(@NotNull Sdk jdk) { }
     @Override public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) { }
   }
-
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addListener(@NotNull Listener listener);
-
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void removeListener(@NotNull Listener listener);
 
   @NotNull
   public abstract SdkTypeId getDefaultSdkType();

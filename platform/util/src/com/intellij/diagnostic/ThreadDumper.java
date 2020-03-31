@@ -31,7 +31,7 @@ public class ThreadDumper {
   @NotNull
   public static String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean()), writer);
+    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean(), true), writer);
     return writer.toString();
   }
   
@@ -45,28 +45,28 @@ public class ThreadDumper {
     return writer.toString();
   }
 
-  @NotNull
-  public static ThreadInfo[] getThreadInfos() {
-    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-    return sort(threadMXBean.dumpAllThreads(false, false));
+  public static ThreadInfo @NotNull [] getThreadInfos() {
+    return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
 
   @NotNull
-  public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
+  public static ThreadDump getThreadDumpInfo(ThreadInfo[] threadInfos) {
+    sort(threadInfos);
     StringWriter writer = new StringWriter();
-    ThreadInfo[] threadInfos = getThreadInfos(threadMXBean);
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
-  @NotNull
-  private static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean) {
+  public static ThreadInfo @NotNull [] getThreadInfos(@NotNull ThreadMXBean threadMXBean, boolean sort) {
     ThreadInfo[] threads;
     try {
-      threads = sort(threadMXBean.dumpAllThreads(false, false));
+      threads = threadMXBean.dumpAllThreads(false, false);
     }
     catch (Exception ignored) {
-      threads = sort(threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE));
+      threads = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE);
+    }
+    if (sort) {
+      sort(threads);
     }
     return threads;
   }
@@ -75,11 +75,11 @@ public class ThreadDumper {
     return isEDT(info.getThreadName());
   }
 
-  public static boolean isEDT(@NotNull String threadName) {
-    return threadName.startsWith("AWT-EventQueue");
+  public static boolean isEDT(@Nullable String threadName) {
+    return threadName != null && threadName.startsWith("AWT-EventQueue");
   }
 
-  private static StackTraceElement[] dumpThreadInfos(@NotNull ThreadInfo[] threadInfo, @NotNull Writer f) {
+  private static StackTraceElement[] dumpThreadInfos(ThreadInfo @NotNull [] threadInfo, @NotNull Writer f) {
     StackTraceElement[] edtStack = null;
     for (ThreadInfo info : threadInfo) {
       if (info != null) {
@@ -92,8 +92,7 @@ public class ThreadDumper {
     return edtStack;
   }
 
-  @NotNull
-  private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
+  public static ThreadInfo @NotNull [] sort(ThreadInfo @NotNull [] threads) {
     Arrays.sort(threads, THREAD_INFO_COMPARATOR);
     return threads;
   }
@@ -102,7 +101,7 @@ public class ThreadDumper {
     dumpCallStack(info, f, info.getStackTrace());
   }
 
-  private static void dumpCallStack(@NotNull ThreadInfo info, @NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+  private static void dumpCallStack(@NotNull ThreadInfo info, @NotNull Writer f, StackTraceElement @NotNull [] stackTraceElements) {
     try {
       @NonNls StringBuilder sb = new StringBuilder("\"").append(info.getThreadName()).append("\"");
       sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(info.getThreadState())).append("\n");
@@ -129,7 +128,7 @@ public class ThreadDumper {
     }
   }
 
-  public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+  public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, StackTraceElement @NotNull [] stackTraceElements) {
     try {
       @NonNls StringBuilder sb = new StringBuilder("\"").append(thread.getName()).append("\"");
       sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(thread.getState())).append("\n");
@@ -144,7 +143,7 @@ public class ThreadDumper {
     }
   }
 
-  private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+  private static void printStackTrace(@NotNull Writer f, StackTraceElement @NotNull [] stackTraceElements) {
     try {
       for (StackTraceElement element : stackTraceElements) {
         f.write("\tat " + element + "\n");
@@ -176,8 +175,8 @@ public class ThreadDumper {
     }
 
     StringBuilder sb = new StringBuilder(200);
-    sb.append(exceptionType + ": ");
-    sb.append(line.substring(1, i)); // append thread name (e.g. AWT-EventQueue-0)
+    sb.append(exceptionType).append(": ");
+    sb.append(line, 1, i); // append thread name (e.g. AWT-EventQueue-0)
 
     line = threadDump.get(1); // e.g. " java.lang.Thread.State: RUNNABLE"
     String[] words = line.trim().split(" ");

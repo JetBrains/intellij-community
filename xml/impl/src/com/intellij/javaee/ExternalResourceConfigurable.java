@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,8 +12,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -264,9 +265,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         } else {
           path = LocalFileSystem.getInstance().findFileByPath(loc);
         }
-        if (path == null) {
-          setForeground(new Color(210, 0, 0));
-        }
+        Color fg = isSelected ? UIUtil.getTableSelectionForeground(hasFocus) : UIUtil.getTableForeground();
+        setForeground(path != null ? fg : new Color(210, 0, 0));
       }
       return rendererComponent;
     }
@@ -301,7 +301,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
       if (myProject != null) {
         names.add("Project");
       }
-      myNames = ArrayUtil.toStringArray(names);
+      myNames = ArrayUtilRt.toStringArray(names);
     }
 
     @Override

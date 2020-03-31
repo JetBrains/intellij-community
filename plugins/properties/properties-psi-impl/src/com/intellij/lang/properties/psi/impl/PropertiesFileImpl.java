@@ -137,10 +137,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return copy.getPsi();
   }
 
-  @NotNull
   @Override
-  public IProperty addProperty(@NotNull String key, @NotNull String value) {
-    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null));
+  public @NotNull IProperty addProperty(@NotNull String key, @NotNull String value, @NotNull PropertyKeyValueFormat format) {
+    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null, format));
   }
 
   @NotNull

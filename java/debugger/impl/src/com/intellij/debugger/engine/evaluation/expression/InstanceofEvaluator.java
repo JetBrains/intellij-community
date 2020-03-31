@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -16,7 +16,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
 class InstanceofEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.InstanceofEvaluator");
+  private static final Logger LOG = Logger.getInstance(InstanceofEvaluator.class);
   private final Evaluator myOperandEvaluator;
   private final TypeEvaluator myTypeEvaluator;
 
@@ -32,7 +32,7 @@ class InstanceofEvaluator implements Evaluator {
       return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(false);
     }
     if (!(value instanceof ObjectReference)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.reference.expected"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
       return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(

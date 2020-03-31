@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -17,9 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author max
- */
 public class ChangesBrowserDialog extends DialogWrapper {
   private Project myProject;
   private CommittedChangesTableModel myChanges;
@@ -117,9 +114,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myMode == Mode.Simple) {
       return new Action[] { getCancelAction() };
     }

@@ -42,11 +42,12 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.ui.tree.TreeUtil.collectSelectedPaths;
+
 /**
  * @author Vitaliy.Bibaev
  */
 public class CollectionTree extends XDebuggerTree implements TraceContainer {
-  private static final TreePath[] EMPTY_PATHS = new TreePath[0];
   private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
   private static final Object NULL_MARKER = ObjectUtils.sentinel("CollectionTree.NULL_MARKER");
 
@@ -117,11 +118,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       if (myIgnoreInternalSelectionEvents) {
         return;
       }
-
-      final TreePath[] selectedPaths = getSelectionPaths();
-      final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<TraceElement> selectedItems =
-        Arrays.stream(paths)
+        collectSelectedPaths(this).stream()
           .map(this::getTopPath)
           .map(myPath2Value::get)
           .filter(Objects::nonNull)
@@ -219,7 +217,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     myPaintingDispatcher.getMulticaster().componentPainted();
   }
 
-  private void select(@NotNull TreePath[] paths) {
+  private void select(TreePath @NotNull [] paths) {
     if (myIgnoreExternalSelectionEvents) {
       return;
     }
@@ -258,7 +256,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @NotNull
-  private Rectangle optimizeRowsCountInVisibleRect(@NotNull int[] rows) {
+  private Rectangle optimizeRowsCountInVisibleRect(int @NotNull [] rows) {
     // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
     final Rectangle visibleRect = getVisibleRect();
     final int height = visibleRect.height;

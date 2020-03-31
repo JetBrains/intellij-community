@@ -2,7 +2,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInspection.SmartHashMap;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl");
+  protected static final Logger LOG = Logger.getInstance(NodeDescriptorImpl.class);
 
   public static final String UNKNOWN_VALUE_MESSAGE = "";
   public boolean myIsExpanded = false;
@@ -69,10 +69,10 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         myLabel = calcRepresentation(context, labelListener);
       }
       catch (InconsistentDebugInfoException e) {
-        throw new EvaluateException(DebuggerBundle.message("error.inconsistent.debug.info"));
+        throw new EvaluateException(JavaDebuggerBundle.message("error.inconsistent.debug.info"));
       }
       catch (InvalidStackFrameException e) {
-        throw new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"));
+        throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.stackframe"));
       }
       catch (ObjectCollectedException e) {
         throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;

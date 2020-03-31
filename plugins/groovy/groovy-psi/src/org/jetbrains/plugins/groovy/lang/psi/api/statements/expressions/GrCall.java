@@ -19,26 +19,22 @@ public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();
 
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
+  GrNamedArgument @NotNull [] getNamedArguments();
 
-  @NotNull
-  GrExpression[] getExpressionArguments();
+  GrExpression @NotNull [] getExpressionArguments();
 
   default boolean hasClosureArguments() {
     return getClosureArguments().length > 0;
   }
 
-  @NotNull
-  default GrClosableBlock[] getClosureArguments() {
+  default GrClosableBlock @NotNull [] getClosureArguments() {
     return GrClosableBlock.EMPTY_ARRAY;
   }
 
   @Nullable
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
 
-  @NotNull
-  GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument);
+  GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument);
 
   @Nullable
   default PsiMethod resolveMethod() {
@@ -50,6 +46,5 @@ public interface GrCall extends GroovyPsiElement {
     return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
-  @NotNull
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
+  GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode);
 }

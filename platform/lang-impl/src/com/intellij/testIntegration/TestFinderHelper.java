@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testIntegration;
 
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,7 @@ public class TestFinderHelper {
   public static List<PsiElement> getSortedElements(final List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending,
                                                    @Nullable final Comparator<? super PsiElement> sameNameComparator) {
-    Collections.sort(elementsWithWeights, (o1, o2) -> {
+    elementsWithWeights.sort((o1, o2) -> {
       int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
       if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());
       if (result == 0 && sameNameComparator != null) result = sameNameComparator.compare(o1.first, o2.first);
@@ -82,7 +82,7 @@ public class TestFinderHelper {
   }
 
   public static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
-    String[] words = NameUtil.splitNameIntoWords(testName);
+    String[] words = NameUtilCore.splitNameIntoWords(testName);
     List<Pair<String, Integer>> result = new ArrayList<>();
 
     for (int from = 0; from < words.length; from++) {

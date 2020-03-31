@@ -105,7 +105,8 @@ public class WSLUtilTest {
   }
 
   private void assertWslPath(@NotNull String wslPath, @Nullable String winPath, boolean forLegacyWSL) {
-    String windowsPath = forLegacyWSL ? myLegacyWSL.getWindowsPath(wslPath) : WSLUtil.getWindowsPath(wslPath);
+    String windowsPath =
+      forLegacyWSL ? myLegacyWSL.getWindowsPath(wslPath) : WSLUtil.getWindowsPath(wslPath, WSLDistribution.DEFAULT_WSL_MNT_ROOT);
     assertEquals(prepare(winPath), windowsPath);
   }
 

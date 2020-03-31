@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.util.Pair;
@@ -12,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author traff
- */
 public interface ProcessDebugger {
   String handshake() throws PyDebuggerException;
 
@@ -32,6 +30,8 @@ public interface ProcessDebugger {
   void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback);
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
+
+  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine) throws PyDebuggerException;
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
@@ -82,7 +82,7 @@ public interface ProcessDebugger {
 
   void run() throws PyDebuggerException;
 
-  void smartStepInto(String threadId, String functionName);
+  void smartStepInto(String threadId, String frameId, String functionName, int callOrder, int contextStartLine, int contextEndLine);
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 

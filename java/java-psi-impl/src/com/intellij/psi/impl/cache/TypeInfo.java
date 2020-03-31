@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
@@ -43,9 +29,6 @@ import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
 
-/**
- * @author max
- */
 public class TypeInfo {
   private static final String[] ourIndexFrequentType;
   private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
@@ -75,10 +58,10 @@ public class TypeInfo {
 
   private final PsiAnnotationStub[] myAnnotationStubs;
 
-  public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
+  public TypeInfo(String text, byte arrayCount, boolean ellipsis, PsiAnnotationStub @NotNull [] annotationStubs) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
-    this.isEllipsis = ellipsis;
+    isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
 
@@ -266,6 +249,6 @@ public class TypeInfo {
   @NotNull
   public static String internFrequentType(@NotNull String type) {
     int frequentIndex = ourFrequentTypeIndex.get(type);
-    return frequentIndex == 0 ? type : ourIndexFrequentType[frequentIndex];
+    return frequentIndex == 0 ? StringUtil.internEmptyString(type) : ourIndexFrequentType[frequentIndex];
   }
 }

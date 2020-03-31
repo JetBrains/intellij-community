@@ -4,16 +4,17 @@ The methods from this file are used for the debugger interaction. Please note
 that Python console now uses Thrift structures with the similar methods
 contained in `pydevd_thrift.py` file.
 """
-from _pydev_bundle import pydev_log
+import sys
 import traceback
+
+from _pydev_bundle import pydev_log
+from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
-import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
-from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
 
 try:
     import types
@@ -22,16 +23,10 @@ try:
 except:
     frame_type = None
 
-try:
-    from xml.sax.saxutils import escape
 
-
-    def make_valid_xml_value(s):
-        return escape(s, {'"': '&quot;'})
-except:
-    # Simple replacement if it's not there.
-    def make_valid_xml_value(s):
-        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+def make_valid_xml_value(s):
+    # Same thing as xml.sax.saxutils.escape but also escaping double quotes.
+    return s.replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
 class ExceptionOnEvaluate:
@@ -293,7 +288,7 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     return return_values_xml + xml
 
 
-def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
+def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True, format='%s'):
     """ single variable or dictionary to xml representation """
 
     try:
@@ -322,26 +317,12 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
 
                 elif v.__class__ in (list, tuple, set, frozenset, dict):
                     if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                        value = '%s: %s' % (str(v.__class__), take_first_n_coll_elements(
-                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE))
+                        value = '%s' % take_first_n_coll_elements(v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
                         value = value.rstrip(')]}') + '...'
                     else:
-                        value = '%s: %s' % (str(v.__class__), v)
+                        value = '%s' % v
                 else:
-                    try:
-                        cName = str(v.__class__)
-                        if cName.find('.') != -1:
-                            cName = cName.split('.')[-1]
-
-                        elif cName.find("'") != -1:  # does not have '.' (could be something like <type 'int'>)
-                            cName = cName[cName.index("'") + 1:]
-
-                        if cName.endswith("'>"):
-                            cName = cName[:-2]
-                    except:
-                        cName = str(v.__class__)
-
-                    value = '%s: %s' % (cName, v)
+                    value = format % v
             else:
                 value = str(v)
         except:
@@ -362,26 +343,34 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     else:
         xml_qualifier = ''
 
-    if value:
-        # cannot be too big... communication may not handle it.
-        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
-            value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
-            value += '...'
+    # cannot be too big... communication may not handle it.
+    if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
+        value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
+        value += '...'
 
-        # fix to work with unicode values
-        try:
-            if not IS_PY3K:
-                if value.__class__ == unicode:  # @UndefinedVariable
-                    value = value.encode('utf-8')
-            else:
-                if value.__class__ == bytes:
-                    value = value.encode('utf-8')
-        except TypeError:  # in java, unicode is a function
-            pass
+    # fix to work with unicode values
+    try:
+        if not IS_PY3K:
+            if value.__class__ == unicode:  # @UndefinedVariable
+                value = value.encode('utf-8')
+        else:
+            if value.__class__ == bytes:
+                value = value.encode('utf-8')
+    except TypeError:  # in java, unicode is a function
+        pass
 
-        xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
-    else:
-        xml_value = ''
+    if is_pandas_container(type_qualifier, typeName, v):
+        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+    xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+
+    xml_shape = ''
+    try:
+        if is_numeric_container(type_qualifier, typeName, v):
+            xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
+        elif hasattr(v, '__len__') and not is_string(v):
+            xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
+    except:
+        pass
 
     if is_exception_on_eval:
         xml_container = ' isErrorOnEval="True"'
@@ -391,5 +380,5 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         else:
             xml_container = ''
 
-    return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, additional_in_xml, ' />\n'))
 

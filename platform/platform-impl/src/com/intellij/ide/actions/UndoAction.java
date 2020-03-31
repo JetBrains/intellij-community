@@ -15,11 +15,12 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Pair;
 
-public class UndoAction extends UndoRedoAction {
+public class UndoAction extends UndoRedoAction implements LightEditCompatible {
   @Override
   protected boolean isAvailable(FileEditor editor, UndoManager undoManager) {
     return undoManager.isUndoAvailable(editor);

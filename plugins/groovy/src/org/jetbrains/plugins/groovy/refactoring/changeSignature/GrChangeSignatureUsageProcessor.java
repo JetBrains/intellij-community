@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +21,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -73,7 +73,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkU
  */
 public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor");
+    Logger.getInstance(GrChangeSignatureUsageProcessor.class);
 
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
@@ -137,7 +137,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             final ParameterInfo[] parameters = changeInfo.getNewParameters();
             for (ParameterInfo parameter : parameters) {
               final String defaultValue = parameter.getDefaultValue();
-              if (defaultValue == null && parameter.getOldIndex() == -1) {
+              if (defaultValue == null && parameter.isNew()) {
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
                   final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element);
@@ -456,7 +456,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     String name = psiClass.getName();
 
     GrMethod constructor = GroovyPsiElementFactory.getInstance(psiClass.getProject())
-      .createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", null);
+      .createConstructorFromText(name, ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}", null);
 
     GrModifierList list = constructor.getModifierList();
     if (psiClass.hasModifierProperty(PsiModifier.PRIVATE)) list.setModifierProperty(PsiModifier.PRIVATE, true);

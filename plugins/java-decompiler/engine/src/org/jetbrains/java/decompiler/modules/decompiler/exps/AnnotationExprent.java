@@ -17,10 +17,10 @@ public class AnnotationExprent extends Exprent {
   public static final int ANNOTATION_SINGLE_ELEMENT = 3;
 
   private final String className;
-  private final List<? extends String> parNames;
+  private final List<String> parNames;
   private final List<? extends Exprent> parValues;
 
-  public AnnotationExprent(String className, List<? extends String> parNames, List<? extends Exprent> parValues) {
+  public AnnotationExprent(String className, List<String> parNames, List<? extends Exprent> parValues) {
     super(EXPRENT_ANNOTATION);
     this.className = className;
     this.parNames = parNames;

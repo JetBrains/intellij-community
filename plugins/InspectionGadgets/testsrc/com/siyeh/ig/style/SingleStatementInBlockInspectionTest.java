@@ -16,12 +16,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Pavel.Dolgov
  */
-public class SingleStatementInBlockInspectionTest extends LightInspectionTestCase {
+public class SingleStatementInBlockInspectionTest extends LightJavaInspectionTestCase {
   public void testSingleStatement() {
     doTest();
   }

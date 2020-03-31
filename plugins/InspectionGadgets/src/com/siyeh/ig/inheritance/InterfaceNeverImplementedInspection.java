@@ -47,14 +47,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("interface.never.implemented.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations);
   }

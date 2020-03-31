@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -38,7 +39,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogModifiableIndex myIndex;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final Consumer<? super Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
   private final int myRecentCommitCount;
@@ -55,7 +55,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                              @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
                              @NotNull Consumer<? super DataPack> dataPackUpdateHandler,
-                             @NotNull Consumer<? super Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
     myStorage = storage;
@@ -63,11 +62,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myUserRegistry = userRegistry;
     myIndex = index;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
-    myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, "permanent", dataPack -> {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>("permanent", dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
     }, this) {
@@ -106,8 +104,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       return myDataPack;
     }
     catch (VcsException e) {
-      myExceptionHandler.consume(e);
-      return DataPack.EMPTY;
+      LOG.info(e);
+      return new DataPack.ErrorDataPack(e);
     }
   }
 
@@ -192,7 +190,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @NotNull private final LogInfo myLoadedInfo = new LogInfo(myStorage);
 
     MyRefreshTask(@NotNull DataPack currentDataPack) {
-      super(VcsLogRefresherImpl.this.myProject, "Refreshing History...", false);
+      super(VcsLogRefresherImpl.this.myProject, VcsLogBundle.message("vcs.log.refreshing.process"), false);
       myCurrentDataPack = currentDataPack;
     }
 
@@ -238,9 +236,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-            List<? extends GraphCommit<Integer>> joinedFullLog =
-              join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
-                   currentRefs, allNewRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
+                                                                      currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;
             }
@@ -255,9 +252,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
         return loadFullLog();
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
-        myExceptionHandler.consume(e);
-        return DataPack.EMPTY;
+        LOG.info(e);
+        return new DataPack.ErrorDataPack(e);
       }
       finally {
         sw.report();
@@ -361,7 +361,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
       public String toString() {
-        return "RELOAD_ALL";
+        return "RELOAD_ALL"; // NON-NLS
       }
     };
     private final Collection<VirtualFile> rootsToRefresh;
@@ -400,8 +400,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     @NotNull
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<VirtualFile> roots) {
-      return ContainerUtil
-        .map2Map(roots, root -> Pair.create(root, this));
+      return ContainerUtil.map2Map(roots, root -> Pair.create(root, this));
     }
   }
 

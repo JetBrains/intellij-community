@@ -6,7 +6,7 @@ class Main1 {
 
   public static void main(String[] args) {
     List x = null;
-    foo(x).iterator().next().<error descr="Cannot resolve method 'iterator()'">iterator</error>();
+    foo(x).iterator().next().<error descr="Cannot resolve method 'iterator' in 'Object'">iterator</error>();
   }
 }
 
@@ -16,7 +16,7 @@ class Main {
   public static void main(String[] args) {
     List x = null;
     <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String s = foo(x).get(0);</error>
-    foo(x).iterator().next().<error descr="Cannot resolve method 'toLowerCase()'">toLowerCase</error>();
+    foo(x).iterator().next().<error descr="Cannot resolve method 'toLowerCase' in 'Object'">toLowerCase</error>();
   }
 }
 

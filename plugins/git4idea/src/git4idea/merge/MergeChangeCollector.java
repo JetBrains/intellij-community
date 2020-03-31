@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -31,6 +16,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,70 +24,99 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 /**
- * Collect change for merge or pull operations
+ * Collect changes for merge or pull operations
  */
 public class MergeChangeCollector {
-  private final HashSet<String> myUnmergedPaths = new HashSet<>();
-  private final Project myProject;
-  private final VirtualFile myRoot;
-  private final GitRevisionNumber myStart; // Revision number before update (used for diff)
+  @NotNull private final HashSet<String> myUnmergedPaths = new HashSet<>();
+
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final GitRevisionNumber myStart; // Revision number before update (used for diff)
   @NotNull private final GitRepository myRepository;
 
-  public MergeChangeCollector(final Project project, final VirtualFile root, final GitRevisionNumber start) {
+  public MergeChangeCollector(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitRevisionNumber start) {
     myStart = start;
     myProject = project;
-    myRoot = root;
-    myRepository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    myRoot = repository.getRoot();
+    myRepository = repository;
   }
 
   /**
-   * Collects changed files during or after merge operation to the supplied {@code updates} container.
+   * @deprecated use constructor with GitRepository to avoid deleting repository mapping problem
    */
-  public void collect(final UpdatedFiles updates, List<VcsException> exceptions) {
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
+    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
+  }
+
+  /**
+   * Collects changed files during or after merge operation to the supplied container.
+   */
+  public void collect(@NotNull UpdatedFiles updatedFiles) throws VcsException {
+    // collect unmerged
+    Set<String> paths = getUnmergedPaths();
+    addAll(updatedFiles, FileGroup.MERGED_WITH_CONFLICT_ID, paths);
+
+    // collect other changes (ignoring unmerged)
+    TreeSet<String> updated = new TreeSet<>();
+    TreeSet<String> created = new TreeSet<>();
+    TreeSet<String> removed = new TreeSet<>();
+
+    String revisionsForDiff = getRevisionsForDiff();
+    if (revisionsForDiff == null) {
+      return;
+    }
+    getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
+    addAll(updatedFiles, FileGroup.UPDATED_ID, updated);
+    addAll(updatedFiles, FileGroup.CREATED_ID, created);
+    addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
+  }
+
+  /**
+   * @deprecated Use {@link #collect(UpdatedFiles)}
+   */
+  @Deprecated
+  public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
     try {
-      // collect unmerged
-      Set<String> paths = getUnmergedPaths();
-      addAll(updates, FileGroup.MERGED_WITH_CONFLICT_ID, paths);
-
-      // collect other changes (ignoring unmerged)
-      TreeSet<String> updated = new TreeSet<>();
-      TreeSet<String> created = new TreeSet<>();
-      TreeSet<String> removed = new TreeSet<>();
-
-      String revisionsForDiff = getRevisionsForDiff();
-      if (revisionsForDiff ==  null) {
-        return;
-      }
-      getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
-      addAll(updates, FileGroup.UPDATED_ID, updated);
-      addAll(updates, FileGroup.CREATED_ID, created);
-      addAll(updates, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
-    } catch (VcsException e) {
+      collect(updatedFiles);
+    }
+    catch (VcsException e) {
       exceptions.add(e);
     }
+  }
+
+  public int calcUpdatedFilesCount() throws VcsException {
+    String revisionsForDiff = getRevisionsForDiff();
+    if (revisionsForDiff == null) {
+      return 0;
+    }
+
+    Set<String> updated = new HashSet<>();
+    getChangedFilesExceptUnmerged(updated, updated, updated, revisionsForDiff);
+    return updated.size() + getUnmergedPaths().size();
   }
 
   /**
    * Returns absolute paths to files which are currently unmerged, and also populates myUnmergedPaths with relative paths.
    */
-  public @NotNull Set<String> getUnmergedPaths() throws VcsException {
+  @NotNull
+  private Set<String> getUnmergedPaths() throws VcsException {
     String root = myRoot.getPath();
-    final GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LS_FILES);
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--unmerged");
-    final String result = Git.getInstance().runCommand(h).getOutputOrThrow();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
-    final Set<String> paths = new HashSet<>();
-    for (StringScanner s = new StringScanner(result); s.hasMoreData();) {
+    Set<String> paths = new HashSet<>();
+    for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;
       }
       s.boundedToken('\t');
-      final String relative = s.line();
+      String relative = s.line();
       if (!myUnmergedPaths.add(relative)) {
         continue;
       }
@@ -117,7 +132,6 @@ public class MergeChangeCollector {
    */
   @Nullable
   public String getRevisionsForDiff() throws VcsException {
-    String root = myRoot.getPath();
     GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, "HEAD");
     if (currentHead.equals(myStart)) {
       // The head has not advanced. This means that this is a merge that did not commit.
@@ -129,7 +143,7 @@ public class MergeChangeCollector {
       try {
         if (mergeHeadsFile.exists()) {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));
-          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData(); ) {
             String head = s.line();
             if (head.length() == 0) {
               continue;
@@ -138,10 +152,12 @@ public class MergeChangeCollector {
             return myStart.getRev() + "..." + head;
           }
         }
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
       }
-    } else {
+    }
+    else {
       // Otherwise this is a merge that did created a commit. And because of this the incoming changes
       // are diffs between old head and new head. The commit could have been multihead commit,
       // and the expression below considers it as well.
@@ -154,17 +170,16 @@ public class MergeChangeCollector {
    * Populates the supplied collections of modified, created and removed files returned by 'git diff #revisions' command,
    * where revisions is the range of revisions to check.
    */
-  public void getChangedFilesExceptUnmerged(Collection<String> updated, Collection<String> created, Collection<String> removed, String revisions)
-    throws VcsException {
-    if (revisions == null) {
-      return;
-    }
+  private void getChangedFilesExceptUnmerged(@NotNull Collection<? super String> updated,
+                                             @NotNull Collection<? super String> created,
+                                             @NotNull Collection<? super String> removed,
+                                             @NotNull String revisions) throws VcsException {
     String root = myRoot.getPath();
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     // note that moves are not detected here
     h.addParameters("--name-status", "--diff-filter=ADMRUX", "--no-renames", revisions);
-    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;
@@ -196,11 +211,10 @@ public class MergeChangeCollector {
   /**
    * Add all paths to the group
    */
-  private static void addAll(final UpdatedFiles updates, String group_id, Set<String> paths) {
-    FileGroup fileGroup = updates.getGroupById(group_id);
-    final VcsKey vcsKey = GitVcs.getKey();
+  private static void addAll(@NotNull UpdatedFiles updates, @NotNull String groupId, @NotNull Set<String> paths) {
+    FileGroup fileGroup = updates.getGroupById(groupId);
     for (String path : paths) {
-      fileGroup.add(path, vcsKey, null);
+      fileGroup.add(path, GitVcs.getKey(), null);
     }
   }
 }

@@ -3,12 +3,11 @@ package com.intellij.execution.testframework.sm.runner
 
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
-import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Assert
 
 
 class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
-  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest", false) }
+  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest", false, false, true) }
 
   private var flushBufferSize = 0
 
@@ -47,10 +46,10 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
     this.flushBufferSize = flushBufferSize
     val testProxy = SMTestProxy.SMRootTestProxy()
     converter.processor = if (idBased) {
-      GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralIdBasedToSMTRunnerEventsConvertor(project, testProxy, "root")
     }
     else {
-      GeneralToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralToSMTRunnerEventsConvertor(project, testProxy, "root")
     }
 
     converter.setTestingStartedHandler {  }

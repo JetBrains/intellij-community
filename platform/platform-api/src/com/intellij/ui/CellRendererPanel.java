@@ -103,7 +103,7 @@ public class CellRendererPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    if (getComponentCount() != 1) {
+    if (getComponentCount() != 1 || super.getBorder() != null) {
       return super.getPreferredSize();
     }
     return getComponent(0).getPreferredSize();

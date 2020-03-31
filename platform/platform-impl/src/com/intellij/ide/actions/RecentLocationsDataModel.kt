@@ -3,13 +3,10 @@ package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT
+import com.intellij.ide.actions.RecentLocationsAction.getEmptyFileText
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
@@ -89,9 +86,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
       return fileName
     }
 
-    val breadcrumbsText = crumbs.joinToString(" > ") { it.text }
-
-    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0)
+    return crumbs.joinToString(" > ") { it.text }
   }
 
   private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {
@@ -134,7 +129,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     val actualTextRange = getTrimmedRange(fileDocument, lineNumber)
     var documentText = fileDocument.getText(actualTextRange)
     if (actualTextRange.isEmpty) {
-      documentText = EMPTY_FILE_TEXT
+      documentText = getEmptyFileText()
     }
 
     val editorFactory = EditorFactory.getInstance()
@@ -143,7 +138,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
 
     val gutterComponentEx = editor.gutterComponentEx
     val linesShift = fileDocument.getLineNumber(actualTextRange.startOffset)
-    gutterComponentEx.setLineNumberConvertor { index -> index + linesShift }
+    gutterComponentEx.setLineNumberConverter(LineNumberConverter.Increasing { _, line -> line + linesShift })
     gutterComponentEx.setPaintBackground(false)
     val scrollPane = editor.scrollPane
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER

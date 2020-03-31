@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import java.io.StringWriter;
 /**
  * @author anna
  */
-public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
+public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
 
   private static final Logger LOG = Logger.getInstance(ByteCodeViewerManager.class);
@@ -70,17 +71,17 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto Show Bytecode for Selected Element";
+    return JavaByteCodeViewerBundle.message("show.bytecode.for.current.element.action.name");
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Show bytecode for current element automatically";
+    return JavaByteCodeViewerBundle.message("show.bytecode.for.current.element.action.description");
   }
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore bytecode popup behavior";
+    return JavaByteCodeViewerBundle.message("show.bytecode.restore.popup.action.description");
   }
 
   @Override
@@ -122,22 +123,24 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   }
 
   @Override
-  protected void doUpdateComponent(PsiElement element, PsiElement originalElement, ByteCodeViewerComponent component) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content != null && element != null) {
+  protected void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, ByteCodeViewerComponent component) {
+    Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content != null) {
       updateByteCode(element, component, content);
     }
   }
 
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content != null) {
-      final ByteCodeViewerComponent component = (ByteCodeViewerComponent)content.getComponent();
-      PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-      if (element != null) {
-        updateByteCode(element, component, content);
-      }
+    Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content == null) {
+      return;
+    }
+
+    ByteCodeViewerComponent component = (ByteCodeViewerComponent)content.getComponent();
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    if (element != null) {
+      updateByteCode(element, component, content);
     }
   }
 
@@ -147,7 +150,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   }
 
   protected void doUpdateComponent(@NotNull PsiElement element, final String newText) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
+    Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
       updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);
     }
@@ -187,7 +190,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
       VirtualFile file = fileClass.getOriginalElement().getContainingFile().getVirtualFile();
       if (file != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
-        if (file.getFileType() == StdFileTypes.CLASS) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)) {
           // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
           String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
           if (index.isInLibraryClasses(file)) {

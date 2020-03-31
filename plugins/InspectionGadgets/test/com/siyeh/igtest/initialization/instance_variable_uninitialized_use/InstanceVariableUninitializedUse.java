@@ -31,21 +31,32 @@ class FinalField {
 }
 class SwitchExpression {
   private int i;
+  private int j;
 
   SwitchExpression(E e, int z) {
     int x;
     x = switch (e) {
       case A:
         i = 1;
-        break 2;
+        yield 2;
       case B:
-        i = 2;
-        break 3;
+        yield i = 3;
       case C:
         i = 3;
-        break 4;
+        yield 4;
     };
     System.out.println(i);
+
+    int p = switch (e) {
+      case A:
+        yield j = 1;
+      case B:
+        yield 3;
+      case C:
+        j = 3;
+        yield 4;
+    };
+    System.out.println(<warning descr="Instance field 'j' used before initialized">j</warning>);
   }
 
   enum E {
@@ -58,6 +69,11 @@ class SwitchExpression {
       default -> i = 10;
     };
     System.out.println(i);
+  }
+
+  SwitchExpression(boolean b) {
+    int x = switch(0) { default -> { { yield i = 2; } } };
+    System.out.println("i = " + i);
   }
 }
 class Lambda {

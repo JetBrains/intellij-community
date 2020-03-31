@@ -18,17 +18,18 @@ package com.jetbrains.python.validation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Custom filter that allows to selectively suppress warnings and errors produced by pycodestyle.py (former pep8.py).
- * Note that by using {@link com.jetbrains.python.inspections.PythonVisitorFilter} you can disable PEP 8 inspection for concrete files
+ * Note that by using {@link PythonVisitorFilter} you can disable PEP 8 inspection for concrete files
  * altogether.
  *
  * @author Mikhail Golubev
  * @see Pep8ExternalAnnotator
- * @see com.jetbrains.python.inspections.PythonVisitorFilter
+ * @see PythonVisitorFilter
  */
 public interface Pep8ProblemSuppressor {
   ExtensionPointName<Pep8ProblemSuppressor> EP_NAME = ExtensionPointName.create("Pythonid.pep8ProblemSuppressor");

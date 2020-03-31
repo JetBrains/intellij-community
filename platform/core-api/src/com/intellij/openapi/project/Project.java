@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -76,13 +76,12 @@ public interface Project extends ComponentManager, AreaInstance {
   /**
    * Returns presentable project path:
    * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getBasePath()} for directory-based ones.<br/>
-   * * Returns {@code null} for default project.
+   * Returns {@code null} for default project.
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
-   *
-   * @return presentable project path
    */
   @Nullable
-  default @SystemDependent String getPresentableUrl() {
+  @SystemDependent
+  default String getPresentableUrl() {
     return null;
   }
 

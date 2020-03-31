@@ -25,6 +25,12 @@ public class TryCatch {
             catch (NumberFormatException ex) {
                 b = 1;
             }
+            catch (@Deprecated NullPointerException e){
+                b = 2;
+            }
+            finally {
+                b = 3;
+            }
             int c = b;
         }
         return sum;

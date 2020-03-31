@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Mark {@link com.intellij.testFramework.UsefulTestCase} implementations using this annotation if they require UI environment to run
- *
- * @author nik
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

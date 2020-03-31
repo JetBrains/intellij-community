@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.enter;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 
-public class MarkdownEnterHandlerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownEnterHandlerTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/enter";
@@ -35,6 +35,18 @@ public class MarkdownEnterHandlerTest extends LightPlatformCodeInsightFixtureTes
   }
 
   public void testQuoteInList1() {
+    doTest();
+  }
+
+  public void testQuoteInListWithSpace() {
+    doTest();
+  }
+
+  public void testCodeFenceWithSpace() {
+    doTest();
+  }
+
+  public void testQuoteInListMiddleWithSpace() {
     doTest();
   }
 

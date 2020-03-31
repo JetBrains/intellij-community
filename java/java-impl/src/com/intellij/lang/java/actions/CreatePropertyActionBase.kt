@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -8,13 +8,13 @@ import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
+import com.intellij.openapi.util.toNotNull
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.util.PropertyUtilBase
-import com.intellij.util.component1
-import com.intellij.util.component2
-import com.intellij.util.toNotNull
 
 internal abstract class CreatePropertyActionBase(
   target: PsiClass,

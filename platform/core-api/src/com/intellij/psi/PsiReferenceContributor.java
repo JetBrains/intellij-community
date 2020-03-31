@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * @see PsiReferenceProviderBean
  */
 public abstract class PsiReferenceContributor implements Disposable {
-  public static final ExtensionPointName<PsiReferenceContributor> EP_NAME = ExtensionPointName.create("com.intellij.psi.referenceContributor");
+  public static final ExtensionPointName<KeyedLazyInstance<PsiReferenceContributor>> EP_NAME = ExtensionPointName.create("com.intellij.psi.referenceContributor");
 
   public abstract void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar);
 

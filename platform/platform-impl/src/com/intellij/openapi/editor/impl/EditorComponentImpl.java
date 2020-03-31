@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
@@ -67,6 +69,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@DirtyUI
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
   private final EditorImpl myEditor;
 
@@ -111,6 +114,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
   }
 
+  @DirtyUI
   @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
@@ -160,11 +164,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return null;
   }
 
+  @DirtyUI
   @Override
   public Color getBackground() {
     return myEditor.getBackgroundColor();
   }
 
+  @DirtyUI
   @Override
   public Dimension getPreferredSize() {
     return myEditor.getPreferredSize();
@@ -217,11 +223,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
   }
 
+  @DirtyUI
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  @DirtyUI
   @Override
   public void paintComponent(Graphics g) {
     myEditor.measureTypingLatency();
@@ -238,14 +246,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
-  }
 
-  public void repaintEditorComponent() {
-    repaint();
-  }
-
-  public void repaintEditorComponentExact(int x, int y, int width, int height) {
-    repaint(x, y, width, height);
+    Project project = myEditor.getProject();
+    if (project != null) {
+      EditorsSplitters.stopOpenFilesActivity(project);
+    }
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
@@ -255,11 +260,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   //--implementation of Scrollable interface--------------------------------------
+  @DirtyUI
   @Override
   public Dimension getPreferredScrollableViewportSize() {
     return myEditor.getPreferredSize();
   }
 
+  @DirtyUI
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) {
@@ -269,6 +276,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
   }
 
+  @DirtyUI
   @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) {
@@ -350,7 +358,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   /**
-   *  We're inheriting method now in order to support accessibility, but you
+   * @deprecated We're inheriting method now in order to support accessibility, but you
    * should <b>NOT</b> call this method if you have an {@linkplain EditorComponentImpl}
    * and you're looking for the real document.
    */
@@ -365,6 +373,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return myEditor.getCaretModel().getOffset();
   }
 
+  @DirtyUI
   @Override
   public void updateUI() {
     // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
@@ -689,6 +698,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
+  @DirtyUI
   @Override
   public void setText(String text) {
     editDocumentSafely(0, myEditor.getDocument().getTextLength(), text);

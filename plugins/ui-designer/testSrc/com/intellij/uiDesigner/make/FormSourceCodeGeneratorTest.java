@@ -12,15 +12,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ThrowableRunnable;
 
 import java.io.IOException;
 
 /**
  * @author yole
  */
-public class FormSourceCodeGeneratorTest extends PsiTestCase {
+public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
   private FormSourceCodeGenerator myGenerator;
 
@@ -80,6 +81,22 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
     doTest();
   }
 
+  public void testTitledBorder() throws IOException {
+    doTest();
+  }
+
+  public void testBorderNullTitle() throws IOException {
+    doTest();
+  }
+
+  public void testTitledBorderInternal() throws IOException {
+    inInternalMode(() -> doTest());
+  }
+
+  public void testTitleFromBundle() throws IOException {
+    doTest();
+  }
+
   private void doTest() throws IOException {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
@@ -101,5 +118,14 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
     assertNotNull(psiFile);
     final String text = StringUtil.convertLineSeparators(psiFile.getText());
     assertEquals(expectedText, text);
+  }
+
+  private static void inInternalMode(ThrowableRunnable<IOException> runnable) throws IOException {
+    System.getProperties().setProperty("idea.is.internal", "true");
+    try {
+      runnable.run();
+    } finally {
+      System.getProperties().setProperty("idea.is.internal", "false");
+    }
   }
 }

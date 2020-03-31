@@ -32,8 +32,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class XmlTagRenameDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameDialog");
-  private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameDialog.class);
 
   private final PsiElement myElement;
   private final Editor myEditor;
@@ -49,7 +48,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     myElement = element;
     myTag = tag;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
     createNewNameComponent();
 
     init();
@@ -161,5 +160,9 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return !StringUtil.containsAnyChar(newName, "\t ;*'\"\\/,()^&<>={}"); // RenameUtil.isValidName(myProject, myTag, newName); // IDEADEV-34531
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("rename.title");
   }
 }

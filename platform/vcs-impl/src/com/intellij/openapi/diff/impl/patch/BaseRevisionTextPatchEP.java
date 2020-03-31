@@ -7,28 +7,25 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class BaseRevisionTextPatchEP implements PatchEP {
   public final static Key<Boolean> ourPutBaseRevisionTextKey = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey");
-  public static final Key<List<FilePath>> ourBaseRevisionPaths = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
+  public static final Key<Map<FilePath, ContentRevision>>
+    ourBaseRevisions = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
   public static final Key<Map<String, String>> ourStoredTexts = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP");
+  private final static Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
 
-  private final ChangeListManager myChangeListManager;
   private final String myBaseDir;
 
   public BaseRevisionTextPatchEP(final Project project) {
     myBaseDir = project.getBasePath();
-    myChangeListManager = ChangeListManager.getInstance(project);
   }
 
   @NotNull
@@ -41,14 +38,14 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
     if (commitContext == null) return null;
     if (Boolean.TRUE.equals(commitContext.getUserData(ourPutBaseRevisionTextKey))) {
-      final File file = new File(myBaseDir, path);
-      FilePath filePathOn = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-      final Change change = myChangeListManager.getChange(filePathOn);
-      List<FilePath> paths = commitContext.getUserData(ourBaseRevisionPaths);
-      if (change == null || change.getBeforeRevision() == null || paths == null || ! paths.contains(filePathOn)) return null;
-
+      File file = new File(myBaseDir, path);
+      FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+      Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
+      if (baseRevisions == null) return null;
+      ContentRevision baseRevision = baseRevisions.get(filePath);
+      if (baseRevision == null) return null;
       try {
-        return change.getBeforeRevision().getContent();
+        return baseRevision.getContent();
       }
       catch (VcsException e) {
         LOG.info(e);

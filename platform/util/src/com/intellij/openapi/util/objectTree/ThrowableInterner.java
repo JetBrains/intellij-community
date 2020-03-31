@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
@@ -6,13 +6,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Please don't look, there's nothing interesting here.
@@ -26,19 +26,10 @@ import java.util.Arrays;
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
 public class ThrowableInterner {
-  private static final WeakInterner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
+  private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
-      String message = throwable.getMessage();
-      if (message != null) {
-        return message.hashCode();
-      }
-      Object[] backtrace = getBacktrace(throwable);
-      if (backtrace != null) {
-        Object[] stack = (Object[])ContainerUtil.find(backtrace, FilteringIterator.instanceOf(Object[].class));
-        return Arrays.hashCode(stack);
-      }
-      return Arrays.hashCode(throwable.getStackTrace());
+      return ThrowableInterner.computeHashCode(throwable);
     }
 
     @Override
@@ -47,7 +38,7 @@ public class ThrowableInterner {
       if (o1 == null || o2 == null) return false;
 
       if (!Comparing.equal(o1.getClass(), o2.getClass())) return false;
-      if (!Comparing.equal(o1.getMessage(), o2.getMessage())) return false;
+      if (!Objects.equals(o1.getMessage(), o2.getMessage())) return false;
       if (!equals(o1.getCause(), o2.getCause())) return false;
       Object[] backtrace1 = getBacktrace(o1);
       Object[] backtrace2 = getBacktrace(o2);
@@ -58,6 +49,23 @@ public class ThrowableInterner {
     }
   });
 
+  public static int computeHashCode(@NotNull Throwable throwable) {
+    String message = throwable.getMessage();
+    if (message != null) {
+      return message.hashCode();
+    }
+    return computeTraceHashCode(throwable);
+  }
+
+  public static int computeTraceHashCode(@NotNull Throwable throwable) {
+    Object[] backtrace = getBacktrace(throwable);
+    if (backtrace != null) {
+      Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
+      return Arrays.hashCode(stack);
+    }
+    return Arrays.hashCode(throwable.getStackTrace());
+  }
+
   private static final Field BACKTRACE_FIELD;
   // can be UNKNOWN if the memory layout or JDK is unknown or ancient so we skip interning altogether, (e.g. jdk <=6)
   // or LUCKILY_NOT_NEEDED when the JDK supports reflection to the "backtrace" field (e.g. jdk 9)
@@ -65,6 +73,7 @@ public class ThrowableInterner {
   private static final int BACKTRACE_FIELD_OFFSET;
   private static final int UNKNOWN = -1;
   private static final int LUCKILY_NOT_NEEDED = -2;
+  private static final int BACKTRACE_INFO_LENGTH;
 
   static {
     BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
@@ -84,6 +93,7 @@ public class ThrowableInterner {
     else {
       BACKTRACE_FIELD_OFFSET = UNKNOWN;
     }
+    BACKTRACE_INFO_LENGTH = SystemInfo.isJavaVersionAtLeast(14, 0, 0) ? 6 : 5;
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
@@ -98,7 +108,7 @@ public class ThrowableInterner {
       return null;
     }
     // obsolete jdk
-    return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
+    return backtrace instanceof Object[] && ((Object[])backtrace).length == BACKTRACE_INFO_LENGTH ? (Object[])backtrace : null;
   }
 
   @NotNull

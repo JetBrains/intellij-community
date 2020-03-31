@@ -15,13 +15,10 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyContinueStatement;
-import com.jetbrains.python.psi.PyFinallyPart;
-import com.jetbrains.python.psi.PyLoopStatement;
-
-import static com.jetbrains.python.PyBundle.message;
 
 /**
  * Annotates misplaced 'break' and 'continue'.
@@ -30,17 +27,14 @@ public class BreakContinueAnnotator extends PyAnnotator {
   @Override
   public void visitPyBreakStatement(final PyBreakStatement node) {
     if (node.getLoopStatement() == null) {
-      getHolder().createErrorAnnotation(node, message("ANN.break.outside.loop"));
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.break.outside.loop")).create();
     }
   }
 
   @Override
   public void visitPyContinueStatement(final PyContinueStatement node) {
     if (node.getLoopStatement() == null) {
-      getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
-    }
-    else if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
-      getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.continue.outside.loop")).create();
     }
   }
 }

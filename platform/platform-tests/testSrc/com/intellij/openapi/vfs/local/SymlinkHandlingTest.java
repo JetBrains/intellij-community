@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.VfsTestUtil;
@@ -31,7 +30,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
   }
 
   @After
@@ -366,8 +365,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     tempDir.getChildren();
     tempDir.refresh(false, true);
-    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() {
-    });
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor<Void>() { });
   }
 
   private static void assertBrokenLink(@NotNull VirtualFile link) {
@@ -387,7 +385,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
 
     Set<String> actualSet = new HashSet<>();
-    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!actualSet.add(file.getPath())) {

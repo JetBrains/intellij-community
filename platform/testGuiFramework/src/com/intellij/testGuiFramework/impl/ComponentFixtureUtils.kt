@@ -446,6 +446,14 @@ fun <C : Container> ContainerFixture<C>.label(labelName: String, timeout: Timeou
   return JLabelFixture(robot(), jbLabel)
 }
 
+fun <C : Container> ContainerFixture<C>.jLabel(labelName: String, timeout: Timeout = defaultTimeout): JLabelFixture {
+  val jbLabel = GuiTestUtil.waitUntilFound(
+    robot(), target() as Container,
+    GuiTestUtilKt.typeMatcher(JLabel::class.java) { it.isShowing && it.text == labelName },
+    timeout)
+  return JLabelFixture(robot(), jbLabel)
+}
+
 /**
  * Find an AsyncProcessIcon component in a current context (gets by receiver) and returns a fixture for it.
  * Indexing processIcon is excluded from this search

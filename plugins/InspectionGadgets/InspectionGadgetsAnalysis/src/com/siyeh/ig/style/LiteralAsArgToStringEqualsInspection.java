@@ -35,13 +35,6 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "literal.as.arg.to.string.equals.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(
@@ -78,7 +71,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Flip method call";
+      return InspectionGadgetsBundle.message("swap.equals.fix.family.name");
     }
 
     @Override
@@ -90,10 +83,10 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
       final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
-      if (qualifier == null || strippedQualifier == null) {
+      if (strippedArgument == null || qualifier == null || strippedQualifier == null) {
         return;
       }
-      CommentTracker tracker = new CommentTracker();
+      final CommentTracker tracker = new CommentTracker();
       tracker.grabComments(qualifier);
       tracker.markUnchanged(strippedQualifier);
       tracker.grabComments(argument);

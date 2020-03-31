@@ -1,10 +1,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryToStringCallInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryToStringCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryToString() {
     doTest();

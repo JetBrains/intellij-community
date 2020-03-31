@@ -39,12 +39,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
+  private static final Logger LOG = Logger.getInstance(GroovyGenerateEqualsHandler.class);
+  private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1];
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateHandler");
   private PsiField[] myEqualsFields = null;
   private PsiField[] myHashCodeFields = null;
   private PsiField[] myNonNullFields = null;
-  private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1];
 
   public GroovyGenerateEqualsHandler() {
     super("");
@@ -52,8 +52,7 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
 
 
   @Override
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     myEqualsFields = null;
     myHashCodeFields = null;
     myNonNullFields = PsiField.EMPTY_ARRAY;

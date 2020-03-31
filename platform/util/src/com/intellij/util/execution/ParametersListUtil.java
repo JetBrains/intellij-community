@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -12,10 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * @author nik
- */
-public class ParametersListUtil {
+public final class ParametersListUtil {
   public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
   public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");
   public static final Function<String, List<String>> COLON_LINE_PARSER = text -> {
@@ -51,21 +48,29 @@ public class ParametersListUtil {
    */
   @NotNull
   public static String join(@NotNull final List<? extends CharSequence> parameters) {
-    return encode(parameters);
+    return join(parameters, ParametersListUtil::escape);
+  }
+
+  /**
+   * @param escapeFunction defines how to handle (quote/escape) special characters in each command line argument
+   * @see ParametersListUtil#join(List)
+   */
+  public static <T extends CharSequence> @NotNull String join(@NotNull List<? extends T> parameters,
+                                                              @NotNull Function<? super T, ? extends CharSequence> escapeFunction) {
+    return StringUtil.join(parameters, escapeFunction, " ");
   }
 
   @NotNull
   public static String join(final String... parameters) {
-    return encode(Arrays.asList(parameters));
+    return join(Arrays.asList(parameters));
   }
 
   /**
    * @see #parse(String)
    */
-  @NotNull
-  public static String[] parseToArray(@NotNull final String string) {
+  public static String @NotNull [] parseToArray(@NotNull final String string) {
     final List<String> params = parse(string);
-    return ArrayUtil.toStringArray(params);
+    return ArrayUtilRt.toStringArray(params);
   }
 
   /**
@@ -105,7 +110,17 @@ public class ParametersListUtil {
 
   @NotNull
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
-    parameterString = parameterString.trim();
+    return parse(parameterString, keepQuotes, supportSingleQuotes, false);
+  }
+
+  @NotNull
+  public static List<String> parse(@NotNull String parameterString,
+                                   boolean keepQuotes,
+                                   boolean supportSingleQuotes,
+                                   boolean keepEmptyParameters) {
+    if (!keepEmptyParameters) {
+      parameterString = parameterString.trim();
+    }
 
     final ArrayList<String> params = new ArrayList<>();
     if (parameterString.isEmpty()) {
@@ -137,7 +152,7 @@ public class ParametersListUtil {
       }
       else if (Character.isWhitespace(ch)) {
         if (!inQuotes) {
-          if (token.length() > 0 || nonEmpty) {
+          if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
             params.add(token.toString());
             token.setLength(0);
             nonEmpty = false;
@@ -158,35 +173,23 @@ public class ParametersListUtil {
       token.append(ch);
     }
 
-    if (token.length() > 0 || nonEmpty) {
+    if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
       params.add(token.toString());
     }
 
     return params;
   }
 
-  @NotNull
-  private static String encode(@NotNull final List<? extends CharSequence> parameters) {
-    if (parameters.isEmpty()) {
-      return "";
-    }
-
-    final StringBuilder buffer = new StringBuilder();
-    final StringBuilder paramBuilder = new StringBuilder();
-    for (CharSequence parameter : parameters) {
-      if (buffer.length() > 0) {
-        buffer.append(' ');
-      }
-
-      paramBuilder.append(parameter);
-      encodeParam(paramBuilder);
-      buffer.append(paramBuilder);
-      paramBuilder.setLength(0);
-    }
-    return buffer.toString();
-  }
-
-  private static void encodeParam(@NotNull StringBuilder builder) {
+  /**
+   * Escapes a single argument. The escaping strategy conforms to the implementation of {@link #parse}
+   * so that the following invariants are held:
+   * <pre>
+   *   assert parse(escape(arg)).size() == 1;
+   *   assert parse(escape(arg)).get(0).equals(arg);
+   * </pre>
+   */
+  public static @NotNull String escape(@NotNull CharSequence argument) {
+    final StringBuilder builder = new StringBuilder(argument);
     StringUtil.escapeQuotes(builder);
     if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
       // don't let a trailing backslash (if any) unintentionally escape the closing quote
@@ -194,5 +197,6 @@ public class ParametersListUtil {
       StringUtil.quote(builder);
       StringUtil.repeatSymbol(builder, '\\', numTrailingBackslashes);
     }
+    return builder.toString();
   }
 }

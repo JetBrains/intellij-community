@@ -18,16 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
 public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProjectPanel, HgProjectConfigurable.HgSettingsHolder> {
-
-  public static final String DISPLAY_NAME = HgVcsMessages.message("hg4idea.mercurial");
-
   @NotNull private final Project myProject;
   @NotNull private final HgSettingsHolder mySettingsHolder;
 
   public HgProjectConfigurable(@NotNull Project project,
                                @NotNull HgGlobalSettings globalSettings,
                                @NotNull HgProjectSettings projectSettings) {
-    super("vcs.Mercurial", DISPLAY_NAME, "project.propVCSSupport.VCSs.Mercurial");
+    super("vcs.Mercurial", getDISPLAY_NAME(), "project.propVCSSupport.VCSs.Mercurial");
     myProject = project;
     mySettingsHolder = new HgSettingsHolder(globalSettings, projectSettings);
   }
@@ -61,5 +58,9 @@ public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProje
     public HgProjectSettings getProjectSettings() {
       return myProjectSettings;
     }
+  }
+
+  public static String getDISPLAY_NAME() {
+    return HgBundle.message("hg4idea.mercurial");
   }
 }

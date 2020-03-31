@@ -4,7 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,21 +17,21 @@ import java.io.OutputStream;
  * In-memory implementation of {@link VirtualFile}.
  */
 public class BinaryLightVirtualFile extends LightVirtualFileBase {
-  private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+  private byte[] myContent = ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
   public BinaryLightVirtualFile(String name) {
-    this(name, ArrayUtil.EMPTY_BYTE_ARRAY);
+    this(name, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
-  public BinaryLightVirtualFile(String name, @NotNull byte[] content) {
+  public BinaryLightVirtualFile(String name, byte @NotNull [] content) {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(String name, FileType fileType, @NotNull byte[] content) {
+  public BinaryLightVirtualFile(String name, FileType fileType, byte @NotNull [] content) {
     this(name, fileType, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(String name, FileType fileType, @NotNull byte[] content, long modificationStamp) {
+  public BinaryLightVirtualFile(String name, FileType fileType, byte @NotNull [] content, long modificationStamp) {
     super(name, fileType, modificationStamp);
     setContent(content);
   }
@@ -54,18 +54,16 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return myContent;
   }
 
-  private void setContent(@NotNull byte[] content) {
+  private void setContent(byte @NotNull [] content) {
     //StringUtil.assertValidSeparators(content);
     myContent = content;
   }
 
-  @NotNull
-  public byte[] getContent() {
+  public byte @NotNull [] getContent() {
     return myContent;
   }
 

@@ -27,6 +27,5 @@ public interface PsiDeclarationStatement extends PsiStatement{
    * @return the array of elements, which can contain elements of types {@link PsiLocalVariable} or
    * {@link PsiClass} (and possibly other types).
    */
-  @NotNull
-  PsiElement[] getDeclaredElements();
+  PsiElement @NotNull [] getDeclaredElements();
 }

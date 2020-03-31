@@ -108,9 +108,9 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   /**
-   * @deprecated use com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks
+   * @deprecated use {@link com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks(Project, ProjectSystemId, String)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   @NotNull
   public Map<String, Collection<ExternalTaskPojo>> getAvailableTasks() {

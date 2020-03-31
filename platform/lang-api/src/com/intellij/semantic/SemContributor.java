@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class SemContributor {
-  public static final ExtensionPointName<SemContributorEP> EP_NAME = new ExtensionPointName<>("com.intellij.semContributor");
+  static final ExtensionPointName<SemContributorEP> EP_NAME = new ExtensionPointName<>("com.intellij.semContributor");
 
   public abstract void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project);
 }

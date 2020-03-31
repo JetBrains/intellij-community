@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,19 +17,22 @@ import java.util.List;
 /**
  * An extension that enumerates classes defining stub element types for all languages. Index infrastructure needs
  * their names to work correctly, so they're loaded via this extension when necessary.<p></p>
- *
+ * <p>
  * To speed up IDE loading, it's recommended that this extension is used for interfaces containing only
  * {@link IStubElementType} (or {@link ObjectStubSerializer}) constants,
  * and all other language's element types are kept in a separate interface that can be loaded later.
+ * <p>
+ * Also consider specifying {@link #externalIdPrefix} for further speedup.
  *
  * @author yole
  */
 public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubElementTypeHolderEP");
+  private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
 
   public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = ExtensionPointName.create("com.intellij.stubElementTypeHolder");
 
   @Attribute("class")
+  @RequiredElement
   public String holderClass;
 
   /**
@@ -76,11 +66,11 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
         }
         return result;
       } else {
-        findClass(holderClass);
+        findExtensionClass(holderClass);
       }
     }
     catch (ClassNotFoundException e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
     }
     return Collections.emptyList();
   }
@@ -89,13 +79,9 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
    * @deprecated please don't use this extension to ensure something is initialized as a side effect of stub element type loading,
    * create your own narrow-scoped extension instead
    */
+  @Deprecated
   public void initialize() {
-    try {
-      findClass(holderClass);
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
+    findClassNoExceptions(holderClass);
   }
 
   @Override

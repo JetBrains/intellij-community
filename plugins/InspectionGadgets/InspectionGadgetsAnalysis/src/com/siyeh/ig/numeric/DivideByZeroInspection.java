@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -35,19 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DivideByZeroInspection extends BaseInspection {
-  private static final LongRangeSet ZERO_RANGE = LongRangeSet.point(0);
 
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
     return "divzero";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("divide.by.zero.display.name");
   }
 
   @Override
@@ -116,8 +110,9 @@ public class DivideByZeroInspection extends BaseInspection {
       final double constantValue = ((Double)value).doubleValue();
       return constantValue == 0.0;
     }
-    LongRangeSet range = CommonDataflow.getExpressionFact(expression, DfaFactType.RANGE);
-    return ZERO_RANGE.equals(range);
+    DfType dfType = CommonDataflow.getDfType(expression);
+    Number val = DfConstantType.getConstantOfType(dfType, Number.class);
+    return val != null && val.doubleValue() == 0.0;
   }
 
   private static class ReplaceWithNaNFix extends InspectionGadgetsFix {
@@ -135,7 +130,7 @@ public class DivideByZeroInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'NaN'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "NaN");
     }
   }
 }

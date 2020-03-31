@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -84,18 +84,19 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
 
       @Override
       public void evaluationError(String message) {
-        final String msg = value != null? message + " " + DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
+        final String msg = value != null ? message + " " + JavaDebuggerBundle
+          .message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
         valueDescriptor.setValueLabelFailed(new EvaluateException(msg, null));
         labelListener.labelChanged();
       }
     });
-    return XDebuggerUIConstants.COLLECTING_DATA_MESSAGE;
+    return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
   @NotNull
   @Override
   public String getLinkText() {
-    return DebuggerBundle.message("message.node.toString");
+    return JavaDebuggerBundle.message("message.node.toString");
   }
 
   public boolean isUseClassFilters() {
@@ -127,10 +128,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return overridesToString(type);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      Method toStringMethod = ((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;");
+      Method toStringMethod = DebuggerUtils.findMethod((ReferenceType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;

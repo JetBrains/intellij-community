@@ -97,9 +97,7 @@ public class HighlightNamesUtil {
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(elementToHighlight, PsiMethodCallExpression.class);
     if (methodCallExpression != null) {
       PsiElement qualifier = methodCallExpression.getMethodExpression().getQualifier();
-      if (qualifier == null || qualifier instanceof PsiThisExpression) {
-        return true;
-      }
+      return qualifier == null || qualifier instanceof PsiThisExpression;
     }
     return false;
   }
@@ -159,7 +157,7 @@ public class HighlightNamesUtil {
     }
     if (variable instanceof PsiField) {
       TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
@@ -306,8 +304,11 @@ public class HighlightNamesUtil {
     TextRange textRange = element.getTextRange();
     if (textRange == null) return 0;
     PsiAnnotation lastAnnotation = null;
-    for (PsiElement child : element.getChildren()) {
-      if (child instanceof PsiAnnotation) lastAnnotation = (PsiAnnotation)child;
+    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof PsiAnnotation) {
+        lastAnnotation = (PsiAnnotation)child;
+        break;
+      }
     }
     if (lastAnnotation == null) {
       return textRange.getStartOffset();
@@ -323,7 +324,7 @@ public class HighlightNamesUtil {
     return textRange.getStartOffset();
   }
 
-  static HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+  static @NotNull HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
     PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
     TextRange range;
     if (referenceNameElement == null) {

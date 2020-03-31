@@ -34,7 +34,7 @@ import java.util.zip.CRC32;
  * @author Dmitry Avdeev
  */
 public class IdeaWin32 {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");
+  private static final Logger LOG = Logger.getInstance(IdeaWin32.class);
   private static final boolean TRACE_ENABLED = LOG.isTraceEnabled();
 
   private static final IdeaWin32 ourInstance;
@@ -120,8 +120,7 @@ public class IdeaWin32 {
     }
   }
 
-  @Nullable
-  public FileInfo[] listChildren(@NotNull String path) {
+  public FileInfo @Nullable [] listChildren(@NotNull String path) {
     path = path.replace('/', '\\');
     if (TRACE_ENABLED) {
       LOG.trace("list(" + path + ")");

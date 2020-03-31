@@ -16,6 +16,7 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -47,7 +49,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   private boolean myPasteEnabled = false;
 
   public EnvVariablesTable() {
-    getTableView().getEmptyText().setText("No variables");
+    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.variables"));
     AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
     if (copyAction != null) {
       copyAction.registerCustomShortcutSet(copyAction.getShortcutSet(), getTableView()); // no need to add in popup menu
@@ -117,7 +119,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   protected class NameColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public NameColumnInfo() {
-      super("Name");
+      super(ExecutionBundle.message("env.variable.column.name.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {
@@ -141,11 +143,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     protected String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
+    @NotNull
+    @Override
+    public TableCellEditor getEditor(EnvironmentVariable variable) {
+      return new DefaultCellEditor(new JTextField());
+    }
   }
 
   protected class ValueColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public ValueColumnInfo() {
-      super("Value");
+      super(ExecutionBundle.message("env.variable.column.value.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {
@@ -174,7 +181,6 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @Override
     public TableCellEditor getEditor(EnvironmentVariable variable) {
       StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
-      editor.setClickCountToStart(1);
       return editor;
     }
   }
@@ -195,6 +201,20 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
+      TableView<EnvironmentVariable> view = getTableView();
+      if (view.isEditing()) {
+        int row = view.getEditingRow();
+        int column = view.getEditingColumn();
+        if (row < 0 || column < 0) {
+          row = view.getSelectedRow();
+          column = view.getSelectedColumn();
+        }
+        if (row >= 0 && column >= 0) {
+          JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
+          CopyPasteManager.getInstance().setContents(new StringSelection(textField.getSelectedText()));
+        }
+        return;
+      }
       stopEditing();
       StringBuilder sb = new StringBuilder();
       List<EnvironmentVariable> variables = getSelection();
@@ -221,9 +241,12 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
       String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      if (StringUtil.isEmpty(content)) {
+        return;
+      }
       Map<String, String> map = parseEnvsFromText(content);
-      if (map.isEmpty() && !StringUtil.isEmpty(content)) {
-        TableView<EnvironmentVariable> view = getTableView();
+      TableView<EnvironmentVariable> view = getTableView();
+      if ((view.isEditing() || map.isEmpty())) {
         int row = view.getEditingRow();
         int column = view.getEditingColumn();
         if (row < 0 || column < 0) {
@@ -231,13 +254,23 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           column = view.getSelectedColumn();
         }
         if (row >= 0 && column >= 0) {
-          view.stopEditing();
-          view.getModel().setValueAt(content, row, column);
+          TableCellEditor editor = view.getCellEditor();
+          if (editor != null) {
+            Component component = ((DefaultCellEditor)editor).getComponent();
+            if (component instanceof JTextField) {
+              JTextField textField = (JTextField)component;
+              try {
+                textField.getDocument().insertString(textField.getCaretPosition(), content, null);
+              }
+              catch (BadLocationException e) {
+                //just ignore, paste failed
+              }
+            }
+          }
         }
         return;
       }
       stopEditing();
-      removeSelected();
       List<EnvironmentVariable> parsed = new ArrayList<>();
       for (Map.Entry<String, String> entry : map.entrySet()) {
         parsed.add(new EnvironmentVariable(entry.getKey(), entry.getValue(), false));
@@ -260,9 +293,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     }
   }
 
-  @NotNull
   @Override
-  protected AnActionButton[] createExtraActions() {
+  protected AnActionButton @NotNull [] createExtraActions() {
     AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

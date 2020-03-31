@@ -4,17 +4,14 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ObjectUtils.nullizeByCondition;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class InlineMethodSpecialization {

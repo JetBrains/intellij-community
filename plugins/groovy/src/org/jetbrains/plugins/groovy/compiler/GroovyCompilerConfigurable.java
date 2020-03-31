@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.options.JavaCompilersTab;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -25,23 +13,35 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.EditorKit;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -52,6 +52,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   private JPanel myExcludesPanel;
   private JBCheckBox myInvokeDynamicSupportCB;
   private TextFieldWithBrowseButton myConfigScriptPath;
+  private JPanel myPathPanel;
 
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
@@ -61,21 +62,20 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myConfig = GroovyCompilerConfiguration.getInstance(project);
     myExcludes = createExcludedConfigurable(project);
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
-    myConfigScriptPath.addBrowseFolderListener(null, "Select path to Groovy compiler configscript", null, descriptor);
+    myExcludesPanel.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("settings.compiler.exclude.from.stub.generation"), false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   public ExcludedEntriesConfigurable getExcludes() {
     return myExcludes;
   }
 
-  private ExcludedEntriesConfigurable createExcludedConfigurable(final Project project) {
+  private ExcludedEntriesConfigurable createExcludedConfigurable(@NotNull Project project) {
     final ExcludesConfiguration configuration = myConfig.getExcludeFromStubGeneration();
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) && !index.isExcluded(file);
+        return super.isFileVisible(file, showHiddenFiles) && (index == null || !index.isExcluded(file));
       }
     };
     descriptor.setRoots(ContainerUtil.concat(ContainerUtil.<Module, List<VirtualFile>>map(ModuleManager.getInstance(project).getModules(),
@@ -92,9 +92,8 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Groovy Compiler";
+    return GroovyBundle.message("configurable.GroovyCompilerConfigurable.display.name");
   }
 
   @Override
@@ -110,7 +109,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
+    return !Objects.equals(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
            myInvokeDynamicSupportCB.isSelected() != myConfig.isInvokeDynamic() ||
            myExcludes.isModified();
   }
@@ -140,4 +139,63 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     return FileUtil.toSystemIndependentName(myConfigScriptPath.getText());
   }
 
+  private void createUIComponents() {
+    myPathPanel = new JPanel(new GridBagLayout());
+    GridBag gb = new GridBag().setDefaultWeightX(1.0).
+      setDefaultAnchor(GridBagConstraints.LINE_START).
+      setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+    myConfigScriptPath = new TextFieldWithBrowseButton();
+    myConfigScriptPath.addBrowseFolderListener(null, GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"), null, descriptor);
+
+    myPathPanel.add(createTopLabel(), gb.nextLine());
+    myPathPanel.add(UI.PanelFactory.panel(myConfigScriptPath).withLabel(GroovyBundle.message("settings.compiler.path.to.configscript")).createPanel(), gb.nextLine().insetTop(13));
+
+    String cbText = GroovyBundle.message("settings.compiler.invoke.dynamic.support");
+    myInvokeDynamicSupportCB = new JBCheckBox(UIUtil.removeMnemonic(cbText));
+    myInvokeDynamicSupportCB.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(cbText));
+    myPathPanel.add(myInvokeDynamicSupportCB, gb.nextLine().insetTop(8));
+  }
+
+  private static JComponent createTopLabel() {
+    JEditorPane tipComponent = new JEditorPane();
+    tipComponent.setContentType("text/html");
+    tipComponent.setEditable(false);
+    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+
+    EditorKit kit = tipComponent.getEditorKit();
+    if (kit instanceof HTMLEditorKit) {
+      StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
+
+      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
+      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
+      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
+      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
+      //css.addRule("body {background-color:#" + ColorUtil.toHex(info.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+    }
+
+    if (tipComponent.getCaret() instanceof DefaultCaret) {
+      ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+    }
+
+    tipComponent.setCaretPosition(0);
+    tipComponent.setText(GroovyBundle.message("settings.compiler.alternative"));
+    tipComponent.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(tipComponent));
+        if (allSettings != null) {
+          Configurable javacConfigurable = allSettings.find(JavaCompilersTab.class);
+          if (javacConfigurable != null) {
+            allSettings.select(javacConfigurable);
+          }
+        }
+      }
+    });
+
+    tipComponent.setBorder(null);
+    tipComponent.setOpaque(false);
+
+    return tipComponent;
+  }
 }

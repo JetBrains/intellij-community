@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.File;
 
@@ -27,7 +27,7 @@ public class HgMoveTest extends HgSingleUserTest {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"));
   }
 
   @Test
@@ -39,7 +39,7 @@ public class HgMoveTest extends HgSingleUserTest {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
   }
 
   @Test
@@ -52,7 +52,7 @@ public class HgMoveTest extends HgSingleUserTest {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(dir, parent2);
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "zzz", "a.txt"), HgTestOutputParser.removed("com", "zzz", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "zzz", "a.txt"), HgTestOutputParser.removed("com", "zzz", "a.txt"));
   }
 
   @Test
@@ -62,12 +62,12 @@ public class HgMoveTest extends HgSingleUserTest {
     File unversionedFile = new File(parent1.getPath(), "a.txt");
     VirtualFile file = makeFile(unversionedFile);
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("com", "a.txt"));
+    verifyStatus(HgTestOutputParser.unknown("com", "a.txt"));
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("org", "a.txt"));
+    verifyStatus(HgTestOutputParser.unknown("org", "a.txt"));
   }
 
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -9,47 +9,51 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseComponent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import gnu.trove.THashSet
 import java.util.function.Function
 
-class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : BaseComponent {
+class QuickListsManager {
   private val mySchemeManager: SchemeManager<QuickList>
+  private val myActionManager by lazy(LazyThreadSafetyMode.NONE) { ActionManager.getInstance() }
 
   init {
-    mySchemeManager = schemeManagerFactory.create("quicklists",
-        object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
-          override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
-                                    name: String,
-                                    attributeProvider: Function<in String, String?>,
-                                    isBundled: Boolean): QuickList {
-            val item = QuickList()
-            item.readExternal(dataHolder.read())
-            dataHolder.updateDigest(item)
-            return item
-          }
-        }, presentableName = IdeBundle.message("quick.lists.presentable.name"))
-  }
-
-  companion object {
-    @JvmStatic
-    val instance: QuickListsManager
-      get() = ApplicationManager.getApplication().getComponent(QuickListsManager::class.java)
-  }
-
-  override fun initComponent() {
+    mySchemeManager = SchemeManagerFactory.getInstance().create("quicklists",
+                                                                object : LazySchemeProcessor<QuickList, QuickList>(
+                                                                  QuickList.DISPLAY_NAME_TAG) {
+                                                                  override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
+                                                                                            name: String,
+                                                                                            attributeProvider: Function<in String, String?>,
+                                                                                            isBundled: Boolean): QuickList {
+                                                                    val item = QuickList()
+                                                                    item.readExternal(dataHolder.read())
+                                                                    dataHolder.updateDigest(item)
+                                                                    return item
+                                                                  }
+                                                                }, presentableName = IdeBundle.message("quick.lists.presentable.name"))
     for (provider in BundledQuickListsProvider.EP_NAME.extensionList) {
       for (path in provider.bundledListsRelativePaths) {
         mySchemeManager.loadBundledScheme(path, provider)
       }
     }
     mySchemeManager.loadSchemes()
-    registerActions()
+  }
+
+  internal class QuickListActionCustomizer : ActionConfigurationCustomizer {
+    override fun customize(manager: ActionManager) {
+      instance.registerActions(manager)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    val instance: QuickListsManager
+      get() = service()
   }
 
   val schemeManager: SchemeManager<QuickList>
@@ -60,20 +64,21 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
       return mySchemeManager.allSchemes.toTypedArray()
     }
 
-  private fun registerActions() {
+  private fun registerActions(actionManager: ActionManager) {
     // to prevent exception if 2 or more targets have the same name
     val registeredIds = THashSet<String>()
     for (scheme in mySchemeManager.allSchemes) {
       val actionId = scheme.actionId
       if (registeredIds.add(actionId)) {
-        myActionManager.registerAction(actionId, InvokeQuickListAction(scheme))
+        actionManager.registerAction(actionId, InvokeQuickListAction(scheme))
       }
     }
   }
 
   private fun unregisterActions() {
-    for (oldId in myActionManager.getActionIds(QuickList.QUICK_LIST_PREFIX)) {
-      myActionManager.unregisterAction(oldId)
+    val actionManager = myActionManager
+    for (oldId in actionManager.getActionIds(QuickList.QUICK_LIST_PREFIX)) {
+      actionManager.unregisterAction(oldId)
     }
   }
 
@@ -81,7 +86,7 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
   fun setQuickLists(quickLists: List<QuickList>) {
     unregisterActions()
     mySchemeManager.setSchemes(quickLists)
-    registerActions()
+    registerActions(myActionManager)
   }
 }
 

@@ -21,9 +21,6 @@ import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public interface BuildDataPaths {
   File getDataStorageRoot();
 

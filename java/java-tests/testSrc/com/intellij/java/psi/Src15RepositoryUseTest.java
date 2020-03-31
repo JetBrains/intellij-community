@@ -3,7 +3,6 @@ package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -13,9 +12,9 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.AnnotatedPackagesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +26,8 @@ import java.util.Set;
 /**
  * @author dsl
  */
-@PlatformTestCase.WrapInCommand
-public class Src15RepositoryUseTest extends PsiTestCase {
+@HeavyPlatformTestCase.WrapInCommand
+public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -287,12 +286,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   public void testAnnotationIndex() {
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(new VirtualFileFilter() {
-      @Override
-      public boolean accept(final VirtualFile file) {
-        return !"package-info.java".equals(file.getName());
-      }
-    }, getTestRootDisposable());
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(file -> !"package-info.java".equals(file.getName()), getTestRootDisposable());
 
     final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());

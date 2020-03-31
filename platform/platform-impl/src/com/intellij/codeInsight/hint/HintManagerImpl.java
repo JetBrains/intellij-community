@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -30,7 +27,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +87,7 @@ public class HintManagerImpl extends HintManager {
     return (HintManagerImpl)ServiceManager.getService(HintManager.class);
   }
 
-  public HintManagerImpl(@NotNull ProjectManager projectManager) {
+  public HintManagerImpl() {
     myEditorManagerListener = new MyEditorManagerListener();
 
     myCaretMoveListener = new CaretListener() {
@@ -108,7 +105,7 @@ public class HintManagerImpl extends HintManager {
     };
 
     final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
-    for (Project project : projectManager.getOpenProjects()) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       projectManagerListener.projectOpened(project);
     }
 
@@ -132,31 +129,34 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new DocumentListener() {
+    myEditorDocumentListener = new BulkAwareDocumentListener() {
       @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-        HintInfo[] infos = getHintsStackArray();
-        for (HintInfo info : infos) {
-          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
-            if (info.hint.isVisible()) {
-              info.hint.hide();
-            }
-            myHintsStack.remove(info);
-          }
-        }
+      public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+        if (event.getOldLength() != 0 || event.getNewLength() != 0) onDocumentChange();
+      }
 
-        if (myHintsStack.isEmpty()) {
-          updateLastEditor(null);
-        }
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        onDocumentChange();
       }
     };
   }
 
-  @Override
-  public boolean isHint(Window component) {
-    return myHintsStack.contains(component);
+  private void onDocumentChange() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    HintInfo[] infos = getHintsStackArray();
+    for (HintInfo info : infos) {
+      if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
+        if (info.hint.isVisible()) {
+          info.hint.hide();
+        }
+        myHintsStack.remove(info);
+      }
+    }
+
+    if (myHintsStack.isEmpty()) {
+      updateLastEditor(null);
+    }
   }
 
   /**
@@ -173,8 +173,7 @@ public class HintManagerImpl extends HintManager {
     myRequestFocusForNextHint = requestFocus;
   }
 
-  @NotNull
-  private HintInfo[] getHintsStackArray() {
+  private HintInfo @NotNull [] getHintsStackArray() {
     return myHintsStack.toArray(new HintInfo[0]);
   }
 
@@ -351,7 +350,7 @@ public class HintManagerImpl extends HintManager {
 
     myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
+      Timer timer = TimerUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
       timer.setRepeats(false);
       timer.start();
     }
@@ -390,7 +389,7 @@ public class HintManagerImpl extends HintManager {
     }, flags, false);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
+      Timer timer = TimerUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
       timer.setRepeats(false);
       timer.start();
     }
@@ -401,18 +400,23 @@ public class HintManagerImpl extends HintManager {
     JComponent externalComponent = getExternalComponent(editor);
     Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
 
-    if (hint.isRealPopup()) {
-      final Point editorCorner = editor.getComponent().getLocation();
-      SwingUtilities.convertPointToScreen(editorCorner, externalComponent);
+    if (hint.isRealPopup() || hintInfo.isPopupForced()) {
       final Point point = new Point(p);
       SwingUtilities.convertPointToScreen(point, externalComponent);
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
 
+      p = new Point(p);
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x -= size.width;
+      }
       SwingUtilities.convertPointToScreen(p, externalComponent);
       final Rectangle rectangle = new Rectangle(p, size);
       ScreenUtil.moveToFit(rectangle, editorScreen, null);
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, externalComponent);
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x += size.width;
+      }
     }
     else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);
@@ -774,17 +778,25 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideQuestionHint();
-    TextAttributes attributes = new TextAttributes();
-    attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
-    attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-    final RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter;
+    if (offset1 != offset2) {
+      TextAttributes attributes = new TextAttributes();
+      attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
+      attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+      highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    else {
+      highlighter = null;
+    }
 
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(@NotNull EventObject event) {
         hint.removeHintListener(this);
-        highlighter.dispose();
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;

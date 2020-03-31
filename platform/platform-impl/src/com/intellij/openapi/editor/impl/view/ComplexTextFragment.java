@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
@@ -21,12 +22,11 @@ class ComplexTextFragment extends TextFragment {
 
   @NotNull
   private final GlyphVector myGlyphVector;
-  @Nullable
-  private final short[] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
+  private final short @Nullable [] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
     super(end - start);
     assert start >= 0;
     assert end <= lineChars.length;
@@ -128,28 +128,30 @@ class ComplexTextFragment extends TextFragment {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     assert startColumn >= 0;
     assert endColumn <= myCharPositions.length;
     assert startColumn < endColumn;
 
-    Color color = g.getColor();
-    assert color != null;
-    float newX = x - getX(startColumn) + getX(endColumn);
-    if (lastFragment == this && lastEndColumn == startColumn && lastEndX == x && lastY == y && color.equals(lastColor)) {
-      lastEndColumn = endColumn;
-      lastEndX = newX;
-      return;
-    }
+    return g -> {
+      Color color = g.getColor();
+      assert color != null;
+      float newX = x - getX(startColumn) + getX(endColumn);
+      if (lastFragment == this && lastEndColumn == startColumn && lastEndX == x && lastY == y && color.equals(lastColor)) {
+        lastEndColumn = endColumn;
+        lastEndX = newX;
+        return;
+      }
 
-    flushDrawingCache(g);
-    lastFragment = this;
-    lastStartColumn = startColumn;
-    lastEndColumn = endColumn;
-    lastColor = color;
-    lastStartX = x;
-    lastEndX = newX;
-    lastY = y;
+      flushDrawingCache(g);
+      lastFragment = this;
+      lastStartColumn = startColumn;
+      lastEndColumn = endColumn;
+      lastColor = color;
+      lastStartX = x;
+      lastEndX = newX;
+      lastY = y;
+    };
   }
 
   private void doDraw(Graphics2D g, float x, float y, int startColumn, int endColumn) {

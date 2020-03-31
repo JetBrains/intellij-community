@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -13,7 +13,9 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
@@ -22,7 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListScope;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -35,7 +37,7 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PlatformUtils;
@@ -54,7 +56,9 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
 import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
 import static com.intellij.util.ui.UIUtil.invokeLaterIfNeeded;
@@ -67,7 +71,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
   private ScopeViewTreeModel myTreeModel;
-  private Comparator<? super NodeDescriptor> myComparator;
+  private Comparator<? super NodeDescriptor<?>> myComparator;
   private LinkedHashMap<String, NamedScopeFilter> myFilters;
   private JScrollPane myScrollPane;
 
@@ -118,7 +122,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager.addScopeListener(scopeListener, this);
     myNamedScopeManager.addScopeListener(scopeListener, this);
-    ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
+    project.getMessageBus().connect(this).subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
         invokeLaterIfNeeded(myDependencyValidationManager::fireScopeListeners);
@@ -137,12 +141,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       @Override
       public void changeListsChanged() {
         if (myTreeModel == null) return; // not initialized yet
-        NamedScopeFilter filter = myTreeModel.getFilter();
-        if (filter != null && filter.getScope() instanceof ChangeListScope) {
-          myTreeModel.setFilter(filter);
-        }
+        myTreeModel.updateScopeIf(ChangeListScope.class);
       }
-    }, this);
+    });
     installComparator();
   }
 
@@ -213,6 +214,14 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
       new TreeSpeedSearch(myTree);
       enableDnD();
+      myTree.getEmptyText()
+        .setText(IdeBundle.message("scope.view.empty.text"))
+        .appendSecondaryText(IdeBundle.message("scope.view.empty.link"), LINK_PLAIN_ATTRIBUTES, event -> {
+          for (NamedScopeFilter filter : getFilters()) {
+            selectScopeView(filter.toString());
+            return;
+          }
+        });
     }
     if (myScrollPane == null) {
       myScrollPane = createScrollPane(myTree, true);
@@ -245,7 +254,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
-    if (myTreeModel == null) return; // not initialized yeta
+    if (myTreeModel == null) return; // not initialized yet
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     NamedScopeFilter current = myTreeModel.getFilter();
     if (select(element, file, requestFocus, current)) return;
@@ -254,12 +263,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     }
   }
 
+  private void selectScopeView(String subId) {
+    ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
+    if (view != null) view.changeView(getId(), subId);
+  }
+
   private boolean select(PsiElement element, VirtualFile file, boolean requestFocus, NamedScopeFilter filter) {
     if (filter == null || !filter.accept(file)) return false;
     String subId = filter.toString();
     if (!Objects.equals(subId, getSubId())) {
       if (!requestFocus) return true;
-      ProjectView.getInstance(myProject).changeView(getId(), subId);
+      selectScopeView(subId);
     }
     LOG.debug("select element: ", element, " in file: ", file);
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
@@ -305,12 +319,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     myTreeModel.setFilter(getFilter(getSubId()));
   }
 
-  @NotNull
   @Override
-  public String[] getSubIds() {
+  public String @NotNull [] getSubIds() {
     LinkedHashMap<String, NamedScopeFilter> map = myFilters;
     if (map == null || map.isEmpty()) return EMPTY_STRING_ARRAY;
-    return ArrayUtil.toStringArray(map.keySet());
+    return ArrayUtilRt.toStringArray(map.keySet());
   }
 
   @NotNull
@@ -328,15 +341,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
-    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
-    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
-    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
-  }
-
-  @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myTreeModel != null) {
       myTreeModel.setComparator(comparator);
     }
@@ -380,5 +385,35 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       if (old != null) LOG.warn("DUPLICATED: " + filter);
     }
     return map;
+  }
+
+  @Override
+  public boolean supportsAbbreviatePackageNames() {
+    return false;
+  }
+
+  @Override
+  public boolean supportsCompactDirectories() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsFlattenModules() {
+    return PlatformUtils.isIntelliJ() && isQualifiedModuleNamesEnabled(myProject) && ProjectView.getInstance(myProject).isShowModules(ID);
+  }
+
+  @Override
+  public boolean supportsHideEmptyMiddlePackages() {
+    return ProjectView.getInstance(myProject).isFlattenPackages(ID);
+  }
+
+  @Override
+  public boolean supportsShowExcludedFiles() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowModules() {
+    return PlatformUtils.isIntelliJ();
   }
 }

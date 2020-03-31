@@ -45,6 +45,12 @@
   <item name="java.net.URLConnection java.lang.String getHeaderField(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.net.URLConnection void setRequestProperty(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.net.URLConnection void setRequestProperty(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.net.URLEncoder java.lang.String encode(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

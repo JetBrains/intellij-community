@@ -264,6 +264,6 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   @Nullable
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Function;
+    return AllIcons.Nodes.Lambda;
   }
 }

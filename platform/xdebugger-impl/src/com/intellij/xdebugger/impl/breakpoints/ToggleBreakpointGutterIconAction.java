@@ -23,9 +23,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 class ToggleBreakpointGutterIconAction extends DumbAwareAction {
   private final XBreakpoint<?> myBreakpoint;
 

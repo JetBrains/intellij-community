@@ -6,9 +6,10 @@ class ParallelTreeManager(object):
     Manages output tree by building it from flat test names.
     """
 
-    def __init__(self):
+    def __init__(self, offset):
         super(ParallelTreeManager, self).__init__()
-        self._max_node_id = 0
+        self._max_node_id = offset
+        self.offset = offset
         self._branches = dict()  # key is test name as tuple, value is tuple of test_id, parent_id
 
     def _next_node_id(self):
@@ -30,13 +31,13 @@ class ParallelTreeManager(object):
             func_to_open()
             return None
         elif len(test_as_list) == 1:
-            self._branches[tuple(test_as_list)] = (self._next_node_id(), 0)
+            self._branches[tuple(test_as_list)] = (self._next_node_id(), self.offset)
             func_to_open()
             return None
 
         commands = []
 
-        parent_id = 0
+        parent_id = self.offset
         for i in range(len(test_as_list)):
             tmp_parent_as_list = test_as_list[0:i + 1]
             try:

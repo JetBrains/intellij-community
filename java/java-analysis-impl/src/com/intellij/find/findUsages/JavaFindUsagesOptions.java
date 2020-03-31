@@ -15,7 +15,8 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
@@ -26,7 +27,7 @@ import java.util.LinkedHashSet;
 /**
  * @author peter
  */
-public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
+public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
   public boolean isSkipImportStatements;
 
   public JavaFindUsagesOptions(@NotNull Project project) {
@@ -39,6 +40,30 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     super(searchScope);
 
     isUsages = true;
+  }
+
+  @Override
+  public final void setDefaults(@NotNull Project project) {
+    setDefaults(PropertiesComponent.getInstance(project), findPrefix());
+  }
+
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    isSearchForTextOccurrences = properties.getBoolean(prefix + "isSearchForTextOccurrences", true);
+    isUsages = properties.getBoolean(prefix + "isUsages", true);
+  }
+
+  @Override
+  public final void storeDefaults(@NotNull Project project) {
+    storeDefaults(PropertiesComponent.getInstance(project), findPrefix());
+  }
+
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    properties.setValue(prefix + "isUsages", isUsages, true);
+    properties.setValue(prefix + "isSearchForTextOccurrences", isSearchForTextOccurrences, true);
+  }
+
+  private String findPrefix() {
+    return getClass().getSimpleName() + ".";
   }
 
   @Override
@@ -59,21 +84,19 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
 
   protected void addUsageTypes(@NotNull LinkedHashSet<? super String> to) {
     if (isUsages) {
-      to.add(FindBundle.message("find.usages.panel.title.usages"));
+      to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
   }
 
   @NotNull
   @Override
   public final String generateUsagesString() {
-    String separator = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
+    String separator = " " + AnalysisBundle.message("find.usages.panel.title.separator") + " ";
     LinkedHashSet<String> strings = new LinkedHashSet<>();
     addUsageTypes(strings);
     if (strings.isEmpty()) {
-      strings.add(FindBundle.message("find.usages.panel.title.usages"));
+      strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
     return StringUtil.join(strings, separator);
   }
-
-
 }

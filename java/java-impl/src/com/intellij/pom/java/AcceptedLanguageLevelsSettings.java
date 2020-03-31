@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -31,9 +33,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.*;
 
 @State(
   name = "AcceptedLanguageLevels",
@@ -43,6 +44,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
 
+  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Java Preview Features");
+  private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
+
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();
 
@@ -50,6 +54,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       if (!project.isDisposed()) {
+        TreeSet<LanguageLevel> previewLevels = new TreeSet<>();
         MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
         LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
         if (projectExtension != null) {
@@ -57,13 +62,21 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           if (!isLanguageLevelAccepted(level)) {
             unacceptedLevels.putValue(level, null);
           }
+          if (level.isPreview()) {
+            previewLevels.add(level);
+          }
         }
         for (Module module : ModuleManager.getInstance(project).getModules()) {
           LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
           if (moduleExtension != null) {
             LanguageLevel level = moduleExtension.getLanguageLevel();
-            if (level != null && !isLanguageLevelAccepted(level)) {
-              unacceptedLevels.putValue(level, module);
+            if (level != null) {
+              if (!isLanguageLevelAccepted(level)) {
+                unacceptedLevels.putValue(level, module);
+              }
+              if (level.isPreview()) {
+                previewLevels.add(level);
+              }
             }
           }
         }
@@ -72,8 +85,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
           for (LanguageLevel level : unacceptedLevels.keySet()) {
             NOTIFICATION_GROUP.createNotification(
-              EXPERIMENTAL_FEATURE_ALERT,
-              getLegalNotice(level) + "<br/><a href='accept'>Accept</a>",
+              JavaBundle.message("java.preview.features.alert.title"),
+              JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
+                                        "<br/><br/><a href=''accept''>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -84,6 +98,25 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
                 }
               }).notify(project);
           }
+        }
+        if (!previewLevels.isEmpty() &&
+            !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+          Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
+          assert languageLevel.isPresent();
+          int previewFeature = languageLevel.get().toJavaVersion().feature;
+          Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
+            JavaBundle.message("java.preview.features.notification.title"),
+            JavaBundle.message("java.preview.features.notification.message"),
+            JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+            NotificationType.WARNING);
+          notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);
+              notification.expire();
+            }
+          });
+          notification.notify(project);
         }
       }
     });
@@ -156,7 +189,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static boolean showDialog(Component parent, LanguageLevel level) {
-    int result = LegalNoticeDialog.build(EXPERIMENTAL_FEATURE_ALERT, getLegalNotice(level)).withParent(parent).show();
+    int result = LegalNoticeDialog.build(JavaBundle.message("java.preview.features.alert.title"),
+                                         JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "")).withParent(parent).show();
     if (result == DialogWrapper.OK_EXIT_CODE) {
       acceptAndRestore(null, null, level);
       return true;
@@ -184,16 +218,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
         projectExtension.setDefault(false);
       }
     });
-  }
-
-  private static final String EXPERIMENTAL_FEATURE_ALERT = "Experimental Feature Alert";
-
-  private static String getLegalNotice(LanguageLevel level) {
-    return
-      "You must accept the terms of legal notice of the beta Java specification to enable support for " +
-      "\"" + level.getPresentableText() + "\".<br/><br/>" +
-      "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
-      "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
   }
 
   @TestOnly

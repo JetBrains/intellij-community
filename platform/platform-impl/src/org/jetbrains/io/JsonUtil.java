@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import io.netty.buffer.ByteBuf;
@@ -14,13 +13,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class JsonUtil {
+public final class JsonUtil {
   private static final String[] REPLACEMENT_CHARS;
 
   static {
     REPLACEMENT_CHARS = new String[128];
     for (int i = 0; i <= 31; i++) {
-      REPLACEMENT_CHARS[i] = String.format("\\u%04x", (int)i);
+      REPLACEMENT_CHARS[i] = String.format("\\u%04x", i);
     }
     REPLACEMENT_CHARS['"'] = "\\\"";
     REPLACEMENT_CHARS['\\'] = "\\\\";
@@ -113,12 +112,6 @@ public class JsonUtil {
     readListBody(reader, list);
     reader.endArray();
     return list;
-  }
-
-  @NotNull
-  public static Object[] nextArray(@NotNull JsonReaderEx reader) {
-    List<Object> list = nextList(reader);
-    return ArrayUtil.toObjectArray(list);
   }
 
   @NotNull

@@ -7,6 +7,7 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -18,6 +19,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
@@ -47,17 +49,18 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
   @NotNull
   @Override
-  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
-    return createGoToChangeAction(this, onSelected);
+  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+    return createGoToChangeAction(this, onSelected, defaultSelection);
   }
 
   /**
    * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
    */
   @NotNull
-  private static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
-                                                 @NotNull Consumer<? super Integer> onSelected) {
-    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, chain.getIndex()) {
+  private static ChangeGoToChangePopupAction<DiffRequestChain> createGoToChangeAction(@NotNull DiffRequestChain chain,
+                                                                                      @NotNull Consumer<? super Integer> onSelected,
+                                                                                      int defaultSelection) {
+    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain) {
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
@@ -81,8 +84,15 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
       }
 
       @Override
-      protected void onSelected(@Nullable Object object) {
-        onSelected.consume((Integer)object);
+      protected void onSelected(@Nullable ChangesBrowserNode object) {
+        GenericChangesBrowserNode node = ObjectUtils.tryCast(object, GenericChangesBrowserNode.class);
+        onSelected.consume(node != null ? node.getIndex() : null);
+      }
+
+      @Override
+      protected Condition<? super DefaultMutableTreeNode> initialSelection() {
+        return node -> node instanceof GenericChangesBrowserNode &&
+                       ((GenericChangesBrowserNode)node).getIndex() == defaultSelection;
       }
     };
   }
@@ -114,14 +124,20 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     }
   }
 
-  private static class GenericChangesBrowserNode extends ChangesBrowserNode<Object> implements Comparable<GenericChangesBrowserNode> {
+  private static class GenericChangesBrowserNode extends ChangesBrowserNode<FilePath> implements Comparable<GenericChangesBrowserNode> {
     @NotNull private final FilePath myFilePath;
     @NotNull private final FileStatus myFileStatus;
+    private final int myIndex;
 
-    protected GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
-      super(userObject);
+    protected GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, int index) {
+      super(filePath);
       myFilePath = filePath;
       myFileStatus = fileStatus;
+      myIndex = index;
+    }
+
+    private int getIndex() {
+      return myIndex;
     }
 
     @Override
@@ -146,7 +162,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
         appendCount(renderer);
       }
 
-      renderer.setIcon(myFilePath.getFileType(), myFilePath.isDirectory() || !isLeaf());
+      renderer.setIcon(myFilePath, myFilePath.isDirectory() || !isLeaf());
     }
 
     @Override
@@ -173,8 +189,8 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
     @Nullable
     @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
-      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
+    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected, defaultSelection);
     }
   }
 }

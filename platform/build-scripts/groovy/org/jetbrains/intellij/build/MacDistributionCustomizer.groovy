@@ -17,9 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class MacDistributionCustomizer {
   /**
@@ -70,10 +67,12 @@ abstract class MacDistributionCustomizer {
   String additionalDocTypes = ""
 
   /**
-   * List of file extensions (without leading dot) which installer will associate with the product. Note that users won't be able to switch off some
-   * of these associations during installation so include only types of files which users will definitely prefer to open by the product.
+   * Note that users won't be able to switch off some of these associations during installation
+   * so include only types of files which users will definitely prefer to open by the product.
+   *
+   * @see FileAssociation
    */
-  List<String> fileAssociations = []
+  List<FileAssociation> fileAssociations = []
 
   /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
@@ -123,20 +122,6 @@ abstract class MacDistributionCustomizer {
    * @return map propertyName-&gt;propertyValue
    */
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
-
-  /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
-   * If this field has non-null value, {@link #getPathToHelpZip} must be overriden to specify path to archive with help files.
-   */
-  String helpId = null
-
-  /**
-   * Override this method if you need to bundle help with macOS distribution of the product.
-   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
-   */
-  String getPathToHelpZip(BuildContext context) {
-    null
-  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

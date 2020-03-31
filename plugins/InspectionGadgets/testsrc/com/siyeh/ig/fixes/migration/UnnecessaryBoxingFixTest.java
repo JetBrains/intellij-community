@@ -73,12 +73,14 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
                  "double f = (double) 0x123;");
   }
 
+  @SuppressWarnings("OctalInteger")
   public void testOctal() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "float f = Float.valueOf/**/(0123);",
                  "float f = (float) 0123;");
   }
 
+  @SuppressWarnings("OctalInteger")
   public void testOctalDouble() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "double f = Double.valueOf/**/(0123);",

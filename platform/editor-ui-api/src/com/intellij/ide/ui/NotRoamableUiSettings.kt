@@ -3,6 +3,8 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Pair
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
@@ -28,10 +30,10 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = UIUtil.isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
+    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
     if (!fontIsValid) {
       for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (UIUtil.isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
+        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
           state.fontFace = preferredFont
           fontIsValid = true
           break
@@ -86,4 +88,4 @@ private class FontFilter : SerializationFilter {
 }
 
 private val systemFontFaceAndSize: Pair<String, Int>
-  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)
+  get() = JBUIScale.getSystemFontData()

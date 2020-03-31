@@ -3,13 +3,12 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,17 +36,18 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
+@HardwareAgentRequired
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
@@ -92,18 +92,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
-        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    ManagingFS managingFS = ManagingFS.getInstance();
+    NewVirtualFile root = managingFS.findRoot(path, fs);
+    PlatformTestUtil.startPerformanceTest("finding root", 20_000,
+      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
         Collections.nCopies(500, null), null,
         __ -> {
-          for (int i = 0; i < 20_000; i++) {
-            NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
+          for (int i = 0; i < 100_000; i++) {
+            NewVirtualFile rootJar = managingFS.findRoot(path, fs);
             assertNotNull(rootJar);
             assertSame(root, rootJar);
           }
           return true;
-        })).assertTiming();
+        })).usesAllCPUCores().assertTiming();
   }
 
   @Test
@@ -119,7 +120,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<RuntimeException>() {
         private VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();
@@ -148,7 +149,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).attempts(10).assertTiming();
     });
   }
 
@@ -182,10 +183,10 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void testAsyncRefresh() throws Throwable {
-    Ref<Throwable> ex = Ref.create();
+    AtomicReference<Throwable> ex = new AtomicReference<>();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(),
-      o -> {
+      Collections.nCopies(JobSchedulerImpl.getJobPoolParallelism(), null), null,
+      __ -> {
         try {
           doAsyncRefreshTest();
         }
@@ -195,49 +196,49 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         return true;
       });
 
-    if (!ex.isNull()) throw ex.get();
-    if (!success) fail("!success");
+    if (ex.get() != null) throw ex.get();
+    assertTrue(success);
   }
 
   private void doAsyncRefreshTest() throws Exception {
-    int N = 1_000;
-    byte[] data = "xxx".getBytes(StandardCharsets.UTF_8);
+    byte[] xxx = "xxx".getBytes(StandardCharsets.UTF_8);
 
     File temp = myTempDir.newFolder();
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);
     assertNotNull(vTemp);
 
-    VirtualFile[] children = new VirtualFile[N];
-    long[] timestamp = new long[N];
+    int N = 1_000;
+    VirtualFile[] vFiles = new VirtualFile[N];
+    long[] ioTimestamp = new long[N];
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      VirtualFile child = fs.refreshAndFindFileByIoFile(file);
-      assertNotNull(child);
-      children[i] = child;
-      timestamp[i] = file.lastModified();
+      File ioFile = new File(temp, i + ".txt");
+      FileUtil.writeToFile(ioFile, xxx);
+      VirtualFile vFile = fs.refreshAndFindFileByIoFile(ioFile);
+      assertNotNull(vFile);
+      vFiles[i] = vFile;
+      ioTimestamp[i] = ioFile.lastModified();
     }
 
     vTemp.refresh(false, true);
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      assertEquals(timestamp[i], file.lastModified());
-      VirtualFile child = fs.findFileByIoFile(file);
-      assertNotNull(child);
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
+      File ioFile = new File(temp, i + ".txt");
+      assertEquals(ioTimestamp[i], ioFile.lastModified());
+      VirtualFile vFile = fs.findFileByIoFile(ioFile);
+      assertNotNull(vFile);
+      IoTestUtil.assertTimestampsEqual(ioTimestamp[i], vFile.getTimeStamp());
     }
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      assertTrue(file.setLastModified(timestamp[i] - 2_000));
-      long modified = file.lastModified();
-      assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
-      timestamp[i] = modified;
-      IoTestUtil.assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
+      File ioFile = new File(temp, i + ".txt");
+      FileUtil.writeToFile(ioFile, xxx);
+      assertTrue(ioFile.setLastModified(ioTimestamp[i] - 2_000));
+      long ioModified = ioFile.lastModified();
+      assertTrue("File:" + ioFile.getPath() + "; time:" + ioModified, ioTimestamp[i] != ioModified);
+      ioTimestamp[i] = ioModified;
+      IoTestUtil.assertTimestampsNotEqual(vFiles[i].getTimeStamp(), ioModified);
     }
 
     Disposable refreshEngaged = Disposer.newDisposable();
@@ -245,21 +246,21 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     try {
       FrequentEventDetector.disableUntil(refreshEngaged);
       latch = new CountDownLatch(N);
-      for (VirtualFile child : children) {
-        child.refresh(true, true, latch::countDown);
+      for (VirtualFile vFile : vFiles) {
+        vFile.refresh(true, true, latch::countDown);
       }
     }
     finally {
       Disposer.dispose(refreshEngaged);
     }
-    while (latch.getCount() > 0) {
+    while (latch.getCount() != 0) {
       latch.await(100, TimeUnit.MILLISECONDS);
       UIUtil.pump();
     }
 
     for (int i = 0; i < N; i++) {
-      VirtualFile child = children[i];
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
+      VirtualFile vFile = vFiles[i];
+      IoTestUtil.assertTimestampsEqual(ioTimestamp[i], vFile.getTimeStamp());
     }
   }
 

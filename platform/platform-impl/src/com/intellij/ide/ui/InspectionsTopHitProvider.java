@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -24,10 +25,10 @@ final class InspectionsTopHitProvider implements OptionsSearchTopHitProvider.Pro
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions(@NotNull Project project) {
+    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     List<OptionDescription> result = new ArrayList<>();
-    List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllEnabledInspectionTools(project);
-    for (Tools tool : tools) {
-      result.add(new ToolOptionDescription(tool, project));
+    for (InspectionToolWrapper<?, ?> toolWrapper : inspectionProfile.getInspectionTools(null)) {
+      result.add(new ToolOptionDescription(toolWrapper, project));
     }
     return result;
   }

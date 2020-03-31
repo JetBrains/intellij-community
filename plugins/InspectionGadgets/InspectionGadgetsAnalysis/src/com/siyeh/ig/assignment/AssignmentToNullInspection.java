@@ -37,12 +37,6 @@ public class AssignmentToNullInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.to.null.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
   }
@@ -66,7 +60,11 @@ public class AssignmentToNullInspection extends BaseInspection {
       return null;
     }
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(target.getProject());
-    return new DelegatingFix(new AddAnnotationPsiFix(manager.getDefaultNullable(), variable, PsiNameValuePair.EMPTY_ARRAY));
+    String annotation = manager.getDefaultNullable();
+    if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
+      return null;
+    }
+    return new DelegatingFix(new AddAnnotationPsiFix(annotation, variable, PsiNameValuePair.EMPTY_ARRAY));
   }
 
   @Override

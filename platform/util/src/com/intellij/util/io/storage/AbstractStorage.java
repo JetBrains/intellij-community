@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -26,7 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
@@ -40,7 +26,7 @@ import java.io.IOException;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class AbstractStorage implements Disposable, Forceable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
+  protected static final Logger LOG = Logger.getInstance(Storage.class);
 
   @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
   @NonNls public static final String DATA_EXTENSION = ".storageData";
@@ -115,7 +101,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       if (retryCount >= 5) {
         throw new IOException("Can't create storage at: " + storageFilePath);
       }
-      
+
       tryInit(storageFilePath, pool, retryCount+1);
       return;
     }
@@ -249,7 +235,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   protected byte[] readBytes(int record) throws IOException {
     synchronized (myLock) {
       final int length = myRecordsTable.getSize(record);
-      if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       assert length > 0:length;
 
       final long address = myRecordsTable.getAddress(record);

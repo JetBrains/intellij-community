@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
-import com.intellij.psi.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.CachedValueProvider;

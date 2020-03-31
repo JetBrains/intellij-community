@@ -113,20 +113,27 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
  *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
  *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
- *
- *  @throws IllegalStateException if called on the default project, since there is no sense in "project dir" in that case.
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
-    throw IllegalStateException("Not applicable for default project")
+    return null
   }
 
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.firstOrNull { it.name == this.name }
-  module?.rootManager?.contentRoots?.firstOrNull { it.isDirectory }?.let {
-    return it
-  }
+  module?.guessModuleDir()?.let { return it }
   return LocalFileSystem.getInstance().findFileByPath(basePath!!)
+}
+
+/**
+ * Tries to guess the main module directory
+ *
+ * Please use this method only in case if no any additional information about module location
+ *  eg. some contained files or etc.
+ */
+fun Module.guessModuleDir(): VirtualFile? {
+  val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
+  return contentRoots.find { it.name == name } ?: contentRoots.firstOrNull()
 }
 
 @JvmOverloads
@@ -146,7 +153,7 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
 
   // trim to avoid "File name too long"
-  name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
+  name = name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
   return "$name$hashSeparator${locationHash}$extensionWithDot"
 }
 
@@ -170,13 +177,21 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
 /**
  * Add one-time projectOpened listener.
  */
-fun Project.runWhenProjectOpened(handler: Runnable): Unit = runWhenProjectOpened(this) { handler.run() }
+fun runWhenProjectOpened(project : Project, handler: Runnable) {
+  runWhenProjectOpened(project) {
+    handler.run()
+  }
+}
 
 /**
  * Add one-time first projectOpened listener.
  */
 @JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>): Unit = runWhenProjectOpened(project) { handler.accept(it) }
+fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
+  runWhenProjectOpened(project) {
+    handler.accept(it)
+  }
+}
 
 /**
  * Add one-time projectOpened listener.
@@ -194,8 +209,8 @@ inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (
 }
 
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (!project.isInitialized || project.isDisposed) {
+  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
+    if (project.isDisposed || !project.isInitialized) {
       continue
     }
 

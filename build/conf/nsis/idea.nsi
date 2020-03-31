@@ -428,14 +428,12 @@ get_installation_options_positions:
   inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
   Pop $0
   ${If} $0 == "OK"
-    ; download jre x86: optional if OS is not 32-bit
+    ; download x86 runtime: optional if OS is not 32-bit
     ${If} ${RunningX64}
       StrCpy $downloadJreX86 "0"
     ${Else}
-      ; download jre32
       StrCpy $downloadJreX86 "1"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Flags" "DISABLED"
-
       ; create shortcut for launcher 32
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" "1"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Flags" "DISABLED"
@@ -491,22 +489,22 @@ FunctionEnd
 Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
-    inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
+    inetc::get ${LINK_TO_JRE} "$TEMP\jbr-x86.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
+      untgz::extract "-d" "$INSTDIR\jbr-x86" "$TEMP\jbr-x86.tar.gz"
       StrCmp $R0 "success" remove_temp_jre
-      ${LogText} "ERROR: jre32: Failed to extract"
-      DetailPrint "Failed to extract jre.tar.gz"
-      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
+      ${LogText} "ERROR: Failed to unpack x86 runtime"
+      DetailPrint "Failed to unpack jbr-x86.tar.gz"
+      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to unpack $TEMP\jbr-x86.tar.gz"
       Goto clean
 remove_temp_jre:
-      ${LogText} "jre32: extracted"
+      ${LogText} "Unpacked x86 runtime"
 clean:
-      IfFileExists "$TEMP\jre.tar.gz" 0 done
-      Delete "$TEMP\jre.tar.gz"
+      IfFileExists "$TEMP\jbr-x86.tar.gz" 0 done
+      Delete "$TEMP\jbr-x86.tar.gz"
     ${Else}
-      ${LogText} "ERROR: jre32: download ${LINK_TO_JRE} is failed: $0"
+      ${LogText} "ERROR: Failed to download x86 runtime from ${LINK_TO_JRE}: $0"
       MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
@@ -552,7 +550,7 @@ UninstPage custom un.ConfirmDeleteSettings
 
 OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
-InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 !define MUI_BRANDINGTEXT " "
 BrandingText " "
 
@@ -653,15 +651,15 @@ update_PATH:
 update_context_menu:
   ClearErrors
   ${ConfigRead} "$R1" "updateContextMenu=" $R3
-  IfErrors download_jre32
+  IfErrors download_jbr_x86
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
 
-download_jre32:
+download_jbr_x86:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors regeneration_shared_archive
-  ${LogText} "  download jre32: $R3"
+  ${LogText} "  download x86 runtime: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
@@ -1012,9 +1010,9 @@ continue_enum_versions_hklm:
 end_enum_versions_hklm:
   StrCmp $INSTDIR "" 0 skip_default_instdir
   ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
 
 skip_default_instdir:
@@ -1051,26 +1049,7 @@ FunctionEnd
 
 Function UpdateContextMenu
   ${LogText} ""
-  ${LogText} "Update Context Menu"
-
-; add "Open with PRODUCT" action for files to Windows context menu
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Edit with ${MUI_PRODUCT}"
-  call OMWriteRegStr
-
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
-
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
+  ${LogText} "Update Context Menu - Open with PRODUCT action for folders"
 
 ; add "Open with PRODUCT" action for folders to Windows context menu
   StrCpy $0 "SHCTX"
@@ -1159,6 +1138,27 @@ command_exists:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   Call OMWriteRegStr
+
+  ; add "Edit with PRODUCT" action for files to Windows context menu
+  ${LogText} ""
+  ${LogText} "Update Context Menu - Edit with PRODUCT"
+
+  StrCpy $0 "SHCTX"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Edit with ${MUI_PRODUCT}"
+  call OMWriteRegStr
+
   pop $3
   pop $2
   pop $1
@@ -1229,16 +1229,16 @@ shortcuts:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
   StrCmp $R2 1 "" exe_64
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
 shortcut_for_exe_64:
   StrCmp $R2 1 "" add_to_path
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
@@ -1308,10 +1308,10 @@ skip_ipr:
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
                  "$productLauncher" "" "" "" SW_SHOWNORMAL
 
-  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
@@ -1339,7 +1339,7 @@ skip_ipr:
 ; write uninstaller & add it to add/remove programs in control panel
   WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
-            "DisplayName" "${PRODUCT_FULL_NAME_WITH_VER}"
+            "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "UninstallString" "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
@@ -1441,7 +1441,7 @@ uac_elevation_aborted:
   ${LogText} ""
   ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
   ${LogText} ""
-  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
@@ -1451,9 +1451,9 @@ uac_admin:
   IfSilent uac_all_users set_install_dir_admin_mode
 set_install_dir_admin_mode:
   ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
 uac_all_users:
   SetShellVarContext all
@@ -1767,7 +1767,7 @@ read_line:
   IntOp $6 $6 + $5
   ${unStrStr} $7 $4 "#" ;check if the property has been customized
   StrCmp $7 "" custom
-  StrCpy $2 "$PROFILE/${PRODUCT_SETTINGS_DIR}/$0" ;no. use the default value.
+  StrCpy $2 $0 ;no. use the default value.
   goto complete
 custom:
   StrCpy $2 $4 "" $6
@@ -1775,7 +1775,7 @@ custom:
 complete:
   FileClose $3
   ${UnStrRep} $2 $2 "/" "\"
-  DetailPrint "path to config/system: $2"
+  DetailPrint "App directory: $2"
 FunctionEnd
 
 Function un.isIDEInUse
@@ -1845,7 +1845,7 @@ Section "Uninstall"
   StrCmp $3 "" delete_caches shortcuts
 
 shortcuts:
-  StrCpy $7 "$SMPROGRAMS\$3\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  StrCpy $7 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   Call un.validateStartMenuLinkToLauncher
   StrCmp $8 "" 0 remove_link
   DetailPrint "StartMenu: $7 is not point to valid launcher."
@@ -1857,50 +1857,50 @@ remove_link:
   RMDir  "$SMPROGRAMS\$3"
 
 delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
-  DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
-  StrCmp $R2 1 0 skip_delete_caches
-; find the path to caches (system) folder
-   StrCpy $0 "system"
-   StrCpy $1 "idea.system.path="
-   Call un.getPath
-   StrCmp $2 "" skip_delete_caches
-   StrCpy $system_path $2
-   RmDir /r "$system_path"
-   RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
-
-skip_delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
-  StrCmp $R3 1 "" skip_delete_settings
-; find the path to settings (config) folder
-    StrCpy $0 "config"
-    StrCpy $1 "idea.config.path="
-    Call un.getPath
-    StrCmp $2 "" skip_delete_settings
-    StrCpy $config_path $2
-    RmDir /r "$config_path"
-    Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
-    Delete "$INSTDIR\bin\idea.properties"
-    StrCmp $R2 1 "" skip_delete_settings
-    RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-
-skip_delete_settings:
-  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
-  StrCmp $R0 "${MUI_PRODUCT}" 0 skip_delete_tools
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
-  StrCmp $R3 1 "" skip_delete_tools
+  ${If} $baseRegKey == "HKLM"
     SetShellVarContext current
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 delete_downloaded_jdk8
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-delete_downloaded_jdk8:
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 continue_uninstall
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
+  StrCmp $R2 1 0 delete_settings
+  ; find the path to caches (system) folder
+  StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.system.path="
+  Call un.getPath
+  StrCmp $2 "" delete_settings
+  StrCpy $system_path $2
+  RmDir /r "$system_path"
+  RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
+
+delete_settings:
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
+  StrCmp $R3 1 0 delete_rider_tools
+  ; find the path to settings (config) folder
+  StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.config.path="
+  Call un.getPath
+  StrCmp $2 "" delete_rider_tools
+  StrCpy $config_path $2
+  RmDir /r "$config_path"
+  Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
+  Delete "$INSTDIR\bin\idea.properties"
+  StrCmp $R2 1 "" delete_rider_tools
+  RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
+
+delete_rider_tools:
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  StrCmp $R0 "${MUI_PRODUCT}" 0 continue_uninstall
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
+  StrCmp $R3 1 "" continue_uninstall
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
 
 continue_uninstall:
-  StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
-  SetShellVarContext all
-skip_delete_tools:
-; Delete uninstaller itself
+  ${If} $baseRegKey == "HKLM"
+    SetShellVarContext all
+  ${EndIf}
+  ; delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
   Delete "$INSTDIR\jbr\bin\server\classes.jsa"
@@ -1916,11 +1916,6 @@ skip_delete_tools:
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
-  IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
-    Delete "$INSTDIR\jre32\bin\server\classes.jsa"
-    StrCpy $0 "$INSTDIR\jre32\lib\applet"
-    Call un.deleteDirIfEmpty
-no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR\bin"
   Call un.deleteDirIfEmpty
@@ -1929,13 +1924,13 @@ no_jre32:
 
 ; remove desktop shortcuts
 desktop_shortcut_launcher32:
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" 0 desktop_shortcut_launcher64
-    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 desktop_shortcut_launcher64
+    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
 desktop_shortcut_launcher64:
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" 0 registry
-    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
-    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
+  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" 0 registry
+    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
 
 registry:
   StrCpy $0 "SHCTX"

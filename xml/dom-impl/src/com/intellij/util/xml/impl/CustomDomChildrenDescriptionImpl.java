@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomExtensionImpl;
@@ -60,7 +46,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler<?,?> parent) {
+  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler parent) {
     if (!parent.getGenericInfo().checkInitialized()) {
       return Collections.emptyList();
     }
@@ -70,12 +56,12 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
-    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(parent);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) return getValues(handler);
 
     assert myGetter != null;
     //noinspection unchecked
-    return (List<? extends DomElement>)myGetter.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return (List<? extends DomElement>)myGetter.invoke(parent, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   @Override

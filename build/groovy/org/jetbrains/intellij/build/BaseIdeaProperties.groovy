@@ -6,64 +6,41 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import java.util.function.Consumer
 
 /**
- * @author nik
+ * Base class for all editions of IntelliJ IDEA
  */
-abstract class BaseIdeaProperties extends ProductProperties {
-  public static final List<String> JAVA_API_MODULES = [
-    "intellij.java.compiler",
-    "intellij.java.debugger",
+abstract class BaseIdeaProperties extends JetBrainsProductProperties {
+  public static final List<String> JAVA_IDE_API_MODULES = [
     "intellij.xml.dom",
-    "intellij.java.execution",
-    "intellij.java.remoteServers",
     "intellij.java.testFramework",
     "intellij.platform.testFramework.core",
-    "intellij.platform.uast.tests"
+    "intellij.platform.uast.tests",
+    "intellij.jsp.base"
   ]
-  public static final List<String> MAIN_JAVA_API_MODULES = [
-    "intellij.java.analysis",
-    "intellij.jvm.analysis",
-    "intellij.java.indexing",
-    "intellij.java.psi",
-    "intellij.java",
-    "intellij.jsp.base",
-    "intellij.jsp",
-    "intellij.platform.uast"
-  ]
-  public static final List<String> JAVA_IMPLEMENTATION_MODULES = [
-    "intellij.java.compiler.impl",
-    "intellij.java.debugger.impl",
-    "intellij.java.debugger.memory.agent",
+  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
     "intellij.xml.dom.impl",
-    "intellij.java.execution.impl",
-    "intellij.platform.externalSystem.impl",
-    "intellij.java.ui",
-    "intellij.java.structureView",
-    "intellij.java.manifest",
-    "intellij.java.remoteServers.impl",
     "intellij.platform.testFramework",
-    "intellij.tools.testsBootstrap",
-    "intellij.uiDesigner"
+    "intellij.tools.testsBootstrap"
   ]
-  public static final List<String> MAIN_JAVA_IMPLEMENTATION_MODULES = [
-    "intellij.java.analysis.impl",
-    "intellij.jvm.analysis.impl",
-    "intellij.java.indexing.impl",
-    "intellij.java.psi.impl",
-    "intellij.java.impl",
-    "intellij.jsp.spi",
-    "intellij.java.uast"
-  ]
+
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
+    "intellij.java.plugin",
+    "intellij.java.ide.customization",
     "intellij.copyright",
     "intellij.properties",
+    "intellij.properties.resource.bundle.editor",
     "intellij.terminal",
+    "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
     "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
+    "intellij.repository.search",
+    "intellij.maven.model",
     "intellij.maven",
     "intellij.gradle",
+    "intellij.gradle.java",
+    "intellij.gradle.java.maven",
     "intellij.vcs.git",
     "intellij.vcs.svn",
     "intellij.vcs.hg",
@@ -88,76 +65,84 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.android.smali",
     "intellij.statsCollector",
     "intellij.sh",
-    "intellij.vcs.changeReminder"
+    "intellij.vcs.changeReminder",
+    "intellij.filePrediction",
+    "intellij.markdown",
+    "intellij.grazie"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
-    "": "1.8",
-    "lib/idea_rt.jar": "1.3",
-    "lib/forms_rt.jar": "1.4",
-    "lib/annotations.jar": "1.5",
-    "lib/util.jar": "1.8",
-    "lib/rt/debugger-agent.jar": "1.6",
-    "lib/rt/debugger-agent-storage.jar": "1.6",
-    "lib/external-system-rt.jar": "1.6",
-    "lib/jshell-frontend.jar": "1.9",
-    "lib/sa-jdwp": "",  // ignored
-    "plugins/Groovy/lib/groovy_rt.jar": "1.5",
-    "plugins/Groovy/lib/groovy-rt-constants.jar": "1.5",
-    "plugins/coverage/lib/coverage_rt.jar": "1.5",
-    "plugins/junit/lib/junit-rt.jar": "1.3",
-    "plugins/gradle/lib/gradle-tooling-extension-api.jar": "1.6",
-    "plugins/gradle/lib/gradle-tooling-extension-impl.jar": "1.6",
-    "plugins/maven/lib/maven-server-api.jar": "1.6",
-    "plugins/maven/lib/maven2-server-impl.jar": "1.6",
-    "plugins/maven/lib/maven3-server-common.jar": "1.6",
-    "plugins/maven/lib/maven30-server-impl.jar": "1.6",
-    "plugins/maven/lib/maven3-server-impl.jar": "1.6",
-    "plugins/maven/lib/artifact-resolver-m2.jar": "1.6",
-    "plugins/maven/lib/artifact-resolver-m3.jar": "1.6",
-    "plugins/maven/lib/artifact-resolver-m31.jar": "1.6",
-    "plugins/xpath/lib/rt/xslt-rt.jar": "1.4",
-    "plugins/xslt-debugger/lib/xslt-debugger-engine.jar": "1.5",
-    "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.5",
-    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": "1.6"
+    ""                                                          : "1.8",
+    "lib/idea_rt.jar"                                           : "1.3",
+    "lib/forms_rt.jar"                                          : "1.4",
+    "lib/annotations.jar"                                       : "1.5",
+    "lib/util.jar"                                              : "1.8",
+    "lib/external-system-rt.jar"                                : "1.6",
+    "lib/jshell-frontend.jar"                                   : "1.9",
+    "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
+    "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
+    "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
+    "plugins/Groovy/lib/groovy_rt.jar"                          : "1.5",
+    "plugins/Groovy/lib/groovy-rt-constants.jar"                : "1.5",
+    "plugins/coverage/lib/coverage_rt.jar"                      : "1.5",
+    "plugins/junit/lib/junit-rt.jar"                            : "1.3",
+    "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
+    "plugins/gradle/lib/gradle-tooling-extension-impl.jar"      : "1.6",
+    "plugins/maven/lib/maven-server-api.jar"                    : "1.6",
+    "plugins/maven/lib/maven2-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/maven3-server-common.jar"                : "1.6",
+    "plugins/maven/lib/maven30-server-impl.jar"                 : "1.6",
+    "plugins/maven/lib/maven3-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/artifact-resolver-m2.jar"                : "1.6",
+    "plugins/maven/lib/artifact-resolver-m3.jar"                : "1.6",
+    "plugins/maven/lib/artifact-resolver-m31.jar"               : "1.6",
+    "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.4",
+    "plugins/xslt-debugger/lib/xslt-debugger-engine.jar"        : "1.5",
+    "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.8",
+    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar"       : "1.6",
+    "plugins/android/lib/layoutlib-jre11-26.6.0.2.jar"          : "1.9",
+    "plugins/javaFX/lib/rt/java11/scenebuilderkit-11.0.2.jar"   : "1.11"
   ]
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
-    productLayout.moduleExcludes.put("intellij.java.resources.en", "search/searchableOptions.xml")
 
-    productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
-    productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
-    productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
-    productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
-    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")
-    productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "intellij.java.aetherDependencyResolver")
-    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "intellij.java.jshell.protocol")
-    productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
+    //for compatibility with generated Ant build.xml files which refer to this file
     productLayout.additionalPlatformJars.
-      putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
+      putAll("javac2.jar",
+             ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt",
+              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8",
+              "intellij.java.jps.javacRefScanner8"])
+
+    productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        MAIN_JAVA_API_MODULES.each {
-          withModule(it, "java-api.jar", "java_resources_en.jar")
+        for (String name : JAVA_IDE_API_MODULES) {
+          withModule(name)
         }
-        MAIN_JAVA_IMPLEMENTATION_MODULES.each {
-          withModule(it, "java-impl.jar", "java_resources_en.jar")
+        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+          withModule(name)
         }
 
+        //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         withModule("intellij.java.rt", "idea_rt.jar", null)
-        withArtifact("debugger-agent", "rt")
-        withArtifact("debugger-agent-storage", "rt")
-        withProjectLibrary("Eclipse")
-        withProjectLibrary("jgoodies-common")
-        withProjectLibrary("commons-net")
-        withProjectLibrary("snakeyaml")
+
+        //for compatibility with users' projects which take these libraries from IDEA installation
         withProjectLibrary("jetbrains-annotations")
-        withoutProjectLibrary("Ant")
-        withoutProjectLibrary("Gradle")
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
         withProjectLibrary("JUnit3")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+        withProjectLibrary("commons-net")
+
+        withoutProjectLibrary("Ant")
+
+        // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
+        // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
+        // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
+        withoutProjectLibrary("Gradle")
+
+        //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
+        withoutProjectLibrary("layoutlib")
       }
     } as Consumer<PlatformLayout>
 

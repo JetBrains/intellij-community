@@ -6,22 +6,26 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ObjectUtils
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.update.ComparableObject
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.Update
+import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -32,39 +36,36 @@ private val LOG = logger<VcsRepositoryIgnoredFilesHolderBase<*>>()
 abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   @JvmField
   protected val repository: REPOSITORY,
-  private val repositoryManager: AbstractRepositoryManager<REPOSITORY>,
-  updateQueueName: String,
-  private val rescanIdentityName: String
-) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener {
+  private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
+) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener, ChangeListListener {
 
   private val inUpdateMode = AtomicBoolean(false)
-  private val updateQueue = MergingUpdateQueue(updateQueueName, 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
-  private val ignoredSet = hashSetOf<VirtualFile>()
+  private val updateQueue = VcsIgnoreManagerImpl.getInstanceImpl(repository.project).ignoreRefreshQueue
+  private val ignoredSet = hashSetOf<FilePath>()
+  private val unprocessedFiles = hashSetOf<FilePath>()
   private val SET_LOCK = ReentrantReadWriteLock()
+  private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
-
-  init {
-    Disposer.register(this, updateQueue)
-  }
+  private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
   }
 
-  override fun addFiles(files: Collection<VirtualFile>) {
+  override fun addFiles(files: Collection<FilePath>) {
     SET_LOCK.write { ignoredSet.addAll(files) }
   }
 
-  override fun addFile(file: VirtualFile) {
+  override fun addFile(file: FilePath) {
     SET_LOCK.write { ignoredSet.add(file) }
   }
 
   override fun isInUpdateMode() = inUpdateMode.get()
 
-  override fun getIgnoredFiles(): Set<VirtualFile> = SET_LOCK.read { ignoredSet.toHashSet() }
+  override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
 
-  override fun containsFile(file: VirtualFile) =
-    SET_LOCK.read { isUnder(ignoredSet, file) }
+  override fun containsFile(file: FilePath) =
+    SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
 
   override fun getSize() = SET_LOCK.read { ignoredSet.size }
 
@@ -74,30 +75,48 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    val affectedFiles = events
-      .asSequence()
-      .mapNotNull(::getAffectedFile)
-      .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
-      .map(VcsUtil::getFilePath)
-      .toList()
+  override fun changeListUpdateDone() {
+    if (scanTurnedOff()) return
 
-    if (affectedFiles.isNotEmpty()) {
-      removeIgnoredFiles(affectedFiles)
-      checkIgnored(affectedFiles)
+    val filesToCheck = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.removeAll(filesToCheck)
+    }
+    //if the files already unversioned, there is no need to check it for ignore
+    val unversioned = ChangeListManagerImpl.getInstanceImpl(repository.project).unversionedFilesPaths
+    filesToCheck.removeAll(unversioned)
+
+    if (filesToCheck.isNotEmpty()) {
+      removeIgnoredFiles(filesToCheck)
+      checkIgnored(filesToCheck)
     }
   }
 
-  fun setupVfsListener() =
+  override fun filesChanged(events: List<VFileEvent>) {
+    if (scanTurnedOff()) return
+
+    val affectedFiles = events
+      .flatMap(::getAffectedFilePaths)
+      .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
+      .toList()
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.addAll(affectedFiles)
+    }
+  }
+
+  fun setupListeners() =
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+      repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
 
   @Throws(VcsException::class)
-  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile>
+  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<FilePath>
 
-  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile> =
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> =
     try {
       requestIgnored(paths)
     }
@@ -121,19 +140,20 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
-    val removedIgnoredFiles = arrayListOf<FilePath>()
+    val removedIgnoredFilePaths = arrayListOf<FilePath>()
     val filePathsSet = filePaths.toHashSet()
-    SET_LOCK.write {
-      val iter = ignoredSet.iterator()
-      while (iter.hasNext()) {
-        val filePath = VcsUtil.getFilePath(iter.next())
-        if (isUnder(filePathsSet, filePath)) {
-          iter.remove()
-          removedIgnoredFiles.add(filePath)
-        }
+    val ignored = SET_LOCK.read { ignoredSet.toHashSet() }
+
+    for (filePath in ignored) {
+      if (isUnder(repositoryRootPath, filePathsSet, filePath)) {
+        removedIgnoredFilePaths.add(filePath)
       }
     }
-    return removedIgnoredFiles
+
+    SET_LOCK.write {
+      ignoredSet.removeAll(removedIgnoredFilePaths)
+    }
+    return removedIgnoredFilePaths
   }
 
   private fun checkIgnored(paths: Collection<FilePath>) {
@@ -146,21 +166,27 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   private fun queueIgnoreUpdate(isFullRescan: Boolean, doAfterRescan: Runnable? = null, action: () -> Set<FilePath>) {
     //full rescan should have the same update identity, so multiple full rescans can be swallowed instead of spawning new threads
-    val updateIdentity = if (isFullRescan) "${rescanIdentityName}_full" else ObjectUtils.sentinel(rescanIdentityName)
-    updateQueue.queue(object : Update(updateIdentity) {
-      override fun canEat(update: Update) = isFullRescan
-
-      override fun run() =
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(repository.project, Runnable {
-          if (inUpdateMode.compareAndSet(false, true)) {
-            fireUpdateStarted()
-            val ignored = action()
-            inUpdateMode.set(false)
-            fireUpdateFinished(ignored)
-            doAfterRescan?.run()
-          }
-        })
+    updateQueue.queue(MyUpdate(repository, isFullRescan) {
+      if (inUpdateMode.compareAndSet(false, true)) {
+        fireUpdateStarted()
+        val ignored = action()
+        inUpdateMode.set(false)
+        fireUpdateFinished(ignored, isFullRescan)
+        doAfterRescan?.run()
+      }
     })
+  }
+
+  private class MyUpdate(val repository: Repository,
+                         val isFullRescan: Boolean,
+                         val action: () -> Unit)
+    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
+
+    override fun canEat(update: Update) = update is MyUpdate &&
+                                          update.repository == repository &&
+                                          isFullRescan
+
+    override fun doRun() = action()
   }
 
   private fun doCheckIgnored(paths: Collection<FilePath>): Set<FilePath> {
@@ -168,13 +194,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     LOG.debug("Check ignored for paths: ", paths)
     LOG.debug("Ignored found for paths: ", ignored)
     addNotContainedIgnores(ignored)
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Collection<VirtualFile>) =
+  private fun addNotContainedIgnores(ignored: Collection<FilePath>) =
     SET_LOCK.write {
       ignored.forEach { ignored ->
-        if (!isUnder(ignoredSet, ignored)) {
+        if (!isUnder(repositoryRootPath, ignoredSet, ignored)) {
           ignoredSet.add(ignored)
         }
       }
@@ -187,22 +213,19 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       ignoredSet.clear()
       ignoredSet.addAll(ignored)
     }
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun <REPOSITORY> Set<VirtualFile>.filterByRepository(repository: REPOSITORY) =
+  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY) =
     filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
 
   private fun fireUpdateStarted() {
     listeners.multicaster.updateStarted()
   }
 
-  private fun fireUpdateFinished(paths: Collection<FilePath>) {
-    listeners.multicaster.updateFinished(paths)
+  private fun fireUpdateFinished(paths: Collection<FilePath>, isFullRescan: Boolean) {
+    listeners.multicaster.updateFinished(paths, isFullRescan)
   }
-
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
-  private fun isUnder(parents: Set<FilePath>, child: FilePath) = generateSequence(child) { it.parentPath }.any { it in parents }
 
   @TestOnly
   inner class Waiter : VcsIgnoredHolderUpdateListener {
@@ -213,12 +236,25 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       addUpdateStateListener(this)
     }
 
-    override fun updateFinished(ignoredPaths: Collection<FilePath>) = awaitLatch.countDown()
+    override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) = awaitLatch.countDown()
 
     fun waitFor() {
       awaitLatch.await()
       listeners.removeListener(this)
     }
+  }
+
+  @TestOnly
+  fun startRescanAndWait() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    updateQueue.flush()
+    while (updateQueue.isFlushing) {
+      TimeoutUtil.sleep(100)
+    }
+    val waiter = createWaiter()
+    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 1, TimeUnit.SECONDS)
+    waiter.waitFor()
   }
 
   @TestOnly
@@ -229,16 +265,22 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   companion object {
     @JvmStatic
-    fun getAffectedFile(event: VFileEvent): VirtualFile? =
-      runReadAction {
-        when {
-          event is VFileCreateEvent && event.parent.isValid -> event.file
-          event is VFileDeleteEvent || event is VFileMoveEvent || event.isRename() -> event.file
-          event is VFileCopyEvent && event.newParent.isValid -> event.newParent.findChild(event.newChildName)
-          else -> null
-        }
+    fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
+      if (event is VFileContentChangeEvent) return emptySet()
+
+      val affectedFilePaths = HashSet<FilePath>(2)
+      val isDirectory = if (event is VFileCreateEvent) event.isDirectory else event.file!!.isDirectory
+
+      affectedFilePaths.add(VcsUtil.getFilePath(event.path, isDirectory))
+
+      if (event is VFileMoveEvent) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
+      }
+      else if (event is VFilePropertyChangeEvent && event.isRename) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
       }
 
-    private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
+      return affectedFilePaths
+    }
   }
 }

@@ -17,6 +17,7 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -92,6 +93,7 @@ public class MigrationMap {
     return getName();
   }
 
+  @NotNull
   public String getFileName() {
     if (myFileName == null) {
       return FileUtil.sanitizeFileName(myName, false);

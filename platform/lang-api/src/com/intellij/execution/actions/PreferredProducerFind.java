@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -14,21 +14,21 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 class PreferredProducerFind {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferredProducerFind");
+  private static final Logger LOG = Logger.getInstance(PreferredProducerFind.class);
 
   private PreferredProducerFind() {}
 
   @Nullable
-  public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, final ConfigurationContext context) {
+  public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, @NotNull ConfigurationContext context) {
     final ConfigurationFromContext fromContext = findConfigurationFromContext(location, context);
     return fromContext != null ? fromContext.getConfigurationSettings() : null;
   }
@@ -41,7 +41,7 @@ class PreferredProducerFind {
     }
     final List<RuntimeConfigurationProducer> producers = findAllProducers(location, context);
     if (producers.isEmpty()) return null;
-    Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
+    producers.sort(RuntimeConfigurationProducer.COMPARATOR);
 
     if(strict) {
       final RuntimeConfigurationProducer first = producers.get(0);
@@ -81,7 +81,7 @@ class PreferredProducerFind {
 
   @Nullable
   public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
-                                                                            final ConfigurationContext context,
+                                                                            @NotNull ConfigurationContext context,
                                                                             final boolean strict) {
     if (location == null) {
       return null;
@@ -114,7 +114,7 @@ class PreferredProducerFind {
     }
 
     if (configurationsFromContext.isEmpty()) return null;
-    Collections.sort(configurationsFromContext, ConfigurationFromContext.COMPARATOR);
+    configurationsFromContext.sort(ConfigurationFromContext.COMPARATOR);
 
     if(strict) {
       final ConfigurationFromContext first = configurationsFromContext.get(0);
@@ -131,7 +131,7 @@ class PreferredProducerFind {
 
 
   @Nullable
-  private static ConfigurationFromContext findConfigurationFromContext(final Location location, final ConfigurationContext context) {
+  private static ConfigurationFromContext findConfigurationFromContext(final Location location, @NotNull ConfigurationContext context) {
     final List<ConfigurationFromContext> producers = getConfigurationsFromContext(location, context, true);
     if (producers != null){
       return producers.get(0);
@@ -145,7 +145,7 @@ class PreferredProducerFind {
     @NotNull Location originalLocation,
     boolean strict
   ) {
-    SmartList<ConfigurationFromContext> result = new SmartList<>();
+    List<ConfigurationFromContext> result = new SmartList<>();
     for (Location alternativeLocation : alternativeLocationsInfo.getAlternativeLocations()) {
       ConfigurationContext fakeContextForAlternativeLocation = ConfigurationContext.createEmptyContextForLocation(alternativeLocation);
       List<ConfigurationFromContext> configurationsForLocation =
@@ -165,9 +165,6 @@ class PreferredProducerFind {
         result.addAll(configurationsForLocation);
       }
     }
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
+    return ContainerUtil.nullize(result);
   }
 }

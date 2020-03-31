@@ -4,6 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,13 +47,13 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
           for (PsiMethod method : equalsMethods) {
             if (!method.hasModifierProperty(PsiModifier.STATIC) &&
                 method.getParameterList().getParametersCount() == 1 &&
-                !TypeUtils.isJavaLangObject(method.getParameterList().getParameters()[0].getType())) {
+                !TypeUtils.isJavaLangObject(Objects.requireNonNull(method.getParameterList().getParameter(0)).getType())) {
               // After replacement may be linked to overloaded equals method
               // even if not, the code becomes more fragile, so let's not suggest the replacement if equals(SomeType) is defined.
               return;
             }
           }
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "equals()"),
+          holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "equals()"),
                                  new ReplaceWithEqualsFix(false));
         }
       }
@@ -61,7 +62,7 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
         PsiType type1 = arg1.getType();
         PsiType type2 = arg2.getType();
         if (type1 instanceof PsiPrimitiveType && type1.equals(type2) && !TypeConversionUtil.isFloatOrDoubleType(type1)) {
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "=="),
+          holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "=="),
                                  new ReplaceWithEqualsFix(true));
           return true;
         }

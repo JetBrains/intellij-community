@@ -1,48 +1,64 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@State(name = "ReSTService")
-public class ReSTService implements PersistentStateComponent<ReSTService> {
-  public String DOC_DIR = "";
-  public boolean TXT_IS_RST = false;
+public abstract class ReSTService extends PyDefaultProjectAwareService<
+  ReSTService.ServiceState, ReSTService, ReSTService.AppService, ReSTService.ModuleService> {
 
-  public ReSTService() {
+  private static final PyDefaultProjectAwareServiceClasses<ServiceState, ReSTService, AppService, ModuleService> SERVICE_CLASSES =
+    new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
+
+
+  protected ReSTService() {
+    super(new ServiceState());
   }
 
-  @Override
-  public ReSTService getState() {
-    return this;
+
+  public final void setWorkdir(String workDir) {
+    getState().DOC_DIR = workDir;
   }
 
-  @Override
-  public void loadState(@NotNull ReSTService state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public static ReSTService getInstance(@Nullable Module module) {
+    return SERVICE_CLASSES.getService(module);
   }
 
-  public void setWorkdir(String workDir) {
-    DOC_DIR = workDir;
+
+  @NotNull
+  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+    return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES);
   }
 
-  public static ReSTService getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, ReSTService.class);
+  public final String getWorkdir() {
+    return getState().DOC_DIR;
   }
 
-  public String getWorkdir() {
-    return DOC_DIR;
+  public final boolean txtIsRst() {
+    return getState().TXT_IS_RST;
   }
 
-  public boolean txtIsRst() {
-    return TXT_IS_RST;
+  public final void setTxtIsRst(boolean isRst) {
+    getState().TXT_IS_RST = isRst;
   }
 
-  public void setTxtIsRst(boolean isRst) {
-    TXT_IS_RST = isRst;
+  public static final class ServiceState {
+    public String DOC_DIR = "";
+    public boolean TXT_IS_RST = false;
+  }
+
+  @State(name = "AppReSTService", storages = @Storage("ReSTService.xml"))
+  public static final class AppService extends ReSTService {
+  }
+
+  @State(name = "ReSTService")
+  public static final class ModuleService extends ReSTService {
   }
 }

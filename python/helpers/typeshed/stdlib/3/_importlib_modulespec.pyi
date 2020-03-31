@@ -8,7 +8,6 @@
 # _Loader is the PEP-451-defined interface for a loader type/object.
 
 from abc import ABCMeta
-import sys
 from typing import Any, Dict, List, Optional, Protocol
 
 class _Loader(Protocol):
@@ -18,22 +17,22 @@ class ModuleSpec:
     def __init__(self, name: str, loader: Optional[Loader], *,
                  origin: Optional[str] = ..., loader_state: Any = ...,
                  is_package: Optional[bool] = ...) -> None: ...
-    name = ...  # type: str
-    loader = ...  # type: Optional[_Loader]
-    origin = ...  # type: Optional[str]
-    submodule_search_locations = ...  # type: Optional[List[str]]
-    loader_state = ...  # type: Any
-    cached = ...  # type: Optional[str]
-    parent = ...  # type: Optional[str]
-    has_location = ...  # type: bool
+    name: str
+    loader: Optional[_Loader]
+    origin: Optional[str]
+    submodule_search_locations: Optional[List[str]]
+    loader_state: Any
+    cached: Optional[str]
+    parent: Optional[str]
+    has_location: bool
 
 class ModuleType:
-    __name__ = ...  # type: str
-    __file__ = ...  # type: str
-    __dict__ = ...  # type: Dict[str, Any]
-    __loader__ = ...  # type: Optional[_Loader]
-    __package__ = ...  # type: Optional[str]
-    __spec__ = ...  # type: Optional[ModuleSpec]
+    __name__: str
+    __file__: str
+    __dict__: Dict[str, Any]
+    __loader__: Optional[_Loader]
+    __package__: Optional[str]
+    __spec__: Optional[ModuleSpec]
     def __init__(self, name: str, doc: Optional[str] = ...) -> None: ...
 
 class Loader(metaclass=ABCMeta):

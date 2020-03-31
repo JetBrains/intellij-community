@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.icons.AllIcons;
@@ -33,25 +19,28 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.CommitPlaceholderProvider;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import com.intellij.util.ArrayUtilRt;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -86,6 +75,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @BindControl("branchNameFormat")
   private EditorTextField myBranchNameFormat;
   private JCheckBox myLowerCase;
+  private JBTextField myReplaceSpaces;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -118,7 +108,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   }
 
   private void enableCachePanel() {
-    GuiUtils.enableChildren(myCacheSettings, myUpdateCheckBox.isSelected());
+    myUpdateCount.setEnabled(myUpdateCheckBox.isSelected());
+    myUpdateInterval.setEnabled(myUpdateCheckBox.isSelected());
   }
 
   @Override
@@ -128,15 +119,16 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
     myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
     myLowerCase.setSelected(TaskSettings.getInstance().LOWER_CASE_BRANCH);
+    myReplaceSpaces.setText(TaskSettings.getInstance().REPLACE_SPACES);
   }
 
   @Override
   public void apply() throws ConfigurationException {
     if (myChangelistNameFormat.getText().trim().isEmpty()) {
-      throw new ConfigurationException("Change list name format should not be empty");
+      throw new ConfigurationException(TaskBundle.message("settings.change.list.name.format.should.not.be.empty"));
     }
     if (myBranchNameFormat.getText().trim().isEmpty()) {
-      throw new ConfigurationException("Branch name format should not be empty");
+      throw new ConfigurationException(TaskBundle.message("settings.Branch.name.format.should.not.be.empty"));
     }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
@@ -149,6 +141,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
     TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
     TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
+    TaskSettings.getInstance().REPLACE_SPACES = myReplaceSpaces.getText();
 
     if (connectionTimeout != oldConnectionTimeout) {
       for (TaskRepository repository : manager.getAllRepositories()) {
@@ -164,13 +157,13 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return super.isModified() ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
            TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
-           TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected();
+           TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected() ||
+           !Objects.equals(TaskSettings.getInstance().REPLACE_SPACES, myReplaceSpaces.getText());
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Tasks";
+    return TaskBundle.message("configurable.TaskConfigurable.display.name");
   }
 
   @Override
@@ -195,9 +188,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return true;
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = new Configurable[] { new TaskRepositoriesConfigurable(myProject) };
     }
@@ -219,12 +211,14 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   private void setupAddAction(EditorTextField field) {
     field.addSettingsProvider(editor -> {
       ExtendableTextComponent.Extension extension =
-        ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, "Add placeholder", () -> {
+        ExtendableTextComponent.Extension
+          .create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, TaskBundle.message("settings.add.placeholder"), () -> {
           Set<String> placeholders = new HashSet<>();
           for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
             placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));
           }
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Placeholders", ArrayUtil.toStringArray(placeholders)) {
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(TaskBundle.message("settings.placeholders"),
+                                                                                     ArrayUtilRt.toStringArray(placeholders)) {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
               WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()

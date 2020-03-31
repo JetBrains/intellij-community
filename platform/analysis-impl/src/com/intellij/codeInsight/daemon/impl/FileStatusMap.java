@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -39,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentMap;
 
-public class FileStatusMap implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
+public final class FileStatusMap implements Disposable {
+  private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING =
     "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
@@ -170,11 +155,9 @@ public class FileStatusMap implements Disposable {
   }
 
   private void assertAllowModifications() {
-    try {
-      assert myAllowDirt : CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING;
-    }
-    finally {
+    if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
+      throw new AssertionError(CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING);
     }
   }
 
@@ -196,9 +179,10 @@ public class FileStatusMap implements Disposable {
    */
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
+
     synchronized(myDocumentToStatusMap){
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return file == null ? null : file.getTextRange();
@@ -260,10 +244,10 @@ public class FileStatusMap implements Disposable {
   }
 
   boolean allDirtyScopesAreNull(@NotNull Document document) {
-    synchronized (myDocumentToStatusMap) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
 
+    synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();
     }
@@ -350,10 +334,13 @@ public class FileStatusMap implements Disposable {
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
-  public static void log(@NonNls @NotNull Object... info) {
+  public static void log(@NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
-      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-      LOG.debug(s);
+      StringJoiner joiner = new StringJoiner(", ", StringUtil.repeatSymbol(' ', getThreadNum() * 4) + "[", "]\n");
+      for (Object o : info) {
+        joiner.add(String.valueOf(o));
+      }
+      LOG.debug(joiner.toString());
     }
   }
 }

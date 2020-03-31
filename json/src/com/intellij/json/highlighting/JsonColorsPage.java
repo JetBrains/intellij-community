@@ -2,6 +2,7 @@ package com.intellij.json.highlighting;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -27,20 +28,20 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{
-    new AttributesDescriptor("Property key", JSON_PROPERTY_KEY),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.property.key"), JSON_PROPERTY_KEY),
 
-    new AttributesDescriptor("Braces", JSON_BRACES),
-    new AttributesDescriptor("Brackets", JSON_BRACKETS),
-    new AttributesDescriptor("Comma", JSON_COMMA),
-    new AttributesDescriptor("Colon", JSON_COLON),
-    new AttributesDescriptor("Number", JSON_NUMBER),
-    new AttributesDescriptor("String", JSON_STRING),
-    new AttributesDescriptor("Keyword", JSON_KEYWORD),
-    new AttributesDescriptor("Line comment", JSON_LINE_COMMENT),
-    new AttributesDescriptor("Block comment", JSON_BLOCK_COMMENT),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.braces"), JSON_BRACES),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.brackets"), JSON_BRACKETS),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.comma"), JSON_COMMA),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.colon"), JSON_COLON),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.number"), JSON_NUMBER),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.string"), JSON_STRING),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.keyword"), JSON_KEYWORD),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.line.comment"), JSON_LINE_COMMENT),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.block.comment"), JSON_BLOCK_COMMENT),
     //new AttributesDescriptor("", JSON_IDENTIFIER),
-    new AttributesDescriptor("Valid escape sequence", JSON_VALID_ESCAPE),
-    new AttributesDescriptor("Invalid escape sequence", JSON_INVALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.valid.escape.sequence"), JSON_VALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.invalid.escape.sequence"), JSON_INVALID_ESCAPE),
   };
 
   @Nullable
@@ -81,22 +82,20 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     return ourAdditionalHighlighting;
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ourAttributeDescriptors;
   }
 
-  @NotNull
   @Override
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return "JSON";
+    return JsonBundle.message("settings.display.name.json");
   }
 
   @Override

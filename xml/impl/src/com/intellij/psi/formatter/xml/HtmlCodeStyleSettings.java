@@ -4,7 +4,6 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;

@@ -23,12 +23,12 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JoinLinesTest extends LightCodeInsightTestCase {
+public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -62,6 +62,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
   public void testIfChainSelection() { doTest(); }
+  public void testAtEOF() { doTest(); }
 
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -245,6 +246,23 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
 
   public void testConvertComment() { doTest();}
   public void testConvertComment2() { doTest();}
+  public void testConvertFinalLineComment() { doTest();}
+  public void testConvertFinalLineComment2() { doTest();}
+  public void testConvertFinalLineComment3() { doTest();}
+  public void testConvertLongLine() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.RIGHT_MARGIN = 79;
+
+    doTest();
+  }
+  public void testConvertMultiLongLine() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.RIGHT_MARGIN = 50;
+
+    doTest();
+  }
+  public void testConvertManyEndOfLineComments() { doTest();}
+  public void testConvertMixed() { doTest();}
 
   public void testJoiningMethodCallWhenItDoesntFit() {
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -283,15 +301,15 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     checkResultByFile(path + getTestName(false) + "_after" + ext);
   }
 
-  private static void performAction() {
+  private void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
   }
 
   @NotNull
-  private static CommonCodeStyleSettings getJavaSettings() {
+  private CommonCodeStyleSettings getJavaSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 }

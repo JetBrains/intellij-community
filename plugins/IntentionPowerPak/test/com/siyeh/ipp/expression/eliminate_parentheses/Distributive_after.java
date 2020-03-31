@@ -22,11 +22,19 @@ class Test {
       double p = a / cc + b / cc;
   }
 
-  void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {
+  void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d, int i1, int i2) {
     boolean g = a && b || a && c;
     boolean i = !a && b && !d || !a && !c && !d;
     boolean j = a && !b && c || a && !d;
     boolean k = d || a && b || a && c;
     boolean l = d ^ a && b || d ^ a && c;
+    boolean m = a && i1 == 1 || a && b;
+    boolean n = a && i1 != 1 || a && i2 >= 1;
+    boolean o = a && i1 > 1 && a == true || a && i2 <= 1 && a == true;
+    boolean p = a && i1 < 1 || a && b;
+  }
+
+  void formatTest(String foo, String bar) {
+      boolean x = !foo.equals("%s") && foo.equals(" %s ") || !foo.equals("%s") && bar.equals("%s");
   }
 }

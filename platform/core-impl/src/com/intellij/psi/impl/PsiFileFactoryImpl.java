@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -35,6 +21,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharSequenceSubSequence;
@@ -42,10 +29,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiFileFactoryImpl extends PsiFileFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiFileFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(PsiFileFactoryImpl.class);
   private final PsiManager myManager;
 
-  public PsiFileFactoryImpl(final PsiManager manager) {
+  public PsiFileFactoryImpl(@NotNull Project project) {
+    myManager = PsiManager.getInstance(project);
+  }
+
+  @NonInjectable
+  public PsiFileFactoryImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
@@ -99,7 +91,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     if(fileType instanceof LanguageFileType){
       final Language language =
-          LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
+          LanguageSubstitutors.getInstance().substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
       final PsiFile file = trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
       if (file != null) return file;
     }

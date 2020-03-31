@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -28,14 +14,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,20 +32,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 
-public class GuiUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GuiUtils");
+public final class GuiUtils {
+  private static final Insets paddingInsideDialog = JBUI.insets(5);
 
-  private static final Insets paddingFromDialogBoundaries = new Insets(7, 5, 7, 5);
-  private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
-
-  private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
-    @Override
-    public boolean accept(char ch) {
-      return ch != '&' && ch != UIUtil.MNEMONIC;
-    }
-  };
+  private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = ch -> ch != '&' && ch != UIUtil.MNEMONIC;
 
   public static JPanel constructFieldWithBrowseButton(JComponent aComponent, ActionListener aActionListener) {
     return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
@@ -73,17 +48,20 @@ public class GuiUtils {
 
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
     JPanel result = new JPanel(new GridBagLayout());
-    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,0));
+    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
     FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
-    result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+    result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                    JBUI.emptyInsets(), 0, 0));
     browseButton.addActionListener(aActionListener);
 
     return result;
   }
 
+  @Deprecated
   public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
     return constructFieldWithBrowseButton(field, new ActionListener() {
+      @SuppressWarnings("HardCodedStringLiteral")
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
@@ -96,46 +74,11 @@ public class GuiUtils {
     });
   }
 
-  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory field, final String objectName) {
-    return constructFieldWithBrowseButton(field, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor =
-          FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
-        if (file != null) {
-          try {
-            field.setText(VfsUtilCore.virtualToIoFile(file).toURI().toURL().toString());
-          }
-          catch (MalformedURLException e1) {
-            field.setText("");
-          }
-        }
-      }
-    });
-  }
-
-  public static JComponent constructLabeledComponent(String aLabelText, JComponent aComponent, @JdkConstants.BoxLayoutAxis int aAxis) {
-    JPanel result = new JPanel();
-    BoxLayout boxLayout = new BoxLayout(result, aAxis);
-    result.setLayout(boxLayout);
-
-    result.add(new JLabel(aLabelText));
-    result.add(aComponent);
-
-    return result;
-  }
-
-  public static JPanel makeDialogPanel(JPanel aPanel) {
-    JPanel emptyBordered = makePaddedPanel(aPanel, paddingFromDialogBoundaries);
-    return wrapWithBorder(emptyBordered, IdeBorderFactory.createRoundedBorder());
-  }
-
+  @Deprecated
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle, true));
+    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
   }
-
 
   private static JPanel wrapWithBorder(JComponent aPanel, Border aBorder) {
     JPanel wrapper = new JPanel(new BorderLayout());
@@ -144,30 +87,18 @@ public class GuiUtils {
     return wrapper;
   }
 
-
+  @Deprecated
   public static BorderLayout createBorderLayout() {
     return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
+  @Deprecated
   public static GridLayout createGridLayout(int aRows, int aColumns) {
     return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
   public static Component createVerticalStrut() {
     return Box.createRigidArea(new Dimension(0, paddingInsideDialog.top));
-  }
-
-  public static Component createHorisontalStrut() {
-    return Box.createRigidArea(new Dimension(paddingInsideDialog.left, 0));
-  }
-
-  private static JPanel makePaddedPanel(JComponent aComponent, Insets aInsets) {
-    return wrapWithBorder(aComponent, BorderFactory.createEmptyBorder(
-      aInsets.top,
-      aInsets.left,
-      aInsets.bottom,
-      aInsets.right
-    ));
   }
 
   private static JPanel makePaddedPanel(JComponent aComponent,
@@ -182,24 +113,6 @@ public class GuiUtils {
       aRight ? paddingInsideDialog.right : 0));
   }
 
-  public static void setAdditionalIcon(JRadioButton button, Icon icon) {
-    final Icon defaultIcon = UIUtil.getRadioButtonIcon();
-    LayeredIcon deficon = new LayeredIcon(2);
-    deficon.setIcon(defaultIcon, 0);
-    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
-    button.setIcon(deficon);
-
-    LayeredIcon pressed = new LayeredIcon(2);
-    pressed.setIcon(defaultIcon, 0);
-    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
-    button.setPressedIcon(pressed);
-
-    LayeredIcon selected = new LayeredIcon(2);
-    selected.setIcon(defaultIcon, 0);
-    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
-    button.setSelectedIcon(selected);
-  }
-
   public static String getTextWithoutMnemonicEscaping(String text) {
     return StringUtil.strip(text, NOT_MNEMONIC_CHAR_FILTER);
   }
@@ -211,16 +124,6 @@ public class GuiUtils {
 
   public static int getDisplayedMnemonicIndex(String text) {
     return text.indexOf("&");
-  }
-
-  public static void packParentDialog(Component component) {
-    while (component != null) {
-      if (component instanceof JDialog) {
-        component.setVisible(true);
-        break;
-      }
-      component = component.getParent();
-    }
   }
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root) {
@@ -297,12 +200,6 @@ public class GuiUtils {
     }
   }
 
-  public static void iterateChildren(Consumer<? super Component> consumer, Component... components) {
-    for (final Component component : components) {
-      iterateChildren(component, consumer);
-    }
-  }
-
   public static void enableChildren(final boolean enabled, Component... components) {
     for (final Component component : components) {
       enableChildren(component, enabled);
@@ -331,7 +228,6 @@ public class GuiUtils {
     }
     else if (component instanceof JLabel) {
       Color color = UIUtil.getInactiveTextColor();
-      if (color == null) color = component.getForeground();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
@@ -373,18 +269,22 @@ public class GuiUtils {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+    }
+    else {
+      app.invokeLater(runnable, modalityState);
     }
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
+    }
+    else {
+      app.invokeLater(runnable, modalityState, expired);
     }
   }
 
@@ -404,18 +304,5 @@ public class GuiUtils {
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;
     return size;
-  }
-
-  public static void printDebugInfo(Component component) {
-    StringBuilder builder = new StringBuilder();
-    boolean first = true;
-    while (component != null) {
-      builder.append("\n");
-      builder.append(first ? "UI debug dump:" : "\tat ").append(component.getClass().getName()).append(" with bounds ")
-        .append(component.getBounds());
-      component = component.getParent();
-      first = false;
-    }
-    LOG.warn(builder.toString());
   }
 }

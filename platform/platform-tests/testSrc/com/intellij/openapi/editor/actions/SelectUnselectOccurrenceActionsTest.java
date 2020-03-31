@@ -22,14 +22,14 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
   private int hintCount;
 
   @Override

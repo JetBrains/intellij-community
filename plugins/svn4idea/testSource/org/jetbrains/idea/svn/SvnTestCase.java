@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -43,7 +43,6 @@ import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -60,17 +59,14 @@ import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.*;
-import static com.intellij.util.FunctionUtil.nullConstant;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -115,13 +111,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return getPluginHomePath("svn4idea");
   }
 
-  @BeforeClass
-  public static void assumeWindowsUnderTeamCity() {
-    if (IS_UNDER_TEAMCITY) {
-      assumeTrue("Windows is required", SystemInfo.isWindows);
-    }
-  }
-
   @Before
   public void setUp() throws Exception {
     runInEdtAndWait(() -> {
@@ -152,7 +141,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       vcs = SvnVcs.getInstance(myProject);
       myGate = new MockChangeListManagerGate(changeListManager);
 
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
       refreshSvnMappingsSynchronously();
     });
 
@@ -204,7 +193,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @NotNull
   protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
     Set<String> feedback = new HashSet<>();
-    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, new CommitContext(), feedback));
     return feedback;
   }
 

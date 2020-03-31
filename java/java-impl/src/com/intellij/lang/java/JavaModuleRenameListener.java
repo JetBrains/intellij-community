@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -34,12 +32,9 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class JavaModuleRenameListener implements ProjectComponent, ModuleListener {
-  public JavaModuleRenameListener(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
-  }
-
+public class JavaModuleRenameListener implements ModuleListener {
   @Override
+  @SuppressWarnings("BoundedWildcard")
   public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
     List<Pair<SmartPsiElementPointer<PsiJavaModule>, String>> suggestions = new ArrayList<>();
 
@@ -51,17 +46,13 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
             .findFirst().orElse(null);
         if (javaModule != null && javaModule.getName().equals(LightJavaModule.moduleName(oldNameProvider.fun(module)))) {
           suggestions.add(pair(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaModule),
-                           LightJavaModule.moduleName(module.getName())));
+                               LightJavaModule.moduleName(module.getName())));
         }
       }
     }
 
     if (!suggestions.isEmpty()) {
-      AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-          .later()
-          .inSmartMode(project)
-          .inTransaction(project)
-          .execute(() -> renameModules(project, suggestions));
+      AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().inSmartMode(project).execute(() -> renameModules(project, suggestions));
     }
   }
 
@@ -109,18 +100,18 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
     @Nls(capitalization = Nls.Capitalization.Title)
     @Override
     public String getDialogTitle() {
-      return RefactoringBundle.message("auto.rename.module.dialog.title");
+      return JavaRefactoringBundle.message("auto.rename.module.dialog.title");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public String getDialogDescription() {
-      return RefactoringBundle.message("auto.rename.module.dialog.description");
+      return JavaRefactoringBundle.message("auto.rename.module.dialog.description");
     }
 
     @Override
     public String entityName() {
-      return RefactoringBundle.message("auto.rename.module.entity");
+      return JavaRefactoringBundle.message("auto.rename.module.entity");
     }
   }
 }

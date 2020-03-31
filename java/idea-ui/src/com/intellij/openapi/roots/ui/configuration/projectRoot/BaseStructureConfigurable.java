@@ -30,14 +30,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
@@ -407,14 +408,15 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       final Presentation presentation = getTemplatePresentation();
       presentation.setIcon(icon);
 
-      final Keymap active = KeymapManager.getInstance().getActiveKeymap();
-      if (active != null) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        final Keymap active = keymapManager.getActiveKeymap();
         final Shortcut[] shortcuts = active.getShortcuts("NewElement");
         setShortcutSet(new CustomShortcutSet(shortcuts));
       }
     }
 
-    public AbstractAddGroup(String text) {
+    public AbstractAddGroup(@Nls String text) {
       this(text, IconUtil.getAddIcon());
     }
 

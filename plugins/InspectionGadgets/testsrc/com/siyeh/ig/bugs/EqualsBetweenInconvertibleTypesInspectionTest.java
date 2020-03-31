@@ -3,14 +3,14 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ALL")
-public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
+public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("public void foo() {\n" +

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -45,10 +45,20 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     t = checkException(t);
     message += attachmentsToString(t);
+    dumpExceptionsToStderr(message, t, details);
+
+    AssertionError error = new AssertionError(message);
+    error.initCause(t);
+    throw error;
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void dumpExceptionsToStderr(String message,
+                                            @Nullable Throwable t,
+                                            String @NotNull ... details) {
     if (shouldDumpExceptionToStderr()) {
       System.err.println("ERROR: " + message);
       if (t != null) t.printStackTrace(System.err);
@@ -59,10 +69,6 @@ public class DefaultLogger extends Logger {
         }
       }
     }
-
-    AssertionError error = new AssertionError(message);
-    error.initCause(t);
-    throw error;
   }
 
   @Override
@@ -71,7 +77,7 @@ public class DefaultLogger extends Logger {
   public static String attachmentsToString(@Nullable Throwable t) {
     Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
     if (rootCause instanceof ExceptionWithAttachments) {
-      return "\n\nAttachments:\n" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING, "\n----\n");
+      return "\n\nAttachments:\n" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING::apply, "\n----\n");
     }
     return "";
   }
@@ -91,5 +97,4 @@ public class DefaultLogger extends Logger {
       }
     });
   }
-
 }

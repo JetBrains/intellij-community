@@ -2,12 +2,13 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -22,6 +23,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,39 +31,33 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
+public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+  protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
+
+  // do not use extension point name to avoid map lookup on each event publishing
+  private static final ExtensionPointImpl<VirtualFileManagerListener>
+    MANAGER_LISTENER_EP = ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+  private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
   }
 
-  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem", this);
-  private final VirtualFileSystem[] myPhysicalFileSystems;
+  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem");
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
-    this(fileSystems, ApplicationManager.getApplication().getMessageBus());
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems) {
+    this(preCreatedFileSystems, ApplicationManager.getApplication().getMessageBus());
   }
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
-    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems, @NotNull MessageBus bus) {
+    myPreCreatedFileSystems = new ArrayList<>(preCreatedFileSystems);
 
-    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
-    if (point != null) {
-      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
-        if (((VirtualFileSystemBean)bean).physical) {
-          physicalFileSystems.add(bean.getInstance());
-        }
-      }
-    }
-
-    myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
-
-    for (VirtualFileSystem fileSystem : fileSystems) {
+    for (VirtualFileSystem fileSystem : preCreatedFileSystems) {
       myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
@@ -73,6 +69,22 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     }
 
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
+  }
+
+  @NotNull
+  public List<VirtualFileSystem> getPhysicalFileSystems() {
+    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(myPreCreatedFileSystems);
+
+    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
+        if (((VirtualFileSystemBean)bean).physical) {
+          VirtualFileSystem fileSystem = bean.getInstance();
+          physicalFileSystems.add(fileSystem);
+        }
+      }
+    }
+    return physicalFileSystems;
   }
 
   @Override
@@ -92,15 +104,20 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     }
 
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    int size = systems.size();
+    return selectFileSystem(protocol, systems);
+  }
+
+  @Nullable
+  protected VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<VirtualFileSystem> candidates) {
+    int size = candidates.size();
     if (size == 0) {
       return null;
     }
 
     if (size > 1) {
-      LOG.error(protocol + ": " + systems);
+      LOG.error(protocol + ": " + candidates);
     }
-    return systems.get(0);
+    return candidates.get(0);
   }
 
   @Override
@@ -115,10 +132,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
 
-    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
@@ -130,10 +147,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
 
-    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (fileSystem instanceof CachingVirtualFileSystem) {
         ((CachingVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
@@ -158,10 +175,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Nullable
-  private VirtualFileSystem getFileSystemForUrl(String url) {
+  private VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
     String protocol = extractProtocol(url);
-    if (protocol == null) return null;
-    return getFileSystem(protocol);
+    return protocol == null ? null : getFileSystem(protocol);
   }
 
   @Override
@@ -196,46 +212,65 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
+  public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
+    myAsyncFileListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myAsyncFileListeners.remove(listener));
+  }
+
+  @ApiStatus.Internal
+  public List<AsyncFileListener> getAsyncFileListeners() {
+    return Collections.unmodifiableList(myAsyncFileListeners);
+  }
+
+  @Override
   public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
     Application app = ApplicationManager.getApplication();
-    app.invokeLater(() -> {
-      if (virtualFile.isValid() && !app.isDisposed()) {
-        app.runWriteAction(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().expireWith(app).submit(() -> {
+      if (virtualFile.isValid()) {
+        WriteAction.run(() -> {
           List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
           BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
           listener.before(events);
           listener.after(events);
         });
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @Override
   public void fireBeforeRefreshStart(boolean asynchronous) {
-    if (myRefreshCount++ == 0) {
-      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        try {
-          listener.beforeRefreshStart(asynchronous);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    if (myRefreshCount++ != 0) {
+      return;
+    }
+
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      try {
+        listener.beforeRefreshStart(asynchronous);
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
+
+    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous), MANAGER_LISTENER_EP);
   }
 
   @Override
   public void fireAfterRefreshFinish(boolean asynchronous) {
-    if (--myRefreshCount == 0) {
-      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        try {
-          listener.afterRefreshFinish(asynchronous);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    if (--myRefreshCount != 0) {
+      return;
+    }
+
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      try {
+        listener.afterRefreshFinish(asynchronous);
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
+
+    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous), MANAGER_LISTENER_EP);
   }
 
   @Override
@@ -273,7 +308,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      LOG.debug("fileCopied: file = " + event.getFile() + "originalFile = " + event.getOriginalFile() +
+      LOG.debug("fileCopied: file = " + event.getFile() + ", originalFile = " + event.getOriginalFile() +
                 ", requestor = " + event.getRequestor());
     }
 
@@ -299,5 +334,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
+  }
+
+  @Override
+  public int storeName(@NotNull String name) {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getVFileName(int nameId) {
+    throw new AbstractMethodError();
   }
 }

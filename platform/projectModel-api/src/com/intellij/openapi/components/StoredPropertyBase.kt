@@ -1,15 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
-import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-@ApiStatus.Experimental
 interface StoredProperty<T> {
   var name: String?
 
   val jsonType: JsonSchemaType
+
+  fun getValue(thisRef: BaseState): T
+  fun setValue(thisRef: BaseState, value: T)
 
   // true if changed
   fun setValue(other: StoredProperty<T>): Boolean
@@ -32,6 +33,14 @@ abstract class StoredPropertyBase<T> : StoredProperty<T>, ReadWriteProperty<Base
     name = property.name
     return this
   }
+
+  fun provideDelegate(thisRef: Any, propertyName: String): StoredProperty<T> {
+    name = propertyName
+    return this
+  }
+
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = getValue(thisRef)
+  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) = setValue(thisRef, value)
 }
 
 enum class JsonSchemaType(val jsonName: String) {

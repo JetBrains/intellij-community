@@ -15,9 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTarget> {
   public static final ResourcesTargetType PRODUCTION = new ResourcesTargetType("resources-production", false);
   public static final ResourcesTargetType TEST = new ResourcesTargetType("resources-test", true);

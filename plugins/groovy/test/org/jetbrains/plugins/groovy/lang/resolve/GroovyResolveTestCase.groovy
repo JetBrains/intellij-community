@@ -1,11 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.annotations.NonNls
@@ -13,6 +11,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+
 /**
  * @author ven
  */
@@ -48,7 +47,7 @@ abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length())
 
     if (newFilePath == null) {
-      myFixture.configureByText("aaa." + vFile.extension, fileText)
+      myFixture.configureByText(vFile.getName(), fileText)
     }
     else {
       myFixture.configureByText(newFilePath, fileText)
@@ -94,25 +93,5 @@ abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     PsiReference ref = configureByFile(getTestName(true) + "/" + fileName)
     assertInstanceOf(ref, GrReferenceExpression.class)
     return ((GrReferenceExpression)ref).advancedResolve()
-  }
-
-  protected PsiClass addBaseScript() {
-    myFixture.addClass("package groovy.transform; public @interface BaseScript {}")
-  }
-
-  protected PsiClass addImmutable() {
-    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
-  }
-
-  protected PsiClass addTupleConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
-  }
-
-  protected PsiClass addCanonical() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
-  }
-
-  protected PsiClass addInheritConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
   }
 }

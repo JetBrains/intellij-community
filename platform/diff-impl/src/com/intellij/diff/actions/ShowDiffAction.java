@@ -20,6 +20,9 @@ import com.intellij.openapi.actionSystem.ExtendableAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 
+/**
+ * Default implementation is in {@link com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction}.
+ */
 public class ShowDiffAction extends ExtendableAction implements DumbAware {
   private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.diff.actions.ShowDiffAction.ExtensionProvider");

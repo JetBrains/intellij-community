@@ -15,27 +15,19 @@
  */
 package com.intellij.xml;
 
-import com.intellij.codeInsight.editorActions.TypedHandler;
-import com.intellij.ide.highlighter.DTDFileType;
-import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.ide.highlighter.XHtmlFileType;
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated to be removed in 2020.1
  * @author yole
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+@Deprecated
 public class XmlFileTypeFactory extends FileTypeFactory {
   @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
-    consumer.consume(XHtmlFileType.INSTANCE, "xhtml");
-    consumer.consume(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
-
-    consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;jhm;ant;xul;xslt;rng;fxml;jrxml;svg");
-    TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(XmlFileType.INSTANCE));
   }
 }

@@ -2,8 +2,8 @@
 package com.intellij.psi
 
 import com.intellij.util.ProcessingContext
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
 abstract class UastInjectionHostReferenceProvider : UastReferenceProvider() {

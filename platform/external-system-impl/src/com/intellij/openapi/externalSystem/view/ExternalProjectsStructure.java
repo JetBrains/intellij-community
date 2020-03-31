@@ -5,15 +5,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
@@ -22,14 +27,15 @@ import java.util.*;
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
-  private final SimpleTree myTree;
+  private final Tree myTree;
   private ExternalProjectsView myExternalProjectsView;
-  private SimpleTreeBuilder myTreeBuilder;
+  private StructureTreeModel<ExternalProjectsStructure> myTreeModel;
   private RootNode myRoot;
 
   private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<>();
+  private AsyncTreeModel myAsyncTreeModel;
 
-  public ExternalProjectsStructure(Project project, SimpleTree tree) {
+  public ExternalProjectsStructure(Project project, Tree tree) {
     myProject = project;
     myTree = tree;
     configureTree(tree);
@@ -38,13 +44,10 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   public void init(ExternalProjectsView externalProjectsView) {
     myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
-
-    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null) {
-      // unique class to simplify search through the logs
-    };
-    Disposer.register(myProject, myTreeBuilder);
-    myTreeBuilder.initRoot();
-    myTreeBuilder.expand(myRoot, null);
+    myTreeModel = new StructureTreeModel<>(this, this);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+    myTree.setModel(myAsyncTreeModel);
+    TreeUtil.expand(myTree, 1);
   }
 
   public Project getProject() {
@@ -53,14 +56,14 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   public void updateFrom(SimpleNode node) {
     if (node != null) {
-      myTreeBuilder.addSubtreeToUpdateByElement(node);
+      myTreeModel.invalidate(node, true);
     }
   }
 
   public void updateUpTo(SimpleNode node) {
     SimpleNode each = node;
     while (each != null) {
-      updateFrom(each);
+      myTreeModel.invalidate(each, false);
       each = each.getParent();
     }
   }
@@ -71,19 +74,23 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return myRoot;
   }
 
-  private static void configureTree(final SimpleTree tree) {
+  public void cleanupCache() {
+    myRoot.cleanUpCache();
+    myNodeMapping.clear();
+    myTreeModel.invalidate();
+  }
+
+  private static void configureTree(final Tree tree) {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
   }
 
-  public void accept(@NotNull SimpleNodeVisitor visitor) {
-    if (myTreeBuilder.getTree() instanceof SimpleTree) {
-      ((SimpleTree)myTreeBuilder.getTree()).accept(myTreeBuilder, visitor);
-    }
+  public void select(@NotNull SimpleNode node) {
+    myTreeModel.select(node, myTree, path -> {});
   }
 
-  public void select(SimpleNode node) {
-    myTreeBuilder.select(node, null);
+  public void expand(@NotNull SimpleNode node) {
+    myTreeModel.expand(node, myTree, path -> {});
   }
 
   protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
@@ -116,7 +123,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         myNodeMapping.put(projectPath, projectNode);
       }
       if (toImport.size() == 1) {
-        myTreeBuilder.expand(projectNode, null);
+        TreeUtil.expand(myTree, 1);
       }
       doUpdateProject((ProjectNode)projectNode);
     }
@@ -175,10 +182,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
       }
 
       updateFrom(currentNode);
+      //noinspection unchecked
+      currentNode.mergeWith(newNode);
       currentNode.addAll(newDataMap.values());
+    } else {
+      //noinspection unchecked
+      currentNode.mergeWith(newNode);
     }
-    //noinspection unchecked
-    currentNode.setDataNode(newDataNode);
   }
 
   private void doUpdateProject(ProjectNode node) {
@@ -206,10 +216,24 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return myNodeMapping.get(projectPath);
   }
 
-  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<? extends T> nodeClass) {
-    for (T node : getNodes(nodeClass)) {
-      updateFrom(node);
+
+  public <T extends ExternalSystemNode> void updateNodesAsync(@NotNull Collection<Class<? extends T>> nodeClasses) {
+    updateNodesAsync(nodeClasses, false);
+  }
+  public <T extends ExternalSystemNode> void updateNodesAsync(@NotNull Collection<Class<? extends T>> nodeClasses, boolean structure) {
+    final List<TreePath> nodes = new LinkedList<>();
+    myAsyncTreeModel
+      .accept(new CollectingVisitor<>(nodes, nodeClasses), false)
+      .onSuccess(p -> {
+          invalidatePaths(nodes, structure);
+      });
+  }
+
+  private void invalidatePaths(@NotNull Collection<TreePath> paths, boolean structure) {
+    if (paths.isEmpty()) {
+      return;
     }
+    paths.forEach(p -> myTreeModel.invalidate(p, structure));
   }
 
   public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<? extends T> nodeClass, @NotNull Consumer<? super T> consumer) {
@@ -223,6 +247,35 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     this.myExternalProjectsView = null;
     this.myNodeMapping.clear();
     this.myRoot = null;
+  }
+
+  private static class CollectingVisitor<T extends ExternalSystemNode> implements TreeVisitor {
+    private final List<TreePath> myCollector;
+    private final Collection<Class<? extends T>> myNodeClasses;
+
+    public CollectingVisitor(List<TreePath> nodeCollector, Collection<Class<? extends T>> nodeClasses) {
+      myCollector = nodeCollector;
+      myNodeClasses = nodeClasses;
+    }
+
+    @NotNull
+    @Override
+    public Action visit(@NotNull TreePath path) {
+      Object object = TreeUtil.getLastUserObject(path);
+      if (object != null && anyAssignableFrom(object.getClass())) {
+        myCollector.add(path);
+      }
+      return Action.CONTINUE;
+    }
+
+    boolean anyAssignableFrom(Class<?> classParam) {
+      for (Class<? extends T> aClass : myNodeClasses) {
+        if (aClass.isAssignableFrom(classParam)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   public class RootNode<T> extends ExternalSystemNode<T> {
@@ -267,26 +320,6 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   @NotNull
   public <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-    final List<T> filtered = new ArrayList<>();
-    for (SimpleNode node : getSelectedNodes(tree)) {
-      if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
-        filtered.clear();
-        break;
-      }
-      //noinspection unchecked
-      filtered.add((T)node);
-    }
-    return filtered;
-  }
-
-  private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
-    List<SimpleNode> nodes = new ArrayList<>();
-    TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths != null) {
-      for (TreePath treePath : treePaths) {
-        nodes.add(tree.getNodeFor(treePath));
-      }
-    }
-    return nodes;
+    return TreeUtil.collectSelectedObjectsOfType(tree, nodeClass);
   }
 }

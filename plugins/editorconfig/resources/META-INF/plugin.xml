@@ -2,11 +2,19 @@
 <idea-plugin>
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
-  <vendor url="http://editorconfig.org">Kirill Glazyrin and Kevin Bell, JetBrains</vendor>
+  <category>Other Tools</category>
+  <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-      Supports storing code formatting settings inside EditorConfig files, as well as editing EditorConfig files.
-      ]]></description>
+Adds support for <a href="https://editorconfig.org/">EditorConfig</a> files.
+
+<ul><li>Define code style settings using EditorConfig files</li>
+<li>Use coding assistance in EditorConfig files</li></ul>
+
+To create an EditorConfig file in a directory, right-click this directory and select <b>New | EditorConfig File</b>.
+<p></p>
+<p>Originally developed by Kirill Glazyrin and Kevin Bell.</p>
+]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 
@@ -27,11 +35,18 @@
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
     <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
-    <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
+    <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
+    <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
+    <stripTrailingSpacesFilterFactory implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesFilterFactory"/>
 
     <!-- Language support -->
-    <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
+    <fileType name="EditorConfig" 
+              language="EditorConfig" 
+              implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
+              fieldName="INSTANCE"
+              fileNames=".editorconfig"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
         language="EditorConfig"
@@ -70,6 +85,10 @@
     <targetElementEvaluator
         language="EditorConfig"
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
+
+    <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
+    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.EncodingManager"/>
+    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 
     <!-- Inspections -->
     <lang.inspectionSuppressor
@@ -368,6 +387,7 @@
         name="EditorConfig File"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
+    <notificationWhitelist groupIds="EditorConfig;editorconfig"/>
   </extensions>
 
 
@@ -443,4 +463,8 @@
         interface="org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider"/>
     <extensionPoint qualifiedName="editorconfig.exportProvider" interface="org.editorconfig.settings.EditorConfigExportProvider"/>
   </extensionPoints>
+
+  <applicationListeners>
+    <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 </idea-plugin>

@@ -4,22 +4,22 @@ package com.siyeh.ig.style;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces;
+import static com.siyeh.ig.psiutils.ParenthesesUtils.stripParentheses;
 
 /**
  * A model which represents an 'if' condition which could be replaced with '?:', '&&' or '||' expression
  */
 public class IfConditionalModel extends ConditionalModel {
 
-  @NotNull private final PsiStatement myThenBranch;
-  @NotNull private final PsiStatement myElseBranch;
+  private final @NotNull PsiStatement myThenBranch;
+  private final @NotNull PsiStatement myElseBranch;
 
   private IfConditionalModel(@NotNull PsiExpression condition,
                             @NotNull PsiExpression thenExpression,
@@ -37,8 +37,7 @@ public class IfConditionalModel extends ConditionalModel {
    *
    * @return then branch
    */
-  @NotNull
-  public PsiStatement getThenBranch() {
+  public @NotNull PsiStatement getThenBranch() {
     return myThenBranch;
   }
 
@@ -47,42 +46,60 @@ public class IfConditionalModel extends ConditionalModel {
    *
    * @return else branch
    */
-  @NotNull
-  public PsiStatement getElseBranch() {
+  public @NotNull PsiStatement getElseBranch() {
     return myElseBranch;
   }
 
   /**
    * Converts if statement to conditional model.
-   * This conversion is possible when both branches contain only one statement or else branch is missing.
+   * This conversion is possible when both branches contain only one statement or else branch is missing
+   * and then branch completes abruptly (e.g. with return statement).
    * Note that model might include surrounding statements like return which follows the if statement (in case when else branch is missing).
    *
    * @param ifStatement if statement
+   * @param allowOuterControlFlow if true the model could be extracted even if the else branch could be reused in outer block. E.g.:
+   * <pre>{@code if(foo) {
+   *   if(bar) return "foobar";
+   * }
+   * return "none";}</pre>
+   * The model for inner {@code if} could be extracted with {@code condition = bar; thenBranch = "foobar"; elseBranch = "none"} when 
+   * this parameter is true.
    * @return null if statement can't be converted, model otherwise
    */
-  @Nullable
-  public static IfConditionalModel from(@NotNull PsiIfStatement ifStatement) {
+  public static @Nullable IfConditionalModel from(@NotNull PsiIfStatement ifStatement, boolean allowOuterControlFlow) {
     IfConditionalModel model;
     model = extractFromAssignment(ifStatement);
     if (model != null) return model;
-    model = extractFromImplicitReturn(ifStatement);
+    model = extractFromImplicitAssignment(ifStatement);
+    if (model != null) return model;
+    model = extractFromImplicitReturn(ifStatement, allowOuterControlFlow);
     if (model != null) return model;
     model = extractFromReturn(ifStatement);
     if (model != null) return model;
-    model = extractFromBreak(ifStatement);
+    model = extractFromYield(ifStatement);
     if (model != null) return model;
-    model = extractFromImplicitBreak(ifStatement);
+    model = extractFromImplicitYield(ifStatement);
     if (model != null) return model;
     return extractFromMethodCall(ifStatement);
   }
 
+  private static @Nullable IfConditionalModel extractFromImplicitAssignment(@NotNull PsiIfStatement ifStatement) {
+    if (ifStatement.getElseBranch() != null) return null;
+    PsiStatement prevStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(ifStatement), PsiStatement.class);
+    return extractFromAssignment(ifStatement.getCondition(), ifStatement.getThenBranch(), prevStatement, false);
+  }
 
-  @Nullable
-  private static IfConditionalModel extractFromAssignment(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static @Nullable IfConditionalModel extractFromAssignment(@NotNull PsiIfStatement ifStatement) {
+    return extractFromAssignment(ifStatement.getCondition(), ifStatement.getThenBranch(), ifStatement.getElseBranch(), true);
+  }
+
+  private static @Nullable IfConditionalModel extractFromAssignment(@Nullable PsiExpression condition,
+                                                                    @Nullable PsiStatement thenStatement,
+                                                                    @Nullable PsiStatement elseStatement, boolean explicit) {
+    condition = stripParentheses(condition);
     if (condition == null) return null;
-    PsiExpressionStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiExpressionStatement.class);
-    PsiExpressionStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiExpressionStatement.class);
+    PsiExpressionStatement thenBranch = tryCast(stripBraces(thenStatement), PsiExpressionStatement.class);
+    PsiExpressionStatement elseBranch = tryCast(stripBraces(elseStatement), PsiExpressionStatement.class);
     if (thenBranch == null || elseBranch == null) return null;
     PsiAssignmentExpression thenExpression = tryCast(thenBranch.getExpression(), PsiAssignmentExpression.class);
     PsiAssignmentExpression elseExpression = tryCast(elseBranch.getExpression(), PsiAssignmentExpression.class);
@@ -90,63 +107,84 @@ public class IfConditionalModel extends ConditionalModel {
     PsiExpression thenRhs = thenExpression.getRExpression();
     PsiExpression elseRhs = elseExpression.getRExpression();
     if (thenRhs == null || elseRhs == null) return null;
-    // Will be warned about equivalent if branches; no need to add ?: warning as well
-    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenRhs, elseRhs)) return null;
     IElementType thenTokenType = thenExpression.getOperationTokenType();
     IElementType elseTokenType = elseExpression.getOperationTokenType();
-    if (!thenTokenType.equals(elseTokenType)) return null;
+    if (!explicit && !thenTokenType.equals(JavaTokenType.EQ)) return null;
+    final boolean operationIsOpposite = areOppositeAssignmentTokens(thenTokenType, elseTokenType);
+    // Will be warned about equivalent if branches; no need to add ?: warning as well
+    if (!operationIsOpposite && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenRhs, elseRhs)) return null;
+    if (!(thenTokenType.equals(elseTokenType) || operationIsOpposite)) return null;
 
     PsiExpression thenLhs = thenExpression.getLExpression();
     PsiExpression elseLhs = elseExpression.getLExpression();
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs)) return null;
     PsiType type = thenLhs.getType();
     if (type == null) return null;
-    return new IfConditionalModel(condition, thenRhs, elseRhs, thenBranch, elseBranch, type);
+    final PsiExpression resultElseRhs = getResultElseRhs(elseRhs, operationIsOpposite);
+    if (!explicit && !ExpressionUtils.isSafelyRecomputableExpression(elseRhs)) return null;
+    return new IfConditionalModel(condition, thenRhs, resultElseRhs, thenBranch, elseBranch, type);
   }
 
-  @Nullable
-  private static IfConditionalModel extractFromReturn(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static PsiExpression getResultElseRhs(@NotNull PsiExpression elseRhs, boolean operationIsOpposite) {
+    if (!operationIsOpposite) return elseRhs;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(elseRhs.getProject());
+    final String elseRhsText;
+    if (elseRhs instanceof PsiPrefixExpression && ((PsiPrefixExpression)elseRhs).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      final PsiExpression operand = ((PsiPrefixExpression)elseRhs).getOperand();
+      if (operand != null) {
+        return operand;
+      }
+    }
+    elseRhsText = "-" + ParenthesesUtils.getText(elseRhs, ParenthesesUtils.ADDITIVE_PRECEDENCE);
+    return factory.createExpressionFromText(elseRhsText, elseRhs);
+  }
+
+  static boolean areOppositeAssignmentTokens(IElementType thenTokenType, IElementType elseTokenType) {
+    return thenTokenType.equals(JavaTokenType.PLUSEQ) && elseTokenType.equals(JavaTokenType.MINUSEQ) ||
+                                        thenTokenType.equals(JavaTokenType.MINUSEQ) && elseTokenType.equals(JavaTokenType.PLUSEQ);
+  }
+
+  private static @Nullable IfConditionalModel extractFromReturn(@NotNull PsiIfStatement ifStatement) {
+    PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
     PsiReturnStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiReturnStatement.class);
     PsiReturnStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiReturnStatement.class);
     return extractFromReturn(condition, thenBranch, elseBranch);
   }
 
-  @Nullable
-  private static IfConditionalModel extractFromImplicitReturn(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static @Nullable IfConditionalModel extractFromImplicitReturn(@NotNull PsiIfStatement ifStatement, boolean allowReturnInOuterBranch) {
+    PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
     if (ifStatement.getElseBranch() != null) return null;
     PsiReturnStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiReturnStatement.class);
-    PsiReturnStatement nextReturnStatement =
-      tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiReturnStatement.class);
+    PsiReturnStatement nextReturnStatement = allowReturnInOuterBranch ?
+                                             ControlFlowUtils.getNextReturnStatement(ifStatement) :
+                                             tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiReturnStatement.class);
+    if (nextReturnStatement == null) return null;
     return extractFromReturn(condition, thenBranch, nextReturnStatement);
   }
 
-  @Nullable
-  private static IfConditionalModel extractFromImplicitBreak(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static @Nullable IfConditionalModel extractFromImplicitYield(@NotNull PsiIfStatement ifStatement) {
+    PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
     if (ifStatement.getElseBranch() != null) return null;
-    PsiBreakStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiBreakStatement.class);
-    PsiBreakStatement nextReturnStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiBreakStatement.class);
-    return extractFromBreak(condition, thenBranch, nextReturnStatement);
+    PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
+    PsiYieldStatement nextReturnStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiYieldStatement.class);
+    return extractFromYield(condition, thenBranch, nextReturnStatement);
   }
 
-  @Nullable
-  private static IfConditionalModel extractFromBreak(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static @Nullable IfConditionalModel extractFromYield(@NotNull PsiIfStatement ifStatement) {
+    PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
-    PsiBreakStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiBreakStatement.class);
-    PsiBreakStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiBreakStatement.class);
-    return extractFromBreak(condition, thenBranch, elseBranch);
+    PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
+    PsiYieldStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiYieldStatement.class);
+    return extractFromYield(condition, thenBranch, elseBranch);
   }
 
   @Contract("_, null, _ -> null; _, !null, null -> null")
-  private static IfConditionalModel extractFromBreak(PsiExpression condition,
-                                                     PsiBreakStatement thenBranch,
-                                                     PsiBreakStatement elseBranch) {
+  private static IfConditionalModel extractFromYield(PsiExpression condition,
+                                                     PsiYieldStatement thenBranch,
+                                                     PsiYieldStatement elseBranch) {
     if (thenBranch == null || elseBranch == null) return null;
     final PsiExpression thenBreak = thenBranch.getExpression();
     if (thenBreak == null) return null;
@@ -158,10 +196,9 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   @Contract("_, null, _ -> null; _, !null, null -> null")
-  @Nullable
-  private static IfConditionalModel extractFromReturn(PsiExpression condition,
-                                                      PsiReturnStatement thenBranch,
-                                                      PsiReturnStatement elseBranch) {
+  private static @Nullable IfConditionalModel extractFromReturn(PsiExpression condition,
+                                                                PsiReturnStatement thenBranch,
+                                                                PsiReturnStatement elseBranch) {
     if (thenBranch == null || elseBranch == null) return null;
     final PsiExpression thenReturn = thenBranch.getReturnValue();
     if (thenReturn == null) return null;
@@ -172,9 +209,8 @@ public class IfConditionalModel extends ConditionalModel {
     return new IfConditionalModel(condition, thenReturn, elseReturn, thenBranch, elseBranch, type);
   }
 
-  @Nullable
-  private static IfConditionalModel extractFromMethodCall(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = ifStatement.getCondition();
+  private static @Nullable IfConditionalModel extractFromMethodCall(@NotNull PsiIfStatement ifStatement) {
+    PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
     PsiExpressionStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiExpressionStatement.class);
     PsiExpressionStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiExpressionStatement.class);
@@ -189,7 +225,7 @@ public class IfConditionalModel extends ConditionalModel {
     }
     PsiMethod thenMethod = thenCall.resolveMethod();
     PsiMethod elseMethod = elseCall.resolveMethod();
-    if (thenMethod == null || elseMethod == null || !thenMethod.equals(elseMethod)) return null;
+    if (thenMethod == null || !thenMethod.equals(elseMethod)) return null;
     final PsiExpression[] thenArguments = thenCall.getArgumentList().getExpressions();
     final PsiExpression[] elseArguments = elseCall.getArgumentList().getExpressions();
     if (thenArguments.length != elseArguments.length) return null;

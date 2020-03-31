@@ -19,11 +19,22 @@ public interface IgnoredFileContentProvider {
   String getFileName();
 
   @NotNull
-  String buildIgnoreFileContent(@NotNull VirtualFile ignoreFileRoot, @NotNull IgnoredFileProvider[] ignoredFileProviders);
+  String buildIgnoreFileContent(@NotNull VirtualFile ignoreFileRoot, IgnoredFileProvider @NotNull [] ignoredFileProviders);
 
   @NotNull
   String buildUnignoreContent(@NotNull String ignorePattern);
 
   @NotNull
+  String buildIgnoreEntryContent(@NotNull VirtualFile ignoreEntryRoot, @NotNull IgnoredFileDescriptor ignoredFileDescriptor);
+
+  @NotNull
   String buildIgnoreGroupDescription(@NotNull IgnoredFileProvider ignoredFileProvider);
+
+  default boolean supportIgnoreFileNotInVcsRoot() {
+    return true;
+  }
+
+  default boolean canCreateIgnoreFileInStateStoreDir() {
+    return true;
+  }
 }

@@ -38,7 +38,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
+  protected static final Logger LOG = Logger.getInstance(RefElement.class);
 
   private static final int IS_ENTRY_MASK = 0x80;
   private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
@@ -253,7 +253,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     mySuppressions = text.split("[, ]");
   }
 
-  public boolean isSuppressed(@NotNull String... toolId) {
+  public boolean isSuppressed(String @NotNull ... toolId) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
         for (String id : toolId) {

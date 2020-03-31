@@ -1,56 +1,53 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.sh.psi.ShFile;
-import com.pty4j.PtyProcess;
+import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+import java.util.Arrays;
+import java.util.Objects;
 
-public class ShTerminalRunner extends ShRunner {
+final class ShTerminalRunner extends ShRunner {
+  private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
+
+  private ShTerminalRunner(@NotNull Project project) {
+    super(project);
+  }
+
   @Override
-  public void run(@NotNull ShFile file) {
-    Project project = file.getProject();
-    TerminalView terminalView = TerminalView.getInstance(file.getProject());
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    if (window != null && window.isAvailable()) {
-      ((ToolWindowImpl) window).ensureContentInitialized();
-      window.activate(null);
-    }
-    terminalView.createNewSession(new LocalTerminalDirectRunner(project) {
-      @Override
-      protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
-        PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
-        Pair<String, String> fileCommand = createCommandLine(file);
-        if (fileCommand.first != null) {
-          try {
-            process.getOutputStream().write(fileCommand.first.getBytes(CharsetToolkit.UTF8_CHARSET));
-          }
-          catch (IOException ex) {
-            throw new ExecutionException("Fail to start " + fileCommand.first, ex);
-          }
-        }
-        else {
-          throw new ExecutionException(fileCommand.second, null);
-        }
-        return process;
+  public void run(@NotNull String command, @NotNull String workingDirectory, @NotNull String title) {
+    TerminalView terminalView = TerminalView.getInstance(myProject);
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window == null) return;
+
+    ContentManager contentManager = window.getContentManager();
+    Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
+    try {
+      if (pair == null) {
+        terminalView.createLocalShellWidget(workingDirectory, title).executeCommand(command);
+        return;
       }
-    });
+      window.activate(null);
+      pair.first.setDisplayName(title);
+      contentManager.setSelectedContent(pair.first);
+      pair.second.executeCommand(command);
+    } catch (IOException e) {
+      LOG.warn("Cannot run command:" + command, e);
+    }
   }
 
   @Override
@@ -59,27 +56,29 @@ public class ShTerminalRunner extends ShRunner {
     return window != null && window.isAvailable();
   }
 
-  @NotNull
-  private Pair<String, String> createCommandLine(@NotNull ShFile file) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return Pair.create(null, "Cannot run " + file.getName());
+  @Nullable
+  private static Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager, @NotNull String workingDirectory) {
+    Content selectedContent = contentManager.getSelectedContent();
+    if (selectedContent != null) {
+      Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(selectedContent, workingDirectory);
+      if (pair != null) return pair;
     }
-    if (!virtualFile.exists()) {
-      return Pair.create(null, "File " + virtualFile.getPath() + " doesn't exist");
-    }
-    String filePath = virtualFile.getPath() + "\n";
-    if (VfsUtil.virtualToIoFile(virtualFile).canExecute()) {
-      return Pair.create(filePath, null);
-    }
-    String executable = ShRunner.getShebangExecutable(file);
-    if (executable == null) {
-      String shellPath = TerminalOptionsProvider.Companion.getInstance().getShellPath();
-      File shellFile = new File(shellPath);
-      if (shellFile.isAbsolute() && shellFile.canExecute()) {
-        executable = shellPath;
-      }
-    }
-    return executable != null ? Pair.create(executable + " " + filePath, null) : Pair.create(filePath, null);
+
+    return Arrays.stream(contentManager.getContents())
+      .map(content -> getSuitableProcess(content, workingDirectory))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+  }
+
+  @Nullable
+  private static Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content, @NotNull String workingDirectory) {
+    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    if (!(widget instanceof ShellTerminalWidget)) return null;
+    ShellTerminalWidget shellTerminalWidget = (ShellTerminalWidget)widget;
+    if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) return null;
+    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
+    if (currentWorkingDirectory == null || !currentWorkingDirectory.equals(workingDirectory)) return null;
+    return Pair.create(content, shellTerminalWidget);
   }
 }

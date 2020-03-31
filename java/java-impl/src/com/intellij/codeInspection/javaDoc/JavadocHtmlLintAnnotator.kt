@@ -7,9 +7,10 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.util.ExecUtil
-import com.intellij.lang.annotation.Annotation
+import com.intellij.java.JavaBundle
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -46,10 +47,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
 
   override fun doAnnotate(collectedInfo: Info): Result? {
-    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null }
-    if (text == null) return null
-
-    val file = collectedInfo.file.virtualFile!!
+    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null } ?: return null
+    val file = collectedInfo.file.virtualFile ?: return null
     val copy = createTempFile(text.toByteArray(file.charset))
 
     try {
@@ -86,8 +85,10 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)
-          val annotation = if (error) holder.createErrorAnnotation(range, description) else holder.createWarningAnnotation(range, description)
-          registerFix(annotation)
+          val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
+          holder.newAnnotation(severity, description).range(range)
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
+            .create()
         }
       }
     }
@@ -157,7 +158,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     while (i.hasNext()) {
       val line = i.next()
       val matcher = lintPattern.matcher(line)
-      if (matcher.matches() && i.hasNext() && !i.next().isEmpty() && i.hasNext()) {
+      if (matcher.matches() && i.hasNext() && i.next().isNotEmpty() && i.hasNext()) {
         val row = matcher.group(1).toInt() - 1
         val col = i.next().indexOf('^')
         val error = matcher.group(2) == "error"
@@ -189,7 +190,5 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     return range
   }
 
-  private fun registerFix(annotation: Annotation) =
-    annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
   //</editor-fold>
 }

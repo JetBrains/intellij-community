@@ -48,10 +48,7 @@ public class IntentionPolicy {
     if (!action.startInWriteAction() || shouldSkipIntention(action.getText())) {
       return false;
     }
-    IntentionAction original = action;
-    while (original instanceof IntentionActionDelegate) {
-      original = ((IntentionActionDelegate)original).getDelegate();
-    }
+    IntentionAction original = IntentionActionDelegate.unwrap(action);
     String familyName;
     if (original instanceof QuickFixWrapper) {
       LocalQuickFix fix = ((QuickFixWrapper)original).getFix();

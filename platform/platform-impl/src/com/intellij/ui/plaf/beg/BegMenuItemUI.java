@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -113,25 +114,17 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+    if (comp.isOpaque() || (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
-        if (UIUtil.isUnderAquaLookAndFeel()) {
-          myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, j1, k1);
-        } else {
+        g.setColor(selectionBackground);
+        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+          g.fillRect(k, 0, j1 - k, k1);
+        }
+        else{
+          g.fillRect(0, 0, j1, k1);
           g.setColor(selectionBackground);
-          if (icon2 != null && !(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
-            g.fillRect(k, 0, j1 - k, k1);
-          }
-          else{
-            g.fillRect(0, 0, j1, k1);
-            //graphics.setColor(BegResources.q);
-            //graphics.drawLine(0, 0, 0, k1);
-            g.setColor(selectionBackground);
-          }
-          //graphics.setColor(BegResources.r);
-          //graphics.drawLine(j1 - 1, 0, j1 - 1, k1);
         }
       }
       g.setColor(color2);
@@ -237,7 +230,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       if (j1 > 0){
         if (SystemInfo.isMac) {
           try {
-            Class appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
+            Class<?> appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
             Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, int.class, boolean.class);
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
           }
@@ -255,7 +248,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         }
 
       }
-      s1 = s1 + KeyEvent.getKeyText(keystroke.getKeyCode());
+      s1 += KeyEvent.getKeyText(keystroke.getKeyCode());
     }
     return s1;
   }

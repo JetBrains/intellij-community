@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,11 +139,30 @@ public interface VcsLogProvider {
   }
 
   /**
+   * Returns {@link VcsLogFileHistoryHandler} for this provider in order to support Log-based file history.
+   *
+   * @return file history handler or null if unsupported.
+   */
+  @Nullable
+  default VcsLogFileHistoryHandler getFileHistoryHandler() {
+    return null;
+  }
+
+  /**
+   * Checks that the given reference points to a valid commit in the given root, and returns the Hash of this commit.
+   * Otherwise, if the reference is invalid, returns null.
+   */
+  @Nullable
+  default Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
+    return null;
+  }
+
+  /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
   @Nullable
-  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath filePath) {
-    return VcsUtil.getVcsRootFor(project, filePath);
+  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath filePath) {
+    return detectedRoot;
   }
 
   interface Requirements {
@@ -186,12 +204,6 @@ public interface VcsLogProvider {
   default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     return readMetadata(root, hashes);
-  }
-
-  @Deprecated
-  default void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
-    throws VcsException {
-    throw new UnsupportedOperationException(this.getClass().getName() + ".readAllFullDetails is deprecated");
   }
 
   /**

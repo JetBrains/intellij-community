@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -27,26 +27,20 @@ import java.util.function.Consumer;
  */
 public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private final EventHandler myEventHandler;
-  private final LinkListener<IdeaPluginDescriptor> myListener;
-  private final LinkListener<String> mySearchListener;
-  private final Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> myFunction;
+  private final Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> myFunction;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
   public PluginsGroupComponent(@NotNull LayoutManager layout,
                                @NotNull EventHandler eventHandler,
-                               @NotNull LinkListener<IdeaPluginDescriptor> listener,
-                               @NotNull LinkListener<String> searchListener,
-                               @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
+                               @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
     super(layout);
     myEventHandler = eventHandler;
-    myListener = listener;
-    mySearchListener = searchListener;
     myFunction = function;
 
     myEventHandler.connect(this);
 
     setOpaque(true);
-    setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
   }
 
   @NotNull
@@ -59,15 +53,15 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   @NotNull
-  public List<CellPluginComponent> getSelection() {
+  public List<ListPluginComponent> getSelection() {
     return myEventHandler.getSelection();
   }
 
-  public void setSelection(@NotNull CellPluginComponent component) {
+  public void setSelection(@NotNull ListPluginComponent component) {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 
@@ -91,7 +85,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
           if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
             int fromIndex = group.ui.plugins.size();
             int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
-            CellPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
+            ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
             PluginLogo.startBatchMode();
@@ -132,7 +126,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
         Container parent = getParent();
         Insets insets = parent.getInsets();
         size.width = Math.min(parent.getWidth() - insets.left - insets.right -
-                              (parent.getComponentCount() == 2 ? parent.getComponent(1).getWidth() + JBUI.scale(20) : 0), size.width);
+                              (parent.getComponentCount() == 2 ? parent.getComponent(1).getWidth() + JBUIScale.scale(20) : 0), size.width);
         return size;
       }
 
@@ -150,7 +144,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       panel.add(group.rightAction, BorderLayout.EAST);
     }
     else if (!ContainerUtil.isEmpty(group.rightActions)) {
-      JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+      JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(5)));
       panel.add(actions, BorderLayout.EAST);
 
       for (JComponent action : group.rightActions) {
@@ -186,7 +180,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
   private int getEventIndexForGroup(int groupIndex) {
     for (int i = groupIndex; i >= 0; i--) {
-      List<CellPluginComponent> plugins = myGroups.get(i).plugins;
+      List<ListPluginComponent> plugins = myGroups.get(i).plugins;
       if (!plugins.isEmpty()) {
         return myEventHandler.getCellIndex(plugins.get(0));
       }
@@ -194,13 +188,16 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     return -1;
   }
 
-  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int index, int eventIndex) {
+  private void addToGroup(@NotNull PluginsGroup group,
+                          @NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                          int index,
+                          int eventIndex) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      CellPluginComponent pluginComponent = myFunction.fun(descriptor);
+      ListPluginComponent pluginComponent = myFunction.fun(descriptor);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
-      pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
+      pluginComponent.setListeners(myEventHandler);
       if (index != -1) {
         index++;
       }
@@ -212,7 +209,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
   public void addToGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
     int index = group.addWithIndex(descriptor);
-    CellPluginComponent anchor = null;
+    ListPluginComponent anchor = null;
     int uiIndex = -1;
 
     if (index == group.ui.plugins.size()) {
@@ -228,18 +225,18 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    CellPluginComponent pluginComponent = myFunction.fun(descriptor);
+    ListPluginComponent pluginComponent = myFunction.fun(descriptor);
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
-    pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
+    pluginComponent.setListeners(myEventHandler);
   }
 
   public void removeGroup(@NotNull PluginsGroup group) {
     myGroups.remove(group.ui);
     remove(group.ui.panel);
 
-    for (CellPluginComponent plugin : group.ui.plugins) {
+    for (ListPluginComponent plugin : group.ui.plugins) {
       plugin.close();
       remove(plugin);
       myEventHandler.removeCell(plugin);
@@ -252,7 +249,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
     int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
     assert index != -1;
-    CellPluginComponent component = group.ui.plugins.remove(index);
+    ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();
     remove(component);
     myEventHandler.removeCell(component);
@@ -274,7 +271,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
   public void clear() {
     for (UIPluginGroup group : myGroups) {
-      for (CellPluginComponent plugin : group.plugins) {
+      for (ListPluginComponent plugin : group.plugins) {
         plugin.close();
       }
     }

@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serialization.ObjectSerializer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.Before
 import org.junit.Test
 import java.io.Serializable
@@ -25,14 +27,28 @@ class DataNodeTest {
   @Test
   fun `instance of class from a classloader can be deserialized`() {
     val barObject = classLoader.loadClass("foo.Bar").newInstance()
-
-    val deserialized = wrapAndDeserialize(barObject)
-
-    assertThatExceptionOfType(IllegalStateException::class.java)
-      .isThrownBy { deserialized.deserializeData(listOf(javaClass.classLoader)) }
-
-    deserialized.deserializeData(listOf(URLClassLoader(arrayOf(libUrl), javaClass.classLoader)))
+    val deserialized = wrapAndDeserialize(barObject, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.name).isEqualTo("foo.Bar")
+  }
+
+  @Test
+  fun `instance of class from a our own classloader can be deserialized`() {
+    class Container {
+      @JvmField
+      var bar: Any? = null
+    }
+
+    val barClass = classLoader.loadClass("foo.Bar")
+    val out = BufferExposingByteArrayOutputStream()
+    val container = Container()
+    container.bar = barClass.newInstance()
+    ObjectSerializer.instance.writeList(listOf(container), Any::class.java, out, createCacheWriteConfiguration())
+    // ClassNotFoundException because custom logic must be applied only to DataNode classes, but foo.Bar it is part of our test Container class
+    assertThatThrownBy {
+      ObjectSerializer.instance.readList(Any::class.java, out.toByteArray(),
+                                         createCacheReadConfiguration(logger<DataNodeTest>(), testOnlyClassLoader = classLoader))
+    }
+      .hasCause(ClassNotFoundException("foo.Bar"))
   }
 
   // well, proxy cannot be serialized because on deserialize we need class
@@ -43,12 +59,7 @@ class DataNodeTest {
 
     val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
     @Suppress("UNCHECKED_CAST")
-    val deserialized = wrapAndDeserialize(proxyInstance)
-
-    assertThatExceptionOfType(IllegalStateException::class.java)
-      .isThrownBy { deserialized.deserializeData(listOf(javaClass.classLoader)) }
-
-    deserialized.deserializeData(listOf(URLClassLoader(arrayOf(libUrl), javaClass.classLoader)))
+    val deserialized = wrapAndDeserialize(proxyInstance, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")
       .contains("foo.Baz")
@@ -61,12 +72,10 @@ class DataNodeTest {
     val dataNodes = listOf(DataNode(Key.create(ProjectSystemId::class.java, 0), id, null),
                            DataNode(Key.create(ProjectSystemId::class.java, 0), id, null))
 
-    val buffer = WriteAndCompressSession()
-    dataNodes.forEach { it.serializeData(buffer) }
     val out = BufferExposingByteArrayOutputStream()
-    ObjectSerializer.instance.writeList(dataNodes, DataNode::class.java, out)
+    ObjectSerializer.instance.writeList(dataNodes, DataNode::class.java, out, createCacheWriteConfiguration())
     val bytes = out.toByteArray()
-    val deserializedList = ObjectSerializer.instance.readList(DataNode::class.java, bytes, createDataNodeReadConfiguration(javaClass.classLoader))
+    val deserializedList = ObjectSerializer.instance.readList(DataNode::class.java, bytes, createDataNodeReadConfiguration { name, _ -> javaClass.classLoader.loadClass(name) })
 
     assertThat(deserializedList).hasSize(2)
     assertThat(deserializedList[0].data === deserializedList[1].data)
@@ -91,16 +100,31 @@ class DataNodeTest {
     handler.ref = proxy
     assertThat(proxy.incrementAndGet()).isEqualTo(1)
 
-    val dataNode = wrapAndDeserialize(proxy)
+    val dataNode = wrapAndDeserialize(proxy, javaClass.classLoader)
     val counter = dataNode.data as Counter
     assertThat(counter.incrementAndGet()).isEqualTo(2)
   }
 
-  private fun wrapAndDeserialize(barObject: Any): DataNode<*> {
+  @Test
+  fun `test DataNode visit allows children modification`() {
+    val key = Key.create(Object::class.java, 0)
+    val parent = DataNode(key, Object(), null)
+    val child1 = DataNode(key, Object(), parent)
+    val child2 = DataNode(key, Object(), parent)
+    with(parent) {
+      addChild(child1)
+      addChild(child2)
+    }
+
+    parent.visit { if (it == child1) { it.clear(true) } }
+
+    then(parent.children).containsExactly(child2)
+  }
+
+  private fun wrapAndDeserialize(barObject: Any, classLoader: ClassLoader): DataNode<*> {
     val original = DataNode(Key.create(barObject.javaClass, 0), barObject, null)
-    original.serializeData(WriteAndCompressSession())
-    val bytes = ObjectSerializer.instance.writeAsBytes(original)
-    return ObjectSerializer.instance.read(DataNode::class.java, bytes)
+    val bytes = ObjectSerializer.instance.writeAsBytes(original, createCacheWriteConfiguration())
+    return ObjectSerializer.instance.read(DataNode::class.java, bytes, createCacheReadConfiguration(logger<DataNodeTest>(), testOnlyClassLoader = classLoader))
   }
 }
 

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface SearchSession {
   DataKey<SearchSession> KEY = DataKey.create("search.replace.session");
-  String INCORRECT_REGEX_MESSAGE = "Incorrect regular expression";
+  String INCORRECT_REGEX_MESSAGE = FindBundle.message("find.incorrect.regexp");
 
   @NotNull
   FindModel getFindModel();
@@ -35,4 +35,8 @@ public interface SearchSession {
   void searchBackward();
 
   void close();
+
+  default boolean isSearchInProgress() {
+    return false;
+  }
 }

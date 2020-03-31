@@ -46,7 +46,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
   //  if (setupRunnable != null) setupRunnable.run();
   //}
 
-  private static void restoreDefaults() {
+  private void restoreDefaults() {
     restoreDefaults(CodeStyleSettingsManager.getInstance());
     restoreDefaults(CodeStyleSettingsManager.getInstance(getProject()));
   }

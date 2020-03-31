@@ -35,8 +35,13 @@ class Contracts {
     if(<warning descr="Condition 'b' is always 'true'">b</warning>) {
       System.out.println("always");
     }
+    assertThat("1", getBooleanWrapper(1), is(true));
+    assertThat("2", getBooleanPrimitive(2), is(true));
     <warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>("b is not true", <weak_warning descr="Value 'b' is always 'true'">b</weak_warning>, not(is(true)));
   }
+  
+  private native Boolean getBooleanWrapper(int x);
+  private native boolean getBooleanPrimitive(int x);
 
   private void checkFalse(boolean b) {
     assertThat("b is false", b, is(equalTo(false)));

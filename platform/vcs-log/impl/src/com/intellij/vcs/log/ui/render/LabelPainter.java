@@ -1,18 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ObjectUtils;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
@@ -20,6 +18,7 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,6 @@ public class LabelPainter {
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
-  private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
@@ -51,7 +49,7 @@ public class LabelPainter {
   @NotNull private final LabelIconCache myIconCache;
 
   @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
-  private int myHeight = JBUI.scale(22);
+  private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
   @NotNull private Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;
@@ -59,28 +57,22 @@ public class LabelPainter {
 
   private boolean myCompact;
   private boolean myShowTagNames;
+  private boolean myLeftAligned;
 
   public LabelPainter(@NotNull VcsLogData data,
                       @NotNull JComponent component,
-                      @NotNull LabelIconCache iconCache,
-                      boolean compact,
-                      boolean showTagNames) {
+                      @NotNull LabelIconCache iconCache) {
     myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
-    myCompact = compact;
-    myShowTagNames = showTagNames;
   }
 
   @Nullable
   public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (!references.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
-      return logData.getLogProvider(root).getReferenceManager();
-    }
-    else {
-      return null;
-    }
+    if (references.isEmpty()) return null;
+
+    VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(references)).getRoot();
+    return logData.getLogProvider(root).getReferenceManager();
   }
 
   public void customizePainter(@NotNull Collection<? extends VcsRef> references,
@@ -279,17 +271,10 @@ public class LabelPainter {
         refName = TWO_DOTS + refName.substring(separatorIndex);
       }
 
-      if (fontMetrics.stringWidth(refName) <= availableWidth) return refName;
-
       if (availableWidth > 0) {
-        for (int i = refName.length(); i > MAX_LENGTH; i--) {
-          String result = StringUtil.shortenTextWithEllipsis(refName, i, 0, THREE_DOTS);
-          if (fontMetrics.stringWidth(result) <= availableWidth) {
-            return result;
-          }
-        }
+        return VcsLogUiUtil.shortenTextToFit(refName, fontMetrics, availableWidth, MAX_LENGTH, StringUtil.ELLIPSIS);
       }
-      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
+      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, StringUtil.ELLIPSIS);
     }
     return refName;
   }
@@ -345,7 +330,7 @@ public class LabelPainter {
   }
 
   public boolean isLeftAligned() {
-    return Registry.is("vcs.log.labels.left.aligned");
+    return myLeftAligned;
   }
 
   public static Font getReferenceFont() {
@@ -363,6 +348,10 @@ public class LabelPainter {
 
   public void setCompact(boolean compact) {
     myCompact = compact;
+  }
+
+  public void setLeftAligned(boolean leftAligned) {
+    myLeftAligned = leftAligned;
   }
 }
 

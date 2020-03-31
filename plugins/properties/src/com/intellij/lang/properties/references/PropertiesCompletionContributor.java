@@ -76,7 +76,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static boolean hasMoreImportantReference(@NotNull PsiReference[] references, @NotNull PropertyReference propertyReference) {
+  public static boolean hasMoreImportantReference(PsiReference @NotNull [] references, @NotNull PropertyReference propertyReference) {
     return propertyReference.isSoft() && ContainerUtil.or(references, reference -> !reference.isSoft());
   }
 
@@ -125,8 +125,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     }
   };
 
-  @NotNull
-  public static LookupElement[] getVariants(final PropertyReferenceBase propertyReference) {
+  public static LookupElement @NotNull [] getVariants(final PropertyReferenceBase propertyReference) {
     final Set<Object> variants = PropertiesPsiCompletionUtil.getPropertiesKeys(propertyReference);
     return getVariants(variants);
   }

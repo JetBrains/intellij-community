@@ -1,48 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.ListItemsDialogWrapper;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.Function;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import org.jetbrains.annotations.NotNull;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
-  
+
   private JTextField myKeepBlankLines;
   private JComboBox myWrapAttributes;
   private JCheckBox myAlignAttributes;
@@ -54,17 +44,17 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myAlignText;
-  private TextFieldWithBrowseButton myInsertNewLineTagNames;
-  private TextFieldWithBrowseButton myRemoveNewLineTagNames;
-  private TextFieldWithBrowseButton myDoNotAlignChildrenTagNames;
-  private TextFieldWithBrowseButton myKeepWhiteSpacesTagNames;
-  private TextFieldWithBrowseButton myInlineElementsTagNames;
+  private ExpandableTextField myInsertNewLineTagNames;
+  private ExpandableTextField myRemoveNewLineTagNames;
+  private ExpandableTextField myDoNotAlignChildrenTagNames;
+  private ExpandableTextField myKeepWhiteSpacesTagNames;
+  private ExpandableTextField myInlineElementsTagNames;
   private JTextField myDoNotAlignChildrenMinSize;
   private JCheckBox myShouldKeepBlankLines;
   private JCheckBox mySpaceInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myShouldKeepLineBreaksInText;
-  private TextFieldWithBrowseButton myDontBreakIfInlineContent;
+  private ExpandableTextField myDontBreakIfInlineContent;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
@@ -84,19 +74,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
     fillEnumCombobox(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
-    customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
-    customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
-    customizeField(ApplicationBundle.message("title.do.not.indent.children.of"), myDoNotAlignChildrenTagNames);
-    customizeField(ApplicationBundle.message("title.inline.elements"), myInlineElementsTagNames);
-    customizeField(ApplicationBundle.message("title.keep.whitespaces.inside"), myKeepWhiteSpacesTagNames);
-    customizeField(ApplicationBundle.message("title.dont.wrap.if.inline.content"), myDontBreakIfInlineContent);
-
-    myInsertNewLineTagNames.getTextField().setColumns(5);
-    myRemoveNewLineTagNames.getTextField().setColumns(5);
-    myDoNotAlignChildrenTagNames.getTextField().setColumns(5);
-    myKeepWhiteSpacesTagNames.getTextField().setColumns(5);
-    myInlineElementsTagNames.getTextField().setColumns(5);
-    myDontBreakIfInlineContent.getTextField().setColumns(5);
+    myInsertNewLineTagNames.setColumns(5);
+    myRemoveNewLineTagNames.setColumns(5);
+    myDoNotAlignChildrenTagNames.setColumns(5);
+    myKeepWhiteSpacesTagNames.setColumns(5);
+    myInlineElementsTagNames.setColumns(5);
+    myDontBreakIfInlineContent.setColumns(5);
 
     myQuotesCombo.addActionListener(new ActionListener() {
       @Override
@@ -127,10 +110,15 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
-  }
 
-  private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
-    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
+    Function<String, List<String>> parser = (list) -> Arrays.asList(list.split(","));
+    Function<List<String>, String> joiner = (list) -> StringUtil.join(list, ",");
+    myInsertNewLineTagNames = new ExpandableTextField(parser, joiner);
+    myRemoveNewLineTagNames = new ExpandableTextField(parser, joiner);
+    myDoNotAlignChildrenTagNames = new ExpandableTextField(parser, joiner);
+    myInlineElementsTagNames = new ExpandableTextField(parser, joiner);
+    myKeepWhiteSpacesTagNames = new ExpandableTextField(parser, joiner);
+    myDontBreakIfInlineContent = new ExpandableTextField(parser, joiner);
   }
 
   @Override
@@ -247,15 +235,15 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!Comparing.equal(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE, myInsertNewLineTagNames.getText().trim())) {
+    if (!Objects.equals(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE, myInsertNewLineTagNames.getText().trim())) {
       return true;
     }
 
-    if (!Comparing.equal(settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE, myRemoveNewLineTagNames.getText().trim())) {
+    if (!Objects.equals(settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE, myRemoveNewLineTagNames.getText().trim())) {
       return true;
     }
 
-    if (!Comparing.equal(settings.HTML_DO_NOT_INDENT_CHILDREN_OF, myDoNotAlignChildrenTagNames.getText().trim())) {
+    if (!Objects.equals(settings.HTML_DO_NOT_INDENT_CHILDREN_OF, myDoNotAlignChildrenTagNames.getText().trim())) {
       return true;
     }
 
@@ -263,10 +251,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!Comparing.equal(settings.HTML_INLINE_ELEMENTS, myInlineElementsTagNames.getText().trim())) return true;
-    if (!Comparing.equal(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT, myDontBreakIfInlineContent.getText().trim())) return true;
+    if (!Objects.equals(settings.HTML_INLINE_ELEMENTS, myInlineElementsTagNames.getText().trim())) return true;
+    if (!Objects.equals(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT, myDontBreakIfInlineContent.getText().trim())) return true;
 
-    if (!Comparing.equal(settings.HTML_KEEP_WHITESPACES_INSIDE, myKeepWhiteSpacesTagNames.getText().trim())) {
+    if (!Objects.equals(settings.HTML_KEEP_WHITESPACES_INSIDE, myKeepWhiteSpacesTagNames.getText().trim())) {
       return true;
     }
 
@@ -289,7 +277,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
 
     if (myRightMarginForm.isModified(rootSettings) || myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES) return true;
-    
+
     return myPanelCustomizers.stream().anyMatch(el -> el.isModified(rootSettings));
   }
 

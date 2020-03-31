@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public class Word {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Word");
+  private static final Logger LOG = Logger.getInstance(Word.class);
   @NotNull private final DiffString myBaseText;
   @NotNull private final TextRange myRange;
   @NotNull private final DiffString myText;

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsMacroExpander {
   private final ExpandMacroToPathMap myExpandMacroMap;
 
@@ -68,7 +65,7 @@ public class JpsMacroExpander {
     return myExpandMacroMap;
   }
 
-  public String substitute(String element, boolean caseSensitive) {
+  public String substitute(@NotNull String element, boolean caseSensitive) {
     return myExpandMacroMap.substitute(element, caseSensitive);
   }
 }

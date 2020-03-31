@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +29,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +36,6 @@ import javax.swing.*;
 
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean ignoreClarification;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.super.qualifier.display.name");
-  }
 
   @Override
   @NotNull
@@ -56,7 +48,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore clarification 'super' qualifier", this, "ignoreClarification");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unnecessary.super.qualifier.option"), this, "ignoreClarification");
   }
 
   @Override

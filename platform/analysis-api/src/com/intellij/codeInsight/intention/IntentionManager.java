@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -24,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +38,7 @@ public abstract class IntentionManager  {
    * @param project the project for which the instance is returned.
    * @return instance of the {@code IntentionManager} assigned for given project.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   public static IntentionManager getInstance(Project project) {
     return getInstance();
@@ -72,8 +60,7 @@ public abstract class IntentionManager  {
    *
    * @return array of registered actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getIntentionActions();
+  public abstract IntentionAction @NotNull [] getIntentionActions();
 
   /**
    * Returns all registered intention actions which are available now
@@ -81,8 +68,7 @@ public abstract class IntentionManager  {
    *
    * @return array of actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getAvailableIntentionActions();
+  public abstract IntentionAction @NotNull [] getAvailableIntentionActions();
 
   /**
    * Registers an intention action which can be enabled or disabled through the "Intention
@@ -99,8 +85,10 @@ public abstract class IntentionManager  {
    * @param action   the intention action to register.
    * @param category the name of the category or categories under which the intention will be shown
    *                 in the "Intention Settings" dialog.
+   * @deprecated Please use {@code <intentionAction>} extension point instead
    */
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
+  @Deprecated
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, String @NotNull ... category);
 
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 

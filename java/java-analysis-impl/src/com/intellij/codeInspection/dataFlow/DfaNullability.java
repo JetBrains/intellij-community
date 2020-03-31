@@ -2,6 +2,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * values useful during the DFA. If you have a DfaNullability value (e.g. from {@link CommonDataflow}),
  * and want to check if it's nullable, or not, it's advised to convert it to {@link Nullability} first,
  * as more values could be introduced to this enum in future.
- *
- * @see DfaFactType#NULLABILITY
  */
 public enum DfaNullability {
   /**
@@ -47,12 +48,36 @@ public enum DfaNullability {
     return myPresentationalName;
   }
 
-  public static boolean isNullable(DfaFactMap map) {
-    return toNullability(map.get(DfaFactType.NULLABILITY)) == Nullability.NULLABLE;
+  @NotNull
+  public DfaNullability unite(@NotNull DfaNullability other) {
+    if (this == other) {
+      return this;
+    }
+    if (this == NULL || other == NULL ||
+        this == NULLABLE || other == NULLABLE) {
+      return NULLABLE;
+    }
+    if (this == FLUSHED || other == FLUSHED) {
+      return FLUSHED;
+    }
+    return UNKNOWN;
   }
 
-  public static boolean isNotNull(DfaFactMap map) {
-    return map.get(DfaFactType.NULLABILITY) == NOT_NULL;
+  @Nullable
+  public DfaNullability intersect(@NotNull DfaNullability right) {
+    if (this == NOT_NULL) {
+      return right == NULL ? null : NOT_NULL;
+    }
+    if (right == NOT_NULL) {
+      return this == NULL ? null : NOT_NULL;
+    }
+    if (this == UNKNOWN) return right;
+    if (right == UNKNOWN) return this;
+    if (this == FLUSHED && toNullability(right) == Nullability.NULLABLE ||
+        right == FLUSHED && toNullability(this) == Nullability.NULLABLE) {
+      return NULLABLE;
+    }
+    return equals(right) ? this : null;
   }
 
   @NotNull
@@ -71,5 +96,24 @@ public enum DfaNullability {
         return UNKNOWN;
     }
     throw new IllegalStateException("Unknown nullability: "+nullability);
+  }
+
+  @NotNull
+  public DfReferenceType asDfType() {
+    switch (this) {
+      case NULL:
+        return DfTypes.NULL;
+      case NOT_NULL:
+        return DfTypes.NOT_NULL_OBJECT;
+      case UNKNOWN:
+        return DfTypes.OBJECT_OR_NULL;
+      default:
+        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
+    }
+  }
+
+  @NotNull
+  public static DfaNullability fromDfType(@NotNull DfType type) {
+    return type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
   }
 }

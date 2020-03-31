@@ -18,15 +18,9 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.List;
-
-/**
- * @author nik
- */
 public class CompilerTestUtil {
   private CompilerTestUtil() {
   }
@@ -68,15 +62,11 @@ public class CompilerTestUtil {
       final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
       ApplicationManager.getApplication().runWriteAction(() -> {
         Sdk internalJdk = table.getInternalJdk();
-        List<Module> modulesToRestore = new SmartList<>();
         for (Module module : ModuleManager.getInstance(project).getModules()) {
           Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
           if (sdk != null && sdk.equals(internalJdk)) {
-            modulesToRestore.add(module);
+            ModuleRootModificationUtil.setModuleSdk(module, null);
           }
-        }
-        for (Module module : modulesToRestore) {
-          ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
         }
         table.removeJdk(internalJdk);
         BuildManager.getInstance().clearState(project);

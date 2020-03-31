@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,10 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
     if (c == '$') {
       final SelectionModel selectionModel = editor.getSelectionModel();
       final String selectedText = selectionModel.getSelectedText();
-      if (!StringUtil.isEmpty(selectedText) && !selectedText.contains("$")) {
+      if (!StringUtil.isEmpty(selectedText)) {
+        if (selectedText.contains("$") || !CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED) {
+          return Result.CONTINUE;
+        }
         final Document document = editor.getDocument();
         final List<RangeMarker> rangeMarkers = new SmartList<>();
         rangeMarkers.add(document.createRangeMarker(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
@@ -74,7 +78,34 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
         }
         return Result.STOP;
       }
+      else if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        final Document document = editor.getDocument();
+        final CaretModel caretModel = editor.getCaretModel();
+        final Caret caret = caretModel.getCurrentCaret();
+        final LogicalPosition position = caret.getLogicalPosition();
+        final int lineStart = document.getLineStartOffset(position.line);
+        final int lineEnd = document.getLineEndOffset(position.line);
+        final CharSequence text = document.getCharsSequence();
+        final int offset = lineStart + position.column;
+        final boolean nextIsDollar = offset < text.length() && text.charAt(offset) == '$';
+        if (hasOddDollar(text, lineStart, offset) && nextIsDollar) {
+          caret.setSelection(offset, offset + 1);
+        }
+        else if (!hasOddDollar(text, lineStart, lineEnd)) {
+          document.insertString(offset, "$");
+        }
+      }
     }
-    return super.beforeSelectionRemoved(c, project, editor, file);
+    return Result.CONTINUE;
+  }
+
+  static boolean hasOddDollar(CharSequence text, int start, int end) {
+    boolean $ = false;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '$') {
+        $ = !$;
+      }
+    }
+    return $;
   }
 }

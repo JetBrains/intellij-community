@@ -209,7 +209,7 @@ class ContractInferenceInterpreter {
     if (type == PARENTH_EXPRESSION) {
       return visitExpression(states, findExpressionChild(myTree, expr));
     }
-    if (type == TYPE_CAST_EXPRESSION) {
+    if (type == TYPE_CAST_EXPRESSION && !isPrimitiveCast(myTree, expr)) {
       return visitExpression(states, findExpressionChild(myTree, expr));
     }
 
@@ -355,8 +355,8 @@ class ContractInferenceInterpreter {
   }
 
   private static class CodeBlockContracts {
-    List<PreContract> accumulated = new ArrayList<>();
-    List<ExpressionRange> varInitializers = new ArrayList<>();
+    final List<PreContract> accumulated = new ArrayList<>();
+    final List<ExpressionRange> varInitializers = new ArrayList<>();
 
     void addAll(List<PreContract> contracts) {
       if (contracts.isEmpty()) return;
@@ -460,8 +460,7 @@ class ContractInferenceInterpreter {
     return -1;
   }
 
-  @Nullable
-  static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+  static ValueConstraint @Nullable [] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
     if (constraints[index] == constraint) return constraints;
 
     ValueConstraint negated = constraint.negate();

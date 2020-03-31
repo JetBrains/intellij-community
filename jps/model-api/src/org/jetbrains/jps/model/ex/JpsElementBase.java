@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsModel;
 
-/**
- * @author nik
- */
 public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implements JpsElement, JpsElement.BulkModificationSupport<Self> {
   protected JpsElementBase myParent;
 

@@ -15,6 +15,9 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
      {"check", "check in ", "CheckinProject"},
      {"check", "checkin ", "CheckinProject"},
      {"comm", "commit ", "CheckinProject"},
+     {"check", "check in ", "ChangesView.ToggleCommitUi"},
+     {"check", "checkin ", "ChangesView.ToggleCommitUi"},
+     {"comm", "commit ", "ChangesView.ToggleCommitUi"},
      {"reve", "revert ", "ChangesView.Revert"},
      {"roll", "rollback ", "ChangesView.Revert"},
      {"compare", "compare ", "Compare.SameVersion"},
@@ -24,9 +27,8 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
      {"appl", "apply patch ", "ChangesView.ApplyPatch"},
   };
 
-  @NotNull
   @Override
-  protected String[][] getActionsMatrix() {
+  protected String[] @NotNull [] getActionsMatrix() {
     return ACTION_MATRIX;
   }
 }

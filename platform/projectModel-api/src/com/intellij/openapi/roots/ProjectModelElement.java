@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Base interface for elements of the project model (modules, libraries, artifacts, etc).
- *
- * @author nik
  */
 @ApiStatus.Experimental
 public interface ProjectModelElement {

@@ -3,7 +3,6 @@ package git4idea.crlf;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.Executor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,16 +17,10 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
+
   @Override
   public void setUp() throws Exception {
-    try {
-      super.setUp();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-    Executor.cd(projectRoot);
+    super.setUp();
     git("config core.autocrlf false");
   }
 

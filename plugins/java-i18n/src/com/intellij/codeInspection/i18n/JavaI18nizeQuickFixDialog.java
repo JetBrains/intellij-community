@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -23,8 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,13 +56,13 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private final boolean myShowPreview;
 
   @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
-  @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
+  @NonNls public static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
   @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
                                @Nullable final PsiLiteralExpression literalExpression,
-                               String defaultPropertyValue,
+                               @NotNull String defaultPropertyValue,
                                DialogCustomization customization,
                                final boolean showJavaCodeInfo,
                                final boolean showPreview) {
@@ -104,7 +105,10 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
         codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
-      myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
+      myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
+                                      .withLabel(JavaI18nBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
+                                      .withComment(JavaI18nBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
+                                      .createPanel(), BorderLayout.NORTH);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
@@ -118,7 +122,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     final String templateName = getTemplateName();
 
     if (templateName != null) {
-      HyperlinkLabel link = new HyperlinkLabel(CodeInsightBundle.message("i18nize.dialog.template.link.label"));
+      HyperlinkLabel link = new HyperlinkLabel(JavaI18nBundle.message("i18nize.dialog.template.link.label"));
       link.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -150,7 +154,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   public static boolean isAvailable(PsiFile file) {
     final Project project = file.getProject();
-    final String title = CodeInsightBundle.message("i18nize.dialog.error.jdk.title");
+    final String title = JavaI18nBundle.message("i18nize.dialog.error.jdk.title");
     try {
       return ResourceBundleManager.getManager(file) != null;
     }
@@ -191,7 +195,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       result.add(getResourceBundleText());
     }
 
-    myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
+    myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
     SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
   }
 
@@ -215,10 +219,10 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   @Override
   protected List<String> defaultSuggestPropertiesFiles() {
-    return myResourceBundleManager.suggestPropertiesFiles();
+    return myResourceBundleManager.suggestPropertiesFiles(myContextModules);
   }
 
-  public String getI18nizedText() {
+  public @NotNull String getI18nizedText() {
     String propertyKey = StringUtil.escapeStringCharacters(getKey());
     I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
     if (textGenerator != null) {
@@ -233,18 +237,17 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));
     addAdditionalAttributes(attributes);
-    String text = null;
     try {
-      text = template.getText(attributes);
+      return template.getText(attributes);
     }
     catch (IOException e) {
       LOG.error(e);
+      return "";
     }
-    return text;
   }
 
   protected String generateText(final I18nizedTextGenerator textGenerator,
-                                final String propertyKey,
+                                @NotNull String propertyKey,
                                 final PropertiesFile propertiesFile,
                                 final PsiLiteralExpression literalExpression) {
     return textGenerator.getI18nizedText(propertyKey, propertiesFile, literalExpression);

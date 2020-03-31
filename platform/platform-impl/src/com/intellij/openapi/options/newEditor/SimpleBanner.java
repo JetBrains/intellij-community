@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -35,22 +35,9 @@ class SimpleBanner extends JPanel {
         super.layoutContainer(target);
         baselineLayout();
       }
-    }) {
-      @Override
-      public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, 0, width, height + y);
-      }
-    };
+    });
     myLeftPanel.add(myProgress);
     add(BorderLayout.WEST, myLeftPanel);
-  }
-
-  @Override
-  public void setBorder(Border border) {
-    super.setBorder(border);
-    if (myLeftPanel != null) {
-      myLeftPanel.setBorder(border);
-    }
   }
 
   Dimension getPreferredLeftPanelSize(Dimension size) {
@@ -77,13 +64,13 @@ class SimpleBanner extends JPanel {
 
       int y;
       if (component == myProgress) {
-        y = (int)(JBUI.scale(1.5f) + (template.getHeight() - component.getHeight()) / 2f);
+        y = (int)(JBUIScale.scale(1.5f) + (template.getHeight() - component.getHeight()) / 2f);
       }
       else {
         y = baseline - component.getBaseline(component.getWidth(), component.getHeight());
       }
 
-      component.setLocation(component.getX(), getInsets().top + y);
+      component.setLocation(component.getX(), y);
     }
   }
 

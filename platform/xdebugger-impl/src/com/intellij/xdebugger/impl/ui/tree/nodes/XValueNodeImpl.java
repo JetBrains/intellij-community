@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -21,6 +22,9 @@ import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
+import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -34,9 +38,6 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
-/**
- * @author nik
- */
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
@@ -62,7 +63,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
         myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+      myText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
     }
   }
 
@@ -89,10 +90,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (isObsolete()) return;
 
     setIcon(icon);
+    boolean refresh = myValuePresentation != null;
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
     if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline()) {
-      updateInlineDebuggerData();
+      updateInlineDebuggerData(refresh);
     }
     updateText();
     setLeaf(!hasChildren);
@@ -100,7 +102,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myTree.nodeLoaded(this, myName);
   }
 
-  public void updateInlineDebuggerData() {
+  public void updateInlineDebuggerData(boolean refresh) {
     try {
       XDebugSession session = XDebugView.getSession(getTree());
       final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
@@ -108,33 +110,38 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         return;
       }
 
-      final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
-        @Override
-        public void computed(XSourcePosition position) {
-          if (isObsolete() || position == null) return;
-          VirtualFile file = position.getFile();
-          // filter out values from other files
-          if (!Comparing.equal(debuggerPosition.getFile(), file)) {
-            return;
-          }
-          final Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document == null) return;
+      if (refresh) {
+        myTree.updateEditor();
+      }
+      else {
+        final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+          @Override
+          public void computed(XSourcePosition position) {
+            if (isObsolete() || position == null) return;
+            VirtualFile file = position.getFile();
+            // filter out values from other files
+            if (!Comparing.equal(debuggerPosition.getFile(), file)) {
+              return;
+            }
+            final Document document = FileDocumentManager.getInstance().getDocument(file);
+            if (document == null) return;
 
-          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
-          if (data == null) {
-            return;
-          }
+            XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
+            if (data == null) {
+              return;
+            }
 
-          if (!showAsInlay(session, position, debuggerPosition)) {
-            data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
+            if (!showAsInlay(session, position, debuggerPosition)) {
+              data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
-            myTree.updateEditor();
+              myTree.updateEditor();
+            }
           }
+        };
+
+        if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+          getValueContainer().computeSourcePosition(callback::computed);
         }
-      };
-
-      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(callback::computed);
       }
     }
     catch (Exception ignore) {
@@ -283,7 +290,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.clear();
     appendName();
     XValuePresentationUtil.appendSeparator(myText, myValuePresentation.getSeparator());
-    myText.append(XDebuggerUIConstants.MODIFYING_VALUE_MESSAGE, XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
+    myText.append(XDebuggerUIConstants.getModifyingValueMessage(), XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
     setLeaf(true);
     fireNodeStructureChanged();
   }
@@ -291,5 +298,36 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Nullable
+  @Override
+  public Object getIconTag() {
+    if (!getTree().getPinToTopManager().isEnabled()) {
+        return null;
+    }
+
+    if (!(myValueContainer instanceof PinToTopMemberValue)) {
+      return null;
+    }
+
+    final PinToTopMemberValue pinToTopMemberValue = (PinToTopMemberValue)myValueContainer;
+    if (!pinToTopMemberValue.canBePinned()) {
+      return null;
+    }
+    if(!(myParent instanceof XValueNodeImpl)) {
+      return null;
+    }
+
+    if (!(((XValueNodeImpl)myParent).myValueContainer instanceof PinToTopParentValue)) {
+      return null;
+    }
+
+    return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.pin.to.top.action")) {
+      @Override
+      public void onClick(MouseEvent event) {
+        XDebuggerPinToTopAction.Companion.pinToTopField(event, XValueNodeImpl.this);
+      }
+    };
   }
 }

@@ -27,6 +27,7 @@
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/StatisticsEventLog.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
@@ -35,12 +36,15 @@
 
     <group id="AnalyzePlatformMenu">
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
+      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
+        <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      </action>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="InspectCodeGroup" text="Inspect Code Actions">
+    <group id="InspectCodeGroup">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />

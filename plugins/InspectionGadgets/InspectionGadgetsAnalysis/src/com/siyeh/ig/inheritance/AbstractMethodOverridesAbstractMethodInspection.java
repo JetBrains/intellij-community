@@ -27,6 +27,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,19 +36,15 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreJavaDoc = false;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.display.name");
-  }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -191,7 +188,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     if (exceptions1.length != exceptions2.length) {
       return false;
     }
-    final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
+    final Set<PsiClassType> set1 = ContainerUtil.set(exceptions1);
     for (PsiClassType anException : exceptions2) {
       if (!set1.contains(anException)) {
         return false;

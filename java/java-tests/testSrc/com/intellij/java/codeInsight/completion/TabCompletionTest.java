@@ -30,8 +30,8 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testReplaceThisWithSuper() {
-    configureByFile("ReplaceThisWithSuper.java");
-    checkResultByFile("ReplaceThisWithSuper_After.java");
+    configureByTestName();
+    checkResultJava();
   }
 
   public void testTabInXml() {
@@ -48,14 +48,23 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.configureByFile("MethodCallBeforeAnnotation.java");
     myFixture.completeBasic();
     myFixture.type("tos\t");
-    checkResultByFile("MethodCallBeforeAnnotation_After.java");
+    checkResultJava();
   }
 
   public void testMethodCallBeforeAnnotation2() {
     myFixture.configureByFile("MethodCallBeforeAnnotation2.java");
     myFixture.completeBasic();
     myFixture.type("tos\t");
-    checkResultByFile("MethodCallBeforeAnnotation2_After.java");
+    checkResultJava();
+  }
+
+  public void testReplaceStringLiteral() {
+    configureByTestName();
+    checkResultJava();
+  }
+
+  private void checkResultJava() {
+    checkResultByFile(getTestName(false) + "_After.java");
   }
 
   @Override

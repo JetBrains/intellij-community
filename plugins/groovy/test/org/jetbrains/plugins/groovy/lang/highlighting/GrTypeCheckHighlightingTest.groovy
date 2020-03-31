@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 
 class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
@@ -77,6 +78,19 @@ def ff(Object o, String s) {}
 @groovy.transform.CompileStatic
 def usage() {
   ff<error descr="Method call is ambiguous">("", "")</error>
+}
+'''
+  }
+
+  void 'test no warning for type parameter assigning'() {
+    testHighlighting '''\
+class A<T> {
+    
+    T value
+    def foo(it) {
+        value = it
+    }
+    
 }
 '''
   }

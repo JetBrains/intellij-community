@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
+  private static final Logger LOG = Logger.getInstance(XmlSmartEnterProcessor.class);
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
@@ -128,8 +128,6 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         }
 
         commitChanges(project, editor, psiFile, caretTo, null);
-
-        return true;
       }
       else {
         final XmlTag unclosedTag = findClosestUnclosedTag(tagAtCaret);
@@ -147,8 +145,8 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
 
         doc.insertString(offset, closingTagString);
         commitChanges(project, editor, psiFile, offset, parentTag != null ? parentTag : unclosedTag);
-        return true;
       }
+      return true;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

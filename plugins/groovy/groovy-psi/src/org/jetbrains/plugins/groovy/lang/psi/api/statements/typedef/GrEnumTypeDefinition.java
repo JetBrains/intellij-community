@@ -14,8 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
  */
 public interface GrEnumTypeDefinition extends GrTypeDefinition {
 
-  @NotNull
-  GrEnumConstant[] getEnumConstants();
+  GrEnumConstant @NotNull [] getEnumConstants();
 
   @Nullable
   GrEnumConstantList getEnumConstantList();

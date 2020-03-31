@@ -7,18 +7,24 @@ import org.jetbrains.annotations.NotNull
 
 @CompileStatic
 enum OsFamily {
-  WINDOWS("win", BuildOptions.OS_WINDOWS, "Windows"),
-  MACOS("mac", BuildOptions.OS_MAC, "macOS"),
-  LINUX("unix", BuildOptions.OS_LINUX, "Linux");
+  WINDOWS(BuildOptions.OS_WINDOWS, "Windows", "win", "windows"),
+  MACOS(BuildOptions.OS_MAC, "macOS", "mac", "osx"),
+  LINUX(BuildOptions.OS_LINUX, "Linux", "unix", "linux");
   static final List<OsFamily> ALL = values().toList().asImmutable()
 
-  final String distSuffix
+  /** ID of OS used in system properties for {@link BuildOptions} */
   final String osId
+  /** presentable name of OS */
   final String osName
+  /** suffix for directory name where OS-specific files are produces */
+  final String distSuffix
+  /** suffix of tar.gz archive containing JBR distribution */
+  final String jbrArchiveSuffix
 
-  OsFamily(@NotNull String distSuffix, @NotNull String osId, @NotNull String osName) {
-    this.distSuffix = distSuffix
+  private OsFamily(@NotNull String osId, @NotNull String osName, @NotNull String distSuffix, @NotNull String jbrArchiveSuffix) {
     this.osId = osId
     this.osName = osName
+    this.distSuffix = distSuffix
+    this.jbrArchiveSuffix = jbrArchiveSuffix
   }
 }

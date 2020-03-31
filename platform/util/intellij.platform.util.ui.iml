@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/ui">
+      <sourceFolder url="file://$MODULE_DIR$/ui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ui/resources" type="java-resource" />
+    </content>
+    <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="library" name="batik-transcoder" level="project" />
+    <orderEntry type="library" name="imgscalr" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="xml-apis-ext" level="project" />
+    <orderEntry type="library" name="Java Compatibility" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="batik-codec" level="project" />
+  </component>
+</module>

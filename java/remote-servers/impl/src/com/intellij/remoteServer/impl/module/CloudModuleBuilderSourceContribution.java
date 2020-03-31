@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
@@ -73,7 +74,7 @@ public abstract class CloudModuleBuilderSourceContribution<
     final ServerType<?> cloudType = account.getType();
     final Project project = module.getProject();
     new CloudConnectionTask<Object, SC, DC, SR>(project,
-                                                CloudBundle.getText("cloud.support", cloudType.getPresentableName()),
+                                                CloudBundle.message("cloud.support", cloudType.getPresentableName()),
                                                 account) {
 
       boolean myFirstAttempt = true;
@@ -144,7 +145,7 @@ public abstract class CloudModuleBuilderSourceContribution<
     });
 
     ProgressManager.getInstance()
-      .run(new Task.Backgroundable(project, CloudBundle.getText("detect.module.structure", getCloudType().getPresentableName()), false) {
+      .run(new Task.Backgroundable(project, CloudBundle.message("detect.module.structure", getCloudType().getPresentableName()), false) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -173,7 +174,7 @@ public abstract class CloudModuleBuilderSourceContribution<
             return;
           }
           moduleBuilder.commit(project);
-          getNotifier().showMessage(CloudBundle.getText("cloud.support.added", getCloudType().getPresentableName()), MessageType.INFO);
+          getNotifier().showMessage(CloudBundle.message("cloud.support.added", getCloudType().getPresentableName()), MessageType.INFO);
         }
       });
   }

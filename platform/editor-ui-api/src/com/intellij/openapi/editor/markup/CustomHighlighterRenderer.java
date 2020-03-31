@@ -20,10 +20,26 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * Specifies custom representation for an editor highlighter.
+ *
+ * @see RangeHighlighter#setCustomRenderer(CustomHighlighterRenderer)
+ * @see RangeHighlighter#getCustomRenderer()
+ */
 public interface CustomHighlighterRenderer {
   void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g);
+
+  /**
+   * By default (if this method returns {@code false}), custom highlighter is painted over the background (defined by common highlighters)
+   * and before the text. If the method returns {@code true}, it will be painted over the text.
+   */
+  @ApiStatus.Experimental
+  default boolean isForeground() {
+    return false;
+  }
 }

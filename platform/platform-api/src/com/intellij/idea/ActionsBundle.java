@@ -15,48 +15,40 @@
  */
 package com.intellij.idea;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ActionsBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
+public class ActionsBundle extends DynamicBundle {
   @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  private static final ActionsBundle ourInstance = new ActionsBundle();
+
+  private ActionsBundle() {
+    super(IDEA_ACTIONS_BUNDLE);
+  }
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
+  }
+
   public static String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static String groupText(@NonNls String actionId) {
     return message("group." + actionId + ".text");
   }
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
   public static String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }

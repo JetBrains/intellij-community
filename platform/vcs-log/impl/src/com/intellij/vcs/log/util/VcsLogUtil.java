@@ -1,20 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -22,26 +14,26 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
 import static java.util.Collections.singletonList;
@@ -51,9 +43,7 @@ public class VcsLogUtil {
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  public static final String HEAD = "HEAD";
-
-  private static final Logger LOG = Logger.getInstance(VcsLogUtil.class);
+  @NonNls public static final String HEAD = "HEAD";
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -205,7 +195,7 @@ public class VcsLogUtil {
   @NotNull
   public static VcsFullCommitDetails getDetails(@NotNull VcsLogData data, @NotNull VirtualFile root, @NotNull Hash hash)
     throws VcsException {
-    return notNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
+    return Objects.requireNonNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
   }
 
   @NotNull
@@ -218,32 +208,17 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
-                                              detail.getChanges(),
+                                              withChanges ? detail.getChanges() : ContainerUtil.emptyList(),
                                               convertToRevisionNumber(detail.getId()));
   }
 
-  /**
-   * Registers disposable on both provided parent and project. When project is disposed, disposable is still accessed through parent,
-   * while when parent is disposed, disposable gets removed from memory. So this method is suitable for parents that depend on project,
-   * but could be created and disposed several times through one project life.
-   *
-   * @param parent     parent to register disposable on.
-   * @param project    project to register disposable on.
-   * @param disposable disposable to register.
-   */
-  public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
-    /*
-     Wrapping in another Disposable is required in order to register on several parents.
-     Otherwise the second `register` call will remove disposable from the first parent.
-     See com.intellij.openapi.util.objectTree.ObjectTree.register.
-    */
-    //noinspection SSBasedInspection
-    Disposer.register(parent, () -> Disposer.dispose(disposable));
-    Disposer.register(project, disposable);
+  @NotNull
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+    return createCommittedChangeList(detail, true);
   }
 
   @NotNull
@@ -258,7 +233,9 @@ public class VcsLogUtil {
 
   @Nullable
   public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    Stream<VcsRef> branches = refs.getAllRefsByRoot().get(root).streamBranches();
+    CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
+    if (compressedRefs == null) return null;
+    Stream<VcsRef> branches = compressedRefs.streamBranches();
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 
@@ -280,13 +257,18 @@ public class VcsLogUtil {
     if (rootObject == null) return null;
     Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
     if (providers.isEmpty()) return null;
-    VcsLogProvider provider = notNull(getFirstItem(providers.values()));
-    return provider.getVcsRoot(project, path);
+    VcsLogProvider provider = Objects.requireNonNull(getFirstItem(providers.values()));
+    return provider.getVcsRoot(project, rootObject.getPath(), path);
   }
 
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogUi logUi) {
-    VcsLogStructureFilter structureFilter = logUi.getDataPack().getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    return getAffectedPaths(logUi.getDataPack());
+  }
+
+  @Nullable
+  public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogDataPack dataPack) {
+    VcsLogStructureFilter structureFilter = dataPack.getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter != null) {
       return structureFilter.getFiles();
     }
@@ -295,8 +277,6 @@ public class VcsLogUtil {
 
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
-    if (!isFolderHistoryShownInLog()) return null;
-
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -314,51 +294,6 @@ public class VcsLogUtil {
     return null;
   }
 
-  public static boolean isFolderHistoryShownInLog() {
-    return Registry.is("vcs.folder.history.in.log");
-  }
-
-  /**
-   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
-   * waits for it in a background task, and executes the action after the log is ready.
-   */
-  @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
-    VcsProjectLog log = VcsProjectLog.getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager != null) {
-      action.accept(log, manager);
-    }
-    else { // schedule showing the log, wait its initialization, and then open the tab
-      CountDownLatch latch = new CountDownLatch(1);
-      MessageBusConnection connection = project.getMessageBus().connect(log);
-      connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
-        @Override
-        public void logCreated(@NotNull VcsLogManager logManager) {
-          latch.countDown();
-          action.accept(log, logManager);
-          connection.disconnect();
-        }
-      });
-
-      new Task.Backgroundable(project, "Loading Commits") {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          log.createLog(true);
-
-          try {
-            while (!latch.await(50, TimeUnit.MILLISECONDS)) {
-              indicator.checkCanceled();
-            }
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-        }
-      }.queue();
-    }
-  }
-
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
@@ -371,7 +306,7 @@ public class VcsLogUtil {
     if (details instanceof VcsChangesLazilyParsedDetails) {
       return ((VcsChangesLazilyParsedDetails)details).size();
     }
-    
+
     int size = 0;
     for (int i = 0; i < details.getParents().size(); i++) {
       size += details.getChanges(i).size();
@@ -381,5 +316,38 @@ public class VcsLogUtil {
 
   public static int getShownChangesLimit() {
     return Registry.intValue("vcs.log.max.changes.shown");
+  }
+
+  @NotNull
+  @NonNls
+  public static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
+  }
+
+  @NotNull
+  public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]"; // NON-NLS
+  }
+
+  @NotNull
+  public static String getVcsDisplayName(@NotNull Project project, @NotNull Collection<VcsLogProvider> logProviders) {
+    Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
+                                                        provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
+    if (vcs.size() != 1) return VcsLogBundle.message("vcs");
+    return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
 }

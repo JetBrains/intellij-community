@@ -7,6 +7,10 @@ public interface ActionTest extends BaseTest {
 
   default void doActionTest(@NotNull String hint, @NotNull String before, @NotNull String after) {
     configureByText(before);
+    doActionTest(hint, after);
+  }
+
+  default void doActionTest(@NotNull String hint, @NotNull String after) {
     getFixture().launchAction(getFixture().findSingleIntention(hint));
     getFixture().checkResult(after);
   }

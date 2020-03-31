@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -51,7 +52,7 @@ import java.util.*;
  * @author ven
  */
 public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveInstanceMethodProcessor.class);
 
   public PsiMethod getMethod() {
     return myMethod;
@@ -97,7 +98,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetVariable, myTargetClass);
   }
 
@@ -132,14 +133,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               PsiExpression instanceValue = expressions[index];
               instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
               if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-                String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                String message = JavaRefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                            RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                            CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
                 conflicts.putValue(instanceValue, message);
               }
             }
           } else if (methodCall instanceof PsiMethodReferenceExpression && shouldBeExpandedToLambda((PsiMethodReferenceExpression)methodCall, index)) {
-            conflicts.putValue(methodCall, RefactoringBundle.message("expand.method.reference.warning"));
+            conflicts.putValue(methodCall, JavaRefactoringBundle.message("expand.method.reference.warning"));
           }
         }
       }
@@ -170,8 +171,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final List<UsageInfo> usages = new ArrayList<>();
@@ -233,7 +233,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     LOG.assertTrue(elements.length == 3);
     myMethod = (PsiMethod) elements[0];
     myTargetVariable = (PsiVariable) elements[1];
@@ -251,7 +251,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     PsiMethod patternMethod = createMethodToAdd();
     final List<PsiReference> docRefs = new ArrayList<>();
     for (UsageInfo usage : usages) {
@@ -496,7 +496,6 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 if (resolved instanceof PsiField) {
                   String fieldName = ((PsiField)resolved).getName();
-                  LOG.assertTrue(fieldName != null);
                   for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
                     if (Comparing.strEqual(parameter.getName(), fieldName) ||
                         facade.getResolveHelper().resolveReferencedVariable(fieldName, expression) != null) {

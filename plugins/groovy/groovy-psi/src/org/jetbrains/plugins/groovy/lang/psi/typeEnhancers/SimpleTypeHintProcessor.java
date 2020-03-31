@@ -22,7 +22,7 @@ public class SimpleTypeHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull PsiSubstitutor substitutor,
-                                                 @NotNull String[] options) {
+                                                 String @NotNull [] options) {
     return Collections.singletonList(ContainerUtil.map(options, value -> {
       try {
         return JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(value, method);

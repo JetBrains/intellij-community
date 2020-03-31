@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -98,7 +99,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
-            presentation.setText("Add to temp suite: " + foundConfigurations.get(0).getName());
+            presentation.setText(ExecutionBundle.message("add.to.temp.suite.0", foundConfigurations.get(0).getName()));
           }
         }
       }

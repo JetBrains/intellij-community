@@ -68,7 +68,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   @Override
   @NotNull
   public String getName() {
-    return DomBundle.message("create.new.element", myTypeName, myNewName);
+    return XmlDomBundle.message("create.new.element", myTypeName, myNewName);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("create.new.element.family");
+    return XmlDomBundle.message("create.new.element.family");
   }
 
   @Override
@@ -124,7 +124,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
         onChoose.consume(files.iterator().next());
         return;
       default:
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(DomBundle.message("choose.file"), files) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message("choose.file"), files) {
           @Override
           public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
             onChoose.consume(selectedValue);

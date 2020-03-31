@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,7 +35,6 @@ public class MavenImportingSettingsForm {
   private JCheckBox mySeparateModulesDirCheckBox;
   private TextFieldWithBrowseButton mySeparateModulesDirChooser;
 
-  private JCheckBox myImportAutomaticallyBox;
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
   private JComboBox<String> myUpdateFoldersOnImportPhaseComboBox;
@@ -54,10 +54,11 @@ public class MavenImportingSettingsForm {
   private JCheckBox myAutoDetectCompilerCheckBox;
   private JBCheckBox myJBCheckBox1;
 
-  public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
-    mySearchRecursivelyCheckBox.setVisible(isImportStep);
-    myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
-    myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
+  public MavenImportingSettingsForm(boolean isDefaultProject) {
+    mySearchRecursivelyCheckBox.setVisible(isDefaultProject);
+    //TODO: remove this
+    myProjectFormatLabel.setVisible(false);
+    myProjectFormatComboBox.setVisible(false);
 
     ActionListener listener = new ActionListener() {
       @Override
@@ -67,7 +68,7 @@ public class MavenImportingSettingsForm {
     };
     mySeparateModulesDirCheckBox.addActionListener(listener);
 
-    mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
+    mySeparateModulesDirChooser.addBrowseFolderListener(MavenProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel<>(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
@@ -76,8 +77,8 @@ public class MavenImportingSettingsForm {
     myGeneratedSourcesComboBox.setRenderer(SimpleListCellRenderer.create("", value -> value.title));
 
     LabelTextReplacingUtil.replaceText(myPanel);
-    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
+    myJdkForImporterComboBox.setHighlightInternalJdk(false);
   }
 
   private void createUIComponents() {
@@ -103,9 +104,9 @@ public class MavenImportingSettingsForm {
 
   public void getData(@NotNull MavenImportingSettings data) {
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
+    LookForNestedToggleAction.setSelected(mySearchRecursivelyCheckBox.isSelected());
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
-    data.setImportAutomatically(myImportAutomaticallyBox.isSelected());
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
@@ -128,12 +129,11 @@ public class MavenImportingSettingsForm {
   }
 
   public void setData(MavenImportingSettings data, @Nullable Project project) {
-    mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
+    mySearchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
 
-    myImportAutomaticallyBox.setSelected(data.isImportAutomatically());
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 

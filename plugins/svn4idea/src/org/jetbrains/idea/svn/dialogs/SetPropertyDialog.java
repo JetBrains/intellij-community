@@ -32,7 +32,7 @@ import java.util.TreeSet;
 
 public class SetPropertyDialog extends DialogWrapper {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.SetPropertyDialog");
+  private static final Logger LOG = Logger.getInstance(SetPropertyDialog.class);
 
   private final String myPropertyName;
   private final File[] myFiles;

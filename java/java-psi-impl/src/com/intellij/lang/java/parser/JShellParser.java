@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Condition;
@@ -25,11 +25,11 @@ import com.intellij.psi.impl.source.tree.JShellElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -37,9 +37,9 @@ import java.util.HashSet;
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();
 
-  private static final HashSet<IElementType> TOP_LEVEL_DECLARATIONS = new HashSet<>(Arrays.asList(
+  private static final Set<IElementType> TOP_LEVEL_DECLARATIONS = ContainerUtil.set(
     JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
-  ));
+  );
   private static final Condition<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
   private static final Condition<IElementType> EXPRESSION_PARSED_CONDITION = type -> type != JavaElementType.REFERENCE_EXPRESSION;
   private static final Condition<IElementType> STATEMENTS_PARSED_CONDITION = tokenType-> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) &&
@@ -115,7 +115,7 @@ public class JShellParser extends JavaParser {
         }
 
         if (!builder.eof()) {
-          builder.mark().error(JavaErrorMessages.message("unexpected.token"));
+          builder.mark().error(JavaPsiBundle.message("unexpected.token"));
           while (!builder.eof()) {
             builder.advanceLexer();
           }

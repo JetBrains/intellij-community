@@ -15,12 +15,11 @@
  */
 package org.intellij.images.fileTypes.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.XmlLikeFileType;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import icons.ImagesIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -31,7 +30,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
   public static final SvgFileType INSTANCE = new SvgFileType();
 
   private SvgFileType() {
-    super(XMLLanguage.INSTANCE);
+    super(SvgLanguage.INSTANCE);
   }
 
   @NotNull
@@ -43,7 +42,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
   @NotNull
   @Override
   public String getDescription() {
-    return "Scalable Vector Graphics";
+    return IdeBundle.message("filetype.description.scalable.vector.graphics");
   }
 
   @NotNull
@@ -52,7 +51,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
     return "svg";
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon getIcon() {
     return ImagesIcons.ImagesFileType;

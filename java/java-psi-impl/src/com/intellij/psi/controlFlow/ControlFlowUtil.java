@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ControlFlowUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowUtil");
+  private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
 
   private static class SSAInstructionState implements Cloneable {
     private final int myWriteCount;
@@ -223,7 +223,7 @@ public class ControlFlowUtil {
     }
     return array;
   }
-                                 
+
   public static boolean isVariableUsed(@NotNull ControlFlow flow, int start, int end, @NotNull PsiVariable variable) {
     List<Instruction> instructions = flow.getInstructions();
     LOG.assertTrue(start >= 0, "flow start");
@@ -330,8 +330,7 @@ public class ControlFlowUtil {
     return array;
   }
 
-  @NotNull
-  public static PsiVariable[] getOutputVariables(@NotNull ControlFlow flow, int start, int end, @NotNull int[] exitPoints) {
+  public static PsiVariable @NotNull [] getOutputVariables(@NotNull ControlFlow flow, int start, int end, int @NotNull [] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     List<PsiVariable> array = new ArrayList<>();
     for (PsiVariable variable : writtenVariables) {
@@ -351,16 +350,17 @@ public class ControlFlowUtil {
     return outputVariables;
   }
 
+  @SafeVarargs
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
+                                                                     Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
     }
     final Collection<PsiStatement> exitStatements = new THashSet<>();
-    InstructionClientVisitor visitor = new InstructionClientVisitor() {
+    InstructionClientVisitor<Void> visitor = new InstructionClientVisitor<Void>() {
       @Override
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         //[ven]This is a hack since Extract Method doesn't want to see throw's exit points
@@ -398,7 +398,7 @@ public class ControlFlowUtil {
       }
 
       @Override
-      public Object getResult() {
+      public Void getResult() {
         return null;
       }
     };
@@ -406,11 +406,12 @@ public class ControlFlowUtil {
     return exitStatements;
   }
 
+  @SafeVarargs
   private static void processGoto(@NotNull ControlFlow flow, int start, int end,
                                   @NotNull IntArrayList exitPoints,
                                   @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
-                                  final PsiStatement statement, @NotNull Class... classesFilter) {
+                                  final PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement == null) return;
     int gotoOffset = instruction.offset;
     if (start > gotoOffset || gotoOffset >= end || isElementOfClass(statement, classesFilter)) {
@@ -434,15 +435,17 @@ public class ControlFlowUtil {
     }
   }
 
+  @SafeVarargs
   private static void processGotoStatement(@NotNull Collection<? super PsiStatement> exitStatements,
-                                           PsiStatement statement, @NotNull Class... classesFilter) {
+                                           PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement != null && isElementOfClass(statement, classesFilter)) {
       exitStatements.add(statement);
     }
   }
 
-  private static boolean isElementOfClass(@NotNull PsiElement element, @NotNull Class... classesFilter) {
-    for (Class aClassesFilter : classesFilter) {
+  @SafeVarargs
+  private static boolean isElementOfClass(@NotNull PsiElement element, Class<? extends PsiStatement> @NotNull ... classesFilter) {
+    for (Class<? extends PsiStatement> aClassesFilter : classesFilter) {
       if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
       }
@@ -501,7 +504,7 @@ public class ControlFlowUtil {
   public static boolean hasObservableThrowExitPoints(@NotNull final ControlFlow flow,
                                                      final int flowStart,
                                                      final int flowEnd,
-                                                     @NotNull PsiElement[] elements,
+                                                     PsiElement @NotNull [] elements,
                                                      @NotNull PsiElement enclosingCodeFragment) {
     final List<Instruction> instructions = flow.getInstructions();
     class Worker {
@@ -1005,7 +1008,7 @@ public class ControlFlowUtil {
   }
 
   /**
-   * returns true iff exists controlflow path completing normally, i.e. not resulting in return,break,continue or exception thrown.
+   * returns true iff exists control flow path completing normally, i.e. not resulting in return,break,continue or exception thrown.
    * In other words, if we add instruction after controlflow specified, it should be reachable
    */
   public static boolean canCompleteNormally(@NotNull ControlFlow flow, final int startOffset, final int endOffset) {
@@ -1213,11 +1216,10 @@ public class ControlFlowUtil {
   private static PsiReferenceExpression findReferenceTo(@NotNull PsiElement element, @NotNull PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
         && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)
-        && ((PsiReferenceExpression)element).resolve() == variable) {
+        && ((PsiReferenceExpression)element).isReferenceTo(variable)) {
       return (PsiReferenceExpression)element;
     }
-    final PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       final PsiReferenceExpression reference = findReferenceTo(child, variable);
       if (reference != null) return reference;
     }
@@ -1235,7 +1237,7 @@ public class ControlFlowUtil {
   public static boolean isDominator(ControlFlow flow, int maybeDominator, int target) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       final BitSet myReachedWithoutDominator = new BitSet();
-      
+
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
         super.visitInstruction(instruction, offset, nextOffset);
@@ -1255,18 +1257,19 @@ public class ControlFlowUtil {
   }
 
   public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
-    final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+    PsiElement parent = variable.getParent();
+    final int variableDeclarationOffset = parent == null ? -1 : flow.getStartOffset(parent);
     int offset = variableDeclarationOffset > -1 ? variableDeclarationOffset : 0;
     boolean[] unassignedOffsets = getVariablePossiblyUnassignedOffsets(variable, flow);
     return !unassignedOffsets[offset];
   }
 
   /**
-   * Returns offsets starting from which the variable could be unassigned 
-   * 
+   * Returns offsets starting from which the variable could be unassigned
+   *
    * @param variable variable to check
    * @param flow control flow
-   * @return a boolean array which values correspond to control flow offset. 
+   * @return a boolean array which values correspond to control flow offset.
    * True value means that variable could be unassigned when execution starts from given offset.
    */
   public static boolean[] getVariablePossiblyUnassignedOffsets(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {
@@ -1334,8 +1337,7 @@ public class ControlFlowUtil {
       }
 
       @Override
-      @NotNull
-      public boolean[] getResult() {
+      public boolean @NotNull [] getResult() {
         return maybeUnassigned;
       }
     }
@@ -1554,126 +1556,124 @@ public class ControlFlowUtil {
     return endOffset;
   }
 
-  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor visitor) {
+  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor<?> visitor) {
     depthFirstSearch(flow, visitor, 0, flow.getSize());
   }
 
-  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor visitor, int startOffset, int endOffset) {
+  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor<?> visitor, int startOffset, int endOffset) {
     visitor.processedInstructions = new boolean[endOffset];
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
   private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
-                                               @NotNull InstructionClientVisitor clientVisitor,
+                                               @NotNull InstructionClientVisitor<?> clientVisitor,
                                                int startOffset,
                                                int endOffset) {
 
     final WalkThroughStack walkThroughStack = new WalkThroughStack(instructions.size() / 2);
     walkThroughStack.push(startOffset);
 
-    // we can change instruction internal state here (e.g. CallInstruction.stack)
-    synchronized (instructions) {
-      final IntArrayList currentProcedureReturnOffsets = new IntArrayList();
-      ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
-        @Override
-        public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
-          instruction.execute(offset + 1);
-          int newOffset = instruction.offset;
-          // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
-          // clear procedure text and return instructions afterwards
-          int i;
-          for (i = instruction.procBegin;
-               i < clientVisitor.processedInstructions.length &&
-               (i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction); i++) {
-            clientVisitor.processedInstructions[i] = false;
-          }
-          clientVisitor.procedureEntered(instruction.procBegin, i);
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-
-          currentProcedureReturnOffsets.add(offset + 1);
+    ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
+      @Override
+      public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+        // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
+        // clear procedure text and return instructions afterwards
+        int i;
+        for (i = instruction.procBegin;
+             i < clientVisitor.processedInstructions.length &&
+             (i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction); i++) {
+          clientVisitor.processedInstructions[i] = false;
         }
-
-        @Override
-        public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.execute(false);
-          if (newOffset != -1) {
-            walkThroughStack.push(offset, newOffset);
-            walkThroughStack.push(newOffset);
-          }
-        }
-
-        @Override
-        public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.offset;
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-        }
-
-        @Override
-        public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.offset;
-
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(offset, offset + 1);
-          walkThroughStack.push(newOffset);
-          walkThroughStack.push(offset + 1);
-        }
-
-        @Override
-        public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
-          int newOffset = offset + 1;
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-        }
-      };
-      while (!walkThroughStack.isEmpty()) {
-        final int offset = walkThroughStack.peekOldOffset();
-        final int newOffset = walkThroughStack.popNewOffset();
-
-        if (offset >= endOffset) {
-          continue;
-        }
-        Instruction instruction = instructions.get(offset);
-
-        if (clientVisitor.processedInstructions[offset]) {
-          if (newOffset != -1) {
-            instruction.accept(clientVisitor, offset, newOffset);
-          }
-          // when traversing call instruction, we have traversed all procedure control flows, so pop return address
-          if (!currentProcedureReturnOffsets.isEmpty() && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
-            currentProcedureReturnOffsets.remove(currentProcedureReturnOffsets.size() - 1);
-          }
-          continue;
-        }
-        if (!currentProcedureReturnOffsets.isEmpty()) {
-          int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
-          CallInstruction callInstruction = (CallInstruction)instructions.get(returnOffset - 1);
-          // check if we inside procedure but 'return offset' stack is empty, so
-          // we should push back to 'return offset' stack
-          synchronized (callInstruction.stack) {
-            if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
-                && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
-              callInstruction.stack.push(returnOffset, callInstruction);
-            }
-          }
-        }
-
-        clientVisitor.processedInstructions[offset] = true;
-        instruction.accept(getNextOffsetVisitor, offset, newOffset);
+        clientVisitor.procedureEntered(instruction.procBegin, i);
+        walkThroughStack.currentStack = new CallStackItem(walkThroughStack.currentStack, offset + 1);
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
       }
+
+      @Override
+      public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
+        int newOffset = -1;
+        if (walkThroughStack.currentStack != null) {
+          newOffset = walkThroughStack.currentStack.target;
+          walkThroughStack.currentStack = walkThroughStack.currentStack.next;
+        }
+        if (instruction.offset != 0) {
+          newOffset = instruction.offset;
+        }
+        if (newOffset != -1) {
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
+        }
+      }
+
+      @Override
+      public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
+      }
+
+      @Override
+      public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(offset, offset + 1);
+        walkThroughStack.push(newOffset);
+        walkThroughStack.push(offset + 1);
+      }
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        int newOffset = offset + 1;
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
+      }
+    };
+    while (!walkThroughStack.isEmpty()) {
+      final int offset = walkThroughStack.peekOldOffset();
+      final int newOffset = walkThroughStack.popNewOffset();
+
+      if (offset >= endOffset) {
+        continue;
+      }
+      Instruction instruction = instructions.get(offset);
+
+      if (clientVisitor.processedInstructions[offset]) {
+        if (newOffset != -1) {
+          instruction.accept(clientVisitor, offset, newOffset);
+        }
+        continue;
+      }
+
+      clientVisitor.processedInstructions[offset] = true;
+      instruction.accept(getNextOffsetVisitor, offset, newOffset);
+    }
+  }
+
+  private static final class CallStackItem {
+    final CallStackItem next;
+    final int target;
+
+    private CallStackItem(CallStackItem next, int target) {
+      this.next = next;
+      this.target = target;
     }
   }
 
   private static class WalkThroughStack {
     private int[] oldOffsets;
     private int[] newOffsets;
+    private CallStackItem[] callStacks;
+    private CallStackItem currentStack;
     private int size;
 
     WalkThroughStack(int initialSize) {
       if (initialSize < 2) initialSize = 2;
       oldOffsets = new int[initialSize];
       newOffsets = new int[initialSize];
+      callStacks = new CallStackItem[initialSize];
     }
 
     /**
@@ -1682,11 +1682,14 @@ public class ControlFlowUtil {
     void push(int oldOffset, int newOffset) {
       LOG.assertTrue(oldOffset >= 0, "negative offset is pushed to walk-through stack");
       if (size >= newOffsets.length) {
-        oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
-        newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);
+        int newSize = size * 3 / 2;
+        oldOffsets = Arrays.copyOf(oldOffsets, newSize);
+        newOffsets = Arrays.copyOf(newOffsets, newSize);
+        callStacks = Arrays.copyOf(callStacks, newSize);
       }
       oldOffsets[size] = oldOffset;
       newOffsets[size] = newOffset;
+      callStacks[size] = currentStack;
       size++;
     }
 
@@ -1708,7 +1711,8 @@ public class ControlFlowUtil {
      * Should be used in pair with {@link #peekOldOffset()}
      */
     int popNewOffset() {
-      return newOffsets[--size];
+      currentStack = callStacks[--size];
+      return newOffsets[size];
     }
 
     boolean isEmpty() {
@@ -1773,7 +1777,7 @@ public class ControlFlowUtil {
       this(Collections.emptyList());
     }
 
-    CopyOnWriteList(@NotNull VariableInfo... infos) {
+    CopyOnWriteList(VariableInfo @NotNull ... infos) {
       this(Arrays.asList(infos));
     }
 
@@ -1820,7 +1824,7 @@ public class ControlFlowUtil {
     }
   }
 
-  private static void merge(int offset, CopyOnWriteList source, @NotNull CopyOnWriteList[] target) {
+  private static void merge(int offset, CopyOnWriteList source, CopyOnWriteList @NotNull [] target) {
     if (source != null) {
       CopyOnWriteList existing = target[offset];
       target[offset] = existing == null ? source : existing.addAll(source);
@@ -1868,7 +1872,7 @@ public class ControlFlowUtil {
     public void visitReadVariableInstruction(ReadVariableInstruction instruction, int offset, int nextOffset) {
       CopyOnWriteList readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
       final PsiVariable variable = instruction.variable;
-      if (!localVariablesOnly || !isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
         final PsiReferenceExpression expression = getEnclosingReferenceExpression(myFlow.getElement(offset), variable);
         if (expression != null) {
           readVars = CopyOnWriteList.add(readVars, new VariableInfo(variable, expression));
@@ -1883,10 +1887,14 @@ public class ControlFlowUtil {
       if (readVars == null) return;
 
       final PsiVariable variable = instruction.variable;
-      if (!localVariablesOnly || !isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
         readVars = readVars.remove(new VariableInfo(variable, null));
       }
       merge(offset, readVars, readVariables);
+    }
+
+    private static boolean isImplicitlyInitialized(@NotNull PsiVariable variable) {
+      return isMethodParameter(variable) || variable instanceof PsiPatternVariable;
     }
 
     private static boolean isMethodParameter(@NotNull PsiVariable variable) {
@@ -2078,8 +2086,8 @@ public class ControlFlowUtil {
    */
   @NotNull
   public static Map<PsiElement, PsiVariable> getWritesBeforeReads(@NotNull ControlFlow flow,
-                                                                  @NotNull Set<PsiVariable> writeVars,
-                                                                  @NotNull Set<PsiVariable> readVars,
+                                                                  @NotNull Set<? extends PsiVariable> writeVars,
+                                                                  @NotNull Set<? extends PsiVariable> readVars,
                                                                   final int stopPoint) {
     Map<PsiElement, PsiVariable> writes = new HashMap<>();
     List<Instruction> instructions = flow.getInstructions();
@@ -2103,7 +2111,7 @@ public class ControlFlowUtil {
    * @return true if it was read
    */
   private static boolean readBeforeStopPoint(@NotNull final ControlFlow flow,
-                                             @NotNull Set<PsiVariable> readVars,
+                                             @NotNull Set<? extends PsiVariable> readVars,
                                              final int startOffset,
                                              final int stopPoint) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
@@ -2150,7 +2158,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachable(@NotNull final ControlFlow flow,
-                                                  @NotNull final int[] instructionOffsets,
+                                                  final int @NotNull [] instructionOffsets,
                                                   final int startOffset) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       private boolean reachable;
@@ -2223,9 +2231,8 @@ public class ControlFlowUtil {
       }
     }
 
-    @NotNull
-    int[] getNextOffsets(int offset) {
-      return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
+    int @NotNull [] getNextOffsets(int offset) {
+      return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int size() {
@@ -2292,7 +2299,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachableWithCalls(@NotNull final ControlFlow flow,
-                                                           @NotNull final int[] instructionOffsets,
+                                                           final int @NotNull [] instructionOffsets,
                                                            final int startOffset) {
     ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
       @Override

@@ -97,9 +97,9 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testQualified() {  // PY-2171
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyClass dateClass = PyClassNameIndex.findClass("datetime.date", myFixture.getProject());
-    assertNotNull(dateClass);
-    PyFunction initMethod = dateClass.findMethodByName(PyNames.INIT, false, null);
+    PyClass cls = PyClassNameIndex.findClass("turtle.TurtleScreenBase", myFixture.getProject());
+    assertNotNull(cls);
+    PyFunction initMethod = cls.findMethodByName(PyNames.INIT, false, null);
     assertNotNull(initMethod);
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
                                             Collections.singletonList(new PyMethodMember(initMethod)), false);
@@ -269,5 +269,10 @@ public class PyOverrideTest extends PyTestCase {
         myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
       }
     );
+  }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
 }

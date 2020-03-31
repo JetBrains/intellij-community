@@ -16,10 +16,10 @@
 package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class PropertyValueSetToItselfInspectionTest extends LightInspectionTestCase {
+public class PropertyValueSetToItselfInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class Bean {\n" +

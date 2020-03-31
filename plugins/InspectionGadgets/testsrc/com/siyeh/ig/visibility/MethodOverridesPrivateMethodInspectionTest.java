@@ -16,12 +16,12 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionTestCase {
+public class MethodOverridesPrivateMethodInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {

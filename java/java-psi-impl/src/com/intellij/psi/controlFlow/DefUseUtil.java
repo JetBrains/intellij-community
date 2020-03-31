@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,11 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author max
- */
 public class DefUseUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
+  private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
   private DefUseUtil() { }
 
@@ -269,13 +252,11 @@ public class DefUseUtil {
     return unusedDefs;
   }
 
-  @NotNull
-  public static PsiElement[] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
-  @NotNull
-  public static PsiElement[] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
@@ -333,8 +314,7 @@ public class DefUseUtil {
     }
   }
 
-  @NotNull
-  public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
+  public static PsiElement @NotNull [] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getRefs(body, def, ref, false);
   }
 
@@ -345,23 +325,23 @@ public class DefUseUtil {
         protected int nNext(int index) {
           return instructions.get(index).nNext();
         }
-  
+
         @Override
         protected int getNext(int index, int no) {
           return instructions.get(index).getNext(index, no);
         }
-  
+
         @Override
         protected boolean defs() {
           return false;
         }
-  
+
         @Override
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
             if (instructionR.variable == def) {
-  
+
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
@@ -404,8 +384,7 @@ public class DefUseUtil {
     protected abstract void processInstruction(@NotNull Set<? super PsiElement> res, @NotNull Instruction instruction, int index);
     protected abstract boolean defs ();
 
-    @NotNull
-    private PsiElement[] get(@NotNull PsiVariable def, @NotNull PsiElement refOrDef) {
+    private PsiElement @NotNull [] get(@NotNull PsiVariable def, @NotNull PsiElement refOrDef) {
       if (body == null) {
         return PsiElement.EMPTY_ARRAY;
       }
@@ -426,7 +405,7 @@ public class DefUseUtil {
           elem += 1;
         }
 
-        final Set<PsiElement> res = new THashSet<>();
+        final Set<@NotNull PsiElement> res = new THashSet<>();
         class Inner {
           private void traverse(int index) {
             if (visited[index]) {
@@ -446,7 +425,10 @@ public class DefUseUtil {
 
               // hack: ControlFlow doesn't contains parameters initialization
               if (index == 0 && def instanceof PsiParameter) {
-                res.add(def.getNameIdentifier());
+                PsiIdentifier identifier = def.getNameIdentifier();
+                if (identifier != null) {
+                  res.add(identifier);
+                }
               }
             }
 
@@ -480,8 +462,7 @@ public class DefUseUtil {
   }
 
 
-  @NotNull
-  private static IntArrayList[] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
+  private static IntArrayList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
     final IntArrayList[] states = new IntArrayList[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new IntArrayList();

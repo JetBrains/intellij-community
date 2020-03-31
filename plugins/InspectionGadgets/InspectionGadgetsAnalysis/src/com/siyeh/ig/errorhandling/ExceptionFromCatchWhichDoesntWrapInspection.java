@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -46,12 +45,6 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
   @NotNull
   public String getID() {
     return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.display.name");
   }
 
   @Override

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,14 +46,97 @@ public interface RunnerAndConfigurationSettings {
   boolean isTemporary();
 
   /**
-   * Is stored in the versioned part of the project files
+   * Checks whether this run configuration is stored in a file (therefore, could be shared through VCS).
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file)
+   * and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   * Effectively, this method is equivalent to <code>isStoredInDotIdeaFolder() || isStoredInArbitraryFileInProject()</code>
+   *
+   * @see #isStoredInLocalWorkspace()
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInArbitraryFileInProject()
    */
   default boolean isShared() {
-    return false;
+    return isStoredInDotIdeaFolder() || isStoredInArbitraryFileInProject();
   }
 
+  /**
+   * @deprecated There are different ways of storing run configuration in a file,
+   * use {@link #storeInLocalWorkspace()}, {@link #storeInDotIdeaFolder()} or {@link #storeInArbitraryFileInProject(String)}
+   */
+  @Deprecated
   default void setShared(boolean value) {
+    if (value) {
+      storeInDotIdeaFolder();
+    }
+    else {
+      storeInLocalWorkspace();
+    }
   }
+
+  /**
+   * Make this run configuration impossible to share through VCS, store it in <code>.idea/workspace.xml</code> file.
+   *
+   * @see #storeInDotIdeaFolder()
+   * @see #storeInArbitraryFileInProject(String)
+   */
+  void storeInLocalWorkspace();
+
+  /**
+   * Checks if this run configuration is not shared through VCS, i.e. stored it in <code>.idea/workspace.xml</code> file.
+   *
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInArbitraryFileInProject()
+   */
+  boolean isStoredInLocalWorkspace();
+
+  /**
+   * Make this run configuration possible to share through VCS: store it as an <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file).
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file)
+   * and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #storeInArbitraryFileInProject(String)
+   * @see #storeInLocalWorkspace()
+   */
+  void storeInDotIdeaFolder();
+
+  /**
+   * Checks if this run configuration is stored as an <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file).
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file)
+   * and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #isStoredInArbitraryFileInProject()
+   * @see #isStoredInLocalWorkspace()
+   */
+  boolean isStoredInDotIdeaFolder();
+
+  /**
+   * Make this run configuration possible to share through VCS: store it in a <code>.run.xml</code> file anywhere within the project content.
+   * It's possible to store more than one run configuration in one <code>.run.xml</code> file.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file)
+   * and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @param filePath needs to be within the project content, otherwise the run configuration will be removed from the model.
+   * @see #storeInDotIdeaFolder()
+   * @see #storeInLocalWorkspace()
+   */
+  void storeInArbitraryFileInProject(@NonNls @NotNull String filePath);
+
+  /**
+   * Checks if this run configuration is stored in a <code>.run.xml</code> file within the project content.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder (or <code>project.ipr</code> file)
+   * and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInLocalWorkspace()
+   */
+  boolean isStoredInArbitraryFileInProject();
+
+  /**
+   * @return full path of the .run.xml file if {@link #isStoredInArbitraryFileInProject()} is <code>true</code>, <code>null</code> otherwise.
+   */
+  @Nullable
+  @NonNls
+  String getPathIfStoredInArbitraryFileInProject();
 
   /**
    * Marks the configuration as temporary or permanent.
@@ -91,8 +175,7 @@ public interface RunnerAndConfigurationSettings {
    * @param runner the runner for which the settings are requested.
    * @return the settings, or null if the runner doesn't provide any settings or the settings aren't configured for this configuration.
    */
-  @Nullable
-  RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
+  @Nullable <Settings extends RunnerSettings> Settings getRunnerSettings(@NotNull ProgramRunner<Settings> runner);
 
   /**
    * Returns the configuration-managed settings for the specified runner.
@@ -108,9 +191,9 @@ public interface RunnerAndConfigurationSettings {
    * Checks whether the run configuration settings are valid.
    *
    * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
-   * but the execution should still be allowed
-   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
-   * configuration.
+   *                                       but the execution should still be allowed
+   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible to execute the run
+   *                                       configuration.
    */
   default void checkSettings() throws RuntimeConfigurationException {
     checkSettings(null);
@@ -121,15 +204,14 @@ public interface RunnerAndConfigurationSettings {
    *
    * @param executor the executor which will be used to run the configuration, or null if the check is not specific to an executor.
    * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
-   * but the execution should still be allowed
-   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
-   * configuration.
+   *                                       but the execution should still be allowed
+   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible to execute the run
+   *                                       configuration.
    */
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * @deprecated
-   * @see ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)
+   * @deprecated use {@link ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)} instead
    */
   @Deprecated
   @SuppressWarnings({"unused"})

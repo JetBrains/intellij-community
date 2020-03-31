@@ -4,20 +4,23 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
 
-public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
+public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   I18nInspection myTool = new I18nInspection();
   
   private void doTest() {
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   public void testHardCodedStringLiteralAsParameter() { doTest(); }
@@ -29,17 +32,7 @@ public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testInAnnotationArguments() { doTest(); }
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
-  public void testEnum() {
-     final JavaPsiFacade facade = getJavaFacade();
-     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-     try {
-       doTest();
-     }
-     finally {
-       LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
-     }
-   }
+  public void testEnum() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
@@ -47,13 +40,100 @@ public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNonNlsEquals() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
+  public void _testConstructorChains() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNonNlsComment() {
     myTool.nonNlsCommentPattern = "MYNON-NLS";
     myTool.cacheNonNlsCommentPattern();
     doTest();
   }
+
+  public void testNlsOnly() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNlsPackage() {
+    myFixture.addFileToProject("package-info.java", "@Nls\n" +
+                                                    "package foo;\n" +
+                                                    "import org.jetbrains.annotations.Nls;");
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
   public void testAnnotationArgument() { doTest(); }
+  public void testAssertionStmt() { doTest(); }
+  public void testExceptionCtor() { doTest(); }
+  public void testSpecifiedExceptionCtor() {
+    boolean old = myTool.ignoreForExceptionConstructors;
+    try {
+      myTool.ignoreForSpecifiedExceptionConstructors = "java.io.IOException";
+      myTool.ignoreForExceptionConstructors = false;
+      doTest();
+    }
+    finally {
+      myTool.ignoreForSpecifiedExceptionConstructors = "";
+      myTool.ignoreForExceptionConstructors = old;
+    }
+  }
+
+  public void testEnumConstantIgnored() {
+    boolean oldState = myTool.setIgnoreForEnumConstants(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForEnumConstants(oldState);
+    }
+  }
+  
+  public void testNlsTypeUse() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNonNlsIndirect() {
+    doTest();
+  }
+
+  public void testNlsIndirect() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNonNlsMeta() {
+    doTest();
+  }
+  
+  public void testNlsMeta() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
 
   @Override
   protected String getTestDataPath() {

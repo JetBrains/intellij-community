@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.dualView.TreeTableView");
+  private static final Logger LOG = Logger.getInstance(TreeTableView.class);
 
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
     super(treeTableModel);

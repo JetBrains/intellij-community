@@ -178,7 +178,7 @@ public class GitLineHandler extends GitTextHandler {
    */
   private static class LineReader extends BaseDataReader {
     @NotNull private final Reader myReader;
-    @NotNull private final char[] myInputBuffer = new char[8192];
+    private final char @NotNull [] myInputBuffer = new char[8192];
 
     @NotNull private final BufferingTextSplitter myOutputProcessor;
 

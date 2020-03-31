@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -164,6 +165,15 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
       "            g2()\n" +
       "        print(x) #pass"
     );
+  }
+  // PY-22204
+  public void testForwardTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testTypeDeclarationFollowsTargetBeforeItsFirstUsage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   @NotNull

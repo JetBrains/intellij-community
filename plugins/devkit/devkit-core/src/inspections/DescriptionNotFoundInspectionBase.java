@@ -119,8 +119,7 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
     return myDescriptionType.getClassName();
   }
 
-  @NotNull
-  protected PsiDirectory[] getDescriptionsDirs(@NotNull Module module) {
+  protected PsiDirectory @NotNull [] getDescriptionsDirs(@NotNull Module module) {
     return DescriptionCheckerUtil.getDescriptionsDirs(module, myDescriptionType);
   }
 

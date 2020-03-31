@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.injection;
 
 import com.intellij.codeInsight.completion.*;
@@ -17,6 +17,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 
@@ -57,15 +58,21 @@ public class LanguageListCompletionContributor extends CompletionContributor {
       final Language language = entry.getValue();
 
       final LookupElementBuilder lookupElementBuilder =
-        LookupElementBuilder.create(entry.getKey()).withIcon(new DeferredIconImpl<>(null, language, true, language1 -> {
-          final LanguageFileType fileType = language1.getAssociatedFileType();
-          return fileType != null ? fileType.getIcon() : null;
-        }))
+        LookupElementBuilder.create(entry.getKey())
+          .withIcon(createLanguageIcon(language))
           .withTypeText(language.getDisplayName(), true)
           .withInsertHandler(new MyInsertHandler(parameters));
 
       result.addElement(lookupElementBuilder);
     }
+  }
+
+  @NotNull
+  public static Icon createLanguageIcon(@NotNull Language language) {
+    return new DeferredIconImpl<>(null, language, true, curLanguage -> {
+      final LanguageFileType fileType = curLanguage.getAssociatedFileType();
+      return fileType != null ? fileType.getIcon() : null;
+    });
   }
 
   public static boolean isInMiddleOfUncollapsedFence(@Nullable PsiElement element, int offset) {

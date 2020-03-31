@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
@@ -39,7 +39,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     myName = getName(kind);
   }
 
-  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = kind;
     myName = getName(kind);
@@ -66,7 +66,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
    * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
    */
   @Deprecated
-  public PsiPrimitiveType(@NotNull String name, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = null;
     myName = name;
@@ -158,8 +158,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return EMPTY_ARRAY;
   }
 
@@ -191,6 +190,13 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
   }
 
+  /**
+   * This method is nullable since {@link PsiType#NULL} has no FQN.<br/>
+   * Consider using {@link JvmPrimitiveTypeKind#getBoxedFqn()} if you know the type you need to get FQN of,
+   * e.g. instead of {@code PsiType.INT.getBoxedTypeName()} use {@code JvmPrimitiveTypeKind.INT.getBoxedFqn()}.
+   *
+   * @see JvmPrimitiveTypeKind#getBoxedFqn
+   */
   @Nullable
   public String getBoxedTypeName() {
     return myKind == null ? null : myKind.getBoxedFqn();

@@ -17,10 +17,8 @@ package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Set;
 
 /**

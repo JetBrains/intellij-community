@@ -19,8 +19,10 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.module.ModuleGroupTestsKt;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -146,7 +148,11 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("src/com/package1/p2"));
 
     Module module = createModule("nested_module");
-    ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(module, new String[]{"modules"});
+
+    ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    moduleModel.setModuleGroupPath(module, new String[]{"modules"});
+    WriteAction.runAndWait(() -> moduleModel.commit());
+
     PsiTestUtil.addContentRoot(module, mainModuleRoot.findFileByRelativePath("src/com/package1/p2/p3"));
 
     myStructure.setShowLibraryContents(false);

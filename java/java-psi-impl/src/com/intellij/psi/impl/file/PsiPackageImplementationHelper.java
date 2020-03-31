@@ -28,8 +28,7 @@ public abstract class PsiPackageImplementationHelper {
   @NotNull
   public abstract GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope);
 
-  @NotNull
-  public abstract VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage);
+  public abstract VirtualFile @NotNull [] occursInPackagePrefixes(@NotNull PsiPackage psiPackage);
 
   public abstract void handleQualifiedNameChange(@NotNull PsiPackage psiPackage, @NotNull String newQualifiedName);
 
@@ -37,8 +36,7 @@ public abstract class PsiPackageImplementationHelper {
 
   public abstract boolean packagePrefixExists(@NotNull PsiPackage psiPackage);
 
-  @NotNull
-  public abstract Object[] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider);
+  public abstract Object @NotNull [] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider);
 
   public static PsiPackageImplementationHelper getInstance() {
     return ServiceManager.getService(PsiPackageImplementationHelper.class);

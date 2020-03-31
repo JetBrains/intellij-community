@@ -1,64 +1,65 @@
 import sys
-from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple, Union
+from typing import Any, Awaitable, Callable, Iterable, Optional, Tuple, Union
 
-from . import coroutines
 from . import events
 from . import protocols
 from . import transports
 
 _ClientConnectedCallback = Callable[[StreamReader, StreamWriter], Optional[Awaitable[None]]]
 
+if sys.version_info < (3, 8):
+    class IncompleteReadError(EOFError):
+        expected: Optional[int]
+        partial: bytes
+        def __init__(self, partial: bytes, expected: Optional[int]) -> None: ...
 
-__all__: List[str]
+    class LimitOverrunError(Exception):
+        consumed: int
+        def __init__(self, message: str, consumed: int) -> None: ...
 
-class IncompleteReadError(EOFError):
-    expected = ...  # type: Optional[int]
-    partial = ...  # type: bytes
-    def __init__(self, partial: bytes, expected: Optional[int]) -> None: ...
-
-class LimitOverrunError(Exception):
-    consumed = ...  # type: int
-    def __init__(self, message: str, consumed: int) -> None: ...
-
-@coroutines.coroutine
-def open_connection(
+async def open_connection(
     host: str = ...,
     port: Union[int, str] = ...,
     *,
     loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
+    ssl_handshake_timeout: Optional[float] = ...,
     **kwds: Any
-) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
+) -> Tuple[StreamReader, StreamWriter]: ...
 
-@coroutines.coroutine
-def start_server(
+async def start_server(
     client_connected_cb: _ClientConnectedCallback,
     host: Optional[str] = ...,
     port: Optional[Union[int, str]] = ...,
     *,
     loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
+    ssl_handshake_timeout: Optional[float] = ...,
     **kwds: Any
-) -> Generator[Any, None, events.AbstractServer]: ...
+) -> events.AbstractServer: ...
 
 if sys.platform != 'win32':
-    @coroutines.coroutine
-    def open_unix_connection(
-        path: str = ...,
+    if sys.version_info >= (3, 7):
+        from os import PathLike
+        _PathType = Union[str, PathLike[str]]
+    else:
+        _PathType = str
+
+    async def open_unix_connection(
+        path: _PathType = ...,
         *,
         loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
         **kwds: Any
-    ) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
+    ) -> Tuple[StreamReader, StreamWriter]: ...
 
-    @coroutines.coroutine
-    def start_unix_server(
+    async def start_unix_server(
         client_connected_cb: _ClientConnectedCallback,
-        path: str = ...,
+        path: _PathType = ...,
         *,
         loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
-        **kwds: Any) -> Generator[Any, None, events.AbstractServer]: ...
+        **kwds: Any) -> events.AbstractServer: ...
 
 class FlowControlMixin(protocols.Protocol): ...
 
@@ -85,9 +86,11 @@ class StreamWriter:
     def write_eof(self) -> None: ...
     def can_write_eof(self) -> bool: ...
     def close(self) -> None: ...
+    if sys.version_info >= (3, 7):
+        def is_closing(self) -> bool: ...
+        async def wait_closed(self) -> None: ...
     def get_extra_info(self, name: str, default: Any = ...) -> Any: ...
-    @coroutines.coroutine
-    def drain(self) -> Generator[Any, None, None]: ...
+    async def drain(self) -> None: ...
 
 class StreamReader:
     def __init__(self,
@@ -99,11 +102,7 @@ class StreamReader:
     def feed_eof(self) -> None: ...
     def at_eof(self) -> bool: ...
     def feed_data(self, data: bytes) -> None: ...
-    @coroutines.coroutine
-    def readline(self) -> Generator[Any, None, bytes]: ...
-    @coroutines.coroutine
-    def readuntil(self, separator: bytes = ...) -> Generator[Any, None, bytes]: ...
-    @coroutines.coroutine
-    def read(self, n: int = ...) -> Generator[Any, None, bytes]: ...
-    @coroutines.coroutine
-    def readexactly(self, n: int) -> Generator[Any, None, bytes]: ...
+    async def readline(self) -> bytes: ...
+    async def readuntil(self, separator: bytes = ...) -> bytes: ...
+    async def read(self, n: int = ...) -> bytes: ...
+    async def readexactly(self, n: int) -> bytes: ...

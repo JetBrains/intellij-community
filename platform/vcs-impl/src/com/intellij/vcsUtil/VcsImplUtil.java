@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,9 +6,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
@@ -20,7 +20,6 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -63,20 +62,20 @@ public class VcsImplUtil {
     return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
   }
 
-  public static boolean isNonModalCommit() {
-    return Registry.is("vcs.non.modal.commit");
+  @Nullable
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
+    return findIgnoredFileContentProvider(vcs.getProject(), vcs.getKeyInstanceMethod());
   }
 
   @Nullable
-  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project,
-                                                                           AbstractVcs vcs) {
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
     IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
+      .filter((provider) -> provider.getSupportedVcs().equals(vcsKey))
       .findFirst()
       .orElse(null);
 
     if (ignoreContentProvider == null) {
-      LOG.debug("Cannot get ignore content provider for vcs " + vcs.getName());
+      LOG.debug("Cannot get ignore content provider for vcs " + vcsKey.getName());
       return null;
     }
     return ignoreContentProvider;
@@ -103,15 +102,6 @@ public class VcsImplUtil {
       return;
     }
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
-  }
-
-  @Nullable
-  public static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
-                                                                          @NotNull AbstractVcs vcs) {
-    return IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
-      .findFirst()
-      .orElse(null);
   }
 
   private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {

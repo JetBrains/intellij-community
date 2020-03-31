@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.Lists;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
@@ -104,7 +105,7 @@ public class FStringsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     final boolean insideFragment = PsiTreeUtil.getParentOfType(comment, PyFStringFragment.class) != null;
     if (insideFragment) {
       report(comment, "Expression fragments inside f-strings cannot include line comments");
@@ -113,10 +114,10 @@ public class FStringsAnnotator extends PyAnnotator {
 
   public void reportCharacter(PsiElement element, int offset, String message) {
     final int nodeStartOffset = element.getTextRange().getStartOffset();
-    getHolder().createErrorAnnotation(TextRange.from(offset, 1).shiftRight(nodeStartOffset), message);
+    getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(TextRange.from(offset, 1).shiftRight(nodeStartOffset)).create();
   }
 
   public void report(PsiElement element, String error) {
-    getHolder().createErrorAnnotation(element, error);
+    getHolder().newAnnotation(HighlightSeverity.ERROR, error).range(element).create();
   }
 }

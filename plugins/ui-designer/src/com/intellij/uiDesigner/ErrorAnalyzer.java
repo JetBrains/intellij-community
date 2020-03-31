@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -34,7 +33,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class ErrorAnalyzer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ErrorAnalyzer");
+  private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
 
   /**
    * Value {@link ErrorInfo}
@@ -238,7 +237,7 @@ public final class ErrorAnalyzer {
     if (rootContainer.isInspectionSuppressed(shortName, componentId)) return true;
     if (formInspectionTool instanceof LocalInspectionTool) {
       String alternativeID = ((LocalInspectionTool)formInspectionTool).getAlternativeID();
-      if (!Comparing.equal(alternativeID, shortName)) {
+      if (!Objects.equals(alternativeID, shortName)) {
         return rootContainer.isInspectionSuppressed(alternativeID, componentId);
       }
     }
@@ -365,7 +364,7 @@ public final class ErrorAnalyzer {
     return null;
   }
 
-  @NotNull public static ErrorInfo[] getAllErrorsForComponent(@NotNull IComponent component) {
+  public static ErrorInfo @NotNull [] getAllErrorsForComponent(@NotNull IComponent component) {
     List<ErrorInfo> result = new ArrayList<>();
     ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
     if (errorInfo != null) {

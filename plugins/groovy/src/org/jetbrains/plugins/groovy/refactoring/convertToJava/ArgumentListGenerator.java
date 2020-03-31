@@ -24,7 +24,7 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 class ArgumentListGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
+  private static final Logger LOG = Logger.getInstance(ArgumentListGenerator.class);
 
   private final StringBuilder myBuilder;
   private final ExpressionGenerator myExpressionGenerator;
@@ -36,9 +36,9 @@ class ArgumentListGenerator {
   }
 
   public void generate(@Nullable GrSignature signature,
-                       @NotNull GrExpression[] exprs,
-                       @NotNull GrNamedArgument[] namedArgs,
-                       @NotNull GrClosableBlock[] clArgs,
+                       GrExpression @NotNull [] exprs,
+                       GrNamedArgument @NotNull [] namedArgs,
+                       GrClosableBlock @NotNull [] clArgs,
                        @NotNull GroovyPsiElement context) {
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
       signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, false, false);

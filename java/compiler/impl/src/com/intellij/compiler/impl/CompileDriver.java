@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.build.BuildContentManager;
 import com.intellij.compiler.*;
+import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
@@ -18,8 +20,8 @@ import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -30,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -43,30 +46,29 @@ import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-public class CompileDriver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
+public final class CompileDriver {
+  private static final Logger LOG = Logger.getInstance(CompileDriver.class);
 
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
+  public static final String CLASSES_UP_TO_DATE_CHECK = "Classes up-to-date check";
 
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
@@ -102,18 +104,18 @@ public class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
+    final CompilerTask task = new CompilerTask(myProject, CLASSES_UP_TO_DATE_CHECK, true, false, false, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<>();
 
-    task.start(() -> {
-      final ProgressIndicator indicator = compileContext.getProgressIndicator();
+    Runnable compileWork = () -> {
+      ProgressIndicator indicator = compileContext.getProgressIndicator();
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
       try {
-        final TaskFuture future = compileInExternalProcess(compileContext, true);
+        TaskFuture<?> future = compileInExternalProcess(compileContext, true);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
             if (indicator.isCanceled()) {
@@ -126,12 +128,22 @@ public class CompileDriver {
         LOG.error(e);
       }
       finally {
-        result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
+        task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
+        result.set(exitStatus);
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
       }
-    }, null);
+    };
+
+    ProgressIndicatorProvider indicatorProvider = ProgressIndicatorProvider.getInstance();
+    if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
+      // if called from background process on pooled thread, run synchronously
+      task.run(compileWork, null, indicatorProvider.getProgressIndicator());
+    } else {
+      task.start(compileWork, null);
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation finished");
@@ -160,7 +172,7 @@ public class CompileDriver {
 
   public static void setCompilationStartedAutomatically(CompileScope scope) {
     //todo[nik] pass this option as a parameter to compile/make methods instead
-    scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, Boolean.TRUE);
+    scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true);
   }
 
   private static boolean isCompilationStartedAutomatically(CompileScope scope) {
@@ -176,8 +188,8 @@ public class CompileDriver {
     if (explicitScopes != null) {
       scopes.addAll(explicitScopes);
     }
-    else if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scope.getAffectedUnloadedModules(), scopes, forceBuild);
+    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext))) {
+      CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
       scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
@@ -201,7 +213,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
+  private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
@@ -212,10 +224,10 @@ public class CompileDriver {
       builderParams = new HashMap<>();
     }
     else {
-      final Map<Key, Object> exported = scope.exportUserData();
+      Map<Key<?>, Object> exported = scope.exportUserData();
       if (!exported.isEmpty()) {
         builderParams = new HashMap<>();
-        for (Map.Entry<Key, Object> entry : exported.entrySet()) {
+        for (Map.Entry<Key<?>, Object> entry : exported.entrySet()) {
           final String _key = entry.getKey().toString();
           final String _value = entry.getValue().toString();
           builderParams.put(_key, _value);
@@ -229,17 +241,18 @@ public class CompileDriver {
       builderParams.put(BuildParametersKeys.LOAD_UNLOADED_MODULES, Boolean.TRUE.toString());
     }
 
-    final MessageBus messageBus = myProject.getMessageBus();
     final MultiMap<String, Artifact> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
-      public void sessionTerminated(@NotNull final UUID sessionId) {
+      public void sessionTerminated(@NotNull UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
-          final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
-          view.clearProgress();
-          view.clearOldMessages(compileContext.getCompileScope(), compileContext.getSessionId());
+          ProblemsView view = myProject.getServiceIfCreated(ProblemsView.class);
+          if (view != null) {
+            view.clearProgress();
+            view.clearOldMessages(compileContext.getCompileScope(), compileContext.getSessionId());
+          }
         }
       }
 
@@ -279,7 +292,7 @@ public class CompileDriver {
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
             // treat JPS_INFO messages in a special way: add them as info messages to the problems view
             final Project project = compileContext.getProject();
-            ProblemsView.SERVICE.getInstance(project).addMessage(
+            ProblemsView.getInstance(project).addMessage(
               new CompilerMessageImpl(project, category, messageText),
               compileContext.getSessionId()
             );
@@ -293,7 +306,7 @@ public class CompileDriver {
         switch (eventType) {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
-            final CompilationStatusListener publisher = !myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
+            CompilationStatusListener publisher = myProject.isDisposed() ? null : myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
             Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
@@ -365,7 +378,8 @@ public class CompileDriver {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final String name = CompilerBundle.message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    final String name = JavaCompilerBundle
+      .message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
     final CompilerTask compileTask = new CompilerTask(
       myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
     );
@@ -408,7 +422,7 @@ public class CompileDriver {
           return;
         }
 
-        final TaskFuture future = compileInExternalProcess(compileContext, false);
+        TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
             if (indicator.isCanceled()) {
@@ -446,8 +460,9 @@ public class CompileDriver {
     compileTask.start(compileWork, () -> {
       if (isRebuild) {
         final int rv = Messages.showOkCancelDialog(
-            myProject, "You are about to rebuild the whole project.\nRun 'Build Project' instead?", "Confirm Project Rebuild",
-            "Build", "Rebuild", Messages.getQuestionIcon()
+          myProject, JavaCompilerBundle.message("you.are.about.to.rebuild.the.whole.project"),
+          JavaCompilerBundle.message("confirm.project.rebuild"),
+          CommonBundle.message("button.build"), JavaCompilerBundle.message("button.rebuild"), Messages.getQuestionIcon()
         );
         if (rv == Messages.OK /*yes, please, do run make*/) {
           startup(scope, false, false, callback, null);
@@ -465,7 +480,9 @@ public class CompileDriver {
 
   /** @noinspection SSBasedInspection*/
   private long notifyCompilationCompleted(final CompileContextImpl compileContext, final CompileStatusNotification callback, final ExitStatus _status) {
-    final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
+    long endCompilationStamp = System.currentTimeMillis();
+    compileContext.getBuildSession().setEndCompilationStamp(_status, endCompilationStamp);
+    final long duration = endCompilationStamp - compileContext.getStartCompilationStamp();
     if (!myProject.isDisposed()) {
       // refresh on output roots is required in order for the order enumerator to see all roots via VFS
       final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
@@ -475,7 +492,7 @@ public class CompileDriver {
         Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
         if (!affectedRoots.isEmpty()) {
           ProgressIndicator indicator = compileContext.getProgressIndicator();
-          indicator.setText("Synchronizing output directories...");
+          indicator.setText(JavaCompilerBundle.message("synchronizing.output.directories"));
           CompilerUtil.refreshOutputRoots(affectedRoots);
           indicator.setText("");
         }
@@ -498,14 +515,16 @@ public class CompileDriver {
         final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
         final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
         if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
-          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+          String toolWindowId = Registry.is("ide.jps.use.build.tool.window", false) ?
+                                BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+          ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
         final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
         final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
           "", wrappedMessage,
           messageType.toNotificationType(),
-          new MessagesActivationListener(compileContext)
+          new BuildToolWindowActivationListener(compileContext)
         ).setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
         notification.notify(myProject);
@@ -523,19 +542,19 @@ public class CompileDriver {
   private static String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
     String message;
     if (status == ExitStatus.CANCELLED) {
-      message = CompilerBundle.message("status.compilation.aborted");
+      message = JavaCompilerBundle.message("status.compilation.aborted");
     }
     else if (status == ExitStatus.UP_TO_DATE) {
-      message = CompilerBundle.message("status.all.up.to.date");
+      message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
-               ? CompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-               : CompilerBundle.message("status.compilation.completed.successfully");
+               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
+               : JavaCompilerBundle.message("status.compilation.completed.successfully");
       }
       else {
-        message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
       message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
@@ -580,12 +599,14 @@ public class CompileDriver {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
       if (tasks.size() > 0) {
         progressIndicator.setText(
-          CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
+          JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
           try {
             if (!task.execute(context)) {
               return false;
             }
+          } catch (ProcessCanceledException e){
+            throw e;
           }
           catch (Throwable t) {
             LOG.error("Error executing task", t);
@@ -600,9 +621,6 @@ public class CompileDriver {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
       if (statusBar != null) {
         statusBar.setInfo("");
-      }
-      if (progressIndicator instanceof CompilerTask) {
-        ApplicationManager.getApplication().invokeLater(((CompilerTask)progressIndicator)::showCompilerContent);
       }
     }
     return true;
@@ -653,7 +671,8 @@ public class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle
+          .message("modules.classpath.title"));
         return false;
       }
 
@@ -708,7 +727,7 @@ public class CompileDriver {
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
+    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
@@ -718,7 +737,7 @@ public class CompileDriver {
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
+    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
@@ -731,7 +750,7 @@ public class CompileDriver {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@NonNls final String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
+  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
                                      String editorNameToSelect) {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();
@@ -750,7 +769,7 @@ public class CompileDriver {
     if (modules.size() > maxModulesToShow) {
       names.append(",\n...");
     }
-    final String message = CompilerBundle.message(resourceId, modules.size(), names.toString());
+    final String message = JavaCompilerBundle.message(resourceId, modules.size(), names.toString());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
@@ -783,11 +802,11 @@ public class CompileDriver {
     }
   }
 
-  private static class MessagesActivationListener extends NotificationListener.Adapter {
+  private static class BuildToolWindowActivationListener extends NotificationListener.Adapter {
     private final WeakReference<Project> myProjectRef;
     private final Object myContentId;
 
-    MessagesActivationListener(CompileContextImpl compileContext) {
+    BuildToolWindowActivationListener(CompileContextImpl compileContext) {
       myProjectRef = new WeakReference<>(compileContext.getProject());
       myContentId = compileContext.getBuildSession().getContentId();
     }
@@ -795,10 +814,17 @@ public class CompileDriver {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
       final Project project = myProjectRef.get();
-      if (project != null && !project.isDisposed() && CompilerTask.showCompilerContent(project, myContentId)) {
-        final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (tw != null) {
-          tw.activate(null, false);
+      boolean useBuildToolwindow = Registry.is("ide.jps.use.build.tool.window", false);
+      String toolWindowId = useBuildToolwindow ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+      if (project != null && !project.isDisposed()) {
+        if (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId)) {
+          final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+          if (tw != null) {
+            tw.activate(null, false);
+          }
+        }
+        else {
+          notification.expire();
         }
       }
       else {

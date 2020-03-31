@@ -1,12 +1,12 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ExpectedExceptionNeverThrownInspectionTest extends LightInspectionTestCase {
+public class ExpectedExceptionNeverThrownInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
     return new ExpectedExceptionNeverThrownInspection();

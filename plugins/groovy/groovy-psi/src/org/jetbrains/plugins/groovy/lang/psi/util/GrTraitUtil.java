@@ -14,7 +14,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
   private static final PsiTypeMapper ID_MAPPER = new PsiTypeMapper() {
     @Override
-    public PsiType visitClassType(PsiClassType classType) {
+    public PsiType visitClassType(@NotNull PsiClassType classType) {
       return classType;
     }
   };
@@ -178,7 +177,7 @@ public class GrTraitUtil {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(trait.getProject()).getElementFactory();
     return new PsiTypeMapper() {
       @Override
-      public PsiType visitClassType(PsiClassType originalType) {
+      public PsiType visitClassType(@NotNull PsiClassType originalType) {
         final PsiClass resolved = originalType.resolve();
         // if resolved to method parameter -> return as is
         if (resolved instanceof PsiTypeParameter && compiledMethod.equals(((PsiTypeParameter)resolved).getOwner())) return originalType;
@@ -217,11 +216,11 @@ public class GrTraitUtil {
     if (traitFile == null) return;
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
-    int key = SingleEntryFileBasedIndexExtension.getFileKey(helperFile);
-    final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
-      GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
-    );
-    values.forEach(descriptors -> descriptors.forEach(descriptor -> result.add(createTraitField(descriptor, trait))));
+
+    Map<Integer, Collection<TraitFieldDescriptor>> data =
+      FileBasedIndex.getInstance().getFileData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
+    Collection<TraitFieldDescriptor> values = ContainerUtil.getFirstItem(data.values(), Collections.emptyList());
+    values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
   }
 
   private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {

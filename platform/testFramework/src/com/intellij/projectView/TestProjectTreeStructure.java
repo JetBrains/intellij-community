@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectViewSettings;
@@ -55,11 +53,6 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   }
 
   @Override
-  public boolean isAbbreviatePackageNames() {
-    return false;
-  }
-
-  @Override
   public boolean isHideEmptyMiddlePackages() {
     return myHideEmptyMiddlePackages;
   }
@@ -72,11 +65,6 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   @Override
   public boolean isShowExcludedFiles() {
     return myShowExcludedFiles;
-  }
-
-  @Override
-  public boolean isShowModules() {
-    return true;
   }
 
   public void setShowMembers(boolean showMembers) {

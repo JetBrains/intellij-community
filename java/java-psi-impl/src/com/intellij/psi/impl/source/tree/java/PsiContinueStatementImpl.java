@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -15,7 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiContinueStatementImpl extends CompositePsiElement implements PsiContinueStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiContinueStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiContinueStatementImpl.class);
 
   public PsiContinueStatementImpl() {
     super(JavaElementType.CONTINUE_STATEMENT);
@@ -29,16 +29,13 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
   @Override
   public PsiStatement findContinuedStatement() {
     PsiIdentifier label = getLabelIdentifier();
-    if (label == null) {
+    if (label != null) {
+      PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+      return labeled != null ? labeled.getStatement() : null;
+    }
+    else {
       return PsiImplUtil.findEnclosingLoop(this);
     }
-
-    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
-    if (labeled != null) {
-      return labeled.getStatement();
-    }
-
-    return null;
   }
 
   @Override

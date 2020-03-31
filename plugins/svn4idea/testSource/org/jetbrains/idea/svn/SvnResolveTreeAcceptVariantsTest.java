@@ -117,7 +117,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         if (excluded != null && asList(excluded).contains(relative)) {
           return true;
         }
-        assertTrue(createTestFailedComment(relative), exists);
+        fail(createTestFailedComment(relative));
       }
       final File theirsFile = virtualToIoFile(file);
       Info theirsInfo = vcs.getInfo(theirsFile);

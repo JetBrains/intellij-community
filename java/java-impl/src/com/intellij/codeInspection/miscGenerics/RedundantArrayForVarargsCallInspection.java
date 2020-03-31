@@ -4,8 +4,8 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +25,7 @@ import java.util.List;
  * @author ven
  */
 public class RedundantArrayForVarargsCallInspection extends GenericsInspectionToolBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection");
+  private static final Logger LOG = Logger.getInstance(RedundantArrayForVarargsCallInspection.class);
   private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
 
   private static class MyQuickFix implements LocalQuickFix {
@@ -39,7 +39,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
+      return JavaBundle.message("inspection.redundant.array.creation.quickfix");
     }
   }
 
@@ -113,13 +113,13 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         if (!isSafeToFlatten(expression, method, initializers)) {
           return;
         }
-        String message = InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
+        String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
         ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg, message, myQuickFixAction,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         problems.add(descriptor);
       }
 
-      private boolean isSafeToFlatten(@NotNull PsiCall callExpression, @NotNull PsiMethod oldRefMethod, @NotNull PsiExpression[] arrayElements) {
+      private boolean isSafeToFlatten(@NotNull PsiCall callExpression, @NotNull PsiMethod oldRefMethod, PsiExpression @NotNull [] arrayElements) {
         if (arrayElements.length == 1) {
           PsiType type = arrayElements[0].getType();
           // change foo(new Object[]{array}) to foo(array) is not safe
@@ -172,8 +172,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PsiExpression[] getInitializers(final PsiNewExpression newExpression) {
+  private static PsiExpression @Nullable [] getInitializers(final PsiNewExpression newExpression) {
     PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
     if (initializer != null) {
       return initializer.getInitializers();
@@ -192,13 +191,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.VERBOSE_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.array.creation.display.name");
+    return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override

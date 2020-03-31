@@ -2,8 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
@@ -11,23 +10,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,22 +28,23 @@ import java.util.stream.Stream;
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   private final GotoFileModel myModelForRenderer;
-  private final PersistentSearchEverywhereContributorFilter<FileType> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
 
-  public FileSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
-    super(project, context);
-    myModelForRenderer = project == null ? null : new GotoFileModel(project);
-    myFilter = project == null ? null : createFileTypeFilter(project);
+  public FileSearchEverywhereContributor(@NotNull AnActionEvent event) {
+    super(event);
+    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    myModelForRenderer = new GotoFileModel(project);
+    myFilter = createFileTypeFilter(project);
   }
 
   @NotNull
   @Override
   public String getGroupName() {
-    return "Files";
+    return IdeBundle.message("search.everywhere.group.name.files");
   }
 
   public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.files", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }
 
   @Override
@@ -65,7 +59,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
   @NotNull
   @Override
-  protected FilteringGotoByModel<FileType> createModel(@NotNull Project project) {
+  protected FilteringGotoByModel<FileTypeRef> createModel(@NotNull Project project) {
     GotoFileModel model = new GotoFileModel(project);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
@@ -82,7 +76,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    //noinspection unchecked
     return new SERenderer() {
       @NotNull
       @Override
@@ -140,16 +133,14 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
+      return new FileSearchEverywhereContributor(initEvent);
     }
   }
 
   @NotNull
-  public static PersistentSearchEverywhereContributorFilter<FileType> createFileTypeFilter(@NotNull Project project) {
-    List<FileType> items = Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
-                                 .sorted(GotoFileAction.FileTypeComparator.INSTANCE)
-                                 .collect(Collectors.toList());
-    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileType::getName,
-                                                             FileType::getIcon);
+  public static PersistentSearchEverywhereContributorFilter<FileTypeRef> createFileTypeFilter(@NotNull Project project) {
+    List<FileTypeRef> items = FileTypeRef.forAllFileTypes();
+    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getName,
+                                                             FileTypeRef::getIcon);
   }
 }

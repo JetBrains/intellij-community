@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.MissingResourceException;
@@ -10,8 +11,7 @@ import java.util.MissingResourceException;
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
-
+final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   private final ExperimentalFeature myFeature;
 
   ExperimentalFeatureRegistryValueWrapper(@NotNull ExperimentalFeature feature) {
@@ -38,7 +38,7 @@ class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
 
   @Override
   public boolean asBoolean() {
-    return Experiments.isFeatureEnabled(myFeature.id);
+    return Experiments.getInstance().isFeatureEnabled(myFeature.id);
   }
 
   @Override
@@ -48,7 +48,7 @@ class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
 
   @Override
   public boolean isChangedFromDefault() {
-    return Experiments.isChanged(myFeature.id);
+    return Experiments.getInstance().isChanged(myFeature.id);
   }
 
   @Override
@@ -59,12 +59,12 @@ class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   @Override
   public void setValue(String value) {
     boolean enable = Boolean.parseBoolean(value);
-    Experiments.setFeatureEnabled(myFeature.id, enable);
+    Experiments.getInstance().setFeatureEnabled(myFeature.id, enable);
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return myFeature.description;
+    return StringUtil.notNullize(myFeature.description);
   }
 }

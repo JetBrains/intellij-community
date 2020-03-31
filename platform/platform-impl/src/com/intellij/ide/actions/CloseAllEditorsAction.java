@@ -46,10 +46,10 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     final EditorWindow editorWindow = event.getData(EditorWindow.DATA_KEY);
     if (editorWindow != null && editorWindow.inSplitter()) {
-      presentation.setText(IdeBundle.message("action.close.all.editors.in.tab.group"));
+      presentation.setText(IdeBundle.messagePointer("action.close.all.editors.in.tab.group"));
     }
     else {
-      presentation.setText(IdeBundle.message("action.close.all.editors"));
+      presentation.setText(IdeBundle.messagePointer("action.close.all.editors"));
     }
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

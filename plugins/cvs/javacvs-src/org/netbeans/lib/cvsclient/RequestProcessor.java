@@ -318,7 +318,7 @@ public final class RequestProcessor implements IRequestProcessor {
   }
 
   private boolean isValidRequest(String request) {
-    return responseServices.getValidRequests().indexOf(request) >= 0;
+    return responseServices.getValidRequests().contains(request);
   }
 
   private void sendRequest(IRequest request, IConnectionStreams connectionStreams) throws CommandAbortedException, IOException {

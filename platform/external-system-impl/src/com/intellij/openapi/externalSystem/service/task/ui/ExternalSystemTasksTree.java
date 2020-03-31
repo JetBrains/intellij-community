@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,9 +107,9 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
       // a chance.
       // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
       // that it automatically expands parent paths on child path expansion.
-      List<TreePath> paths = ContainerUtilRt.newArrayList(myPathsToProcessCollapseState);
+      List<TreePath> paths = new ArrayList<>(myPathsToProcessCollapseState);
       myPathsToProcessCollapseState.clear();
-      Collections.sort(paths, PATH_COMPARATOR);
+      paths.sort(PATH_COMPARATOR);
       for (TreePath treePath : paths) {
         applyCollapseState(treePath);
       }

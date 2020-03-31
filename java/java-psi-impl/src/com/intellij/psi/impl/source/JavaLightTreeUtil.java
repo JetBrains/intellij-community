@@ -22,6 +22,8 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.java.IKeywordElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,10 +63,22 @@ public class JavaLightTreeUtil {
 
   @Nullable
   public static LighterASTNode skipParenthesesCastsDown(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
-    while (node != null && (node.getTokenType() == PARENTH_EXPRESSION || node.getTokenType() == TYPE_CAST_EXPRESSION)) {
+    while (node != null) {
+      IElementType type = node.getTokenType();
+      if (type != PARENTH_EXPRESSION && type != TYPE_CAST_EXPRESSION) break;
+      if (type == TYPE_CAST_EXPRESSION && isPrimitiveCast(tree, node)) break;
       node = findExpressionChild(tree, node);
     }
     return node;
+  }
+
+  public static boolean isPrimitiveCast(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+    LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, node, TYPE);
+    if (typeElement != null) {
+      LighterASTNode item = ContainerUtil.getOnlyItem(tree.getChildren(typeElement));
+      return item != null && item.getTokenType() instanceof IKeywordElementType;
+    }
+    return false;
   }
 
   @Nullable

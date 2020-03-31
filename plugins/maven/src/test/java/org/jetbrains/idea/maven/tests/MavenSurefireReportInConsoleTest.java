@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.tests;
 
 import com.intellij.execution.filters.Filter;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.project.MavenTestConsoleFilter;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenSurefireReportInConsoleTest extends LightCodeInsightFixtureTestCase {
+public class MavenSurefireReportInConsoleTest extends LightJavaCodeInsightFixtureTestCase {
 
   private Filter myFilter;
 

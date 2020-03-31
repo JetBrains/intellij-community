@@ -33,12 +33,10 @@ public abstract class SuppressManager implements BatchSuppressManager, Inspectio
     return annotation != null && SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName());
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey key) {
+  public SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey key) {
     return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(key);
   }
 
-  @NotNull
-  public abstract SuppressIntentionAction[] createSuppressActions(@NotNull HighlightDisplayKey key);
+  public abstract SuppressIntentionAction @NotNull [] createSuppressActions(@NotNull HighlightDisplayKey key);
 }

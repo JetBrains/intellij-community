@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.markdown.lang;
 
+import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -22,6 +23,7 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 
 import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformType;
+import static org.intellij.plugins.markdown.lang.MarkdownTokenTypes.HTML_BLOCK_CONTENT;
 
 public interface MarkdownElementTypes {
   IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = new IStubFileElementType("Markdown file", MarkdownLanguage.INSTANCE);
@@ -61,6 +63,11 @@ public interface MarkdownElementTypes {
   IElementType IMAGE = platformType(org.intellij.markdown.MarkdownElementTypes.IMAGE);
 
   IElementType HTML_BLOCK = platformType(org.intellij.markdown.MarkdownElementTypes.HTML_BLOCK);
+
+  IElementType MARKDOWN_OUTER_BLOCK = new IElementType("MARKDOWN_OUTER_BLOCK", MarkdownLanguage.INSTANCE);
+
+  TemplateDataElementType MARKDOWN_TEMPLATE_DATA =
+    new TemplateDataElementType("MARKDOWN_TEMPLATE_DATA", MarkdownLanguage.INSTANCE, HTML_BLOCK_CONTENT, MARKDOWN_OUTER_BLOCK);
 
   IElementType AUTOLINK = platformType(org.intellij.markdown.MarkdownElementTypes.AUTOLINK);
 

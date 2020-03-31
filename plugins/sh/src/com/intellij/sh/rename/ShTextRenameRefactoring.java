@@ -3,6 +3,7 @@ package com.intellij.sh.rename;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
@@ -19,14 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class ShTextRenameRefactoring {
-  private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  @NonNls private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
+  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
   private final Project myProject;
@@ -75,7 +80,8 @@ class ShTextRenameRefactoring {
       }
     }
     createCaretRangeMarker();
-    WriteCommandAction.writeCommandAction(myProject).withName("Rename " + myOccurrenceText).run(() -> startTemplate(builder));
+    WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("sh.rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
+    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 
   private void createCaretRangeMarker() {
@@ -112,25 +118,30 @@ class ShTextRenameRefactoring {
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
         for (int i = 0; i < templateState.getSegmentsCount(); i++) {
           TextRange segmentOffset = templateState.getSegmentRange(i);
-          String name = template.getSegmentName(i);
-          TextAttributes attributes = null;
-          if (name.equals(PRIMARY_VARIABLE_NAME)) {
-            attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+          TextAttributes attributes = getAttributes(colorsManager, template.getSegmentName(i));
+          if (attributes != null) {
+            rangesToHighlight.put(segmentOffset, attributes);
           }
-          else if (name.equals(OTHER_VARIABLE_NAME)) {
-            attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-          }
-          if (attributes == null) continue;
-          rangesToHighlight.put(segmentOffset, attributes);
         }
       }
-      addHighlights(rangesToHighlight, myHighlighters, HighlightManager.getInstance(myProject));
+      addHighlights(rangesToHighlight, myHighlighters);
     }
   }
 
+  @Nullable
+  private static TextAttributes getAttributes(@NotNull EditorColorsManager colorsManager, @NotNull String segmentName) {
+    if (segmentName.equals(PRIMARY_VARIABLE_NAME)) {
+      return colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+    }
+    if (segmentName.equals(OTHER_VARIABLE_NAME)) {
+      return colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    }
+    return null;
+  }
+
   private void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
-                             @NotNull Collection<RangeHighlighter> highlighters,
-                             @NotNull HighlightManager highlightManager) {
+                             @NotNull Collection<RangeHighlighter> highlighters) {
+    HighlightManager highlightManager = HighlightManager.getInstance(myProject);
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
@@ -160,7 +171,7 @@ class ShTextRenameRefactoring {
 
     LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(myEditor);
     if (lookup != null && lookup.getLookupStart() <= (restoreCaretOffset(offset))) {
-      lookup.setFocusDegree(LookupImpl.FocusDegree.UNFOCUSED);
+      lookup.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }
     else {

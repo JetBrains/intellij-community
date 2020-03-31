@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.util.TooManyListenersException;
 
 public class ExportToFileUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.ExportToFileUtil");
+  private static final Logger LOG = Logger.getInstance(ExportToFileUtil.class);
 
   public static void exportTextToFile(Project project, String fileName, String textToExport) {
     String prepend = "";
@@ -52,7 +52,7 @@ public class ExportToFileUtil {
       int result = Messages.showYesNoCancelDialog(
         project,
         IdeBundle.message("error.text.file.already.exists", fileName),
-        "Export To File",
+        IdeBundle.message("dialog.title.export.to.file"),
         IdeBundle.message("action.overwrite"),
         IdeBundle.message("action.append"),
         CommonBundle.getCancelButtonText(),
@@ -214,8 +214,7 @@ public class ExportToFileUtil {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), new CopyToClipboardAction(), getCancelAction()};
     }
 

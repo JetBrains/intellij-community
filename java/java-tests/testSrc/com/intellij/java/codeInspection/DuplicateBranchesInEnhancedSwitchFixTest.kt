@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -16,5 +16,5 @@ class DuplicateBranchesInEnhancedSwitchFixTest : LightQuickFixParameterizedTestC
 
   override fun getBasePath() = "/inspection/duplicateBranchesInEnhancedSwitchFix"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_13
 }

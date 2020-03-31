@@ -13,30 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@file:JvmName(name = "GroovyTransformationsBundle")
-
 package org.jetbrains.plugins.groovy.transformations
 
-import com.intellij.CommonBundle
-import com.intellij.reference.SoftReference
+import com.intellij.DynamicBundle
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.lang.ref.Reference
-import java.util.*
 
-const val BUNDLE: String = "org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
+@NonNls
+private const val BUNDLE: String = "messages.GroovyTransformationsBundle"
 
-fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = CommonBundle.message(getBundle(), key, *params)
+object GroovyTransformationsBundle : DynamicBundle(BUNDLE) {
+  @JvmStatic
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
 
-private var ourBundle: Reference<ResourceBundle>? = null
-
-private fun getBundle(): ResourceBundle {
-  var bundle = SoftReference.dereference(ourBundle)
-
-  if (bundle == null) {
-    bundle = ResourceBundle.getBundle(BUNDLE)!!
-    ourBundle = SoftReference<ResourceBundle>(bundle)
-  }
-
-  return bundle
+  @JvmStatic
+  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String,
+                  vararg params: Any): java.util.function.Supplier<String> = getLazyMessage(key, *params)
 }

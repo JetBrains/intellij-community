@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.attach.*;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.*;
 
-public class AttachToProcessActionTest extends PlatformTestCase {
+public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
   @NotNull
   private AttachToProcessItem fixtureCreateAttachToProcessItem(@NotNull XAttachPresentationGroup<ProcessInfo> group, boolean firstInGroup, @NotNull ProcessInfo info, @NotNull List<XLocalAttachDebugger> debuggers, @NotNull UserDataHolder dataHolder) {
@@ -34,7 +34,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     return RecentItem.createRecentItem(LocalAttachHost.INSTANCE, info, group, debuggerName);
   }
 
-  private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, @NotNull XAttachDebuggerProvider... providers) {
+  private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, XAttachDebuggerProvider @NotNull ... providers) {
     List<ProcessInfo> infoList = ContainerUtil.newArrayList(infos);
     return doCollectAttachProcessItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
   }
@@ -574,7 +574,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(20, group2, createDebuggers("gdb2", "lldb2")));
   }
 
-  private void assertItems(String expected, @NotNull XLocalAttachDebuggerProvider... providers) {
+  private void assertItems(String expected, XLocalAttachDebuggerProvider @NotNull ... providers) {
     ProcessInfo[] infos = {
       new ProcessInfo(1, "command line 1", "exec1", "args1"),
       new ProcessInfo(2, "command line 2", "exec2", "args2"),
@@ -582,7 +582,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     assertItems(expected, infos, providers);
   }
 
-  private void assertItems(String expected, ProcessInfo[] infos, @NotNull XLocalAttachDebuggerProvider... providers) {
+  private void assertItems(String expected, ProcessInfo[] infos, XLocalAttachDebuggerProvider @NotNull ... providers) {
     assertEquals(expected, printItems(fixtureCollectAttachItems(infos, providers)));
   }
 

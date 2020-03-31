@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+
 public class StdModuleTypes {
-  public static final ModuleType JAVA;
+  public static final ModuleType<JavaModuleBuilder> JAVA;
 
   static {
     try {
-      JAVA = (ModuleType)Class.forName("com.intellij.openapi.module.JavaModuleType").newInstance();
+      //noinspection unchecked
+      JAVA = (ModuleType<JavaModuleBuilder>)Class.forName("com.intellij.openapi.module.JavaModuleType").newInstance();
     }
     catch (Exception e) {
       throw new IllegalArgumentException(e);

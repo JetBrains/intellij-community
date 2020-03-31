@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.quickfixes;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.ide.DataManager;
@@ -16,15 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.getInjectedEditorForInjectedFile;
+import static com.intellij.spellchecker.statistics.SpellcheckerActionsCounter.quickFixApplied;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
-
-  public static final String FIX_NAME = SpellCheckerBundle.message("change.to");
-
   public ChangeTo(String wordWithTypo) {
     super(wordWithTypo);
   }
@@ -32,7 +28,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return FIX_NAME;
+    return getFixName();
   }
 
   @Override
@@ -53,7 +49,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
                  if (editor == null) return;
 
                  if (InjectedLanguageManager.getInstance(project).getInjectionHost(element) != null && !(editor instanceof EditorWindow)) {
-                   editor = getInjectedEditorForInjectedFile(editor, element.getContainingFile());
+                   editor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, element.getContainingFile());
                  }
 
                  final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
@@ -71,11 +67,36 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
                    .stream()
                    .map(LookupElementBuilder::create)
                    .toArray(LookupElement[]::new);
-                 LookupManager.getInstance(project).showLookup(editor, items);
+                 final LookupEx lookup = LookupManager.getInstance(project).showLookup(editor, items);
+                 if (lookup != null) {
+                   lookup.addLookupListener(StatisticsLookupListener.INSTANCE);
+                 }
                });
   }
 
   private static int getDocumentOffset(int offset, int documentLength) {
     return offset >=0 && offset <= documentLength ? offset : documentLength;
+  }
+
+  public static String getFixName() {
+    return SpellCheckerBundle.message("change.to");
+  }
+
+  private static class StatisticsLookupListener implements LookupListener {
+    private static StatisticsLookupListener INSTANCE = new StatisticsLookupListener();
+
+    @Override
+    public void lookupCanceled(@NotNull LookupEvent event) {
+      log(true);
+    }
+
+    @Override
+    public void itemSelected(@NotNull LookupEvent event) {
+      log(false);
+    }
+
+    private static void log(boolean canceled) {
+      quickFixApplied("change.to", canceled);
+    }
   }
 }

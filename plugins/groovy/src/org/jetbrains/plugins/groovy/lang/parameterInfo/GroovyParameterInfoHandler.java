@@ -10,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,11 +50,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
-  private static final Set<Class> ourStopSearch = Collections.singleton(GrMethod.class);
+  private static final Set<Class<?>> ourStopSearch = Collections.singleton(GrMethod.class);
 
   @NotNull
   @Override
-  public Set<Class> getArgListStopSearchClasses() {
+  public Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
@@ -140,7 +139,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, @NotNull GroovyResolveResult[] variants) {
+  private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, GroovyResolveResult @NotNull [] variants) {
     for (GroovyResolveResult variant : variants) {
       final PsiElement element = variant.getElement();
       if (element instanceof PsiMethod) {
@@ -185,12 +184,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void updateParameterInfo(@NotNull GroovyPsiElement place, @NotNull UpdateParameterInfoContext context) {
-    final PsiElement parameterOwner = context.getParameterOwner();
-    if (parameterOwner != place) {
-      context.removeHint();
-      return;
-    }
-
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
     final int currIndex = getCurrentParameterIndex(place, offset);
@@ -445,16 +438,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType paramType = substitutor.substitute(t);
       buffer.append(paramType.getPresentableText());
       String name = param.getName();
-      if (name != null) {
-        buffer.append(" ");
-        buffer.append(name);
-      }
+      buffer.append(" ");
+      buffer.append(name);
     }
   }
 
-  @NotNull
   @Override
-  public GroovyPsiElement[] getActualParameters(@NotNull GroovyPsiElement o) {
+  public GroovyPsiElement @NotNull [] getActualParameters(@NotNull GroovyPsiElement o) {
     if (o instanceof GrArgumentList) return ((GrArgumentList)o).getAllArguments();
     return GroovyPsiElement.EMPTY_ARRAY;
   }
@@ -471,11 +461,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return GroovyTokenTypes.mRPAREN;
   }
 
-  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
+  private static final Set<Class<?>> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
 
   @NotNull
   @Override
-  public Set<Class> getArgumentListAllowedParentClasses() {
+  public Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_PARAM_CLASSES;
   }
 

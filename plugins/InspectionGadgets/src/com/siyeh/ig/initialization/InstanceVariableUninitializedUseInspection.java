@@ -89,12 +89,6 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
   }
@@ -111,9 +105,8 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
     super.writeSettings(element);
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(field, annotationNames);
   }

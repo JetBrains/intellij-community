@@ -32,7 +32,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -44,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 public class ExceptionWorker {
@@ -58,7 +58,7 @@ public class ExceptionWorker {
   private String myMethod;
   private ParsedLine myInfo;
   private final ExceptionInfoCache myCache;
-  private PsiElementFilter myLocationRefiner;
+  private Predicate<PsiElement> myLocationRefiner;
 
   public ExceptionWorker(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
@@ -69,7 +69,7 @@ public class ExceptionWorker {
     return execute(line, textEndOffset, null);
   }
 
-  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable PsiElementFilter elementMatcher) {
+  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable Predicate<PsiElement> elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null || myProject.isDisposed()) {
@@ -145,7 +145,7 @@ public class ExceptionWorker {
     return result;
   }
 
-  public PsiElementFilter getLocationRefiner() {
+  public Predicate<PsiElement> getLocationRefiner() {
     return myLocationRefiner;
   }
 
@@ -163,6 +163,10 @@ public class ExceptionWorker {
     }
   }
 
+  @NotNull
+  Project getProject() {
+    return myProject;
+  }
   public Filter.Result getResult() {
     return myResult;
   }
@@ -337,7 +341,7 @@ public class ExceptionWorker {
     } 
   }
   
-  private static class StackFrameMatcher implements PsiElementFilter {
+  private static class StackFrameMatcher implements Predicate<PsiElement> {
     private final String myMethodName;
     private final String myClassName;
     private final boolean myHasDollarInName;
@@ -349,7 +353,7 @@ public class ExceptionWorker {
     }
 
     @Override
-    public boolean isAccepted(@NotNull PsiElement element) {
+    public boolean test(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;
       if (myMethodName.equals("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
@@ -390,10 +394,10 @@ public class ExceptionWorker {
   }
 
   private static class ExceptionColumnFinder implements ToIntFunction<PsiFile> {
-    private final PsiElementFilter myElementMatcher;
+    private final Predicate<PsiElement> myElementMatcher;
     private final int myLineNumber;
 
-    private ExceptionColumnFinder(@NotNull PsiElementFilter elementMatcher, int lineNumber) {
+    private ExceptionColumnFinder(@NotNull Predicate<PsiElement> elementMatcher, int lineNumber) {
       myElementMatcher = elementMatcher;
       myLineNumber = lineNumber;
     }
@@ -409,7 +413,7 @@ public class ExceptionWorker {
       PsiElement element = file.findElementAt(startOffset);
       List<PsiElement> candidates = new ArrayList<>();
       while (element != null && element.getTextRange().getStartOffset() < endOffset) {
-        if (myElementMatcher.isAccepted(element)) {
+        if (myElementMatcher.test(element)) {
           candidates.add(element);
           if (candidates.size() > 1) return 0;
         }
@@ -422,9 +426,9 @@ public class ExceptionWorker {
     }
   }
 
-  private static class FunctionCallMatcher implements PsiElementFilter {
+  private static class FunctionCallMatcher implements Predicate<PsiElement> {
     @Override
-    public boolean isAccepted(@NotNull PsiElement element) {
+    public boolean test(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return false;

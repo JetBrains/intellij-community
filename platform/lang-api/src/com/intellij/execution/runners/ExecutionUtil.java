@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -25,9 +25,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +38,8 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-public class ExecutionUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
+public final class ExecutionUtil {
+  private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
 
@@ -54,7 +54,7 @@ public class ExecutionUtil {
 
   public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
     handleExecutionError(environment.getProject(),
-                         ExecutionManager.getInstance(environment.getProject()).getContentManager().getToolWindowIdByEnvironment(environment),
+                         RunContentManager.getInstance(environment.getProject()).getToolWindowIdByEnvironment(environment),
                          environment.getRunProfile().getName(), e);
   }
 
@@ -106,6 +106,8 @@ public class ExecutionUtil {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(fullMessage, e);
+    } else {
+      LOG.info(fullMessage, e);
     }
 
     if (listener == null) {
@@ -166,8 +168,9 @@ public class ExecutionUtil {
   }
 
   public static void restart(@NotNull ExecutionEnvironment environment) {
-    if (!ExecutorRegistry.getInstance().isStarting(environment)) {
-      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment);
+    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    if (!executionManager.isStarting(environment)) {
+      executionManager.restartRunProfile(environment);
     }
   }
 
@@ -182,12 +185,10 @@ public class ExecutionUtil {
   /**
    * @param executionId Id that will be set for {@link ExecutionEnvironment} that is created to run configuration.
    */
-  public static void runConfiguration(
-    @NotNull RunnerAndConfigurationSettings configuration,
-    @NotNull Executor executor,
-    @NotNull ExecutionTarget target,
-    long executionId
-  ) {
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                      @NotNull Executor executor,
+                                      @NotNull ExecutionTarget target,
+                                      long executionId) {
     doRunConfiguration(configuration, executor, target, executionId, null);
   }
 
@@ -195,28 +196,29 @@ public class ExecutionUtil {
     doRunConfiguration(configuration, executor, null, executionId, null);
   }
 
-  public static void doRunConfiguration(
-    @NotNull RunnerAndConfigurationSettings configuration,
-    @NotNull Executor executor,
-    @Nullable ExecutionTarget targetOrNullForDefault,
-    @Nullable Long executionId,
-    @Nullable DataContext dataContext) {
+  public static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                        @NotNull Executor executor,
+                                        @Nullable ExecutionTarget targetOrNullForDefault,
+                                        @Nullable Long executionId,
+                                        @Nullable DataContext dataContext) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
-    if (builder != null) {
-      if (targetOrNullForDefault != null) {
-        builder.target(targetOrNullForDefault);
-      }
-      else {
-        builder.activeTarget();
-      }
-      if (executionId != null) {
-        builder.executionId(executionId);
-      }
-      if (dataContext != null) {
-        builder.dataContext(dataContext);
-      }
-      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+    if (builder == null) {
+      return;
     }
+
+    if (targetOrNullForDefault != null) {
+      builder.target(targetOrNullForDefault);
+    }
+    else {
+      builder.activeTarget();
+    }
+    if (executionId != null) {
+      builder.executionId(executionId);
+    }
+    if (dataContext != null) {
+      builder.dataContext(dataContext);
+    }
+    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
   }
 
   @Nullable
@@ -227,7 +229,7 @@ public class ExecutionUtil {
     catch (ExecutionException e) {
       RunConfiguration configuration = settings.getConfiguration();
       Project project = configuration.getProject();
-      RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
+      RunContentManager manager = RunContentManager.getInstance(project);
       String toolWindowId = manager.getContentDescriptorToolWindowId(configuration);
       if (toolWindowId == null) {
         toolWindowId = executor.getToolWindowId();
@@ -237,21 +239,24 @@ public class ExecutionUtil {
     }
   }
 
+  @NotNull
   public static Icon getLiveIndicator(@Nullable final Icon base) {
     return getLiveIndicator(base, 13, 13);
   }
 
   @SuppressWarnings("UseJBColor")
+  @NotNull
   public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
     return getIndicator(base, emptyIconWidth, emptyIconHeight, Color.GREEN);
   }
 
+  @NotNull
   public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new Icon() {
       @SuppressWarnings("UseJBColor")
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        int iSize = JBUI.scale(4);
+        int iSize = JBUIScale.scale(4);
         Graphics2D g2d = (Graphics2D)g.create();
         try {
           GraphicsUtil.setupAAPainting(g2d);

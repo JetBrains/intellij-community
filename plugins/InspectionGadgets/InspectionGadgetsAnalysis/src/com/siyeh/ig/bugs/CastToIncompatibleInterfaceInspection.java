@@ -16,9 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,12 +25,6 @@ import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CastToIncompatibleInterfaceInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("casting.to.incompatible.interface.display.name");
-  }
 
   @Override
   @NotNull
@@ -85,11 +77,8 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
         return;
       }
-      TypeConstraint constraint = CommonDataflow.getExpressionFact(operand, DfaFactType.TYPE_CONSTRAINT);
-      if (constraint != null &&
-          constraint.getInstanceofValues().stream().map(DfaPsiType::getPsiType).anyMatch(type -> castClassType.isAssignableFrom(type))) {
-        return;
-      }
+      PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand)).getPsiType(operandClass.getProject());
+      if (psiType != null && castClassType.isAssignableFrom(psiType)) return;
       registerError(castTypeElement);
     }
   }

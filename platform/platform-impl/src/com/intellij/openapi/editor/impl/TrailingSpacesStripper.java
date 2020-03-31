@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +123,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       }
     }
     else {
-      caretLines = ArrayUtil.EMPTY_INT_ARRAY;
+      caretLines = ArrayUtilRt.EMPTY_INT_ARRAY;
     }
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
@@ -131,8 +131,8 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   private static Editor getActiveEditor(@NotNull Document document) {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-    boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
-    Editor activeEditor = isDisposeInProgress ? null : CommonDataKeys.EDITOR.getData(dataContext);
+    // ignore caret placing when exiting
+    Editor activeEditor = ApplicationManager.getApplication().isDisposed() ? null : CommonDataKeys.EDITOR.getData(dataContext);
     if (activeEditor != null && activeEditor.getDocument() != document) {
       activeEditor = null;
     }
@@ -173,7 +173,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
 
     return !markAsNeedsStrippingLater;
   }
-  
+
   @Nullable
   private static Project getProject(@NotNull Document document, @Nullable Editor editor) {
     if (editor != null) return editor.getProject();

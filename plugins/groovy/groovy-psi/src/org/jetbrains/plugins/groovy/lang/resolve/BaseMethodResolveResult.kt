@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.impl.MethodCandidateImpl
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.THIS_TYPE
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RECEIVER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -31,20 +31,24 @@ open class BaseMethodResolveResult(
 
   private val myApplicability by recursionAwareLazy {
     arguments?.let { checkProviders(arguments.map(::ErasedArgument), method) }
-    ?: myCandidate.argumentMapping?.applicability(contextSubstitutor, true)
+    ?: myCandidate.argumentMapping?.applicability()
     ?: Applicability.canBeApplicable
   }
 
   protected val myCandidate: GroovyMethodCandidate by recursionAwareLazy {
-    MethodCandidateImpl(state[THIS_TYPE], method, contextSubstitutor, arguments, place)
+    MethodCandidateImpl(state[RECEIVER], method, contextSubstitutor, arguments, place)
   }
 
   final override fun getCandidate(): GroovyMethodCandidate? = myRealCandidate
 
   private val myRealCandidate by recursionAwareLazy {
+    createMethodCandidate(method, place, state)
+  }
+
+  protected open fun createMethodCandidate(method: PsiMethod, place: PsiElement, state: ResolveState): GroovyMethodCandidate {
     val mapping = myCandidate.argumentMapping
-    if (mapping != null && method is GrGdkMethod) {
-      GdkMethodCandidate(method.staticMethod, buildQualifier(place as? GrReferenceExpression, state), mapping)
+    return if (mapping != null && method is GrGdkMethod) {
+      GdkMethodCandidate(method.staticMethod, buildQualifier(place as? GrReferenceExpression, state), place, mapping)
     }
     else {
       myCandidate

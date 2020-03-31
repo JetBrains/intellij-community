@@ -6,6 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace getClass() with .class literal";
+    return JavaAnalysisBundle.message("replace.get.class.with.class.literal");
   }
 
   public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo errorResult) {

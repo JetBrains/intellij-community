@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -47,19 +48,17 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.packaging.PyPackageManagerUI;
-import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.packaging.PyRequirementsKt;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,7 +72,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JComboBox myTestRunnerComboBox;
   private JComboBox<DocStringFormat> myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
-  @NotNull private final Module myModule;
+  private PyPackageRequirementsSettings myPackagingSettings;
+  @Nullable private final Module myModule;
   @NotNull private final Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
@@ -87,37 +87,50 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myPackagingPanel;
   private JPanel myTestsPanel;
   private TextFieldWithBrowseButton myPipEnvPathField;
+  private JPanel myPipEnvPanel;
+
+
+  public PyIntegratedToolsConfigurable() {
+    this(null, DefaultProjectFactory.getInstance().getDefaultProject());
+  }
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
+    this(module, module.getProject());
+  }
+
+  private PyIntegratedToolsConfigurable(@Nullable Module module, @NotNull Project project) {
     myModule = module;
-    myProject = myModule.getProject();
+    myProject = project;
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
+    myPackagingSettings = PyPackageRequirementsSettings.getInstance(module);
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
                                                                      myDocumentationSettings.getFormat()));
     myDocstringFormatComboBox.setRenderer(SimpleListCellRenderer.create("", DocStringFormat::getName));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
+    myWorkDir.addBrowseFolderListener(PyBundle.message("configurable.choose.working.directory"), null, myProject, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
+    myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
+
     myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
 
-    myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
-    myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
-    myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder("Packaging"));
-    myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder("Testing"));
+    myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.docstrings")));
+    myRestPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.restructuredtext")));
+    myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.packaging")));
+    myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.testing")));
+    myPipEnvPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.pipenv")));
   }
 
   @NotNull
   private String getRequirementsPath() {
-    final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && !PyPackageUtil.hasRequirementsTxt(myModule)) {
+    final String path = myPackagingSettings.getRequirementsPath();
+    if (myModule != null && myPackagingSettings.isDefaultPath() && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
     }
     else {
@@ -133,7 +146,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       @NotNull
       @Override
       public ValidationResult check() {
-        final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
+        final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
 
@@ -179,7 +192,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Python Integrated Tools";
+    return PyBundle.message("configurable.PyIntegratedToolsConfigurable.display.name");
   }
 
   @Override
@@ -257,7 +270,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
-    PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
+    myPackagingSettings.setRequirementsPath(myRequirementsPathField.getText());
+
     DaemonCodeAnalyzer.getInstance(myProject).restart();
     PipenvKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
   }
@@ -272,7 +286,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
 
-    PyUtil.rehighlightOpenEditors(myProject);
+    PyUiUtil.rehighlightOpenEditors(myProject);
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -298,7 +312,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       else {
         final File executable = PipenvKt.detectPipEnvExecutable();
         if (executable != null) {
-          pipEnvText.getEmptyText().setText("Auto-detected: " + executable.getAbsolutePath());
+          pipEnvText.getEmptyText().setText(PyBundle.message("configurable.pipenv.auto.detected", executable.getAbsolutePath()));
         }
       }
     }

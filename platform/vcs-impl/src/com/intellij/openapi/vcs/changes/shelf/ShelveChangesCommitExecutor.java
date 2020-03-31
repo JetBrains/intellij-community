@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor");
+  private static final Logger LOG = Logger.getInstance(ShelveChangesCommitExecutor.class);
 
   private final Project myProject;
 
@@ -25,15 +25,16 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
-  @Override
   @NotNull
-  public CommitSession createCommitSession() {
+  @Override
+  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return new ShelveChangesCommitSession();
   }
 
@@ -47,11 +48,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
-    @Override
-    public void setContext(CommitContext context) {
-    }
-
+  private class ShelveChangesCommitSession implements CommitSession {
     @Override
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return changes.size() > 0;

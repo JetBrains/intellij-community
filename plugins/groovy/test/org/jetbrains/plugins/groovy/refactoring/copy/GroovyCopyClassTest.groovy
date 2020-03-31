@@ -1,18 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.copy
 
-
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.copy.CopyClassesHandler
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
-class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
-
+class GroovyCopyClassTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}refactoring/copy/"
@@ -37,7 +36,7 @@ class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
   void testCopyScript() throws Throwable {
     final String testName = getTestName(false)
-    def file = myFixture.copyFileToProject("${testName}.groovy", "/foo/${testName}.groovy")
+    def file = myFixture.copyFileToProject("${testName}.groovy", "foo/${testName}.groovy")
     def psiFile = myFixture.psiManager.findFile(file)
     //would be copied as file
     assertFalse(CopyClassesHandler.canCopyClass(myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))))

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.GsonBuilder
@@ -43,8 +43,10 @@ class ProductInfoGenerator {
     def json = new ProductInfoData(
       name: context.applicationInfo.productName,
       version: context.applicationInfo.fullVersion,
+      versionSuffix: context.applicationInfo.versionSuffix,
       buildNumber: context.buildNumber,
       productCode: context.applicationInfo.productCode,
+      dataDirectoryName: context.systemSelector,
       svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
       launch: launch
     )

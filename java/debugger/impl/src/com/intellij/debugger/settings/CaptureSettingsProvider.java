@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -7,16 +7,15 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author egor
- */
 public class CaptureSettingsProvider {
   private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
 
@@ -42,7 +41,7 @@ public class CaptureSettingsProvider {
   private static List<AgentPoint> getAnnotationPoints() {
     return ReadAction.compute(() -> {
       List<AgentPoint> annotationPoints = new ArrayList<>();
-      CaptureConfigurable.processCaptureAnnotations((capture, e) -> {
+      CaptureConfigurable.processCaptureAnnotations((capture, e, annotation) -> {
         PsiMethod method;
         KeyProvider keyProvider;
         if (e instanceof PsiMethod) {
@@ -72,15 +71,9 @@ public class CaptureSettingsProvider {
           LOG.error(ex);
         }
 
-        PsiModifierList modifierList = e.getModifierList();
-        if (modifierList != null) {
-          PsiAnnotation annotation = modifierList.findAnnotation(CaptureConfigurable.getAnnotationName(capture));
-          if (annotation != null) {
-            PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
-            if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
-              keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
-            }
-          }
+        PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+        if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
+          keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
         }
         AgentPoint point = capture ?
                            new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
@@ -140,7 +133,7 @@ public class CaptureSettingsProvider {
   private interface KeyProvider {
     String asString();
   }
- 
+
   private static KeyProvider param(int idx) {
     return new StringKeyProvider(Integer.toString(idx));
   }

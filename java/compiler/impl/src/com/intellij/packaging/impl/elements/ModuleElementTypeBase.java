@@ -16,12 +16,12 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -35,9 +35,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase> extends PackagingElementType<E> {
   public ModuleElementTypeBase(String id, String presentableName) {
     super(id, presentableName);
@@ -53,7 +50,7 @@ public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                        @NotNull CompositePackagingElement<?> parent) {
     List<Module> suitableModules = getSuitableModules(context);
-    List<Module> selected = context.chooseModules(suitableModules, ProjectBundle.message("dialog.title.packaging.choose.module"));
+    List<Module> selected = context.chooseModules(suitableModules, JavaCompilerBundle.message("dialog.title.packaging.choose.module"));
 
     final List<PackagingElement<?>> elements = new ArrayList<>();
     final ModulePointerManager pointerManager = ModulePointerManager.getInstance(context.getProject());

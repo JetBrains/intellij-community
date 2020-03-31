@@ -24,20 +24,32 @@ public interface ExtensionPoint extends DomElement {
   @Override
   XmlTag getXmlTag();
 
+  /**
+   * Use {@link #getEffectiveQualifiedName()} for presentation.
+   */
   @NotNull
   @Stubbed
   @NameValue
   GenericAttributeValue<String> getName();
 
+  /**
+   * Use {@link #getEffectiveQualifiedName()} for presentation.
+   */
   @Attribute("qualifiedName")
   @Stubbed
   GenericAttributeValue<String> getQualifiedName();
 
+  /**
+   * @see #getEffectiveClass()
+   */
   @NotNull
   @Stubbed
   @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getInterface();
 
+  /**
+   * @see #getEffectiveClass()
+   */
   @NotNull
   @Stubbed
   @Attribute("beanClass")
@@ -48,6 +60,10 @@ public interface ExtensionPoint extends DomElement {
   GenericAttributeValue<Area> getArea();
 
   @NotNull
+  @Attribute("dynamic")
+  GenericAttributeValue<Boolean> getDynamic();
+
+  @NotNull
   @Stubbed
   @SubTagList("with")
   List<With> getWithElements();
@@ -55,7 +71,7 @@ public interface ExtensionPoint extends DomElement {
   With addWith();
 
   /**
-   * Returns the fully qualified EP name
+   * Returns the fully qualified EP name.
    *
    * @return {@code PluginID.name} or {@code qualifiedName}.
    */
@@ -66,9 +82,33 @@ public interface ExtensionPoint extends DomElement {
    * Returns the actually defined name.
    *
    * @return {@link #getName()} if defined, {@link #getQualifiedName()} otherwise.
+   * @deprecated Use {@link #getEffectiveQualifiedName()} for presentation.
    */
+  @Deprecated
   @NotNull
   String getEffectiveName();
+
+  /**
+   * Returns the extension point class.
+   *
+   * @return {@link #getInterface()} if defined, {@link #getBeanClass()} otherwise.
+   */
+  @Nullable
+  PsiClass getEffectiveClass();
+
+  /**
+   * Returns the actual EP class to implement/override.
+   *
+   * @return Determined in the following order:
+   * <ol>
+   *   <li>{@link #getInterface()} if defined</li>
+   *   <li>first {@code <with> "implements"} class if exactly one {@code <with>} element defined</li>
+   *   <li>first {@code <with> "implements"} class where attribute name matching common naming rules ({@code "implementationClass"} etc.)</li>
+   *   <li>{@code null} if none of above rules apply</li>
+   * </ol>
+   */
+  @Nullable
+  PsiClass getExtensionPointClass();
 
   /**
    * Returns EP name prefix (Plugin ID).

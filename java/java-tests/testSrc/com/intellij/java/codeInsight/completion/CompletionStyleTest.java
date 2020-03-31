@@ -13,12 +13,12 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class CompletionStyleTest extends LightCodeInsightTestCase{
+public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/style";
 
   @Override
@@ -244,7 +244,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = space_before_method_call_parentheses;
   }
 
-  private static CommonCodeStyleSettings getCodeStyleSettings() {
+  private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
@@ -261,6 +261,18 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     performNormalCompletion();
     checkResultByFile(path + "/after32-a.java");
     styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = space_before_method_call_parentheses;
+    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = space_within_method_call_parentheses;
+  }
+
+  public void testSpaceWithinNonEmptyCallParens() {
+    final String path = BASE_PATH;
+    CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
+    final boolean space_within_method_call_parentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+
+    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    configureByFile(path + "/" + getTestName(false) + ".java");
+    performNormalCompletion();
+    checkResultByFile(path + "/" + getTestName(false) + "-out.java");
     styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = space_within_method_call_parentheses;
   }
 
@@ -304,23 +316,23 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     checkResultByFile(path + "/after38.java");
   }
 
-  private static void performSmartCompletion(){
+  private void performSmartCompletion(){
     new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void performNormalCompletion(){
+  private void performNormalCompletion(){
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void select(char completionChar, int index){
+  private void select(char completionChar, int index){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, index);
   }
 
-  private static void select(char completionChar, LookupElement item){
+  private void select(char completionChar, LookupElement item){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private static LookupElement getSelected(){
+  private LookupElement getSelected(){
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 

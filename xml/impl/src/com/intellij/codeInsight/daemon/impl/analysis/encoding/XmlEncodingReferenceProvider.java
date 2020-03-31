@@ -31,12 +31,11 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider");
+  private static final Logger LOG = Logger.getInstance(XmlEncodingReferenceProvider.class);
   @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 

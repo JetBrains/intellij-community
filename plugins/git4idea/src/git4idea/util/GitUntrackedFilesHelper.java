@@ -80,7 +80,7 @@ public class GitUntrackedFilesHelper {
                                                        @NotNull String operation,
                                                        @Nullable String description,
                                                        @Nullable NotificationListener listener,
-                                                       @NotNull NotificationAction... actions) {
+                                                       NotificationAction @NotNull ... actions) {
 
     Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description, listener);
     for (NotificationAction action : actions) {
@@ -167,14 +167,13 @@ public class GitUntrackedFilesHelper {
 
   private static class UntrackedFilesDialog extends SelectFilesDialog {
 
-    UntrackedFilesDialog(Project project, @NotNull Collection<VirtualFile> untrackedFiles, @NotNull String dialogDesc) {
+    UntrackedFilesDialog(Project project, @NotNull Collection<? extends VirtualFile> untrackedFiles, @NotNull String dialogDesc) {
       super(project, new ArrayList<>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, true);
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
 

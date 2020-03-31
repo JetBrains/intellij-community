@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,15 +14,23 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.download.FileDownloader;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -32,6 +38,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +49,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditor");
+  private static final Logger LOG = Logger.getInstance(SceneBuilderEditor.class);
 
   private final static String SCENE_CARD = "scene_builder";
   private final static String ERROR_CARD = "error";
@@ -96,6 +105,45 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     removeSceneBuilder();
 
+    if (JavaVersion.current().feature == 11 &&
+        e instanceof NoClassDefFoundError &&
+        !SceneBuilderUtil.getSceneBuilder11Path().toFile().isFile()) {
+      myErrorLabel.addHyperlinkListener(e1 -> {
+        DownloadableFileService service = DownloadableFileService.getInstance();
+        DownloadableFileDescription
+          description = service.createFileDescription("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
+                                                      "intellij-third-party-dependencies/org/jetbrains/intellij/deps/scenebuilderkit/" +
+                                                      SceneBuilderUtil.SCENE_BUILDER_VERSION + "/" + SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME,
+                                                      SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME);
+        FileDownloader downloader = service.createDownloader(Collections.singletonList(description), "Scene Builder Kit");
+        try {
+          Path tempDir = Files.createTempDirectory("" );
+
+          List<Pair<VirtualFile, DownloadableFileDescription>>
+            list = downloader.downloadWithProgress(tempDir.toString(), myProject, myErrorPanel);
+          if (list == null || list.isEmpty()) {
+            myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.download.kit.error"), "", "");
+            myErrorLabel.setIcon(Messages.getErrorIcon());
+            return;
+          }
+
+          FileUtil.copy(VfsUtilCore.virtualToIoFile(list.get(0).first), SceneBuilderUtil.getSceneBuilder11Path().toFile());
+          FileUtil.delete(tempDir.toFile());
+
+          SceneBuilderUtil.updateLoader();
+          updateState();
+        }
+        catch (IOException e2) {
+          LOG.warn("Can't download SceneBuilderKit", e2);
+         }
+      });
+      myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"),
+                                    JavaFXBundle.message("javafx.scene.builder.editor.download.scene.builder.kit"), "");
+      myErrorLabel.setIcon(Messages.getErrorIcon());
+      myLayout.show(myPanel, ERROR_CARD);
+      return;
+    }
+
     final String description;
     if (e != null) {
       final List<String> messages = new ArrayList<>();
@@ -115,7 +163,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       description = "Unknown error occurred";
     }
 
-    myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder", "", "");
+    myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"), "", "");
     myErrorLabel.setIcon(Messages.getErrorIcon());
     myErrorStack.setText(description);
     myErrorStack.setVisible(true);
@@ -151,7 +199,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
           // XXX: strange behavior with undo/redo
 
-          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null));
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
+            .executeCommand(myProject, () -> myDocument.setText(content), JavaFXBundle.message("javafx.scene.builder.editor.scene.builder.edit.operation"), null));
         }
         finally {
           myChangeListener.setRunState(true);
@@ -181,7 +230,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         return;
       }
       removeSceneBuilder();
-      mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
+      mySceneBuilder = SceneBuilderUtil.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);
@@ -261,19 +310,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 

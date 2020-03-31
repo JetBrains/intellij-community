@@ -79,13 +79,6 @@ public class StandardVariableNamesInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "standard.variable.names.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
@@ -165,7 +158,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
         final PsiParameter[] parameters =
           superMethod.getParameterList().getParameters();
         final PsiParameter overriddenParameter = parameters[index];
-        if (variableName.equals(overriddenParameter.getName())) {
+        if (overriddenParameter.getName().equals(variableName)) {
           return true;
         }
       }

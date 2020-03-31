@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -33,6 +19,7 @@ import java.util.Map;
  * @see GitBranchWorker
  */
 public interface GitBrancher {
+
   static GitBrancher getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitBrancher.class);
   }
@@ -43,11 +30,10 @@ public interface GitBrancher {
    * <p>Doesn't check the name of new branch for validity -
    *    do this before calling this method, otherwise a standard error dialog will be shown.</p>
    * <p>Equivalent to {@code git checkout <name>}</p>
-   *
-   * @param name          name of the new branch to check out.
+   *  @param name          name of the new branch to check out.
    * @param repositories  repositories to operate on.
    */
-  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories);
+  void checkoutNewBranch(@NotNull String name, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * Creates new branch without checking it out.
@@ -59,15 +45,24 @@ public interface GitBrancher {
   void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints);
 
   /**
-   * <p>Creates new tag on the selected reference.</p>
+   * Creates new branch without checking it out.
    *
-   * @param name           the name of new tag.
+   * @param name        name of the new branch.
+   * @param startPoints position (commit hash) where the branch should be created, for each repository.
+   *                    Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param force       create and overwrite existing if needed
+   */
+  void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force);
+
+  /**
+   * <p>Creates new tag on the selected reference.</p>
+   *  @param name           the name of new tag.
    * @param reference      the reference which tag will point to.
    * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
-   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+*                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void createNewTag(@NotNull String name, @NotNull String reference, @NotNull List<GitRepository> repositories,
+  void createNewTag(@NotNull String name, @NotNull String reference, @NotNull List<? extends GitRepository> repositories,
                     @Nullable Runnable callInAwtLater);
 
   /**
@@ -82,22 +77,39 @@ public interface GitBrancher {
    *                       create a local branch tracking the given remote branch, checkout hash or tag into the detached HEAD.
    * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
- *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+*                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkout(@NotNull String reference, boolean detach, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtLater);
+  void checkout(@NotNull String reference, boolean detach, @NotNull List<? extends GitRepository> repositories, @Nullable Runnable callInAwtLater);
+
+  /**
+   * Creates and checks out a new local branch starting from the given reference:
+   * {@code git checkout -b <branchname> <start-point>}. <br/>
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, boolean, List, Runnable)}.
+   *  @param newBranchName  the name of the new local branch.
+   * @param startPoint     the reference to checkout.
+   * @param repositories   repositories to operate on.
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+   */
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @NotNull List<? extends GitRepository> repositories,
+                                     @Nullable Runnable callInAwtLater);
+
 
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
    * Provides the "smart checkout" procedure the same as in {@link #checkout(String, boolean, List, Runnable)}.
    *
-   * @param newBranchName  the name of the new local branch.
-   * @param startPoint     the reference to checkout.
-   * @param repositories   repositories to operate on.
-   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
-   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+   * @param newBranchName     the name of the new local branch.
+   * @param startPoint        the reference to checkout.
+   * @param overwriteIfNeeded reset existing branch to {@code startPoint} if needed.
+   * @param repositories      repositories to operate on.
+   * @param callInAwtLater    the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                          If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @NotNull List<GitRepository> repositories,
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                     @NotNull String startPoint, boolean overwriteIfNeeded,
+                                     @NotNull List<? extends GitRepository> repositories,
                                      @Nullable Runnable callInAwtLater);
 
   /**
@@ -106,63 +118,74 @@ public interface GitBrancher {
    * <p>If the branch can't be deleted, because it is unmerged neither to the HEAD nor to its upstream,
    *    displays a dialog showing commits that are not merged and proposing to execute force deletion:</p>
    * <p>{@code git branch -D <name>}</p>
-   *
-   * @param branchName   the name of the branch to be deleted.
+   *  @param branchName   the name of the branch to be deleted.
    * @param repositories repositories to operate on.
    */
-  void deleteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories);
+  void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
+
+  void deleteBranches(@NotNull Map<String, List<? extends GitRepository>> branchesToContainingRepositories, @Nullable Runnable callInAwtAfterExecution);
 
   /**
    * <p>Deletes the remote branch:</p>
    * <p>{@code git push <remote> :<name>}</p>
-   *
-   * @param branchName   name of the remote branch to delete.
+   *  @param branchName   name of the remote branch to delete.
    * @param repositories Repositories to operate on.
    */
-  void deleteRemoteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories);
+  void deleteRemoteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
 
   /**
-   * Compares the HEAD with the specified branch - shows a dialog with the differences.
-   *
-   * @param branchName         name of the branch to compare with.
-   * @param repositories       repositories to operate on.
-   * @param selectedRepository current or selected repository.
-   *                           The list of commits is displayed for the repository selected from the combobox.
-   *                           This parameter tells which repository should be pre-selected in the combobox.
+   * Delete multiple remote branches.
+   * @see #deleteRemoteBranch
    */
-  void compare(@NotNull String branchName, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository);
+  void deleteRemoteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories);
+
+  /**
+   * Compares commits from the HEAD with the specified branch.
+   */
+  void compare(@NotNull String branchName,
+               @NotNull List<? extends GitRepository> repositories,
+               @NotNull GitRepository selectedRepository);
+
+  /**
+   * Compares the current working tree with its state in the selected branch.
+   */
+  void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>
    * <p>{@code git merge <name>}</p>
    * <p>If local changes prevent merging, proposes the "Smart merge" procedure (stash-merge-unstash).</p>
    * <p>If untracked files prevent merging, shows them in an error dialog.</p>
-   *
-   * @param branchName    the branch to be merged into HEAD.
+   *  @param branchName    the branch to be merged into HEAD.
    * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
    * @param repositories  repositories to operate on.
    */
-  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories);
+  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * Call {@code git rebase <branchName>} for each of the given repositories.
    */
-  void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName);
+  void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName);
+
+  /**
+   * Call {@code git rebase <upstream> <branchName>} for each of the given repositories
+   */
+  void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName);
 
   /**
    * Call {@code git rebase <current branch> <branchName>} for each of the given repositories.
    */
-  void rebaseOnCurrent(@NotNull List<GitRepository> repositories, @NotNull String branchName);
+  void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName);
 
   /**
    * Renames the given branch.
    */
-  void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<GitRepository> repositories);
+  void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * Deletes tag
    */
-  void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories);
+  void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * Deletes tag on all remotes

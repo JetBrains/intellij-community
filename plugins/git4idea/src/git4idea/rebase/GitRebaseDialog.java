@@ -1,15 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
@@ -33,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.branch.GitBranchUtil.sortBranchesByName;
 
 /**
@@ -126,8 +128,8 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   public GitRebaseDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
-    setTitle(GitBundle.getString("rebase.title"));
-    setOKButtonText(GitBundle.getString("rebase.button"));
+    setTitle(GitBundle.getString("rebase.dialog.title"));
+    setOKButtonText(GitBundle.getString("rebase.dialog.start.rebase"));
     init();
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
@@ -215,17 +217,17 @@ public class GitRebaseDialog extends DialogWrapper {
       return;
     }
     else if (myOntoValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.onto"), myOntoComboBox);
+      setErrorText(GitBundle.getString("rebase.dialog.error.invalid.onto"), myOntoComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.from"), myFromComboBox);
+      setErrorText(GitBundle.getString("rebase.dialog.error.invalid.from"), myFromComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
-      setErrorText(GitBundle.getString("rebase.in.progress"));
+      setErrorText(GitBundle.getString("rebase.dialog.error.rebase.in.progress"));
       setOKActionEnabled(false);
       return;
     }
@@ -313,25 +315,28 @@ public class GitRebaseDialog extends DialogWrapper {
    * Load tags and branches
    */
   protected void loadRefs() {
-    try {
-      myLocalBranches.clear();
-      myRemoteBranches.clear();
-      myTags.clear();
-      final VirtualFile root = gitRoot();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-      if (repository != null) {
-        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
-        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
-        myCurrentBranch = repository.getCurrentBranch();
-      }
-      else {
-        LOG.error("Repository is null for root " + root);
-      }
-      myTags.addAll(GitTag.list(myProject, root));
+    myLocalBranches.clear();
+    myRemoteBranches.clear();
+    myTags.clear();
+    final VirtualFile root = gitRoot();
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(root);
+    if (repository != null) {
+      myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+      myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
+      myCurrentBranch = repository.getCurrentBranch();
     }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, "git branch -a");
+    else {
+      LOG.error("Repository is null for root " + root);
     }
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        myTags.addAll(ContainerUtil.map(GitBranchUtil.getAllTags(myProject, root), GitTag::new));
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+      }
+    }, GitBundle.getString("rebase.dialog.progress.loading.tags"), true, myProject);
   }
 
   /**
@@ -343,10 +348,21 @@ public class GitRebaseDialog extends DialogWrapper {
       String currentBranch = (String)myBranchComboBox.getSelectedItem();
       GitBranch trackedBranch = null;
       if (currentBranch != null) {
-        String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
-        String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+        Pair<String, String> remoteAndMerge = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
+          String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+          return Pair.create(remote, mergeBranch);
+        }, GitBundle.getString("rebase.dialog.progress.loading.branch.info"), true, myProject);
+        String remote = remoteAndMerge.first;
+        String mergeBranch = remoteAndMerge.second;
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(root);
+        if (repository == null) {
+          LOG.error(GitBundle.message("repository.not.found.error", root.getPresentableUrl()));
+          return;
+        }
+
         if (remote == null || mergeBranch == null) {
-          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
+          trackedBranch = repository.getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
@@ -354,7 +370,7 @@ public class GitRebaseDialog extends DialogWrapper {
             trackedBranch = new GitSvnRemoteBranch(mergeBranch);
           }
           else {
-            GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
+            GitRemote r = GitUtil.findRemoteByName(repository,remote);
             if (r != null) {
               trackedBranch = new GitStandardRemoteBranch(r, mergeBranch);
             }
@@ -382,11 +398,6 @@ public class GitRebaseDialog extends DialogWrapper {
   }
 
   @NotNull
-  public GitRepository getSelectedRepository() {
-    return assertNotNull(myRepositoryManager.getRepositoryForRoot(gitRoot()));
-  }
-
-  @NotNull
   public GitRebaseParams getSelectedParams() {
     String selectedBranch = (String)myBranchComboBox.getSelectedItem();
     String branch = myCurrentBranch != null && !myCurrentBranch.getName().equals(selectedBranch) ? selectedBranch : null;
@@ -404,7 +415,8 @@ public class GitRebaseDialog extends DialogWrapper {
       newBase = onto;
     }
 
-    return new GitRebaseParams(branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
+    return new GitRebaseParams(GitVcs.getInstance(myProject).getVersion(),
+                               branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
   }
 
   /**

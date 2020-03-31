@@ -1,1 +1,1 @@
-Object.<ref>sleep(0, {})
+Object.<caret>sleep(0, {})

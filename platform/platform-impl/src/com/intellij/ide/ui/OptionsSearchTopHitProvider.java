@@ -14,6 +14,8 @@ public interface OptionsSearchTopHitProvider {
   @NotNull
   String getId();
 
+  default boolean preloadNeeded() { return true; }
+
   /**
    * Extension point name: com.intellij.search.topHitProvider
    */

@@ -38,8 +38,7 @@ public class PluginPathManager {
       return result;
     }
 
-    @NotNull
-    private static File[] getSortedSubreposRoots(@NotNull File dir) {
+    private static File @NotNull [] getSortedSubreposRoots(@NotNull File dir) {
       File[] gitRoots = dir.listFiles(child -> child.isDirectory() && ROOT_NAMES.contains(child.getName()));
       if (gitRoots == null) {
         return new File[0];

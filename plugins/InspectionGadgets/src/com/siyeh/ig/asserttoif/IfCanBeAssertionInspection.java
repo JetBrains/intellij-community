@@ -39,13 +39,6 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   private static final String GUAVA_PRECONDITIONS = "com.google.common.base.Preconditions";
   private static final String GUAVA_CHECK_NON_NULL = "checkNotNull";
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("if.can.be.assertion.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -57,9 +50,8 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     return new IfToAssertionVisitor();
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     boolean isObjectsRequireNonNullAvailable = (boolean)infos[0];
     boolean isIfStatement = (boolean)infos[1];
     List<InspectionGadgetsFix> fixes = new ArrayList<>(2);

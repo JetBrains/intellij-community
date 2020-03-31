@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
+import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +29,11 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_ALERT = "alerting";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
-  Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");
+  Key<TabDescriptor> TAB_DESCRIPTOR_KEY = Key.create("tabDescriptor");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
+  Key<DnDTarget> TAB_DND_TARGET_KEY = Key.create("tabDndTarget");
 
   void setComponent(JComponent component);
 
@@ -42,27 +44,36 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setIcon(Icon icon);
   Icon getIcon();
 
-  void setDisplayName(String displayName);
+  void setDisplayName(@Nls(capitalization = Nls.Capitalization.Title) String displayName);
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
-  void setTabName(String tabName);
+  void setTabName(@Nls(capitalization = Nls.Capitalization.Title)String tabName);
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getTabName();
 
-  void setToolwindowTitle(String toolwindowTitle);
   String getToolwindowTitle();
 
-  Disposable getDisposer();
+  void setToolwindowTitle(String toolwindowTitle);
+
+  @Nullable Disposable getDisposer();
+
   void setDisposer(@NotNull Disposable disposer);
 
   void setShouldDisposeContent(boolean value);
-  boolean shouldDisposeContent();
 
+  @NlsUI.Tooltip
   String getDescription();
-  void setDescription(String description);
+
+  void setDescription(@NlsUI.Tooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
+
   void removePropertyChangeListener(PropertyChangeListener l);
 
+  @Nullable
   ContentManager getManager();
 
   boolean isSelected();

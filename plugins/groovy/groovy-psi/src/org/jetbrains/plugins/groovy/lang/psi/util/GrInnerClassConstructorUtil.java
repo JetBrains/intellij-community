@@ -14,11 +14,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
  */
 public class GrInnerClassConstructorUtil {
 
-  @NotNull
-  public static GrParameter[] addEnclosingInstanceParam(@NotNull GrMethod method,
-                                                        @NotNull PsiClass enclosingClass,
-                                                        @NotNull GrParameter[] originalParams,
-                                                        boolean isOptional) {
+  public static GrParameter @NotNull [] addEnclosingInstanceParam(@NotNull GrMethod method,
+                                                                  @NotNull PsiClass enclosingClass,
+                                                                  GrParameter @NotNull [] originalParams,
+                                                                  boolean isOptional) {
     final GrParameter[] parameters = new GrParameter[originalParams.length + 1];
     final PsiClassType enclosingClassType = JavaPsiFacade.getElementFactory(method.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
     final GrLightParameter enclosing = new GrLightParameter("enclosing", enclosingClassType, method);
@@ -46,8 +45,7 @@ public class GrInnerClassConstructorUtil {
     return false;
   }
 
-  @NotNull
-  public static PsiType[] addEnclosingArgIfNeeded(@NotNull PsiType[] types, @NotNull PsiElement place, @NotNull PsiClass aClass) {
+  public static PsiType @NotNull [] addEnclosingArgIfNeeded(PsiType @NotNull [] types, @NotNull PsiElement place, @NotNull PsiClass aClass) {
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass containingClass = aClass.getContainingClass();
       if (containingClass != null) {

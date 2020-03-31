@@ -1,18 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings({"UnusedDeclaration"})
-public class MainImpl {
-  private MainImpl() { }
+public final class MainImpl implements StartupUtil.AppStarter {
+  public MainImpl() {
+    PlatformUtils.setDefaultPrefixForCE();
+  }
 
-  /**
-   * Called from PluginManager via reflection.
-   */
-  protected static void start(final String[] args) throws Exception {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
+  @Override
+  public void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask) {
+    ApplicationLoader.initApplication(args, initUiTask);
+  }
 
-    StartupUtil.prepareAndStart(args, () -> IdeaApplication.initApplication(args));
+  @Override
+  public void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {
+    IdeStarter.setWizardStepsProvider(provider);
   }
 }

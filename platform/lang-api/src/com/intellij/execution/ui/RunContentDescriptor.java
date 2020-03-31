@@ -39,8 +39,7 @@ public class RunContentDescriptor implements Disposable {
 
   private Content myContent;
   private String myContentToolWindowId;
-  @NotNull
-  private final AnAction[] myRestartActions;
+  private final AnAction @NotNull [] myRestartActions;
 
   @Nullable
   private final Runnable myActivationCallback;
@@ -60,7 +59,7 @@ public class RunContentDescriptor implements Disposable {
                               String displayName,
                               @Nullable Icon icon,
                               @Nullable Runnable activationCallback,
-                              @Nullable AnAction[] restartActions) {
+                              AnAction @Nullable [] restartActions) {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
@@ -108,8 +107,7 @@ public class RunContentDescriptor implements Disposable {
   /**
    * @return actions to restart or rerun
    */
-  @NotNull
-  public AnAction[] getRestartActions() {
+  public AnAction @NotNull [] getRestartActions() {
     return myRestartActions.length == 0 ? AnAction.EMPTY_ARRAY : myRestartActions.clone();
   }
 
@@ -264,12 +262,10 @@ public class RunContentDescriptor implements Disposable {
   }
 
   @NotNull
-  @ApiStatus.Experimental
   public RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;
   }
 
-  @ApiStatus.Experimental
   public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
     myReusePolicy = reusePolicy;
   }

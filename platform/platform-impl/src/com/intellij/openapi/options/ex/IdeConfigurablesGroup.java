@@ -4,11 +4,13 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated ShowSettingsUtilImpl#getConfigurableGroups(null, true)
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   public IdeConfigurablesGroup() {
     super(Configurable.APPLICATION_CONFIGURABLE);

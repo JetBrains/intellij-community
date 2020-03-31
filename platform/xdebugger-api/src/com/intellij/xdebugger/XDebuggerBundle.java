@@ -16,35 +16,26 @@
 
 package com.intellij.xdebugger;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-/**
- * @author nik
- */
-public class XDebuggerBundle {
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+public class XDebuggerBundle extends DynamicBundle {
+  @NonNls public static final String BUNDLE = "messages.XDebuggerBundle";
+  private static final XDebuggerBundle INSTANCE = new XDebuggerBundle();
+
+  private XDebuggerBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "messages.XDebuggerBundle";
-  private static Reference<ResourceBundle> ourBundle;
-
-  private XDebuggerBundle() {
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

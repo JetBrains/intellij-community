@@ -16,13 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EmptySynchronizedStatementInspectionTest extends LightInspectionTestCase {
+public class EmptySynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("/*Empty 'synchronized' statement*/synchronized/**/ (new Object()) {" +

@@ -6,11 +6,17 @@
   <p>Supports configuring the IDE using text files (YAML, JSON). Experimental.</p>
   ]]>
   </description>
+  <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
+                    serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
+                    preload="notHeadless" overrides="true"/>
+
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>

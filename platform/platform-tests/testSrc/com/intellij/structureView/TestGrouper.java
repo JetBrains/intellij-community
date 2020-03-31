@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structureView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -46,7 +32,7 @@ public class TestGrouper implements Grouper {
     throw new RuntimeException();
   }
 
-  private class StringGroup implements Group {
+  private static class StringGroup implements Group {
     private final String myString;
     private final Collection<TreeElement> myChildren;
     private final Collection<String> myChildrenUsedStrings;
@@ -62,7 +48,7 @@ public class TestGrouper implements Grouper {
     public Collection<TreeElement> getChildren() {
       Collection<TreeElement> result = new LinkedHashSet<>();
       for (TreeElement object : myChildren) {
-        if (object.toString().indexOf(myString) >= 0) {
+        if (object.toString().contains(myString)) {
           result.add(object);
         }
       }
@@ -72,7 +58,7 @@ public class TestGrouper implements Grouper {
     @NotNull
     @Override
     public ItemPresentation getPresentation() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     public String toString() {
@@ -97,7 +83,7 @@ public class TestGrouper implements Grouper {
 
   @Override
   @NotNull
-  public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
+  public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     List<Group> result = new ArrayList<>();
     Collection<String> parentGroupUsedStrings = parent.getValue() instanceof StringGroup ?
                                                 ((StringGroup)parent.getValue()).myChildrenUsedStrings :

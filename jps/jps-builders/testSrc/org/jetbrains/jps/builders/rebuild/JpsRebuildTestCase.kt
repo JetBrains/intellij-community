@@ -25,9 +25,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.*
 
-/**
- * @author nik
- */
 abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   protected val myOutputDirectory: File by lazy {
     FileUtil.createTempDirectory("jps-build-output", "")

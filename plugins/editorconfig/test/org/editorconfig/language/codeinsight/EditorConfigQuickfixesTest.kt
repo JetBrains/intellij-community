@@ -4,13 +4,13 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.codeinsight.inspections.*
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.jetbrains.annotations.PropertyKey
 import kotlin.reflect.KClass
 
-class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigQuickfixesTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/quickfixes/"
 

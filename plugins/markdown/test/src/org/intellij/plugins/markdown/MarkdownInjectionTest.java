@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown;
 
-import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.injection.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
@@ -13,16 +12,15 @@ import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class MarkdownInjectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownInjectionTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assert JavascriptLanguage.INSTANCE != null;
   }
 
   public void testFenceWithLang() {
-    doTest("```java\n" +
+    doTest("```text\n" +
            "{\"foo\":\n" +
            "  <caret>\n" +
            "  bar\n" +
@@ -38,7 +36,7 @@ public class MarkdownInjectionTest extends LightPlatformCodeInsightFixtureTestCa
                            "}\n" +
                            "\n" +
                            "}";
-    final String text = "```java\n" +
+    final String text = "```text\n" +
                         content + "\n" +
                         "```";
     doTest(text, true);
@@ -56,7 +54,7 @@ public class MarkdownInjectionTest extends LightPlatformCodeInsightFixtureTestCa
                            "\n" +
                            "\n" +
                            "}";
-    final String text = "> ```java\n" +
+    final String text = "> ```text\n" +
                         Arrays.stream(content.split("\\n")).map(s -> "> " + s).collect(Collectors.joining("\n")) + "\n" +
                         "> ```";
 
@@ -70,7 +68,7 @@ public class MarkdownInjectionTest extends LightPlatformCodeInsightFixtureTestCa
     boolean oldValue = markdownSettings.isDisableInjections();
     try {
       markdownSettings.setDisableInjections(true);
-      doTest("```java\n" +
+      doTest("```text\n" +
              "{\"foo\":\n" +
              "  <caret>\n" +
              "  bar\n" +
@@ -82,8 +80,8 @@ public class MarkdownInjectionTest extends LightPlatformCodeInsightFixtureTestCa
     }
   }
 
-  public void testFenceWithJs() {
-    assertNotNull(LanguageGuesser.INSTANCE.guessLanguage("js"));
+  public void testFenceWithHtml() {
+    assertNotNull(LanguageGuesser.INSTANCE.guessLanguage("text"));
   }
 
   private void doTest(String text, boolean shouldHaveInjection) {

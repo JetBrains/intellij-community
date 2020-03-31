@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.NameSuggestionsField;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,6 @@ import java.awt.*;
 import java.util.LinkedHashSet;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
-
   private final Project myProject;
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
@@ -55,7 +53,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     super.init();
 
     setModal(true);
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     myCbReplaceAllOccurrences.setFocusable(false);
     myCbIsFinal.setFocusable(false);
@@ -149,7 +147,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   private NameSuggestionsField setUpNameComboBox() {
     LinkedHashSet<String> names = suggestNames();
-    return new NameSuggestionsField(ArrayUtil.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    return new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   @Override
@@ -219,5 +217,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     public PsiType getSelectedType() {
       return mySelectedType;
     }
+  }
+
+  private static String getRefactoringName() {
+    return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

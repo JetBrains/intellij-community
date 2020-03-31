@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.javaee;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 public class UriUtil {
   private UriUtil() {}
 
-  /** @see #findRelative(String, com.intellij.psi.PsiFileSystemItem) */
+  /**
+   * @deprecated use {@link #findRelative(String, PsiFileSystemItem)}
+   */
   @Deprecated
   @Nullable
   public static VirtualFile findRelativeFile(String uri, VirtualFile base) {
@@ -39,7 +37,8 @@ public class UriUtil {
   @Nullable
   public static VirtualFile findRelative(String uri, @NotNull PsiFileSystemItem base) {
     String location = ExternalResourceManager.getInstance().getResourceLocation(uri, base.getProject());
-    return VfsUtilCore.findRelativeFile(location, base.getVirtualFile());
+    VirtualFile file = base.getVirtualFile();
+    return VfsUtilCore.findRelativeFile(location, file != null && file.isValid() ? file : null);
   }
 
   // cannot use UriUtil.SLASH_MATCHER.trimFrom - we don't depend on guava

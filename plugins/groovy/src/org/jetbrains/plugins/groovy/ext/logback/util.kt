@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.logback
 
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiter
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 
-internal const val configName = "logback.groovy"
 internal const val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
 internal const val componentDelegateFqn = "ch.qos.logback.classic.gaffer.ComponentDelegate"
 internal val appenderMethodPattern = psiMethod(configDelegateFqn, "appender")
@@ -21,7 +21,10 @@ internal val appenderDeclarationPattern = groovyLiteralExpression().methodCallPa
 
 internal fun PsiClass?.isLogbackConfig() = this is GroovyScriptClass && this.containingFile.isLogbackConfig()
 
-internal fun PsiFile?.isLogbackConfig() = this?.originalFile?.virtualFile?.name == configName
+internal fun PsiFile?.isLogbackConfig(): Boolean {
+  val virtualFile = this?.originalFile?.virtualFile ?: return false
+  return FileTypeRegistry.getInstance().isFileOfType(virtualFile, LogbackFileType)
+}
 
 internal fun PsiElement.isBefore(other: PsiElement) = textRange.startOffset < other.textRange.startOffset
 
@@ -32,7 +35,7 @@ internal val PsiFile.appenderDeclarations: Map<String, GrLiteral> get() = Cached
 private fun PsiFile.computeAppenderDeclarations(): Map<String, GrLiteral> {
   val result = mutableMapOf<String, GrLiteral>()
   val visitor = object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(currentElement: PsiElement?) {
+    override fun visitElement(currentElement: PsiElement) {
       super.visitElement(currentElement)
       if (appenderDeclarationPattern.accepts(currentElement)) {
         val literal = currentElement as GrLiteral

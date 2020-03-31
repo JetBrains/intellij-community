@@ -7,10 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 import javax.swing.*;
@@ -21,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedReturnValue")
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class Field {
 
   public enum Relation {
@@ -36,14 +33,13 @@ public class Field {
   private boolean myEditable = true;
   private boolean myDeprecated = false;
   private boolean myAnyNameAllowed;
-  private boolean myAnyValueAllowed;
   private boolean myEmptyValueAllowed;
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
 
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
-  public Field(@NotNull String name, @NotNull YamlMetaType mainType) {
+  public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
     myName = name;
     myMainType = mainType;
   }
@@ -142,7 +138,7 @@ public class Field {
   }
 
   /**
-   * Returns the default relation between the field and its value. For mots normal fields it can be computed based on type and multiplicity
+   * Returns the default relation between the field and its value. For most normal fields it can be computed based on type and multiplicity
    * but for polymorphic fields the main relation should be assigned explicitly.
    */
   @NotNull
@@ -173,21 +169,6 @@ public class Field {
     return this;
   }
 
-  @NotNull
-  public Field withAnyValue() {
-    return withAnyValue(true);
-  }
-
-  @NotNull
-  public Field withAnyValue(boolean allowOtherValues) {
-    myAnyValueAllowed = allowOtherValues;
-    return this;
-  }
-
-  public final boolean isAnyValueAllowed() {
-    return myAnyValueAllowed;
-  }
-
   public final boolean isAnyNameAllowed() {
     return myAnyNameAllowed;
   }
@@ -216,16 +197,17 @@ public class Field {
   }
 
   @NotNull
-  public List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaClass ownerClass,
+  public List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaType ownerClass,
                                                   @NotNull PsiElement insertedScalar) {
     if (isAnyNameAllowed()) {
       return Collections.emptyList();
     }
 
-    LookupElementBuilder lookup = LookupElementBuilder.create(new TypeFieldPair(ownerClass, this), getName())
-                                                      .withTypeText(myMainType.getDisplayName(), true)
-                                                      .withIcon(getLookupIcon())
-                                                      .withStrikeoutness(isDeprecated());
+    LookupElementBuilder lookup = LookupElementBuilder
+      .create(new TypeFieldPair(ownerClass, this), getName())
+      .withTypeText(myMainType.getDisplayName(), true)
+      .withIcon(getLookupIcon())
+      .withStrikeoutness(isDeprecated());
 
     if (isRequired()) {
       lookup = lookup.bold();

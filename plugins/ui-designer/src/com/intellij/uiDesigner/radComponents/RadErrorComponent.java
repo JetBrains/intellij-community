@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlWriter;
 import org.jdom.Element;
@@ -16,7 +15,6 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class RadErrorComponent extends RadAtomicComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadErrorComponent");
 
   private final String myComponentClassName;
   private final Element myProperties;

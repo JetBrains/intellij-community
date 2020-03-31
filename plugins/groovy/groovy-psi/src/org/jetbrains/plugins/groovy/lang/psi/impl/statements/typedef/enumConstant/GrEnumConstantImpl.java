@@ -21,14 +21,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MODIFIER_LIST;
 
 public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
-  private final GroovyCallReference myReference = new GrEnumConstructorReference(this);
+  private final GroovyConstructorReference myReference = new GrEnumConstructorReference(this);
 
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
@@ -126,23 +126,20 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return list.addNamedArgument(namedArgument);
   }
 
-  @NotNull
   @Override
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
   }
 
-  @NotNull
   @Override
-  public GrExpression[] getExpressionArguments() {
+  public GrExpression @NotNull [] getExpressionArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 
@@ -186,9 +183,8 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return resolveMethod();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return myReference.multiResolve(incompleteCode);
   }
 
@@ -208,7 +204,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @NotNull
   @Override
-  public GroovyCallReference getConstructorReference() {
+  public GroovyConstructorReference getConstructorReference() {
     return myReference;
   }
 }

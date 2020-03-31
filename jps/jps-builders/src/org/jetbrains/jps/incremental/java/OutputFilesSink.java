@@ -29,7 +29,7 @@ import java.util.Set;
 * @author Eugene Zhuravlev
 */
 class OutputFilesSink implements OutputFileConsumer {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");
+  private static final Logger LOG = Logger.getInstance(OutputFilesSink.class);
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;

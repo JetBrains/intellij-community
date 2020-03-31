@@ -25,7 +25,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiExpressionListImpl.class);
   private volatile PsiExpression[] myExpressions;
 
   public PsiExpressionListImpl() {
@@ -33,8 +33,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   @Override
-  @NotNull
-  public PsiExpression[] getExpressions() {
+  public PsiExpression @NotNull [] getExpressions() {
     PsiExpression[] expressions = myExpressions;
     if (expressions == null) {
       expressions = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
@@ -65,8 +64,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   @Override
-  @NotNull
-  public PsiType[] getExpressionTypes() {
+  public PsiType @NotNull [] getExpressionTypes() {
     PsiExpression[] expressions = getExpressions();
     PsiType[] types = PsiType.createArray(expressions.length);
 

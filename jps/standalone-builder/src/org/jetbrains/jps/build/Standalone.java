@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.build;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ParameterizedRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import org.jetbrains.jps.api.BuildType;
@@ -36,13 +23,14 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-/**
- * @author nik
- */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Standalone {
   @Argument(value = "config", prefix = "--", description = "Path to directory containing global options (idea.config.path)")
@@ -55,13 +43,13 @@ public class Standalone {
   public String cacheDirPath;
 
   @Argument(value = "modules", prefix = "--", delimiter = ",", description = "Comma-separated list of modules to compile")
-  public String[] modules = ArrayUtil.EMPTY_STRING_ARRAY;
+  public String[] modules = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Argument(value = "all-modules", prefix = "--", description = "Compile all modules")
   public boolean allModules;
 
   @Argument(value = "artifacts", prefix = "--", delimiter = ",", description = "Comma-separated list of artifacts to build")
-  public String[] artifacts = ArrayUtil.EMPTY_STRING_ARRAY;
+  public String[] artifacts = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Argument(value = "all-artifacts", prefix = "--", description = "Build all artifacts")
   public boolean allArtifacts;
@@ -131,7 +119,7 @@ public class Standalone {
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
-    Set<String> modulesSet = new HashSet<>(Arrays.asList(modules));
+    Set<String> modulesSet = ContainerUtil.set(modules);
     List<String> artifactsList = Arrays.asList(artifacts);
     File dataStorageRoot;
     if (cacheDirPath != null) {
@@ -146,7 +134,7 @@ public class Standalone {
     }
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     try {
       runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
                consoleMessageHandler);
@@ -155,7 +143,7 @@ public class Standalone {
       System.err.println("Internal error: " + t.getMessage());
       t.printStackTrace();
     }
-    System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
+    System.out.println("Build finished in " + Utils.formatDuration(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
     return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 

@@ -5,13 +5,15 @@ import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class ErrorTreeElement {
   public static final ErrorTreeElement[] EMPTY_ARRAY = new ErrorTreeElement[0];
 
-  private final ErrorTreeElementKind myKind;
+  private ErrorTreeElementKind myKind;
 
   protected ErrorTreeElement() {
     this(ErrorTreeElementKind.GENERIC);
@@ -24,6 +26,10 @@ public abstract class ErrorTreeElement {
   @NotNull
   public ErrorTreeElementKind getKind() {
     return myKind;
+  }
+
+  public void setKind(@NotNull ErrorTreeElementKind kind) {
+    myKind = kind;
   }
 
   public abstract String[] getText();
@@ -46,5 +52,15 @@ public abstract class ErrorTreeElement {
   @Nullable
   public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
     return null;
+  }
+  
+  @Nullable
+  public Icon getIcon() {
+    return getKind().getIcon();
+  }
+  
+  @NotNull
+  public String getPresentableText() {
+    return getKind().getPresentableText();
   }
 }

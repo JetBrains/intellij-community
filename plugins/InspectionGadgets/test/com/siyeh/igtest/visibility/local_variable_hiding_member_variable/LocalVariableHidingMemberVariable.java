@@ -105,3 +105,16 @@ class Outer {
         }.run();
     }
 }
+class IdeaBloopers13
+{
+    public static final IdeaBloopers13 staticField2 = new IdeaBloopers13()
+    {
+        public void x()
+        {
+            //IdeaBloopers13.this.stringValue = null;  <-- Java error: non-static variable this cannot be referenced from a static context
+            String stringValue = ""; //IntellijIdea inspection: Local variable 'stringValue' hides field in class 'IdeaBloopers13'.
+        }
+    };
+
+    private String stringValue;
+}

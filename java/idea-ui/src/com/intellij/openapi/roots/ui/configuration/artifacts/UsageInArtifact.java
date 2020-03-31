@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class UsageInArtifact extends ProjectStructureElementUsage {
   private final Artifact myOriginalArtifact;
   private final ArtifactsStructureConfigurableContext myContext;

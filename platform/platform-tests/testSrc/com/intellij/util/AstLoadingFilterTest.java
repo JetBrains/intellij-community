@@ -5,9 +5,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AstLoadingFilterTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -35,17 +35,17 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  private static class AssertionCase extends AbstractExceptionCase<AssertionError> {
+  private static class AstLoadingExceptionCase extends AbstractExceptionCase<AstLoadingException> {
 
     private final Runnable myRunnable;
 
-    private AssertionCase(Runnable runnable) {
+    private AstLoadingExceptionCase(Runnable runnable) {
       myRunnable = runnable;
     }
 
     @Override
-    public Class<AssertionError> getExpectedExceptionClass() {
-      return AssertionError.class;
+    public Class<AstLoadingException> getExpectedExceptionClass() {
+      return AstLoadingException.class;
     }
 
     @Override
@@ -57,19 +57,19 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
   public void testDisallowedLoading() {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertException(new AssertionCase(
+    assertException(new AstLoadingExceptionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> file.getNode()
       )
     ));
   }
 
-  public void testForceAllowLoading() {
+  public void testForceAllowLoading() throws AstLoadingException {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     PsiFileImpl anotherFile = addAnotherFile();
     assertFalse(anotherFile.isContentsLoaded());
-    assertNoException(new AssertionCase(
+    assertNoException(new AstLoadingExceptionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file
@@ -77,7 +77,7 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
         )
       )
     ));
-    assertException(new AssertionCase(
+    assertException(new AstLoadingExceptionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file

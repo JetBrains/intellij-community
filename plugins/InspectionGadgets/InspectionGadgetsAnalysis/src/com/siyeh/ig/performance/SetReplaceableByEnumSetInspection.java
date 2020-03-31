@@ -38,12 +38,6 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("set.replaceable.by.enum.set.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("set.replaceable.by.enum.set.problem.descriptor");
   }
@@ -74,7 +68,7 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
     @Override
     protected List<String> getUnreplaceableCollectionNames() {
       return Arrays.asList("java.util.concurrent.CopyOnWriteArraySet", "java.util.concurrent.ConcurrentSkipListSet",
-                           "java.util.LinkedHashSet");
+                           CommonClassNames.JAVA_UTIL_LINKED_HASH_SET);
     }
 
     @NotNull

@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,13 +51,13 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.compose.function.text");
+    return JavaBundle.message("intention.compose.function.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.compose.function.family");
+    return JavaBundle.message("intention.compose.function.family");
   }
 
   @Override

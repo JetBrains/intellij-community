@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
@@ -12,7 +13,7 @@ import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -78,7 +79,7 @@ public class PyPackagingTest extends PyEnvTestCase {
                                                                                         false);
           final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
-          assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
+          assertTrue(PythonSdkUtil.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
           final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).refreshAndGetPackages(false);
           final PyPackage setuptools = findPackage("setuptools", packages);

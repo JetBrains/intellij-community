@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -30,12 +17,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * @author Denis Fokin
  */
 public class MacDockDelegate implements SystemDock.Delegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacDockDelegate");
+  private static final Logger LOG = Logger.getInstance(MacDockDelegate.class);
 
   private static boolean initialized = false;
   private static final SystemDock.Delegate instance = new MacDockDelegate();
@@ -60,7 +48,7 @@ public class MacDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu () {
     RecentProjectsManager projectsManager = RecentProjectsManager.getInstance();
     if (projectsManager == null) return;
-    final AnAction[] recentProjectActions = projectsManager.getRecentProjectsActions(false);
+    List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
     recentProjectsMenu.removeAll();
 
     for (final AnAction action : recentProjectActions) {

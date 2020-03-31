@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Disposable;
@@ -22,10 +22,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -38,11 +38,15 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.jar.JarFile;
 
-public class PersistentFsTest extends PlatformTestCase {
+import static org.junit.Assert.assertArrayEquals;
+
+public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
 
@@ -75,6 +79,41 @@ public class PersistentFsTest extends PlatformTestCase {
     assertNull(myFs.findFileById(id));
   }
 
+  public void testFileContentHash() throws Exception {
+    File dir = createTempDirectory();
+    File file = new File(dir, "test.txt");
+    assertTrue(file.createNewFile());
+    FileUtil.writeToFile(file, "one");
+
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    // content is not yet loaded
+    byte[] hash = fs.getContentHashIfStored(vFile);
+    assertNull(hash);
+
+    vFile.contentsToByteArray();
+    hash = fs.getContentHashIfStored(vFile);
+    assertNotNull(hash);
+
+    // different contents should have different hashes
+    setFileText(vFile, "two");
+    byte[] newHash = fs.getContentHashIfStored(vFile);
+    assertNotNull(newHash);
+    assertFalse(Arrays.equals(hash, newHash));
+
+    // equal contents should have the equal hashes
+    setFileText(vFile, "one");
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+
+    // deleted files preserve content, and thus hash
+    delete(vFile);
+    assertNotNull(fs.contentsToByteArray(vFile));
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+  }
+
   public void testFindRootShouldNotBeFooledByRelativePath() throws Exception {
     File tmp = createTempDirectory();
     File x = new File(tmp, "x.jar");
@@ -101,7 +140,7 @@ public class PersistentFsTest extends PlatformTestCase {
 
     JarFileSystem jfs = JarFileSystem.getInstance();
     String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
-    NewVirtualFile root = ObjectUtils.notNull(myFs.findRoot(path, jfs));
+    NewVirtualFile root = Objects.requireNonNull(myFs.findRoot(path, jfs));
     assertFalse(root.getPath(), root.getPath().contains("../"));
     assertFalse(root.getPath(), root.getPath().contains("/.."));
   }
@@ -372,6 +411,41 @@ public class PersistentFsTest extends PlatformTestCase {
                 new VFileDeleteEvent(this, vFile, false));
   }
 
+  public void testProcessEventsMustBeAwareOfDeleteEventsDominations() throws IOException {
+    File temp = createTempDirectory();
+
+    File d = new File(temp, "d");
+    assertTrue(d.mkdir());
+    File x = new File(d, "x.txt");
+    assertTrue(x.createNewFile());
+    VirtualFile vXTxt = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(x);
+
+    checkEvents("Before:[VFileDeleteEvent->d]\n" +
+                "After:[VFileDeleteEvent->d]\n",
+
+                new VFileDeleteEvent(this, vXTxt.getParent(), false),
+                new VFileDeleteEvent(this, vXTxt, false),
+                new VFileDeleteEvent(this, vXTxt, false)
+                );
+  }
+
+  public void testProcessCreateEventsMustFilterOutDuplicates() throws IOException {
+    File temp = createTempDirectory();
+
+    File d = new File(temp, "d");
+    assertTrue(d.mkdir());
+    File x = new File(d, "x.txt");
+    assertTrue(x.createNewFile());
+    VirtualFile vXTxt = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(x);
+
+    checkEvents("Before:[VFileCreateEvent->xx.created]\n" +
+                "After:[VFileCreateEvent->xx.created]\n",
+
+                new VFileCreateEvent(this, vXTxt.getParent(), "xx.created", false, null, null, false, null),
+                new VFileCreateEvent(this, vXTxt.getParent(), "xx.created", false, null, null, false, null)
+                );
+  }
+
   public void testProcessEventsMustGroupDependentEventsCorrectly2() throws IOException {
     File file = new File(createTempDirectory(), "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
@@ -412,10 +486,10 @@ public class PersistentFsTest extends PlatformTestCase {
     File file = new File(temp, "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
     assertTrue(file.createNewFile());
-    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+    VirtualFile testTxt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file));
     File file2 = new File(temp, "a/b/c/test2.txt");
     assertTrue(file2.createNewFile());
-    VirtualFile test2Txt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file2));
+    VirtualFile test2Txt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file2));
 
     checkEvents("Before:[VFileDeleteEvent->test.txt]\n" +
                 "After:[VFileDeleteEvent->test.txt]\n" +
@@ -427,16 +501,31 @@ public class PersistentFsTest extends PlatformTestCase {
                 new VFileDeleteEvent(this, test2Txt, false));
   }
 
+  public void testProcessContentChangedLikeReconcilableEventsMustResultInSingleBatch() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file));
+
+    checkEvents("Before:[VFileContentChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt]\n" +
+                "After:[VFileContentChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt]\n",
+
+                new VFileContentChangeEvent(this, testTxt, 0, 1, false),
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_WRITABLE, false, true, false),
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_ENCODING, StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8, false));
+  }
+
   public void testProcessCompositeMoveEvents() throws IOException {
     File temp = createTempDirectory();
     File file = new File(temp, "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
     assertTrue(file.createNewFile());
-    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+    VirtualFile testTxt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file));
 
     File newParentF = new File(temp, "a/b/d");
     assertTrue(newParentF.mkdirs());
-    VirtualFile newParent = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
+    VirtualFile newParent = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
 
     checkEvents("Before:[VFileMoveEvent->test.txt]\n" +
                 "After:[VFileMoveEvent->test.txt]\n" +
@@ -452,11 +541,11 @@ public class PersistentFsTest extends PlatformTestCase {
     File file = new File(temp, "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
     assertTrue(file.createNewFile());
-    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+    VirtualFile testTxt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file));
 
     File newParentF = new File(temp, "a/b/d");
     assertTrue(newParentF.mkdirs());
-    VirtualFile newParent = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
+    VirtualFile newParent = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
 
     checkEvents("Before:[VFileCopyEvent->new.txt]\n" +
                 "After:[VFileCopyEvent->new.txt]\n" +
@@ -472,11 +561,11 @@ public class PersistentFsTest extends PlatformTestCase {
     File file = new File(temp, "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());
     assertTrue(file.createNewFile());
-    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+    VirtualFile testTxt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file));
 
     File file2 = new File(temp, "a/b/c/test2.txt");
     assertTrue(file2.createNewFile());
-    VirtualFile test2Txt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file2));
+    VirtualFile test2Txt = Objects.requireNonNull(myLocalFs.refreshAndFindFileByIoFile(file2));
 
     checkEvents("Before:[VFileDeleteEvent->test2.txt]\n" +
                 "After:[VFileDeleteEvent->test2.txt]\n" +
@@ -589,5 +678,55 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals("d1", vd1.getName());
     assertFalse(((VirtualDirectoryImpl)vd1).allChildrenLoaded());
     UsefulTestCase.assertEmpty(((VirtualDirectoryImpl)vd1).getCachedChildren());
+  }
+
+  public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
+    IoTestUtil.assumeWindows();
+    File temp = createTempDir("", false);
+    File file = new File(temp, "rename.txt");
+    FileUtil.createParentDirs(file);
+    FileUtil.writeToFile(file, "x");
+    VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vtemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vtemp);
+    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
+    VirtualFile[] newChildren = vtemp.getChildren();
+    assertOneElement(newChildren);
+  }
+
+  public void testPersistentFsCacheDoesntContainInvalidFiles() throws IOException {
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    File dir = createTempDirectory();
+    File subDir1 = new File(dir, "subDir1");
+    File subDir2 = new File(subDir1, "subDir2");
+    File subDir3 = new File(subDir2, "subDir3");
+    File file = new File(subDir3, "file.txt");
+
+    assertTrue(subDir3.mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFileSystemEntry vFile = ((VirtualFileSystemEntry)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    VirtualFileSystemEntry vSubDir3 = vFile.getParent();
+    VirtualFileSystemEntry vSubDir2 = vSubDir3.getParent();
+    VirtualFileSystemEntry vSubDir1 = vSubDir2.getParent();
+
+    VirtualFileSystemEntry[] hardReferenceHolder = new VirtualFileSystemEntry[]{vFile, vSubDir3, vSubDir2, vSubDir1};
+
+    // delete directory with deep nested children
+    delete(vSubDir1);
+
+    for (VirtualFileSystemEntry f : hardReferenceHolder) {
+      assertFalse("file is valid but deleted " + f.getName(), f.isValid());
+    }
+
+    for (VirtualFileSystemEntry f : hardReferenceHolder) {
+      assertNull(fs.getCachedDir(f.getId()));
+      assertNull(fs.findFileById(f.getId()));
+    }
+
+    for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
+      assertTrue(f.isValid());
+    }
   }
 }

@@ -54,7 +54,7 @@ public final class ServiceBean implements PluginAware {
   }
 
   @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 }

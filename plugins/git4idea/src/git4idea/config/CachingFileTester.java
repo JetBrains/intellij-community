@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +33,7 @@ abstract class CachingFileTester<T> {
 
   @NotNull
   final TestResult getResultForFile(@NotNull String filePath) {
-    while (true) {
-      ProgressManager.checkCanceled();
-      try {
-        if (LOCK.tryLock(50, TimeUnit.MILLISECONDS)) break;
-      }
-      catch (InterruptedException ignore) {
-      }
-    }
-    try {
+    return ProgressIndicatorUtils.computeWithLockAndCheckingCanceled(LOCK, 50, TimeUnit.MILLISECONDS, () -> {
       TestResult result = myFileTestMap.get(filePath);
       long currentLastModificationDate = 0L;
 
@@ -49,6 +42,8 @@ abstract class CachingFileTester<T> {
         if (result == null || result.getFileLastModifiedTimestamp() != currentLastModificationDate) {
           result = new TestResult(testFileOrAbort(filePath), currentLastModificationDate);
         }
+
+        myFileTestMap.put(filePath, result);
       }
       catch (ProcessCanceledException pce) {
         throw pce;
@@ -57,12 +52,8 @@ abstract class CachingFileTester<T> {
         result = new TestResult(e, currentLastModificationDate);
       }
 
-      myFileTestMap.put(filePath, result);
       return result;
-    }
-    finally {
-      LOCK.unlock();
-    }
+    });
   }
 
   @NotNull

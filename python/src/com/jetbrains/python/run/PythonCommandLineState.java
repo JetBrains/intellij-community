@@ -51,7 +51,7 @@ import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ import java.util.*;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
+  private static final Logger LOG = Logger.getInstance(PythonCommandLineState.class);
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
@@ -131,7 +131,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     return execute(executor, (CommandLinePatcher[])null);
   }
 
@@ -160,7 +160,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
-    if (PySdkUtil.isRemote(myConfig.getSdk())) {
+    if (PythonSdkUtil.isRemote(myConfig.getSdk())) {
       assert processHandler instanceof ProcessControlWithMappings;
       consoleView
         .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (ProcessControlWithMappings)processHandler));
@@ -173,7 +173,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
     if (isDebug()) {
-      return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getInterpreterPath()));
+      return new PyDebugConsoleBuilder(project, PythonSdkUtil.findSdkByPath(myConfig.getInterpreterPath()));
     }
     else {
       return TextConsoleBuilderFactory.getInstance().createBuilder(project);
@@ -228,9 +228,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected final PythonProcessStarter getDefaultPythonProcessStarter() {
     return (config, commandLine) -> {
-      Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
+      Sdk sdk = PythonSdkUtil.findSdkByPath(myConfig.getInterpreterPath());
       final ProcessHandler processHandler;
-      if (PySdkUtil.isRemote(sdk)) {
+      if (PythonSdkUtil.isRemote(sdk)) {
         PyRemotePathMapper pathMapper = createRemotePathMapper();
         processHandler = createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), pathMapper);
       }
@@ -264,7 +264,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return generated command line changed by patchers
    */
   @NotNull
-  public final GeneralCommandLine generateCommandLine(@Nullable CommandLinePatcher[] patchers) {
+  public final GeneralCommandLine generateCommandLine(CommandLinePatcher @Nullable [] patchers) {
     return applyPatchers(generateCommandLine(), patchers);
   }
 
@@ -276,7 +276,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return command line changed by patchers
    */
   @NotNull
-  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, @Nullable CommandLinePatcher[] patchers) {
+  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, CommandLinePatcher @Nullable [] patchers) {
     if (patchers != null) {
       for (CommandLinePatcher patcher : patchers) {
         if (patcher != null) patcher.patchCommandLine(commandLine);
@@ -367,10 +367,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
-    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    Sdk sdk = PythonSdkUtil.findSdkByPath(sdkHome);
     if (sdk != null &&
-        (Registry.is("python.activate.virtualenv.on.run") && PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
-      Map<String, String> environment = PythonSdkType.activateVirtualEnv(sdk);
+        (Registry.is("python.activate.virtualenv.on.run") && PythonSdkUtil.isVirtualEnv(sdkHome) || PythonSdkUtil.isConda(sdk))) {
+      Map<String, String> environment = PySdkUtil.activateVirtualEnv(sdk);
       env.putAll(environment);
 
       for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
@@ -398,7 +398,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void setupEncodingEnvs(Map<String, String> envs, Charset charset) {
-    PythonSdkFlavor.setupEncodingEnvs(envs, charset);
+    PythonEnvUtil.setupEncodingEnvs(envs, charset);
   }
 
   public static void buildPythonPath(@NotNull Project project,
@@ -417,7 +417,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                      boolean shouldAddContentRoots,
                                      boolean shouldAddSourceRoots,
                                      boolean isDebug) {
-    Sdk pythonSdk = PythonSdkType.findSdkByPath(sdkHome);
+    Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList();
       pathList.addAll(getAddedPaths(pythonSdk));
@@ -435,7 +435,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       flavor.initPythonPath(commandLine, passParentEnvs, pathList);
     }
     else {
-      PythonSdkFlavor.initPythonPath(commandLine.getEnvironment(), passParentEnvs, pathList);
+      PythonEnvUtil.initPythonPath(commandLine.getEnvironment(), passParentEnvs, pathList);
     }
   }
 
@@ -610,7 +610,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (config.isUseModuleSdk() || StringUtil.isEmpty(sdkHome)) {
       Module module = getModule(project, config);
 
-      Sdk sdk = PythonSdkType.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
       if (sdk != null) {
         sdkHome = sdk.getHomePath();

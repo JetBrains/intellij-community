@@ -54,7 +54,7 @@ public class SubstitutionHandler extends MatchingHandler {
         return false;
       }
 
-      return profile.canBeVarDelimeter(element);
+      return profile.canBeVarDelimiter(element);
     }
   };
 
@@ -84,7 +84,7 @@ public class SubstitutionHandler extends MatchingHandler {
     this.subtype = subtype;
   }
 
-  public void setPredicate(MatchPredicate handler) {
+  public void setPredicate(@NotNull MatchPredicate handler) {
     predicate = handler;
   }
 
@@ -106,7 +106,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
 
     if(start instanceof AndPredicate) {
-      AndPredicate binary = (AndPredicate)start;
+      final AndPredicate binary = (AndPredicate)start;
       final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
       if (result!=null) return result;
 
@@ -345,7 +345,7 @@ public class SubstitutionHandler extends MatchingHandler {
       while (fNodes.hasNext() && matchedOccurs < minOccurs) {
         if (handler.match(currentPatternNode, matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else if (handler instanceof TopLevelMatchingHandler ||
+        } else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
                    currentPatternNode instanceof PsiComment ||
                    !(matchNodes.current() instanceof PsiComment)) {
           break;
@@ -367,7 +367,7 @@ public class SubstitutionHandler extends MatchingHandler {
         while (fNodes.hasNext() && matchedOccurs < maxOccurs) {
           if (handler.match(currentPatternNode, matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else if (handler instanceof TopLevelMatchingHandler ||
+          } else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
                      currentPatternNode instanceof PsiComment ||
                      !(matchNodes.current() instanceof PsiComment)) {
             break;

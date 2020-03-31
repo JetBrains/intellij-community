@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -53,7 +54,7 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
     forceBuild |= checkResourcesRebuild;
     return JBIterable.of(createTargets(project, forceBuild, JavaResourceRootType.RESOURCE, CheckResourcesTarget.PRODUCTION),
                          createTargets(project, forceBuild, JavaResourceRootType.TEST_RESOURCE, CheckResourcesTarget.TESTS)).
-      filter(Condition.NOT_NULL).toList();
+      filter(Conditions.notNull()).toList();
   }
 
   @Nullable
@@ -78,7 +79,7 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
 
   private static boolean containsGroovyResources(Module module, VirtualFile root) {
     return !ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(root, file -> {
-      if (!file.isDirectory() && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType()) {
+      if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
         return false; // found
       }
       return true;

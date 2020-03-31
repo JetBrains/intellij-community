@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,18 @@ public interface VcsLogUserFilter extends VcsLogDetailsFilter {
    */
   @NotNull
   Collection<VcsUser> getUsers(@NotNull VirtualFile root);
+
+  /**
+   * Filter values in text format, such that the filter could be later restored from it.
+   */
+  @NotNull
+  Collection<String> getValuesAsText();
+
+  @NotNull
+  @Override
+  default String getDisplayText() {
+    return StringUtil.join(getValuesAsText(), ", ");
+  }
 
   @NotNull
   @Override

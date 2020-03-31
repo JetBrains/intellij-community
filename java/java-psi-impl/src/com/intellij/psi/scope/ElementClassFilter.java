@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.scope;
 
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 
-/**
- * @author max
- */
 public class ElementClassFilter implements ElementFilter {
   public static final ElementClassFilter PACKAGE = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
   public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclarationKind.VARIABLE);
@@ -64,10 +47,4 @@ public class ElementClassFilter implements ElementFilter {
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
-  @Deprecated
-  public static final ElementClassFilter PACKAGE_FILTER = PACKAGE;
-  //</editor-fold>
 }

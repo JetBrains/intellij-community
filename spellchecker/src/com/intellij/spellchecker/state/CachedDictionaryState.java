@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.state;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "CachedDictionaryState",
@@ -21,6 +19,12 @@ public class CachedDictionaryState extends DictionaryState implements Persistent
     name = DEFAULT_NAME;
   }
 
+  @NotNull
+  public static CachedDictionaryState getInstance() {
+    return ServiceManager.getService(CachedDictionaryState.class);
+  }
+
+  @NonInjectable
   public CachedDictionaryState(EditableDictionary dictionary) {
     super(dictionary);
     name = DEFAULT_NAME;

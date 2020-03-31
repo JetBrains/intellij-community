@@ -5,6 +5,7 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 
@@ -18,7 +19,7 @@ public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
   protected void collectElementText(StringBuilder buffer, PsiElement element) {
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         IElementType type = element.getNode().getElementType();
         if (type == mGDOC_TAG_VALUE_LPAREN ||

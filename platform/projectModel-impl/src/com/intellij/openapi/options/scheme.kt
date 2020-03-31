@@ -5,7 +5,6 @@ import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
 import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
@@ -21,7 +20,7 @@ interface ExternalizableScheme : Scheme {
 abstract class SchemeManagerFactory {
   companion object {
     @JvmStatic
-    fun getInstance(): SchemeManagerFactory = ServiceManager.getService(SchemeManagerFactory::class.java)!!
+    fun getInstance() = service<SchemeManagerFactory>()
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<SchemeManagerFactory>()
@@ -73,7 +72,7 @@ abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
   open fun onSchemeDeleted(scheme: MUTABLE_SCHEME) {
   }
 
-  open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?) {
+  open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?, processChangeSynchronously: Boolean) {
   }
 
   /**

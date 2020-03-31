@@ -22,6 +22,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
@@ -32,10 +33,7 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteArraySequenceExternalizer;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -104,7 +102,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   }
 
   @Nullable
-  private static PsiJavaFileStub index(@NotNull VirtualFile file, @NotNull byte[] content) {
+  private static PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
@@ -176,27 +174,23 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    int key = getFileKey(helperFile);
-
-    List<ByteArraySequence> byteSequences = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
-    if (byteSequences.isEmpty()) return Collections.emptyList();
+    Map<Integer, ByteArraySequence> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, helperFile, trait.getProject());
+    ByteArraySequence byteSequence = ContainerUtil.getFirstItem(data.values());
 
     SerializationManagerEx manager = SerializationManagerEx.getInstanceEx();
     List<PsiMethod> result = new ArrayList<>();
-    for (ByteArraySequence byteSequence : byteSequences) {
-      Stub root;
-      try {
-        root = manager.deserialize(new ByteArrayInputStream(byteSequence.getBytes()));
-        ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)psiFile);
-      }
-      catch (SerializerNotFoundException e) {
-        LOG.warn(e);
-        continue;
-      }
-      for (Object childStub : root.getChildrenStubs().get(0).getChildrenStubs()) {
-        if (childStub instanceof PsiMethodStub) {
-          result.add(((PsiMethodStub)childStub).getPsi());
-        }
+    Stub root;
+    try {
+      root = manager.deserialize(new ByteArrayInputStream(byteSequence.getBytes()));
+      ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)psiFile);
+    }
+    catch (SerializerNotFoundException e) {
+      LOG.warn(e);
+      return result;
+    }
+    for (Object childStub : root.getChildrenStubs().get(0).getChildrenStubs()) {
+      if (childStub instanceof PsiMethodStub) {
+        result.add(((PsiMethodStub)childStub).getPsi());
       }
     }
     return result;

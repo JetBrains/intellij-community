@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -26,7 +24,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   private final Throwable myProcessStart;
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public BaseOSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
@@ -57,7 +55,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    */
   @NotNull
   protected Options readerOptions() {
-    if (Registry.is("output.reader.blocking.mode", false)) {
+    if (Boolean.getBoolean("output.reader.blocking.mode")) {
       return Options.BLOCKING;
     }
     else {
@@ -79,9 +77,8 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       @Override
       public void startNotified(@NotNull final ProcessEvent event) {
         try {
-          Options options = readerOptions();
-          @SuppressWarnings("deprecation") final BaseDataReader stdOutReader = createOutputDataReader(options.policy());
-          @SuppressWarnings("deprecation") final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(options.policy()) : null;
+          BaseDataReader stdOutReader = createOutputDataReader();
+          BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader() : null;
 
           myWaitFor.setTerminationCallback(exitCode -> {
             try {
@@ -107,20 +104,6 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     });
 
     super.startNotify();
-  }
-
-  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy policy) {
-    return createErrorDataReader();
-  }
-
-  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy policy) {
-    return createOutputDataReader();
   }
 
   @NotNull
@@ -150,19 +133,10 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
-  /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 2018) */
-  @Deprecated
-  public static class ExecutorServiceHolder {
-    public static Future<?> submit(@NotNull Runnable task) {
-      LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());
-      return AppExecutorUtil.getAppExecutorService().submit(task);
-    }
-  }
-
   protected class SimpleOutputReader extends BaseOutputReader {
-    private final Key myProcessOutputType;
+    private final Key<?> myProcessOutputType;
 
-    public SimpleOutputReader(Reader reader, Key outputType, Options options, @NotNull String presentableName) {
+    public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull String presentableName) {
       super(reader, options);
       myProcessOutputType = outputType;
       start(presentableName);
@@ -191,8 +165,9 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       else if (TimeUnit.MILLISECONDS.toMinutes(now - sleepStart) >= 2 &&
                mySleepStart.compareAndSet(sleepStart, -1)) { // report only once
         LOG.warn("Process hasn't generated any output for a long time.\n" +
-                 "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
-                 "Command line: " + StringUtil.trimLog(myCommandLine, 1000),
+                 "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with" +
+                 " 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
+                 "Command line: " + StringUtil.trimLog(StringUtil.notNullize(myCommandLine), 1000),
                  myProcessStart);
       }
     }

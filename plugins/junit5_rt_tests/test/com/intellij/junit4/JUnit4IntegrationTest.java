@@ -81,7 +81,7 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
     String testDataPath = communityPath + File.separator + "plugins" + File.separator + "junit5_rt_tests" +
                           File.separator + "testData" + File.separator + "integration" + File.separator + methodName;
 
-    addLibs(module, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
+    addMavenLibs(module, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
 
     ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
     ModuleRootModificationUtil.updateModel(module, model -> {

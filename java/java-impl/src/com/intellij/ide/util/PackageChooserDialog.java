@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -34,7 +34,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,9 +46,10 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 
 public class PackageChooserDialog extends PackageChooser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PackageChooserDialog");
+  private static final Logger LOG = Logger.getInstance(PackageChooserDialog.class);
 
   private Tree myTree;
   private DefaultTreeModel myModel;
@@ -313,7 +313,7 @@ public class PackageChooserDialog extends PackageChooser {
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
       final PsiPackage nodePackage = (PsiPackage)child.getUserObject();
       if (nodePackage != null) {
-        if (Comparing.equal(nodePackage.getQualifiedName(), qualifiedName)) return child;
+        if (Objects.equals(nodePackage.getQualifiedName(), qualifiedName)) return child;
       }
     }
     return null;
@@ -328,7 +328,7 @@ public class PackageChooserDialog extends PackageChooser {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
         PsiPackage nodePackage = (PsiPackage)node.getUserObject();
         if (nodePackage != null) {
-          if (Comparing.equal(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
+          if (Objects.equals(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
         }
       }
     }
@@ -394,8 +394,8 @@ public class PackageChooserDialog extends PackageChooser {
 
   private class NewPackageAction extends AnAction {
     NewPackageAction() {
-      super(IdeBundle.message("action.new.package"),
-            IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
+      super(IdeBundle.messagePointer("action.new.package"), IdeBundle.messagePointer("action.description.create.new.package"),
+            AllIcons.Actions.NewFolder);
     }
 
     @Override

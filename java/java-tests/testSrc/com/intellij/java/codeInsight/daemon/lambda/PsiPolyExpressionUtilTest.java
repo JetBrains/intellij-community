@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
+public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCase {
   public void testPrefixExpression() {
     final PsiExpression psiExpression = findExpression("     int j = i<caret>++;");
     assertInstanceOf(psiExpression, PsiPostfixExpression.class);

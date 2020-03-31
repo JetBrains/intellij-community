@@ -49,12 +49,6 @@ public class MethodCountInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.many.methods.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     final JComponent panel = new JPanel(new GridBagLayout());
     final Component label = new JLabel(InspectionGadgetsBundle.message("method.count.limit.option"));

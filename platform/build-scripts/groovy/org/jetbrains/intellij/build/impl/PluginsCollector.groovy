@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Ref
+import com.intellij.util.xmlb.JDOMXIncluder
 import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jdom.Element
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModule
 
 @CompileStatic
 class PluginsCollector {
@@ -68,7 +61,7 @@ class PluginsCollector {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
-    def allBundledPlugins = productLayout.allBundledPluginsModules
+    def allBundledPlugins = productLayout.bundledPluginModules as Set<String>
     myBuildContext.project.modules.each {
       if (allBundledPlugins.contains(it.name)) {
         return
@@ -80,26 +73,38 @@ class PluginsCollector {
       if (pluginLayout == null) {
         pluginLayout = PluginLayout.plugin(it.name)
       }
+
       def pluginXml = myBuildContext.findFileInModuleSources(it.name, "META-INF/plugin.xml")
       if (pluginXml == null) {
         return
       }
 
-      def xml = new XmlParser().parse(pluginXml)
-      String id = xml.id.text() ?: xml.name.text()
+      Element xml = JDOMUtil.load(pluginXml)
+      if (JDOMUtil.isEmpty(xml)) {
+        return
+      }
+
+      if (xml.getAttributeValue('implementation-detail') == 'true') {
+        return
+      }
+
+      String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
       if (!id) {
         return
       }
+
+      JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toURI().toURL(), true, new SourcesBasedXIncludeResolver(it))
       def declaredModules = new HashSet<String>()
-      for (module in xml.module) {
-        if (module.@value) {
-          declaredModules += module.@value
+      for (module in xml.getChildren('module')) {
+        def value = module.getAttributeValue('value')
+        if (value) {
+          declaredModules += value
         }
       }
       def requiredDependencies = new HashSet<String>()
-      for (dependency in xml.depends) {
-        if (dependency.@optional != 'true') {
-          requiredDependencies += dependency.text()
+      for (dependency in xml.getChildren('depends')) {
+        if (dependency.getAttributeValue('optional') != 'true') {
+          requiredDependencies += dependency.getTextTrim()
         }
       }
 
@@ -123,6 +128,30 @@ class PluginsCollector {
       this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
       this.pluginLayout = pluginLayout
+    }
+  }
+
+  private class SourcesBasedXIncludeResolver implements JDOMXIncluder.PathResolver {
+    private final JpsModule myMainModule
+
+    SourcesBasedXIncludeResolver(@NotNull JpsModule mainModule) {
+      myMainModule = mainModule
+    }
+
+    @Override
+    URL resolvePath(@NotNull String relativePath, @Nullable URL url) throws MalformedURLException {
+      Ref<URL> result = Ref.create()
+      JpsJavaExtensionService.dependencies(myMainModule).recursively().processModules({ module ->
+        for (def sourceRoot : module.sourceRoots) {
+          def resolved = new File(sourceRoot.file, relativePath)
+          if (resolved.exists()) {
+            result.set(resolved.toURI().toURL())
+            return false
+          }
+        }
+        return true
+      })
+      return result.isNull() ? JDOMXIncluder.DEFAULT_PATH_RESOLVER.resolvePath(relativePath, url) : result.get()
     }
   }
 }

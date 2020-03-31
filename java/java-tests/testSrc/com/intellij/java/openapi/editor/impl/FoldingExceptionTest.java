@@ -18,10 +18,10 @@ package com.intellij.java.openapi.editor.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
-public class FoldingExceptionTest extends LightCodeInsightTestCase {
+public class FoldingExceptionTest extends LightJavaCodeInsightTestCase {
   public void test() {
     doTest("FoldingExceptionTest.java");
   }
@@ -32,15 +32,15 @@ public class FoldingExceptionTest extends LightCodeInsightTestCase {
 
   private void doTest(String fileName) {
     configureByFile("/codeInsight/folding/" + fileName);
-    EditorTestUtil.configureSoftWraps(myEditor, 120);
+    EditorTestUtil.configureSoftWraps(getEditor(), 120);
     runFoldingPass();
     deleteLine();
     runFoldingPass();
     // we just verify here that the operation completes normally - it was known to fail previously
   }
 
-  private static void runFoldingPass() {
-    PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+  private void runFoldingPass() {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
   }
 }

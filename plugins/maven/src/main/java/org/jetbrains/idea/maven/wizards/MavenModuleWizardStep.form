@@ -13,7 +13,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="GroupId"/>
+          <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.groupid"/>
         </properties>
       </component>
       <component id="bbb74" class="javax.swing.JLabel">
@@ -21,7 +21,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="ArtifactId"/>
+          <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.artifactid"/>
         </properties>
       </component>
       <component id="4eb56" class="javax.swing.JLabel">
@@ -29,7 +29,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Version"/>
+          <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.version"/>
         </properties>
       </component>
       <component id="d7d25" class="javax.swing.JTextField" binding="myGroupIdField">
@@ -61,7 +61,7 @@
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Inherit"/>
+          <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.inherit"/>
         </properties>
       </component>
       <component id="897ff" class="javax.swing.JCheckBox" binding="myInheritVersionCheckBox">
@@ -69,7 +69,7 @@
           <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Inherit"/>
+          <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.inherit"/>
         </properties>
       </component>
       <grid id="320a3" binding="myArchetypesPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -93,7 +93,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Add as module to"/>
+              <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.add.to"/>
             </properties>
           </component>
           <component id="6f435" class="javax.swing.JLabel" binding="myAggregatorNameLabel">
@@ -101,7 +101,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Label"/>
+              <text value="Label" noi18n="true"/>
             </properties>
           </component>
           <component id="e24ab" class="javax.swing.JButton" binding="mySelectAggregator">
@@ -118,7 +118,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Parent"/>
+              <text resource-bundle="messages/MavenWizardBundle" key="maven.structure.wizard.module.parent"/>
             </properties>
           </component>
           <component id="5f27e" class="javax.swing.JLabel" binding="myParentNameLabel">
@@ -126,7 +126,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Label"/>
+              <text value="Label" noi18n="true"/>
             </properties>
           </component>
           <component id="376fa" class="javax.swing.JButton" binding="mySelectParent">

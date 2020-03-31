@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" scope="RUNTIME">
-      <library name="sqlite" type="repository">
+      <library name="sqlite-svn" type="repository">
         <properties maven-id="org.xerial:sqlite-jdbc:3.20.1" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1.jar!/" />
@@ -35,5 +35,7 @@
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="library" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
+    <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

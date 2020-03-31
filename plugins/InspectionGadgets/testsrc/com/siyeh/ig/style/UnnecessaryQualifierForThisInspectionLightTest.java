@@ -16,11 +16,11 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnnecessaryQualifierForThis")
-public class UnnecessaryQualifierForThisInspectionLightTest extends LightInspectionTestCase {
+public class UnnecessaryQualifierForThisInspectionLightTest extends LightJavaInspectionTestCase {
 
   public void testFinalWithoutInnerClass() {
     doTest("class Base {\n" +

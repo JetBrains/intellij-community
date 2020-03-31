@@ -16,9 +16,9 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class UnpredictableBigDecimalConstructorCallInspectionTest extends LightInspectionTestCase {
+public class UnpredictableBigDecimalConstructorCallInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse;
 
@@ -42,8 +42,9 @@ public abstract class EclipseVarsTest extends JavaProjectTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      PathMacros.getInstance().removeMacro(VARIABLE);
-      PathMacros.getInstance().removeMacro(SRCVARIABLE);
+      PathMacros pathMacros = PathMacros.getInstance();
+      pathMacros.setMacro(VARIABLE, null);
+      pathMacros.setMacro(SRCVARIABLE, null);
     }
     catch (Throwable e) {
       addSuppressedException(e);

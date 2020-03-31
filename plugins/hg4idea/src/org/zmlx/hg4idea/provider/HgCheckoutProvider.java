@@ -2,17 +2,19 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -28,19 +30,31 @@ public class HgCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final HgCloneDialog dialog = new HgCloneDialog(project);
+    HgCloneDialog dialog = new HgCloneDialog(project);
     if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();
-    VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
+
+    String directoryName = dialog.getDirectoryName();
+    String sourceRepositoryURL = dialog.getSourceRepositoryURL();
+    String parentDirectory = dialog.getParentDirectory();
+    doClone(project, listener, directoryName, sourceRepositoryURL, parentDirectory);
+  }
+
+  public static void doClone(@NotNull Project project,
+                             @Nullable Listener listener,
+                             @NotNull String directoryName,
+                             @NotNull String sourceRepositoryURL,
+                             @NotNull String parentDirectory) {
+    VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(parentDirectory));
     if (destinationParent == null) {
       return;
     }
-    final String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
-    final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
+    final String targetDir = destinationParent.getPath() + File.separator + directoryName;
+
     final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<>();
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
+    new Task.Backgroundable(project, HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
@@ -58,7 +72,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
         else {
           DvcsUtil.addMappingIfSubRoot(project, targetDir, HgVcs.VCS_NAME);
           if (listener != null) {
-            listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
+            listener.directoryCheckedOut(new File(parentDirectory, directoryName), HgVcs.getKey());
             listener.checkoutCompleted();
           }
         }
@@ -69,5 +83,11 @@ public class HgCheckoutProvider implements CheckoutProvider {
   @Override
   public String getVcsName() {
     return "_Mercurial";
+  }
+
+  @NotNull
+  @Override
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
+    return new HgCloneDialogComponent(project);
   }
 }

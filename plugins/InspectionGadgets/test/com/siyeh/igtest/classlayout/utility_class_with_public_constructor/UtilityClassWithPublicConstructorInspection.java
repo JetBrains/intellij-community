@@ -28,3 +28,10 @@ public class <warning descr="Class 'UtilityClassWithPublicConstructorInspection'
         public X () {}
     }
 }
+class NonUtility {
+    private static final int Z = 10;
+    public NonUtility() {}
+
+    private static void boo() {}
+
+}

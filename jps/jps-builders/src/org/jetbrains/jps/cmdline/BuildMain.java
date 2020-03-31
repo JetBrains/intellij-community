@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,12 +19,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -57,7 +45,7 @@ public class BuildMain {
   private static final Logger LOG;
   static {
     LogSetup.initLoggers();
-    LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+    LOG = Logger.getInstance(BuildMain.class);
   }
 
   private static final int HOST_ARG = 0;
@@ -71,7 +59,7 @@ public class BuildMain {
 
   public static void main(String[] args) {
     try {
-      final long processStart = System.currentTimeMillis();
+      final long processStart = System.nanoTime();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
       System.out.println(startMessage);
       LOG.info(StringUtil.repeatSymbol('=', 50));
@@ -83,7 +71,7 @@ public class BuildMain {
       final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
       Utils.setSystemRoot(systemDir);
 
-      final long connectStart = System.currentTimeMillis();
+      final long connectStart = System.nanoTime();
       // IDEA-123132, let's try again
       for (int attempt = 0; attempt < 3; attempt++) {
         try {
@@ -118,7 +106,7 @@ public class BuildMain {
 
       final boolean success = future.isSuccess();
       if (success) {
-        LOG.info("Connection to IDE established in " + (System.currentTimeMillis() - connectStart) + " ms");
+        LOG.info("Connection to IDE established in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - connectStart) + " ms");
 
         final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
         final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null);
@@ -159,16 +147,18 @@ public class BuildMain {
               fsState.clearAll();
             }
 
-            // preloading target configurations
+            // preloading target configurations and pre-calculating target dirty state
             final BuildTargetsState targetsState = pd.getTargetsState();
             for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target);
+              targetsState.getTargetConfiguration(target).isTargetDirty(pd);
             }
 
             //noinspection ResultOfMethodCallIgnored
             BuilderRegistry.getInstance();
 
-            LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
+            JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.preloadData(data));
+
+            LOG.info("Pre-loaded process ready in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - processStart) + " ms");
           }
           catch (Throwable e) {
             LOG.info("Failed to pre-load project " + projectPathToPreload, e);
@@ -221,7 +211,7 @@ public class BuildMain {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
-              SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+              SharedThreadPool.getInstance().execute(() -> {
                 //noinspection finally
                 try {
                   try {
@@ -251,10 +241,7 @@ public class BuildMain {
           }
 
           case CONSTANT_SEARCH_RESULT: {
-            final BuildSession session = mySession;
-            if (session != null) {
-              session.processConstantSearchResult(controllerMessage.getConstantSearchResult());
-            }
+            // ignored, functionality deprecated
             return;
           }
 
@@ -280,6 +267,9 @@ public class BuildMain {
               if (pd != null) {
                 pd.release();
               }
+
+              JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.discardPreloadedData(preloaded));
+
               System.exit(0);
             }
             return;

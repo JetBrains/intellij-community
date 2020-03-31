@@ -10,19 +10,20 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
-  public static <T> InboundSemiGraph<T> cache(InboundSemiGraph<T> original) {
+public final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
+  @NotNull
+  public static <T> InboundSemiGraph<T> cache(@NotNull InboundSemiGraph<T> original) {
     return new CachingSemiGraph<>(original);
   }
 
   private final Set<Node> myNodes;
   private final Map<Node, List<Node>> myIn;
 
-  private CachingSemiGraph(InboundSemiGraph<Node> original) {
+  private CachingSemiGraph(@NotNull InboundSemiGraph<Node> original) {
     myNodes = new LinkedHashSet<>(original.getNodes());
     myIn = new THashMap<>();
     for (Node node : myNodes) {
-      final Iterator<Node> inIterator = original.getIn(node);
+      Iterator<Node> inIterator = original.getIn(node);
       if (inIterator.hasNext()) {
         ArrayList<Node> value = new ArrayList<>();
         ContainerUtil.addAll(value, inIterator);
@@ -43,7 +44,6 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
     final List<Node> inNodes = myIn.get(n);
     return inNodes != null
            ? inNodes.iterator()
-           : ContainerUtil.emptyIterator();
+           : Collections.emptyIterator();
   }
-
 }

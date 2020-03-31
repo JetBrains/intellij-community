@@ -51,7 +51,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   @Override
-  public boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
+  public boolean preparePsiElementsForWrite(PsiElement @NotNull ... elements) {
     return preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
@@ -82,7 +82,9 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     return !status.hasReadonlyFiles();
   }
 
-  // returns true on success
+  /**
+   * @deprecated use {@link EditorModificationUtil#checkModificationAllowed(Editor)}
+   */
   @Deprecated
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
     return EditorModificationUtil.checkModificationAllowed(editor);

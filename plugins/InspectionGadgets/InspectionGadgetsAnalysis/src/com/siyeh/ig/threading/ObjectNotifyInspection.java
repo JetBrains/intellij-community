@@ -35,12 +35,6 @@ public class ObjectNotifyInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("object.notify.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "object.notify.problem.descriptor");
@@ -57,14 +51,6 @@ public class ObjectNotifyInspection extends BaseInspection {
   }
 
   private static class ObjectNotifyFix extends AbstractReplaceWithAnotherMethodCallFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "object.notify.replace.quickfix");
-    }
-
     @Override
     protected String getMethodName() {
       return HardcodedMethodConstants.NOTIFY_ALL;

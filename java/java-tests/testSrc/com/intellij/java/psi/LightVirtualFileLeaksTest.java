@@ -25,14 +25,14 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class LightVirtualFileLeaksTest extends LightCodeInsightFixtureTestCase {
+public class LightVirtualFileLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   private Key<Boolean> myKey;
 
   @Override

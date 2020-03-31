@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +38,7 @@ import java.awt.*;
  * @author spleaner
  */
 public class NotificationsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsUtil");
+  private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
   private static final int TITLE_LIMIT = 1000;
   private static final int CONTENT_LIMIT = 10000;
 
@@ -156,6 +157,7 @@ public class NotificationsUtil {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final NotificationListener listener1 = notification.getListener();
           if (listener1 != null) {
+            NotificationCollector.getInstance().logHyperlinkClicked(notification);
             listener1.hyperlinkUpdate(notification, e);
           }
         }

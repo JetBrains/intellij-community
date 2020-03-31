@@ -33,8 +33,8 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testFormatting() {
-    Project currProject = ourProject;
-    ourProject = ProjectManager.getInstance().getDefaultProject();
+    Project currProject = getProject();
+    setProject(ProjectManager.getInstance().getDefaultProject());
     try {
       doFileTest(
         "class Foo{}",
@@ -43,7 +43,7 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
         "}");
     }
     finally {
-      ourProject = currProject;
+      setProject(currProject);
     }
   }
 

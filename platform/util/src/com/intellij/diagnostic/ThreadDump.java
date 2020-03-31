@@ -14,7 +14,7 @@ public class ThreadDump {
   private final StackTraceElement[] myEdtStack;
   private final ThreadInfo[] myThreadInfos;
 
-  ThreadDump(@NotNull String rawDump, @Nullable StackTraceElement[] edtStack, @NotNull ThreadInfo[] threadInfos) {
+  ThreadDump(@NotNull String rawDump, StackTraceElement @Nullable [] edtStack, ThreadInfo @NotNull [] threadInfos) {
     myRawDump = rawDump;
     myEdtStack = edtStack;
     myThreadInfos = threadInfos;
@@ -31,13 +31,11 @@ public class ThreadDump {
   /**
    * @return state of the AWT thread from the dump
    */
-  @Nullable
-  StackTraceElement[] getEDTStackTrace() {
+  StackTraceElement @Nullable [] getEDTStackTrace() {
     return myEdtStack;
   }
 
-  @NotNull
-  ThreadInfo[] getThreadInfos() {
+  ThreadInfo @NotNull [] getThreadInfos() {
     return myThreadInfos;
   }
 }

@@ -19,6 +19,7 @@ public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
   public interface FileTypeListProvider {
+    @NotNull
     Iterable<FileType> getCurrentFileTypeList();
   }
 
@@ -29,12 +30,11 @@ public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   }
 
   public FileTypeRenderer(@NotNull FileTypeListProvider fileTypeListProvider) {
-    super();
     myFileTypeListProvider = fileTypeListProvider;
   }
 
   @Override
-  public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+  public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     Icon icon = value.getIcon();
@@ -54,7 +54,7 @@ public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
     }
   }
 
-  private boolean isDuplicated(final String description) {
+  private boolean isDuplicated(@NotNull String description) {
     boolean found = false;
 
     for (FileType type : myFileTypeListProvider.getCurrentFileTypeList()) {
@@ -71,12 +71,9 @@ public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   }
 
   private static class DefaultFileTypeListProvider implements FileTypeListProvider {
-    private final List<FileType> myFileTypes;
+    private final List<FileType> myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
 
-    DefaultFileTypeListProvider() {
-      myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
-    }
-
+    @NotNull
     @Override
     public Iterable<FileType> getCurrentFileTypeList() {
       return myFileTypes;

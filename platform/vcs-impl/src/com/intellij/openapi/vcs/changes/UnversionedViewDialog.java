@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,8 +19,8 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    super(project, "Unversioned Files", ChangesListView.UNVERSIONED_FILES_DATA_KEY,
-          ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles());
+    super(project, "Unversioned Files", ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY,
+          ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFilesPaths());
   }
 
   @Override
@@ -48,7 +48,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
 
   @NotNull
   @Override
-  protected List<VirtualFile> getFiles() {
-    return ((ChangeListManagerImpl)myChangeListManager).getUnversionedFiles();
+  protected List<FilePath> getFiles() {
+    return ((ChangeListManagerImpl)myChangeListManager).getUnversionedFilesPaths();
   }
 }

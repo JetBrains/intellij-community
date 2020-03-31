@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +33,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- */
 public class HyperlinkLabel extends HighlightableComponent {
   private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
     final Color foreground1 = UIUtil.getLabelTextForeground();
@@ -56,18 +55,18 @@ public class HyperlinkLabel extends HighlightableComponent {
     this("");
   }
 
-  public HyperlinkLabel(String text) {
+  public HyperlinkLabel(@Nls String text) {
     this(text, UIUtil.getLabelBackground());
   }
 
-  public HyperlinkLabel(String text, Color background) {
+  public HyperlinkLabel(@Nls String text, Color background) {
     this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
 
-  public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    myAnchorAttributes = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
-      new CustomTextAttributes(textBackgroundColor) :
-      new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+  public HyperlinkLabel(@Nls String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
+    myAnchorAttributes = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
+                         new CustomTextAttributes(textBackgroundColor) :
+                         new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
 
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
@@ -85,11 +84,11 @@ public class HyperlinkLabel extends HighlightableComponent {
     myFontSize = fontSize;
   }
 
-  public void setHyperlinkText(String text) {
+  public void setHyperlinkText(@Nls String text) {
     setHyperlinkText("", text, "");
   }
 
-  public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
+  public void setHyperlinkText(@Nls String beforeLinkText, @Nls String linkText, @Nls String afterLinkText) {
     myUseIconAsLink = beforeLinkText.isEmpty();
     prepareText(beforeLinkText, linkText, afterLinkText);
   }
@@ -122,10 +121,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent(e);
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      if (myMousePressed && isOnLink(e.getX())) {
+        fireHyperlinkEvent(e);
+      }
       myMousePressed = false;
       repaint();
     }
@@ -180,6 +181,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     if (url != null) {
       myHyperlinkListener = e -> BrowserUtil.browse(url);
       addHyperlinkListener(myHyperlinkListener);
+      setIcon(AllIcons.Ide.External_link_arrow);
+      setIconAtRight(true);
     }
   }
 

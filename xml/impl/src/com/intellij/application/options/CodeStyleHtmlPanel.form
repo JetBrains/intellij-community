@@ -53,7 +53,7 @@
                           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.or.if.tag.size.more.than"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.or.if.tag.size.more.than"/>
                         </properties>
                       </component>
                       <component id="547a0" class="javax.swing.JTextField" binding="myDoNotAlignChildrenMinSize">
@@ -69,7 +69,7 @@
                           <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.lines"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.lines"/>
                         </properties>
                       </component>
                       <component id="fe20d" class="javax.swing.JLabel">
@@ -77,7 +77,7 @@
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.insert.new.line.before"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.insert.new.line.before"/>
                         </properties>
                       </component>
                       <component id="160eb" class="javax.swing.JLabel">
@@ -85,7 +85,7 @@
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.remove.new.line.before"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.remove.new.line.before"/>
                         </properties>
                       </component>
                       <component id="93fdf" class="javax.swing.JLabel">
@@ -93,10 +93,10 @@
                           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.do.not.indent.children.of"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.do.not.indent.children.of"/>
                         </properties>
                       </component>
-                      <component id="d6b64" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInsertNewLineTagNames">
+                      <component id="d6b64" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myInsertNewLineTagNames" custom-create="true">
                         <constraints>
                           <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -106,7 +106,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="47f60" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRemoveNewLineTagNames">
+                      <component id="47f60" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myRemoveNewLineTagNames" custom-create="true">
                         <constraints>
                           <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -116,7 +116,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="655c2" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDoNotAlignChildrenTagNames">
+                      <component id="655c2" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myDoNotAlignChildrenTagNames" custom-create="true">
                         <constraints>
                           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -126,7 +126,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="c0d93" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInlineElementsTagNames">
+                      <component id="c0d93" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myInlineElementsTagNames" custom-create="true">
                         <constraints>
                           <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -141,7 +141,7 @@
                           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="inline.elements"/>
+                          <text resource-bundle="messages/XmlBundle" key="inline.elements"/>
                         </properties>
                       </component>
                       <component id="1ade9" class="javax.swing.JLabel">
@@ -149,7 +149,7 @@
                           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="label.keep.white.spaces.inside"/>
+                          <text resource-bundle="messages/XmlBundle" key="label.keep.white.spaces.inside"/>
                         </properties>
                       </component>
                       <component id="a2288" class="javax.swing.JLabel">
@@ -157,10 +157,10 @@
                           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="don.t.break.if.inline.content"/>
+                          <text resource-bundle="messages/XmlBundle" key="don.t.break.if.inline.content"/>
                         </properties>
                       </component>
-                      <component id="77303" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myKeepWhiteSpacesTagNames">
+                      <component id="77303" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myKeepWhiteSpacesTagNames" custom-create="true">
                         <constraints>
                           <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -170,7 +170,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="c854c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDontBreakIfInlineContent">
+                      <component id="c854c" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myDontBreakIfInlineContent" custom-create="true">
                         <constraints>
                           <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -199,7 +199,7 @@
                           <grid row="10" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="generated.quote.enforce.format"/>
+                          <text resource-bundle="messages/XmlBundle" key="generated.quote.enforce.format"/>
                         </properties>
                       </component>
                       <component id="8ac3c" class="com.intellij.ui.components.JBLabel">
@@ -208,7 +208,7 @@
                         </constraints>
                         <properties>
                           <labelFor value="4240e"/>
-                          <text resource-bundle="messages/ApplicationBundle" key="html.label.new.line.before.first.attribute"/>
+                          <text resource-bundle="messages/XmlBundle" key="html.label.new.line.before.first.attribute"/>
                         </properties>
                       </component>
                       <component id="4240e" class="com.intellij.openapi.ui.ComboBox" binding="myBeforeFirstAttributeCombo">
@@ -223,7 +223,7 @@
                         </constraints>
                         <properties>
                           <labelFor value="f09a3"/>
-                          <text resource-bundle="messages/ApplicationBundle" key="html.label.new.line.after.last.attribute"/>
+                          <text resource-bundle="messages/XmlBundle" key="html.label.new.line.after.last.attribute"/>
                         </properties>
                       </component>
                       <component id="f09a3" class="com.intellij.openapi.ui.ComboBox" binding="myAfterLastAttributeCombo">
@@ -256,7 +256,7 @@
                             </constraints>
                             <properties>
                               <margin top="0" left="0" bottom="0" right="0"/>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.align.attributes"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.align.attributes"/>
                             </properties>
                           </component>
                           <component id="165dc" class="javax.swing.JCheckBox" binding="myAlignText">
@@ -265,7 +265,7 @@
                             </constraints>
                             <properties>
                               <margin top="0" left="0" bottom="0" right="0"/>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.align.text"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.align.text"/>
                             </properties>
                           </component>
                           <component id="959da" class="javax.swing.JCheckBox" binding="myKeepWhiteSpaces">
@@ -274,7 +274,7 @@
                             </constraints>
                             <properties>
                               <margin top="0" left="0" bottom="0" right="0"/>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.keep.white.spaces"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.keep.white.spaces"/>
                             </properties>
                           </component>
                           <component id="bfd7f" class="javax.swing.JCheckBox" binding="myWrapText">
@@ -282,7 +282,7 @@
                               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.wrap.text"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.wrap.text"/>
                             </properties>
                           </component>
                         </children>
@@ -303,7 +303,7 @@
                               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.spaces.around.equals.in.attribute"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.spaces.around.equals.in.attribute"/>
                             </properties>
                           </component>
                           <component id="8f9a9" class="javax.swing.JCheckBox" binding="mySpacesAroundTagName">
@@ -311,7 +311,7 @@
                               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.spaces.around.tag.name"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.spaces.around.tag.name"/>
                             </properties>
                           </component>
                           <component id="2830e" class="javax.swing.JCheckBox" binding="mySpaceInEmptyTag">
@@ -319,7 +319,7 @@
                               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text resource-bundle="messages/ApplicationBundle" key="checkbox.spaces.in.empty.tag"/>
+                              <text resource-bundle="messages/XmlBundle" key="checkbox.spaces.in.empty.tag"/>
                             </properties>
                           </component>
                         </children>
@@ -340,7 +340,7 @@
                         </constraints>
                         <properties>
                           <margin top="0" left="0" bottom="0" right="0"/>
-                          <text resource-bundle="messages/ApplicationBundle" key="checkbox.keep.line.breaks"/>
+                          <text resource-bundle="messages/XmlBundle" key="checkbox.keep.line.breaks"/>
                         </properties>
                       </component>
                       <component id="d4efa" class="javax.swing.JLabel">
@@ -356,7 +356,7 @@
                           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text resource-bundle="messages/ApplicationBundle" key="editbox.keep.blank.lines"/>
+                          <text resource-bundle="messages/XmlBundle" key="editbox.keep.blank.lines"/>
                         </properties>
                       </component>
                       <component id="18182" class="javax.swing.JTextField" binding="myKeepBlankLines">
@@ -383,7 +383,7 @@
                         </constraints>
                         <properties>
                           <margin top="0" left="0" bottom="0" right="0"/>
-                          <text resource-bundle="messages/ApplicationBundle" key="checkbox.keep.line.breaks.in.text"/>
+                          <text resource-bundle="messages/XmlBundle" key="checkbox.keep.line.breaks.in.text"/>
                         </properties>
                       </component>
                     </children>

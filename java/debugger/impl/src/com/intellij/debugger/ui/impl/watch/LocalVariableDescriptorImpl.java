@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -33,8 +33,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   private final StackFrameProxyImpl myFrameProxy;
   private final LocalVariableProxyImpl myLocalVariable;
 
-  private String myTypeName = DebuggerBundle.message("label.unknown.value");
+  private String myTypeName = JavaDebuggerBundle.message("label.unknown.value");
   private boolean myIsPrimitive;
+  private boolean myIsParameter;
 
   private boolean myIsNewLocal = true;
 
@@ -62,12 +63,14 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    boolean isVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
+    LocalVariableProxyImpl variable = getLocalVariable();
+    boolean isVisible = myFrameProxy.isLocalVariableVisible(variable);
     if (isVisible) {
-      final String typeName = getLocalVariable().typeName();
+      final String typeName = variable.typeName();
       myTypeName = typeName;
       myIsPrimitive = DebuggerUtils.isPrimitiveType(typeName);
-      return myFrameProxy.getValue(getLocalVariable());
+      myIsParameter = variable.getVariable().isArgument();
+      return myFrameProxy.getValue(variable);
     }
 
     return null;
@@ -103,7 +106,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
   }
 
@@ -133,5 +136,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
         }
       }
     };
+  }
+
+  public boolean isParameter() {
+    return myIsParameter;
   }
 }

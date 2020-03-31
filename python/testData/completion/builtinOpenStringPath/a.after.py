@@ -1,0 +1,1 @@
+open('foobar.txt')

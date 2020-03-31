@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -40,24 +40,22 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testRenameInspectionWithoutGetShortName() {
-    doTestRenameInspection("MyInspectionWithoutGetShortName", "/withoutGetShortName/", "NewMyInspectionWithoutGetShortName.html");
+    doTestRenameInspection("MyInspectionWithoutGetShortName", "withoutGetShortName/", "NewMyInspectionWithoutGetShortName.html");
   }
 
   public void testRenameInspectionWithGetShortName() {
-    doTestRenameInspection("MyInspectionWithGetShortName", "/withGetShortName/", "someSpecificShortName.html");
+    doTestRenameInspection("MyInspectionWithGetShortName", "withGetShortName/", "someSpecificShortName.html");
   }
 
   public void testRenameNonStandardNamedInspection() {
-    doTestRenameInspection("MyInspectionWithSpecificName", "MyInspectionWithSpecificName", "/nonStandardNamed/", "someShortName.html");
+    doTestRenameInspection("MyInspectionWithSpecificName", "MyInspectionWithSpecificName", "nonStandardNamed/", "someShortName.html");
   }
-
 
   private void doTestRenameInspection(String name, String testDataSubPath, String expectedDescriptionFileName) {
     doTestRenameInspection(name, name + "Inspection", testDataSubPath, expectedDescriptionFileName);
   }
 
-  private void doTestRenameInspection(String name, String inspectionName, String testDataSubPath,
-                                      String expectedDescriptionFileName) {
+  private void doTestRenameInspection(String name, String inspectionName, String testDataSubPath, String expectedDescriptionFileName) {
     myFixture.configureByFile(testDataSubPath + name + ".xml");
     myFixture.copyFileToProject(testDataSubPath + inspectionName + ".java");
     myFixture.copyDirectoryToProject(testDataSubPath + "inspectionDescriptions", "inspectionDescriptions");

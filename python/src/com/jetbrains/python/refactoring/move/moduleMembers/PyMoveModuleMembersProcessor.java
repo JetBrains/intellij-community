@@ -29,7 +29,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -49,13 +53,11 @@ import java.util.List;
  * @see PyMoveSymbolProcessor
  */
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
-  public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
-
   private final List<SmartPsiElementPointer<PsiNamedElement>> myElements;
   private final LinkedHashSet<PsiFile> mySourceFiles;
   private final String myDestination;
 
-  public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
+  public PyMoveModuleMembersProcessor(PsiNamedElement @NotNull [] elements, @NotNull String destination) {
     super(elements[0].getProject());
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
     myElements = ContainerUtil.map(elements, manager::createSmartPsiElementPointer);
@@ -65,40 +67,38 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       }
 
       @Override
       public String getProcessedElementsHeader() {
-        return REFACTORING_NAME;
+        return getRefactoringName();
       }
     };
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()
-      .flatMap(e -> StreamEx.of(PyRefactoringUtil.findUsages(e, false))
+      .flatMap(e -> StreamEx.of(PyPsiIndexUtil.findUsages(e, false))
         .map(info -> new MyUsageInfo(info, e)))
       .toArray(UsageInfo[]::new);
   }
 
   @Override
-  protected void performRefactoring(@NotNull final UsageInfo[] usages) {
+  protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     final MultiMap<PsiElement, UsageInfo> usagesByElement = MultiMap.create();
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyRefactoringUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
@@ -140,13 +140,13 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       for (PsiFile file : optimizeImportsTargets) {
         PyClassRefactoringUtil.optimizeImports(file);
       }
-    }), REFACTORING_NAME, null);
+    }), getRefactoringName(), null);
   }
 
   @NotNull
   @Override
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return getRefactoringName();
   }
 
   private static class MyUsageInfo extends UsageInfo {
@@ -155,6 +155,10 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage);
       myMovedElement = element;
     }
+  }
+
+  public static String getRefactoringName() {
+    return PyBundle.message("refactoring.move.module.members");
   }
 }
 

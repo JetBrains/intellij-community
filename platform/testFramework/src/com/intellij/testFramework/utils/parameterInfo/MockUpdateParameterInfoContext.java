@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.utils.parameterInfo;
 
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +27,10 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     this(editor, file, null);
   }
 
-  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, @Nullable Object[] items) {
+  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, Object @Nullable [] items) {
     myEditor = editor;
     myFile = file;
-    myItems = items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : items;
+    myItems = items == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : items;
     myCompEnabled = items == null ? null : new boolean[items.length];
   }
 

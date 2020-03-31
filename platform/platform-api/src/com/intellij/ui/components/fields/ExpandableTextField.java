@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,9 +22,6 @@ import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
-/**
- * @author Sergey Malenkov
- */
 public class ExpandableTextField extends ExtendableTextField implements Expandable {
   private final ExpandableSupport support;
 
@@ -109,8 +106,12 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
         };
       }
     };
-    putClientProperty("monospaced", true);
+    setMonospaced(true);
     setExtensions(createExtensions());
+  }
+
+  public void setMonospaced(boolean monospaced) {
+    putClientProperty("monospaced", monospaced);
   }
 
   @NotNull

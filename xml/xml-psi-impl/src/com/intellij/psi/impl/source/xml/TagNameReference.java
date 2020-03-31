@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TagNameReference implements PsiReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.TagNameReference");
+  private static final Logger LOG = Logger.getInstance(TagNameReference.class);
 
   protected final boolean myStartTagFlag;
   private final ASTNode myNameElement;

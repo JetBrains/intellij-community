@@ -1,0 +1,52 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.jps.incremental.groovy
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class GroovyAllPathEvaluationTest {
+  @Test
+  fun `single groovy-all JAR`() {
+    assertEquals("/lib/groovy-all-2.4.17.jar",
+                 evalPathForParentClassloader("/lib/foo.jar", "/lib/groovy-all-2.4.17.jar"))
+  }
+
+  @Test
+  fun `groovy-all and groovy-eclipse`() {
+    assertEquals("/lib/groovy-all-2.4.17.jar",
+                 evalPathForParentClassloader("/lib/groovy-eclipse-batch-2.0.jar", "/lib/groovy-all-2.4.17.jar"))
+  }
+
+  @Test
+  fun `two groovy-all JARs`() {
+    assertNull(evalPathForParentClassloader("/lib/groovy-all-2.4.17.jar",
+                                            "/lib/groovy-all-2.4.18.jar"))
+
+  }
+
+  @Test
+  fun `many groovy JARs`() {
+    assertNull(evalPathForParentClassloader("/lib/groovy-2.4.12.jar",
+                                            "/lib/groovy-ant-2.4.12.jar",
+                                            "/lib/groovy-bsf-2.4.12.jar",
+                                            "/lib/groovy-console-2.4.12.jar"))
+  }
+
+  @Test
+  fun `groovy-all and JPS plugin JARs`() {
+    assertEquals("/lib/groovy-all-2.4.17.jar",
+                 evalPathForParentClassloader("/lib/groovy-jps-193.239.jar",
+                                              "/lib/groovy-rt-193.239.jar",
+                                              "/lib/groovy-constants-rt-193.239.jar",
+                                              "/lib/groovy-all-2.4.17.jar"))
+    assertEquals("/lib/groovy-all-2.4.17.jar",
+                 evalPathForParentClassloader("/lib/groovy-all-2.4.17.jar",
+                                              "/lib/groovy-jps-plugin.jar",
+                                              "/lib/groovy-rt-constants.jar",
+                                              "/lib/groovy_rt.jar"))
+  }
+
+  private fun evalPathForParentClassloader(vararg classpath: String) =
+    InProcessGroovyc.evaluatePathToGroovyAllForParentClassloader(classpath.toList())
+}

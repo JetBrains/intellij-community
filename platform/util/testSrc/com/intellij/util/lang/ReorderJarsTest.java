@@ -15,8 +15,9 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.io.zip.ReorderJarsMain;
@@ -36,6 +37,7 @@ import static org.junit.Assert.*;
  * @author Dmitry Avdeev
  */
 public class ReorderJarsTest {
+  private static final Logger LOG = Logger.getInstance(ReorderJarsTest.class);
   private File myTempDirectory;
 
   @Before
@@ -49,18 +51,16 @@ public class ReorderJarsTest {
   }
 
   private static String getTestDataPath() {
-    String homePath = PathManager.getHomePath().replace(File.separatorChar, '/');
-    if (new File(homePath + "/community/java/java-tests/testData").exists()) return homePath + "/community/java/java-tests/testData";
-    return homePath + "/java/java-tests/testData";
+    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/reorderJars";
   }
 
   @Test
   public void testReordering() throws IOException {
-    String path = getTestDataPath() + "/ide/plugins/reorderJars";
+    String path = getTestDataPath();
 
     try (JBZipFile zipFile1 = new JBZipFile(path + "/annotations.jar")) {
       List<JBZipEntry> entries = zipFile1.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
     }
 
     ReorderJarsMain.main(new String[]{path + "/order.txt", path, myTempDirectory.getPath()});
@@ -74,7 +74,7 @@ public class ReorderJarsTest {
     byte[] data;
     try (JBZipFile zipFile2 = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile2.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
       JBZipEntry entry = entries.get(1);
       data = entry.getData();
@@ -97,7 +97,7 @@ public class ReorderJarsTest {
 
   @Test
   public void testPluginXml() throws Exception {
-    String path = getTestDataPath() + "/ide/plugins/reorderJars";
+    String path = getTestDataPath();
 
     ReorderJarsMain.main(new String[] { path + "/zkmOrder.txt", path, myTempDirectory.getPath() } );
 
@@ -108,7 +108,7 @@ public class ReorderJarsTest {
 
     try (JBZipFile zipFile = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
       assertEquals("META-INF/plugin.xml", entries.get(1).getName());
     }

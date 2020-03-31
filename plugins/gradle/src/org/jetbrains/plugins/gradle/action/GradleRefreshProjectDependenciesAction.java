@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -17,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
@@ -25,10 +25,9 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class GradleRefreshProjectDependenciesAction extends RefreshExternalProjectAction {
-
   public GradleRefreshProjectDependenciesAction() {
-    getTemplatePresentation().setText("Refresh dependencies");
-    getTemplatePresentation().setDescription("Refresh dependencies in the Gradle cache using --refresh-dependencies argument");
+    getTemplatePresentation().setText(GradleBundle.messagePointer("gradle.action.refresh.dependencies.text"));
+    getTemplatePresentation().setDescription(GradleBundle.messagePointer("gradle.action.refresh.dependencies.description"));
   }
 
   @Override
@@ -69,9 +68,6 @@ public class GradleRefreshProjectDependenciesAction extends RefreshExternalProje
 
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       new ImportSpecBuilder(project, projectSystemId)
-                                        .useDefaultCallback()
-                                        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                                        .withArguments("--refresh-dependencies")
-                                        .build());
+                                        .withArguments("--refresh-dependencies"));
   }
 }

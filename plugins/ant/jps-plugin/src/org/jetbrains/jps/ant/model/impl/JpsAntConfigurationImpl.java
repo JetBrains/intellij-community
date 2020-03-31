@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.ant.model.impl;
 
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
@@ -25,11 +24,9 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
   public static final JpsElementChildRole<JpsAntConfiguration> ROLE = JpsElementChildRoleBase.create("ant configuration");
   private String myProjectDefaultAntName;

@@ -5,10 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -46,21 +43,26 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     private Icon myIcon;
     private final Set<Component> myComponents = new HashSet<>();
 
-    private LazyIcon(@NotNull boolean[] state) {
+    private LazyIcon(boolean @NotNull [] state) {
       myState = state;
     }
 
     private void setIcon(@NotNull PluginLogoIconProvider logoIcon) {
       myIcon = logoIcon.getIcon(myState[0], myState[1], myState[2], myState[3]);
-      for (Component component : myComponents) {
+      for (Iterator<Component> I = myComponents.iterator(); I.hasNext(); ) {
+        Component component = I.next();
         if (component.isShowing()) {
           component.repaint();
+        }
+        else if (!component.isValid()) {
+          I.remove();
         }
       }
     }
 
     @Override
     public void paintIcon(Component component, Graphics g, int x, int y) {
+      myComponents.removeIf(c -> !c.isValid());
       myComponents.add(component);
       myIcon.paintIcon(component, g, x, y);
     }

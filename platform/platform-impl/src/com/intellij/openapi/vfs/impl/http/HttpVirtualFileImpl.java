@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.UriUtil;
@@ -38,7 +25,7 @@ import java.util.List;
 class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
   @Nullable private final RemoteFileInfoImpl myFileInfo;
-  private FileType myInitialFileType;
+  @Nullable private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
@@ -63,7 +50,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
           ApplicationManager.getApplication().invokeLater(() -> {
             HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
             FileDocumentManager.getInstance().reloadFiles(file);
-            if (!localFile.getFileType().equals(myInitialFileType)) {
+            if (myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType)) {
               FileContentUtilCore.reparseFiles(file);
             }
           });
@@ -89,14 +76,8 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       }
       else {
         int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-        if (prevSlash < 0) {
-          myParentPath = path.substring(0, lastSlash + 1);
-          myName = path.substring(lastSlash + 1);
-        }
-        else {
-          myParentPath = path.substring(0, lastSlash);
-          myName = path.substring(lastSlash + 1);
-        }
+        myParentPath = path.substring(0, prevSlash < 0 ? lastSlash + 1 : lastSlash);
+        myName = path.substring(lastSlash + 1);
       }
     }
   }
@@ -210,8 +191,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     if (myFileInfo == null) {
       throw new UnsupportedOperationException();
     }
@@ -220,7 +200,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     if (localFile != null) {
       return localFile.contentsToByteArray();
     }
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override

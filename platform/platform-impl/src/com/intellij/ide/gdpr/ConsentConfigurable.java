@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +14,7 @@ public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, Lis
   private final List<Consent> myConsents;
 
   public ConsentConfigurable() {
-    super("consents", "Data Sharing", "preferences.usage.statistics");
+    super("consents", IdeBundle.message("consent.configurable"), "preferences.usage.statistics");
     myConsents = new ArrayList<>(AppUIUtil.loadConsentsForEditing());
   }
 
@@ -24,12 +26,18 @@ public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, Lis
 
   @Override
   protected ConsentSettingsUi createUi() {
-    return new ConsentSettingsUi(true) {
+    ConsentSettingsUi ui = new ConsentSettingsUi(true) {
       @Override
       public void apply(@NotNull List<Consent> consents) {
         super.apply(consents);
         AppUIUtil.saveConsents(consents);
       }
     };
+
+    // When building searchable options, ensure we return a non-empty UI
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      ui.reset(myConsents);
+    }
+    return ui;
   }
 }

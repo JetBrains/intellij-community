@@ -37,3 +37,19 @@ public class UnnecessaryFinalOnLocalVariableOrParameter {
     }
   }
 }
+class Sample {
+
+  public static void main(String[] args) {
+    final int ALPHA_OPAQUE = (short) 0xFFFF; // IDEA suggests to remove final
+    final int ALPHA_TRANSLUCENT = (short) 0; // IDEA suggests to remove final
+
+    int size = 5;
+    short[][] data = {
+      new short[size],
+      new short[size]
+    };
+
+    data[1][1] = ALPHA_TRANSLUCENT;
+    data[1][1] = ALPHA_OPAQUE;
+  }
+}

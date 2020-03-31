@@ -21,9 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
 /**
  * @author Irina.Chernushina on 4/21/2015.

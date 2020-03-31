@@ -65,13 +65,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "parameter.name.differs.from.overridden.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "parameter.name.differs.from.overridden.parameter.problem.descriptor",
@@ -117,9 +110,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         final PsiParameter parameter = parameters[i];
         final String parameterName = parameter.getName();
         final String superParameterName = superParameters[i].getName();
-        if (superParameterName == null) {
-          continue;
-        }
         if (superParameterName.equals(parameterName)) {
           continue;
         }

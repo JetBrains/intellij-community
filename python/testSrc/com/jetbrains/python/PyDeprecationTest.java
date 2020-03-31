@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -48,7 +33,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/functionStub.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
-    GCWatcher.tracking(file.findTopLevelFunction("getstatus"), ((PsiFileImpl)file).getTreeElement()).tryGc();
+    GCWatcher.tracking(file.findTopLevelFunction("getstatus"), ((PsiFileImpl)file).getTreeElement()).ensureCollected();
     assertNotParsed(file);
     
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
@@ -79,22 +64,11 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testAbcDeprecatedAbstracts() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
-        myFixture.checkHighlighting(true, false, false);
-      }
-    );
-  }
-
   public void testFileStub() {
     myFixture.configureByFile("deprecation/deprecatedModule.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
-    GCWatcher.tracking(((PsiFileImpl)file).getStub(), ((PsiFileImpl)file).getTreeElement()).tryGc();
+    GCWatcher.tracking(((PsiFileImpl)file).getStub(), ((PsiFileImpl)file).getTreeElement()).ensureCollected();
 
     assertNotParsed(file);
 
@@ -106,6 +80,14 @@ public class PyDeprecationTest extends PyTestCase {
   public void testHashlibMd5() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.copyDirectoryToProject("deprecation/hashlibMd5", "");
+    myFixture.configureByFile("a.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-38101
+  public void testDeprecatedElementInPyi() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedElementInPyi", "");
     myFixture.configureByFile("a.py");
     myFixture.checkHighlighting(true, false, false);
   }

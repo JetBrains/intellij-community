@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
 * @author Eugene Zhuravlev
 */
-public final class FileKeyDescriptor implements KeyDescriptor<File> {
+public class FileKeyDescriptor implements KeyDescriptor<File> {
   @Override
   public void save(@NotNull DataOutput out, File value) throws IOException {
     IOUtil.writeUTF(out, value.getPath());

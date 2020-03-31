@@ -25,6 +25,5 @@ public abstract class ActionsTopHitProvider implements SearchTopHitProvider {
     }
   }
 
-  @NotNull
-  protected abstract String[][] getActionsMatrix();
+  protected abstract String[] @NotNull [] getActionsMatrix();
 }

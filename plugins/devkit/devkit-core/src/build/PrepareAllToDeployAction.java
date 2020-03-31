@@ -59,7 +59,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     }
     e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
-      e.getPresentation().setText(DevKitBundle.message("prepare.for.deployment.all"));
+      e.getPresentation().setText(DevKitBundle.messagePointer("prepare.for.deployment.all"));
     }
   }
 }

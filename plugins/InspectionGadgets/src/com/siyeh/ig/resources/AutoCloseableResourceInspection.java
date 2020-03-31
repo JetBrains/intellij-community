@@ -83,7 +83,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     table2.setEnabled(!ignoreFromMethodCall);
     final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, "Choose class");
     final JPanel wrapperPanel = new JPanel(new BorderLayout());
-    wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore AutoCloseable instances returned from these methods", false));
+    wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title"), false));
     wrapperPanel.add(tablePanel2);
     panel.add(tablePanel);
     panel.add(wrapperPanel);
@@ -93,13 +94,6 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
     return panel;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("auto.closeable.resource.display.name");
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 final class ComponentTreeStructure extends AbstractTreeStructure{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.componentTree.ComponentPtr");
+  private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
   private static final Object[] ourEmptyObjectArray=new Object[]{};
 
   private final Object myRootElement;
@@ -38,9 +39,8 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     return myRootElement;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull final Object element){
+  public Object @NotNull [] getChildElements(@NotNull final Object element){
     if(element==myRootElement){
       ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();
@@ -84,7 +84,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       return (RadButtonGroup[]) element;
     }
     else if (element instanceof LwInspectionSuppression || element instanceof RadButtonGroup) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
     else{
       throw new IllegalArgumentException("unknown element: "+element);

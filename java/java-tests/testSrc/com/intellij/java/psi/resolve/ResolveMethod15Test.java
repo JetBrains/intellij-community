@@ -611,8 +611,9 @@ public class ResolveMethod15Test extends LightResolveTestCase {
   }
 
   public void testSOE() throws Exception {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     PsiReference ref = configureByFile();
-    ref.resolve();
+    assertNull(ref.resolve());
   }
   public void testHidingSuperPrivate() throws Exception {
     PsiJavaReference ref = (PsiJavaReference)configureByFile();
@@ -644,6 +645,14 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     PsiJavaReference ref = (PsiJavaReference)configureByFile();
     final JavaResolveResult result = ref.advancedResolve(true);
     assertNull(result.getElement());
+  }
+
+  public void testStaticImportOnEnumValues() throws Exception {
+    JavaResolveResult result = ((PsiJavaReference)configureByFile()).advancedResolve(true);
+    PsiMethod method = (PsiMethod)result.getElement();
+    assertNotNull(method);
+    PsiClass containingClass = method.getContainingClass();
+    assertEquals("RetentionPolicy", containingClass.getName());
   }
 
   private static void assertResolvesToMethodInClass(JavaResolveResult result, @NonNls String name) {

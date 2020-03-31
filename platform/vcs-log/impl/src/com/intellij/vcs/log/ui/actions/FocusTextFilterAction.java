@@ -16,40 +16,41 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.frame.MainFrame;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
-    super("Focus Text Filter", "Focus text filter or move focus back to the commits list", null);
+    super(VcsLogBundle.messagePointer("action.FocusTextFilterAction.text"),
+          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"), null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(project != null && ui instanceof VcsLogUiImpl);
+    e.getPresentation().setEnabledAndVisible(project != null && ui instanceof MainVcsLogUi);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    MainFrame mainFrame = ((VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getMainFrame();
-    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(mainFrame.getToolbar()) != null) {
-      IdeFocusManager.getInstance(project).requestFocus(mainFrame.getGraphTable(), true);
+    MainVcsLogUi logUi = (MainVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    Project project = e.getProject();
+
+    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(logUi.getToolbar()) != null) {
+      IdeFocusManager.getInstance(project).requestFocus(logUi.getTable(), true);
     }
     else {
-      IdeFocusManager.getInstance(project).requestFocus(mainFrame.getTextFilter(), true);
+      IdeFocusManager.getInstance(project).requestFocus(logUi.getFilterUi().getTextFilterComponent(), true);
     }
   }
 }

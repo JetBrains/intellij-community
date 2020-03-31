@@ -75,7 +75,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
     openEditor(project, new Navigatable[]{navigatable});
   }
 
-  public void openEditor(@NotNull Project project, @NotNull Navigatable[] navigatables) {
+  public void openEditor(@NotNull Project project, Navigatable @NotNull [] navigatables) {
     boolean success = false;
     for (Navigatable navigatable : navigatables) {
       if (navigatable.canNavigate()) {

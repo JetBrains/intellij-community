@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang
 
 import com.intellij.openapi.editor.Editor
@@ -7,24 +7,25 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.testFramework.fixtures.InjectionTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 
-abstract class AbstractLanguageInjectionTestCase : LightCodeInsightFixtureTestCase() {
-
+abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTestCase() {
   private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 
   fun assertInjectedLangAtCaret(lang: String?) {
     injectionTestFixture.assertInjectedLangAtCaret(lang)
   }
 
-  val topLevelEditor get() = injectionTestFixture.topLevelEditor
+  val topLevelEditor: Editor
+    get() = injectionTestFixture.topLevelEditor
 
-  val topLevelCaretPosition get() = injectionTestFixture.topLevelCaretPosition
+  val topLevelCaretPosition
+    get() = injectionTestFixture.topLevelCaretPosition
 
-  val topLevelFile: PsiFile get() = injectionTestFixture.topLevelFile
-
+  val topLevelFile: PsiFile
+    get() = injectionTestFixture.topLevelFile
 }
 
 class StoringFixPresenter : InjectLanguageAction.FixPresenter {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
@@ -9,7 +9,8 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   public BookmarksFavoriteListProvider(Project project) {
     super(project, "Bookmarks");
 
-    project.getMessageBus().connect(project).subscribe(BookmarksListener.TOPIC, this);
+    project.getMessageBus().connect().subscribe(BookmarksListener.TOPIC, this);
     updateChildren();
   }
 
@@ -53,11 +54,11 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
     if (myProject.isDisposed()) return;
     myChildren.clear();
     List<Bookmark> bookmarks = BookmarkManager.getInstance(myProject).getValidBookmarks();
-    for (final Bookmark bookmark : bookmarks) {
+    for (Bookmark bookmark : bookmarks) {
       AbstractTreeNode<Bookmark> child = new AbstractTreeNode<Bookmark>(myProject, bookmark) {
         @NotNull
         @Override
-        public Collection<? extends AbstractTreeNode> getChildren() {
+        public Collection<? extends AbstractTreeNode<Bookmark>> getChildren() {
           return Collections.emptyList();
         }
 
@@ -140,7 +141,8 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
         break;
       case REMOVE:
         for (Object toRemove : selectedObjects) {
-          Bookmark bookmark = (Bookmark)((AbstractTreeNode)toRemove).getValue();
+          @SuppressWarnings("unchecked")
+          Bookmark bookmark = ((AbstractTreeNode<Bookmark>)toRemove).getValue();
           BookmarkManager.getInstance(project).removeBookmark(bookmark);
         }
         break;
@@ -168,7 +170,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
       Bookmark bookmark = (Bookmark)value;
       BookmarkItem.setupRenderer(renderer, myProject, bookmark, selected);
       if (renderer.getIcon() != null) {
-        RowIcon icon = new RowIcon(3, RowIcon.Alignment.CENTER);
+        RowIcon icon = IconManager.getInstance().createRowIcon(3, RowIcon.Alignment.CENTER);
         icon.setIcon(bookmark.getIcon(), 0);
         icon.setIcon(JBUI.scale(EmptyIcon.create(1)), 1);
         icon.setIcon(renderer.getIcon(), 2);

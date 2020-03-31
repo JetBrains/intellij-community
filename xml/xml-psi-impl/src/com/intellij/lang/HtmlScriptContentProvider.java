@@ -23,6 +23,7 @@ public interface HtmlScriptContentProvider {
   /**
    * @return instance of the {@link IElementType} to use in html script tag
    */
+  @Nullable
   IElementType getScriptElementType();
 
   /**
@@ -32,6 +33,7 @@ public interface HtmlScriptContentProvider {
   Lexer getHighlightingLexer();
 
   class Empty implements HtmlScriptContentProvider{
+    @Nullable
     @Override
     public IElementType getScriptElementType() {
       return null;

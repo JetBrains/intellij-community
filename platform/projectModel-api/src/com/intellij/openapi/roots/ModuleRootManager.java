@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  * @see CompilerModuleExtension
  */
+@ApiStatus.NonExtendable
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.
@@ -58,8 +60,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    *
    * @return the list of module direct dependencies.
    */
-  @NotNull
-  public abstract Module[] getDependencies();
+  public abstract Module @NotNull [] getDependencies();
 
   /**
    * Returns the list of modules on which the current module directly depends. The method does not traverse
@@ -68,8 +69,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    * @param includeTests whether test-only dependencies should be included
    * @return the list of module direct dependencies.
    */
-  @NotNull
-  public abstract Module[] getDependencies(boolean includeTests);
+  public abstract Module @NotNull [] getDependencies(boolean includeTests);
 
   /**
    * Checks if the current module directly depends on the specified module.

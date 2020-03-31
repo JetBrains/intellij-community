@@ -6,11 +6,9 @@ src/Server.java
 End of files
 Cleaning output files:
 out/production/RecompileDependentTests/Client.class
-out/production/RecompileDependentTests/Server.class
 End of files
 Compiling files:
 src/Client.java
-src/Server.java
 End of files
 Cleaning output files:
 out/test/RecompileDependentTests/TestClient.class

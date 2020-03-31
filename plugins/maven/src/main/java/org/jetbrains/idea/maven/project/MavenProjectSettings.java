@@ -6,13 +6,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Evdokimov
  */
-@Deprecated
+@ApiStatus.Experimental
 @State(name = "MavenProjectSettings", storages = @Storage("mavenProjectSettings.xml"))
 public class MavenProjectSettings implements PersistentStateComponent<MavenProjectSettings> {
 

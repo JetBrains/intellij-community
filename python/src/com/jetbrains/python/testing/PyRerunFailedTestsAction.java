@@ -52,9 +52,8 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       super(configuration);
     }
 
-    @NotNull
     @Override
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return ((AbstractPythonRunConfiguration)getPeer()).getModules();
     }
 

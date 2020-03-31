@@ -19,8 +19,6 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.codeInsight.completion.CompletionProcess;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.lang.WordCompletionElementFilter;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;

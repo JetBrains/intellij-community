@@ -8,9 +8,10 @@ import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class CanBeFinalTest extends InspectionTestCase {
+public class CanBeFinalTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
@@ -130,17 +131,17 @@ public class CanBeFinalTest extends InspectionTestCase {
   public void testfieldImplicitWrite() {
     ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
       @Override
-      public boolean isImplicitUsage(PsiElement element) {
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
         return isImplicitWrite(element);
       }
 
       @Override
-      public boolean isImplicitRead(PsiElement element) {
+      public boolean isImplicitRead(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitWrite(PsiElement element) {
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
         return element instanceof PsiField && "implicitWrite".equals(((PsiNamedElement)element).getName());
       }
     }, getTestRootDisposable());

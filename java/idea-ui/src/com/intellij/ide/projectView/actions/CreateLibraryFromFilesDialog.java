@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -30,9 +31,6 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;
@@ -43,7 +41,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
-    setTitle("Create Library");
+    setTitle(JavaUiBundle.message("dialog.title.create.library"));
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
@@ -55,7 +53,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myModulesComboBox = new ModulesComboBox();
     myModulesComboBox.fillModules(myProject);
     myModulesComboBox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent("&Add to module:", myModulesComboBox);
+    builder.addLabeledComponent(JavaUiBundle.message("label.add.to.module"), myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {
@@ -97,10 +95,10 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
       Module module = null;
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());
       if (local != null) {
-        module = ModuleUtil.findModuleForFile(local, myProject);
+        module = ModuleUtilCore.findModuleForFile(local, myProject);
       }
       if (module == null) {
-        module = ModuleUtil.findModuleForFile(root.getFile(), myProject);
+        module = ModuleUtilCore.findModuleForFile(root.getFile(), myProject);
       }
       if (module != null) {
         return module;

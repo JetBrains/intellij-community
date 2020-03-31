@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl;
 
 import com.intellij.facet.Facet;
@@ -30,28 +15,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
-public class FacetModelImpl extends FacetModelBase implements ModifiableFacetModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetModelImpl");
-  private final List<Facet> myFacets = new ArrayList<>();
-  private final Map<Facet, String> myFacet2NewName = new HashMap<>();
+public final class FacetModelImpl extends FacetModelBase implements ModifiableFacetModel {
+  private static final Logger LOG = Logger.getInstance(FacetModelImpl.class);
+  private final List<Facet<?>> myFacets = new ArrayList<>();
+  private final Map<Facet<?>, String> myFacet2NewName = new HashMap<>();
   private final FacetManagerImpl myManager;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public FacetModelImpl(final FacetManagerImpl manager) {
+  public FacetModelImpl(@NotNull FacetManagerImpl manager) {
     myManager = manager;
   }
 
   public void addFacetsFromManager() {
-    for (Facet facet : myManager.getAllFacets()) {
+    for (Facet<?> facet : myManager.getAllFacets()) {
       addFacet(facet);
     }
   }
 
   @Override
-  public void addFacet(Facet facet) {
+  public void addFacet(Facet<?> facet) {
     if (myFacets.contains(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] is already added");
     }
@@ -61,13 +43,13 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   @Override
-  public void addFacet(Facet facet, @Nullable ProjectModelExternalSource externalSource) {
+  public void addFacet(Facet<?> facet, @Nullable ProjectModelExternalSource externalSource) {
     addFacet(facet);
-    myManager.setExternalSource(facet, externalSource);
+    FacetManagerImpl.setExternalSource(facet, externalSource);
   }
 
   @Override
-  public void removeFacet(Facet facet) {
+  public void removeFacet(Facet<?> facet) {
     if (!myFacets.remove(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] not found");
     }
@@ -76,7 +58,16 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   @Override
-  public void rename(final Facet facet, final String newName) {
+  public void replaceFacet(@NotNull Facet<?> original, @NotNull Facet<?> replacement) {
+    int index = myFacets.indexOf(original);
+    if (index != -1) {
+      myFacets.set(index, replacement);
+      facetsChanged();
+    }
+  }
+
+  @Override
+  public void rename(final Facet<?> facet, final String newName) {
     if (!newName.equals(facet.getName())) {
       myFacet2NewName.put(facet, newName);
     } else {
@@ -87,7 +78,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   @Override
   @Nullable
-  public String getNewName(final Facet facet) {
+  public String getNewName(final Facet<?> facet) {
     return myFacet2NewName.get(facet);
   }
 
@@ -98,23 +89,22 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   @Override
   public boolean isModified() {
-    return !new HashSet<>(myFacets).equals(new HashSet<>(Arrays.asList(myManager.getAllFacets()))) || !myFacet2NewName.isEmpty();
+    return !new HashSet<>(myFacets).equals(ContainerUtil.set(myManager.getAllFacets())) || !myFacet2NewName.isEmpty();
   }
 
   @Override
-  public boolean isNewFacet(final Facet facet) {
+  public boolean isNewFacet(final Facet<?> facet) {
     return myFacets.contains(facet) && ArrayUtil.find(myManager.getAllFacets(), facet) == -1;
   }
 
   @Override
-  @NotNull
-  public Facet[] getAllFacets() {
+  public Facet<?> @NotNull [] getAllFacets() {
     return myFacets.toArray(Facet.EMPTY_ARRAY);
   }
 
   @Override
   @NotNull
-  public String getFacetName(@NotNull final Facet facet) {
+  public String getFacetName(@NotNull final Facet<?> facet) {
     return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -518,6 +518,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return the value of the Open in New Tab flag.
    * @deprecated and not used anymore
    */
+  @Deprecated
   public boolean isOpenInNewTab() {
     return true;
   }
@@ -528,6 +529,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTab the value of the Open in New Tab flag.
    * @deprecated and not used anymore
    */
+  @Deprecated
   public void setOpenInNewTab(boolean showInNewTab) {
   }
 
@@ -537,6 +539,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return true if Open in New Tab is enabled, false otherwise.
    * @deprecated and not used anymore
    */
+  @Deprecated
   public boolean isOpenInNewTabEnabled() {
     return true;
   }
@@ -547,6 +550,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTabEnabled true if Open in New Tab is enabled, false otherwise.
    * @deprecated and not used anymore
    */
+  @Deprecated
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
   }
 

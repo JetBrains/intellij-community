@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
@@ -10,14 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.PathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author traff
- */
 public class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter {
   public PyRemoteAnalyzeStacktraceFilter(Project project) {
     super(project);
@@ -31,8 +27,8 @@ public class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter {
       return vFile;
     }
     for (Module m: ModuleManager.getInstance(getProject()).getModules()) {
-      Sdk s = PythonSdkType.findPythonSdk(m);
-      if (PySdkUtil.isRemote(s)) {
+      Sdk s = PythonSdkUtil.findPythonSdk(m);
+      if (PythonSdkUtil.isRemote(s)) {
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase) s.getSdkAdditionalData();
 
         if (data != null) {

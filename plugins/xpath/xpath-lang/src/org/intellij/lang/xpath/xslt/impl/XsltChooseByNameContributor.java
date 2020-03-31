@@ -36,13 +36,13 @@ import org.jetbrains.annotations.Nullable;
 
 class XsltChooseByNameContributor implements ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(XsltSymbolIndex.NAME, processor, scope, filter);
   }
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     FileBasedIndex.getInstance().processValues(XsltSymbolIndex.NAME, name, null, (file, kind) -> {

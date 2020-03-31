@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.logger
@@ -34,7 +34,7 @@ fun splitData(data: String?): Credentials? {
     return null
   }
 
-  val list = parseString(data!!, '@')
+  val list = parseString(data, '@')
   return Credentials(list.getOrNull(0), list.getOrNull(1))
 }
 
@@ -75,7 +75,8 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
 @JvmOverloads
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
-internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
 
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()

@@ -76,4 +76,10 @@ public class MacroParserTest extends LightIdeaTestCase {
     Result result = assertInstanceOf(e, ConstantNode.class).calculateResult(null);
     assertEquals("test\\test\n\t\fx", assertInstanceOf(result, TextResult.class).getText());
   }
+
+  public void testSingleQuote() {
+    Expression e = MacroParser.parse("\"");
+    Result result = assertInstanceOf(e, ConstantNode.class).calculateResult(null);
+    assertEquals("", assertInstanceOf(result, TextResult.class).getText());
+  }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -16,8 +16,16 @@ import org.junit.Assert.assertFalse
 
 fun Module.addExclude(outDir: VirtualFile) {
   ModuleRootModificationUtil.updateModel(this) { model ->
-    ReadAction.run<RuntimeException> {
+    runReadAction {
       findContentEntry(model, outDir)?.addExcludeFolder(outDir)
+    }
+  }
+}
+
+fun Module.addSourceFolder(sourceDir: VirtualFile, isTestSource: Boolean = false) {
+  ModuleRootModificationUtil.updateModel(this) { model ->
+    runReadAction {
+      findContentEntry(model, sourceDir)?.addSourceFolder(sourceDir, isTestSource)
     }
   }
 }
@@ -26,7 +34,10 @@ fun Module.addContentRoot(vDir: VirtualFile): ContentEntry? {
   ModuleRootModificationUtil.updateModel(this) { model -> model.addContentEntry(vDir) }
   for (entry in ModuleRootManager.getInstance(this).contentEntries) {
     if (Comparing.equal(entry.file, vDir)) {
-      assertFalse((entry as ContentEntryImpl).isDisposed)
+      if (entry is ContentEntryImpl) {
+        assertFalse(entry.isDisposed)
+      }
+
       return entry
     }
   }

@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +17,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @NotNull
   private final Module myModule;
 
-  public ModuleFileIndexImpl(@NotNull Module module, @NotNull DirectoryIndex directoryIndex) {
-    super(directoryIndex, FileTypeRegistry.getInstance());
+  public ModuleFileIndexImpl(@NotNull Module module) {
+    super(DirectoryIndex.getInstance(module.getProject()));
+
     myModule = module;
   }
 
@@ -41,7 +40,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
-      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      List<VirtualFile[]> allRoots = Arrays.asList(
+        ModuleRootManager.getInstance(myModule).getContentRoots(),
+        ModuleRootManager.getInstance(myModule).getSourceRoots()
+      );
       for (VirtualFile[] roots : allRoots) {
         for (VirtualFile root : roots) {
           DirectoryInfo info = getInfoForFileOrDirectory(root);
@@ -143,15 +145,13 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       myOwnerModule = ownerModule;
     }
 
-    @NotNull
     @Override
-    public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+    public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
       throw new IncorrectOperationException();
     }
 
-    @NotNull
     @Override
-    public String[] getUrls(@NotNull OrderRootType rootType) {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       throw new IncorrectOperationException();
     }
 
@@ -189,7 +189,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+  protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
   }
 }

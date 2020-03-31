@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
@@ -37,9 +40,6 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Sergey.Malenkov
- */
 final class SettingsEditor extends AbstractEditor implements DataProvider {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
@@ -61,10 +61,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   SettingsEditor(@NotNull Disposable parent,
                  @NotNull Project project,
-                 @NotNull List<ConfigurableGroup> groups,
+                 @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
                  final String filter,
-                 final ISettingsTreeViewFactory factory) {
+                 @NotNull ISettingsTreeViewFactory factory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -117,7 +117,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       @Override
       public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
-          myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.ByID.getID(configurable));
+          myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
           myLoadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
@@ -148,13 +148,14 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      private Promise<? super Object> updateIfCurrent(Configurable configurable) {
+      @NotNull
+      private Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
           return Promises.resolvedPromise();
         }
         else {
-          return Promises.rejectedPromise("rejected");
+          return Promises.cancelledPromise();
         }
       }
     });
@@ -209,8 +210,8 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myEditor.setPreferredSize(JBUI.size(800, 600));
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
-    searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
+    searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
+    myBanner.setBorder(JBUI.Borders.empty(5, 6, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
@@ -224,7 +225,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
 
-    if (IdeFrameDecorator.isCustomDecoration()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       mySplitter.getDivider().setOpaque(false);
     }
 
@@ -241,9 +242,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
     if (configurable == null) {
       String id = myProperties.getValue(SELECTED_CONFIGURABLE);
-      configurable = new ConfigurableVisitor.ByID(id != null ? id : "preferences.lookFeel").find(groups);
+      configurable = ConfigurableVisitor.findById(id != null ? id : "preferences.lookFeel", groups);
       if (configurable == null) {
-        configurable = ConfigurableVisitor.ALL.find(groups);
+        configurable = ConfigurableVisitor.find(ConfigurableVisitor.ALL, groups);
       }
     }
 
@@ -257,6 +258,39 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myTreeView.select(myFilter.myContext.getCurrentConfigurable())
         .onSuccess(o -> requestFocusToEditor());
     });
+
+    for (ConfigurableGroup group : groups) {
+      if (group instanceof MutableConfigurableGroup) {
+        MutableConfigurableGroup mutable = (MutableConfigurableGroup)group;
+        Disposer.register(this, mutable);
+        mutable.addListener(createReloadListener(groups));
+      }
+    }
+  }
+
+  @NotNull
+  private MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
+    return new MutableConfigurableGroup.Listener() {
+      @Override
+      public void handleUpdate() {
+        Configurable selected = myEditor.getConfigurable();
+        String id = selected instanceof SearchableConfigurable ? ((SearchableConfigurable)selected).getId() : null;
+        myEditor.reload();
+        myFilter.reload();
+        myControllers.clear();
+        myLastController = null;
+
+        Configurable candidate = id == null ? null :ConfigurableVisitor.findById(id, groups);
+        if (candidate == null) {
+          candidate = ConfigurableVisitor.findById(PluginManagerConfigurable.ID, groups);
+        }
+        myEditor.init(candidate, false);
+        myTreeView.reloadWithSelection(candidate);
+        mySettings.reload();
+        invalidate();
+        repaint();
+      }
+    };
   }
 
   private void requestFocusToEditor() {
@@ -295,6 +329,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   @Override
   void disposeOnce() {
+    if (myProperties == null || mySplitter == null) return; // if constructor failed
     myProperties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
   }
 
@@ -327,12 +362,15 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Override
-  boolean cancel() {
-    if (myFilter.myContext.isHoldingFilter()) {
+  boolean cancel(AWTEvent source) {
+    if (source instanceof KeyEvent && myFilter.myContext.isHoldingFilter()) {
       mySearch.setText("");
       return false;
     }
-    return super.cancel();
+    for (Configurable configurable : myFilter.myContext.getModified()) {
+      configurable.cancel();
+    }
+    return super.cancel(source);
   }
 
   @Override

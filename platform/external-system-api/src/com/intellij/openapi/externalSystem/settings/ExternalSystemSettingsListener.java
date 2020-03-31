@@ -32,17 +32,29 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
 
   /**
    * This method is present here only because IJ platform doesn't has corresponding messaging set up for 'project rename' event.
-   * 
+   *
    * @param oldName  old project name
    * @param newName  new project name
    */
   void onProjectRenamed(@NotNull String oldName, @NotNull String newName);
-  
+
+  /**
+   * Happens after loading of project settings
+   *
+   * @see AbstractExternalSystemSettings#loadState
+   * @see com.intellij.openapi.components.PersistentStateComponent#loadState
+   */
+  default void onProjectsLoaded(@NotNull Collection<S> settings) {}
+
   void onProjectsLinked(@NotNull Collection<S> settings);
 
   void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths);
-  
-  void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath);
+
+  /**
+   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  default void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {}
 
   /**
    * External system settings changes might affect project structure, e.g. switching from one external system version to another

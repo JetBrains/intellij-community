@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -39,18 +39,21 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
+
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
@@ -60,7 +63,19 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
     MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
 
-    return selectStrategy(context).isValid(id, manager, context) ? s : null;
+    ConverterStrategy strategy = selectStrategy(context);
+    boolean isValid = strategy.isValid(id, manager, context);
+    if (!isValid) {
+      File localRepository = MavenProjectsManager.getInstance(context.getProject()).getLocalRepository();
+      VirtualFile file = strategy.getRepositoryFile(id, MavenProjectsManager.getInstance(context.getProject()));
+      if (file != null) {
+        File artifactFile = new File(file.getPath());
+        MavenIndicesManager.getInstance().fixArtifactIndex(artifactFile, localRepository);
+        return s;
+      }
+      return null;
+    }
+    return s;
   }
 
   protected abstract boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context);
@@ -73,7 +88,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(context.getProject()).getSearchService();
+    DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
@@ -94,18 +109,6 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
     return selectStrategy(context).getContextName() + " '" + MavenArtifactCoordinatesHelper.getId(context) + "' not found";
-  }
-
-  @Override
-  public LocalQuickFix[] getQuickFixes(ConvertContext context) {
-    MavenId id = MavenArtifactCoordinatesHelper.getId(context);
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
-    if (manager.hasOfflineIndexes()) {
-      return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
-    }
-    else {
-      return super.getQuickFixes(context);
-    }
   }
 
   @Override
@@ -169,7 +172,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return new ConverterStrategy();
   }
 
-  private static class MyUpdateIndicesFix implements LocalQuickFix {
+  public static class MyUpdateIndicesIntention implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -178,7 +181,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     @NotNull
-    public String getName() {
+    public String getText() {
       return MavenDomBundle.message("fix.update.indices");
     }
 
@@ -187,9 +190,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return false;
     }
 
+
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return MavenUtil.isPomFile(project, file.getVirtualFile()) &&
+             MavenProjectIndicesManager.getInstance(project).hasRemotesExceptCentral();
+
     }
   }
 
@@ -230,13 +241,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
-      if (file == null) return null;
-
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = getRepositoryFile(id, projectsManager);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
+    }
+
+    @Nullable
+    protected VirtualFile getRepositoryFile(MavenId id, MavenProjectsManager projectsManager) {
+      File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
+      return LocalFileSystem.getInstance().findFileByIoFile(file);
     }
 
     private File makeLocalRepositoryFile(MavenId id, File localRepository) {

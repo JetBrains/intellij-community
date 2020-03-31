@@ -3,14 +3,33 @@ package com.intellij.serialization
 
 import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
+import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.annotations.TestOnly
+import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal abstract class BindingProducer : BindingInitializationContext {
-  private val cache: MutableMap<Type, Binding> = THashMap()
+  private val cache: MutableMap<Type, Binding> = THashMap(object : TObjectHashingStrategy<Type> {
+    override fun equals(o1: Type, o2: Type): Boolean {
+      if (o1 is ParameterizedType && o2 is ParameterizedType) {
+        return o1 === o2 || (Arrays.equals(o1.actualTypeArguments, o2.actualTypeArguments) && o1.rawType == o2.rawType)
+      }
+      return o1 == o2
+    }
+
+    override fun computeHashCode(o: Type): Int {
+      // ours ParameterizedTypeImpl hash code differs from java impl
+      return when (o) {
+        is ParameterizedType -> 31 * o.rawType.hashCode() + Arrays.hashCode(o.actualTypeArguments)
+        else -> o.hashCode()
+      }
+    }
+  })
+
   private val cacheLock = ReentrantReadWriteLock()
 
   @get:TestOnly
@@ -24,10 +43,12 @@ internal abstract class BindingProducer : BindingInitializationContext {
 
   abstract fun getNestedBinding(accessor: MutableAccessor): Binding
 
-  fun getRootBinding(aClass: Class<*>, type: Type = aClass): Binding {
+  fun getRootBinding(aClass: Class<*>) = getRootBinding(aClass, aClass)
+
+  fun getRootBinding(aClass: Class<*>?, type: Type): Binding {
     fun getByTypeOrByClass(): Binding? {
       var result = cache.get(type)
-      if (result == null && aClass !== type) {
+      if (result == null && aClass !== type && aClass != null) {
         result = cache.get(aClass)
       }
       return result
@@ -57,7 +78,7 @@ internal abstract class BindingProducer : BindingInitializationContext {
     }
   }
 
-  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): Binding
+  protected abstract fun createRootBinding(aClass: Class<*>?, type: Type): Binding
 
   @Suppress("unused")
   fun clearBindingCache() {

@@ -6,6 +6,6 @@ class StringCategory{
 
 
 use(StringCategory){
-  println "hello world".getM<ref>d5()
+  println "hello world".getM<caret>d5()
 }
 

@@ -24,13 +24,6 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.of.awt.peer.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.of.awt.peer.class.problem.descriptor");

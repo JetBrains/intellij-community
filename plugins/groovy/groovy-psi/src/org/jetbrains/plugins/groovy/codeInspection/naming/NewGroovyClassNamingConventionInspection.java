@@ -12,23 +12,20 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.List;
-
 public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public NewGroovyClassNamingConventionInspection() {
-    super(wrapClassExtensions(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    registerConventionsListener(NewClassNamingConventionInspection.EP_NAME);
   }
 
-  private static List<NamingConvention<PsiClass>> wrapClassExtensions() {
-    return ContainerUtil
-      .map(NewClassNamingConventionInspection.EP_NAME.getExtensions(), ex -> new NamingConvention<PsiClass>() {
+  private static NamingConvention<PsiClass> wrapClassExtension(NamingConvention<PsiClass> ex) {
+    return new NamingConvention<PsiClass>() {
         @Override
         public boolean isApplicable(PsiClass member) {
           return ex.isApplicable(member);
@@ -50,7 +47,17 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
         public NamingConventionBean createDefaultBean() {
           return ex.createDefaultBean();
         }
-      });
+      };
+  }
+
+  @Override
+  protected void registerConvention(NamingConvention<PsiClass> convention) {
+    super.registerConvention(wrapClassExtension(convention));
+  }
+
+  @Override
+  protected void unregisterConvention(@NotNull NamingConvention<PsiClass> extension) {
+    super.unregisterConvention(wrapClassExtension(extension));
   }
 
   @NotNull
@@ -61,7 +68,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
     }
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrTypeDefinition) {
           PsiClass aClass = (PsiClass)element;
           final String name = aClass.getName();

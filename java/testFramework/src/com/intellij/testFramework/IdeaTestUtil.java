@@ -3,33 +3,31 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 @TestOnly
 public class IdeaTestUtil extends PlatformTestUtil {
@@ -57,10 +55,9 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
-    final LanguageLevelModuleExtensionImpl
-      modifiable = (LanguageLevelModuleExtensionImpl)LanguageLevelModuleExtensionImpl.getInstance(module).getModifiableModel(true);
-    modifiable.setLanguageLevel(level);
-    modifiable.commit();
+    ModuleRootModificationUtil.updateModel(module, (model) -> {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
+    });
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
@@ -82,7 +79,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   @NotNull
   private static Sdk createMockJdk(@NotNull String name, @NotNull String path) {
-    return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk(name, path, false);
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    if (javaSdk == null) {
+      throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
+                               "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', 'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
+    }
+    return ((JavaSdkImpl)javaSdk).createMockJdk(name, path, false);
   }
 
   @NotNull
@@ -143,15 +145,24 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
-  @NotNull
+  /**
+   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static Sdk getWebMockJdk17() {
     Sdk jdk = getMockJdk17();
     jdk=addWebJarsTo(jdk);
     return jdk;
   }
 
+  /**
+   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
     try {
       jdk = (Sdk)jdk.clone();
@@ -164,6 +175,39 @@ public class IdeaTestUtil extends PlatformTestUtil {
     sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
     sdkModificator.commitChanges();
     return jdk;
+  }
+
+  public static void addWebJarsToModule(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, model -> addWebJarsToModule(model));
+  }
+
+  public static void removeWebJarsFromModule(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      boolean removed = false;
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry) {
+          LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          if (libraryOrderEntry.isModuleLevel() && IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME.equals(libraryOrderEntry.getLibraryName())) {
+            model.removeOrderEntry(entry);
+            removed = true;
+            // do not break here to remove all matched entries
+          }
+        }
+      }
+      assertTrue("Module library " + IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME + " was not found in module " + module, removed);
+    });
+  }
+
+  public static final String WEB_JARS_MODULE_LIBRARY_NAME = "webjars";
+
+  public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
+    LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(WEB_JARS_MODULE_LIBRARY_NAME);
+    LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
+
+    libraryModel.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
+    libraryModel.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
+
+    WriteAction.runAndWait(libraryModel::commit);
   }
 
   @NotNull
@@ -211,8 +255,8 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static void compileFile(@NotNull File source, @NotNull File out, @NotNull String... options) {
-    Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
+  public static void compileFile(@NotNull File source, @NotNull File out, String @NotNull ... options) {
+    assertTrue("source does not exist: " + source.getPath(), source.isFile());
 
     List<String> args = new ArrayList<>();
     args.add("-d");
@@ -222,14 +266,14 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
     if (source.getName().endsWith(".groovy")) {
       try {
-        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtil.toStringArray(args));
+        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtilRt.toStringArray(args));
       }
       catch (Exception e) {
         throw new IllegalStateException(e);
       }
     }
     else {
-      int result = com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+      int result = com.sun.tools.javac.Main.compile(ArrayUtilRt.toStringArray(args));
       if (result != 0) throw new IllegalStateException("javac failed with exit code " + result);
     }
   }

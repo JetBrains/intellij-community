@@ -72,7 +72,6 @@ public interface ShTypes {
   IElementType PARENTHESES_CONDITION = new ShCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new ShCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new ShCompositeElementType("PATTERN");
-  IElementType PIPELINE = new ShCompositeElementType("PIPELINE");
   IElementType PIPELINE_COMMAND = new ShCompositeElementType("PIPELINE_COMMAND");
   IElementType POST_EXPRESSION = new ShCompositeElementType("POST_EXPRESSION");
   IElementType PRE_EXPRESSION = new ShCompositeElementType("PRE_EXPRESSION");
@@ -85,6 +84,7 @@ public interface ShTypes {
   IElementType SIMPLE_COMMAND_ELEMENT = new ShCompositeElementType("SIMPLE_COMMAND_ELEMENT");
   IElementType STRING = new ShCompositeElementType("STRING");
   IElementType SUBSHELL_COMMAND = new ShCompositeElementType("SUBSHELL_COMMAND");
+  IElementType TEST_COMMAND = new ShCompositeElementType("TEST_COMMAND");
   IElementType THEN_CLAUSE = new ShCompositeElementType("THEN_CLAUSE");
   IElementType UNARY_EXPRESSION = new ShCompositeElementType("UNARY_EXPRESSION");
   IElementType UNTIL_COMMAND = new ShCompositeElementType("UNTIL_COMMAND");
@@ -135,6 +135,7 @@ public interface ShTypes {
   IElementType HEX = new ShTokenType("hex");
   IElementType IF = new ShTokenType("if");
   IElementType IN = new ShTokenType("in");
+  IElementType INPUT_PROCESS_SUBSTITUTION = new ShTokenType("<(");
   IElementType INT = new ShTokenType("int");
   IElementType LE = new ShTokenType("<=");
   IElementType LEFT_CURLY = new ShTokenType("{");
@@ -157,6 +158,7 @@ public interface ShTypes {
   IElementType OPEN_BACKQUOTE = new ShTokenType("OPEN_BACKQUOTE");
   IElementType OPEN_QUOTE = new ShTokenType("OPEN_QUOTE");
   IElementType OR_OR = new ShTokenType("||");
+  IElementType OUTPUT_PROCESS_SUBSTITUTION = new ShTokenType(">(");
   IElementType PARAMETER_EXPANSION_BODY = new ShTokenType("parameter_expansion_body");
   IElementType PIPE = new ShTokenType("|");
   IElementType PIPE_AMP = new ShTokenType("|&");
@@ -186,6 +188,7 @@ public interface ShTypes {
   IElementType SHIFT_RIGHT = new ShTokenType(">>");
   IElementType SHIFT_RIGHT_ASSIGN = new ShTokenType(">>=");
   IElementType STRING_CONTENT = new ShTokenType("STRING_CONTENT");
+  IElementType TEST = new ShTokenType("test");
   IElementType THEN = new ShTokenType("then");
   IElementType UNTIL = new ShTokenType("until");
   IElementType VAR = new ShTokenType("var");
@@ -370,9 +373,6 @@ public interface ShTypes {
       else if (type == PATTERN) {
         return new ShPatternImpl(node);
       }
-      else if (type == PIPELINE) {
-        return new ShPipelineImpl(node);
-      }
       else if (type == PIPELINE_COMMAND) {
         return new ShPipelineCommandImpl(node);
       }
@@ -408,6 +408,9 @@ public interface ShTypes {
       }
       else if (type == SUBSHELL_COMMAND) {
         return new ShSubshellCommandImpl(node);
+      }
+      else if (type == TEST_COMMAND) {
+        return new ShTestCommandImpl(node);
       }
       else if (type == THEN_CLAUSE) {
         return new ShThenClauseImpl(node);

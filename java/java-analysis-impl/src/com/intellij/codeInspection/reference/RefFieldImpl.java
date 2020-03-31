@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-/**
- * @author max
- */
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
@@ -82,7 +79,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (forReading) {
       setUsedForReading(true);
     }
-    
+
     setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
@@ -126,7 +123,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (uField != null) {
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       refUtil.addReferencesTo(uField, this, uField.getUastInitializer());
-      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
+      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
       if (uField instanceof UEnumConstant) {
         refUtil.addReferencesTo(uField, this, uField);
       }

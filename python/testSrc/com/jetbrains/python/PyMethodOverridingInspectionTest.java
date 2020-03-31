@@ -110,6 +110,11 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

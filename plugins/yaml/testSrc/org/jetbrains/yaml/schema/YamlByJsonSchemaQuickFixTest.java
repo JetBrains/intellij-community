@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTestBase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
 
 public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
@@ -25,7 +26,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
       YAMLLanguage.INSTANCE);
   }
 
-  public void testAddMissingProperty() throws Exception {
+  public void testAddMissingProperty() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"a\": {\n" +
@@ -38,18 +39,18 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                               "c: 5");
   }
 
-  public void testRemoveProhibitedProperty() throws Exception {
+  public void testRemoveProhibitedProperty() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"a\": {},\n" +
            "    \"c\": {}\n" +
            "  },\n" +
            "  \"additionalProperties\": false\n" +
-           "}", "a: 5\n<warning>b: 6</warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
+           "}", "a: 5\n<warning>b: 6<caret></warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
                                                                                          "c: 7");
   }
 
-  public void testEmptyFile() throws Exception {
+  public void testEmptyFile() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -63,7 +64,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                    "  - ");
   }
 
-  public void testEmptyObject() throws Exception {
+  public void testEmptyObject() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -80,12 +81,12 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "  },\n" +
            "  \"required\": [\"versionAsStringArray\"]\n" +
            "}", "versionAsStringArray:\n" +
-                "<warning>  </warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
+                "<warning>  <caret></warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
                                                                        "  xxx:\n" +
                                                                        "    - ");
   }
 
-  public void testEmptyObjectMultipleProps() throws Exception {
+  public void testEmptyObjectMultipleProps() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -108,9 +109,44 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "  },\n" +
            "  \"required\": [\"versionAsStringArray\"]\n" +
            "}", "versionAsStringArray:\n" +
-                "<warning>  </warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
+                "<warning>  <caret></warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
                                                                                       "  xxx: 0\n" +
                                                                                       "  yyy:\n" +
                                                                                       "  zzz: 0");
   }
+
+  public void testAddMissingPropertyAfterComment() {
+    doTest(SCHEMA_WITH_NESTING, "image: #aaa\n" +
+                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image: #aaa\n" +
+                                                                                                                                           "  tag: ");
+  }
+
+  public void testAddMissingPropertyAfterWhitespace() {
+    doTest(SCHEMA_WITH_NESTING, "image: \n" +
+                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image:\n" +
+                                                                                                                                           "  tag: ");
+  }
+
+  @Language("JSON") private static final String SCHEMA_WITH_NESTING = "{\n" +
+                                                               "  \"properties\": {\n" +
+                                                               "    \"image\": {\n" +
+                                                               "      \"description\": \"Container Image\",\n" +
+                                                               "      \"properties\": {\n" +
+                                                               "        \"repo\": {\n" +
+                                                               "          \"type\": \"string\"\n" +
+                                                               "        },\n" +
+                                                               "        \"tag\": {\n" +
+                                                               "          \"type\": \"string\"\n" +
+                                                               "        }\n" +
+                                                               "      },\n" +
+                                                               "      \"required\": [\n" +
+                                                               "        \"tag\"\n" +
+                                                               "      ],\n" +
+                                                               "      \"type\": \"object\"\n" +
+                                                               "    }\n" +
+                                                               "  },\n" +
+                                                               "  \"title\": \"Values\",\n" +
+                                                               "  \"type\": \"object\"\n" +
+                                                               "}\n";
+
 }

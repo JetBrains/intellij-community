@@ -28,7 +28,7 @@ public class StreamChainCallExtractor implements ChainCallExtractor {
   @Override
   public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
     if (!StreamApiUtil.isSupportedStreamElement(expressionType) ||
-        !InlineStreamMapAction.NEXT_METHODS.contains(call.getMethodExpression().getReferenceName()) ||
+        !InlineStreamMapAction.Holder.NEXT_METHODS.contains(call.getMethodExpression().getReferenceName()) ||
         call.getMethodExpression().getQualifierExpression() == null) {
       return false;
     }

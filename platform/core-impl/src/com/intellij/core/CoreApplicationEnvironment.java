@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
-import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -16,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,8 +25,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
@@ -38,10 +36,8 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
@@ -53,8 +49,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -67,6 +63,7 @@ public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
+  @NotNull
   protected final VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
@@ -80,39 +77,38 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
+    PluginManagerCore.dontLoadDisabledPlugins();
+
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
-                                      new StaticGetter<>(myFileTypeRegistry),
+                                      () -> myFileTypeRegistry,
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
+    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
+      return new DocumentImpl(charSequence);
+    }, null));
 
-    final MutablePicoContainer appContainer = myApplication.getPicoContainer();
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
-      charSequence -> new DocumentImpl(charSequence), null));
-
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs);
-    registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
+    registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
     //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
-    registerApplicationService(DefaultASTFactory.class, new CoreASTFactory());
+    registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
-    registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
@@ -133,7 +129,7 @@ public class CoreApplicationEnvironment {
 
   @NotNull
   protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
-    return new MockApplicationEx(parentDisposable) {
+    return new MockApplication(parentDisposable) {
       @Override
       public boolean isUnitTestMode() {
         return myUnitTestMode;
@@ -145,7 +141,7 @@ public class CoreApplicationEnvironment {
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                          ProgressIndicator progress,
                                                          boolean runInReadAction,
                                                          boolean failFastOnAcquireReadAction,
@@ -265,7 +261,7 @@ public class CoreApplicationEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
-  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+  public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
   }
 

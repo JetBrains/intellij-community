@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
+  <category>Other Tools</category>
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
@@ -21,34 +22,35 @@
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
 
   <extensionPoints>
-    <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
-    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean"/>
+    <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
+    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
 
-    <projectConfigurable groupId="editor" displayName="Language Injections" dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI" nonDefaultProject="true"/>
+    <projectConfigurable groupId="editor" bundle="messages.IntelliLangBundle" key="configurable.InjectionsSettingsUI.display.name"
+                         dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"
+                         nonDefaultProject="true"/>
 
     <multiHostInjector id="TemporaryPlacesInjector" implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" order="first"/>
     <multiHostInjector id ="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
-    <projectService serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
@@ -59,7 +61,7 @@
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"
-                     displayName="Injected References" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
+                     displayName="Injected references" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
   </extensions>
 
 </idea-plugin>

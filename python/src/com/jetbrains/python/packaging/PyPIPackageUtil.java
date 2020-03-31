@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.cache.CacheBuilder;
@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.SmartList;
@@ -45,15 +45,10 @@ import java.util.stream.Collectors;
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
   private static final Gson GSON = new GsonBuilder().create();
-  
+
   private static final String PYPI_HOST = "https://pypi.python.org";
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
   public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
-
-  /**
-   * Contains mapping "importable top-level package" -> "package names on PyPI".
-   */
-  public static final ImmutableMap<String, List<String>> PACKAGES_TOPLEVEL = loadPackageAliases();
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
 
@@ -113,39 +108,20 @@ public class PyPIPackageUtil {
           .connect(request -> GSON.fromJson(request.getReader(), PackageDetails.class));
       }
     });
-  
+
   /**
    * Prevents simultaneous updates of {@link PyPackageService#PYPI_REMOVED}
    * because the corresponding response contains tons of data and multiple
-   * queries at the same time can cause memory issues. 
+   * queries at the same time can cause memory issues.
    */
   private final Object myPyPIPackageCacheUpdateLock = new Object();
-  
+
   /**
    * Value for "User Agent" HTTP header in form: PyCharm/2016.2 EAP
    */
   @NotNull
   private static String getUserAgent() {
     return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
-  }
-
-  @NotNull
-  private static ImmutableMap<String, List<String>> loadPackageAliases() {
-    final ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    try {
-      Files
-        .lines(Paths.get(PythonHelpersLocator.getHelperPath("/tools/packages")))
-        .forEach(
-          line -> {
-            final List<String> split = StringUtil.split(line, " ");
-            builder.put(split.get(0), new SmartList<>(ContainerUtil.subList(split, 1)));
-          }
-        );
-    }
-    catch (IOException e) {
-      LOG.error("Cannot find \"packages\". " + e.getMessage());
-    }
-    return builder.build(); 
   }
 
   public static boolean isPyPIRepository(@Nullable String repository) {
@@ -220,7 +196,7 @@ public class PyPIPackageUtil {
    * Fetches available package versions using JSON API of PyPI.
    */
   @NotNull
-  private List<String> getPackageVersionsFromPyPI(@NotNull String packageName, 
+  private List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
                                                   boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
     final List<String> result = details.getReleases();
@@ -236,7 +212,7 @@ public class PyPIPackageUtil {
   }
 
   /**
-   * Fetches available package versions by scrapping the page containing package archives. 
+   * Fetches available package versions by scrapping the page containing package archives.
    * It's primarily used for additional repositories since, e.g. devpi doesn't provide another way to get this information.
    */
   @NotNull
@@ -292,7 +268,7 @@ public class PyPIPackageUtil {
         }
 
         @Override
-        public void handleText(@NotNull char[] data, int pos) {
+        public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
             final String artifactName = String.valueOf(data);
             final String version = extractVersionFromArtifactName(artifactName, packageName);
@@ -318,7 +294,7 @@ public class PyPIPackageUtil {
       withoutExtension = StringUtil.trimEnd(artifactName, ".tar.gz");
     }
     else {
-      withoutExtension = FileUtil.getNameWithoutExtension(artifactName);
+      withoutExtension = FileUtilRt.getNameWithoutExtension(artifactName);
     }
     final String packageNameWithUnderscores = packageName.replace('-', '_');
     final String suffix;
@@ -361,7 +337,7 @@ public class PyPIPackageUtil {
         }
 
         @Override
-        public void handleText(@NotNull char[] data, int pos) {
+        public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
             packages.add(String.valueOf(data));
           }
@@ -397,11 +373,11 @@ public class PyPIPackageUtil {
   @SuppressWarnings("FieldMayBeFinal")
   public static final class PackageDetails {
     public static final class Info {
-      // We have to explicitly name each of the fields instead of just using 
+      // We have to explicitly name each of the fields instead of just using
       // GsonBuilder#setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES),
       // since otherwise GSON wouldn't be able to deserialize server responses
-      // in the professional edition of PyCharm where the names of private fields 
-      // are obfuscated.  
+      // in the professional edition of PyCharm where the names of private fields
+      // are obfuscated.
       @SerializedName("version")
       private String version = "";
       @SerializedName("author")
@@ -413,7 +389,7 @@ public class PyPIPackageUtil {
       @SerializedName("summary")
       private String summary = "";
 
-      
+
       @NotNull
       public String getVersion() {
         return StringUtil.notNullize(version);

@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -24,12 +25,12 @@ public class JarMemoryLoader {
 
   private JarMemoryLoader() { }
 
-  public Resource getResource(String entryName) {
+  public Resource getResource(@NotNull String entryName) {
     return myResources.remove(entryName);
   }
 
   @Nullable
-  static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
+  static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) return null;
 

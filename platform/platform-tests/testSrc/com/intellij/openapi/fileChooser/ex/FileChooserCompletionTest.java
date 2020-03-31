@@ -1,8 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FlyIdeaTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +34,13 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
   }
 
   public void testBasicComplete() throws Exception {
-    assertComplete("", ArrayUtil.EMPTY_STRING_ARRAY, null);
-    assertComplete("1", ArrayUtil.EMPTY_STRING_ARRAY, null);
+    assertComplete("", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
+    assertComplete("1", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
 
 
     basicSetup();
 
-    assertComplete("f", ArrayUtil.EMPTY_STRING_ARRAY, null);
+    assertComplete("f", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
 
     assertComplete("/", new String[] {
       "a",
@@ -74,7 +75,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
       "folder12",
     }, "folder11");
 
-    assertComplete("/foo", ArrayUtil.EMPTY_STRING_ARRAY, null);
+    assertComplete("/foo", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
 
     assertTrue(new File(myParent, "qw/child.txt").mkdirs());
     assertTrue(new File(myParent, "qwe").mkdir());
@@ -98,7 +99,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
 
   public void testComplete() throws Exception {
     basicSetup();
-    
+
     myParent = null;
     myMacros.put("$FOLDER_11$", myFolder11.getAbsolutePath());
     myMacros.put("$FOLDER_21$", myFolder21.getAbsolutePath());

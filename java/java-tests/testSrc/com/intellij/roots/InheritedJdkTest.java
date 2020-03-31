@@ -16,6 +16,7 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.InheritedJdkOrderEntry;
@@ -24,14 +25,14 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class InheritedJdkTest extends ModuleTestCase {
+public class InheritedJdkTest extends JavaModuleTestCase {
   @Override
   protected void setUpJdk() {
   }
@@ -43,7 +44,7 @@ public class InheritedJdkTest extends ModuleTestCase {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-      rootManagerEx.setProjectSdkName(jdk.getName());
+      rootManagerEx.setProjectSdk(jdk);
       ModuleRootModificationUtil.setSdkInherited(myModule);
     });
 
@@ -55,7 +56,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertFalse("JDK is not inherited after setJdk(null)", rootManager.isSdkInherited());
     assertNull("No JDK assigned", rootManager.getSdk());
 
-    final Sdk jdk1 = IdeaTestUtil.getMockJdk17();
+    final Sdk jdk1 = IdeaTestUtil.getMockJdk18();
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk1, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(myModule, jdk1);
 
@@ -79,7 +80,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertTrue(rootManager.isSdkInherited());
     assertEquals("mockJdk inherited", mockJdk, rootManager.getSdk());
 
-    ApplicationManager.getApplication().runWriteAction(() -> projectRootManager.setProjectSdkName("jdk1"));
+    ApplicationManager.getApplication().runWriteAction(() -> projectRootManager.setProjectSdkName("jdk1", JavaSdk.getInstance().getName()));
 
     assertTrue(rootManager.isSdkInherited());
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",

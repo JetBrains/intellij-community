@@ -19,12 +19,9 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class PythonConfigurationFactoryBase extends ConfigurationFactory {
   protected PythonConfigurationFactoryBase(@NotNull ConfigurationType type) {
     super(type);
@@ -32,6 +29,6 @@ public abstract class PythonConfigurationFactoryBase extends ConfigurationFactor
 
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return PlatformUtils.isPyCharm() || PythonSdkType.hasValidSdk();
+    return PlatformUtils.isPyCharm() || PythonSdkUtil.hasValidSdk();
   }
 }

@@ -12,9 +12,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-/**
- * @author nik
- */
 public abstract class ConfigurationErrorQuickFix {
   private final String myActionName;
 

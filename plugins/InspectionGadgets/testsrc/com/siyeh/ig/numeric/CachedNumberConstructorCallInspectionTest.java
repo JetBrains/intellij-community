@@ -16,12 +16,12 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CachedNumberConstructorCallInspectionTest extends LightInspectionTestCase {
+public class CachedNumberConstructorCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     final CachedNumberConstructorCallInspection inspection = new CachedNumberConstructorCallInspection();

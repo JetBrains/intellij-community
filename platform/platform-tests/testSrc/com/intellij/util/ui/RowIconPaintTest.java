@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.ui.scale.ScaleContext;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 
 /**
- * Tests {@link com.intellij.ui.RowIcon} painting.
+ * Tests {@link RowIcon} painting.
  *
  * @author tav
  */

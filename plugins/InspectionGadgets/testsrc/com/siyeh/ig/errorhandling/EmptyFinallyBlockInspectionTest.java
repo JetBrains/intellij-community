@@ -17,9 +17,9 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class EmptyFinallyBlockInspectionTest extends LightInspectionTestCase {
+public class EmptyFinallyBlockInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new EmptyFinallyBlockInspection();

@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MavenShortcutsManager implements Disposable {
+public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
   private static final String ACTION_ID_PREFIX = "Maven_";
@@ -90,6 +90,7 @@ public class MavenShortcutsManager implements Disposable {
     MavenKeymapExtension.clearActions(myProject);
   }
 
+  @NotNull
   public String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
@@ -112,14 +113,12 @@ public class MavenShortcutsManager implements Disposable {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  public boolean hasShortcuts(MavenProject project, String goal) {
+  boolean hasShortcuts(MavenProject project, String goal) {
     return getShortcuts(project, goal).length > 0;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(MavenProject project, String goal) {
+  private Shortcut @NotNull [] getShortcuts(MavenProject project, String goal) {
     String actionId = getActionId(project.getPath(), goal);
-    if (actionId == null) return Shortcut.EMPTY_ARRAY;
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);
   }
@@ -134,6 +133,7 @@ public class MavenShortcutsManager implements Disposable {
     myListeners.add(listener);
   }
 
+  @FunctionalInterface
   public interface Listener {
     void shortcutsUpdated();
   }
@@ -141,19 +141,11 @@ public class MavenShortcutsManager implements Disposable {
   private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
-                                                                                 500, true, myProject);
+                                                                                 500, true, myProject).usePassThroughInUnitTestMode();
 
     @Override
     public void activated() {
       scheduleKeymapUpdate(MavenProjectsManager.getInstance(myProject).getNonIgnoredProjects(), true);
-    }
-
-    @Override
-    public void projectsScheduled() {
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
     }
 
     @Override
@@ -179,7 +171,7 @@ public class MavenShortcutsManager implements Disposable {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
+    private void scheduleKeymapUpdate(List<? extends MavenProject> mavenProjects, boolean forUpdate) {
       synchronized (mySheduledProjects) {
         for (MavenProject each : mavenProjects) {
           mySheduledProjects.put(each, forUpdate);
@@ -196,6 +188,7 @@ public class MavenShortcutsManager implements Disposable {
             projectToDelete = selectScheduledProjects(false);
             mySheduledProjects.clear();
           }
+
           if (!myProject.isDisposed()) {
             MavenKeymapExtension.clearActions(myProject, projectToDelete);
             MavenKeymapExtension.updateActions(myProject, projectToUpdate);

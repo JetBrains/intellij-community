@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -6,9 +6,9 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.Reference;
@@ -18,8 +18,8 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class TabbedContentTabLabel extends ContentTabLabel {
-
+public final class TabbedContentTabLabel extends ContentTabLabel {
+  private final PopupState myPopupState = new PopupState();
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
@@ -38,11 +38,13 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     super.selectContent();
 
     if (hasMultipleTabs()) {
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       final SelectContentTabStep step = new SelectContentTabStep(getContent());
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
       myPopupReference = new WeakReference<>(popup);
+      popup.addListener(myPopupState);
       popup.showUnderneathOf(this);
-      popup.addListener(new JBPopupAdapter() {
+      popup.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           repaint();
@@ -56,7 +58,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   public void update() {
     super.update();
     if (myContent != null) {
-      setText(myContent.getTabName());
+      setText(myContent.getDisplayName());
     }
   }
 
@@ -80,7 +82,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         return hasMultipleTabs();
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Runnable getAction() {
         return () -> selectContent();

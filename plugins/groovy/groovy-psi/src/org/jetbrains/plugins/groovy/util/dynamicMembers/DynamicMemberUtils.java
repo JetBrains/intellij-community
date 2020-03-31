@@ -361,9 +361,8 @@ public class DynamicMemberUtils {
       return myMethod.getText();
     }
 
-    @NotNull
     @Override
-    public PsiTypeParameter[] getTypeParameters() {
+    public PsiTypeParameter @NotNull [] getTypeParameters() {
       return myTypeParameters;
     }
 

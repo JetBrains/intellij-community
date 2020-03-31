@@ -6,24 +6,32 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.PathUtilRt
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.Stack
 import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement
+import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
+import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
+import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 
 import java.util.regex.Pattern
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
- *
- * @author nik
  */
 class LayoutBuilder {
+  public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
+  
   private final AntBuilder ant
   private final boolean compressJars
-  final Set<String> usedModules = new LinkedHashSet<>()
   private final MultiValuesMap<String, String> moduleOutputPatches = new MultiValuesMap<>(true)
   private final CompilationContext context
 
@@ -56,7 +64,11 @@ class LayoutBuilder {
    * variables of its method only. It cannot refer to its fields or methods because data's 'owner' field is changed to support the internal DSL.
    */
   void layout(String targetDirectory, @DelegatesTo(LayoutSpec) Closure data) {
-    def spec = new LayoutSpec()
+    process(targetDirectory, new ProjectStructureMapping(), true, data)
+  }
+
+  void process(String targetDirectory, ProjectStructureMapping mapping, boolean copyFiles, @DelegatesTo(LayoutSpec) Closure data) {
+    def spec = new LayoutSpec(mapping, copyFiles)
     //we cannot set 'spec' as delegate because 'delegate' will be overwritten by AntBuilder
     def body = data.rehydrate(null, spec, data.thisObject)
     body.resolveStrategy = Closure.OWNER_FIRST
@@ -66,6 +78,15 @@ class LayoutBuilder {
   }
 
   class LayoutSpec {
+    final ProjectStructureMapping projectStructureMapping
+    final Stack<String> currentPath = new Stack<>()
+    private final boolean copyFiles
+
+    LayoutSpec(ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
+      this.copyFiles = copyFiles
+      this.projectStructureMapping = projectStructureMapping
+    }
+
     /**
      * Create a JAR file with name {@code relativePath} (it may also include parent directories names for the JAR) into the current place
      * in the layout. The content of the JAR is specified by {@code body}.
@@ -73,8 +94,15 @@ class LayoutBuilder {
     void jar(String relativePath, boolean preserveDuplicates = false, boolean mergeManifests = true, Closure body) {
       def directory = PathUtilRt.getParentPath(relativePath)
       if (directory == "") {
-        ant.jar(name: relativePath, compress: compressJars, duplicate: preserveDuplicates ? "preserve" : "fail",
-                filesetmanifest: mergeManifests ? "merge" : "skip", body)
+        currentPath.push(relativePath)
+        if (copyFiles) {
+          ant.jar(name: relativePath, compress: compressJars, duplicate: preserveDuplicates ? "preserve" : "fail",
+                  filesetmanifest: mergeManifests ? "merge" : "skip", body)
+        }
+        else {
+          body()
+        }
+        currentPath.pop()
       }
       else {
         dir(directory) {
@@ -90,7 +118,14 @@ class LayoutBuilder {
     void zip(String relativePath, Closure body) {
       def directory = PathUtilRt.getParentPath(relativePath)
       if (directory == "") {
-        ant.zip(name: relativePath, body)
+        currentPath.push(relativePath)
+        if (copyFiles) {
+          ant.zip(name: relativePath, body)
+        }
+        else {
+          body()
+        }
+        currentPath.pop()
       }
       else {
         dir(directory) {
@@ -109,7 +144,14 @@ class LayoutBuilder {
         body()
       }
       else if (parent.empty) {
-        ant.dir(name: relativePath, body)
+        currentPath.push(relativePath)
+        if (copyFiles) {
+          ant.dir(name: relativePath, body)
+        }
+        else {
+          body()
+        }
+        currentPath.pop()
       }
       else {
         dir(parent) {
@@ -135,8 +177,10 @@ class LayoutBuilder {
      * Include production output of {@code moduleName} to the current place in the layout
      */
     void module(String moduleName, Closure body = {}) {
-      usedModules << moduleName
-      ant.module(name: moduleName, body)
+      projectStructureMapping.addEntry(new ModuleOutputEntry(getCurrentPathString(), moduleName))
+      if (copyFiles) {
+        ant.module(name: moduleName, body)
+      }
       context.messages.debug(" include output of module '$moduleName'")
     }
 
@@ -144,8 +188,15 @@ class LayoutBuilder {
      * Include test output of {@code moduleName} to the current place in the layout
      */
     void moduleTests(String moduleName, Closure body = {}) {
-      ant.moduleTests(name: moduleName, body)
+      projectStructureMapping.addEntry(new ModuleTestOutputEntry(getCurrentPathString(), moduleName))
+      if (copyFiles) {
+        ant.moduleTests(name: moduleName, body)
+      }
       context.messages.debug(" include tests of module '$moduleName'")
+    }
+
+    private String getCurrentPathString() {
+      currentPath.join("/")
     }
 
     /**
@@ -170,12 +221,15 @@ class LayoutBuilder {
         throw new IllegalArgumentException("Cannot find artifact $artifactName in the project")
       }
 
-      if (artifact.outputFilePath != artifact.outputPath) {
-        ant.fileset(file: artifact.outputFilePath)
+      if (copyFiles) {
+        if (artifact.outputFilePath != artifact.outputPath) {
+          ant.fileset(file: artifact.outputFilePath)
+        }
+        else {
+          ant.fileset(dir: artifact.outputPath)
+        }
       }
-      else {
-        ant.fileset(dir: artifact.outputPath)
-      }
+      addArtifactMapping(artifact)
       context.messages.debug(" include artifact '$artifactName'")
     }
 
@@ -191,8 +245,6 @@ class LayoutBuilder {
       jpsLibrary(library)
     }
 
-    private static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
-
     /**
      * @param removeVersionFromJarName if {@code true} versions will be removed from the JAR names. <strong>It may be used to temporary
      *      * keep names of JARs included into bootstrap classpath only.</strong>
@@ -202,11 +254,17 @@ class LayoutBuilder {
         def matcher = it.name =~ JAR_NAME_WITH_VERSION_PATTERN
         if (removeVersionFromJarName && matcher.matches()) {
           def newName = matcher.group(1) + ".jar"
-          ant.renamedFile(filePath: it.absolutePath, newName: newName)
+          if (copyFiles) {
+            ant.renamedFile(filePath: it.absolutePath, newName: newName)
+          }
+          addLibraryMapping(library, newName, it.absolutePath)
           context.messages.debug(" include $newName (renamed from $it.absolutePath) from library '${getLibraryName(library)}'")
         }
         else {
-          ant.fileset(file: it.absolutePath)
+          if (copyFiles) {
+            ant.fileset(file: it.absolutePath)
+          }
+          addLibraryMapping(library, it.name, it.absolutePath)
           context.messages.debug(" include $it.name ($it.absolutePath) from library '${getLibraryName(library)}'")
         }
       }
@@ -236,6 +294,39 @@ class LayoutBuilder {
         return file.name
       }
       return name
+    }
+
+    private void addLibraryMapping(JpsLibrary library, String outputFileName, String libraryFilePath) {
+      def outputFilePath = getCurrentPathString().isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
+      def parentReference = library.createReference().parentReference
+      if (parentReference instanceof JpsModuleReference) {
+        def projectHome = context.paths.projectHome + File.separator
+        def mavenLocalRepo = new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath + File.separator
+        String shortenedPath = libraryFilePath.replace(projectHome, "\$PROJECT_DIR\$/").replace(mavenLocalRepo, "\$MAVEN_REPOSITORY\$/")
+        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(outputFilePath, shortenedPath))
+      }
+      else {
+        projectStructureMapping.addEntry(new ProjectLibraryEntry(outputFilePath, library.name))
+      }
+    }
+
+    private void addArtifactMapping(JpsArtifact artifact) {
+      def rootElement = artifact.getRootElement()
+      String artifactFilePath = getCurrentPathString()
+      if ((rootElement instanceof JpsArchivePackagingElement)) {
+        artifactFilePath += "/$rootElement.archiveName"
+      }
+      rootElement.children.each {
+        if (it instanceof JpsProductionModuleOutputPackagingElement) {
+          projectStructureMapping.addEntry(new ModuleOutputEntry(artifactFilePath, it.moduleReference.moduleName))
+        }
+        else if (it instanceof JpsTestModuleOutputPackagingElement) {
+          projectStructureMapping.addEntry(new ModuleTestOutputEntry(artifactFilePath, it.moduleReference.moduleName))
+        }
+        else if (it instanceof JpsLibraryFilesPackagingElement) {
+          addLibraryMapping(it.libraryReference.resolve(), artifactFilePath)
+        }
+      }
     }
   }
 }

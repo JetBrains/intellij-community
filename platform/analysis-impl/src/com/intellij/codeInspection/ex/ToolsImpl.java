@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class ToolsImpl implements Tools {
+public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
   @NonNls static final String ENABLED_ATTRIBUTE = "enabled";
   @NonNls static final String LEVEL_ATTRIBUTE = "level";
@@ -147,7 +146,7 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, @NotNull Map<String, List<String>> dependencies) {
+  void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, @Nullable Map<String, List<String>> dependencies) {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
     final SeverityRegistrar registrar = profileManager.getSeverityRegistrar();
     HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
@@ -197,11 +196,13 @@ public class ToolsImpl implements Tools {
         scopeNames.add(scopeName);
       }
 
-      for (int i = 0; i < scopeNames.size(); i++) {
-        String scopeName = scopeNames.get(i);
-        List<String> order = dependencies.computeIfAbsent(scopeName, __ -> new ArrayList<>());
-        for (int j = i + 1; j < scopeNames.size(); j++) {
-          order.add(scopeNames.get(j));
+      if (dependencies != null) {
+        for (int i = 0; i < scopeNames.size(); i++) {
+          String scopeName = scopeNames.get(i);
+          List<String> order = dependencies.computeIfAbsent(scopeName, __ -> new ArrayList<>());
+          for (int j = i + 1; j < scopeNames.size(); j++) {
+            order.add(scopeNames.get(j));
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -111,7 +111,7 @@ public class ProcessPopup  {
     JComponent toFocus = myRootContent.getTargetComponent() == myActiveContentComponent ? myActiveFocusedContent : myInactiveContentComponent;
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
-    builder.addListener(new JBPopupAdapter() {
+    builder.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         myProgressPanel.hideProcessPopup();
@@ -212,7 +212,7 @@ public class ProcessPopup  {
 
     ActiveContent() {
       super(new BorderLayout());
-      setBorder(DialogWrapper.ourDefaultBorder);
+      setBorder(DialogWrapper.createDefaultBorder());
       setFocusable(true);
     }
 

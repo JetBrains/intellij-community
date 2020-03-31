@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
-import com.jetbrains.python.inspections.PyStringFormatParser;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import org.jetbrains.annotations.NotNull;
@@ -82,15 +82,15 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     int offset = contentRange.getStartOffset();
 
     for (final T chunk : extractTopLevelSubstitutionChunks()) {
-      // Preceding literal text
-      fStringText.append(stringText, offset, chunk.getStartIndex());
+      processLiteralChunk(stringText.substring(offset, chunk.getStartIndex()), fStringText);
+      if (!processSubstitutionChunk(chunk, fStringText)) {
+        return;
+      }
       offset = chunk.getEndIndex();
-
-      if (!convertSubstitutionChunk(chunk, fStringText)) return;
     }
 
     if (offset < contentRange.getEndOffset()) {
-      fStringText.append(stringText, offset, contentRange.getEndOffset());
+      processLiteralChunk(stringText.substring(offset, contentRange.getEndOffset()), fStringText);
     }
 
     fStringText.append(myNodeInfo.getQuote());
@@ -115,7 +115,9 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
 
   protected abstract boolean checkChunk(@NotNull T chunk);
 
-  protected abstract boolean convertSubstitutionChunk(@NotNull T chunk, @NotNull StringBuilder fStringText);
+  protected abstract boolean processSubstitutionChunk(@NotNull T chunk, @NotNull StringBuilder fStringText);
+
+  protected abstract void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText);
 
   @Nullable
   protected PsiElement adjustQuotesInsideInjectedExpression(@NotNull PsiElement expression) {

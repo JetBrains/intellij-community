@@ -20,9 +20,6 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 
-/**
- * @author nik
- */
 public class JpsUnknownRunConfigurationType extends JpsElementTypeWithDummyProperties implements JpsRunConfigurationType<JpsDummyElement> {
   private final String myTypeId;
 

@@ -18,6 +18,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -86,7 +87,7 @@ public class GoToHashOrRefPopup {
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
     myTextField.setBorder(JBUI.Borders.empty(3));
 
-    JBLabel label = new JBLabel("Enter hash or branch/tag name:");
+    JBLabel label = new JBLabel(VcsLogBundle.message("vcs.log.go.to.hash.popup.label"));
     label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -149,7 +150,7 @@ public class GoToHashOrRefPopup {
     @Override
     public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
-      if (myColorManager.isMultipleRoots()) {
+      if (myColorManager.hasMultiplePaths()) {
         ColorIcon icon = JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)));
         lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
@@ -165,14 +166,14 @@ public class GoToHashOrRefPopup {
     @Nullable
     @Override
     protected String getTailText(@NotNull VcsRef item) {
-      if (!myColorManager.isMultipleRoots()) return null;
+      if (!myColorManager.hasMultiplePaths()) return null;
       return "";
     }
 
     @Nullable
     @Override
     protected String getTypeText(@NotNull VcsRef item) {
-      if (!myColorManager.isMultipleRoots()) return null;
+      if (!myColorManager.hasMultiplePaths()) return null;
       String text = myCachedRootNames.get(item.getRoot());
       if (text == null) {
         return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());

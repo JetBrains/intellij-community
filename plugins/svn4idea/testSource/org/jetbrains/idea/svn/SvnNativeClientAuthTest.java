@@ -33,8 +33,7 @@ import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @Ignore
 public class SvnNativeClientAuthTest extends SvnTestCase {
@@ -511,8 +510,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
         public void checkoutCompleted() {
         }
       }, WorkingCopyFormat.ONE_DOT_SEVEN);
-    final int[] cnt = new int[1];
-    cnt[0] = 0;
+    final int[] cnt = {0};
     FileUtil.processFilesRecursively(root, file -> {
       ++ cnt[0];
       return ! (cnt[0] > 1);
@@ -536,7 +534,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
       vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                    new Ref<>());
     assertTrue(session.getExceptions() != null && !session.getExceptions().isEmpty());
-    assertTrue(!session.isCanceled());
+    assertFalse(session.isCanceled());
     assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
 
     if (myIsSecure) {
@@ -552,8 +550,8 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     final UpdateSession session =
       vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                    new Ref<>());
-    assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
-    assertTrue(!session.isCanceled());
+    assertTrue(session.getExceptions().isEmpty());
+    assertFalse(session.isCanceled());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;

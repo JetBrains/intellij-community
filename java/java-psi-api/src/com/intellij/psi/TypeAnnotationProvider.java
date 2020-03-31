@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TypeAnnotationProvider {
   TypeAnnotationProvider EMPTY = new TypeAnnotationProvider() {
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public PsiAnnotation @NotNull [] getAnnotations() {
       return PsiAnnotation.EMPTY_ARRAY;
     }
 
@@ -39,8 +38,7 @@ public interface TypeAnnotationProvider {
     }
   };
 
-  @NotNull
-  PsiAnnotation[] getAnnotations();
+  PsiAnnotation @NotNull [] getAnnotations();
 
 
   class Static implements TypeAnnotationProvider {
@@ -50,14 +48,13 @@ public interface TypeAnnotationProvider {
       myAnnotations = annotations;
     }
 
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public PsiAnnotation @NotNull [] getAnnotations() {
       return myAnnotations;
     }
 
     @NotNull
-    public static TypeAnnotationProvider create(@NotNull PsiAnnotation[] annotations) {
+    public static TypeAnnotationProvider create(PsiAnnotation @NotNull [] annotations) {
       return annotations.length == 0 ? EMPTY : new Static(annotations);
     }
   }

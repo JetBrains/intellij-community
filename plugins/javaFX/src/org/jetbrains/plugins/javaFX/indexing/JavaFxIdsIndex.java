@@ -23,18 +23,18 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.externalizer.StringCollectionExternalizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> implements DocumentChangesDependentIndex {
+public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> implements DocumentChangeDependentIndex {
 
   @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.id.name");
 
   private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
   private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer();
-  private final FxmlDataExternalizer myDataExternalizer = new FxmlDataExternalizer();
 
   @NotNull
   @Override
@@ -45,7 +45,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   @NotNull
   @Override
   public DataExternalizer<Set<String>> getValueExternalizer() {
-    return myDataExternalizer;
+    return StringCollectionExternalizer.STRING_SET_EXTERNALIZER;
   }
 
   @NotNull

@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.PsiModifierListOwner
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.psi.PsiJvmModifiersOwner
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
+class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private fun createAnnotationAction(modifierListOwner: PsiModifierListOwner, annotationRequest: AnnotationRequest): IntentionAction =
+  private fun createAnnotationAction(modifierListOwner: PsiJvmModifiersOwner, annotationRequest: AnnotationRequest): IntentionAction =
     createAddAnnotationActions(modifierListOwner, annotationRequest).single()
 
   @SuppressWarnings
@@ -20,7 +20,7 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("bar", PsiModifierListOwner::class.java)
+    val modifierListOwner = myFixture.findElementByText("bar", PsiJvmModifiersOwner::class.java)
 
     myFixture.launchAction(createAnnotationAction(modifierListOwner,
                                                   annotationRequest("java.lang.SuppressWarnings",
@@ -48,7 +48,7 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
       class A {}
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiModifierListOwner::class.java)
+    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
 
     myFixture.launchAction(createAnnotationAction(modifierListOwner,
                                                   annotationRequest(

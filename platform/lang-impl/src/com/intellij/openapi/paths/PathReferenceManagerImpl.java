@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.paths;
 
@@ -11,7 +11,10 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -73,20 +76,18 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
-                                         final boolean soft,
-                                         boolean endingSlashNotAllowed,
-                                         final boolean relativePathsAllowed, PathReferenceProvider... additionalProviders) {
+  public PsiReference @NotNull [] createReferences(@NotNull final PsiElement psiElement,
+                                                   final boolean soft,
+                                                   boolean endingSlashNotAllowed,
+                                                   final boolean relativePathsAllowed, PathReferenceProvider... additionalProviders) {
     return createReferences(psiElement, soft, endingSlashNotAllowed, relativePathsAllowed, null, additionalProviders);
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
-                                         final boolean soft,
-                                         boolean endingSlashNotAllowed,
-                                         final boolean relativePathsAllowed, FileType[] suitableFileTypes, PathReferenceProvider... additionalProviders) {
+  public PsiReference @NotNull [] createReferences(@NotNull final PsiElement psiElement,
+                                                   final boolean soft,
+                                                   boolean endingSlashNotAllowed,
+                                                   final boolean relativePathsAllowed, FileType[] suitableFileTypes, PathReferenceProvider... additionalProviders) {
 
     List<PsiReference> mergedReferences = new ArrayList<>();
     processProvider(psiElement, myGlobalPathsProvider, mergedReferences, soft);
@@ -109,8 +110,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createCustomReferences(@NotNull PsiElement psiElement, boolean soft, PathReferenceProvider... providers) {
+  public PsiReference @NotNull [] createCustomReferences(@NotNull PsiElement psiElement, boolean soft, PathReferenceProvider... providers) {
     List<PsiReference> references = new ArrayList<>();
     for (PathReferenceProvider provider : providers) {
       boolean processed = processProvider(psiElement, provider, references, soft);
@@ -122,8 +122,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, final boolean soft, PathReferenceProvider... additionalProviders) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, final boolean soft, PathReferenceProvider... additionalProviders) {
     return createReferences(psiElement, soft, false, true, null, additionalProviders);
   }
 
@@ -131,7 +130,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     if (references.size() <= 1) {
       return references.toArray(PsiReference.EMPTY_ARRAY);
     }
-    Collections.sort(references, START_OFFSET_COMPARATOR);
+    references.sort(START_OFFSET_COMPARATOR);
     final List<PsiReference> intersecting = new ArrayList<>();
     final List<PsiReference> notIntersecting = new ArrayList<>();
     TextRange intersectingRange = references.get(0).getRangeInElement();

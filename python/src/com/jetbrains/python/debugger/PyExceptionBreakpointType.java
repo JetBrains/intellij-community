@@ -20,6 +20,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyClassTreeChooserDialog;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
@@ -40,7 +41,7 @@ public class PyExceptionBreakpointType
   private static final String BASE_EXCEPTION = "BaseException";
 
   public PyExceptionBreakpointType() {
-    super("python-exception", "Python Exception Breakpoint");
+    super("python-exception", PyBundle.message("debugger.exception.breakpoint.type"));
   }
 
   @NotNull
@@ -67,7 +68,8 @@ public class PyExceptionBreakpointType
 
   @Override
   public XBreakpoint<PyExceptionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
-    final PyClassTreeChooserDialog dialog = new PyClassTreeChooserDialog("Select Exception Class",
+    final PyClassTreeChooserDialog dialog = new PyClassTreeChooserDialog(PyBundle.message(
+      "debugger.exception.breakpoint.select.exception.class"),
                                                                          project,
                                                                          GlobalSearchScope.allScope(project),
                                                                          new PyExceptionCachingFilter(), null);
@@ -164,9 +166,9 @@ public class PyExceptionBreakpointType
     @NotNull
     @Override
     public JComponent getComponent() {
-      myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
-      myNotifyOnRaiseCheckBox = new JCheckBox("On raise");
-      myIgnoreLibrariesCheckBox = new JCheckBox("Ignore library files");
+      myNotifyOnTerminateCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.on.termination"));
+      myNotifyOnRaiseCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.on.raise"));
+      myIgnoreLibrariesCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.ignore.library.files"));
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
@@ -193,7 +195,7 @@ public class PyExceptionBreakpointType
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
       panel.add(innerPanel, BorderLayout.NORTH);
-      panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy", true));
+      panel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("debugger.exception.breakpoint.activation.policy")));
 
       return panel;
     }

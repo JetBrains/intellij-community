@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,7 +19,7 @@ import java.util.Map;
  * @author cdr
  */
 @TestOnly
-public class EditorListenerTracker {
+public final class EditorListenerTracker {
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
 
   public EditorListenerTracker() {
@@ -54,7 +40,17 @@ public class EditorListenerTracker {
           afterList.removeAll(beforeList);
         }
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
-        afterList.removeIf(listener -> listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject());
+        afterList.removeIf(listener -> {
+          //noinspection CastConflictsWithInstanceof
+          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) {
+            return true;
+          }
+
+          // app level listener
+          String name = listener.getClass().getName();
+          return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
+                 name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
+        });
         if (!afterList.isEmpty()) {
           leaked.put(aClass, afterList);
         }

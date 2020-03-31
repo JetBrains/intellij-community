@@ -27,7 +27,7 @@ import java.util.List;
  * @author yole
  */
 class DesignDropTargetListener implements DropTargetListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DesignDropTargetListener");
+  private static final Logger LOG = Logger.getInstance(DesignDropTargetListener.class);
 
   private DraggedComponentList myDraggedComponentList;
   private ComponentDragObject myComponentDragObject;

@@ -23,7 +23,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgGraftCommand;
@@ -52,10 +54,11 @@ public class HgCherryPicker extends VcsCherryPicker {
     return HgVcs.getKey();
   }
 
-  @NotNull
   @Override
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getActionTitle() {
-    return "Graft";
+    return HgBundle.message("graft");
   }
 
   @Override

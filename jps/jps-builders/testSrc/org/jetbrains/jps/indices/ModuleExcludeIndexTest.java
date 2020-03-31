@@ -27,9 +27,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
   private File myRoot;
 

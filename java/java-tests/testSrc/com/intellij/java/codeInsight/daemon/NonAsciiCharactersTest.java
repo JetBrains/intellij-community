@@ -26,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/nonAsciiCharacters";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     NonAsciiCharactersInspection inspection = new NonAsciiCharactersInspection();
     inspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     inspection.CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;
@@ -38,12 +37,15 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{inspection};
   }
 
-  private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false)+".java", true, false);
+  private void doTest(String extension) throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + extension, true, false);
     UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testSimple() throws Exception {
-    doTest();
+    doTest(".java");
+  }
+  public void testGroovy() throws Exception {
+    doTest(".groovy");
   }
 }

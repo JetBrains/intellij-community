@@ -79,6 +79,17 @@ public interface Repository extends Disposable {
       }
     },
 
+    /**
+     * During revert operation in git.
+     */
+    REVERTING {
+      @NotNull
+      @Override
+      public String toString() {
+        return "Reverting";
+      }
+    },
+
 
     /**
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).

@@ -30,9 +30,8 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 

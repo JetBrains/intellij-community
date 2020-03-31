@@ -7,15 +7,13 @@ import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorDropHandler;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,11 +67,12 @@ public class FileDropHandler implements EditorDropHandler {
         NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(vFile));
 
         if (editorWindow != null) {
-          fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
+          Pair<FileEditor[], FileEditorProvider[]> pair = fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
+          if (pair.first.length > 0) {
+            continue;
+          }
         }
-        else {
-          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
-        }
+        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
       }
     }
   }

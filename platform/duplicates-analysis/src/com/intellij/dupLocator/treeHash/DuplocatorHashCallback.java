@@ -18,15 +18,17 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class DuplocatorHashCallback implements FragmentsCollector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.treeHash.DuplocatorHashCallback");
+  private static final Logger LOG = Logger.getInstance(DuplocatorHashCallback.class);
 
   private TIntObjectHashMap<List<List<PsiFragment>>> myDuplicates;
   private final int myBound;
@@ -71,7 +73,8 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     List<List<PsiFragment>> fragments = myDuplicates.get(hash);
 
     if (fragments == null) {
-      if (!myReadOnly) { //do not add new hashcodes
+      //do not add new hashcodes
+      if (!myReadOnly) {
         List<List<PsiFragment>> list = new ArrayList<>();
         List<PsiFragment> listf = new ArrayList<>();
 
@@ -291,13 +294,10 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     };
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void report(String path, final Project project) throws IOException {
+  public void report(@NotNull Path dir, @NotNull Project project) throws IOException {
     int[] hashCodes = myDuplicates.keys();
-    FileWriter fileWriter = null;
     //fragments
-    try {
-      fileWriter = new FileWriter(path + File.separator + "fragments.xml");
+    try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("fragments.xml"))) {
       PrettyPrintWriter writer = new PrettyPrintWriter(fileWriter);
       writer.startNode("root");
       for (int hash : hashCodes) {
@@ -312,20 +312,13 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       writer.endNode(); //root node
       writer.flush();
     }
-    finally {
-      if (fileWriter != null) {
-        fileWriter.close();
-      }
-    }
 
-    writeDuplicates(path, project, getInfo());
+    writeDuplicates(dir, project, getInfo());
   }
 
   //duplicates
-  public static void writeDuplicates(String path, Project project, DupInfo info) throws IOException {
-    FileWriter fileWriter = null;
-    try {
-      fileWriter = new FileWriter(path + File.separator + "duplicates.xml");
+  public static void writeDuplicates(@NotNull Path dir, @NotNull Project project, DupInfo info) throws IOException {
+    try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("duplicates.xml"))) {
       PrettyPrintWriter writer = new PrettyPrintWriter(fileWriter);
       writer.startNode("root");
       final int patterns = info.getPatterns();
@@ -339,18 +332,12 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       writer.endNode(); //root node
       writer.flush();
     }
-    finally {
-      if (fileWriter != null) {
-        fileWriter.close();
-      }
-    }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeFragments(final List<? extends PsiFragment> psiFragments,
-                                     final PrettyPrintWriter writer,
-                                     Project project,
-                                     final boolean shouldWriteOffsets) {
+  private static void writeFragments(List<? extends PsiFragment> psiFragments,
+                                     PrettyPrintWriter writer,
+                                     @NotNull Project project,
+                                     boolean shouldWriteOffsets) {
     final PathMacroManager macroManager = PathMacroManager.getInstance(project);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 

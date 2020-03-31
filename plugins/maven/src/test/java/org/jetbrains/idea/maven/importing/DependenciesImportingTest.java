@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -31,6 +30,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -1047,6 +1047,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testDependencyWithEnvironmentENVProperty() {
+    if(MavenUtil.newModelEnabled(myProject)){
+      throw new IllegalStateException("This test brokes all subsequent!");
+    }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
     envDir = StringUtil.trimEnd(envDir, "/");
 
@@ -1655,16 +1658,16 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProject("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m2</module>" +
+                  "</modules>");
 
-//    assertProjectLibraries("Maven: xxx:yyy:1");
+    //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/");
     assertModuleLibDep("m2", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m2/foo.jar!/");
   }
@@ -2084,7 +2087,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private Library createProjectLibrary(final String libraryName) {
-    return WriteAction.compute(() -> ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName));
+    return WriteAction.compute(() -> LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(libraryName));
   }
 
   private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {
@@ -2096,7 +2099,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   private void clearLibraryRoots(final String libraryName, final OrderRootType... types) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library lib = com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
       Library.ModifiableModel model = lib.getModifiableModel();
       for (OrderRootType eachType : types) {
         for (String each : model.getUrls(eachType)) {
@@ -2109,7 +2112,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library lib = com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
       Library.ModifiableModel model = lib.getModifiableModel();
       model.addRoot(path, type);
       model.commit();
@@ -2466,5 +2469,58 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0.jar!/",
                        "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-javadoc.jar!/");
+  }
+
+  public void testReimportingInheritedLibrary() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit1</groupId><artifactId>junit1</artifactId><version>3.3</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    createModulePom("m1", "<parent>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>project</artifactId>" +
+                          "    " +
+                          "    <version>1</version>" +
+                          "  </parent>" +
+                          "<artifactId>m1</artifactId>");
+
+
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId><artifactId>junit</artifactId><version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+
+    assertModuleLibDep("m1", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 }

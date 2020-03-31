@@ -46,12 +46,6 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("logging.condition.disagrees.with.log.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("logging.condition.disagrees.with.log.statement.problem.descriptor", infos[0]);
   }
@@ -265,7 +259,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         }
         final PsiField field = (PsiField)target;
         final String fieldName = field.getName();
-        return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+        return !StringUtil.toLowerCase(fieldName).equals(priority);
       }
       else if ("isEnabledFor".equals(methodName)) {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -290,7 +284,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
           }
           final PsiField field = (PsiField)argumentTarget;
           final String fieldName = field.getName();
-          return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+          return !StringUtil.toLowerCase(fieldName).equals(priority);
         }
       }
       return false;

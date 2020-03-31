@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -21,9 +7,8 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,17 +34,12 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected BaseInspection[] getInspections() {
     final BaseInspection inspection = getInspection();
-    if (inspection != null) {
-      return new BaseInspection[] {inspection};
-    }
-    return new BaseInspection[0];
+    return inspection != null ? new BaseInspection[]{inspection} : new BaseInspection[0];
   }
 
-  @SuppressWarnings("LanguageMismatch")
-  @NonNls
   @Language("JAVA")
   protected String[] getEnvironmentClasses() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -83,7 +63,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
                 myFixture.filterAvailableIntentions(quickfixName));
   }
 
-  protected void assertQuickfixNotAvailable(String quickfixName, @Language("JAVA") @NotNull @NonNls String text) {
+  protected void assertQuickfixNotAvailable(String quickfixName, @Language("JAVA") @NotNull String text) {
     text = text.replace("/**/", "<caret>");
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
@@ -103,7 +83,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
-    final IntentionAction action = myFixture.getAvailableIntention(hint);
+    IntentionAction action = myFixture.getAvailableIntention(hint);
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
@@ -111,27 +91,27 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doExpressionTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {static {System.out.print(", suffix = ");}}") @NotNull String before,
+    @Language(value = "JAVA", prefix = "class $X$ {static {System.out.print(", suffix = ");}}") @NotNull String after
+  ) {
     doTest(hint, "class $X$ {static {System.out.print(" + before + ");}}", "class $X$ {static {System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {", suffix = "}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {", suffix = "}") @NotNull String before,
+    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull String after
+  ) {
     doTest(hint, "class $X$ {" + before + "}", "class $X$ {" + after + "}");
   }
 
-  protected void doTest(@NotNull String hint,
-                        @Language("JAVA") @NotNull @NonNls String before,
-                        @Language("JAVA") @NotNull @NonNls String after) {
+  protected void doTest(@NotNull String hint, @Language("JAVA") @NotNull String before, @Language("JAVA") @NotNull String after) {
     doTest(hint, before, after, "aaa.java");
   }
 
   protected void doTest(@NotNull String hint,
-                        @Language("JAVA") @NotNull @NonNls String before,
-                        @Language("JAVA") @NotNull @NonNls String after,
+                        @Language("JAVA") @NotNull String before,
+                        @Language("JAVA") @NotNull String after,
                         @NotNull String fileName) {
     before = before.replace("/**/", "<caret>");
     myFixture.configureByText(fileName, before);
@@ -145,5 +125,4 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     assertNotNull(myRelativePath);
     return myRelativePath;
   }
-
 }

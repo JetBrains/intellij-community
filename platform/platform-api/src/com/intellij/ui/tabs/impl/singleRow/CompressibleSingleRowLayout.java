@@ -6,7 +6,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBFont;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -21,15 +21,13 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
     calculateRequiredLength(data);
-    data.firstGhostVisible = false;
-    data.lastGhostVisible = false;
   }
 
   @Override
-  protected void layoutLabelsAndGhosts(SingleRowPassInfo data) {
+  protected void layoutLabels(SingleRowPassInfo data) {
     if (myTabs.getPresentation().getTabsPosition() != JBTabsPosition.top
         && myTabs.getPresentation().getTabsPosition() != JBTabsPosition.bottom) {
-      super.layoutLabelsAndGhosts(data);
+      super.layoutLabels(data);
       return;
     }
 
@@ -44,7 +42,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       final TabLabel label = myTabs.myInfo2Label.get(layout.get(i));
       if (maxGridSize == 0) {
         Font font = label.getLabelComponent().getFont();
-        maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBUI.Fonts.label() : font) * myTabs.tabMSize();
+        maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBFont.label() : font) * myTabs.tabMSize();
       }
       int lengthIncrement = label.getPreferredSize().width;
       lengths[i] = lengthIncrement;
@@ -66,7 +64,6 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       final TabLabel label = myTabs.myInfo2Label.get(iterator.next());
-      label.setActionPanelVisible(true);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -79,9 +76,9 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       else {
         length = Math.max(lengthIncrement, actualGridSize);
       }
-      spentLength += length + myTabs.getInterTabSpaceLength();
-      applyTabLayout(data, label, length, 0);
-      data.position = (int)label.getBounds().getMaxX() + myTabs.getInterTabSpaceLength();
+      spentLength += length + myTabs.getTabHGap();
+      applyTabLayout(data, label, length);
+      data.position = (int)label.getBounds().getMaxX() + myTabs.getTabHGap();
     }
 
     for (TabInfo eachInfo : data.toDrop) {
@@ -90,8 +87,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
-    boolean result = super.applyTabLayout(data, label, length, deltaToFit);
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
+    boolean result = super.applyTabLayout(data, label, length);
     label.setAlignmentToCenter(false);
     return result;
   }

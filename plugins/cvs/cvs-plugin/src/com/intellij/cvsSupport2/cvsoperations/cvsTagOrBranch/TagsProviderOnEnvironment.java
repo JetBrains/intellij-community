@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
 
 /**

@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
 import com.intellij.Patches
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
@@ -14,17 +16,14 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.util.*
 
 private val LOG = logger<BrowserLauncherAppless>()
 
@@ -47,15 +46,15 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
 
-  protected open fun openWithExplicitBrowser(url: String, settings: GeneralSettings, project: Project?) {
-    browseUsingPath(url, settings.browserPath, project = project)
+  protected open fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
+    browseUsingPath(url, browserPath, project = project)
   }
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
-    if (url.startsWith("mailto:") && Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
+    if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
       try {
         LOG.debug("Trying Desktop#mail")
         Desktop.getDesktop().mail(URI(url))
@@ -93,7 +92,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       openWithDefaultBrowser(url, project)
     }
     else {
-      openWithExplicitBrowser(url, settings, project = project)
+      openWithExplicitBrowser(url, settings.browserPath, project = project)
     }
   }
 
@@ -123,7 +122,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       showError(IdeBundle.message("browser.default.not.supported"), project = project)
       return
     }
-    doLaunch(url, command, null, project)
+
+    if (url.startsWith("jar:")) return
+
+    doLaunch(GeneralCommandLine(command).withParameters(url), project)
   }
 
   protected open fun signUrl(url: String): String = url
@@ -145,34 +147,24 @@ open class BrowserLauncherAppless : BrowserLauncher() {
                                project: Project?,
                                openInNewWindow: Boolean,
                                additionalParameters: Array<String>): Boolean {
+    if (url != null && url.startsWith("jar:")) return false
+
     val byName = browserPath == null && browser != null
     val effectivePath = if (byName) PathUtil.toSystemDependentName(browser!!.path) else browserPath
-    val launchTask: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
+    val fix: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
 
     if (effectivePath.isNullOrBlank()) {
       val message = browser?.browserNotFoundMessage ?: IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath())
-      showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask)
+      showError(message, browser, project, IdeBundle.message("title.browser.not.found"), fix)
       return false
     }
 
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow), browser, project, additionalParameters, launchTask)
-  }
-
-  private fun doLaunch(url: String?,
-                       command: List<String>,
-                       browser: WebBrowser?,
-                       project: Project?,
-                       additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY,
-                       launchTask: (() -> Unit)? = null): Boolean {
-    if (url != null && url.startsWith("jar:")) {
-      return false
-    }
-
-    val commandWithUrl = command.toMutableList()
+    val commandWithUrl = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
     if (url != null) {
       if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
-      else commandWithUrl.add(url)
+      else commandWithUrl += url
     }
+
     val commandLine = GeneralCommandLine(commandWithUrl)
 
     val browserSpecificSettings = browser?.specificSettings
@@ -180,29 +172,35 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
     }
 
-    addArgs(commandLine, browserSpecificSettings, additionalParameters)
-
-    return try {
-      checkCreatedProcess(browser, project, commandLine, commandLine.createProcess(), launchTask)
-      true
+    val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
+    if (specific.size + additionalParameters.size > 0) {
+      if (isOpenCommandUsed(commandLine)) {
+        commandLine.addParameter("--args")
+      }
+      commandLine.addParameters(specific)
+      commandLine.addParameters(*additionalParameters)
     }
-    catch (e: ExecutionException) {
-      showError(e.message, browser, project, null, null)
-      false
+
+    doLaunch(commandLine, project, browser, fix)
+    return true
+  }
+
+  private fun doLaunch(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, fix: (() -> Unit)? = null) {
+    LOG.debug { command.commandLineString }
+    ProcessIOExecutorService.INSTANCE.execute {
+      try {
+        val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
+        if (!output.checkSuccess(LOG) && output.exitCode == 1) {
+          showError(output.stderrLines.firstOrNull(), browser, project, null, fix)
+        }
+      }
+      catch (e: ExecutionException) {
+        showError(e.message, browser, project, null, fix)
+      }
     }
   }
 
-  protected open fun checkCreatedProcess(browser: WebBrowser?,
-                                         project: Project?,
-                                         commandLine: GeneralCommandLine,
-                                         process: Process,
-                                         launchTask: (() -> Unit)?) { }
-
-  protected open fun showError(error: String?,
-                               browser: WebBrowser? = null,
-                               project: Project? = null,
-                               title: String? = null,
-                               launchTask: (() -> Unit)? = null) {
+  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, fix: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }
@@ -223,22 +221,3 @@ private val defaultBrowserCommand: List<String>?
     SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
     else -> null
   }
-
-private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
-  val specific = settings?.additionalParameters ?: emptyList<String>()
-  if (specific.size + additional.size > 0) {
-    if (BrowserLauncherAppless.isOpenCommandUsed(command)) {
-      if (BrowserUtil.isOpenCommandSupportArgs()) {
-        command.addParameter("--args")
-      }
-      else {
-        LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
-                 StringUtil.join(specific, ", ") + " " + Arrays.toString(additional))
-        return
-      }
-    }
-
-    command.addParameters(specific)
-    command.addParameters(*additional)
-  }
-}

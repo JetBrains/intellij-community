@@ -2,10 +2,6 @@
 package com.intellij.testDiscovery;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
@@ -23,7 +19,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -40,10 +35,8 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +70,7 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
                                              entry.addSourceFolder(getTestContentRoot() + "/src", false);
                                              entry.addSourceFolder(getTestContentRoot() + "/test", true);
                                            });
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
   }
 
   @Before

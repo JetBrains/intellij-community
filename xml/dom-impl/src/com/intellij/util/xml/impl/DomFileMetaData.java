@@ -42,14 +42,14 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   @Attribute("stubVersion")
   public Integer stubVersion;
 
-  volatile DomFileDescription lazyInstance;
+  volatile DomFileDescription<?> lazyInstance;
 
   // created by reflection
   @SuppressWarnings("unused")
   public DomFileMetaData() {}
 
   @SuppressWarnings("deprecation")
-  public DomFileMetaData(DomFileDescription description) {
+  public DomFileMetaData(DomFileDescription<?> description) {
     lazyInstance = description;
     implementation = description.getClass().getName();
     rootTagName = description.acceptsOtherRootTagNames() ? null : description.getRootTagName();
@@ -58,27 +58,30 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   }
 
   // synchronized under DomApplicationComponent lock
-  DomFileDescription getDescription() {
-    DomFileDescription instance = lazyInstance;
+  DomFileDescription<?> getDescription() {
+    DomFileDescription<?> instance = lazyInstance;
     if (instance == null) {
       try {
-        instance = instantiate(findClass(implementation), ApplicationManager.getApplication().getPicoContainer());
+        instance = instantiate(findExtensionClass(implementation), ApplicationManager.getApplication().getPicoContainer());
         if (StringUtil.isEmpty(rootTagName)) {
           if (!instance.acceptsOtherRootTagNames()) {
-            throw new PluginException(implementation + " should either specify a root tag name in XML, or return true from 'acceptsOtherRootTagNames'", getPluginId());
+            throw new PluginException(
+              implementation + " should either specify a root tag name in XML, or return true from 'acceptsOtherRootTagNames'",
+              getPluginId());
           }
         }
         else if (!rootTagName.equals(instance.getRootTagName())) {
-          throw new PluginException(implementation + " XML declaration should have " + instance.getRootTagName() + " root tag name", getPluginId());
+          throw new PluginException(implementation + " XML declaration should have " + instance.getRootTagName() + " root tag name",
+                                    getPluginId());
         }
         DomApplicationComponent.getInstance().initDescription(instance);
         lazyInstance = instance;
       }
-      catch (ProcessCanceledException e) {
+      catch (ProcessCanceledException | PluginException e) {
         throw e;
       }
       catch (Exception e) {
-        throw new RuntimeException(e);
+        throw new PluginException(e, getPluginId());
       }
     }
     return instance;

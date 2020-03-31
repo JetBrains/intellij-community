@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -38,12 +39,6 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
       }
     }
     return new RemoveSillyAssignmentFix();
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.variable.assigned.to.itself.display.name");
   }
 
   @Override
@@ -92,7 +87,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
             variable.hasModifierProperty(PsiModifier.STATIC)) {
           if (refExpr.isReferenceTo(variable)) {
             holder.registerProblem(refExpr,
-                                   InspectionsBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
+                                   JavaBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    createRemoveAssignmentFix(refExpr));
           }
@@ -128,7 +123,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     }
     PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return;
-    holder.registerProblem(rRef, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
+    holder.registerProblem(rRef, JavaBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix(rRef));
   }
 
@@ -206,7 +201,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("assignment.to.itself.quickfix.name");
+      return JavaBundle.message("assignment.to.itself.quickfix.name");
     }
 
     @Override

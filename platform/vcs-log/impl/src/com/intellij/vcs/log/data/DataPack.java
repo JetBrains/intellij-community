@@ -18,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class DataPack extends DataPackBase {
-  public static final DataPack EMPTY = createEmptyInstance();
+  public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
+                                                    EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
 
   @NotNull private final PermanentGraph<Integer> myPermanentGraph;
 
@@ -93,19 +94,26 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static DataPack createEmptyInstance() {
-    RefsModel emptyModel =
-      new RefsModel(new HashMap<>(), new HashSet<>(), VcsLogStorageImpl.EMPTY, new HashMap<>());
-    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
-  }
-
-  @NotNull
   public PermanentGraph<Integer> getPermanentGraph() {
     return myPermanentGraph;
   }
 
   @Override
   public String toString() {
-    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
+    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}"; // NON-NLS
+  }
+
+  public static class ErrorDataPack extends DataPack {
+    @NotNull private final Throwable myError;
+
+    public ErrorDataPack(@NotNull Throwable error) {
+      super(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY), EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
+      myError = error;
+    }
+
+    @NotNull
+    public Throwable getError() {
+      return myError;
+    }
   }
 }

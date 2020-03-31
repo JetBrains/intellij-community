@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
@@ -67,10 +68,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   private static boolean mayContainClassName(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
-    PsiFile file = position.getContainingFile();
-    if (file instanceof PsiPlainTextFile || file.getFileType() instanceof CustomSyntaxTableFileType) {
-      return true;
-    }
     if (SkipAutopopupInStrings.isInStringLiteral(position)) {
       return true;
     }
@@ -87,7 +84,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                    @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
-    if (JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement)) {
+    if (JavaCompletionContributor.getAnnotationNameIfInside(insertedElement) != null) {
       MultiMap<String, PsiClass> annoMap = getAllAnnotationClasses(insertedElement, matcher);
       Processor<PsiClass> processor = new LimitedAccessibleClassPreprocessor(parameters, filterByScope, anno -> {
         JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(anno, JAVA_CLASS_INSERT_HANDLER);
@@ -95,7 +92,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         consumer.consume(item);
         return true;
       });
-      for (String name : CompletionUtil.sortMatching(matcher, annoMap.keySet())) {
+      for (String name : matcher.sortMatching(annoMap.keySet())) {
         if (!ContainerUtil.process(annoMap.get(name), processor)) break;
       }
       return;
@@ -188,7 +185,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       DirectClassInheritorsSearch.search(annotation, scope, false).forEach(psiClass -> {
         if (!psiClass.isAnnotationType() || psiClass.getQualifiedName() == null) return true;
 
-        String name = ObjectUtils.assertNotNull(psiClass.getName());
+        String name = Objects.requireNonNull(psiClass.getName());
         if (!matcher.prefixMatches(name)) {
           name = getClassNameWithContainers(psiClass);
           if (!matcher.prefixMatches(name)) return true;
@@ -202,7 +199,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   @NotNull
   private static String getClassNameWithContainers(@NotNull PsiClass psiClass) {
-    String name = ObjectUtils.assertNotNull(psiClass.getName());
+    String name = Objects.requireNonNull(psiClass.getName());
     for (PsiClass parent : JBIterable.generate(psiClass, PsiClass::getContainingClass)) {
       name = parent.getName() + "." + name;
     }
@@ -249,7 +246,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       return LangBundle.message("completion.no.suggestions") +
              "; " +
              StringUtil.decapitalize(
-                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
+                 JavaBundle.message("completion.class.name.hint.2", KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION)));
     }
 
     return null;

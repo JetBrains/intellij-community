@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.template.Expression;
@@ -25,7 +25,7 @@ import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -49,7 +49,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
+  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, String @NotNull ... values) {
     super(tag);
     myAttrName = attrName;
     myValues = values;
@@ -58,13 +58,13 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   @NotNull
   public String getText() {
-    return XmlErrorMessages.message("insert.required.attribute.quickfix.text", myAttrName);
+    return XmlErrorBundle.message("insert.required.attribute.quickfix.text", myAttrName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
+    return XmlErrorBundle.message("insert.required.attribute.quickfix.family");
   }
 
   @Override
@@ -108,7 +108,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       template.addTextSegment(" " + myAttrName);
       if (!insertShorthand) {
         String quote = XmlEditUtil.getAttributeQuote(file);
-        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote, file);
+        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(myTag, myAttrName, quote);
 
         valuePostfix = presentation.getPostfix();
         template.addTextSegment("=" + presentation.getPrefix());
@@ -128,8 +128,8 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
 
     final PsiElement anchor1 = anchor;
 
-    final Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(
-      () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      WriteCommandAction.runWriteCommandAction(project, getText(), getFamilyName(), () -> {
         int textOffset = anchor1.getTextOffset();
         if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
         editor.getCaretModel().moveToOffset(textOffset);
@@ -137,21 +137,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
           editor.getDocument().deleteString(textOffset,textOffset + 2);
         }
         TemplateManager.getInstance(project).startTemplate(editor, template);
-      }
-    );
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Runnable commandRunnable = () -> CommandProcessor.getInstance().executeCommand(
-        project,
-        runnable,
-        getText(),
-        getFamilyName()
-      );
-
-      ApplicationManager.getApplication().invokeLater(commandRunnable);
-    }
-    else {
-      runnable.run();
-    }
+      });
+    });
   }
 }

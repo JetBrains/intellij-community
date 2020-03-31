@@ -1,15 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
@@ -43,7 +40,7 @@ import java.util.Comparator;
     final int endOffset = file.getTextRange().getEndOffset();
     final Ref<Integer> first = new Ref<>();
     final Ref<Integer> next = new Ref<>();
-    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(((MarkupModelEx)editor.getMarkupModel()), project, null, startOffset, endOffset, info -> {
       if (HighlightInfoType.ELEMENT_UNDER_CARET_READ.equals(info.type) || HighlightInfoType.ELEMENT_UNDER_CARET_WRITE.equals(info.type)) {
         if (ordering.compare(info.startOffset, caretOffset) > 0 && ordering.compare(info.endOffset, caretOffset) > 0) {
           if (next.isNull() || ordering.compare(next.get(), info.startOffset) > 0) {
@@ -74,6 +71,11 @@ import java.util.Comparator;
     Caret caret = editor.getCaretModel().getCurrentCaret();
     caret.removeSelection();
     caret.moveToOffset(toOffset);
+    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldRegion region = foldingModel.getCollapsedRegionAtOffset(toOffset);
+    if (region != null) {
+      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
+    }
     if (caret == editor.getCaretModel().getPrimaryCaret()) {
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }

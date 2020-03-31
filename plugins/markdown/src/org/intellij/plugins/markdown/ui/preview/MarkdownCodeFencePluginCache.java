@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,12 +40,14 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   }
 
   public MarkdownCodeFencePluginCache() {
-    scheduleClearCache();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleClearCache();
+    }
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        if (MarkdownFileType.INSTANCE == event.getFile().getFileType()) {
+        if (FileTypeRegistry.getInstance().isFileOfType(event.getFile(), MarkdownFileType.INSTANCE)) {
           myAdditionalCacheToDelete.addAll(processSourceFileToDelete(event.getFile(), ContainerUtil.emptyList()));
         }
       }
@@ -86,8 +88,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
     return filesToDelete;
   }
 
-  @NotNull
-  private static File[] getChildren(@NotNull File directory) {
+  private static File @NotNull [] getChildren(@NotNull File directory) {
     File[] files = directory.listFiles();
     return files != null ? files : EMPTY_FILE_ARRAY;
   }
@@ -103,7 +104,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   private void scheduleClearCache() {
     myAlarm.addRequest(() -> {
       Collection<File> filesToDelete = ContainerUtil.union(myAdditionalCacheToDelete, collectFilesToRemove());
-      ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> FileUtil.asyncDelete(filesToDelete)));
+      FileUtil.asyncDelete(filesToDelete);
 
       clear();
 

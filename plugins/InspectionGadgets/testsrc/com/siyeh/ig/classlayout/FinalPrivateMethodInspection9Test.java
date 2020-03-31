@@ -2,8 +2,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalPrivateMethodInspection9Test extends FinalPrivateMethodInspectionTest {

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -45,7 +46,7 @@ import java.io.IOException;
 
 public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackDebugger");
+  private static final Logger LOG = Logger.getInstance(PlaybackDebugger.class);
 
   private static final Color ERROR_COLOR = JBColor.RED;
   private static final Color MESSAGE_COLOR = Color.BLACK;
@@ -155,9 +156,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class SaveAction extends AnAction {
-    private SaveAction() {
-      super("Save", "", AllIcons.Actions.Menu_saveall);
-    }
+  SaveAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.save"),
+          IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.Menu_saveall);
+  }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -197,10 +199,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class SetScriptFileAction extends AnAction {
-
-    private SetScriptFileAction() {
-      super("Set Script File", "", AllIcons.Actions.Menu_open);
-    }
+  SetScriptFileAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
+          IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.Menu_open);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -214,9 +216,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class NewScriptAction extends AnAction {
-    private NewScriptAction() {
-      super("New Script", "", AllIcons.Actions.New);
-    }
+  NewScriptAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.new.script"),
+          IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -266,9 +269,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class StopAction extends AnAction {
-    private StopAction() {
-      super("Stop", null, AllIcons.Actions.Suspend);
-    }
+  StopAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.stop"),
+          IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
+  }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -285,9 +289,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class ActivateFrameAndRun extends AnAction {
-    private ActivateFrameAndRun() {
-      super("Activate Frame And Run", "", AllIcons.Nodes.Deploy);
-    }
+  ActivateFrameAndRun() {
+    super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"),
+          IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -301,10 +306,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class RunOnFameActivationAction extends AnAction {
-
-    private RunOnFameActivationAction() {
-      super("Run On Frame Activation", "", AllIcons.RunConfigurations.TestState.Run);
-    }
+  RunOnFameActivationAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"),
+          IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
+  }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -322,14 +327,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myLog.setText(null);
 
-    final IdeFrameImpl frame = getFrame();
-
-    final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
-
-    if (c != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
-    } else {
+    JFrame frame = getFrame();
+    Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
+    if (c == null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
+    }
+    else {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     }
 
     //noinspection SSBasedInspection
@@ -337,11 +341,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   }
 
-  private static IdeFrameImpl getFrame() {
+  private static JFrame getFrame() {
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
-      if (each instanceof IdeFrame) {
-        return (IdeFrameImpl)each;
+      if (each instanceof IdeFrameImpl) {
+        return (JFrame)each;
       }
     }
 

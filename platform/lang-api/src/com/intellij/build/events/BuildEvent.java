@@ -15,14 +15,12 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildEvent {
   /**
    * Returns an id that uniquely identifies the event.

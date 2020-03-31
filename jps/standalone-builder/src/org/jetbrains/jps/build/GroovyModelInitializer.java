@@ -25,9 +25,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class GroovyModelInitializer implements ParameterizedRunnable<JpsModel> {
   private final File myScriptFile;
 

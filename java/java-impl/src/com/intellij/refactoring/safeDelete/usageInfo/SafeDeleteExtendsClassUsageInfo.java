@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteExtendsClassUsageInfo");
+  private static final Logger LOG = Logger.getInstance(SafeDeleteExtendsClassUsageInfo.class);
   private final PsiClass myExtendingClass;
   private final PsiSubstitutor mySubstitutor;
 

@@ -2,14 +2,14 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class RollbackThemeAction extends DumbAwareAction {
+final class RollbackThemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
@@ -29,11 +29,14 @@ public class RollbackThemeAction extends DumbAwareAction {
     UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
     if (feel instanceof TempUIThemeBasedLookAndFeelInfo) {
       LafManager.getInstance().setCurrentLookAndFeel(((TempUIThemeBasedLookAndFeelInfo)feel).getPreviousLaf());
-    } else {
+    }
+    else {
       LafManager.getInstance().setCurrentLookAndFeel(feel);
     }
-    EditorColorsManagerImpl.schemeChangedOrSwitched();
-    LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+
+    EditorColorsManagerImpl manager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    manager.schemeChangedOrSwitched(manager.getGlobalScheme());
+    AppUIUtil.updateForDarcula(StartupUiUtil.isUnderDarcula());
     LafManager.getInstance().updateUI();
   }
 

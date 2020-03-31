@@ -9,7 +9,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
  * A range represents a set of commits which are reachable from the end of the range, but not reachable from the start of the range.
  * A continuous ancestry list of commits is one simple case of the range. Another example is a difference between branches.
  */
-interface VcsLogRangeFilter : VcsLogFilter {
+interface VcsLogRangeFilter : VcsLogBranchLikeFilter {
 
   /**
    * The range between commits (or references pointing to commits), represented by this filter.
@@ -23,10 +23,6 @@ interface VcsLogRangeFilter : VcsLogFilter {
 
   override fun getKey(): VcsLogFilterCollection.FilterKey<VcsLogRangeFilter> {
     return RANGE_FILTER
-  }
-
-  override fun getPresentation(): String {
-    return getTextPresentation().joinToString(", ")
   }
 
   /**

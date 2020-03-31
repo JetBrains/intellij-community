@@ -1,61 +1,45 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.nexus;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.MavenRepositoryService;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
  */
 public class NexusRepositoryService extends MavenRepositoryService {
+
+  private final Gson gson = new Gson();
+
   @Nullable
-  public static RemoteRepositoryDescription convertRepositoryInfo(@NotNull RepositoryType repo) {
-    final String id = repo.getId();
-    if (id == null) {
+  public static RemoteRepositoryDescription convertRepositoryInfo(@NotNull NexusModel.RepositoryType repo) {
+    if (repo.id == null) {
       return null;
     }
-    final String name = repo.getName();
-    if (name == null) {
+    if (repo.name == null) {
       return null;
     }
-    final String uri = repo.getContentResourceURI();
-    if (uri == null) {
+    if (repo.contentResourceURI == null) {
       return null;
     }
-    return new RemoteRepositoryDescription(id, name, uri);
+    return new RemoteRepositoryDescription(repo.id, repo.name, repo.contentResourceURI);
   }
 
-  public static RepositoryArtifactDescription convertArtifactInfo(ArtifactType t) {
+  public static RepositoryArtifactDescription convertArtifactInfo(NexusModel.ArtifactType t) {
     return new RepositoryArtifactDescription(
-      t.getGroupId(), t.getArtifactId(), t.getVersion(), t.getPackaging(), t.getClassifier(), null, t.getRepoId()
+      t.groupId, t.artifactId, t.version, t.packaging, t.classifier, null, t.repoId
     );
   }
 
@@ -68,23 +52,30 @@ public class NexusRepositoryService extends MavenRepositoryService {
   @NotNull
   @Override
   public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+    assert !ApplicationManager.getApplication().isDispatchThread();
     try {
-      final List<RepositoryType> repos = new Endpoint.Repositories(url).getRepolistAsRepositories().getData().getRepositoriesItem();
+      NexusModel.RepositorySearchResults repos = gson.fromJson(
+        HttpRequests.request(toUrl(url, "repositories"))
+          .productNameAsUserAgent()
+          .accept("application/json")
+          .readString(), NexusModel.RepositorySearchResults.class);
       final List<RemoteRepositoryDescription> result = new SmartList<>();
-      for (RepositoryType repo : repos) {
-        if ("maven2".equals(repo.getProvider())){
-          final RemoteRepositoryDescription desc = convertRepositoryInfo(repo);
-          if (desc != null) {
-            result.add(desc);
+      if (repos.data != null) {
+        for (NexusModel.RepositoryType repo : repos.data) {
+          if ("maven2".equals(repo.provider)) {
+            final RemoteRepositoryDescription desc = convertRepositoryInfo(repo);
+            if (desc != null) {
+              result.add(desc);
+            }
           }
         }
       }
       return result;
     }
-    catch (UnmarshalException e) {
+    catch (JsonSyntaxException e) {
       return Collections.emptyList();
     }
-    catch (JAXBException e) {
+    catch (Exception e) {
       throw new IOException(e);
     }
   }
@@ -92,32 +83,43 @@ public class NexusRepositoryService extends MavenRepositoryService {
   @NotNull
   @Override
   public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template) throws IOException {
+    assert !ApplicationManager.getApplication().isDispatchThread();
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
-      final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
-      final SearchResults results = new Endpoint.DataIndex(url).getArtifactlistAsSearchResults(
-        name, template.getGroupId(), template.getArtifactId(), template.getVersion(), null, template.getClassNames()
-      );
+
+      NexusModel.ArtifactSearchResults results =
+        gson.fromJson(HttpRequests.request(toUrl(url, "data_index", prepareParameters(template)))
+                        .accept("application/json")
+                        .readString(), NexusModel.ArtifactSearchResults.class);
+
       //boolean tooManyResults = results.isTooManyResults();
-      final SearchResults.Data data = results.getData();
       final ArrayList<RepositoryArtifactDescription> result = new ArrayList<>();
-      if (data != null) {
-        for (ArtifactType each : data.getArtifact()) {
-          if (Comparing.equal(each.packaging, packaging)){
+      if (results.data != null) {
+        for (NexusModel.ArtifactType each : results.data) {
+          if (Objects.equals(each.packaging, packaging)) {
             result.add(convertArtifactInfo(each));
           }
         }
       }
-      //if (tooManyResults) {
-      //  result.add(null);
-      //}
       return result;
     }
-    catch (UnmarshalException e) {
+    catch (JsonSyntaxException e) {
       return Collections.emptyList();
     }
-    catch (JAXBException e) {
+    catch (Exception e) {
       throw new IOException(e);
     }
+  }
+
+  @NotNull
+  private String prepareParameters(@NotNull RepositoryArtifactDescription template) {
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("q", StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":"));
+    params.put("g", template.getGroupId());
+    params.put("a", template.getArtifactId());
+    params.put("v", template.getVersion());
+    params.put("cn", template.getClassNames());
+
+    return mapToParamString(params);
   }
 }

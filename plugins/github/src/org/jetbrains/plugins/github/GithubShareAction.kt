@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -19,11 +20,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -37,7 +36,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.DialogManager
 import git4idea.GitUtil
-import git4idea.actions.BasicAction
 import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -49,6 +47,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -100,7 +99,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
     @JvmStatic
     fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
-      BasicAction.saveAll()
+      FileDocumentManager.getInstance().saveAllDocuments();
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
 
@@ -135,7 +134,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
             val names = GithubApiPagesLoader
               .loadAll(requestExecutor, progressManager.progressIndicator,
-                       GithubApiRequests.CurrentUser.Repos.pages(account.server, false))
+                       GithubApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER))
               .mapSmartSet { it.name }
             user.canCreatePrivateRepo() to names
           }, "Loading Account Information For $account", true, project)
@@ -244,7 +243,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
             // ask for files to add
             val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
-            val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
+            val untrackedFiles =
+              filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
             trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
             val allFiles = ArrayList<VirtualFile>()
@@ -391,8 +391,10 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
     override fun createCenterPanel(): JComponent? {
       val tree = super.createCenterPanel()
 
-      myCommitMessagePanel = CommitMessage(myProject)
-      myCommitMessagePanel!!.setCommitMessage("Initial commit")
+      val commitMessage = CommitMessage(myProject)
+      Disposer.register(disposable, commitMessage)
+      commitMessage.setCommitMessage("Initial commit")
+      myCommitMessagePanel = commitMessage
 
       val splitter = Splitter(true)
       splitter.setHonorComponentsMinimumSize(true)

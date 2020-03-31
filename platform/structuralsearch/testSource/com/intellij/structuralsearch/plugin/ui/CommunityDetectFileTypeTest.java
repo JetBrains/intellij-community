@@ -2,8 +2,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import org.intellij.lang.annotations.Language;
 
 /**
  * @author Bas Leijdekkers

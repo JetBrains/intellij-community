@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -20,11 +21,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
@@ -76,12 +75,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       if (children.size() > 0) {
         newChildren = new ArrayList<>(children.size());
         if (myValueChildren == null) {
-          if (!myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
-            myValueChildren = new SortedList<>(XValueNodeImpl.COMPARATOR);
-          }
-          else {
-            myValueChildren = new ArrayList<>(children.size());
-          }
+          myValueChildren = initChildrenList(children.size());
         }
         boolean valuesInline = XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
         InlineDebuggerHelper inlineHelper = getTree().getEditorsProvider().getInlineDebuggerHelper();
@@ -115,6 +109,23 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       }
       myTree.childrenLoaded(this, newChildren, last);
     });
+  }
+
+  private List<XValueNodeImpl> initChildrenList(int initialSize) {
+    XDebuggerPinToTopManager pinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(myTree.getProject());
+    boolean needBaseSorting = !myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues();
+    boolean isPinToTopSupported = pinToTopManager.isEnabled() && pinToTopManager.isPinToTopSupported(this);
+
+    if (!needBaseSorting && !isPinToTopSupported) {
+      return new ArrayList<>(initialSize);
+    }
+
+    Comparator<XValueNodeImpl> comparator = needBaseSorting?
+                                              isPinToTopSupported?
+                                                pinToTopManager.getCompoundComparator()
+                                                : XValueNodeImpl.COMPARATOR
+                                              : pinToTopManager.getPinToTopComparator();
+    return new SortedList<>(comparator);
   }
 
   private static boolean isUseGetChildrenHack(@NotNull XDebuggerTree tree) {

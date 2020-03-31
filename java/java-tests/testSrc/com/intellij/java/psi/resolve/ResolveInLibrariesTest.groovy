@@ -18,16 +18,13 @@ package com.intellij.java.psi.resolve
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.IntelliJProjectConfiguration
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.*
 import com.intellij.psi.impl.JavaPsiFacadeEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -37,6 +34,8 @@ import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
@@ -70,6 +69,29 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
       assert middles[i].isInheritor(interfaces[i], true)
       assert bottoms[i].isInheritor(interfaces[i], true)
       assert bottoms[i].isInheritor(middles[i], true)
+    }
+  }
+
+  @CompileStatic
+  void "test missed library dependency"() {
+    def projectRootManager = ProjectRootManager.getInstance(myFixture.project)
+    def oldSdk = projectRootManager.projectSdk
+    try {
+      WriteAction.run { projectRootManager.projectSdk = IdeaTestUtil.getMockJdk17() }
+      def groovy = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("Groovy")
+      PsiTestUtil.addProjectLibrary(module, 'groovy', [groovy], [])
+      def ant = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Ant")
+      PsiTestUtil.addProjectLibrary(module, 'ant', ant)
+
+      myFixture.configureByText("Foo.java", """
+  class Foo { 
+    {new org.codehaus.groovy.ant.Groovydoc().set<caret>Project(new org.apache.tools.ant.Project());}
+  }""")
+
+      assertNotNull(myFixture.getElementAtCaret())
+    }
+    finally {
+      WriteAction.run { projectRootManager.projectSdk = oldSdk }
     }
   }
 
@@ -192,7 +214,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("TestCase.java", """
 class TestCase {
     public static void main( String[] args ) {
-        new B().<error descr="Cannot resolve method 'a()'">a</error>(); // should not work, because the A in lib1 has no method a
+        new B().<error descr="Cannot resolve method 'a' in 'B'">a</error>(); // should not work, because the A in lib1 has no method a
         new B().a2(); // should work, because the A with this method is in lib1
     }
 }

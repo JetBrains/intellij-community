@@ -2,17 +2,15 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspection.extra.closing.tag");
-  }
 
   @Override
   @NonNls
@@ -41,7 +32,7 @@ public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
 
     if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag, true)
         && tag.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
-      holder.registerProblem(tag, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
+      holder.registerProblem(tag, XmlAnalysisBundle.message("extra.closing.tag.for.empty.element"),
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, range.shiftRight(-tag.getTextRange().getStartOffset()), new RemoveExtraClosingTagIntentionAction());
     }
   }

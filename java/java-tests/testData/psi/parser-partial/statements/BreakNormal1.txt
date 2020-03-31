@@ -2,8 +2,5 @@ PsiJavaFile:BreakNormal1.java
   PsiBreakStatement
     PsiKeyword:break('break')
     PsiWhiteSpace(' ')
-    PsiReferenceExpression:LABEL
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:LABEL('LABEL')
+    PsiIdentifier:LABEL('LABEL')
     PsiJavaToken:SEMICOLON(';')

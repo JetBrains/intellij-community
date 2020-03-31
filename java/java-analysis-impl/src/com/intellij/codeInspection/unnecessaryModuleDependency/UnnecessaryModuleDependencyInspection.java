@@ -1,25 +1,22 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
   @Override
@@ -92,13 +89,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("unnecessary.module.dependency.display.name");
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -116,16 +107,16 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
                                                           InspectionManager manager,
-                                                          Module module,
-                                                          Module dependency) {
+                                                          @NotNull Module module,
+                                                          @NotNull Module dependency) {
     String dependencyName = dependency.getName();
     String moduleName = module.getName();
     if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
-      final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
+      final String allContainsMessage = JavaAnalysisBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
       return manager.createProblemDescriptor(allContainsMessage, module, new RemoveModuleDependencyFix(dependencyName));
     }
     else {
-      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", moduleName, dependencyName, scope.getDisplayName());
+      String message = JavaAnalysisBundle.message("suspected.module.dependency.problem.descriptor", moduleName, dependencyName, scope.getDisplayName());
       return manager.createProblemDescriptor(message, module);
     }
   }
@@ -141,7 +132,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove dependency";
+      return JavaAnalysisBundle.message("remove.dependency");
     }
 
     @Override
@@ -150,7 +141,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       for (OrderEntry entry : model.getOrderEntries()) {
         if (entry instanceof ModuleOrderEntry) {
           final String mDependency = ((ModuleOrderEntry)entry).getModuleName();
-          if (Comparing.equal(mDependency, myDependency)) {
+          if (Objects.equals(mDependency, myDependency)) {
             model.removeOrderEntry(entry);
             break;
           }

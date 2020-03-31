@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.controlFlow
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
-class ControlFlowTest extends LightCodeInsightFixtureTestCase {
+class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"
 
@@ -158,7 +158,7 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
     final PsiElement start = file.findElementAt(model.hasSelection() ? model.selectionStart : 0)
     final PsiElement end = file.findElementAt(model.hasSelection() ? model.selectionEnd - 1 : file.textLength - 1)
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false)
-    final Instruction[] instructions = new ControlFlowBuilder(project).buildControlFlow(owner)
+    final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(owner)
     final String cf = ControlFlowUtils.dumpControlFlow(instructions)
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, code + "\n-----\n" + cf.trim())
     myFixture.checkResultByFile(path)

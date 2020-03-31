@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler");
+  private static final Logger LOG = Logger.getInstance(InspectionDescriptionLinkHandler.class);
 
   @Override
   public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
@@ -49,7 +49,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
       return null;
     }
 
-    final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
+    final InspectionProfile profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper toolWrapper = profile.getInspectionTool(refSuffix, file);
     if (toolWrapper == null) return null;
 

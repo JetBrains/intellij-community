@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
@@ -25,9 +25,8 @@ import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +64,7 @@ import java.util.*;
 public class GrIntroduceConstantDialog extends DialogWrapper
   implements GrIntroduceConstantSettings, GrIntroduceDialog<GrIntroduceConstantSettings> {
 
-  private static final Logger LOG  = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantDialog");
+  private static final Logger LOG = Logger.getInstance(GrIntroduceConstantDialog.class);
 
   private final GrIntroduceContext myContext;
   private JLabel myNameLabel;
@@ -266,10 +265,10 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       names.add(var.getName());
     }
     if (expression != null) {
-      ContainerUtil.addAll(names, suggestNames());
+      names.addAll(suggestNames());
     }
 
-    myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
+    myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
   }
@@ -353,7 +352,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
-                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
+                                      IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());

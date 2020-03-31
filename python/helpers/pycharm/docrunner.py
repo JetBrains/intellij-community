@@ -1,4 +1,3 @@
-import imp
 import sys
 import datetime
 import os
@@ -203,6 +202,15 @@ modules = {}
 
 runner = DocTestRunner()
 
+
+def _load_file(moduleName, fileName):
+  if sys.version_info >= (3, 3):
+      from importlib import machinery
+      return machinery.SourceFileLoader(moduleName, fileName).load_module()
+  else:
+    import imp
+    return imp.load_source(moduleName, fileName)
+
 def loadSource(fileName):
   """
   loads source from fileName,
@@ -226,7 +234,7 @@ def loadSource(fileName):
       cnt += 1
     moduleName = getModuleName(prefix, cnt)
   debug("/ Loading " + fileName + " as " + moduleName)
-  module = imp.load_source(moduleName, fileName)
+  module = _load_file(moduleName, fileName)
   modules[moduleName] = module
   return module
 

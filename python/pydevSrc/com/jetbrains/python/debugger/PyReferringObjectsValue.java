@@ -20,24 +20,29 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PyReferringObjectsValue extends PyDebugValue {
   private static final Logger LOG = Logger.getInstance(PyReferringObjectsValue.class);
 
-  private final @NotNull PyReferrersLoader myReferrersLoader;
+  private final @Nullable PyReferrersLoader myReferrersLoader;
 
   public PyReferringObjectsValue(@NotNull String name,
                                  String type,
                                  String typeQualifier,
                                  String value,
-                                 boolean container, boolean isReturnedVal, boolean errorOnEval, @NotNull PyFrameAccessor frameAccessor) {
-    super(name, type, typeQualifier, value, container, isReturnedVal, false, errorOnEval, frameAccessor);
+                                 boolean container,
+                                 String shape,
+                                 boolean isReturnedVal,
+                                 boolean errorOnEval,
+                                 @NotNull PyFrameAccessor frameAccessor) {
+    super(name, type, typeQualifier, value, container, shape, isReturnedVal, false, errorOnEval, frameAccessor);
     myReferrersLoader = frameAccessor.getReferrersLoader();
   }
 
   public PyReferringObjectsValue(PyDebugValue debugValue) {
     this(debugValue.getName(), debugValue.getType(), debugValue.getTypeQualifier(), debugValue.getValue(), debugValue.isContainer(),
-         debugValue.isReturnedVal(), debugValue.isErrorOnEval(), debugValue.getFrameAccessor());
+         debugValue.getShape(), debugValue.isReturnedVal(), debugValue.isErrorOnEval(), debugValue.getFrameAccessor());
   }
 
   @Override
@@ -48,7 +53,10 @@ public class PyReferringObjectsValue extends PyDebugValue {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-
+    if (myReferrersLoader == null) {
+      LOG.error("Failed to load Referring Objects. Frame accessor: " + getFrameAccessor());
+      return;
+    }
     myReferrersLoader.loadReferrers(this, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList value) {
@@ -68,6 +76,6 @@ public class PyReferringObjectsValue extends PyDebugValue {
   }
 
   public boolean isField() {
-    return false; //TODO
+    return false;
   }
 }

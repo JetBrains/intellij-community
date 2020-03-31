@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
-import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsFileSystem
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
@@ -26,14 +25,14 @@ class GitDirectoryVirtualFile(
 
   private val cachedChildren by lazy {
     val gitRevisionNumber = GitRevisionNumber(commit.id.asString())
-    val remotePath = if (path.isEmpty()) "." else path + "/"
+    val dirPath = if (path.isEmpty()) "." else "$path/"
 
-    val tree = GitIndexUtil.listTree(repo, listOf(RemoteFilePath(remotePath, true)), gitRevisionNumber)
+    val tree = GitIndexUtil.listTreeForRawPaths(repo, listOf(dirPath), gitRevisionNumber)
     val result = tree.map {
       when(it) {
         is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
         else -> VcsVirtualFile(this, it.path.name,
-                               GitFileRevision(repo.project, RemoteFilePath(it.path.path, false), gitRevisionNumber),
+                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber),
                                VcsFileSystem.getInstance())
 
       }

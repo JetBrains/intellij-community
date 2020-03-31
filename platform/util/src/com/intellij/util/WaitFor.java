@@ -15,8 +15,11 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 /**
@@ -29,8 +32,7 @@ public abstract class WaitFor {
   private long myWaitTime;
   private boolean myInterrupted;
   private volatile boolean myConditionRealized;
-  @NonNls private static final String WAIT_FOR_THREAD_NAME = "WaitFor thread";
-  private Thread myThread;
+  private Future<?> myThread;
 
   /** Blocking call */
   public WaitFor() {
@@ -59,22 +61,18 @@ public abstract class WaitFor {
 
   /** Non-blocking call */
   public WaitFor(final int timeoutMsecs, final Runnable toRunOnTrue) {
-    myThread = new Thread(WAIT_FOR_THREAD_NAME) {
-      @Override
-      public void run() {
-        myConditionRealized = new WaitFor(timeoutMsecs) {
-          @Override
-          protected boolean condition() {
-            return WaitFor.this.condition();
-          }
-        }.isConditionRealized();
-
-        if (myConditionRealized) {
-          toRunOnTrue.run();
+    myThread = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      myConditionRealized = new WaitFor(timeoutMsecs) {
+        @Override
+        protected boolean condition() {
+          return WaitFor.this.condition();
         }
+      }.isConditionRealized();
+
+      if (myConditionRealized) {
+        toRunOnTrue.run();
       }
-    };
-    myThread.start();
+    });
   }
 
   public long getWaitedTime() {
@@ -99,10 +97,10 @@ public abstract class WaitFor {
   }
 
   @TestOnly
-  public void join() throws InterruptedException {
-    Thread thread = myThread;
+  public void join() throws InterruptedException, ExecutionException {
+    Future<?> thread = myThread;
     if (thread != null) {
-      thread.join();
+      thread.get();
     }
   }
 }

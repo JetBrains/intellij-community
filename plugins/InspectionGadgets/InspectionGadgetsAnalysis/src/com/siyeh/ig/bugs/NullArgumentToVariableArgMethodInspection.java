@@ -43,19 +43,12 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     final PsiType type1 = (PsiType)infos[1];
     final PsiType type2 = (PsiType)infos[2];

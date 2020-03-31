@@ -43,7 +43,7 @@ public class CommentBreakerEnterProcessor implements EnterProcessor {
   }
 
   private static void plainEnter(Editor editor) {
-    getEnterHandler().execute(editor, ((EditorEx) editor).getDataContext());
+    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx) editor).getDataContext());
   }
 
   private static EditorActionHandler getEnterHandler() {

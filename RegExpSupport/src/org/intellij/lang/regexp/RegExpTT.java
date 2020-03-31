@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.StringEscapesTokenTypes;
 
 public interface RegExpTT {
     IElementType NUMBER = new RegExpElementType("NUMBER");
@@ -82,7 +82,7 @@ public interface RegExpTT {
     IElementType PLUS = new RegExpElementType("PLUS");
     IElementType COLON = new RegExpElementType("COLON");
 
-    /** "\\" ("b" | "B" | "A" | "z" | "Z" | "G") */
+    /** "\\" ("b" | "B" | "A" | "z" | "Z" | "G" | "K") */
     IElementType BOUNDARY = new RegExpElementType("BOUNDARY");
     /** "^" */
     IElementType CARET = new RegExpElementType("CARET");
@@ -141,11 +141,16 @@ public interface RegExpTT {
 
     /** (?P<name>... */
     IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
+    /** (?P>name) or (?&name) */
+    IElementType PCRE_RECURSIVE_NAMED_GROUP_REF = new RegExpElementType("PCRE_RECURSIVE_NAMED_GROUP");
     /** (?P=name) */
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
     /** (?(id/name)yes-pattern|no-pattern) */
-    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF"); 
-  
+    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF");
+    /** (?(condition pattern)yes-pattern|no-pattern) */
+    IElementType PCRE_COND_REF = new RegExpElementType("PCRE_COND_REF");
+    /** (?|regex) */
+    IElementType PCRE_BRANCH_RESET = new RegExpElementType("PCRE_BRANCH_RESET");
     /** (?<name>... */
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
     /** \k<name> */
@@ -175,7 +180,7 @@ public interface RegExpTT {
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
-    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
+    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND, PCRE_BRANCH_RESET);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

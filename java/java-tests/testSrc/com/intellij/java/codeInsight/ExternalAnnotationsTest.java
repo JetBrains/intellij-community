@@ -1,28 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -38,7 +29,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations";
     myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    JavaModuleFixtureBuilder<?> builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
@@ -69,13 +60,21 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     }
   }
 
+  public void testAddedAnnotationInCodeWhenAlreadyPresent() {
+    PsiFile file = myFixture.configureByFile("src/withAnnotation/Foo.java");
+    PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
+    assertNotNull(method);
+    AddAnnotationPsiFix.createAddNullableFix(method).invoke(myFixture.getProject(), file, method, method);
+    myFixture.checkResultByFile("src/withAnnotation/Foo_after.java");
+  }
+
   public void testRenameClassWithExternalAnnotations() {
     myFixture.configureByFiles("src/rename/Foo.java", "content/anno/rename/annotations.xml");
 
     myFixture.renameElementAtCaret("Bar");
-    
+
     myFixture.checkResultByFile("content/anno/rename/annotations.xml",
-                                "content/anno/rename/annotations_after.xml", 
+                                "content/anno/rename/annotations_after.xml",
                                 true);
   }
 
@@ -84,26 +83,26 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
 
     IntentionAction action = myFixture.findSingleIntention("Insert '@Deprecated'");
     assertNotNull(action);
-   
+
     myFixture.launchAction(action);
-    
+
     myFixture.checkResultByFile("src/toSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/toSrc/annotations.xml",
-                                "content/anno/toSrc/annotations_after.xml", 
+                                "content/anno/toSrc/annotations_after.xml",
                                 true);
   }
 
   public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
-    IntentionAction action = myFixture.findSingleIntention("Annotate externally");
+    IntentionAction action = myFixture.findSingleIntention(JavaBundle.message("intention.text.annotate.externally"));
     assertNotNull(action);
-   
+
     myFixture.launchAction(action);
-    
+
     myFixture.checkResultByFile("src/fromSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/fromSrc/annotations.xml",
-                                "content/anno/fromSrc/annotations_after.xml", 
+                                "content/anno/fromSrc/annotations_after.xml",
                                 true);
 
   }

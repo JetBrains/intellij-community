@@ -25,15 +25,13 @@ public class MethodOverridesInaccessibleMethodMerger extends InspectionElementsM
     return "MethodOverridesInaccessibleMethodOfSuper";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] { "MethodOverridesPackageLocalMethod", "MethodOverridesPrivateMethod"};
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {"MethodOverridesPrivateMethodOfSuperclass", "MethodOverridesPrivateMethodOfSuperclass" };
   }
 }

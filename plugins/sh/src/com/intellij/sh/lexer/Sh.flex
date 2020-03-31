@@ -86,7 +86,8 @@ EscapedChar              = "\\" [^\n]
 Quote                    = \"
 
 UnclosedRawString        = '[^']*
-RawString                = {UnclosedRawString}'
+DollarSignRawString      = "$'"([^'] | {EscapedChar})*
+RawString                = {UnclosedRawString}' | {DollarSignRawString}'
 
 WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
 WordAfter                = {WordFirst} | [#!]
@@ -114,7 +115,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-EscapedCurly             = "\\{" | "\\}"
+ParamExpansion           = [^{}\\] | {EscapedChar}
+ParamExpansionBody       = {ParamExpansion}+
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -125,12 +127,13 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 StringContent            = [^$\"`(\\] | {EscapedChar}
-EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
+EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
 %state EVAL_EXPRESSION
+%state TEST_EXPRESSION
 %state CONDITIONAL_EXPRESSION
 
 %state IF_CONDITION
@@ -164,7 +167,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
    {WhiteSpace}+                 { return WHITESPACE; }
    {RawString}                   { return RAW_STRING; }
-   ")"                           |
+   ")" | ";"                     |
    {LineTerminator}              { popState(); yypushback(yylength()); }
    "$" | "(" | {EvalContent}+    { return EVAL_CONTENT; }
 }
@@ -185,6 +188,12 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
     "let"                         { return LET; }
     {Quote}                       { if (isQuoteOpen) { isQuoteOpen = false; return CLOSE_QUOTE; }
                                     else { isQuoteOpen = true; return OPEN_QUOTE; } }
+    ";"                           { popState(); return SEMI; }
+    {LineTerminator}              { popState(); return LINEFEED; }
+}
+
+<TEST_EXPRESSION> {
+    "!="                          { return WORD; }
     ";"                           { popState(); return SEMI; }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
@@ -252,7 +261,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
   "${"                                { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
   "{"                                 {             return LEFT_CURLY; }
   "}"                                 { popState(); return RIGHT_CURLY; }
-  ([^{}]|{EscapedCurly})+ / "${"|"}"  {             return PARAMETER_EXPANSION_BODY; }
+  {ParamExpansionBody} / "${"|"}"     {             return PARAMETER_EXPANSION_BODY; }
 }
 
 <CASE_CONDITION> {
@@ -320,10 +329,11 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
     "while"                       { pushState(OTHER_CONDITIONS); return WHILE; }
     "let"                         { pushState(LET_EXPRESSION); return LET; }
     "eval"                        { pushState(EVAL_EXPRESSION); return EVAL; }
+    "test"                        { pushState(TEST_EXPRESSION); return TEST; }
 }
 
-<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION,
-  CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
+<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, TEST_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
@@ -378,6 +388,8 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
     "<>"                          { return REDIRECT_LESS_GREATER; }
     "&>"                          { return REDIRECT_AMP_GREATER; }
     ">|"                          { return REDIRECT_GREATER_BAR; }
+    ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
+    "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
     "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
@@ -409,7 +421,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
 }
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
-  OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
+  OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, TEST_EXPRESSION> {
     {PatternExt}+                 |
     {Word}                        { return WORD; }
 }

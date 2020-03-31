@@ -30,13 +30,6 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
     super(commandLine);
   }
 
-  /** @deprecated Use {@link #CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused"})
-  @Deprecated
-  public CapturingAnsiEscapesAwareProcessHandler(Process process) {
-    super(process);
-  }
-
   public CapturingAnsiEscapesAwareProcessHandler(@NotNull Process process, @NotNull String commandLine) {
     super(process, null, commandLine);
   }

@@ -7,14 +7,14 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
-import com.intellij.testFramework.LightCodeInsightTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import groovy.transform.CompileStatic
 
 /**
  * User: anna
  */
 @CompileStatic
-class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
+class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
   void "test start caret position"() {
     def text = """\
      class <caret>Test {
@@ -90,12 +90,12 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
   private doTestPositionInvariance(String text, final boolean preselect, final boolean checkTyping) {
     configure text
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project)
-    def oldPreselectSetting = myEditor.settings.preselectRename
+    def oldPreselectSetting = editor.settings.preselectRename
     try {
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-      myEditor.settings.preselectRename = preselect
-      int offset = myEditor.caretModel.offset
-      final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
+      editor.settings.preselectRename = preselect
+      int offset = editor.caretModel.offset
+      final PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
 
@@ -109,10 +109,10 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
         offset++
       }
 
-      assertEquals(offset, myEditor.caretModel.offset)
+      assertEquals(offset, editor.caretModel.offset)
     }
     finally {
-      myEditor.settings.preselectRename = oldPreselectSetting
+      editor.settings.preselectRename = oldPreselectSetting
 
       TemplateState state = TemplateManagerImpl.getTemplateState(editor)
 

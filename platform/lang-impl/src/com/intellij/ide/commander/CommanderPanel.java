@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.commander;
 
@@ -68,7 +54,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class CommanderPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.commander.CommanderPanel");
+  private static final Logger LOG = Logger.getInstance(CommanderPanel.class);
 
   private static final Color DARK_BLUE = new Color(55, 85, 134);
   private static final Color DARK_BLUE_BRIGHTER = new Color(58, 92, 149);
@@ -133,7 +119,7 @@ public class CommanderPanel extends JPanel {
     });
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown();
         return true;
       }
@@ -285,7 +271,7 @@ public class CommanderPanel extends JPanel {
     add(myTitlePanel, BorderLayout.NORTH);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     scrollPane.setBorder(null);
-    scrollPane.getVerticalScrollBar().setFocusable(false); // otherwise the scrollbar steals focus and panel switching with tab is broken 
+    scrollPane.getVerticalScrollBar().setFocusable(false); // otherwise the scrollbar steals focus and panel switching with tab is broken
     scrollPane.getHorizontalScrollBar().setFocusable(false);
     add(scrollPane, BorderLayout.CENTER);
 
@@ -331,10 +317,10 @@ public class CommanderPanel extends JPanel {
   }
 
   @NotNull
-  private List<AbstractTreeNode> getSelectedNodes() {
+  private List<AbstractTreeNode<?>> getSelectedNodes() {
     if (myBuilder == null) return Collections.emptyList();
     final int[] indices = myList.getSelectedIndices();
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
     for (int index : indices) {
       if (index >= myModel.getSize()) continue;
       Object elementAtIndex = myModel.getElementAt(index);
@@ -503,8 +489,7 @@ public class CommanderPanel extends JPanel {
     return elements.toArray(new Navigatable[0]);
   }
 
-  @Nullable
-  private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
+  private static PsiElement @Nullable [] filterInvalidElements(final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
       return null;
     }
@@ -596,9 +581,8 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    @NotNull
     @Override
-    public PsiDirectory[] getDirectories() {
+    public PsiDirectory @NotNull [] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }

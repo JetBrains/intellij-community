@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,26 +43,26 @@ public class LoggedErrorProcessor {
     logger.warn(message, t);
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && ArrayUtil.isEmpty(details)) {
+      throw (TestLoggerAssertionError)t;
+    }
+
     message += DefaultLogger.attachmentsToString(t);
     logger.info(message, t);
 
-    if (DefaultLogger.shouldDumpExceptionToStderr()) {
-      System.err.println("ERROR: " + message);
-      if (t != null) t.printStackTrace(System.err);
-      if (details != null && details.length > 0) {
-        System.err.println("details: ");
-        for (String detail : details) {
-          System.err.println(detail);
-        }
-      }
-    }
+    DefaultLogger.dumpExceptionsToStderr(message, t, details);
 
-    throw new AssertionError(message, t);
+    throw new TestLoggerAssertionError(message, t);
   }
 
   public void disableStderrDumping(@NotNull Disposable parentDisposable) {
     DefaultLogger.disableStderrDumping(parentDisposable);
+  }
+
+  static class TestLoggerAssertionError extends AssertionError {
+    private TestLoggerAssertionError(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }

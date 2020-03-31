@@ -13,7 +13,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
@@ -28,7 +28,7 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.disableAstLoading
 /**
  * @author peter
  */
-class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
+class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testEnumConstant() {
     myFixture.tempDirFixture.createFile('A.groovy', 'enum A { MyEnumConstant }')

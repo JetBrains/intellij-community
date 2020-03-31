@@ -18,11 +18,11 @@ package com.siyeh.ig.bugs
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
-import com.siyeh.ig.LightInspectionTestCase
+import com.siyeh.ig.LightJavaInspectionTestCase
 import org.jetbrains.annotations.NotNull
 
 @SuppressWarnings(["ResultOfMethodCallIgnored", "UnusedReturnValue"])
-class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
+class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {
@@ -32,7 +32,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12
+    return JAVA_13
   }
 
   @Override
@@ -394,6 +394,18 @@ class X{
   void test(String foo) {
     if (foo == null) return;
     Validate.notNull(foo);
+  }
+}"""
+  }
+  
+  void testVoidType() {
+    doTest """class X {
+  void a() {
+    b();
+  }
+  
+  static Void b() {
+    return null;
   }
 }"""
   }

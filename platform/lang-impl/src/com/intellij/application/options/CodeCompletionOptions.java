@@ -3,19 +3,21 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider {
-  private static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.codeCompletionConfigurable");
+public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider, Configurable.WithEpDependencies {
+  public static final String ID = "editor.preferences.completion";
 
   private CodeCompletionPanel myPanel;
 
@@ -28,12 +30,13 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   public JComponent createComponent() {
     List<UnnamedConfigurable> configurables = getConfigurables();
     List<JComponent> addonComponents = new ArrayList<>(configurables.size());
-    List<JComponent> sectionComponents = new ArrayList<>(configurables.size());
+    List<UnnamedConfigurable> sectionConfigurables = new ArrayList<>(configurables.size());
     for (UnnamedConfigurable configurable : configurables) {
-      if (configurable instanceof CodeCompletionOptionsCustomSection) sectionComponents.add(configurable.createComponent());
+      if (configurable instanceof CodeCompletionOptionsCustomSection) sectionConfigurables.add(configurable);
       else addonComponents.add(configurable.createComponent());
     }
-    myPanel = new CodeCompletionPanel(addonComponents, sectionComponents);
+    sectionConfigurables.sort(Comparator.comparing(c -> ObjectUtils.notNull(c instanceof Configurable ? ((Configurable)c).getDisplayName() : null, "")));
+    myPanel = new CodeCompletionPanel(addonComponents, ContainerUtil.map(sectionConfigurables, c -> c.createComponent()));
     return myPanel.myPanel;
   }
 
@@ -63,7 +66,7 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   @NotNull
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    return ConfigurableWrapper.createConfigurables(EP_NAME);
+    return ConfigurableWrapper.createConfigurables(CodeCompletionConfigurableEP.EP_NAME);
   }
 
   @Override
@@ -74,6 +77,12 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   @Override
   @NotNull
   public String getId() {
-    return "editor.preferences.completion";
+    return ID;
+  }
+
+  @NotNull
+  @Override
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singleton(CodeCompletionConfigurableEP.EP_NAME);
   }
 }

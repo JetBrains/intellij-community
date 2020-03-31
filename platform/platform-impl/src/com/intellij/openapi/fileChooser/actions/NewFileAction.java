@@ -3,6 +3,7 @@
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -14,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 
-public class NewFileAction extends FileChooserAction {
+public class NewFileAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
     Presentation presentation = e.getPresentation();

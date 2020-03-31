@@ -4,15 +4,20 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Alarm;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
  */
-public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
+public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   private boolean myForbid; // for tests only
@@ -37,10 +43,10 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   private final Object myLock;
   @NotNull private final Runnable myDirtReporter;
 
-  public VcsDirtyScopeVfsListener(@NotNull Project project,
-                                  @NotNull ProjectLevelVcsManager vcsManager,
-                                  @NotNull VcsDirtyScopeManager dirtyScopeManager) {
-    myVcsManager = vcsManager;
+  public VcsDirtyScopeVfsListener(@NotNull Project project) {
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
 
     myLock = new Object();
     myQueue = new ArrayList<>();
@@ -51,19 +57,24 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
         myQueue.clear();
       }
 
-      HashSet<FilePath> dirtyFiles = new HashSet<>();
-      HashSet<FilePath> dirtyDirs = new HashSet<>();
+      List<FilePath> dirtyFiles = new ArrayList<>();
+      List<FilePath> dirtyDirs = new ArrayList<>();
       for (FilesAndDirs filesAndDirs : list) {
-        dirtyFiles.addAll(filesAndDirs.dirtyFiles);
-        dirtyDirs.addAll(filesAndDirs.dirtyDirs);
+        for (Set<FilePath> value : filesAndDirs.files.asMap().values()) {
+          dirtyFiles.addAll(value);
+        }
+        for (Set<FilePath> value : filesAndDirs.dirs.asMap().values()) {
+          dirtyDirs.addAll(value);
+        }
       }
+
       if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
         dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
       }
     };
     myZipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.POOLED_THREAD, this);
     Disposer.register(project, this);
-    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+    VirtualFileManager.getInstance().addAsyncFileListener(this, project);
   }
 
   public static VcsDirtyScopeVfsListener getInstance(@NotNull Project project) {
@@ -71,9 +82,6 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   }
 
   public static void install(@NotNull Project project) {
-    if (!project.isOpen()) {
-      throw new RuntimeException("Already closed: " + project);
-    }
     getInstance(project);
   }
 
@@ -95,63 +103,62 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   }
 
   @TestOnly
-  void waitForAsyncTaskCompletion() {
+  public void waitForAsyncTaskCompletion() {
     myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
+  @Nullable
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    if (myForbid || !myVcsManager.hasAnyMappings()) return;
+  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    if (myForbid || !myVcsManager.hasActiveVcss()) return null;
     final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
-      if (event instanceof VFileCreateEvent) continue;
-      final VirtualFile file = event.getFile();
+      ProgressManager.checkCanceled();
 
-      if (file == null || !file.isInLocalFileSystem()) {
-        continue;
+      final boolean isDirectory;
+      if (event instanceof VFileCreateEvent) {
+        if (!((VFileCreateEvent)event).getParent().isInLocalFileSystem()) {
+          continue;
+        }
+        isDirectory = ((VFileCreateEvent)event).isDirectory();
+      }
+      else {
+        final VirtualFile file = Objects.requireNonNull(event.getFile(), "All events but VFileCreateEvent have @NotNull getFile()");
+        if (!file.isInLocalFileSystem()) {
+          continue;
+        }
+        isDirectory = file.isDirectory();
       }
 
-      if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
-        dirtyFilesAndDirs.add(file);
+      if (event instanceof VFileMoveEvent) {
+        add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(((VFileMoveEvent)event).getOldPath(), isDirectory));
+        add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(((VFileMoveEvent)event).getNewPath(), isDirectory));
       }
-    }
-    markDirtyOnPooled(dirtyFilesAndDirs);
-  }
-
-  @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
-    if (myForbid || !myVcsManager.hasAnyMappings()) return;
-    final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
-    // collect files and directories - sources of events
-    for (VFileEvent event : events) {
-      if (event instanceof VFileDeleteEvent) continue;
-
-      final VirtualFile file = event.getFile();
-      if (file == null || !file.isInLocalFileSystem()) {
-        continue;
-      }
-
-      if (event instanceof VFileContentChangeEvent || event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
-        dirtyFilesAndDirs.add(file);
-      }
-      else if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-        dirtyFilesAndDirs.add(copyEvent.getNewParent().findChild(copyEvent.getNewChildName()));
-      }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-        if (pce.isRename()) {
-          // if a file was renamed, then the file is dirty and its parent directory is dirty too;
-          // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
-          dirtyFilesAndDirs.add(file);   // the file is dirty recursively
-          dirtyFilesAndDirs.addToFiles(file.getParent()); // directory is dirty alone. if parent is null - is checked in the method
-        } else {
-          dirtyFilesAndDirs.addToFiles(file);
+      else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).isRename()) {
+        // if a file was renamed, then the file is dirty and its parent directory is dirty too;
+        // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
+        FilePath oldPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getOldPath(), isDirectory);
+        FilePath newPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getNewPath(), isDirectory);
+        // the file is dirty recursively
+        add(myVcsManager, dirtyFilesAndDirs, oldPath);
+        add(myVcsManager, dirtyFilesAndDirs, newPath);
+        FilePath parentPath = oldPath.getParentPath();
+        if (parentPath != null) {
+          addAsFiles(myVcsManager, dirtyFilesAndDirs, parentPath); // directory is dirty alone
         }
       }
+      else {
+        add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(event.getPath(), isDirectory));
+      }
     }
-    markDirtyOnPooled(dirtyFilesAndDirs);
+
+    return new ChangeApplier() {
+      @Override
+      public void afterVfsChange() {
+        markDirtyOnPooled(dirtyFilesAndDirs);
+      }
+    };
   }
 
   private void markDirtyOnPooled(@NotNull FilesAndDirs dirtyFilesAndDirs) {
@@ -169,31 +176,38 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
    * not recursively, you should add it to files.
    */
   private static class FilesAndDirs {
-    @NotNull HashSet<FilePath> dirtyFiles = new HashSet<>();
-    @NotNull HashSet<FilePath> dirtyDirs = new HashSet<>();
-
-    private void add(@Nullable VirtualFile file, boolean addToFiles) {
-      if (file == null) return;
-      boolean isDirectory = file.isDirectory();
-      FilePath path = VcsUtil.getFilePath(file.getPath(), isDirectory);
-      if (addToFiles || !isDirectory) {
-        dirtyFiles.add(path);
-      }
-      else {
-        dirtyDirs.add(path);
-      }
-    }
-
-    private void add(@Nullable VirtualFile file) {
-      add(file, false);
-    }
-
-    private void addToFiles(@Nullable VirtualFile file) {
-      add(file, true);
-    }
+    @NotNull VcsDirtyScopeMap files = new VcsDirtyScopeMap();
+    @NotNull VcsDirtyScopeMap dirs = new VcsDirtyScopeMap();
 
     private boolean isEmpty() {
-      return dirtyFiles.isEmpty() && dirtyDirs.isEmpty();
+      return files.isEmpty() && dirs.isEmpty();
     }
+  }
+
+  private static void add(@NotNull ProjectLevelVcsManager vcsManager,
+                          @NotNull FilesAndDirs filesAndDirs,
+                          @NotNull FilePath filePath,
+                          boolean forceAddAsFiles) {
+    AbstractVcs vcs = vcsManager.getVcsFor(filePath);
+    if (vcs == null) return;
+
+    if (forceAddAsFiles || !filePath.isDirectory()) {
+      filesAndDirs.files.add(vcs, filePath);
+    }
+    else {
+      filesAndDirs.dirs.add(vcs, filePath);
+    }
+  }
+
+  private static void add(@NotNull ProjectLevelVcsManager vcsManager,
+                          @NotNull FilesAndDirs filesAndDirs,
+                          @NotNull FilePath filePath) {
+    add(vcsManager, filesAndDirs, filePath, false);
+  }
+
+  private static void addAsFiles(@NotNull ProjectLevelVcsManager vcsManager,
+                                 @NotNull FilesAndDirs filesAndDirs,
+                                 @NotNull FilePath filePath) {
+    add(vcsManager, filesAndDirs, filePath, true);
   }
 }

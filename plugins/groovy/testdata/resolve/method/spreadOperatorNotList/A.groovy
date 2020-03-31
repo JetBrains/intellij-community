@@ -4,4 +4,4 @@ class Foo {
 
 def col = new ArrayList<Foo>()
 
-col*.fo<ref>o()
+col*.fo<caret>o()

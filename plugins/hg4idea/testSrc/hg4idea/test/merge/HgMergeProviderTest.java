@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import hg4idea.test.HgPlatformTest;
 import hg4idea.test.HgTestUtil;
-import org.testng.Assert;
+import org.junit.Assert;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.nio.charset.StandardCharsets;
@@ -178,6 +178,6 @@ public class HgMergeProviderTest extends HgPlatformTest {
   }
 
   private static void assertEquals(String s, byte[] bytes) {
-    Assert.assertEquals(s, new String(bytes, StandardCharsets.UTF_8));
+    Assert.assertEquals(new String(bytes, StandardCharsets.UTF_8), s);
   }
 }

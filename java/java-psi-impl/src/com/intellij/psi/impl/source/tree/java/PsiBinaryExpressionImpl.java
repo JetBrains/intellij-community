@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,7 +31,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiBinaryExpressionImpl.class);
 
   public PsiBinaryExpressionImpl() {
     this(JavaElementType.BINARY_EXPRESSION);
@@ -141,9 +142,16 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return "PsiBinaryExpression:" + getText();
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getOperands() {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return PsiPolyadicExpressionImpl.processDeclarations(this, processor, state, lastParent, place);
+  }
+
+  @Override
+  public PsiExpression @NotNull [] getOperands() {
     PsiExpression rOperand = getROperand();
     return rOperand == null ? new PsiExpression[]{getLOperand()} : new PsiExpression[]{getLOperand(), rOperand};
   }

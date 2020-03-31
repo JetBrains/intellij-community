@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -24,7 +24,7 @@ import java.util.*;
  *
  * @see LineLayout
  */
-class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable {
+class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
 
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
@@ -56,7 +56,7 @@ class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
-    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable.Adapter() {
+    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable() {
       @Override
       public void hideNotify() {
         trimChunkCache();
@@ -86,13 +86,6 @@ class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable
                 new Attachment("editorState.txt", myView.getEditor().dumpState()));
       resetToDocumentSize(true);
     }
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    int insertedStartLine = myDocument.getLineNumber(base);
-    int insertedEndLine = myDocument.getLineNumber(base + (end - start));
-    invalidateLines(insertedStartLine, insertedEndLine); // range highlighters could have been moved to the inserted range
   }
 
   @Override

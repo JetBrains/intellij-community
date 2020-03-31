@@ -19,6 +19,7 @@ package org.intellij.plugins.relaxNG.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
@@ -69,7 +70,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       if (rootTag == null) {
         return null;
       }
-      if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
+      if (!RelaxNgMetaDataContributor.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
         return null;
       }
     } else {
@@ -118,7 +119,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         public void onMessage(PsiElement context, String message) {
           errors.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     ValidationMessageConsumer warning() {
       return new ValidationMessageConsumer() {
@@ -126,7 +127,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         public void onMessage(PsiElement context, String message) {
           warnings.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     void apply(AnnotationHolder holder) {
       MessageConsumerImpl errorc = new ErrorMessageConsumer(holder);
@@ -259,7 +260,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
           RelaxIncludeIndex.processBackwardDependencies((XmlFile)psiFile, processor);
           if (processor.isFound()) {
             // files that are included from other files do not need a <start> element.
-            myHolder.createWeakWarningAnnotation(node, message);
+            myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, message).range(node).create();
             return;
           }
         }
@@ -267,7 +268,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         // we've got our own validation for that
         return;
       }
-      myHolder.createErrorAnnotation(node, message);
+      myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(node).create();
     }
   }
 
@@ -279,7 +280,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
 
     @Override
     protected void createAnnotation(ASTNode node, String message) {
-      myHolder.createWarningAnnotation(node, message);
+      myHolder.newAnnotation(HighlightSeverity.WARNING, message).range(node).create();
     }
   }
 
@@ -291,7 +292,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     private static final HasError FOUND = new HasError();
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       throw FOUND;
     }
 

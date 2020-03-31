@@ -11,16 +11,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +81,11 @@ public abstract class AbstractExternalSystemConfigurable<
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
+
+      JComponent component = ScrollPaneFactory.createScrollPane(myComponent, true);
+      component.setSize(myComponent.getPreferredSize());
+      myComponent.setPreferredSize(myComponent.getMinimumSize());
+      return component;
     }
     return myComponent;
   }
@@ -100,13 +101,13 @@ public abstract class AbstractExternalSystemConfigurable<
 
   @SuppressWarnings("unchecked")
   private void prepareProjectSettings(@NotNull SystemSettings s) {
-    List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
+    List<ProjectSettings> settings = new ArrayList<>(s.getLinkedProjectsSettings());
     if (settings.isEmpty()) {
       ExternalSystemUiUtil.fillBottom(myComponent);
       return;
     }
 
-    myComponent.add(new TitledSeparator(ExternalSystemBundle.message("settings.title.system.settings",
+    myComponent.add(new TitledSeparator(ExternalSystemBundle.message("settings.title.projects.settings",
                                                                      myExternalSystemId.getReadableName())),
                     ExternalSystemUiUtil.getFillLineConstraints(0));
 
@@ -128,7 +129,7 @@ public abstract class AbstractExternalSystemConfigurable<
                       .getFillLineConstraints(1)
                       .fillCell()
                       .weighty(1)
-                      .pady(JBUI.scale(30)));
+                      .pady(JBUIScale.scale(30)));
 
     ContainerUtil.sort(settings, Comparator.comparing(s2 -> getProjectName(s2.getExternalProjectPath())));
 
@@ -198,7 +199,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
       constraints = ExternalSystemUiUtil.getFillLineConstraints(0);
       constraints.insets.top = 0;
-      
+
       panel.add(new TitledSeparator(ExternalSystemBundle.message("settings.title.system.settings")), constraints);
       mySystemSettingsControl.fillUi(panel, 1);
     }
@@ -233,6 +234,7 @@ public abstract class AbstractExternalSystemConfigurable<
       List<ProjectSettings> projectSettings = new ArrayList<>();
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         ProjectSettings s = newProjectSettings();
+        s.setupNewProjectDefault();
         control.apply(s);
         projectSettings.add(s);
       }

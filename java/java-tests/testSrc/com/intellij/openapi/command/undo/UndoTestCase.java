@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -12,6 +12,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public abstract class UndoTestCase extends CodeInsightTestCase {
+public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   private CurrentEditorProvider myOldEditorProvider;
 
   protected UndoManagerImpl myManager;
@@ -75,7 +76,8 @@ public abstract class UndoTestCase extends CodeInsightTestCase {
   }
 
   protected void typeInChar(Editor e, char c) {
-    getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
+    getActionManager();
+    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
   private static EditorActionManager getActionManager() {

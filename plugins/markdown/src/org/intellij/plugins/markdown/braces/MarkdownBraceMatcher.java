@@ -32,9 +32,8 @@ public class MarkdownBraceMatcher extends PairedBraceMatcherAdapter {
 
   private static class MyPairedBraceMatcher implements PairedBraceMatcher {
 
-    @NotNull
     @Override
-    public BracePair[] getPairs() {
+    public BracePair @NotNull [] getPairs() {
       return new BracePair[]{
         new BracePair(MarkdownTokenTypes.LPAREN, MarkdownTokenTypes.RPAREN, false),
         new BracePair(MarkdownTokenTypes.LBRACKET, MarkdownTokenTypes.RBRACKET, false),

@@ -127,7 +127,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
 
   @Override
   protected void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup, @Nullable LightActionGroup actions) {
-    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
+    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myInSpecificRepository ? myCurrentRepository : null, true));
   }
 }
 

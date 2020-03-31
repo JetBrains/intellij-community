@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -40,9 +40,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpoin
 import javax.swing.*;
 
 public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
+  private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
 
-  protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
   public ExceptionBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
@@ -90,7 +89,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
+    return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
   }
 
   @Override
@@ -173,18 +172,18 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     try {
       String file = location.sourceName();
       int line = DebuggerUtilsEx.getLineNumber(location, false);
-      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
+      locationInfo = JavaDebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
     }
     catch (AbsentInformationException e) {
-      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info.absent");
+      locationInfo = JavaDebuggerBundle.message("exception.breakpoint.console.message.location.info.absent");
     }
     if (threadName != null) {
-      return DebuggerBundle.message("exception.breakpoint.console.message.with.thread.info",
-                                    exceptionName, threadName, locationQName, locationInfo
+      return JavaDebuggerBundle.message("exception.breakpoint.console.message.with.thread.info",
+                                        exceptionName, threadName, locationQName, locationInfo
       );
     }
     else {
-      return DebuggerBundle.message("exception.breakpoint.console.message", exceptionName, locationQName, locationInfo);
+      return JavaDebuggerBundle.message("exception.breakpoint.console.message", exceptionName, locationQName, locationInfo);
     }
   }
 
@@ -245,7 +244,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
     if(className == null) {
-      throw new InvalidDataException(READ_NO_CLASS_NAME);
+      throw new InvalidDataException(getReadNoClassName());
     }
   }
 
@@ -279,5 +278,9 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   public void setCatchClassExclusionFilters(ClassFilter[] filters) {
     getProperties().setCatchClassExclusionFilters(filters);
+  }
+
+  protected static String getReadNoClassName() {
+    return JavaDebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   }
 }

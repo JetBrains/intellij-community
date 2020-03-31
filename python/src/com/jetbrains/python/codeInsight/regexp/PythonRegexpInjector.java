@@ -88,7 +88,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
     if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
-      return referenceExpression.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).resolve();
+      return referenceExpression.getReference(PyResolveContext.defaultContext().withTypeEvalContext(context)).resolve();
     }
 
     return null;

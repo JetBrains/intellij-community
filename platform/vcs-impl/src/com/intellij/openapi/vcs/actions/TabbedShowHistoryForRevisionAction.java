@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,7 +18,9 @@ import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Collections;
+import java.util.Objects;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
@@ -49,9 +37,9 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    AbstractVcs vcs = assertNotNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
+    AbstractVcs vcs = Objects.requireNonNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
 
-    Pair<FilePath, VcsRevisionNumber> fileAndRevision = assertNotNull(getFileAndRevision(event));
+    Pair<FilePath, VcsRevisionNumber> fileAndRevision = Objects.requireNonNull(getFileAndRevision(event));
     FilePath file = fileAndRevision.getFirst();
     VcsRevisionNumber revisionNumber = fileAndRevision.getSecond();
 
@@ -60,20 +48,20 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
       showNewFileHistory(project, file, revisionNumberString);
     }
     else {
-      VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
-      AbstractVcsHelperImpl helper = assertNotNull(getVcsHelper(project));
+      VcsHistoryProviderEx vcsHistoryProvider = Objects.requireNonNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
+      AbstractVcsHelperImpl helper = Objects.requireNonNull(getVcsHelper(project));
       helper.showFileHistory(vcsHistoryProvider, file, vcs, revisionNumber);
     }
   }
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, path, revisionNumber);
+    historyProvider.showFileHistory(project, Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, path, revisionNumber);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {

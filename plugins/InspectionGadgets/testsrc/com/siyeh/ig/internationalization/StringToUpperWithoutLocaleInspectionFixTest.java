@@ -10,7 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_8;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
 
 public class StringToUpperWithoutLocaleInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -35,9 +35,8 @@ public class StringToUpperWithoutLocaleInspectionFixTest extends LightQuickFixPa
     return JAVA_8;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new StringToUpperWithoutLocaleInspection()};
   }
 }

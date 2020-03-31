@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +13,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * @author oleg
- */
 public class YAMLUtil {
   public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER =
     new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
@@ -54,7 +51,6 @@ public class YAMLUtil {
    * }</pre>
    * Flattened {@code needKey} is {@code top.next.list[0].needKey}
    */
-  @ApiStatus.Experimental
   @NotNull
   public static String getConfigFullName(@NotNull YAMLPsiElement target) {
     final StringBuilder builder = new StringBuilder();
@@ -84,7 +80,7 @@ public class YAMLUtil {
     else {
       return Collections.emptyList();
     }
-  } 
+  }
 
   @Nullable
   public static YAMLKeyValue getQualifiedKeyInFile(final YAMLFile file, List<String> key) {
@@ -101,11 +97,16 @@ public class YAMLUtil {
         return null;
       }
 
-      final YAMLKeyValue keyValue = mapping.getKeyValueByKey(key.get(i));
+      YAMLKeyValue keyValue = mapping.getKeyValueByKey(String.join(".", key.subList(i, key.size())));
+      if (keyValue != null) {
+        return keyValue;
+      }
+
+      keyValue = mapping.getKeyValueByKey(key.get(i));
       if (keyValue == null || i + 1 == key.size()) {
         return keyValue;
       }
-      
+
       mapping = ObjectUtils.tryCast(keyValue.getValue(), YAMLMapping.class);
     }
     throw new IllegalStateException("Should have returned from the loop");
@@ -241,7 +242,7 @@ public class YAMLUtil {
       else {
         current = ((YAMLMapping)dummyKeyValue.getValue());
       }
-  
+
     }
 
     // Conflict with existing value
@@ -256,29 +257,8 @@ public class YAMLUtil {
     throw new IncorrectOperationException(YAMLBundle.message("new.name.conflicts.with", builder.toString()));
   }
 
-  //public static void removeI18nRecord(final YAMLFile file, final String[] key){
-  //  PsiElement element = getQualifiedKeyInFile(file, key);
-  //  while (element != null){
-  //    final PsiElement parent = element.getParent();
-  //    if (parent instanceof YAMLDocument) {
-  //      ((YAMLKeyValue)element).getValue().delete();
-  //      return;
-  //    }
-  //    if (parent instanceof YAMLCompoundValue) {
-  //      if (((YAMLCompoundValue)parent).getYAMLElements().size() > 1) {
-  //        element.delete();
-  //        return;
-  //      }
-  //    }
-  //    element = parent;
-  //  }
-  //}
-
   public static PsiElement rename(final YAMLKeyValue element, final String newName) {
-    if (newName.contains(".")){
-      throw new IncorrectOperationException(YAMLBundle.message("rename.wrong.name"));
-    }
-    if (newName.equals(element.getName())){
+    if (newName.equals(element.getName())) {
       throw new IncorrectOperationException(YAMLBundle.message("rename.same.name"));
     }
     final YAMLKeyValue topKeyValue = YAMLElementGenerator.getInstance(element.getProject()).createYamlKeyValue(newName, "Foo");
@@ -306,7 +286,7 @@ public class YAMLUtil {
     }
     return 0;
   }
-  
+
   public static int getIndentToThisElement(@NotNull PsiElement element) {
     if (element instanceof YAMLBlockMappingImpl) {
       try {

@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vcs.VcsBundle;
 
 public abstract class ShowDiffPreviewAction extends ToggleAction implements DumbAware {
   public ShowDiffPreviewAction() {
-    super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
+    super(VcsBundle.messagePointer("action.ToggleAction.text.preview.diff"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);
   }
 }

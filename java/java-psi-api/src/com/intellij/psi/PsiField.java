@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmField;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java field or enum constant.
  */
-public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, JvmField {
+public interface PsiField extends PsiJvmMember, PsiVariable, PsiDocCommentOwner, JvmField {
   /**
    * The empty array of PSI fields which can be reused to avoid unnecessary allocations.
    */
@@ -36,4 +36,8 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, Jv
   @NotNull
   @Override
   PsiType getType();
+
+  @NotNull
+  @Override
+  String getName();
 }

@@ -16,11 +16,11 @@
 
 package com.intellij.facet.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.*;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public interface FacetValidatorsManager {
 
   void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch);

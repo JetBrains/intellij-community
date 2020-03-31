@@ -45,7 +45,7 @@ public class GitConflictsHolder implements Disposable {
     }
   }
 
-  public void refresh(@NotNull VcsDirtyScope scope, @NotNull Collection<GitConflict> conflicts) {
+  public void refresh(@NotNull VcsDirtyScope scope, @NotNull Collection<? extends GitConflict> conflicts) {
     synchronized (LOCK) {
       Map<FilePath, GitConflict> map = new HashMap<>();
       for (GitConflict conflict : myConflicts) {

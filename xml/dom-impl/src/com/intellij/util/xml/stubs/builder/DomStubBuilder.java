@@ -28,7 +28,6 @@ import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.SemService;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.*;
@@ -90,12 +89,11 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     }
     finally {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.FALSE);
-      SemService.getSemService(project).clearCache();
     }
   }
 
   @Override
   public int getStubVersion() {
-    return 22 + DomApplicationComponent.getInstance().getCumulativeVersion(true);
+    return 23 + DomApplicationComponent.getInstance().getCumulativeVersion(true);
   }
 }

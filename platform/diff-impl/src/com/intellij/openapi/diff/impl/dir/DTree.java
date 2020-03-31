@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DiffErrorElement;
 import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.SortedList;
@@ -37,6 +39,8 @@ import static com.intellij.ide.diff.DiffType.ERROR;
  * @author Konstantin Bulenkov
  */
 public class DTree {
+  private static final Logger LOG = Logger.getInstance(DTree.class);
+
   private static final Comparator<DTree> COMPARATOR = (o1, o2) -> {
     final boolean b1 = o1.isContainer();
     final boolean b2 = o2.isContainer();
@@ -280,9 +284,10 @@ public class DTree {
     if (file1.isContainer() || file2.isContainer()) return false;
     if (file1.getSize() != file2.getSize()) return false;
     try {
-      return Arrays.equals(file1.getContent(), file2.getContent());
+      return DiffUtil.compareStreams(() -> file1.getContentStream(), () -> file2.getContentStream());
     }
     catch (IOException e) {
+      LOG.warn(e);
       return false;
     }
   }
@@ -311,6 +316,7 @@ public class DTree {
       return StringUtil.equals(convertedText1, convertedText2);
     }
     catch (IOException e) {
+      LOG.warn(e);
       return false;
     }
   }

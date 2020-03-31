@@ -19,6 +19,7 @@ import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -30,8 +31,9 @@ import java.util.stream.Collectors;
 
 /**
  * This class is deprecated and is to be removed in future releases
- * Use {@link JarRepositoryManager} instead
+ * @deprecated Use {@link JarRepositoryManager} instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 @Deprecated
 public class RepositoryAttachHandler {
 

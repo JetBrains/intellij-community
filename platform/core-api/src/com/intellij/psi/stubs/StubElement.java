@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -12,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author max
- */
 public interface StubElement<T extends PsiElement> extends Stub {
   @Override
   IStubElementType getStubType();
@@ -29,15 +24,11 @@ public interface StubElement<T extends PsiElement> extends Stub {
 
   T getPsi();
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, final E[] array);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, final E[] array);
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<E> f);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<E> f);
 
   @Nullable
   <E extends PsiElement> E getParentStubOfType(@NotNull Class<E> parentClass);

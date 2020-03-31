@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 /**
  * @author peter
+ * @see ProcessingContext
  */
 public class SharedProcessingContext {
   private final Map<Object, Object> myMap = ContainerUtil.newConcurrentMap();
@@ -38,7 +40,7 @@ public class SharedProcessingContext {
       return null;
     }
     else {
-      return (T) map.get(element);
+      return (T)map.get(element);
     }
   }
 

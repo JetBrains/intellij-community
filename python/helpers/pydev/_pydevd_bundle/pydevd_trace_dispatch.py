@@ -39,32 +39,29 @@ show_tracing_warning = False
 
 if use_cython == 'YES':
     # We must import the cython version if forcing cython
-    from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
+    from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
     def trace_dispatch(py_db, frame, event, arg):
+        if _trace_dispatch is None:
+            return None
         return _trace_dispatch(py_db, frame, event, arg)
 
 elif use_cython == 'NO':
     # Use the regular version if not forcing cython
-    from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
+    from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
 
 elif use_cython is None:
     # Regular: use fallback if not found and give message to user
     try:
-        from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
+        from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func
         def trace_dispatch(py_db, frame, event, arg):
+            if _trace_dispatch is None:
+                return None
             return _trace_dispatch(py_db, frame, event, arg)
 
-        # This version number is always available
-        from _pydevd_bundle.pydevd_additional_thread_info_regular import version as regular_version
-        # This version number from the already compiled cython extension
-        from _pydevd_bundle.pydevd_cython_wrapper import version as cython_version
-        if cython_version != regular_version:
+    except ImportError as e:
+        if hasattr(e, 'version_mismatch'):
             delete_old_compiled_extensions()
-            raise ImportError()
-
-    except ImportError:
-        from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
-        from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
+        from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
         from _pydev_bundle.pydev_monkey import log_error_once
 
         if not IS_PYCHARM:

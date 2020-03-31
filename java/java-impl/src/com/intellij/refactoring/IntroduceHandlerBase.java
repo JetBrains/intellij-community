@@ -33,7 +33,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author dsl
  */
 public abstract class IntroduceHandlerBase implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.IntroduceHandlerBase");
+  private static final Logger LOG = Logger.getInstance(IntroduceHandlerBase.class);
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
@@ -48,14 +48,14 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length >= 1 && elements[0] instanceof PsiExpression, "incorrect invoke() parameters");
     final PsiElement tempExpr = elements[0];
     final Editor editor;
     if (dataContext != null) {
       final Editor editorFromDC = CommonDataKeys.EDITOR.getData(dataContext);
       final PsiFile cachedPsiFile = editorFromDC != null ? PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument()) : null;
-      if (cachedPsiFile != null && PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
+      if (PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
         editor = editorFromDC;
       }
       else {
@@ -81,22 +81,14 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   }
 
   /**
-   * @param project
-   * @param tempExpr
    * @param editor editor to highlight stuff in. Should accept {@code null}
-   * @return
    */
-  protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr,
-                                        Editor editor);
+  protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr, @Nullable Editor editor);
 
   /**
-   * @param project
-   * @param localVariable
    * @param editor editor to highlight stuff in. Should accept {@code null}
-   * @return
    */
-  protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable,
-                                        Editor editor);
+  protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable, @Nullable Editor editor);
 
   @TestOnly
   public abstract AbstractInplaceIntroducer getInplaceIntroducer();

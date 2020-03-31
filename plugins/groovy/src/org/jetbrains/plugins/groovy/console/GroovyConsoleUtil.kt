@@ -1,36 +1,56 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil.isSuitableModule
-import org.jetbrains.plugins.groovy.util.filterGroovyCompatibleModules
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_3
+import org.jetbrains.plugins.groovy.config.getSdkVersion
+import org.jetbrains.plugins.groovy.util.hasAcceptableModuleType
+import org.jetbrains.plugins.groovy.util.hasJavaSdk
 
-fun getApplicableModules(project: Project): List<Module> {
-  val modules = ModuleManager.getInstance(project).modules.toList()
-  return filterGroovyCompatibleModules(modules, ::isSuitableModule)
-}
+private fun Project.modules(): Array<out Module> = ModuleManager.getInstance(this).modules
 
-fun getAnyApplicableModule(project: Project): Module? {
-  return getApplicableModules(project).firstOrNull()
-}
+internal fun isApplicableModule(module: Module): Boolean = hasJavaSdk(module) && hasAcceptableModuleType(module)
+
+internal fun hasAnyApplicableModule(project: Project): Boolean = project.modules().any(::isApplicableModule)
+
+internal fun getApplicableModules(project: Project): List<Module> = project.modules().filter(::isApplicableModule)
 
 fun getWorkingDirectory(module: Module): String? {
   return ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path ?: module.project.basePath
+}
+
+internal fun hasNeededDependenciesToRunConsole(module: Module): Boolean {
+  val sdkVersion = getSdkVersion(module)
+  return sdkVersion != null && hasNeededDependenciesToRunConsole(module, sdkVersion)
+}
+
+internal fun sdkVersionIfHasNeededDependenciesToRunConsole(module: Module): String? {
+  val sdkVersion = getSdkVersion(module)
+  return sdkVersion?.takeIf {
+    hasNeededDependenciesToRunConsole(module, it)
+  }
+}
+
+private fun hasNeededDependenciesToRunConsole(module: Module, sdkVersion: String): Boolean {
+  val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+  val facade = JavaPsiFacade.getInstance(module.project)
+  if (facade.findClass("groovy.ui.GroovyMain", scope) == null) {
+    return false
+  }
+  if (StringUtil.compareVersionNumbers(sdkVersion, GROOVY2_3) >= 0) {
+    return true
+  }
+  else {
+    // groovy < 2.3 needs commons-cli:commons-cli jar
+    // groovy-all has repackaged jarjar inside
+    // regular groovy has optional dependency on regular commons-cli
+    return facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null ||
+           facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null
+  }
 }

@@ -59,7 +59,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
           result.myConfiguration = configuration;
         }
         else {
-          runManager.setUniqueNameIfNeed(result.myConfiguration);
+          runManager.setUniqueNameIfNeeded(result.myConfiguration);
         }
       }
     }

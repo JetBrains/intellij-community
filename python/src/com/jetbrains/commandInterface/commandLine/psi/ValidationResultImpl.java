@@ -18,16 +18,16 @@ package com.jetbrains.commandInterface.commandLine.psi;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -191,7 +191,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
 
 
   @Override
-  public void visitWhiteSpace(final PsiWhiteSpace space) {
+  public void visitWhiteSpace(@NotNull final PsiWhiteSpace space) {
     super.visitWhiteSpace(space);
     // -aSHORT_OPT_ARGUMENT, but -a NEW_POSITION_ARGUMENT, so whitespace makes sense
     if (myCurrentOptionAndArgsLeft != null && myCurrentOptionAndArgsLeft.second == 0) {

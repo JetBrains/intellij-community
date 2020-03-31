@@ -82,14 +82,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
       myOldChild = (TreeElement)oldNode;
       myNewChild = (TreeElement)newNode;
-      ASTNode parent = oldNode.getTreeParent();
-      assert parent != null : "old:" + oldNode + " new:" + newNode;
+      ensureOldParent();
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
-      CompositeElement parent = myOldChild.getTreeParent();
-      assert parent != null : "old:" + myOldChild + " new:" + myNewChild;
+      CompositeElement parent = ensureOldParent();
 
       final PsiElement psiParent = parent.getPsi();
       final PsiElement psiOldChild = file.isPhysical() ? myOldChild.getPsi() : null;
@@ -116,6 +114,15 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       }
 
       DebugUtil.checkTreeStructure(parent);
+    }
+
+    @NotNull
+    private CompositeElement ensureOldParent() {
+      CompositeElement parent = myOldChild.getTreeParent();
+      if (parent == null) {
+        throw PsiInvalidElementAccessException.createByNode(myOldChild, "new:" + myNewChild);
+      }
+      return parent;
     }
   }
 

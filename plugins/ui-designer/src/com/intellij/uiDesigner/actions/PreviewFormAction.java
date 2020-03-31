@@ -28,10 +28,15 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,6 +60,7 @@ import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -63,18 +69,19 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PreviewFormAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+  private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
    * The problem is that this class is in a default package so it's not
    * import this class to refer
    */
-  private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
+  private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
+  private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
-  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
+  public static InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, @NotNull final String classPath) {
     final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -85,7 +92,8 @@ public final class PreviewFormAction extends AnAction{
         throw new RuntimeException(exc);
       }
     }
-    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
+    URL[] zero = new URL[0];
+    return new InstrumentationClassFinder(platformUrls == null ? zero : platformUrls, urls.toArray(zero));
   }
 
   @Override
@@ -108,7 +116,7 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM
+      FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.GUI_DESIGNER_FORM)
     );
   }
 
@@ -130,11 +138,21 @@ public final class PreviewFormAction extends AnAction{
       return;
     }
 
+    URL[] platformUrls = null;
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null && sdk.getHomePath() != null && JavaSdk.getInstance().isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_9)) {
+      try {
+        platformUrls = new URL[]{InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath())};
+      }
+      catch (MalformedURLException ignore) {
+      }
+    }
+
     final PathsList sources = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = createClassFinder(classPath);
+    final InstrumentationClassFinder finder = createClassFinder(platformUrls, classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
@@ -166,11 +184,11 @@ public final class PreviewFormAction extends AnAction{
       try {
         PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, finder);
 
-        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
+        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME, true);
         //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyExitAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyPackAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MySetLafAction", true);
 
         Locale locale = Locale.getDefault();
         if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
@@ -296,7 +314,7 @@ public final class PreviewFormAction extends AnAction{
       );
       return;
     }
-    parameters.setMainClass("FormPreviewFrame");
+    parameters.setMainClass(CLASS_TO_BIND_NAME);
     parameters.setWorkingDirectory(tempPath);
     if (stringDescriptorLocale != null && stringDescriptorLocale.getDisplayName().length() > 0) {
       parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
@@ -344,7 +362,7 @@ public final class PreviewFormAction extends AnAction{
 
         @Override
         @NotNull
-        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
@@ -370,8 +388,7 @@ public final class PreviewFormAction extends AnAction{
     }
 
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return new Module[] {myModule};
     }
   }

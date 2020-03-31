@@ -1,18 +1,4 @@
-/*
-* Copyright 2000-2017 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.java
 
@@ -32,12 +18,12 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
 
   override val uastInitializer: UExpression? by lz {
     val initializer = javaPsi.initializer ?: return@lz null
-    getLanguagePlugin().convertElement(initializer, this) as? UExpression
+    UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
   }
 
-  override val annotations: List<JavaUAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<JavaUAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
   override val typeReference: UTypeReferenceExpression? by lz {
-    getLanguagePlugin().convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this)
+    javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
   }
 
   override val uastAnchor: UIdentifier
@@ -122,7 +108,7 @@ open class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by sourcePsi, UMultiResolvable {
-  override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(sourcePsi.initializingClass, this) }
+  override val initializingClass: UClass? by lz { UastFacade.findPlugin(sourcePsi)?.convertOpt<UClass>(sourcePsi.initializingClass, this) }
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiEnumConstant
@@ -149,7 +135,7 @@ open class JavaUEnumConstant(
 
   override val valueArguments: List<UExpression> by lz {
     sourcePsi.argumentList?.expressions?.map {
-      getLanguagePlugin().convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
+      UastFacade.findPlugin(it)?.convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
     } ?: emptyList()
   }
 

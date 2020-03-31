@@ -72,44 +72,63 @@ else:
 
 def ignore_patterns(*patterns: _Path) -> Callable[[Any, List[_AnyStr]], Set[_AnyStr]]: ...
 
-if sys.version_info >= (3,):
-    _IgnoreFn = Union[None, Callable[[str, List[str]], Iterable[str]], Callable[[_Path, List[str]], Iterable[str]]]
+if sys.version_info >= (3, 8):
+    def copytree(
+        src: _Path,
+        dst: _Path,
+        symlinks: bool = ...,
+        ignore: Union[None, Callable[[str, List[str]], Iterable[str]], Callable[[_Path, List[str]], Iterable[str]]] = ...,
+        copy_function: Callable[[str, str], None] = ...,
+        ignore_dangling_symlinks: bool = ...,
+        dirs_exist_ok: bool = ...,
+    ) -> _PathReturn: ...
+elif sys.version_info >= (3,):
     def copytree(src: _Path, dst: _Path, symlinks: bool = ...,
-                 ignore: _IgnoreFn = ...,
+                 ignore: Union[None,
+                               Callable[[str, List[str]], Iterable[str]],
+                               Callable[[_Path, List[str]], Iterable[str]]] = ...,
                  copy_function: Callable[[str, str], None] = ...,
                  ignore_dangling_symlinks: bool = ...) -> _PathReturn: ...
 else:
-    _IgnoreFn = Union[None, Callable[[AnyStr, List[AnyStr]], Iterable[AnyStr]]]
     def copytree(src: AnyStr, dst: AnyStr, symlinks: bool = ...,
-                 ignore: _IgnoreFn = ...) -> _PathReturn: ...
+                 ignore: Union[None,
+                               Callable[[AnyStr, List[AnyStr]],
+                                        Iterable[AnyStr]]] = ...) -> _PathReturn: ...
 
 if sys.version_info >= (3,):
-    @overload
-    def rmtree(path: bytes, ignore_errors: bool = ...,
-               onerror: Optional[Callable[[Any, str, Any], Any]] = ...) -> None: ...
-    @overload
-    def rmtree(path: _AnyPath, ignore_errors: bool = ...,
-               onerror: Optional[Callable[[Any, _AnyPath, Any], Any]] = ...) -> None: ...
+    def rmtree(path: Union[bytes, _Path], ignore_errors: bool = ...,
+               onerror: Optional[Callable[[Any, Any, Any], Any]] = ...) -> None: ...
 else:
     def rmtree(path: _AnyPath, ignore_errors: bool = ...,
                onerror: Optional[Callable[[Any, _AnyPath, Any], Any]] = ...) -> None: ...
 
-if sys.version_info >= (3, 5):
-    _CopyFn = Union[Callable[[str, str], None], Callable[[_Path, _Path], None]]
+_CopyFn = Union[Callable[[str, str], None], Callable[[_Path, _Path], None]]
+
+if sys.version_info >= (3, 9):
     def move(src: _Path, dst: _Path,
+             copy_function: _CopyFn = ...) -> _PathReturn: ...
+elif sys.version_info >= (3, 5):
+    # See https://bugs.python.org/issue32689
+    def move(src: str, dst: _Path,
              copy_function: _CopyFn = ...) -> _PathReturn: ...
 else:
     def move(src: _Path, dst: _Path) -> _PathReturn: ...
 
 if sys.version_info >= (3,):
-    _ntuple_diskusage = NamedTuple('usage', [('total', int),
-                                             ('used', int),
-                                             ('free', int)])
+    class _ntuple_diskusage(NamedTuple):
+        total: int
+        used: int
+        free: int
     def disk_usage(path: _Path) -> _ntuple_diskusage: ...
     def chown(path: _Path, user: Optional[str] = ...,
               group: Optional[str] = ...) -> None: ...
-    def which(cmd: _Path, mode: int = ...,
-              path: Optional[_Path] = ...) -> Optional[str]: ...
+if sys.version_info >= (3, 8):
+    @overload
+    def which(cmd: _Path, mode: int = ..., path: Optional[_Path] = ...) -> Optional[str]: ...
+    @overload
+    def which(cmd: bytes, mode: int = ..., path: Optional[_Path] = ...) -> Optional[bytes]: ...
+elif sys.version_info >= (3,):
+    def which(cmd: _Path, mode: int = ..., path: Optional[_Path] = ...) -> Optional[str]: ...
 
 def make_archive(base_name: _AnyStr, format: str, root_dir: Optional[_Path] = ...,
                  base_dir: Optional[_Path] = ..., verbose: bool = ...,
@@ -123,9 +142,13 @@ def register_archive_format(name: str, function: Callable[..., Any],
 def unregister_archive_format(name: str) -> None: ...
 
 if sys.version_info >= (3,):
-    # Should be _Path once http://bugs.python.org/issue30218 is fixed
-    def unpack_archive(filename: str, extract_dir: Optional[_Path] = ...,
-                       format: Optional[str] = ...) -> None: ...
+    if sys.version_info >= (3, 7):
+        def unpack_archive(filename: _Path, extract_dir: Optional[_Path] = ...,
+                           format: Optional[str] = ...) -> None: ...
+    else:
+        # See http://bugs.python.org/issue30218
+        def unpack_archive(filename: str, extract_dir: Optional[_Path] = ...,
+                           format: Optional[str] = ...) -> None: ...
     def register_unpack_format(name: str, extensions: List[str], function: Any,
                                extra_args: Sequence[Tuple[str, Any]] = ...,
                                description: str = ...) -> None: ...

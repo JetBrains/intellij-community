@@ -39,7 +39,7 @@ public class GrSortMapKeysIntention extends Intention {
   }
 
   @NotNull
-  private static GrListOrMap constructNewMap(@NotNull GrNamedArgument[] args, Project project) {
+  private static GrListOrMap constructNewMap(GrNamedArgument @NotNull [] args, Project project) {
     StringBuilder builder = new StringBuilder();
 
     builder.append("[");

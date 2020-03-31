@@ -1,32 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.pico.AssignableToComponentAdapter;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoIntrospectionException;
-import org.picocontainer.PicoVisitor;
 
-import java.util.Objects;
+import java.util.*;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
   private Element myExtensionElement;
 
-  private Object myComponentInstance;
+  private volatile Object extensionInstance;
+  private boolean initializing;
 
   XmlExtensionAdapter(@NotNull String implementationClassName,
-                      @Nullable PluginDescriptor pluginDescriptor,
+                      @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
                       @Nullable Element extensionElement) {
@@ -37,13 +34,14 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   @Override
   synchronized boolean isInstanceCreated() {
-    return myComponentInstance != null;
+    return extensionInstance != null;
   }
 
   @NotNull
   @Override
-  public synchronized Object createInstance(@Nullable PicoContainer container) {
-    Object instance = myComponentInstance;
+  public <T> T createInstance(@NotNull ComponentManager componentManager) {
+    @SuppressWarnings("unchecked")
+    T instance = (T)extensionInstance;
     if (instance != null) {
       // todo add assert that createInstance was already called
       // problem is that ExtensionPointImpl clears cache on runtime modification and so adapter instance need to be recreated
@@ -51,113 +49,120 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       return instance;
     }
 
-    instance = super.createInstance(container);
-    myComponentInstance = instance;
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      //noinspection unchecked
+      instance = (T)extensionInstance;
+      if (instance != null) {
+        return instance;
+      }
+
+      if (initializing) {
+        componentManager.logError(new IllegalStateException("Cyclic extension initialization: " + toString()), getPluginDescriptor().getPluginId());
+      }
+
+      try {
+        initializing = true;
+
+        instance = super.createInstance(componentManager);
+
+        Element element = myExtensionElement;
+        if (element != null) {
+          XmlSerializer.deserializeInto(instance, element);
+          myExtensionElement = null;
+        }
+
+        extensionInstance = instance;
+      }
+      finally {
+        initializing = false;
+      }
+    }
     return instance;
   }
 
-  @Override
-  protected void initInstance(@NotNull Object instance) {
-    Element element = myExtensionElement;
-    if (element != null) {
-      XmlSerializer.deserializeInto(instance, element);
-      myExtensionElement = null;
+  boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
+    SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
+    if (myExtensionElement == null && extensionInstance == null) {
+      // dummy extension with no data; unload based on PluginDescriptor check in calling method
+      return true;
     }
+    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
+    Map<String, String> serializedData = getSerializedDataMap(serializedElement);
+
+    for (Element candidateElement : candidateElements) {
+      Map<String, String> candidateData = getSerializedDataMap(candidateElement);
+      for (Iterator<Map.Entry<String, String>> iterator = candidateData.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<String, String> entry = iterator.next();
+        if (Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue())) {
+          iterator.remove();
+        }
+      }
+
+      if (serializedData.equals(candidateData)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  private static class PicoComponentAdapter extends XmlExtensionAdapter implements AssignableToComponentAdapter {
-    PicoComponentAdapter(@NotNull String implementationClassName,
-                         @Nullable PluginDescriptor pluginDescriptor,
-                         @Nullable String orderId,
-                         @NotNull LoadingOrder order,
-                         @Nullable Element extensionElement) {
-      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
+  static Map<String, String> getSerializedDataMap(Element serializedElement) {
+    Map<String, String> data = new HashMap<>();
+    for (Attribute attribute : serializedElement.getAttributes()) {
+      if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {
+        data.put(attribute.getName(), attribute.getValue());
+      }
     }
-
-    @Override
-    @NotNull
-    public final Object getComponentInstance(@Nullable PicoContainer container) {
-      return createInstance(container);
+    for (Element child : serializedElement.getChildren()) {
+      data.put(child.getName(), child.getText());
     }
-
-    @Override
-    public final Class getComponentImplementation() {
-      return getImplementationClass();
-    }
-
-    @Override
-    public final Object getComponentKey() {
-      return this;
-    }
-
-    @Override
-    public final void verify(PicoContainer container) throws PicoIntrospectionException {
-      throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
-    }
-
-    @Override
-    public final void accept(PicoVisitor visitor) {
-      throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
-    }
-  }
-
-  static final class ConstructorInjectionAdapter extends PicoComponentAdapter {
-    ConstructorInjectionAdapter(@NotNull String implementationClassName,
-                                @Nullable PluginDescriptor pluginDescriptor,
-                                @Nullable String orderId,
-                                @NotNull LoadingOrder order, @Nullable Element extensionElement) {
-      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
-    }
-
-    @NotNull
-    @Override
-    protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
-      return new CachingConstructorInjectionComponentAdapter(getComponentKey(), clazz, null, true)
-        .getComponentInstance(Objects.requireNonNull(container));
-    }
+    return data;
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
-
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
-                                      @NotNull LoadingOrder order, @Nullable Element extensionElement) {
+                                      @NotNull LoadingOrder order,
+                                      @Nullable Element extensionElement) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
     }
 
     @NotNull
     @Override
-    protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
-      if (container != null && container.getParent() == null) {
-        // for app try without pico container
+    protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+      // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
+      if (componentManager.getPicoContainer().getParent() == null) {
         try {
-          return ReflectionUtil.newInstance(clazz, false);
+          return super.instantiateClass(aClass, componentManager);
         }
         catch (ProcessCanceledException | ExtensionNotApplicableException e) {
           throw e;
         }
         catch (RuntimeException e) {
-          if (!(e.getCause() instanceof NoSuchMethodException)) {
+          Throwable cause = e.getCause();
+          if (!(cause instanceof NoSuchMethodException || cause instanceof IllegalArgumentException)) {
             throw e;
           }
 
-          String message = "Cannot create app level extension without pico container (class: " +
-                           clazz.getName() +
-                           "), please remove constructor parameters";
-          PluginDescriptor pluginDescriptor = Objects.requireNonNull(getPluginDescriptor());
-          if (pluginDescriptor.isBundled() && !pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")) {
-            LOG.error(message, e);
+          String message = "Cannot create extension without pico container (class=" + aClass.getName() + ")," +
+                           " please remove extra constructor parameters";
+          PluginDescriptor pluginDescriptor = getPluginDescriptor();
+          if (pluginDescriptor.isBundled() && !isKnownBadPlugin(pluginDescriptor)) {
+            ExtensionPointImpl.LOG.error(message, e);
           }
           else {
-            LOG.warn(message, e);
+            ExtensionPointImpl.LOG.warn(message, e);
           }
         }
       }
+      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, getPluginDescriptor().getPluginId());
+    }
 
-      return new CachingConstructorInjectionComponentAdapter(this, clazz, null, true)
-        .getComponentInstance(Objects.requireNonNull(container));
+    private static boolean isKnownBadPlugin(@NotNull PluginDescriptor pluginDescriptor) {
+      String id = pluginDescriptor.getPluginId().getIdString();
+      //noinspection SpellCheckingInspection
+      return id.equals("org.jetbrains.kotlin") || id.equals("Lombook Plugin");
     }
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.lang.Language;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class XDebuggerHistoryManagerTest extends PlatformTestCase {
+public class XDebuggerHistoryManagerTest extends HeavyPlatformTestCase {
   public void testSerialize() {
     XDebuggerHistoryManager manager = XDebuggerHistoryManager.getInstance(getProject());
     assertNotNull(manager);
@@ -57,7 +57,7 @@ public class XDebuggerHistoryManagerTest extends PlatformTestCase {
     checkExpression(expressionsBySecondId.get(0), "10", null, null, EvaluationMode.EXPRESSION);
 
     List<XExpression> expressionsByThirdId = manager.getRecentExpressions("id3");
-    assertTrue(expressionsByThirdId == null || expressionsByThirdId.isEmpty());
+    assertTrue(expressionsByThirdId.isEmpty());
   }
 
   private static void checkExpression(@NotNull XExpression expression,

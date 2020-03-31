@@ -18,11 +18,15 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.util.VictimCollector;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class SystemBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder");
+  private static final Logger LOG = Logger.getInstance(SystemBuilder.class);
 
   private final PsiManager myManager;
   private final Map<PsiElement, Boolean> myMethodCache;
@@ -326,7 +330,7 @@ public class SystemBuilder {
         final PsiExpression qualifier =
           expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
-        final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(methodTypeParameters));
+        final Set<PsiTypeParameter> typeParameters = ContainerUtil.set(methodTypeParameters);
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;

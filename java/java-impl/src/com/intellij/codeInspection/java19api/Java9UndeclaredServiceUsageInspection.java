@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
@@ -67,7 +67,7 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
             PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(argument);
             if (module != null && isUndeclaredUsage(module, psiClass)) {
               holder.registerProblem(
-                argument, InspectionsBundle.message("inspection.undeclared.service.usage.message", qualifiedName),
+                argument, JavaBundle.message("inspection.undeclared.service.usage.message", qualifiedName),
                 new AddUsesDirectiveFix(module, qualifiedName));
             }
           }
@@ -77,8 +77,8 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
 
   private static boolean isUndeclaredUsage(PsiJavaModule module, @NotNull PsiClass serviceClass) {
     for (PsiUsesStatement usesStatement : module.getUses()) {
-      PsiJavaCodeReferenceElement reference = usesStatement.getClassReference();
-      if (reference != null && reference.isReferenceTo(serviceClass)) {
+      PsiClassType usedClass = usesStatement.getClassType();
+      if (usedClass != null && serviceClass.equals(usedClass.resolve())) {
         return false;
       }
     }

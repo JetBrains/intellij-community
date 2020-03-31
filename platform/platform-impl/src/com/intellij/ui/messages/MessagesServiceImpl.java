@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -32,28 +33,26 @@ import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChar
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.MessagesServiceImpl");
+  private static final Logger LOG = Logger.getInstance(MessagesServiceImpl.class);
 
   @Override
   public int showMessageDialog(@Nullable Project project,
                                @Nullable Component parentComponent,
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
                                boolean alwaysUseIdeaUI) {
-
     if (isApplicationInUnitTestOrHeadless()) {
       return getTestImplementation().show(message);
     }
 
     try {
       if (canShowMacSheetPanel() && !alwaysUseIdeaUI) {
-        WindowManager windowManager = WindowManager.getInstance();
+        WindowManager windowManager = LoadingState.COMPONENTS_REGISTERED.isOccurred() ? WindowManager.getInstance() : null;
         if (windowManager != null) {
           Window parentWindow = windowManager.suggestParentWindow(project);
           return MacMessages.getInstance()
@@ -160,7 +159,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                         new String[]{getOkButton(), getCancelButton()},
                                          0, comment);
 
     final JTextComponent field = dialog.getTextField();
@@ -186,7 +185,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                           new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+                                                                    new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
   }

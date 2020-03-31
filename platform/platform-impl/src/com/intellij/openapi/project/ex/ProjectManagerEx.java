@@ -1,22 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
-import java.util.Collection;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
+  }
+
+  @Nullable
+  public static ProjectManagerEx getInstanceExIfCreated() {
+    return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
   }
 
   /**
@@ -27,22 +35,41 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @TestOnly
   @NotNull
-  public final Project newProject(@Nullable String projectName, @NotNull String filePath) {
-    return ObjectUtils.assertNotNull(newProject(projectName, filePath, false, false));
+  public final Project newProjectForTest(@NotNull Path file, @NotNull Disposable parentDisposable) {
+    OpenProjectTask options = new OpenProjectTask();
+    options.useDefaultProjectAsTemplate = false;
+    options.isNewProject = true;
+    Project project = Objects.requireNonNull(newProject(file, null, options));
+    Disposer.register(parentDisposable, () -> forceCloseProject(project));
+    return project;
   }
 
   @Nullable
-  public abstract Project loadProject(@NotNull String filePath) throws IOException;
+  public abstract Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
 
-  @Nullable
-  public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
+  /**
+   * @deprecated Use {@link #loadProject(Path)}
+   */
+  @NotNull
+  @Deprecated
+  public final Project loadProject(@NotNull String filePath) {
+    return loadProject(Paths.get(filePath).toAbsolutePath(), null);
+  }
+
+  @NotNull
+  public final Project loadProject(@NotNull Path path) {
+    return loadProject(path, null);
+  }
+
+  @NotNull
+  public abstract Project loadProject(@NotNull Path file, @Nullable String projectName);
 
   public abstract boolean openProject(@NotNull Project project);
 
   @TestOnly
   public abstract boolean isDefaultProjectInitialized();
 
-  public abstract boolean isProjectOpened(Project project);
+  public abstract boolean isProjectOpened(@NotNull Project project);
 
   public abstract boolean canClose(@NotNull Project project);
 
@@ -68,17 +95,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract void openTestProject(@NotNull Project project);
 
   /**
-   * Without save and "check can close".
-   * Returns remaining open test projects.
-   */
-  @TestOnly
-  @NotNull
-  public abstract Collection<Project> closeTestProject(@NotNull Project project);
-
-  /**
    * The project and the app settings will be not saved.
    */
-  public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
+  public abstract boolean forceCloseProject(@NotNull Project project);
 
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
@@ -98,9 +117,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
-  @Nullable
-  public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
-
-  @NotNull
-  public abstract String[] getAllExcludedUrls();
+  @ApiStatus.Internal
+  public abstract String @NotNull [] getAllExcludedUrls();
 }

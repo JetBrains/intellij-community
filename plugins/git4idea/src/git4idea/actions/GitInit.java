@@ -61,7 +61,7 @@ public class GitInit extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           GitCommandResult result = Git.getInstance().init(project, root);
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
+            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString(), true);
             return;
           }
 
@@ -70,7 +70,6 @@ public class GitInit extends DumbAwareAction {
           }
 
           refreshAndConfigureVcsMappings(project, root, root.getPath());
-          GitUtil.proposeUpdateGitignore(project, root);
         }
       }.queue();
     });

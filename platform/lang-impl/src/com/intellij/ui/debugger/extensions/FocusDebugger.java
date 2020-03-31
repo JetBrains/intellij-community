@@ -17,6 +17,7 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 
 public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListener, ListSelectionListener  {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.FocusDebugger");
+  private static final Logger LOG = Logger.getInstance(FocusDebugger.class);
 
   private JComponent myComponent;
 
@@ -96,9 +97,10 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   }
 
   class ClearAction extends AnAction {
-    ClearAction() {
-      super("Clear", "", AllIcons.Actions.Close);
-    }
+  ClearAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.clear"),
+          IdeBundle.messagePointer("action.AnAction.description.clear"), AllIcons.Actions.Close);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

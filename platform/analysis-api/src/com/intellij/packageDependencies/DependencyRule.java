@@ -15,7 +15,7 @@
  */
 package com.intellij.packageDependencies;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class DependencyRule {
   private NamedScope myFromScope;
   private NamedScope myToScope;
-  private boolean myDenyRule = true;
+  private final boolean myDenyRule;
 
   public DependencyRule(NamedScope fromPackageSet, NamedScope toPackageSet, boolean isDenyRule) {
     myFromScope = fromPackageSet;
@@ -63,8 +63,8 @@ public class DependencyRule {
     String fromScopeName = myFromScope == null ? "" : myFromScope.getName();
 
     return myDenyRule
-           ? AnalysisScopeBundle.message("scope.display.name.deny.scope", toScopeName, fromScopeName)
-           : AnalysisScopeBundle.message("scope.display.name.allow.scope", toScopeName, fromScopeName);
+           ? AnalysisBundle.message("scope.display.name.deny.scope", toScopeName, fromScopeName)
+           : AnalysisBundle.message("scope.display.name.allow.scope", toScopeName, fromScopeName);
   }
 
   public boolean equals(Object o) {

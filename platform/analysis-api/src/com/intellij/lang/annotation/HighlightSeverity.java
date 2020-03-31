@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -29,9 +29,10 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   /**
    * The standard severity level for 'weak' :) warning annotations.
+   *
+   * @deprecated use {@link #WEAK_WARNING}
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
 
   public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK WARNING", 200);
@@ -49,8 +50,8 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
   /**
    * Standard severity levels.
    */
-  @SuppressWarnings("deprecation")
-  public static final HighlightSeverity[] DEFAULT_SEVERITIES = {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WEAK_WARNING, WARNING, ERROR};
+  public static final HighlightSeverity[] DEFAULT_SEVERITIES =
+    {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WEAK_WARNING, WARNING, ERROR};
 
   /**
    * Creates a new highlighting severity level with the specified name and value.
@@ -66,7 +67,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   public HighlightSeverity(@NotNull Element element) {
-    this(readField(element, "myName"), Integer.valueOf(readField(element, "myVal")));
+    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")));
   }
 
   private static String readField(Element element, String name) {

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
 
@@ -18,7 +18,7 @@ import static com.intellij.psi.util.PsiUtil.hasDefaultConstructor;
 /**
  *  @author dsl
  */
-public class PsiUtilTest extends LightCodeInsightFixtureTestCase {
+public class PsiUtilTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");
     Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA);

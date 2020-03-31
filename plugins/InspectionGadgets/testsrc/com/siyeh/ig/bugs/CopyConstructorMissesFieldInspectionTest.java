@@ -2,13 +2,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CopyConstructorMissesFieldInspectionTest extends LightInspectionTestCase {
+public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class Simple {" +

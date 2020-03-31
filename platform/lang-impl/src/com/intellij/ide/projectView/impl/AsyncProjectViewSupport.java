@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.CopyPasteUtil;
@@ -27,6 +27,7 @@ import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
@@ -40,17 +41,17 @@ import java.util.Set;
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 
-class AsyncProjectViewSupport {
+@ApiStatus.Internal
+public class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
   private final ProjectFileNodeUpdater myNodeUpdater;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
-  AsyncProjectViewSupport(@NotNull Disposable parent,
-                          @NotNull Project project,
-                          @NotNull JTree tree,
-                          @NotNull AbstractTreeStructure structure,
-                          @NotNull Comparator<NodeDescriptor> comparator) {
+  public AsyncProjectViewSupport(@NotNull Disposable parent,
+                                 @NotNull Project project,
+                                 @NotNull AbstractTreeStructure structure,
+                                 @NotNull Comparator<NodeDescriptor<?>> comparator) {
     myStructureTreeModel = new StructureTreeModel<>(structure, comparator, parent);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
@@ -63,18 +64,17 @@ class AsyncProjectViewSupport {
         else {
           long time = System.currentTimeMillis();
           LOG.debug("found ", updatedFiles.size(), " changed files");
-          TreeCollector<VirtualFile> collector = TreeCollector.createFileRootsCollector();
+          TreeCollector<VirtualFile> collector = TreeCollector.VirtualFileRoots.create();
           for (VirtualFile file : updatedFiles) {
             if (!file.isDirectory()) file = file.getParent();
             if (file != null && findArea(file, project) != null) collector.add(file);
           }
           List<VirtualFile> roots = collector.get();
           LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
-          myStructureTreeModel.getInvoker().runOrInvokeLater(() -> roots.forEach(root -> updateByFile(root, true)));
+          myStructureTreeModel.getInvoker().invoke(() -> roots.forEach(root -> updateByFile(root, true)));
         }
       }
     };
-    setModel(tree, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
@@ -150,7 +150,11 @@ class AsyncProjectViewSupport {
     });
   }
 
-  public void setComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+  public AsyncTreeModel getTreeModel() {
+    return myAsyncTreeModel;
+  }
+
+  public void setComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     myStructureTreeModel.setComparator(comparator);
   }
 
@@ -207,7 +211,7 @@ class AsyncProjectViewSupport {
     }
     TreePath path = paths.get(0);
     tree.expandPath(path); // request to expand found path
-    TreeUtil.selectPath(tree, path); // select and scroll to center
+    TreeUtil.selectPaths(tree, path); // select and scroll to center
     return true;
   }
 
@@ -286,11 +290,11 @@ class AsyncProjectViewSupport {
     }, list, false);
   }
 
-  private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+  void setModelTo(@NotNull JTree tree) {
     RestoreSelectionListener listener = new RestoreSelectionListener();
     tree.addTreeSelectionListener(listener);
-    tree.setModel(model);
-    Disposer.register(model, () -> {
+    tree.setModel(myAsyncTreeModel);
+    Disposer.register(myAsyncTreeModel, () -> {
       tree.setModel(null);
       tree.removeTreeSelectionListener(listener);
     });

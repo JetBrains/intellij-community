@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.process.AnsiStreamingLexer.AnsiElementType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +113,11 @@ public class AnsiEscapeDecoder {
     return outputType;
   }
 
+  /**
+   * @deprecated use {@link ColoredTextAcceptor} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
     void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
@@ -16,7 +17,7 @@ public @interface State {
   /**
    * Component name.
    */
-  @NotNull
+  @NotNull @NonNls
   String name();
 
   /**
@@ -28,8 +29,7 @@ public @interface State {
    *
    * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
-  @NotNull
-  Storage[] storages() default {};
+  Storage @NotNull [] storages() default {};
 
   /**
    * If set to false, complete project (or application) reload is required when the storage file is changed externally and the state has changed.
@@ -54,11 +54,23 @@ public @interface State {
   boolean externalStorageOnly() default false;
 
   /**
-   * If true and statistics is enabled, values of boolean fields will be recorded.
+   * <p>Enables recording of boolean and numerical fields, if true and statistics is allowed.</p>
+   * <br/>
+   * <p>Boolean: records not default value of the field.</p>
+   * <p>Numerical: records an event that the value is not default.
+   * To record an absolute value of the field, add {@link ReportValue} annotation. </p>
+   *
+   * <br/>
+   * <i>Limitations:</i><ul>
+   * <li>Won't record the value of object, string or enum fields.</li>
+   * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
+   * </ul>
    */
   boolean reportStatistic() default false;
 
-  @ApiStatus.Experimental
+  boolean allowLoadInTests() default false;
+
+  @ApiStatus.Internal
   boolean useLoadedStateAsExisting() default true;
 
   abstract class NameGetter implements Getter<String> {

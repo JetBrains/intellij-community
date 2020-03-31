@@ -20,12 +20,12 @@ import com.intellij.refactoring.changeSignature.JavaMethodDescriptor
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor
 import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCase {
+class IntroduceParameterObjectForJavaTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "/refactoring/introduceParameterObjectForJava/"
 
   void testSimple() throws Exception {

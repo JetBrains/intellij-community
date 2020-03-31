@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -26,7 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
+  private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
+  private static final int FRAMES_BATCH_MAX = 10;
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final int myFrameFromBottomIndex; // 1-based
 
@@ -47,6 +48,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public boolean isObsolete() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (!getVirtualMachine().canRedefineClasses()) {
+      return false;
+    }
     checkValid();
     if (myIsObsolete != ThreeState.UNSURE) {
       return myIsObsolete.toBoolean();
@@ -55,7 +59,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         Method method = DebuggerUtilsEx.getMethod(location());
-        boolean isObsolete = (getVirtualMachine().canRedefineClasses() && (method == null || method.isObsolete()));
+        boolean isObsolete = method == null || method.isObsolete();
         myIsObsolete = ThreeState.fromBoolean(isObsolete);
         return isObsolete;
       }
@@ -117,13 +121,21 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if (myStackFrame == null) {
       try {
         final ThreadReference threadRef = myThreadProxy.getThreadReference();
-        myStackFrame = threadRef.frame(getFrameIndex());
+        int index = getFrameIndex();
+        // batch get frames from 1 to FRAMES_BATCH_MAX
+        // making this number very high does not help much because renderers invocation usually flush all caches
+        if (index > 0 && index < FRAMES_BATCH_MAX) {
+          myStackFrame = threadRef.frames(0, Math.min(myThreadProxy.frameCount(), FRAMES_BATCH_MAX)).get(index);
+        }
+        else {
+          myStackFrame = threadRef.frame(index);
+        }
       }
       catch (IndexOutOfBoundsException e) {
         throw new EvaluateException(e.getMessage(), e);
       }
       catch (ObjectCollectedException ignored) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.thread.collected"));
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -319,7 +331,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (InternalException e) {
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
-          throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
+          throw new EvaluateException(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
         }
         else throw e;
       }

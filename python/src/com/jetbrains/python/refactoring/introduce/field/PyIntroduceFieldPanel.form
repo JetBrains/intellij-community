@@ -16,7 +16,7 @@
         <constraints border-constraint="West"/>
         <properties>
           <labelFor value="fa68d"/>
-          <text value="&amp;Initialize in"/>
+          <text resource-bundle="messages/PyBundle" key="form.introduce.field.initialize.in"/>
         </properties>
       </component>
       <component id="fa68d" class="javax.swing.JComboBox" binding="myInitializerPlaceCombo">

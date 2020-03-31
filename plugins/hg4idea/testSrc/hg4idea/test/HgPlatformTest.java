@@ -31,8 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 /**
@@ -62,9 +61,10 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     myVcs = HgVcs.getInstance(myProject);
     assertNotNull(myVcs);
     myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    debug(HgExecutor.getHgExecutable());
     myVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     myVcs.checkVersion();
-    hg("version");
+    debug(hg("version"));
     createRepository(projectRoot);
     myRepository = projectRoot;
     setUpHgrc(myRepository);

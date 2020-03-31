@@ -34,7 +34,7 @@ import java.util.*;
 @SomeQueue
 // TODO: Used only in RemoteRevisionsNumberCache
 public class LazyRefreshingSelfQueue<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LazyRefreshingSelfQueue");
+  private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);
 
   // provides update interval in milliseconds.
   private final Getter<Long> myUpdateInterval;
@@ -99,7 +99,7 @@ public class LazyRefreshingSelfQueue<T> {
 
     // do not ask under lock
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
-    final List<T> dirty = new LinkedList<>();
+    final List<T> dirty = new ArrayList<>();
 
     synchronized (myLock) {
       // adds all pairs with pair.First == null to dirty

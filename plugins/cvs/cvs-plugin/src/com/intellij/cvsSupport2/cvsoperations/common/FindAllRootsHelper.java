@@ -17,20 +17,22 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.map;
+
 public class FindAllRootsHelper {
   private FindAllRootsHelper() { }
 
   public static List<VirtualFile> findVersionedUnder(final List<? extends VirtualFile> coll) {
-    final List<FilePath> pathList = ObjectsConvertor.vf2fp(coll);
+    final List<FilePath> pathList = map(coll, VcsUtil::getFilePath);
     final MyVisitor visitor = new MyVisitor();
 
     for (FilePath root : pathList) {
@@ -42,7 +44,7 @@ public class FindAllRootsHelper {
     return visitor.found;
   }
 
-  private static class MyVisitor extends VirtualFileVisitor {
+  private static class MyVisitor extends VirtualFileVisitor<Void> {
     private final List<VirtualFile> found = new LinkedList<>();
 
     @NotNull

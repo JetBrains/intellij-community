@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.offlineViewer;
 
-import com.intellij.codeInspection.InspectionApplication;
+import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashSet;
@@ -30,6 +31,9 @@ public class OfflineViewParseUtil {
     return parse(new FileReader(problemFile));
   }
 
+  /**
+   * @deprecated use {@link #parse(File)} or {@link #parse(Reader)}
+   */
   @Deprecated
   public static Map<String, Set<OfflineProblemDescriptor>> parse(String problemText) {
     return parse(new StringReader(problemText));
@@ -37,7 +41,7 @@ public class OfflineViewParseUtil {
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(Reader problemReader) {
     TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
-    StringInterner stringInterner = new StringInterner();
+    Interner<String> stringInterner = new StringInterner();
     Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
     XppReader reader = new XppReader(problemReader, new MXParser());
     try {
@@ -110,6 +114,9 @@ public class OfflineViewParseUtil {
     return parseProfileName(new FileReader(descriptorFile));
   }
 
+  /**
+   * @deprecated use {@link #parseProfileName(File)} or {@link #parseProfileName(Reader)}
+   */
   @Deprecated
   @Nullable
   public static String parseProfileName(String descriptorText) {
@@ -120,7 +127,7 @@ public class OfflineViewParseUtil {
   public static String parseProfileName(Reader descriptorReader) {
     final XppReader reader = new XppReader(descriptorReader, new MXParser());
     try {
-      return reader.getAttribute(InspectionApplication.PROFILE);
+      return reader.getAttribute(InspectionsResultUtil.PROFILE);
     }
     catch (Exception e) {
       return null;

@@ -1,31 +1,48 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class VfsEventGenerationHelper {
-  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private int myMarkedStart = -1;
@@ -57,27 +74,45 @@ class VfsEventGenerationHelper {
                         @Nullable String symlinkTarget,
                         @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
-    ChildInfo[] children;
+    ChildInfo[] children = null;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
-      Path root = Paths.get(parent.getPath(), childName);
-      Path[] excluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
-                                         url -> {
-                                           Path path = Paths.get(VirtualFileManager.extractPath(url));
-                                           return path.startsWith(root) ? path : null;
-                                         }, new Path[0]);
+      try {
+        Path child = Paths.get(parent.getPath(), childName);
+        if (shouldScanDirectory(parent, child, childName)) {
+          Path[] relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
+               url -> {
+                 Path path = Paths.get(VirtualFileManager.extractPath(url));
+                 return path.startsWith(child) ? path : null;
+               }, new Path[0]);
+          children = scanChildren(child, relevantExcluded, checkCanceled);
+        }
+      }
+      catch (InvalidPathException e) {
+        LOG.warn("Invalid child name: '" + childName + "'", e);
+      }
+    }
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
+  }
 
-      children = scanChildren(root, excluded, checkCanceled);
+  private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
+    if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
+    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+      if (ReadAction.compute(()->ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
+        return false;
+      }
+      String projectRootPath = openProject.getBasePath();
+      if (projectRootPath != null) {
+        Path path = Paths.get(projectRootPath);
+        if (child.startsWith(path)) return true;
+      }
     }
-    else {
-      children = null;
-    }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
-    myEvents.add(event);
+    return false;
   }
 
   void beginTransaction() {
     myMarkedStart = myEvents.size();
   }
+
   void endTransaction(boolean success) {
     if (!success) {
       myEvents.subList(myMarkedStart, myEvents.size()).clear();
@@ -86,12 +121,15 @@ class VfsEventGenerationHelper {
   }
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
-  @Nullable // null means error during scan
-  private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
+  // null means error during scan
+  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root,
+                                                     Path @NotNull [] excluded,
+                                                     @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled)
+  throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, "", null, null, null);
-    stack.push(ContainerUtil.newSmartList(fakeRoot));
+    ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
+    stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
       int checkCanceledCount;
       @Override
@@ -117,14 +155,12 @@ class VfsEventGenerationHelper {
         String name = file.getFileName().toString();
         boolean isSymLink = false;
         if (attrs.isSymbolicLink()) {
-          // under windows the isDirectory attribute for symlink is incorrect - reread it again
           isSymLink = true;
-          attrs = Files.readAttributes(file, BasicFileAttributes.class);
-
+          attrs = Files.readAttributes(file, BasicFileAttributes.class); // under Windows, the isDirectory attribute for symlink is incorrect, re-read
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
-        String symLinkTarget = attributes.isSymLink() ? file.toRealPath().toString() : null;
-        ChildInfo info = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
+        String symLinkTarget = isSymLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
+        ChildInfo info = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
@@ -136,8 +172,14 @@ class VfsEventGenerationHelper {
         // store children back
         ChildInfo parentInfo = ContainerUtil.getLastItem(parentInfos);
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
-        ChildInfo newInfo = new ChildInfo(parentInfo.id, parentInfo.name, parentInfo.attributes, children, parentInfo.symLinkTarget);
+        ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymLinkTarget());
         parentInfos.set(parentInfos.size() - 1, newInfo);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) {
+        // ignore exceptions when e.g. compiler quickly creates a temp file, FileWalker tries to read its attributes but by then it already deleted
         return FileVisitResult.CONTINUE;
       }
     };
@@ -149,7 +191,7 @@ class VfsEventGenerationHelper {
       // tell client we didn't find any children, abandon the optimization altogether
       return null;
     }
-    return stack.pop().get(0).children;
+    return stack.pop().get(0).getChildren();
   }
 
   void scheduleDeletion(@NotNull VirtualFile file) {
@@ -159,7 +201,7 @@ class VfsEventGenerationHelper {
 
   void checkSymbolicLinkChange(@NotNull VirtualFile child, String oldTarget, String currentTarget) {
     String currentVfsTarget = currentTarget != null ? FileUtil.toSystemIndependentName(currentTarget) : null;
-    if (!Comparing.equal(oldTarget, currentVfsTarget)) {
+    if (!Objects.equals(oldTarget, currentVfsTarget)) {
       scheduleAttributeChange(child, VirtualFile.PROP_SYMLINK_TARGET, oldTarget, currentVfsTarget);
     }
   }

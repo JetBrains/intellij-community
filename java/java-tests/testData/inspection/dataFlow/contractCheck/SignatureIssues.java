@@ -26,8 +26,8 @@ class Foo {
   @Contract("_-><warning descr="Contract return value 'param2': not applicable for method which has 1 parameter">param2</warning>")
   public native String absentParameter2(String x);
 
-  @Contract("_-><warning descr="Contract return value 'param1': return type 'String' must be assignable from parameter type 'CharSequence'">param1</warning>")
-  public native String wrongParameterType(CharSequence x);
+  @Contract("_-><warning descr="Contract return value 'param1': return type 'String' must be convertible from parameter type 'Integer'">param1</warning>")
+  public native String wrongParameterType(Integer x);
 
   @Contract("_->param1")
   public native Object okParameterType(Integer x);
@@ -49,9 +49,9 @@ class Foo {
   @Contract("-><warning descr="Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: foo">foo</warning>")
   public native void invalidReturn();
 
-  @Contract("<warning descr="Contract clause 'true -> fail': parameter #1 has 'String' type (expected boolean)">true</warning> -> fail")
+  @Contract("<warning descr="Parameter 's' has 'String' type (expected boolean)">true</warning> -> fail")
   public native void invalidType(String s);
 
-  @Contract("<warning descr="Contract clause 'null -> fail': parameter #1 has primitive type 'int'">null</warning> -> fail")
+  @Contract("<warning descr="Parameter 's' has primitive type 'int', so 'null' is not applicable">null</warning> -> fail")
   public native void invalidType(int s);
 }

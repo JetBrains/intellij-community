@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -140,8 +141,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     mainPanel.setLayout(new BorderLayout());
 
     JPanel initializationPanel = new JPanel();
-    initializationPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("initialize.in.border.title"),
-                                                                      true));
+    initializationPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("initialize.in.border.title")));
     initializationPanel.setLayout(new BoxLayout(initializationPanel, BoxLayout.Y_AXIS));
 
 
@@ -152,7 +152,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
 
     myRbInFieldDeclaration = new JRadioButton();
     myRbInFieldDeclaration.setFocusable(false);
-    myRbInFieldDeclaration.setText(RefactoringBundle.message("field.declaration.radio"));
+    myRbInFieldDeclaration.setText(JavaRefactoringBundle.message("field.declaration.radio"));
 
     myRbInConstructor = new JRadioButton();
     myRbInConstructor.setFocusable(false);

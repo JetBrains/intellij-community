@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -12,14 +13,18 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -45,7 +50,7 @@ public abstract class PluginsTab {
       query = (String)data;
     }
     else if (data instanceof TagComponent) {
-      query = "/" + SearchQueryParser.getTagQuery(((TagComponent)data).getText());
+      query = SearchQueryParser.getTagQuery(((TagComponent)data).getText());
     }
     else {
       return;
@@ -59,7 +64,12 @@ public abstract class PluginsTab {
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    List<CellPluginComponent> selection = panel.getSelection();
+    int key = mySearchPanel.getPanel() == panel ? 1 : 0;
+    if (myCardPanel.getKey() != key) {
+      return;
+    }
+
+    List<ListPluginComponent> selection = panel.getSelection();
     int size = selection.size();
     myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
@@ -97,7 +107,7 @@ public abstract class PluginsTab {
       @Override
       protected Divider createDivider() {
         Divider divider = super.createDivider();
-        divider.setBackground(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR);
+        divider.setBackground(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR);
         return divider;
       }
     };
@@ -199,20 +209,20 @@ public abstract class PluginsTab {
       }
     });
 
-    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
+    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
-    editor.setBackground(PluginManagerConfigurableNew.SEARCH_BG_COLOR);
+    editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
 
-    String text = "Type / to see options";
+    String text = IdeBundle.message("plugin.manager.options.command");
 
     StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
-    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
+    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));
   }
 
   @NotNull
@@ -225,6 +235,26 @@ public abstract class PluginsTab {
 
   @NotNull
   protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+
+  @Nullable
+  public String getSearchQuery() {
+    if (mySearchPanel == null || mySearchPanel.isEmpty()) {
+      return null;
+    }
+    String query = mySearchPanel.getQuery();
+    return query.isEmpty() ? null : query;
+  }
+
+  public void setSearchQuery(@Nullable String query) {
+    mySearchTextField.setTextIgnoreEvents(query);
+    mySearchTextField.requestFocus();
+    if (query == null) {
+      hideSearchPanel();
+    }
+    else {
+      showSearchPanel(query);
+    }
+  }
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {

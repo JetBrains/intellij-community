@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.PsiElement
@@ -19,11 +19,12 @@ class GrUReferenceExpression(
   override val psi: PsiElement = sourcePsi
   override val javaPsi: PsiElement? = null
 
-  override val resolvedName: String? = (resolve() as? PsiNamedElement)?.name
+  override val resolvedName: String?
+    get() = (resolve() as? PsiNamedElement)?.name
 
   override val uastParent: UElement? by lazy(parentProvider)
 
-  override val annotations: List<UAnnotation> = emptyList()
+  override val uAnnotations: List<UAnnotation> = emptyList()
 
   override fun resolve(): PsiElement? = sourcePsi.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =

@@ -30,8 +30,7 @@ public interface GrSwitchStatement extends GroovyPsiElement, GrStatement {
   @Nullable
   GrExpression getCondition();
 
-  @NotNull
-  GrCaseSection[] getCaseSections();
+  GrCaseSection @NotNull [] getCaseSections();
 
   @Nullable PsiElement getRParenth();
 

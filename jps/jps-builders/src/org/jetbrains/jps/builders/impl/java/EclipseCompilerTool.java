@@ -33,8 +33,6 @@ import java.util.ServiceLoader;
 /**
  * The latest version of ecj batch compiler can be found here:
  * http://download.eclipse.org/eclipse/downloads/
- *
- * @author nik
  */
 public class EclipseCompilerTool extends JavaCompilingTool {
 
@@ -107,8 +105,9 @@ public class EclipseCompilerTool extends JavaCompilingTool {
 
   @Nullable
   public static File findEcjJarFile() {
-    File[] libs = {new File(PathManager.getHomePath(), "lib"), new File(PathManager.getHomePath(), "community/lib")};
-    for (File lib : libs) {
+    String[] dirsToCheck = {"plugins/java/lib", "lib", "community/lib"};
+    for (String relativeDirectoryPath : dirsToCheck) {
+      File lib = new File(PathManager.getHomePath(), relativeDirectoryPath);
       File[] children = lib.listFiles((dir, name) -> name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX));
       if (children != null && children.length > 0) {
         return children[0];

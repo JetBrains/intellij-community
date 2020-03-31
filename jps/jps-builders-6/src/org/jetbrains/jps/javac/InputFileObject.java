@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.PathUtils;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.net.URI;
 
 public class InputFileObject extends JpsFileObject {
   private final File myFile;
@@ -16,19 +14,13 @@ public class InputFileObject extends JpsFileObject {
   private Reference<File> myAbsFileRef;
 
   InputFileObject(File f, String encoding) {
-    super(createUri(f), findKind(f.getName()));
+    super(f.toURI(), findKind(f.getName()), StandardLocation.SOURCE_PATH);
     this.myFile = f;
     myEncoding = encoding;
   }
 
-  @NotNull
-  private static URI createUri(final File f) {
-    try {
-      return PathUtils.toURI(f.getPath());
-    }
-    catch (Throwable e) {
-      return f.toURI().normalize(); // fallback
-    }
+  public File getFile() {
+    return myFile;
   }
 
   @Override

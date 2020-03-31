@@ -37,11 +37,11 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
   };
 
-  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @NotNull String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @NotNull String refactoringName) {
     this(elements, null, refactoringName);
   }
 
-  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @Nullable Editor editor, @Nullable String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @Nullable Editor editor, @Nullable String refactoringName) {
     super(elements[0].getProject(), editor, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
   }
 
@@ -77,7 +77,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
   }
 
-  private static boolean isUnchanged(PsiVariable fromVariable, PsiType fromType, @NotNull List<VariableData> inputVariables) {
+  private static boolean isUnchanged(PsiVariable fromVariable, PsiType fromType, @NotNull List<? extends VariableData> inputVariables) {
     for (VariableData data : inputVariables) {
       if (data.variable == fromVariable) {
         return data.type != null && data.type.equalsToText(fromType.getCanonicalText());
@@ -122,7 +122,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
 
   private boolean isReferenced(@Nullable PsiVariable variable, PsiVariable fromVariable) {
     return variable == fromVariable || // it's a freshlyDeclaredParameter
-           (variable != null && ReferencesSearch.search(variable, new LocalSearchScope(myElements)).findFirst() != null);
+           variable != null && ReferencesSearch.search(variable, new LocalSearchScope(myElements)).findFirst() != null;
   }
 
   public void applyDefaults(@NotNull String methodName, @PsiModifier.ModifierConstant @NotNull String visibility) {
@@ -140,7 +140,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
 
   @Override
   public void doExtract() {
-    super.chooseAnchor();
+    chooseAnchor();
     super.doExtract();
   }
 
@@ -169,7 +169,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   private boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass, boolean showErrorHint) {
     setShowErrorDialogs(false);
     try {
-      if (super.prepare(pass)) {
+      if (prepare(pass)) {
         return true;
       }
 
@@ -192,15 +192,15 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
 
   @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    boolean inSameFile = isInSameFile(match);
-    if (!inSameFile) {
+    boolean inMultipleFiles = !isInSameFile(match);
+    if (inMultipleFiles) {
       relaxMethodVisibility(match);
     }
-    boolean inSameClass = isInSameClass(match);
+    boolean inMultipleClasses = !isInSameClass(match);
 
     PsiElement element = super.processMatch(match);
 
-    if (!inSameFile || !inSameClass) {
+    if (inMultipleFiles || inMultipleClasses) {
       PsiMethodCallExpression callExpression = getMatchMethodCallExpression(element);
       if (callExpression != null) {
         return updateCallQualifier(callExpression);

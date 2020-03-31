@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +14,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class ThreadDumpParser {
+public final class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
@@ -36,15 +22,16 @@ public class ThreadDumpParser {
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
-  private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for  <(.+)>");
+  private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for {2}<(.+)>");
   @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
-  private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at java.util.TimerThread.mainLoop");
-  private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at javax.swing.TimerQueue.run");
+  private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
+  private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
 
   private ThreadDumpParser() {
   }
 
+  @NotNull
   public static List<ThreadState> parse(String threadDump) {
     List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
@@ -117,7 +104,7 @@ public class ThreadDumpParser {
   }
 
   public static void sortThreads(List<? extends ThreadState> result) {
-    Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
+    result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
   @Nullable
@@ -135,18 +122,17 @@ public class ThreadDumpParser {
 
   private static int getInterestLevel(final ThreadState state) {
     if (state.isEmptyStackTrace()) return -10;
-    if (isKnownJdkThread(state)) return -5;
+    if (state.isKnownJDKThread()) return -5;
     if (state.isSleeping()) {
       return -2;
     }
     if (state.getOperation() == ThreadOperation.Socket) {
       return -1;
     }
-    return state.getStackTrace().split("\n").length;
+    return state.getStackDepth();
   }
 
-  public static boolean isKnownJdkThread(final ThreadState state) {
-    @NonNls String stackTrace = state.getStackTrace();
+  static boolean isKnownJdkThread(@NotNull String stackTrace) {
     return stackTrace.contains("java.lang.ref.Reference$ReferenceHandler.run") ||
         stackTrace.contains("java.lang.ref.Finalizer$FinalizerThread.run") ||
         stackTrace.contains("sun.awt.AWTAutoShutdown.run") ||

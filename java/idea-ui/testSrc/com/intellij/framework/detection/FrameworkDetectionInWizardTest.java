@@ -18,7 +18,7 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,9 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
 
   public void testDetectFacet() {
@@ -67,8 +64,8 @@ public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
         return Collections.singletonList(descriptor);
       }
 
+      @NotNull
       @Override
-      @Nullable
       protected String getContentPath() {
         return FileUtil.toSystemIndependentName(path);
       }

@@ -15,43 +15,48 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class PathInterner {
-  private static final TObjectHashingStrategy<SubstringWrapper[]> HASHING_STRATEGY = new TObjectHashingStrategy<SubstringWrapper[]>() {
+  private static final TObjectHashingStrategy<CharSegment[]> HASHING_STRATEGY = new TObjectHashingStrategy<CharSegment[]>() {
     @Override
-    public int computeHashCode(SubstringWrapper[] object) {
+    public int computeHashCode(CharSegment[] object) {
       return Arrays.hashCode(object);
     }
 
     @Override
-    public boolean equals(SubstringWrapper[] o1, SubstringWrapper[] o2) {
+    public boolean equals(CharSegment[] o1, CharSegment[] o2) {
       return Arrays.equals(o1, o2);
     }
   };
-  private final OpenTHashSet<SubstringWrapper> myInternMap = new OpenTHashSet<>();
+  private final OpenTHashSet<CharSegment> myInternMap = new OpenTHashSet<>();
 
-  @Nullable
-  protected SubstringWrapper[] internParts(String path, boolean forAddition) {
+  @Contract("_,true->!null")
+  private CharSegment[] internParts(@NotNull CharSequence path, boolean forAddition) {
     int start = 0;
     boolean asBytes = forAddition && IOUtil.isAscii(path);
-    List<SubstringWrapper> key = new ArrayList<>();
-    SubstringWrapper flyweightKey = new SubstringWrapper();
+    List<CharSegment> key = new ArrayList<>();
+    SubSegment flyweightKey = new SubSegment();
     while (start < path.length()) {
       flyweightKey.findSubStringUntilNextSeparator(path, start);
-      SubstringWrapper interned = myInternMap.get(flyweightKey);
+      CharSegment interned = myInternMap.get(flyweightKey);
       if (interned == null) {
         if (!forAddition) {
           return null;
@@ -59,77 +64,52 @@ public class PathInterner {
         myInternMap.add(interned = flyweightKey.createPersistentCopy(asBytes));
       }
       key.add(interned);
-      start += flyweightKey.len;
+      start += flyweightKey.length();
     }
-    return key.toArray(new SubstringWrapper[0]);
+    return key.toArray(new CharSegment[0]);
   }
 
-  private static String restorePath(SubstringWrapper[] seq) {
-    StringBuilder sb = new StringBuilder();
-    for (SubstringWrapper wrapper : seq) {
-      wrapper.append(sb);
+  private static class CharSegment {
+    private final Object encodedString; // String or byte[]
+    private final int hc;
+
+    private CharSegment(@NotNull Object encodedString, int hc) {
+      this.encodedString = encodedString;
+      this.hc = hc;
     }
-    return sb.toString();
-  }
 
-  private static class SubstringWrapper {
-    private Object encodedString;
-    private int start;
-    private int len;
-    private int hc;
-
-    void append(StringBuilder sb) {
-      if (encodedString instanceof String) {
+    void appendTo(@NotNull StringBuilder sb) {
+      if (encodedString instanceof CharSequence) {
         sb.append(encodedString);
         return;
       }
 
       int oldLen = sb.length();
-      sb.setLength(oldLen + len);
-      byte[] bytes = (byte[]) encodedString;
-      for (int i = 0, len = bytes.length; i < len; i++) {
+      sb.setLength(oldLen + length());
+      byte[] bytes = (byte[])encodedString;
+      for (int i = 0; i < bytes.length; i++) {
         sb.setCharAt(oldLen + i, (char)bytes[i]);
       }
     }
 
-    void findSubStringUntilNextSeparator(String s, int start) {
-      encodedString = s;
-      this.start = start;
-      hc = 0;
-
-      while (start < s.length() && isSeparator(s.charAt(start))) {
-        hc = hc * 31 + s.charAt(start);
-        start++;
-      }
-      while (start < s.length() && !isSeparator(s.charAt(start))) {
-        hc = hc * 31 + s.charAt(start);
-        start++;
-      }
-      this.len = start - this.start;
-    }
-
-    private static boolean isSeparator(char c) {
-      return c == '/' || c == '\\' || c == '.' || c == ' ' || c == '_' || c == '$';
-    }
-
     char charAt(int i) {
-      if (encodedString instanceof String) {
-        return ((String)encodedString).charAt(start + i);
+      if (encodedString instanceof CharSequence) {
+        return ((CharSequence)encodedString).charAt(i);
       }
-      return (char)((byte[]) encodedString)[start + i];
+      return (char)((byte[])encodedString)[i];
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SubstringWrapper)) return false;
+      if (!(o instanceof CharSegment)) return false;
 
-      SubstringWrapper wrapper = (SubstringWrapper)o;
+      CharSegment wrapper = (CharSegment)o;
 
-      if (hc != wrapper.hc) return false;
-      if (len != wrapper.len) return false;
+      if (hashCode() != wrapper.hashCode()) return false;
+      if (length() != wrapper.length()) return false;
 
-      for (int i = 0; i < len; i++) {
+      for (int i = 0; i < length(); i++) {
         if (charAt(i) != wrapper.charAt(i)) {
           return false;
         }
@@ -138,97 +118,248 @@ public class PathInterner {
       return true;
     }
 
+    int length() {
+      if (encodedString instanceof CharSequence) {
+        return ((CharSequence)encodedString).length();
+      }
+      return (char)((byte[])encodedString).length;
+    }
+
     @Override
     public int hashCode() {
       return hc;
     }
 
-    SubstringWrapper createPersistentCopy(boolean asBytes) {
-      SubstringWrapper wrapper = new SubstringWrapper();
-      String string = (String) encodedString;
-      String substring = string.substring(start, start + len);
-      if (asBytes) {
-        byte[] bytes = new byte[len];
-        for (int i = 0; i < len; i++) {
-          bytes[i] = (byte)string.charAt(i + start);
-        }
-        wrapper.encodedString = bytes;
-      } else {
-        wrapper.encodedString = string.substring(start, start + len);
-      }
-      wrapper.start = 0;
-      wrapper.len = len;
-      wrapper.hc = hc;
-      return wrapper;
+    @Override
+    public String toString() {
+      return encodedString instanceof String ? (String)encodedString : new String((byte[])encodedString, StandardCharsets.ISO_8859_1);
     }
   }
 
-  public static class PathEnumerator {
-    private final TObjectIntHashMap<SubstringWrapper[]> mySeqToIdx = new TObjectIntHashMap<>(
-      PathInterner.HASHING_STRATEGY);
-    private final List<SubstringWrapper[]> myIdxToSeq = new ArrayList<>();
+  private static class SubSegment extends CharSegment {
+    private Object encodedString;
+    private int start;
+    private int end;
+    private int computedHc;
+
+    private SubSegment() {
+      super("", 0);
+    }
+
+    void findSubStringUntilNextSeparator(@NotNull CharSequence s, int start) {
+      encodedString = s;
+      this.start = start;
+
+      while (start < s.length() && isSeparator(s.charAt(start))) {
+        start++;
+      }
+      while (start < s.length() && !isSeparator(s.charAt(start))) {
+        start++;
+      }
+
+      end = start;
+      computedHc = StringUtil.stringHashCode(s, this.start, end);
+    }
+
+    private static boolean isSeparator(char c) {
+      return c == '/' || c == '\\' || c == '.' || c == ' ' || c == '_' || c == '$';
+    }
+
+    @Override
+    char charAt(int i) {
+      if (encodedString instanceof CharSequence) {
+        return ((CharSequence)encodedString).charAt(start + i);
+      }
+      return (char)((byte[])encodedString)[start + i];
+    }
+
+    @Override
+    int length() {
+      return end - start;
+    }
+
+    @Override
+    public int hashCode() {
+      return computedHc;
+    }
+
+    @NotNull
+    CharSegment createPersistentCopy(boolean asBytes) {
+      CharSequence string = (CharSequence)encodedString;
+      Object newEncodedString;
+      if (asBytes) {
+        byte[] bytes = new byte[length()];
+        for (int i = 0; i < bytes.length; i++) {
+          bytes[i] = (byte)string.charAt(i + start);
+        }
+        newEncodedString = bytes;
+      }
+      else {
+        newEncodedString = string.subSequence(start, end);
+      }
+      return new CharSegment(newEncodedString, computedHc);
+    }
+
+    @Override
+    public String toString() {
+      return (encodedString instanceof String ? (String)encodedString : new String((byte[])encodedString, StandardCharsets.ISO_8859_1)).substring(start, end);
+    }
+  }
+
+  private static class SegmentedCharSequence implements CharSequenceWithStringHash {
+    private final CharSegment[] myWrappers;
+    private transient int hash;
+
+    private SegmentedCharSequence(CharSegment @NotNull [] wrappers) {
+      myWrappers = wrappers;
+    }
+
+    @Override
+    public int length() {
+      int length = 0;
+      for (CharSegment wrapper : myWrappers) {
+        length += wrapper.length();
+      }
+      return length;
+    }
+
+    @Override
+    public char charAt(int index) {
+      for (CharSegment wrapper : myWrappers) {
+        int length = wrapper.length();
+        if (index < length) {
+          return wrapper.charAt(index);
+        }
+        index -= length;
+      }
+      throw new IndexOutOfBoundsException();
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+      return toString().substring(start, end);
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder(length());
+      for (CharSegment wrapper : myWrappers) {
+        wrapper.appendTo(b);
+      }
+      return b.toString();
+    }
+
+    // calculate 31**p mod 2**32 by repeated squaring
+    private static int pow31(int p) {
+      int base = 31;
+      int r = 1;
+      while (p != 0) {
+        if ((p & 1) != 0) {
+          r *= base;
+        }
+        base *= base;
+        p >>= 1;
+      }
+      return r;
+    }
+
+    // hashCode of SegmentedString consisting of three CharSegments a,b,c
+    // happens to be (a.hc * 31**b.length() + b.hc) * 31**c.length() + c.hc
+    @Override
+    public int hashCode() {
+      int h = hash;
+      if (h == 0) {
+        h = myWrappers[0].hc;
+        for (int i = 1; i < myWrappers.length; i++) {
+          CharSegment wrapper = myWrappers[i];
+          h = h * pow31(wrapper.length()) + wrapper.hc;
+        }
+        hash = h;
+        return h;
+      }
+      return h;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof CharSequence)) return false;
+      CharSequence other = (CharSequence)obj;
+      if (length() != other.length()) return false;
+      int i = 0;
+      for (CharSegment wrapper : myWrappers) {
+        if (wrapper.encodedString instanceof String) {
+          if (!CharArrayUtil.regionMatches(other, i, i + wrapper.length(), (String)wrapper.encodedString)) return false;
+          i += wrapper.length();
+        }
+        else {
+          byte[] bytes = (byte[])wrapper.encodedString;
+          for (byte b : bytes) {
+            char c = (char)b;
+            if (c != other.charAt(i++)) return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+
+  public static class PathEnumerator extends Interner<CharSequence> {
+    private final TObjectIntHashMap<CharSegment[]> mySeqToIdx = new TObjectIntHashMap<>(HASHING_STRATEGY);
+    private final List<CharSequence> myIdxToSeq = new ArrayList<>();
     private final PathInterner myInterner = new PathInterner();
 
     public PathEnumerator() {
       myIdxToSeq.add(null);
     }
 
-    public List<String> getAllPaths() {
-      ArrayList<String> result = new ArrayList<>(myIdxToSeq.size() - 1);
-      for (SubstringWrapper[] wrappers : myIdxToSeq) {
-        if (wrappers != null) {
-          result.add(PathInterner.restorePath(wrappers));
-        }
-      }
-      return result;
+    @NotNull
+    public List<CharSequence> getAllPaths() {
+      // 0th is reserved
+      return myIdxToSeq.subList(1, myIdxToSeq.size());
     }
 
-    public int addPath(String path) {
-      PathInterner.SubstringWrapper[] seq = myInterner.internParts(path, true);
+    public int addPath(@NotNull CharSequence path) {
+      CharSegment[] seq = myInterner.internParts(path, true);
       if (!mySeqToIdx.containsKey(seq)) {
         mySeqToIdx.put(seq, myIdxToSeq.size());
-        myIdxToSeq.add(seq);
+        myIdxToSeq.add(new SegmentedCharSequence(seq));
       }
       return mySeqToIdx.get(seq);
     }
 
-    public String retrievePath(int idx) {
+    @NotNull
+    public CharSequence retrievePath(int idx) {
       try {
-        return PathInterner.restorePath(myIdxToSeq.get(idx));
+        return myIdxToSeq.get(idx);
       }
       catch (IndexOutOfBoundsException e) {
         throw new IllegalArgumentException("Illegal index: " + idx);
       }
     }
 
-    public int getExistingPathIndex(String path) {
-      PathInterner.SubstringWrapper[] key = myInterner.internParts(path, false);
-      return key != null && mySeqToIdx.containsKey(key) ? mySeqToIdx.get(key) : 0;
-    }
-    public boolean containsPath(String path) {
-      PathInterner.SubstringWrapper[] key = myInterner.internParts(path, false);
+    public boolean containsPath(@NotNull CharSequence path) {
+      CharSegment[] key = myInterner.internParts(path, false);
       return key != null && mySeqToIdx.containsKey(key);
     }
+
+    @NotNull
+    @Override
+    public CharSequence intern(@NotNull CharSequence path) {
+      return retrievePath(addPath(path));
+    }
+
+    @NotNull
+    @Override
+    public Set<CharSequence> getValues() {
+      return new THashSet<>(getAllPaths());
+    }
+
+    @Override
+    public void clear() {
+      myInterner.myInternMap.clear();
+      mySeqToIdx.clear();
+      myIdxToSeq.clear();
+    }
   }
-
-  public static class PathMap<T> {
-    private final THashMap<SubstringWrapper[], T> myMap = new THashMap<>(PathInterner.HASHING_STRATEGY);
-    private final PathInterner myInterner = new PathInterner();
-
-    @Nullable
-    public T get(@NotNull String path) {
-      PathInterner.SubstringWrapper[] seq = myInterner.internParts(path, false);
-      return seq == null ? null : myMap.get(seq);
-    }
-
-    public void put(@NotNull String path, @NotNull T value) {
-      myMap.put(myInterner.internParts(path, true), value);
-    }
-
-
-    public Iterable<T> values() {
-      return myMap.values();
-    }
-  }
-
 }

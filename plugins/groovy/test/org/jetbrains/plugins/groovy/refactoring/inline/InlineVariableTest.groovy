@@ -24,7 +24,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-class InlineVariableTest extends LightCodeInsightFixtureTestCase {
+class InlineVariableTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineLocal/"
 
   void testGRVY_1232() { doTest() }

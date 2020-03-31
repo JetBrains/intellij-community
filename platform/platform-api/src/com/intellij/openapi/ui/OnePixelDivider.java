@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -24,7 +10,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -106,8 +92,20 @@ public class OnePixelDivider extends Divider {
     }
   }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
+    private boolean skipEventProcessing() {
+      if (isShowing()) {
+        return false;
+      }
+      setDragging(false);
+      myGlassPane.setCursor(null, this);
+      return true;
+    }
+
     @Override
     public void mousePressed(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       setDragging(isInDragZone(e));
       _processMouseEvent(e);
       if (myDragging) {
@@ -122,11 +120,14 @@ public class OnePixelDivider extends Divider {
       OnePixelDivider d = OnePixelDivider.this;
       if ((vertical ? p.x : p.y) < 0 || vertical && p.x > d.getWidth() || !vertical && p.y > d.getHeight()) return false;
       int r = Math.abs(vertical ? p.y : p.x);
-      return r < JBUI.scale(Registry.intValue("ide.splitter.mouseZone"));
+      return r < JBUIScale.scale(Registry.intValue("ide.splitter.mouseZone"));
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       _processMouseEvent(e);
       if (myDragging) {
         e.consume();
@@ -136,6 +137,9 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       final OnePixelDivider divider = OnePixelDivider.this;
       if (isInDragZone(e)) {
         myGlassPane.setCursor(divider.getCursor(), divider);
@@ -147,12 +151,17 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       _processMouseMotionEvent(e);
     }
+
     @Override
     public double getWeight() {
       return 1;
     }
+
     private void _processMouseMotionEvent(MouseEvent e) {
       MouseEvent event = getTargetEvent(e);
       if (event == null) {

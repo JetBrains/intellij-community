@@ -4,6 +4,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
 import com.intellij.codeInspection.AnalysisUastUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UCallExpression;
@@ -42,13 +42,6 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return JvmAnalysisBundle.message("jvm.inspections.blocking.method.display.name");
   }
 
   @NotNull
@@ -137,7 +130,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
       if (callExpression == null) return;
@@ -151,8 +144,13 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
+
+      LocalQuickFix[] quickFixes = StreamEx.of(myBlockingMethodCheckers)
+        .flatArray(checker -> checker.getQuickFixesFor(element))
+        .toArray(LocalQuickFix.EMPTY_ARRAY);
       myHolder.registerProblem(elementToHighLight,
-                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"));
+                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"),
+                               quickFixes);
     }
   }
 

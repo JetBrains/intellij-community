@@ -1,16 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.ToolExtensionPoints;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -19,41 +17,29 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
@@ -81,9 +67,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     return getTestName(false).contains("UnusedInspection");
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new SillyAssignmentInspection(),
       new AccessStaticViaInstance(),
@@ -116,6 +101,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testOverriddenMethodIsFinal() { doTest(false); }
   public void testMissingReturn() { doTest(false); }
   public void testUnreachable() { doTest(false); }
+  public void testUnreachableMultiFinally() { doTest(false); }
   public void testFinalFieldInit() { doTest(false); }
   public void testLocalVariableInitialization() { doTest(false); }
   public void testVarDoubleInitialization() { doTest(false); }
@@ -185,10 +171,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
+      VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
+      VirtualFile file2 = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }
@@ -202,7 +188,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testSynchronizedExpression() { doTest(false); }
   public void testExtendMultipleClasses() { doTest(false); }
-  public void testRecursiveConstructorInvocation() { doTest(false); }
+
+  public void testRecursiveConstructorInvocation() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // mutual recursion is prevented in contract inference
+    doTest(false);
+  }
+
   public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
@@ -271,7 +262,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedNonPrivateMembers2() {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null);
     EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override
@@ -317,8 +308,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
     doTest(true);
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      PsiDirectory directory = myFile.getParent();
-      assertNotNull(myFile.toString(), directory);
+      PsiDirectory directory = getFile().getParent();
+      assertNotNull(getFile().toString(), directory);
       PsiFile txt = directory.createFile("x.txt");
       VirtualFile vFile = txt.getVirtualFile();
       assertNotNull(txt.toString(), vFile);
@@ -343,25 +334,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  public void testInjectedAnnotator() {
-    Annotator annotator = new MyAnnotator();
-    Language xml = StdFileTypes.XML.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(xml, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-      assertTrue(list.toString(), list.contains(annotator));
-      doTest(BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(xml, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-    assertFalse(list.toString(), list.contains(annotator));
-  }
-
   public void testSOEForTypeOfHugeBinaryExpression() {
-    configureFromFileText("a.java", "class A { String s = \"\"; }");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A { String s = \"\"; }";
+    configureFromFileText("a.java", text);
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -384,7 +360,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSOEForCyclicInheritance() {
-    configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ";
+    configureFromFileText("a.java", text);
     doHighlighting();
   }
 
@@ -425,78 +403,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(infos.isEmpty());
   }
 
-  public void testAnnotatorWorksWithFileLevel() {
-    Annotator annotator = new MyTopFileAnnotator();
-    Language java = StdFileTypes.JAVA.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-      assertTrue(list.toString(), list.contains(annotator));
-      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      doHighlighting();
-      List<HighlightInfo> fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      HighlightInfo info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
-
-      type("\n\n");
-      doHighlighting();
-      fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
-
-      type("//xxx"); //disable top level annotation
-      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
-      assertEmpty(warnings);
-      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      assertEmpty(fileLevel);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-    assertFalse(list.toString(), list.contains(annotator));
-  }
-
   public void testIllegalWhitespaces() { doTest(false); }
 
   public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(true);
-  }
-
-  // must stay public for PicoContainer to work
-  public static class MyAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-      psiElement.accept(new XmlElementVisitor() {
-        @Override public void visitXmlTag(XmlTag tag) {
-          XmlAttribute attribute = tag.getAttribute("aaa", "");
-          if (attribute != null) {
-            holder.createWarningAnnotation(attribute, "MyAnnotator");
-          }
-        }
-
-        @Override public void visitXmlToken(XmlToken token) {
-          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-            holder.createWarningAnnotation(token, "ENTITY");
-          }
-        }
-      });
-    }
-  }
-
-  // must stay public for PicoContainer to work
-  public static class MyTopFileAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
-        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
-        annotation.setFileLevelAnnotation(true);
-      }
-    }
   }
 }

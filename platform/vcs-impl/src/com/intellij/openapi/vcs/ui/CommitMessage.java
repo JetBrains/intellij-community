@@ -5,33 +5,36 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.commit.CommitMessageUi;
+import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
@@ -46,12 +49,29 @@ import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
+import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
+
+  private static final EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
+    editor.setBackgroundColor(null); // to use background from set color scheme
+    editor.setColorsScheme(getCommitMessageColorScheme());
+  };
+
+  @NotNull
+  private static EditorColorsScheme getCommitMessageColorScheme() {
+    boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
+    boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
+    return isLaFDark == isEditorDark
+           ? EditorColorsManager.getInstance().getGlobalScheme()
+           : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  }
+
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
@@ -86,6 +106,22 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     }
 
     setBorder(createEmptyBorder());
+
+    updateOnInspectionProfileChanged(project);
+    project.getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
+  }
+
+  private void updateOnInspectionProfileChanged(@NotNull Project project) {
+    project.getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> {
+      Editor editor = myEditorField.getEditor();
+      if (editor instanceof EditorEx) RightMarginCustomization.customize(project, (EditorEx)editor);
+    });
+  }
+
+  @Override
+  public void lookAndFeelChanged(@NotNull LafManager source) {
+    Editor editor = myEditorField.getEditor();
+    if (editor instanceof EditorEx) COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
   @NotNull
@@ -134,17 +170,10 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = new HashSet<>();
 
-    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-    if (configuration != null) {
-      features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, getBodyRightMargin(project)));
-      features.add(WrapWhenTypingReachesRightMarginCustomization.getInstance(configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN));
-    } else {
-      features.add(new RightMarginEditorCustomization(false, -1));
-    }
-
+    features.add(new RightMarginCustomization(project));
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    features.add(editor -> editor.setBackgroundColor(null)); // use background from set color scheme
+    features.add(COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION);
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));
@@ -215,14 +244,40 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @CalledInAwt
   public synchronized void setChangeList(@NotNull ChangeList value) {
+    setChangeLists(singletonList(value));
+  }
+
+  @CalledInAwt
+  public synchronized void setChangeLists(@NotNull List<ChangeList> value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myChangeLists = Collections.singletonList(value);
+    myChangeLists = newUnmodifiableList(value);
   }
 
   @NotNull
   @CalledWithReadLock
   public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
+  }
+
+  private static class RightMarginCustomization implements EditorCustomization {
+    @NotNull private final Project myProject;
+
+    private RightMarginCustomization(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void customize(@NotNull EditorEx editor) {
+      customize(myProject, editor);
+    }
+
+    private static void customize(@NotNull Project project, @NotNull EditorEx editor) {
+      BodyLimitSettings settings = getBodyLimitSettings(project);
+
+      editor.getSettings().setRightMargin(settings.getRightMargin());
+      editor.getSettings().setRightMarginShown(settings.isShowRightMargin());
+      editor.getSettings().setWrapWhenTypingReachesRightMargin(settings.isWrapOnTyping());
+    }
   }
 
   private static class InspectionCustomization implements EditorCustomization {
@@ -242,13 +297,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
       ((EditorMarkupModelImpl)editor.getMarkupModel())
-        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument(), file));
+        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument()));
     }
   }
 
   private static class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
-    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable PsiFile file) {
-      super(project, document, file);
+    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
+      super(project, document);
     }
 
     @Override
@@ -259,7 +314,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
     }
 
-    private boolean hasHighSeverities(@NotNull int[] errorCount) {
+    private boolean hasHighSeverities(int @NotNull [] errorCount) {
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
       for (int i = 0; i < errorCount.length; i++) {
@@ -268,6 +323,23 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
         }
       }
       return false;
+    }
+
+    @Override
+    @NotNull
+    protected UIController createUIController() {
+      return new DefaultUIController() {
+        @Override
+        @NotNull
+        protected List<AnAction> initActions() {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public boolean enableToolbar() {
+          return false;
+        }
+      };
     }
   }
 }

@@ -1,19 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
+import com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable
 import com.intellij.util.recursionSafeLazy
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 import kotlin.reflect.jvm.isAccessible
 
-class MethodResolveResult(
+open class MethodResolveResult(
   method: PsiMethod,
   place: PsiElement,
   state: ResolveState,
@@ -33,6 +31,40 @@ class MethodResolveResult(
 
   private val fullSubstitutor by recursionSafeLazy {
     buildTopLevelSession(place).inferSubst(this)
+  }
+
+  override fun createMethodCandidate(method: PsiMethod, place: PsiElement, state: ResolveState): GroovyMethodCandidate {
+    val originalCandidate = super.createMethodCandidate(method, place, state)
+    return object : GroovyMethodCandidate {
+      override val receiverType: PsiType? get() = originalCandidate.receiverType
+      override val method: PsiMethod get() = originalCandidate.method
+      override val argumentMapping: ArgumentMapping<PsiCallParameter>? by recursionAwareLazy {
+        originalCandidate.argumentMapping?.let {
+          GenericsArgumentMapping(method, place, it)
+        }
+      }
+    }
+  }
+
+  private class GenericsArgumentMapping(
+    private val method: PsiMethod,
+    private val place: PsiElement,
+    delegate: ArgumentMapping<PsiCallParameter>
+  ) : DelegateArgumentMapping<PsiCallParameter>(delegate) {
+    override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult {
+      val applicabilityResult = super.highlightingApplicabilities(substitutor)
+      return when {
+        applicabilityResult.applicability != Applicability.applicable -> {
+          applicabilityResult
+        }
+        isTypeArgumentsApplicable(method.typeParameters, substitutor, place) -> {
+          ApplicabilityResult.Applicable
+        }
+        else -> {
+          ApplicabilityResult.Inapplicable
+        }
+      }
+    }
   }
 
   val fullSubstitutorDelegate: Lazy<*>

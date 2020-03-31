@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
@@ -46,6 +47,7 @@ import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.util.Arrays.asList;
 
 /**
  * @author yole
@@ -74,7 +76,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JBLoadingPanel myLoadingPanel;
 
   private static class MapInfo {
-    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
+    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR); //NON-NLS
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
         return Comparing.compare(o1.mapping.getDirectory(), o2.mapping.getDirectory());
@@ -133,7 +135,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
 
         if (info == MapInfo.SEPARATOR) {
-          append("Unregistered roots:", getAttributes(info));
+          append(VcsBundle.message("unregistered.roots.label"), getAttributes(info));
           return;
         }
 
@@ -402,7 +404,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                  isMappingValid(mapping)));
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
@@ -437,7 +439,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     else if (hasUnregistered && !hasSeparator) {
       items.add(MapInfo.SEPARATOR);
     }
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
   }
 
   private void editMapping() {
@@ -453,7 +455,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private void setMapping(int row, @NotNull VcsDirectoryMapping mapping) {
     List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.set(row, MapInfo.registered(mapping, isMappingValid(mapping)));
-    Collections.sort(items, MapInfo.COMPARATOR);
+    items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
@@ -497,7 +499,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
-    panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
+    if (!AbstractCommonUpdateAction.showsCustomNotification(asList(myVcsManager.getAllActiveVcss()))) {
+      panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
+    }
     return panel;
   }
 
@@ -573,7 +577,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createShowRecursivelyDirtyOption() {
-    myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    myShowChangedRecursively = new JCheckBox(VcsBundle.message("checkbox.show.dirty.recursively"), myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     return myShowChangedRecursively;
   }
 
@@ -647,10 +651,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return vcses;
   }
 
-  @Override
   @Nls
+  @Override
   public String getDisplayName() {
-    return "Mappings";
+    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
   }
 
   @Override

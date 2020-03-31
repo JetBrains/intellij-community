@@ -2,7 +2,10 @@
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +17,14 @@ import java.util.Map;
 public abstract class DvcsBranchManager {
   @NotNull private final DvcsBranchSettings myBranchSettings;
   @NotNull private final Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
+  @NotNull private final Project myProject;
 
-  protected DvcsBranchManager(@NotNull DvcsBranchSettings settings,
-                              @NotNull BranchType[] branchTypes) {
+  @NotNull public static final Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
+    Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
+
+  protected DvcsBranchManager(@NotNull Project project, @NotNull DvcsBranchSettings settings,
+                              BranchType @NotNull [] branchTypes) {
+    myProject = project;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {
       String defaultBranchName = getDefaultBranchName(type);
@@ -60,5 +68,16 @@ public abstract class DvcsBranchManager {
         myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
       }
     }
+    notifySettingsChanged();
+  }
+
+  private void notifySettingsChanged() {
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchSettingsChanged();
+    });
+  }
+
+  public interface DvcsBranchManagerListener {
+    void branchSettingsChanged();
   }
 }

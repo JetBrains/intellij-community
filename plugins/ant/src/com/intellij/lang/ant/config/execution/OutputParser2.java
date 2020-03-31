@@ -30,7 +30,7 @@ import com.intellij.rt.ant.execution.PacketProcessor;
 import java.io.IOException;
 
 final class OutputParser2 extends OutputParser implements PacketProcessor, InputConsumer, OutputPacketProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser2");
+  private static final Logger LOG = Logger.getInstance(OutputParser2.class);
   private int myLastPacketIndex = -1;
 
   private OutputParser2(Project project,

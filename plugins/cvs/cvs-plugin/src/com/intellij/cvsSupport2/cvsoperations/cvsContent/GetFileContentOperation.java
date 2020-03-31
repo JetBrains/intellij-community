@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 import com.intellij.cvsSupport2.CvsUtil;
@@ -28,7 +14,7 @@ import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +43,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       return myContent == null && myBinaryContent == null;
     }
 
-    public byte[] getReadContent() {
+    public byte @NotNull [] getReadContent() {
       if (myBinaryContent != null) {
         return myBinaryContent;
       } else {
@@ -188,16 +174,15 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   }
 
-  public synchronized byte[] getFileBytes() {
+  public synchronized byte @NotNull [] getFileBytes() {
     if (myFileBytes == null) {
-      if (myState == DELETED) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      if (myState == DELETED) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       myFileBytes = loadFileBytes();
     }
     return myFileBytes;
   }
 
-  @Nullable
-  public synchronized byte[] tryGetFileBytes() {
+  public synchronized byte @Nullable [] tryGetFileBytes() {
     if (myFileBytes == null && myState == LOADING) {
       myFileBytes = loadFileBytes();
     }
@@ -211,13 +196,13 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return myState == DELETED;
   }
 
-  private synchronized byte[] loadFileBytes() {
+  private synchronized byte @NotNull [] loadFileBytes() {
     if (myState != LOADING) {
       LOG.error("state = " + myState);
     }
     if (myReader.isEmpty()) {
       myState = DELETED;
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     else {
       myState = SUCCESSFULLY_LOADED;
@@ -230,7 +215,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     super.gotEntry(abstractFileObject, entry);
     if (entry == null) {
       myState = DELETED;
-      myFileBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+      myFileBytes = ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     else {
       myRevision = entry.getRevision();

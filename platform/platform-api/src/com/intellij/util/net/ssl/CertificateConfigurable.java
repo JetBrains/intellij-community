@@ -15,6 +15,7 @@
  */
 package com.intellij.util.net.ssl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.options.Configurable;
@@ -22,12 +23,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +51,12 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  * @author Mikhail Golubev
  */
 public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
-  private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR = new FileTypeDescriptor("Choose Certificate", ".crt", ".cer", ".pem");
+  private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR =
+    new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
+                           ".crt", ".CRT",
+                           ".cer", ".CER",
+                           ".pem", ".PEM",
+                           ".der", ".DER");
   @NonNls public static final String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;
@@ -75,7 +80,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     // show newly added certificates
     myTrustManager.addListener(this);
 
-    myTree.getEmptyText().setText("No certificates");
+    myTree.getEmptyText().setText(IdeBundle.message("settings.certificate.no.certificates"));
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setRootVisible(false);
     //myTree.setShowsRootHandles(false);
@@ -89,10 +94,12 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
           String path = file.getPath();
           X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
           if (certificate == null) {
-            Messages.showErrorDialog(myRootPanel, "Malformed X509 server certificate", "Not Imported");
+            Messages.showErrorDialog(myRootPanel, IdeBundle.message("settings.certificate.malformed.x509.server.certificate"),
+                                     IdeBundle.message("settings.certificate.not.imported"));
           }
           else if (myCertificates.contains(certificate)) {
-            Messages.showWarningDialog(myRootPanel, "Certificate already exists", "Not Imported");
+            Messages.showWarningDialog(myRootPanel, IdeBundle.message("settings.certificate.certificate.already.exists"),
+                                       IdeBundle.message("settings.certificate.not.imported"));
           }
           else {
             myCertificates.add(certificate);
@@ -128,6 +135,10 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         }
       }
     });
+
+    myCertificatesListPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.certificate.accepted.certificates"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
     myCertificatesListPanel.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
@@ -157,7 +168,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Nls
   @Override
   public String getDisplayName() {
-    return "Server Certificates";
+    return UIBundle.message("configurable.CertificateConfigurable.display.name");
   }
 
   @Nullable
@@ -194,13 +205,15 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
     for (X509Certificate certificate : added) {
       if (!myTrustManager.addCertificate(certificate)) {
-        throw new ConfigurationException("Cannot add certificate for " + getCommonName(certificate), "Cannot Add Certificate");
+        throw new ConfigurationException(IdeBundle.message("settings.certificate.cannot.add.certificate.for", getCommonName(certificate)),
+                                         IdeBundle.message("settings.certificate.cannot.add.certificate"));
       }
     }
 
     for (X509Certificate certificate : removed) {
       if (!myTrustManager.removeCertificate(certificate)) {
-        throw new ConfigurationException("Cannot remove certificate for " + getCommonName(certificate), "Cannot Remove Certificate");
+        throw new ConfigurationException(IdeBundle.message("settings.certificate.cannot.remove.certificate.for", getCommonName(certificate)),
+                                         IdeBundle.message("settings.certificate.cannot.remove.certificate"));
       }
     }
     CertificateManager.Config state = CertificateManager.getInstance().getState();

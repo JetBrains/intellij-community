@@ -3,14 +3,13 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.pom.Navigatable;
@@ -39,11 +38,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.util.Hashtable;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class JavaDocLocalInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
+
   public static final String SHORT_NAME = "JavaDoc";
   protected static final String NONE = "none";
   protected static final String PACKAGE_LOCAL = "package";
@@ -331,8 +331,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     else if (required && !hasSupers) {
       PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null) {
-        ExtensionPoint<Condition<PsiMember>> ep = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVADOC_LOCAL);
-        if (Stream.of(ep.getExtensions()).noneMatch(condition -> condition.value(method))) {
+        if (EP_NAME.extensions().noneMatch(condition -> condition.value(method))) {
           JavadocHighlightUtil.reportMissingTag(nameIdentifier, holder);
         }
       }
@@ -357,12 +356,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
 
     JavadocHighlightUtil.checkDuplicateTags(tags, holder);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.javadoc.display.name");
   }
 
   @Override
@@ -446,8 +439,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                JBUI.emptyInsets(), 0, 0);
 
-      String title = InspectionsBundle.message("inspection.javadoc.dialog.title");
-      FieldPanel additionalTagsPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.label.text"), title, null, null);
+      String title = JavaBundle.message("inspection.javadoc.dialog.title");
+      FieldPanel additionalTagsPanel = new FieldPanel(JavaBundle.message("inspection.javadoc.label.text"), title, null, null);
       additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
       additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
@@ -469,40 +462,40 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
       JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
       String[] tags = {"@author", "@version", "@since"};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.package"),
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.package"),
                createOptionsPanel(new String[]{NONE, PUBLIC}, tags, PACKAGE_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.module"),
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.module"),
                createOptionsPanel(new String[]{NONE, PUBLIC}, tags, MODULE_OPTIONS));
       tags = new String[]{"@author", "@version", "@since", "@param"};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"),
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title"),
                createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL}, tags, TOP_LEVEL_CLASS_OPTIONS));
-      tags = new String[]{"@return", "@param", InspectionsBundle.message("inspection.javadoc.throws.or.exception.option")};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.method"),
+      tags = new String[]{"@return", "@param", JavaBundle.message("inspection.javadoc.throws.or.exception.option")};
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.method"),
                createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, tags, METHOD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.field"),
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.field"),
                createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, FIELD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.inner.class"),
+      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
                createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, INNER_CLASS_OPTIONS));
       add(tabs, gc);
 
-      JCheckBox checkBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.deprecated"), IGNORE_DEPRECATED);
+      JCheckBox checkBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.deprecated"), IGNORE_DEPRECATED);
       checkBox.addActionListener(e -> IGNORE_DEPRECATED = checkBox.isSelected());
       gc.gridwidth = 1;
       add(checkBox, gc);
 
-      JCheckBox periodCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.period"), IGNORE_JAVADOC_PERIOD);
+      JCheckBox periodCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.period"), IGNORE_JAVADOC_PERIOD);
       periodCheckBox.addActionListener(e -> IGNORE_JAVADOC_PERIOD = periodCheckBox.isSelected());
       add(periodCheckBox, gc);
 
-      JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.throws"), isIgnoreDuplicatedThrows());
+      JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.throws"), isIgnoreDuplicatedThrows());
       ignoreDuplicateThrowsCheckBox.addActionListener(e -> setIgnoreDuplicatedThrows(ignoreDuplicateThrowsCheckBox.isSelected()));
       add(ignoreDuplicateThrowsCheckBox, gc);
 
-      JCheckBox ignorePointToItselfCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.self.ref"), IGNORE_POINT_TO_ITSELF);
+      JCheckBox ignorePointToItselfCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.self.ref"), IGNORE_POINT_TO_ITSELF);
       ignorePointToItselfCheckBox.addActionListener(e -> IGNORE_POINT_TO_ITSELF = ignorePointToItselfCheckBox.isSelected());
       add(ignorePointToItselfCheckBox, gc);
 
-      JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.simple"), isIgnoreSimpleAccessors());
+      JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.simple"), isIgnoreSimpleAccessors());
       ignoreSimpleAccessorsCheckBox.addActionListener(e -> setIgnoreSimpleAccessors(ignoreSimpleAccessorsCheckBox.isSelected()));
       add(ignoreSimpleAccessorsCheckBox, gc);
     }
@@ -523,7 +516,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private JPanel createScopePanel(String[] modifiers, Options options) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.scope.for.title"), true),
+        IdeBorderFactory.createTitledBorder(JavaBundle.message("inspection.scope.for.title")),
         BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       @SuppressWarnings("UseOfObsoleteCollectionType") Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
@@ -562,7 +555,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.javadoc.required.tags.option.title"), true),
+        IdeBorderFactory.createTitledBorder(JavaBundle.message("inspection.javadoc.required.tags.option.title")),
         BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       GridBagConstraints gc = new GridBagConstraints();
@@ -686,13 +679,13 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
+      return JavaBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
+      return JavaBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
 
@@ -707,7 +700,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag.family");
+      return JavaBundle.message("inspection.javadoc.problem.add.param.tag.family");
     }
 
     @Override
@@ -756,13 +749,13 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private static boolean matches(PsiParameter param, PsiDocTag tag) {
       PsiDocTagValue valueElement = tag.getValueElement();
       String name = param.getName();
-      return valueElement != null && name != null && valueElement.getText().trim().startsWith(name);
+      return valueElement != null && valueElement.getText().trim().startsWith(name);
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myName);
+      return JavaBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
   }
 

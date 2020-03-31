@@ -18,22 +18,20 @@ package com.intellij.openapi.vcs;
 public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements VcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 
-  private final String myCaption;
-
-  private final String myDoNothingCaption;
-  private final String myShowConfirmationCaption;
-  private final String myDoActionSilentlyCaption;
-
+  /**
+   * @deprecated Use {@link #VcsShowConfirmationOptionImpl(String)}
+   */
+  @Deprecated
   public VcsShowConfirmationOptionImpl(final String displayName,
                                        final String caption,
                                        final String doNothingCaption,
                                        final String showConfirmationCaption,
                                        final String doActionSilentlyCaption) {
+    this(displayName);
+  }
+
+  public VcsShowConfirmationOptionImpl(final String displayName) {
     super(displayName);
-    myCaption = caption;
-    myDoNothingCaption = doNothingCaption;
-    myShowConfirmationCaption = showConfirmationCaption;
-    myDoActionSilentlyCaption = doActionSilentlyCaption;
   }
 
   @Override

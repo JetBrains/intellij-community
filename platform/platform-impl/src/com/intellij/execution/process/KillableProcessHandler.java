@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -11,9 +11,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * This process handler supports the "soft-kill" feature (see {@link KillableProcessHandler}).
@@ -54,7 +57,17 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
-    super(process, commandLine, charset);
+    this(process, commandLine, charset, null);
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/
+                                String commandLine,
+                                @NotNull Charset charset,
+                                @Nullable Set<? extends File> filesToDelete) {
+    super(process, commandLine, charset, filesToDelete);
     myMediatedProcess = false;
   }
 

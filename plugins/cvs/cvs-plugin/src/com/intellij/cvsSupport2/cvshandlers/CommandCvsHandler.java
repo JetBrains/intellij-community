@@ -56,7 +56,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -72,7 +71,7 @@ import java.util.*;
  */
 public class CommandCvsHandler extends CvsHandler {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
+  private static final Logger LOG = Logger.getInstance(CommandCvsHandler.class);
 
   protected final CvsOperation myCvsOperation;
 

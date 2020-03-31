@@ -21,9 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ExcludedRootElement extends LibraryTableTreeContentElement<ExcludedRootElement> {
   @NotNull private final String myUrl;
 

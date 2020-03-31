@@ -7,12 +7,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+
+import static com.intellij.openapi.util.NlsUI.Label;
 
 /**
  * @author yole
@@ -24,14 +23,14 @@ public abstract class TemplateContextType {
   private final String myContextId;
   @NotNull
   private final String myPresentableName;
-  private final NullableLazyValue<TemplateContextType> myBaseContextType;
+  private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
 
-  protected TemplateContextType(@NotNull @NonNls String id, @NotNull String presentableName) {
+  protected TemplateContextType(@NotNull @NonNls String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
   protected TemplateContextType(@NotNull @NonNls String id,
-                                @NotNull String presentableName,
+                                @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
@@ -67,6 +66,12 @@ public abstract class TemplateContextType {
   public TemplateContextType getBaseContextType() {
     return myBaseContextType.getValue();
   }
+
+  @ApiStatus.Internal
+  public void clearCachedBaseContextType() {
+    myBaseContextType.drop();
+  }
+
 
   public Document createDocument(CharSequence text, Project project) {
     return EditorFactory.getInstance().createDocument(text);

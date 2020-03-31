@@ -4,24 +4,21 @@ package com.intellij.java.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.InspectionTestUtil;
-import com.siyeh.ig.controlflow.UnnecessaryConditionalExpressionInspection;
+import com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -60,20 +57,22 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionManager im = InspectionManager.getInstance(getProject());
     AnalysisScope scope = new AnalysisScope(getProject());
     List<Path> resultFiles = new ArrayList<>();
-    File outputPath = FileUtil.createTempDirectory("inspection", "results");
+    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
-    InspectionProfileImpl profile = new InspectionProfileImpl("test", () -> getTools().collect(Collectors.toList()), (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList()));
+    Disposer.register(getTestRootDisposable(), toolSupplier);
+    InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     getTools().forEach(t -> profile.enableTool(t.getShortName(), getProject()));
 
     context.setExternalProfile(profile);
 
-    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath.getAbsolutePath(), false, resultFiles), new ProgressIndicatorBase());
+    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath, false, resultFiles), new ProgressIndicatorBase());
     assertSize(2, resultFiles);
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantConditions.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
-    Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("UnnecessaryConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
+    Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("SimplifiableConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
 
     Element expectedDfaResults = JDOMUtil.load("<problems>" +
                                                "<problem>\n" +
@@ -159,6 +158,6 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
   @NotNull
   private static Stream<InspectionToolWrapper> getTools() {
-    return Stream.of(new DataFlowInspection(), new UnnecessaryConditionalExpressionInspection()).map(LocalInspectionToolWrapper::new);
+    return Stream.of(new DataFlowInspection(), new SimplifiableConditionalExpressionInspection()).map(LocalInspectionToolWrapper::new);
   }
 }

@@ -24,7 +24,7 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         JvmElementVisitor<Boolean> visitor = null;
         for (JvmElement jvmElement : JvmDeclarationSearch.getElementsByIdentifier(element)) {
           if (visitor == null) {
@@ -47,13 +47,13 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
 
   public interface HighlightSink {
 
-    default void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message, @NotNull LocalQuickFix... fixes) {
+    default void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message, LocalQuickFix @NotNull ... fixes) {
       highlight(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
     }
 
     void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
                    @NotNull ProblemHighlightType highlightType,
-                   @NotNull LocalQuickFix... fixes);
+                   LocalQuickFix @NotNull ... fixes);
   }
 
   @Nullable

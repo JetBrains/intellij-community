@@ -16,13 +16,13 @@
 package org.jetbrains.plugins.groovy.inspections.secondUnsafeCall;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-public class SecondUnsafeCallTest extends LightCodeInsightFixtureTestCase {
+public class SecondUnsafeCallTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

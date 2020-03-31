@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ref;
 
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.MemoryDumpHelper;
@@ -19,11 +20,10 @@ import java.util.Set;
 
 /**
  * A utility to garbage-collect specified objects in tests. Create a GCWatcher using {@link #tracking} or {@link #fromClearedRef}
- * and then call {@link #tryGc()}. Please ensure that your test doesn't hold references to objects passed to {@link #tracking},
- * so, if you pass fields or local variables there, nullify them before calling {@link #tryGc()}.
+ * and then call {@link #ensureCollected()}. Please ensure that your test doesn't hold references to objects passed to {@link #tracking},
+ * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
-@TestOnly
 public class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
   private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
@@ -68,11 +68,20 @@ public class GCWatcher {
     }
   }
 
+  public boolean tryCollect() {
+    return LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
+      long startTime = System.currentTimeMillis();
+      GCUtil.allocateTonsOfMemory(new StringBuilder(), () -> isEverythingCollected() || System.currentTimeMillis() - startTime > 5000);
+      return isEverythingCollected();
+    });
+  }
+
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
    * this method gives up after some time.
    */
-  public void tryGc() {
+  @TestOnly
+  public void ensureCollected() {
     StringBuilder log = new StringBuilder();
     if (!GCUtil.allocateTonsOfMemory(log, this::isEverythingCollected)) {
       String message = "Couldn't garbage-collect some objects, they might still be reachable from GC roots: " +

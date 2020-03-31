@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -41,7 +42,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,13 +60,14 @@ import static org.junit.Assert.*;
  * @author yole
  */
 public class EditorTestFixture {
+  @NotNull
   private final Project myProject;
   private final Editor myEditor;
   private final VirtualFile myFile;
 
   private boolean myEmptyLookup;
 
-  public EditorTestFixture(Project project, Editor editor, VirtualFile file) {
+  public EditorTestFixture(@NotNull Project project, Editor editor, VirtualFile file) {
     myProject = project;
     myEditor = editor;
     myFile = file;
@@ -110,7 +112,7 @@ public class EditorTestFixture {
       }
 
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
-      actionManager.getTypedAction().actionPerformed(myEditor, c, getEditorDataContext());
+      TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
     });
 
   }
@@ -147,11 +149,13 @@ public class EditorTestFixture {
     return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile)) : null;
   }
 
+  @NotNull
   public List<HighlightInfo> doHighlighting() {
-    return doHighlighting(false);
+    return doHighlighting(false, false);
   }
 
-  public List<HighlightInfo> doHighlighting(boolean myAllowDirt) {
+  @NotNull
+  public List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -161,7 +165,7 @@ public class EditorTestFixture {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
     assertNotNull(file);
-    return instantiateAndRun(file, editor, ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
+    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
   }
 
   @Nullable
@@ -200,8 +204,7 @@ public class EditorTestFixture {
     return getLookupElements();
   }
 
-  @Nullable
-  public LookupElement[] getLookupElements() {
+  public LookupElement @Nullable [] getLookupElements() {
     LookupImpl lookup = getLookup();
     if (lookup == null) {
       return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
@@ -248,7 +251,7 @@ public class EditorTestFixture {
     return result;
   }
 
-  public void assertPreferredCompletionItems(final int selected, @NotNull final String... expected) {
+  public void assertPreferredCompletionItems(final int selected, final String @NotNull ... expected) {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
@@ -301,6 +304,7 @@ public class EditorTestFixture {
     return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
+  @NotNull
   public List<IntentionAction> getAllQuickFixes() {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
@@ -314,6 +318,7 @@ public class EditorTestFixture {
     return actions;
   }
 
+  @NotNull
   public List<Crumb> getBreadcrumbsAtCaret() {
     FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));

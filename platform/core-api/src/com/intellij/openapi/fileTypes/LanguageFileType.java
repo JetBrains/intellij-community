@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -27,15 +13,30 @@ import java.nio.charset.Charset;
  * Kind of file types capable to provide {@link Language}.
  * Note that the associated language can still be overridden by a {@link com.intellij.psi.LanguageSubstitutor}.
  */
-public abstract class LanguageFileType implements FileType{
+public abstract class LanguageFileType implements FileType {
   private final Language myLanguage;
+  private final boolean mySecondary;
 
   /**
    * Creates a language file type for the specified language.
    * @param language The language used in the files of the type.
    */
-  protected LanguageFileType(@NotNull final Language language) {
+  protected LanguageFileType(@NotNull Language language) {
+    this(language, false);
+  }
+
+  /**
+   * Creates a language file type for the specified language.
+   * @param language The language used in the files of the type.
+   * @param secondary If true, this language file type will never be returned as the associated file type for the language.
+   *                  (Used when a file type is reusing the language of another file type, e.g. XML).
+   */
+  protected LanguageFileType(@NotNull Language language, boolean secondary) {
+    // passing Language instead of lazy resolve on getLanguage call (like LazyRunConfigurationProducer), is ok because:
+    // 1. Usage of FileType nearly always requires Language
+    // 2. FileType is created only on demand (if deprecated FileTypeFactory is not used).
     myLanguage = language;
+    mySecondary = secondary;
   }
 
   /**
@@ -57,8 +58,16 @@ public abstract class LanguageFileType implements FileType{
     return false;
   }
 
+  /**
+   * If true, this language file type will never be returned as the associated file type for the language.
+   * (Used when a file type is reusing the language of another file type, e.g. XML).
+   */
+  public boolean isSecondary() {
+    return mySecondary;
+  }
+
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }
 
@@ -71,17 +80,16 @@ public abstract class LanguageFileType implements FileType{
   }
 
   /**
-   * Callers: use {@link CharsetUtil#extractCharsetFromFileContent(Project, VirtualFile, FileType, CharSequence)}
+   * @deprecated Callers: use {@link CharsetUtil#extractCharsetFromFileContent(Project, VirtualFile, FileType, CharSequence)}
    * Overriders: override {@link #extractCharsetFromFileContent(Project, VirtualFile, CharSequence)} instead
-   * @deprecated 
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull String content) {
     return null;
   }
-  
+
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
-    //noinspection deprecation
     return extractCharsetFromFileContent(project, file, content.toString());
   }
 }

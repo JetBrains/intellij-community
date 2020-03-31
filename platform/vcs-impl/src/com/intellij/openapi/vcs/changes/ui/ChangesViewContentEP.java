@@ -2,27 +2,32 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author yole
  */
 public class ChangesViewContentEP implements PluginAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
+  private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 
-  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<>("com.intellij.changesViewContent");
+  public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
+  /**
+   * Used to determine specific tab content in {@link com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager#selectContent}
+   * <p>
+   * To provide localized tab name use {@link #displayNameSupplierClassName}
+   */
   @Attribute("tabName")
-  @Nls(capitalization = Nls.Capitalization.Title)
   public String tabName;
 
   @Attribute("className")
@@ -31,11 +36,17 @@ public class ChangesViewContentEP implements PluginAware {
   @Attribute("predicateClassName")
   public String predicateClassName;
 
+  @Attribute("preloaderClassName")
+  public String preloaderClassName;
+
+  @Attribute("displayNameSupplierClassName")
+  public String displayNameSupplierClassName;
+
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
   @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 
@@ -63,6 +74,22 @@ public class ChangesViewContentEP implements PluginAware {
     this.predicateClassName = predicateClassName;
   }
 
+  public String getPreloaderClassName() {
+    return preloaderClassName;
+  }
+
+  public void setPreloaderClassName(final String preloaderClassName) {
+    this.preloaderClassName = preloaderClassName;
+  }
+
+  public String getDisplayNameSupplierClassName() {
+    return displayNameSupplierClassName;
+  }
+
+  public void setDisplayNameSupplierClassName(String displayNameSupplierClassName) {
+    this.displayNameSupplierClassName = displayNameSupplierClassName;
+  }
+
   public ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
       myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
@@ -82,6 +109,23 @@ public class ChangesViewContentEP implements PluginAware {
     }
     //noinspection unchecked
     return (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName);
+  }
+
+  @Nullable
+  public ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
+    if (preloaderClassName == null) {
+      return null;
+    }
+    return (ChangesViewContentProvider.Preloader)newClassInstance(project, preloaderClassName);
+  }
+
+  @Nullable
+  public Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
+    if (displayNameSupplierClassName == null) {
+      return null;
+    }
+    //noinspection unchecked
+    return (Supplier<String>)newClassInstance(project, displayNameSupplierClassName);
   }
 
   @Nullable

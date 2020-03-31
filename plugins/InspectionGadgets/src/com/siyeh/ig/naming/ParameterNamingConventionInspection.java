@@ -33,13 +33,6 @@ public class ParameterNamingConventionInspection extends
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "parameter.naming.convention.display.name");
-  }
-
-  @Override
   protected String getElementDescription() {
     return InspectionGadgetsBundle.message("parameter.naming.convention.element.description");
   }
@@ -75,7 +68,7 @@ public class ParameterNamingConventionInspection extends
         return;
       }
       final String name = variable.getName();
-      if (name == null || isValid(name)) {
+      if (isValid(name)) {
         return;
       }
       registerVariableError(variable, name);

@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -68,7 +69,8 @@ public class GrCastFix extends GroovyFix {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
 
-  static void doSafeCast(@NotNull Project project, @NotNull PsiType type, @NotNull GrExpression expr) {
+  @ApiStatus.Internal
+  public static void doSafeCast(@NotNull Project project, @NotNull PsiType type, @NotNull GrExpression expr) {
     if (!type.isValid()) return;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);

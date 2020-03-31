@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +28,8 @@ public class HgBinaryContentRevision extends HgContentRevision implements Binary
     super(project, hgFile, revisionNumber);
   }
 
-  @Nullable
   @Override
-  public byte[] getBinaryContent() {
+  public byte @Nullable [] getBinaryContent() {
     return getContentAsBytes();
   }
 }

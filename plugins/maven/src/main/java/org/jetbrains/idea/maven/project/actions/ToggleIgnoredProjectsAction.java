@@ -22,9 +22,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -42,13 +41,13 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      e.getPresentation().setText(ProjectBundle.message("maven.ignore.edit"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore.edit"));
     }
     else if (isIgnored(projectsManager, projects)) {
-      e.getPresentation().setText(ProjectBundle.message("maven.unignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.unignore"));
     }
     else {
-      e.getPresentation().setText(ProjectBundle.message("maven.ignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore"));
     }
   }
 
@@ -89,7 +88,6 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
     if(projectsManager == null) return;

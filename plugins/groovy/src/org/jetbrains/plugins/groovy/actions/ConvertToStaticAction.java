@@ -44,7 +44,7 @@ public class ConvertToStaticAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return !ConvertToStaticHandler.collectFilesForProcessing(elements).isEmpty();
   }
 

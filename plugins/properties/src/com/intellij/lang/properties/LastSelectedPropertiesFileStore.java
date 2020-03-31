@@ -7,13 +7,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +25,6 @@ import java.util.Map;
   storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
-  private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
-
   private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();
   private String lastSelectedFileUrl;
 
@@ -60,10 +54,6 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     return null;
   }
 
-  public static int getUseCount(@NotNull String path) {
-    return StatisticsManager.getInstance().getUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, path));
-  }
-
   public void saveLastSelectedPropertiesFile(PsiFile context, PropertiesFile file) {
     VirtualFile virtualFile = context.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
@@ -78,7 +68,6 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
       VirtualFile containingDir = virtualFile.getParent();
       lastSelectedUrls.put(containingDir.getUrl(), url);
       lastSelectedFileUrl = url;
-      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url))));
     }
   }
 

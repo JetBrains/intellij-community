@@ -13,6 +13,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
@@ -46,6 +47,10 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
     DiffUtil.installLineConvertor(getEditor(), getContent());
+
+    if (getProject() != null) {
+      myContentPanel.setBreadcrumbs(new SimpleDiffBreadcrumbsPanel(getEditor(), this), getTextSettings());
+    }
   }
 
   @Override
@@ -100,7 +105,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
   @CalledInAwt
   protected void installEditorListeners() {
-    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
   }
 
   @CalledInAwt

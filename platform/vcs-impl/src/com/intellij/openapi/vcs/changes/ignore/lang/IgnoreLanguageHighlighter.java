@@ -31,17 +31,16 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.vcs.changes.ignore.lexer.IgnoreLexerAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Syntax highlighter definition for {@link IgnoreLanguage}.
  */
 public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
-
   @Nullable
   private final VirtualFile currentHighlightedFile;
 
@@ -49,7 +48,9 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
 
   /* Binds parser definitions with highlighter colors. */
   static {
-    SyntaxHighlighterBase.fillMap(ATTRIBUTES, IgnoreParserDefinition.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.SECTIONS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.HEADERS, DefaultLanguageHighlighterColors.LINE_COMMENT);
   }
 
   public IgnoreLanguageHighlighter(@Nullable VirtualFile currentHighlightedFile) {
@@ -62,9 +63,8 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
     return new IgnoreLexerAdapter(currentHighlightedFile);
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return pack(ATTRIBUTES.get(tokenType));
   }
 }

@@ -17,7 +17,6 @@ package org.jetbrains.jps.ant.model.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -41,9 +40,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

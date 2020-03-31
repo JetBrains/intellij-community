@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +52,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
   }
 
   @Override
-  public void loadState(@NotNull String[] state) {
+  public void loadState(String @NotNull [] state) {
     synchronized (myHistory) {
       myHistory.clear();
       int start = 0;
@@ -73,7 +72,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
 
   public String[] getHistory() {
     synchronized (myHistory) {
-      return ArrayUtil.toStringArray(myHistory);
+      return ArrayUtilRt.toStringArray(myHistory);
     }
   }
 

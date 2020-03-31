@@ -5,9 +5,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 public class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
   private final XDebugSession mySession;

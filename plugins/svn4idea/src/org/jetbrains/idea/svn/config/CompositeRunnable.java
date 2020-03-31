@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompositeRunnable implements Runnable {
   private final Runnable[] myRunnables;
 
-  public CompositeRunnable(@NotNull Runnable... runnables) {
+  public CompositeRunnable(Runnable @NotNull ... runnables) {
     myRunnables = runnables;
   }
 

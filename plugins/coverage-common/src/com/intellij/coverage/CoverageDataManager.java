@@ -55,8 +55,7 @@ public abstract class CoverageDataManager implements JDOMExternalizable {
   /**
    * @return registered suites
    */
-  @NotNull
-  public abstract CoverageSuite[] getSuites();
+  public abstract CoverageSuite @NotNull [] getSuites();
 
   /**
    * @return currently active suite

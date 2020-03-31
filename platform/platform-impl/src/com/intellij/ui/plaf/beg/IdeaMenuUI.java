@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
@@ -31,23 +33,13 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
-  private Border myAquaSelectedBackgroundPainter;
-  private Icon myAquaInvertedArrowIcon;
-  private Icon myAquaDisabledArrowIcon;
-
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
     return new IdeaMenuUI();
   }
 
   public IdeaMenuUI() {
-    myMaxGutterIconWidth = JBUI.scale(18);
-
-    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF()) {
-      if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-      if (myAquaInvertedArrowIcon == null) myAquaInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
-      if (myAquaDisabledArrowIcon == null) myAquaDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
-    }
+    myMaxGutterIconWidth = JBUIScale.scale(18);
   }
 
   @Override
@@ -98,24 +90,11 @@ public class IdeaMenuUI extends BasicMenuUI{
       jMenu.getText() != null ? defaultTextIconGap : 0,
       defaultTextIconGap
     );
-    Color color2 = g.getColor();
+    Color mainColor = g.getColor();
     if (comp.isOpaque()){
-      g.setColor(jMenu.getBackground());
-      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-      if (buttonmodel.isArmed() || buttonmodel.isSelected()){
-        if (UIUtil.isUnderAquaLookAndFeel()) {
-           myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
-        } else {
-          g.setColor(selectionBackground);
-          if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-            g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
-          }
-          else {
-            g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-          }
-        }
-      }
-      g.setColor(color2);
+      fillOpaque(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
+    } else {
+      fillOpaqueFalse(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
     }
     if (allowedIcon != null){
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
@@ -127,7 +106,7 @@ public class IdeaMenuUI extends BasicMenuUI{
       if (useCheckAndArrow()){
         allowedIcon.paintIcon(comp, g, ourCheckIconRect.x, ourCheckIconRect.y);
       }
-      g.setColor(color2);
+      g.setColor(mainColor);
       if (menuItem.isArmed()){
         drawIconBorder(g);
       }
@@ -173,28 +152,47 @@ public class IdeaMenuUI extends BasicMenuUI{
     }
     if (arrowIcon != null){
       if (SystemInfo.isMac) {
-        ourArrowIconRect.y += JBUI.scale(1);
+        ourArrowIconRect.y += JBUIScale.scale(1);
       }
 
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         g.setColor(selectionForeground);
       }
-      if (useCheckAndArrow()){
-        try {
-          if (SystemInfo.isMac && myAquaInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-            myAquaInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else if (SystemInfo.isMac && myAquaDisabledArrowIcon != null && !buttonmodel.isEnabled() && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-            myAquaDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-        }
-        catch (NullPointerException npe) {
-          // GTKIconFactory$MenuArrowIcon.paintIcon since it doesn't expect to be given a null instead of SynthContext
-          // http://www.jetbrains.net/jira/browse/IDEADEV-22360
-        }
+
+      if (useCheckAndArrow()) {
+        arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
       }
     }
-    g.setColor(color2);
+    g.setColor(mainColor);
     g.setFont(font);
+  }
+
+  protected void fillOpaque(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
+    g.setColor(jMenu.getBackground());
+    g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+    if (buttonmodel.isArmed() || buttonmodel.isSelected()){
+      paintHover(g, comp, jMenu, allowedIcon);
+    }
+    g.setColor(mainColor);
+  }
+
+  protected void fillOpaqueFalse(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
+    if(IdeFrameDecorator.isCustomDecorationActive()) {
+      if (buttonmodel.isArmed() || buttonmodel.isSelected()) {
+        paintHover(g, comp, jMenu, allowedIcon);
+      }
+      g.setColor(mainColor);
+    }
+  }
+
+  protected final void paintHover(Graphics g, JComponent comp, JMenu jMenu, Icon allowedIcon) {
+    g.setColor(selectionBackground);
+    if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
+      g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
+    }
+    else {
+      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+    }
   }
 
   private boolean useCheckAndArrow() {
@@ -371,11 +369,11 @@ public class IdeaMenuUI extends BasicMenuUI{
     int k1 = i1 + myMaxGutterIconWidth + 1;
     int l1 = j1 + myMaxGutterIconWidth + 4;
     g.setColor(BegResources.m);
-    UIUtil.drawLine(g, i1, j1, i1, l1);
-    UIUtil.drawLine(g, i1, j1, k1, j1);
+    LinePainter2D.paint((Graphics2D)g, i1, j1, i1, l1);
+    LinePainter2D.paint((Graphics2D)g, i1, j1, k1, j1);
     g.setColor(BegResources.j);
-    UIUtil.drawLine(g, k1, j1, k1, l1);
-    UIUtil.drawLine(g, i1, l1, k1, l1);
+    LinePainter2D.paint((Graphics2D)g, k1, j1, k1, l1);
+    LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
   private void resetRects() {

@@ -34,7 +34,7 @@ import java.util.Collections;
  */
 public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepository> {
 
-  public GitMultiRootBranchConfig(@NotNull Collection<GitRepository> repositories) {
+  public GitMultiRootBranchConfig(@NotNull Collection<? extends GitRepository> repositories) {
     super(repositories);
   }
 

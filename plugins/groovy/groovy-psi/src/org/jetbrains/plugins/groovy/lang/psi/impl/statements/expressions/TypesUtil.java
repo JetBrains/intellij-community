@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -31,14 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
 
 /**
  * @author ven
@@ -58,14 +54,6 @@ public class TypesUtil implements TypeConstants {
   };
 
   private TypesUtil() {
-  }
-
-
-  public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
-                                                                           IElementType tokenType,
-                                                                           @NotNull GroovyPsiElement place,
-                                                                           PsiType[] argumentTypes) {
-    return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<>();
@@ -95,17 +83,6 @@ public class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBOOLEAN, CommonClassNames.JAVA_LANG_BOOLEAN);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kCHAR, CommonClassNames.JAVA_LANG_CHARACTER);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
-  }
-
-  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<>();
-
-  static {
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, AS_BOOLEAN);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, POSITIVE);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, NEGATIVE);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, PREVIOUS);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, NEXT);
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
   static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
@@ -149,14 +126,14 @@ public class TypesUtil implements TypeConstants {
     if (lType == null || rType == null) {
       return false;
     }
-    return canAssign(lType, rType, context, ApplicableTo.ASSIGNMENT) == ConversionResult.OK;
+    return canAssign(lType, rType, context, Position.ASSIGNMENT) == ConversionResult.OK;
   }
 
   @NotNull
   public static ConversionResult canAssign(@NotNull PsiType targetType,
                                            @NotNull PsiType actualType,
                                            @NotNull PsiElement context,
-                                           @NotNull ApplicableTo position) {
+                                           @NotNull Position position) {
     if (actualType instanceof PsiIntersectionType) {
       ConversionResult min = ConversionResult.ERROR;
       for (PsiType child : ((PsiIntersectionType)actualType).getConjuncts()) {
@@ -209,7 +186,7 @@ public class TypesUtil implements TypeConstants {
                                                            @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
-    return canAssign(targetType, actualType, context, ApplicableTo.METHOD_PARAMETER) == ConversionResult.OK;
+    return canAssign(targetType, actualType, context, Position.METHOD_PARAMETER) == ConversionResult.OK;
   }
 
   public static boolean isAssignableByParameter(@Nullable PsiType targetType,
@@ -217,19 +194,19 @@ public class TypesUtil implements TypeConstants {
                                                @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
-    return canAssign(targetType, actualType, context, ApplicableTo.GENERIC_PARAMETER) == ConversionResult.OK;
+    return canAssign(targetType, actualType, context, Position.GENERIC_PARAMETER) == ConversionResult.OK;
   }
 
   @Nullable
   private static ConversionResult areTypesConvertible(@NotNull PsiType targetType,
                                                       @NotNull PsiType actualType,
                                                       @NotNull PsiElement context,
-                                                      @NotNull ApplicableTo position) {
+                                                      @NotNull Position position) {
     if (!(context instanceof GroovyPsiElement)) return null;
     if (targetType.equals(actualType)) return ConversionResult.OK;
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
-      final ConversionResult result = converter.isConvertibleEx(targetType, actualType, (GroovyPsiElement)context, position);
+      final ConversionResult result = converter.isConvertible(targetType, actualType, position, (GroovyPsiElement)context);
       if (result != null) return result;
     }
     return null;
@@ -261,7 +238,7 @@ public class TypesUtil implements TypeConstants {
 
   @NotNull
   public static ConversionResult canCast(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull PsiElement context) {
-    final ConversionResult result = areTypesConvertible(targetType, actualType, context, ApplicableTo.EXPLICIT_CAST);
+    final ConversionResult result = areTypesConvertible(targetType, actualType, context, Position.EXPLICIT_CAST);
     if (result != null) return result;
     return TypeConversionUtil.areTypesConvertible(actualType, targetType) ? ConversionResult.OK : ConversionResult.ERROR;
   }
@@ -526,7 +503,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isClassType(@Nullable PsiType type, @NotNull String... names) {
+  public static boolean isClassType(@Nullable PsiType type, String @NotNull ... names) {
     String fqn = getQualifiedName(type);
     if (fqn == null) return false;
     return ContainerUtil.or(names, it -> it.equals(fqn));
@@ -544,7 +521,7 @@ public class TypesUtil implements TypeConstants {
         result.put(parameter, map2.get(parameter));
       }
     }
-    return PsiSubstitutorImpl.createSubstitutor(result);
+    return PsiSubstitutor.createSubstitutor(result);
   }
 
   @NotNull
@@ -724,21 +701,21 @@ public class TypesUtil implements TypeConstants {
       parameter.accept(new PsiTypeVisitorEx<Object>() {
         @Nullable
         @Override
-        public Object visitClassType(PsiClassType classType) {
+        public Object visitClassType(@NotNull PsiClassType classType) {
             newParam.set(classType.rawType());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        public Object visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
           newParam.set(capturedWildcardType.getWildcard().getBound());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitWildcardType(PsiWildcardType wildcardType) {
+        public Object visitWildcardType(@NotNull PsiWildcardType wildcardType) {
           newParam.set(wildcardType.getBound());
           return null;
         }
@@ -756,26 +733,14 @@ public class TypesUtil implements TypeConstants {
 
   @Nullable
   public static PsiType rawWildcard(PsiType type, PsiElement context) {
-    final PsiTypeMapper visitor = new PsiTypeMapper() {
-
+    final PsiTypeMapper visitor = new GrTypeMapper(context) {
       @Override
-      public PsiType visitClassType(PsiClassType classType) {
-        final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
-        final PsiClass element = result.getElement();
-        if (element == null) return null;
-
-        final PsiType[] parameters = classType.getParameters();
-        PsiType[] replacedParams = Arrays.stream(parameters).map((arg) -> arg == null ? null : arg.accept(this)).toArray(PsiType[]::new);
-        return JavaPsiFacade.getElementFactory(context.getProject()).createType(element, replacedParams);
-      }
-
-      @Override
-      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 
       @Override
-      public PsiType visitWildcardType(PsiWildcardType capturedWildcardType) {
+      public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 

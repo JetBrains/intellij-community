@@ -19,12 +19,12 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.io.File;
 
 @TestDataPath("$CONTENT_ROOT/testData/selectWord")
-public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
+public class HtmlSelectWordTest extends LightJavaCodeInsightFixtureTestCase {
 
   private boolean oldSelectWholeCssSelectorOptionValue;
 

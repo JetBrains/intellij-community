@@ -25,7 +25,7 @@ public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
   }
 
   @Override
-  public RunnerSettings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
+  public RunnerSettings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
     return new CoverageRunnerData();
   }
 

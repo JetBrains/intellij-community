@@ -2,8 +2,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
 
@@ -55,17 +54,22 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   public List<? extends RootDetector> getRootDetectors() {
     List<RootDetector> results = new ArrayList<>();
     results.add(new DescendentBasedRootFilter(OrderRootType.CLASSES, false, "classes",
-                                              file -> StdFileTypes.CLASS.equals(file.getFileType())
+                                              file -> FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)
                                                       //some libraries store native libraries inside their JAR files and unpack them dynamically so we should detect such JARs as classes roots
                                                       || file.getFileSystem() instanceof JarFileSystem && isNativeLibrary(file)));
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
-    ContainerUtil.addAll(results, LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
+    results.addAll(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
     results.add(new JavadocRootDetector());
-    results.add(new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",
-                                              file -> ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName())));
+    results.add(createAnnotationsRootDetector());
     results.add(new NativeLibraryRootFilter());
     return results;
+  }
+
+  @NotNull
+  public static DescendentBasedRootFilter createAnnotationsRootDetector() {
+    return new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",
+                                              file -> ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName()));
   }
 
   private static boolean isNativeLibrary(VirtualFile file) {
@@ -79,7 +83,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true).withFileFilter(LIBRARY_ROOT_CONDITION);
     descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
                                                         : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
-    descriptor.setDescription(ProjectBundle.message("library.java.attach.files.description"));
+    descriptor.setDescription(JavaUiBundle.message("library.java.attach.files.description"));
     return descriptor;
   }
 
@@ -103,7 +107,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
 
     private static void collectJavadocRoots(VirtualFile file, final List<? super VirtualFile> result, final ProgressIndicator progressIndicator) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           progressIndicator.checkCanceled();

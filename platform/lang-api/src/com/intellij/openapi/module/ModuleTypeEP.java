@@ -26,7 +26,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author yole
  */
 public class ModuleTypeEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.ModuleTypeEP");
+  private static final Logger LOG = Logger.getInstance(ModuleTypeEP.class);
 
   public static final ExtensionPointName<ModuleTypeEP> EP_NAME = ExtensionPointName.create("com.intellij.moduleType");
 
@@ -44,7 +44,7 @@ public class ModuleTypeEP extends AbstractExtensionPointBean {
   public ModuleType getModuleType() {
     if (myModuleType == null) {
       try {
-        myModuleType = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+        myModuleType = instantiateClass(implementationClass, ApplicationManager.getApplication().getPicoContainer());
       }
       catch(Exception e) {
         LOG.error(e);

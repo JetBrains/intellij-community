@@ -15,9 +15,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -81,7 +81,7 @@ public class PsiTestUtil {
 
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
     assert vDir != null && vDir.isDirectory() : dir;
-    PlatformTestCase.synchronizeTempDirVfs(vDir);
+    HeavyPlatformTestCase.synchronizeTempDirVfs(vDir);
 
     EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
       if (rootPath != null) {
@@ -299,16 +299,34 @@ public class PsiTestUtil {
     return new LibraryBuilder(name);
   }
 
+  /**
+   * Add a module-level library. If you already have a {@link ModifiableRootModel} (e.g. inside {@link LightProjectDescriptor#configureModule}),
+   * use {@link #addLibrary(ModifiableRootModel, String, String, String...)}.
+   * @param module where to add a module library
+   * @param libPath the path of a single class root (jar or directory) of the created library
+   */
   public static void addLibrary(@NotNull Module module, @NotNull String libPath) {
     File file = new File(libPath);
     String libName = file.getName();
     addLibrary(module, libName, file.getParent(), libName);
   }
 
-  public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
+  /**
+   * Add a module-level library. If you already have a {@link ModifiableRootModel} (e.g. inside {@link LightProjectDescriptor#configureModule}),
+   * use {@link #addLibrary(ModifiableRootModel, String, String, String...)}.
+   * @param module where to add a module library
+   * @param libName the name of the created library
+   * @param libPath the path of a directory
+   * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
+   */
+  public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(model, libName, libPath, jarArr));
   }
-  public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
+
+  /**
+   * Add a module-level library. Same as {@link #addLibrary(Module, String, String, String...)}, but the library will be removed when the {@code parent} disposable is disposed.
+   */
+  public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
     Disposer.register(parent, () -> {
@@ -320,7 +338,7 @@ public class PsiTestUtil {
         }
       });
       WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
+        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
         LibraryTable.ModifiableModel model = table.getModifiableModel();
         model.removeLibrary(library);
         model.commit();
@@ -328,6 +346,11 @@ public class PsiTestUtil {
     });
   }
 
+  /**
+   * Add a project-level library and make the given module depend on it.
+   * If you already have a {@link ModifiableRootModel} (e.g. inside {@link LightProjectDescriptor#configureModule}),
+   * use {@link #addProjectLibrary(ModifiableRootModel, String, List)}.
+   */
   public static void addProjectLibrary(@NotNull Module module, String libName, @NotNull List<String> classesRootPaths) {
     List<VirtualFile> roots = getLibraryRoots(classesRootPaths);
     addProjectLibrary(module, libName, roots, Collections.emptyList());
@@ -338,20 +361,31 @@ public class PsiTestUtil {
     return ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
   }
 
+  /**
+   * Add a project-level library and make the given module depend on it.
+   */
   public static void addProjectLibrary(@NotNull ModifiableRootModel model, String libName, @NotNull List<String> classesRootPaths) {
     List<VirtualFile> roots = getLibraryRoots(classesRootPaths);
-    addProjectLibrary(model, libName, roots, Collections.emptyList(), Collections.emptyList());
+    addProjectLibrary(model, libName, roots, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
-  public static void addProjectLibrary(@NotNull Module module, String libName, @NotNull VirtualFile... classesRoots) {
+  /**
+   * Add a project-level library and make the given module depend on it.
+   * If you already have a {@link ModifiableRootModel} (e.g. inside {@link LightProjectDescriptor#configureModule}),
+   * use {@link #addProjectLibrary(ModifiableRootModel, String, List)}.
+   */
+  public static void addProjectLibrary(@NotNull Module module, String libName, VirtualFile @NotNull ... classesRoots) {
     addProjectLibrary(module, libName, Arrays.asList(classesRoots), Collections.emptyList());
   }
 
+  /**
+   * Add a project-level library and make the given module depend on it.
+   */
   @NotNull
   public static Library addProjectLibrary(@NotNull Module module, String libName, @NotNull List<? extends VirtualFile> classesRoots, @NotNull List<? extends VirtualFile> sourceRoots) {
     Ref<Library> result = Ref.create();
     ModuleRootModificationUtil.updateModel(
-      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList())));
+      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList(), Collections.emptyList())));
     return result.get();
   }
 
@@ -360,8 +394,9 @@ public class PsiTestUtil {
                                            String libName,
                                            @NotNull List<? extends VirtualFile> classesRoots,
                                            @NotNull List<? extends VirtualFile> sourceRoots,
-                                           @NotNull List<? extends VirtualFile> javaDocs) {
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
+                                           @NotNull List<? extends VirtualFile> javaDocs,
+                                           @NotNull List<? extends VirtualFile> externalAnnotationsRoots) {
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
     return WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
@@ -374,6 +409,9 @@ public class PsiTestUtil {
         }
         for (VirtualFile root : javaDocs) {
           libraryModel.addRoot(root, JavadocOrderRootType.getInstance());
+        }
+        for (VirtualFile root : externalAnnotationsRoots) {
+          libraryModel.addRoot(root, AnnotationOrderRootType.getInstance());
         }
         libraryModel.commit();
       }
@@ -393,11 +431,19 @@ public class PsiTestUtil {
     });
   }
 
+  /**
+   * Add a module-level library.
+   * @param model a module's modifiable root model to add a library to
+   * @param libName the name of the created library
+   * @param libPath the path of a directory
+   * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
+   * @return
+   */
   @NotNull
   public static Library addLibrary(@NotNull ModifiableRootModel model,
                                    String libName,
                                    @NotNull String libPath,
-                                   @NotNull String... jarArr) {
+                                   String @NotNull ... jarArr) {
     List<VirtualFile> classesRoots = new ArrayList<>();
     for (String jar : jarArr) {
       if (!libPath.endsWith("/") && !jar.startsWith("/")) {
@@ -414,14 +460,35 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList());
+
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
+    if (libraryTable.getLibraryByName(libName) != null) {
+      for (int index = 0; index < 100000; index++) {
+        String candidate = libName + "-" + index;
+        if (libraryTable.getLibraryByName(candidate) == null) {
+          libName = candidate;
+          break;
+        }
+      }
+    }
+
+    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
+  /**
+   * Add a module-level library.
+   * @param module where to add the library
+   * @param libName the name of the created library
+   * @param libDir the path of a directory
+   * @param classRoots the names of jars or subdirectories relative to {@code libDir} that will become class roots
+   * @param sourceRoots the names of jars or subdirectories relative to {@code libDir} that will become source roots
+   * @return
+   */
   public static void addLibrary(@NotNull Module module,
                                 String libName,
                                 @NotNull String libDir,
-                                @NotNull String[] classRoots,
-                                @NotNull String[] sourceRoots) {
+                                String @NotNull [] classRoots,
+                                String @NotNull [] sourceRoots) {
     String proto = (classRoots.length > 0 ? classRoots[0] : sourceRoots[0]).endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL;
     String parentUrl = VirtualFileManager.constructUrl(proto, libDir);
     List<String> classesUrls = new ArrayList<>();
@@ -482,7 +549,7 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude));
   }
 
-  public static void setJavadocUrls(@NotNull Module module, @NotNull String... urls) {
+  public static void setJavadocUrls(@NotNull Module module, String @NotNull ... urls) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls));
   }
 
@@ -498,9 +565,10 @@ public class PsiTestUtil {
   @Contract(pure=true)
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
-                                  @NotNull VirtualFile... roots) {
+                                  VirtualFile @NotNull ... roots) {
     return modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
+        sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());
         sdkModificator.addRoot(root, rootType);
       }
     });
@@ -551,7 +619,8 @@ public class PsiTestUtil {
     private final List<VirtualFile> myClassesRoots = new ArrayList<>();
     private final List<VirtualFile> mySourceRoots = new ArrayList<>();
     private final List<VirtualFile> myJavaDocRoots = new ArrayList<>();
-    
+    private final List<VirtualFile> myExternalAnnotationsRoots = new ArrayList<>();
+
     private LibraryBuilder(String name) {
       myName = name;
     }
@@ -623,6 +692,17 @@ public class PsiTestUtil {
     }
 
     /**
+     * Add an external annotations root for the future library.
+     * @param rootPath root to add
+     * @return this builder
+     */
+    @NotNull
+    public LibraryBuilder externalAnnotationsRoot(@NotNull String rootPath) {
+      myExternalAnnotationsRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
+      return this;
+    }
+
+    /**
      * Creates the actual library and registers it within given {@link ModifiableRootModel}. Presumably this method
      * is called inside {@link ModuleRootModificationUtil#updateModel(Module, com.intellij.util.Consumer)}.
      * 
@@ -631,7 +711,7 @@ public class PsiTestUtil {
      */
     @NotNull
     public Library addTo(@NotNull ModifiableRootModel model) {
-      return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots);
+      return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots, myExternalAnnotationsRoots);
     }
 
     /**

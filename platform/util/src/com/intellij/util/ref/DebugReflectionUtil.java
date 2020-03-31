@@ -57,8 +57,7 @@ public class DebugReflectionUtil {
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
-  @NotNull
-  private static Field[] getAllFields(@NotNull Class aClass) {
+  private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
       try {
@@ -70,7 +69,7 @@ public class DebugReflectionUtil {
           if (isTrivial(type)) continue; // unable to hold references, skip
           fields.add(declaredField);
         }
-        Class superclass = aClass.getSuperclass();
+        Class<?> superclass = aClass.getSuperclass();
         if (superclass != null) {
           for (Field sup : getAllFields(superclass)) {
             if (!fields.contains(sup)) {
@@ -104,7 +103,7 @@ public class DebugReflectionUtil {
     return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
-  private static boolean isInitialized(@NotNull Class root) {
+  private static boolean isInitialized(@NotNull Class<?> root) {
     if (Unsafe_shouldBeInitialized == null) return false;
     boolean isInitialized = false;
     try {
@@ -155,7 +154,7 @@ public class DebugReflectionUtil {
                                                     @NotNull Object root,
                                                     @NotNull Condition<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
-    Class rootClass = root.getClass();
+    Class<?> rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
       if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs

@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
-
-import java.util.List;
-
 public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
 
@@ -42,32 +36,5 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     finally {
       super.tearDown();
     }
-  }
-
-  public void testAutomaticallyAddAndUpdateLocalRepository() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
-
-    assertEquals(2, indices.size());
-
-    assertEquals(MavenSearchIndex.Kind.REMOTE, indices.get(0).getKind());
-    assertEquals(MavenSearchIndex.Kind.LOCAL, indices.get(1).getKind());
-    assertTrue(indices.get(1).getRepositoryPathOrUrl().endsWith("local1"));
-    assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
-  }
-
-  public void testAutomaticallyAddSearchService() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    DependencySearchService service = myIndicesFixture.getProjectIndicesManager().getSearchService();
-    assertEquals(3, service.getProviders().size());
-
-    assertTrue(service.getProviders().get(0) instanceof IndexBasedCompletionProvider);
-    assertTrue(service.getProviders().get(1) instanceof IndexBasedCompletionProvider);
-    assertTrue(service.getProviders().get(2) instanceof ProjectModulesCompletionProvider);
   }
 }

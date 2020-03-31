@@ -16,12 +16,12 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintedToSystemOutInspectionTest extends LightInspectionTestCase {
+public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("void foo() {\n" +

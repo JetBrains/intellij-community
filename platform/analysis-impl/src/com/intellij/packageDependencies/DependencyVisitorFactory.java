@@ -72,7 +72,7 @@ public abstract class DependencyVisitorFactory {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
 
       for (PsiReference ref : element.getReferences()) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.TaskExecutor;
@@ -20,24 +6,28 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
 public class ProcessWaitFor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
+  private static final Logger LOG = Logger.getInstance(ProcessWaitFor.class);
 
   private final Future<?> myWaitForThreadFuture;
   private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);
   private volatile boolean myDetached;
 
-  /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead (to be removed in IDEA 2018) */
+  /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead */
   @Deprecated
-  public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public ProcessWaitFor(@NotNull Process process, @NotNull TaskExecutor executor) {
     this(process, executor, "");
+    DeprecatedMethodException.report("Use ProcessWaitFor(Process, TaskExecutor, String) instead");
   }
 
-  public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {
+  public ProcessWaitFor(@NotNull Process process, @NotNull TaskExecutor executor, @NotNull String presentableName) {
     myWaitForThreadFuture = executor.executeTask(() -> {
       String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
       ConcurrencyUtil.runUnderThreadName(threadName, () -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -13,12 +13,12 @@ import java.net.URL;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class FileLoader extends Loader {
+final class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
   private final ClassPath myConfiguration;
 
-  FileLoader(URL url, int index, ClassPath configuration) throws IOException {
+  FileLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
     super(url, index);
     try {
       myRootDir = new File(url.toURI());
@@ -30,7 +30,7 @@ class FileLoader extends Loader {
     myConfiguration = configuration;
   }
 
-  private void buildPackageCache(final File dir, ClasspathCache.LoaderDataBuilder context) {
+  private void buildPackageCache(@NotNull File dir, @NotNull ClasspathCache.LoaderDataBuilder context) {
     context.addResourcePackageFromName(getRelativeResourcePath(dir));
 
     final File[] files = dir.listFiles();
@@ -39,7 +39,7 @@ class FileLoader extends Loader {
     }
 
     boolean containsClasses = false;
-    
+
     for (File file : files) {
       final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
       if (isClass) {
@@ -56,11 +56,13 @@ class FileLoader extends Loader {
     }
   }
 
-  private String getRelativeResourcePath(final File file) {
+  @NotNull
+  private String getRelativeResourcePath(@NotNull File file) {
     return getRelativeResourcePath(file.getAbsolutePath());
   }
 
-  private String getRelativeResourcePath(final String absFilePath) {
+  @NotNull
+  private String getRelativeResourcePath(@NotNull String absFilePath) {
     String relativePath = absFilePath.substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
     relativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
@@ -70,22 +72,23 @@ class FileLoader extends Loader {
   private static class DirEntry {
     static final int[] empty = new int[0];
     volatile int[] childrenNameHashes;
-    
+
     volatile DirEntry[] childrenDirectories;
     final int nameHash;
+    @NotNull
     final String name;
-    
-    DirEntry(int _nameHash, String _name) {
-      nameHash = _nameHash;
-      name = _name;
+
+    DirEntry(int nameHash, @NotNull String name) {
+      this.nameHash = nameHash;
+      this.name = name;
     }
   }
-  
-  private final DirEntry root = new DirEntry(0, null);
-  
+
+  private final DirEntry root = new DirEntry(0, "");
+
   @Override
   @Nullable
-  Resource getResource(final String name) {
+  Resource getResource(@NotNull final String name) {
     try {
       if (myConfiguration.myLazyClassloadingCaches) {
         DirEntry lastEntry = root;
@@ -119,10 +122,10 @@ class FileLoader extends Loader {
   }
 
   @NotNull
-  private static DirEntry findOrCreateNextDirEntry(DirEntry lastEntry, String name,
-                                            int prevIndex,
-                                            int nameEnd,
-                                            int nameHash) {
+  private static DirEntry findOrCreateNextDirEntry(@NotNull DirEntry lastEntry, @NotNull String name,
+                                                   int prevIndex,
+                                                   int nameEnd,
+                                                   int nameHash) {
     DirEntry nextEntry = null;
     DirEntry[] directories = lastEntry.childrenDirectories; // volatile read
 
@@ -156,7 +159,7 @@ class FileLoader extends Loader {
     return lastEntry;
   }
 
-  private boolean nameHashIsPresentInChildren(DirEntry lastEntry, String name, int prevIndex, int nameHash) {
+  private boolean nameHashIsPresentInChildren(@NotNull DirEntry lastEntry, @NotNull String name, int prevIndex, int nameHash) {
     int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
 
     if (childrenNameHashes == null) {
@@ -193,12 +196,12 @@ class FileLoader extends Loader {
   private ClasspathCache.LoaderData tryReadFromIndex() {
     if (!myConfiguration.myCanHavePersistentIndex) return null;
     long started = System.nanoTime();
-    
+
     File index = getIndexFileFile();
 
     DataInputStream reader = null;
     boolean isOk = false;
-    
+
     try {
       reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)));
       if (DataInputOutputUtilRt.readINT(reader) == ourVersion) {
@@ -206,23 +209,30 @@ class FileLoader extends Loader {
         isOk = true;
         return loaderData;
       }
-    } catch (FileNotFoundException ex) {
+    }
+    catch (FileNotFoundException ex) {
       isOk = true;
-    } catch (IOException ignore) {}
+    }
+    catch (IOException ignore) {
+    }
     finally {
       if (reader != null) {
         try {
           reader.close();
-        } catch (IOException ignore) {}
+        }
+        catch (IOException ignore) {
+        }
       }
-      if (!isOk) index.delete();
+      if (!isOk) {
+        index.delete();
+      }
       totalReading.addAndGet(System.nanoTime() - started);
     }
 
     return null;
   }
 
-  private void trySaveToIndex(ClasspathCache.LoaderData data) {
+  private void trySaveToIndex(@NotNull ClasspathCache.LoaderData data) {
     if (!myConfiguration.myCanHavePersistentIndex) return;
     long started = System.nanoTime();
     File index = getIndexFileFile();
@@ -234,12 +244,16 @@ class FileLoader extends Loader {
       DataInputOutputUtilRt.writeINT(writer, ourVersion);
       data.save(writer);
       isOk = true;
-    } catch (IOException ignore) {}
+    }
+    catch (IOException ignore) {
+    }
     finally {
       if (writer != null) {
         try {
           ((OutputStream)writer).close();
-        } catch (IOException ignore) {}
+        }
+        catch (IOException ignore) {
+        }
       }
       if (!isOk) index.delete();
       totalSaving.addAndGet(System.nanoTime() - started);
@@ -328,25 +342,28 @@ class FileLoader extends Loader {
     return loaderData;
   }
 
-  private static class MyResource extends Resource {
+  private static final class MyResource extends Resource {
     private final URL myUrl;
     private final File myFile;
 
-    MyResource(URL url, File file) {
+    MyResource(@NotNull URL url, @NotNull File file) {
       myUrl = url;
       myFile = file;
     }
 
+    @NotNull
     @Override
     public URL getURL() {
       return myUrl;
     }
 
+    @NotNull
     @Override
     public InputStream getInputStream() throws IOException {
       return new BufferedInputStream(new FileInputStream(myFile));
     }
 
+    @NotNull
     @Override
     public byte[] getBytes() throws IOException {
       InputStream stream = getInputStream();
@@ -372,8 +389,8 @@ class FileLoader extends Loader {
     return h;
   }
 
-  private static class UnsyncDataOutputStream extends java.io.DataOutputStream {
-    UnsyncDataOutputStream(OutputStream out) {
+  private static final class UnsyncDataOutputStream extends DataOutputStream {
+    UnsyncDataOutputStream(@NotNull OutputStream out) {
       super(out);
     }
 

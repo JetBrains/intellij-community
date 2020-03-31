@@ -20,7 +20,7 @@ import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -170,19 +170,19 @@ public class OptionalChainInliner implements CallInliner {
       terminalInliner.accept(builder, call);
       return true;
     }
-    DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
       DfaVariableValue result = builder.createTempVariable(call.getType());
       builder
-        .assign(result, builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
+        .assign(result, DfTypes.typedObject(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
         .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
         .splice(3, 1, 0, 2)
         .assign()
-        .pop();
+        .pop()
+        .resultOf(call);
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
-      builder.push(DfaOptionalSupport.getOptionalValue(factFactory, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(false), call);
       return true;
     }
     return false;
@@ -286,7 +286,7 @@ public class OptionalChainInliner implements CallInliner {
       builder
         .pushExpression(argument, NullabilityProblemKind.passingToNotNullParameter)
         .boxUnbox(argument, optionalElementType)
-        .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
+        .push(DfaOptionalSupport.getOptionalValue(true), qualifierCall)
         .pop();
     }
     else {
@@ -295,9 +295,9 @@ public class OptionalChainInliner implements CallInliner {
         .boxUnbox(argument, optionalElementType)
         .dup()
         .ifNull()
-          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(false), qualifierCall)
           .elseBranch()
-          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(true), qualifierCall)
         .end()
         .pop();
     }

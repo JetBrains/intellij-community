@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Specialized memory saving map implementation for UrlClassLoader to avoid extra dependencies.
  */
@@ -16,23 +18,27 @@ final class IntObjectHashMap {
     values = new Object[keys.length];
   }
 
-  public int size() {
+  int size() {
     return size + (hasZeroValue ? 1 : 0);
   }
 
-  public void put(int key, Object value) {
+  void put(int key, @NotNull Object value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
       return;
     }
 
-    if (size >= (2 * values.length) / 3) rehash();
+    if (size >= (2 * values.length) / 3) {
+      rehash();
+    }
     Object previousValue = doPut(keys, values, key, value);
-    if (previousValue == null) ++size;
+    if (previousValue == null) {
+      ++size;
+    }
   }
 
-  private static Object doPut(int[] keys, Object[] values, int key, Object value) {
+  private static Object doPut(@NotNull int[] keys, @NotNull Object[] values, int key, @NotNull Object value) {
     int index = hashIndex(keys, key);
     Object obj = values[index];
     values[index] = value;
@@ -40,7 +46,7 @@ final class IntObjectHashMap {
     return obj;
   }
 
-  private static int hashIndex(int[] keys, int key) {
+  private static int hashIndex(@NotNull int[] keys, int key) {
     int hash = (int)((key * 0x9E3779B9L) & 0x7fffffff);
     int index = hash & (keys.length - 1);
 

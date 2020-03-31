@@ -1,0 +1,4 @@
+Libraries description
+===
+joni.jar – Java port of Oniguruma regexp library. Can be found at https://github.com/jruby/joni
+jcodings.jar – Java-based codings helper classes for Joni and JRuby. Required for Joni. Can be found here: https://github.com/jruby/jcodings.git

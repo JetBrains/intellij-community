@@ -14,7 +14,14 @@ interface ServiceViewUi {
 
   void setServiceToolbar(@NotNull ServiceViewActionProvider actionManager);
 
-  void setMasterPanel(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionManager);
+  void setMasterComponent(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionManager);
 
   void setDetailsComponent(@Nullable JComponent component);
+
+  void setNavBar(@NotNull JComponent component);
+
+  void setMasterComponentVisible(boolean visible);
+
+  @Nullable
+  JComponent getDetailsComponent();
 }

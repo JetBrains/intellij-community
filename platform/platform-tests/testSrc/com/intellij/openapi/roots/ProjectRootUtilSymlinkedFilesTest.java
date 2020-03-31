@@ -6,13 +6,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
+public class ProjectRootUtilSymlinkedFilesTest extends HeavyPlatformTestCase {
   private File myNonContentDir;
   private File myNonContentFile;
   private VirtualFile myNonContentVFile;

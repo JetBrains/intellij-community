@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.ImportsLayoutSettings;
@@ -44,7 +45,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
   private ImportLayoutPanel myImportLayoutPanel;
-  private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
 
   public CodeStyleImportsPanelBase() {
     setLayout(new BorderLayout());
@@ -79,13 +79,13 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
 
   private JPanel createGeneralOptionsPanel() {
     OptionGroup group = new OptionGroup(ApplicationBundle.message("title.general"));
-    myCbUseSingleClassImports = new JCheckBox(ApplicationBundle.message("checkbox.use.single.class.import"));
+    myCbUseSingleClassImports = new JCheckBox(JavaBundle.message("checkbox.use.single.class.import"));
     group.add(myCbUseSingleClassImports);
 
-    myCbUseFQClassNames = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names"));
+    myCbUseFQClassNames = new JCheckBox(JavaBundle.message("checkbox.use.fully.qualified.class.names"));
     group.add(myCbUseFQClassNames);
 
-    myCbInsertInnerClassImports = new JCheckBox(ApplicationBundle.message("checkbox.insert.imports.for.inner.classes"));
+    myCbInsertInnerClassImports = new JCheckBox(JavaBundle.message("checkbox.insert.imports.for.inner.classes"));
     group.add(myCbInsertInnerClassImports);
 
     fillCustomOptions(group);
@@ -93,13 +93,13 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")),
+    panel.add(new JLabel(JavaBundle.message("editbox.class.count.to.use.import.with.star")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                      JBUI.insetsLeft(3), 0, 0));
     panel.add(myClassCountField,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                      JBUI.insetsLeft(1), 0, 0));
-    panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")),
+    panel.add(new JLabel(JavaBundle.message("editbox.names.count.to.use.static.import.with.star")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                      JBUI.insetsLeft(3), 0, 0));
     panel.add(myNamesCountField,

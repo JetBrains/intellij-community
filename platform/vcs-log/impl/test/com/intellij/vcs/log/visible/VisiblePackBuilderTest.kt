@@ -17,9 +17,11 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Test
 import java.util.*
+import kotlin.random.nextInt
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -87,15 +89,17 @@ class VisiblePackBuilderTest {
       4()              +null
     }
 
-    val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      ArrayList(listOf(2, 3, 4).map { commitId ->
-        graph.allCommits.firstOrNull { commit ->
-          commit.id == commitId
-        }!!.toVcsCommit(graph.hashMap)
-      })
+    val provider = object : TestVcsLogProvider() {
+      override fun getCommitsMatchingFilter(root: VirtualFile,
+                                            filterCollection: VcsLogFilterCollection,
+                                            maxCount: Int): List<TimedVcsCommit> {
+        return listOf(2, 3, 4).map { commitId ->
+          graph.allCommits.first { it.id == commitId }.toVcsCommit(graph.hashMap)
+        }
+      }
     }
+    graph.providers = graph.roots.associateWith { provider }
 
-    graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
     val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromBranchPatterns(setOf("-master"), setOf("master")),
                                                                 VcsLogFilterObject.fromUser((DEFAULT_USER))))
     val visibleGraph = visiblePack.visibleGraph
@@ -151,13 +155,22 @@ class VisiblePackBuilderTest {
     val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "feature"),
                                                 VcsLogFilterObject.fromPaths(listOf(filePath)))
 
-    graph.providers.entries.first().value.setFilteredCommitsProvider(Function<VcsLogFilterCollection, List<TimedVcsCommit>> {
-      listOf(2).map { commitId ->
-        graph.allCommits.firstOrNull { commit ->
-          commit.id == commitId
-        }!!.toVcsCommit(graph.hashMap)
+    val provider = object : TestVcsLogProvider() {
+      override fun getCommitsMatchingFilter(root: VirtualFile,
+                                            filterCollection: VcsLogFilterCollection,
+                                            maxCount: Int): List<TimedVcsCommit> {
+        return listOf(graph.allCommits.first { it.id == 2 }.toVcsCommit(graph.hashMap))
       }
-    })
+
+      override fun resolveReference(ref: String, root: VirtualFile): Hash? {
+        return when (ref) {
+          "master" -> graph.getHash(1)
+          "feature" -> graph.getHash(2)
+          else -> null
+        }
+      }
+    }
+    graph.providers = graph.roots.associateWith { provider }
 
     val visiblePack = graph.build(filters)
     assertCommits(visiblePack.visibleGraph, 2)
@@ -185,6 +198,31 @@ class VisiblePackBuilderTest {
     val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "feature"))
     val visiblePack = graph.build(filters)
     assertCommits(visiblePack.visibleGraph, 2)
+  }
+
+  @Test
+  fun `filter by hash range in multi-root project`() {
+    val root1 = MockVirtualFile("root1")
+    val root2 = MockVirtualFile("root2")
+
+    val graph = multiRootGraph {
+      root(root1) {
+        1(2) * "master"
+        2(3)
+        3()
+      }
+
+      root(root2) {
+        5(4) * "master"
+        4()
+      }
+    }
+
+    val hash1 = graph.getHash(1)
+    val hash2 = graph.getHash(2)
+    val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange(hash2.asString(), hash1.asString()))
+    val visiblePack = graph.build(filters)
+    assertCommits(visiblePack.visibleGraph, 1)
   }
 
   @Test
@@ -224,7 +262,8 @@ class VisiblePackBuilderTest {
 
   inner class MultiRootGraph(private val graphsByRoots: Map<VirtualFile, SingleRootGraph>) {
 
-    val providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider(it.key) }
+    val roots = graphsByRoots.keys
+    var providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider() }
 
     val commits: Map<VirtualFile, List<GraphCommit<Int>>> = graphsByRoots.mapValues { it.value.commits }
     val allCommits = commits.values.flatten()
@@ -251,7 +290,7 @@ class VisiblePackBuilderTest {
 
       val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
 
-      return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
+      return builder.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
@@ -271,11 +310,15 @@ class VisiblePackBuilderTest {
         }
       }
     }
+
+    fun getHash(id: Int): Hash {
+      return hashMap.getCommitId(id).hash
+    }
   }
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  private fun graph(f: GraphBuilder.() -> Unit): VisiblePackBuilderTest.MultiRootGraph {
+  private fun graph(f: GraphBuilder.() -> Unit): MultiRootGraph {
     return multiRootGraph {
       root(MockVirtualFile("root")) {
         f()
@@ -349,7 +392,7 @@ class VisiblePackBuilderTest {
         val hashes : Map<Int, Hash> = commits.map {
           val currentIndex = commitIndex
           commitIndex++
-          val hash = HashImpl.build(currentIndex.toString())
+          val hash = generateHashForIndex(currentIndex)
           currentIndex to hash
         }.toMap()
 
@@ -362,6 +405,21 @@ class VisiblePackBuilderTest {
 
         SingleRootStorage(hashes, refs)
       }
+    }
+
+    private fun generateHashForIndex(currentIndex: Int): Hash {
+      val hexIndex = currentIndex.toString(16)
+      val remainingSize = FULL_HASH_LENGTH - hexIndex.length
+
+      val sb = StringBuilder()
+      for (i in 0 until remainingSize) {
+        val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
+        sb.append(randomHexChar)
+      }
+
+      val hashString = hexIndex + sb.toString()
+      assertEquals(FULL_HASH_LENGTH, hashString.length, "Hash generated incorrectly: [$hashString]")
+      return HashImpl.build(hashString)
     }
 
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = storagesByRoot.getValue(root).hashesReversed.getValue(hash)
@@ -396,4 +454,3 @@ class VisiblePackBuilderTest {
     }
   }
 }
-

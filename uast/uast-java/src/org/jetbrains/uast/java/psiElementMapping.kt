@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.java
 
 import com.intellij.openapi.util.registry.Registry
@@ -92,10 +92,12 @@ private val conversionMapping = UElementToPsiElementMapping(
   UForExpression::class.java to ClassSet(PsiForStatement::class.java),
   UForEachExpression::class.java to ClassSet(PsiForeachStatement::class.java),
   UBreakExpression::class.java to ClassSet(PsiBreakStatement::class.java),
+  UYieldExpression::class.java to ClassSet(PsiYieldStatement::class.java),
   UContinueExpression::class.java to ClassSet(PsiContinueStatement::class.java),
   UReturnExpression::class.java to ClassSet(PsiReturnStatement::class.java),
   UThrowExpression::class.java to ClassSet(PsiThrowStatement::class.java),
   UTryExpression::class.java to ClassSet(PsiTryStatement::class.java),
+  UCatchClause::class.java to ClassSet(PsiCatchSection::class.java),
   UastEmptyExpression::class.java to ClassSet(PsiEmptyStatement::class.java),
   UExpressionList::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
 

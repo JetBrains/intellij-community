@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -17,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,7 +79,7 @@ public class NamePathComponent extends JPanel {
     myTfPath.setPreferredSize(new Dimension(200, myTfPath.getPreferredSize().height));
 
     myNameLabel = new JLabel(nameLabelText);
-    if (bold) myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) myNameLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
 
     FileChooserDescriptor chooserDescriptor = (FileChooserDescriptor)BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR.clone();
@@ -92,7 +94,7 @@ public class NamePathComponent extends JPanel {
     myPathPanel = new FieldPanel(myTfPath, null, null, browseButtonActionListener, null);
 
     JLabel pathLabel = new JLabel(pathLabelText);
-    if (bold) pathLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) pathLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     pathLabel.setLabelFor(myTfPath);
 
     add(myNameLabel, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(0, 0, 5, 4), 0, 0));
@@ -105,8 +107,8 @@ public class NamePathComponent extends JPanel {
     NamePathComponent component = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     String baseDir = context.getProjectFileDirectory();
@@ -122,40 +124,44 @@ public class NamePathComponent extends JPanel {
     String name = getNameValue();
     if (StringUtil.isEmptyOrSpaces(name)) {
       ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
-      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getFullProductName(), context.getPresentationName()));
+      throw new ConfigurationException(JavaUiBundle.message("prompt.new.project.file.name", info.getFullProductName(), context.getPresentationName()));
     }
 
-    String projectDirectory = getPath();
-    if (StringUtil.isEmptyOrSpaces(projectDirectory)) {
-      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
+    String projectDirectoryPath = getPath();
+    if (StringUtil.isEmptyOrSpaces(projectDirectoryPath)) {
+      throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
-    if (myShouldBeAbsolute && !new File(projectDirectory).isAbsolute()) {
-      throw new ConfigurationException(StringUtil.capitalize(IdeBundle.message("file.location.should.be.absolute", context.getPresentationName())));
+    if (myShouldBeAbsolute && !new File(projectDirectoryPath).isAbsolute()) {
+      throw new ConfigurationException(StringUtil.capitalize(JavaUiBundle.message("file.location.should.be.absolute", context.getPresentationName())));
     }
 
     boolean shouldPromptCreation = isPathChangedByUser();
-    String message = IdeBundle.message("directory.project.file.directory", context.getPresentationName());
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(message, projectDirectory, shouldPromptCreation)) {
+    String message = JavaUiBundle.message("directory.project.file.directory", context.getPresentationName());
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(message, projectDirectoryPath, shouldPromptCreation)) {
       return false;
     }
 
-    File file = new File(projectDirectory);
-    if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(String.format("Directory '%s' is not seem to be writable. Please consider another location.", projectDirectory));
+    File projectDirectory = new File(projectDirectoryPath);
+    if (projectDirectory.exists() && !projectDirectory.canWrite()) {
+      throw new ConfigurationException(JavaUiBundle.message("project.directory.is.not.writable", projectDirectoryPath));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(projectDirectory, p)) {
-        throw new ConfigurationException(String.format("Directory '%s' is already taken by the project '%s'. Please consider another location.", projectDirectory, p.getName()));
+      if (ProjectUtil.isSameProject(projectDirectoryPath, p)) {
+        throw new ConfigurationException(JavaUiBundle.message("project.directory.is.already.taken", projectDirectoryPath, p.getName()));
       }
     }
-
+    if (projectDirectory.exists() && !projectDirectory.isDirectory()) {
+      LOG.warn(String.format("Project '%s' directory should be a directory", projectDirectoryPath));
+    }
     boolean shouldContinue = true;
-    String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
-    File projectFile = new File(file, fileName);
-    if (projectFile.exists()) {
-      message = IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
-      int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      shouldContinue = (answer == Messages.YES);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
+      File projectFile = new File(projectDirectory, fileName);
+      if (projectFile.exists()) {
+        message = JavaUiBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
+        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+        shouldContinue = (answer == Messages.YES);
+      }
     }
     return shouldContinue;
   }

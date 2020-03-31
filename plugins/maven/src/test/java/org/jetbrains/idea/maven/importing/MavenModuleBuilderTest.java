@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,20 +30,31 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.wizards.MavenModuleBuilder;
+import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
+import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder;
 
 import java.util.List;
 
 public class MavenModuleBuilderTest extends MavenImportingTestCase {
-  private MavenModuleBuilder myBuilder;
+  private AbstractMavenModuleBuilder myBuilder;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myBuilder = new MavenModuleBuilder();
+    myBuilder = new InternalMavenModuleBuilder();
 
     createJdk();
     setModuleNameAndRoot("module", getProjectPath());
+  }
+
+  public void testModuleRecreation() throws Exception {
+    MavenId id = new MavenId("org.foo", "module", "1.0");
+
+    createNewModule(id);
+    assertModules(id.getArtifactId());
+    deleteModule(id.getArtifactId());
+    createNewModule(id);
+    assertModules(id.getArtifactId());
   }
 
   public void testCreatingBlank() throws Exception {
@@ -313,6 +325,20 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
     MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module.getFile());
     assertEquals("custompom.xml", domProjectModel.getMavenParent().getRelativePath().getRawText());
+  }
+
+  private void deleteModule(String name) {
+    ModuleManager moduleManger = ModuleManager.getInstance(myProject);
+    Module module = moduleManger.findModuleByName(name);
+    ModifiableModuleModel modifiableModuleModel = moduleManger.getModifiableModel();
+    WriteAction.runAndWait(() -> {
+      try {
+        modifiableModuleModel.disposeModule(module);
+      }
+      finally {
+        modifiableModuleModel.commit();
+      }
+    });
   }
 
   private void setModuleNameAndRoot(String name, String root) {

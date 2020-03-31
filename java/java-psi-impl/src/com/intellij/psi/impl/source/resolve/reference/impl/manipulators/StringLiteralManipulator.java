@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
@@ -58,21 +44,30 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     if (element instanceof PsiLiteralExpressionImpl) {
       // avoid calling getValue(): it allocates new string, it returns null for invalid escapes
       IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
-      if (type == JavaTokenType.RAW_STRING_LITERAL) {
-        String text = ((PsiLiteralExpressionImpl)element).getNode().getText();
-
-        int leadingSeq = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
-        int trailingSeq = PsiRawStringLiteralUtil.getTrailingTicksSequence(text);
-
-        return length >= leadingSeq + trailingSeq ? TextRange.from(leadingSeq, length - trailingSeq - leadingSeq) : TextRange.from(0, length);
+      if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        final String text = element.getText();
+        int startOffset = findBlockStart(text);
+        return startOffset < 0
+               ? new TextRange(0, length)
+               : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
       }
-
       isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
     }
     else {
-      final Object value = element.getValue();
+      Object value = element.getValue();
       isQuoted = value instanceof String || value instanceof Character;
     }
     return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
+  }
+
+  private static int findBlockStart(String text) {
+    if (!text.startsWith("\"\"\"")) return -1;
+    final int length = text.length();
+    for (int i = 3; i < length; i++) {
+      final char c = text.charAt(i);
+      if (c == '\n') return i + 1;
+      if (!Character.isWhitespace(c)) return -1;
+    }
+    return -1;
   }
 }

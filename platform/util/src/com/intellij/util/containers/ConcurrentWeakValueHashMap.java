@@ -48,11 +48,11 @@ final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
       if (o == null || getClass() != o.getClass()) return false;
 
       @SuppressWarnings("unchecked")
-      ValueReference<K,V> that = (ValueReference)o;
+      ValueReference<K,V> that = (ValueReference<K, V>)o;
 
       V v = get();
       V thatV = that.get();
-      return key.equals(that.getKey()) && v != null && thatV != null && v.equals(thatV);
+      return key.equals(that.getKey()) && v != null && v.equals(thatV);
     }
   }
 

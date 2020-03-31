@@ -47,7 +47,7 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
 
   protected String getCommentText(String prefix, String suffix) {
     if (commentText == null) {
-      FileType ftype = FileTypeUtil.getInstance().getFileTypeByFile(root);
+      FileType ftype = root.getFileType();
       LanguageOptions opts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(ftype.getName());
       String base = EntityUtil.decode(myCopyrightProfile.getNotice());
       if (base.isEmpty()) {

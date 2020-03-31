@@ -1,18 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.cache
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Alarm
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import gnu.trove.THashSet
@@ -27,9 +33,8 @@ import java.util.regex.Pattern
  * * after entries have been expired: entries becomes expired if no read/write operations happened with the corresponding key during some amount of time (10 minutes).
  * * after project dispose
  */
-class IgnorePatternsMatchedFilesCache(private val project: Project,
-                                      private val projectFileIndex: ProjectFileIndex,
-                                      fileManager: VirtualFileManager) : Disposable {
+class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
+  private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val cache =
     CacheBuilder.newBuilder()
@@ -40,31 +45,40 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
                                                Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
-    fileManager.addVirtualFileListener(object : VirtualFileListener {
-      override fun fileCreated(event: VirtualFileEvent) = cleanupCache(event)
-      override fun fileDeleted(event: VirtualFileEvent) = cleanupCache(event)
-      override fun fileMoved(event: VirtualFileMoveEvent) = cleanupCache(event)
-      override fun fileCopied(event: VirtualFileCopyEvent) = cleanupCache(event)
-      override fun beforeFileMovement(event: VirtualFileMoveEvent) = cleanupCache(event)
+    ApplicationManager.getApplication().messageBus.connect(this)
+      .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+          if (cache.size() == 0L) return
 
-      override fun propertyChanged(event: VirtualFilePropertyEvent) {
-        if (event.isRename) {
-          cleanupCache(event)
-        }
-      }
-
-      private fun cleanupCache(event: VirtualFileEvent) {
-        val cacheMap = cache.asMap()
-        val globCache = PatternCache.getInstance(project)
-        for (key in cacheMap.keys) {
-          val pattern = globCache.getPattern(key) ?: continue
-          val parts = RegexUtil.getParts(pattern)
-          if (RegexUtil.matchAnyPart(parts, event.file.path)) {
-            cacheMap.remove(key)
+          for (event in events) {
+            if (event is VFileCreateEvent ||
+                event is VFileDeleteEvent ||
+                event is VFileCopyEvent) {
+              cleanupCache(event.path)
+            }
+            else if (event is VFilePropertyChangeEvent && event.isRename) {
+              cleanupCache(event.oldPath)
+              cleanupCache(event.path)
+            }
+            else if (event is VFileMoveEvent) {
+              cleanupCache(event.oldPath)
+              cleanupCache(event.path)
+            }
           }
         }
-      }
-    }, this)
+
+        private fun cleanupCache(path: String) {
+          val cacheMap = cache.asMap()
+          val globCache = PatternCache.getInstance(project)
+          for (key in cacheMap.keys) {
+            val pattern = globCache.getPattern(key) ?: continue
+            val parts = RegexUtil.getParts(pattern)
+            if (RegexUtil.matchAnyPart(parts, path)) {
+              cacheMap.remove(key)
+            }
+          }
+        }
+      })
   }
 
   override fun dispose() {
@@ -89,9 +103,9 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
   }
 
   private fun runSearchRequest(key: String, pattern: Pattern) =
-    updateQueue.queue(object : Update(key) {
+    updateQueue.queue(object : DisposableUpdate(project, key) {
       override fun canEat(update: Update) = true
-      override fun run() = cache.put(key, doSearch(pattern))
+      override fun doRun() = cache.put(key, doSearch(pattern))
     })
 
   private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
@@ -101,6 +115,7 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
 
     val projectScope = GlobalSearchScope.projectScope(project)
     projectFileIndex.iterateContent { fileOrDir ->
+      ProgressManager.checkCanceled()
       val name = fileOrDir.name
       if (RegexUtil.matchAnyPart(parts, name)) {
         for (file in runReadAction { FilenameIndex.getVirtualFilesByName(project, name, projectScope) }) {

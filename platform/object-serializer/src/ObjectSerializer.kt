@@ -15,7 +15,6 @@ import java.io.Reader
 
 internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
-typealias BeanConstructed = (instance: Any) -> Any
 
 internal val defaultWriteConfiguration = WriteConfiguration()
 internal val LOG = logger<ObjectSerializer>()

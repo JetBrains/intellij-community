@@ -21,6 +21,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,14 +45,21 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   private JPanel myMainPanel;
   private ElementsChooser<String> myIgnoredFilesPathsChooser;
   private JTextArea myIgnoredFilesPattersEditor;
+  private JPanel myIgnoredFilesPatternsPanel;
+  private JPanel myIgnoredFilesPanel;
 
   public MavenIgnoredFilesConfigurable(Project project) {
     myManager = MavenProjectsManager.getInstance(project);
+    myIgnoredFilesPatternsPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.tooltip"), false, JBUI.insetsTop(8)).setShowLine(false));
+
+    myIgnoredFilesPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.title"), false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   private void createUIComponents() {
     myIgnoredFilesPathsChooser = new ElementsChooser<>(true);
-    myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
+    myIgnoredFilesPathsChooser.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.ignored.no.file"));
   }
 
   @Override
@@ -89,7 +98,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.ignored.files");
+    return MavenConfigurableBundle.message("maven.settings.ignored.title");
   }
 
   @Override

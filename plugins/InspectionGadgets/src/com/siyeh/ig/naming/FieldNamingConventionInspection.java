@@ -17,12 +17,11 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public class FieldNamingConventionInspection extends AbstractNamingConventionInspection<PsiField> {
   public static final ExtensionPointName<NamingConvention<PsiField>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.field");
   public FieldNamingConventionInspection() {
-    super(Arrays.asList(EP_NAME.getExtensions()), null);
+    super(EP_NAME.getExtensionList(), null);
+    registerConventionsListener(EP_NAME);
   }
 
   @Nullable
@@ -38,9 +37,7 @@ public class FieldNamingConventionInspection extends AbstractNamingConventionIns
       @Override
       public void visitField(PsiField field) {
         String name = field.getName();
-        if (name != null) {
-          checkName(field, name, holder);
-        }
+        checkName(field, name, holder);
       }
     };
   }

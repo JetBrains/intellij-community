@@ -29,11 +29,10 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
   }
 
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression element,
-                                                      @NotNull PsiLanguageInjectionHost host,
-                                                      @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression element,
+                                                                @NotNull PsiLanguageInjectionHost host,
+                                                                @NotNull ProcessingContext context) {
     Object value = null;
     String bundleName = null;
     boolean soft = myDefaultSoft;

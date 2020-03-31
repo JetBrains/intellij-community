@@ -90,7 +90,7 @@ class SignatureFactory(object):
         self.cache = CallSignatureCache()
 
     def is_in_scope(self, filename):
-        return not pydevd_utils.not_in_project_roots(filename)
+        return pydevd_utils.in_project_roots(filename)
 
     def create_signature(self, frame, filename, with_args=True):
         try:

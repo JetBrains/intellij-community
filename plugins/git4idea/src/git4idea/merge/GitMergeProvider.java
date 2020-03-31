@@ -89,7 +89,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
-    VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
+    VirtualFile root = GitUtil.getRootForFile(myProject, file);
     FilePath path = VcsUtil.getFilePath(file);
     return loadMergeData(myProject, root, path, myReverseRoots.contains(root));
   }
@@ -97,7 +97,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFilesForce(myProject, GitUtil.getRepositoryForFile(myProject, file).getRoot(), Collections.singletonList(file));
+      GitFileUtils.addFilesForce(myProject, GitUtil.getRootForFile(myProject, file), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);
@@ -214,9 +214,8 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
-    @NotNull
     @Override
-    public ColumnInfo[] getMergeInfoColumns() {
+    public ColumnInfo @NotNull [] getMergeInfoColumns() {
       return new ColumnInfo[]{new StatusColumn(false, currentBranchName), new StatusColumn(true, mergeHeadBranchName)};
     }
 
@@ -232,7 +231,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     @Override
-    public void conflictResolvedForFiles(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) {
+    public void conflictResolvedForFiles(@NotNull List<? extends VirtualFile> files, @NotNull Resolution resolution) {
       MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(files);
 
       for (VirtualFile root : byRoot.keySet()) {
@@ -250,7 +249,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     @Override
-    public void acceptFilesRevisions(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) throws VcsException {
+    public void acceptFilesRevisions(@NotNull List<? extends VirtualFile> files, @NotNull Resolution resolution) throws VcsException {
       assert resolution == Resolution.AcceptedYours || resolution == Resolution.AcceptedTheirs;
 
       MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(files);
@@ -273,7 +272,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     @NotNull
-    private MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull List<VirtualFile> files) {
+    private MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull List<? extends VirtualFile> files) {
       MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
       for (VirtualFile file: files) {
         GitConflict c = myConflicts.get(file);
@@ -310,6 +309,7 @@ public class GitMergeProvider implements MergeProvider2 {
         GitConflict.Status lastStatus = c.getStatus(ConflictSide.THEIRS, isReversed);
         GitConflict.Status status = myIsLast ? lastStatus : currentStatus;
         switch (status) {
+          case ADDED:
           case MODIFIED:
             return GitBundle.message("merge.tool.column.status.modified");
           case DELETED:

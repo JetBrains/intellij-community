@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * A TestCase for testing some action in editor
  */
-public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
+public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase {
   /**
    * @return id of the action to be tested.
    */
@@ -57,7 +57,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
     configureFromFileText(fileName, textBefore);
     invokeAction();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertEquals("Reparse error!", myEditor.getDocument().getText(), myFile.getText());
+    assertEquals("Reparse error!", getEditor().getDocument().getText(), getFile().getText());
     checkResultByText(null, textAfter, ignoreTrailingSpaces);
   }
 

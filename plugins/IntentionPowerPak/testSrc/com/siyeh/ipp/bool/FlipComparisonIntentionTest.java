@@ -20,6 +20,22 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "    boolean b = 2 < 1;}");
   }
 
+  public void testAssignment() {
+    doTest("class X {\n" +
+           "  void foo(int x) {\n" +
+           "    boolean b;\n" +
+           "    b = 1/*_Flip '>' to '<'*/ > x;\n" +
+           "  }\n" +
+           "}",
+
+           "class X {\n" +
+           "  void foo(int x) {\n" +
+           "    boolean b;\n" +
+           "    b = x < 1;\n" +
+           "  }\n" +
+           "}");
+  }
+
   public void testGreater() {
     doTest("class X {{" +
            "  if(a+b>/*_Flip '>' to '<'*/c);" +
@@ -53,7 +69,7 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
 
            "@Anno(\n" +
            "        //test comment\n" +
-           "        foo > param >");
+           "        foo > param >)");
   }
 
   public void testBrokenCode4() {
@@ -68,6 +84,14 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
     doTestIntentionNotAvailable("class A{\n" +
            "  {\n" +
            "    /*_Flip '>' to '<'*/a > b > c" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testBrokenCode6() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();" +
            "  }\n" +
            "}");
   }

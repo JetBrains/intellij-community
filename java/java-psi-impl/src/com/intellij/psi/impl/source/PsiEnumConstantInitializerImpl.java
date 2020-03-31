@@ -24,7 +24,7 @@ import com.intellij.psi.impl.light.LightClassReference;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiEnumConstantInitializer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl");
+  private static final Logger LOG = Logger.getInstance(PsiEnumConstantInitializerImpl.class);
   private PsiClassType myCachedBaseType;
 
   public PsiEnumConstantInitializerImpl(final PsiClassStub stub) {
@@ -84,10 +84,11 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    if (myCachedBaseType == null) {
-      myCachedBaseType = JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClass());
+    PsiClassType cachedBaseType = myCachedBaseType;
+    if (cachedBaseType == null) {
+      myCachedBaseType = cachedBaseType = JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClass());
     }
-    return myCachedBaseType;
+    return cachedBaseType;
   }
 
   @Override
@@ -121,8 +122,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getSuperTypes() {
+  public PsiClassType @NotNull [] getSuperTypes() {
     return new PsiClassType[]{getBaseClassType()};
   }
 

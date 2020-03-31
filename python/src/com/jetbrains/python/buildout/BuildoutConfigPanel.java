@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,7 +59,8 @@ public class BuildoutConfigPanel extends JPanel {
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     //descriptor.setRoot(myConfiguration.getRoot());
-    myScript.addBrowseFolderListener("Choose a buildout script", "Select the target script that will invoke your code", null, descriptor,
+    myScript.addBrowseFolderListener(PyBundle.message("buildout.configurable.choose.a.buildout.script"),
+                                     PyBundle.message("buildout.configurable.select.the.target.script"), null, descriptor,
                                      TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     myScript.getComboBox().setEditable(true);
 
@@ -92,7 +94,7 @@ public class BuildoutConfigPanel extends JPanel {
 
   private static ValidationResult validateScriptName(String scriptName) {
     if (StringUtil.isEmpty(scriptName)) {
-      return new ValidationResult("Please specify buildout script");
+      return new ValidationResult(PyBundle.message("buildout.config.script.name.validation.error.message"));
     }
     try {
       getScriptFile(scriptName);
@@ -125,20 +127,20 @@ public class BuildoutConfigPanel extends JPanel {
     myConfiguration.setScriptName(scriptName);
   }
 
-  BuildoutFacetConfiguration getConfiguration() {
+  public BuildoutFacetConfiguration getConfiguration() {
     return myConfiguration;
   }
 
-  void showNoticeText(boolean show) {
+  public void showNoticeText(boolean show) {
     myNoticeTextArea.setVisible(show);
   }
 
   @NotNull
-  public static VirtualFile getScriptFile(String script_name) throws ConfigurationException {
-    VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
-    if (script_file == null || script_file.isDirectory()) {
-      throw new ConfigurationException("Invalid script file '" + script_name + "'");
+  public static VirtualFile getScriptFile(String scriptName) throws ConfigurationException {
+    VirtualFile scriptFile = LocalFileSystem.getInstance().findFileByPath(scriptName);
+    if (scriptFile == null || scriptFile.isDirectory()) {
+      throw new ConfigurationException(PyBundle.message("buildout.config.script.file.invalid.message", scriptName));
     }
-    return script_file;
+    return scriptFile;
   }
 }

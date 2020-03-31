@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,21 +26,18 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see OrderEnumerator#classes()
  * @see OrderEnumerator#sources()
- *
- * @author nik
  */
+@ApiStatus.NonExtendable
 public interface OrderRootsEnumerator {
   /**
    * @return all roots processed by this enumerator
    */
-  @NotNull
-  VirtualFile[] getRoots();
+  VirtualFile @NotNull [] getRoots();
 
   /**
    * @return urls of all roots processed by this enumerator
    */
-  @NotNull
-  String[] getUrls();
+  String @NotNull [] getUrls();
 
   /**
    * @return list of path to all roots processed by this enumerator

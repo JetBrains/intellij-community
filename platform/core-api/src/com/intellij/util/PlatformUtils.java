@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,7 +18,7 @@ import java.util.Set;
  *
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
-public class PlatformUtils {
+public final class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
   // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
@@ -50,17 +37,22 @@ public class PlatformUtils {
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
 
-  private static final Set<String> COMMERCIAL_EDITIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX, DBE_PREFIX,
-    RIDER_PREFIX, GOIDE_PREFIX
-  )));
-
-  public static String getPlatformPrefix() {
+  private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX,
+                                                                                     PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX,
+                                                                                     WEB_PREFIX, DBE_PREFIX, RIDER_PREFIX,
+                                                                                     GOIDE_PREFIX));
+  public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
   }
 
-  public static String getPlatformPrefix(String defaultPrefix) {
+  public static String getPlatformPrefix(@Nullable String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
+  }
+
+  public static void setDefaultPrefixForCE() {
+    // IJ CE doesn't have prefix if we start IDE from the source code.
+    // The proper fix is to set the prefix in all CE run configurations but for keeping compatibility set it indirectly
+    System.setProperty(PLATFORM_PREFIX_KEY, getPlatformPrefix(IDEA_CE_PREFIX));
   }
 
   public static boolean isJetBrainsProduct() {
@@ -80,7 +72,7 @@ public class PlatformUtils {
     return is(IDEA_CE_PREFIX);
   }
 
-  private static boolean isIdeaEducational() {
+  public static boolean isIdeaEducational() {
     return is(IDEA_EDU_PREFIX);
   }
 
@@ -144,7 +136,7 @@ public class PlatformUtils {
     return COMMERCIAL_EDITIONS.contains(getPlatformPrefix());
   }
 
-  private static boolean is(String idePrefix) {
+  private static boolean is(@NotNull String idePrefix) {
     return idePrefix.equals(getPlatformPrefix());
   }
 }

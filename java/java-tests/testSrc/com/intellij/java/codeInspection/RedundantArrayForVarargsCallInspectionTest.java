@@ -18,13 +18,13 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
-public class RedundantArrayForVarargsCallInspectionTest extends LightInspectionTestCase {
+public class RedundantArrayForVarargsCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantArrayForVarargs/";

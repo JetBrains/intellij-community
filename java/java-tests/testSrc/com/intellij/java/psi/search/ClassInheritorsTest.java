@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -149,7 +148,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
     ModuleRootModificationUtil.updateModel(mod2, model ->
-      ((ModuleOrderEntryImpl)model.addModuleOrderEntry(getModule())).setProductionOnTestDependency(true));
+      model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));
 
     assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
   }
@@ -160,4 +159,10 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
   }
 
+  public void testQueryingNonAnonymousInheritors() {
+    PsiClass foo = myFixture.addClass("class Foo { { new Foo(){}; }; class Bar extends Foo {} }");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    assertSize(1, ClassInheritorsSearch.search(foo, scope, true, true, false).findAll());
+    assertSize(2, ClassInheritorsSearch.search(foo, scope, true, true, true).findAll());
+  }
 }

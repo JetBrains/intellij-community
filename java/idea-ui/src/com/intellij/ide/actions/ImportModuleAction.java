@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -24,7 +11,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -32,11 +19,9 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
@@ -46,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +42,7 @@ import java.util.List;
 public class ImportModuleAction extends AnAction implements NewProjectOrModuleAction {
 
   private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
+  private static final Logger LOG = Logger.getInstance(ImportModuleAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -72,7 +59,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   @NotNull
   @Override
   public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
-    return ProjectBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
+    return JavaUiBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 
   @Override
@@ -86,18 +73,16 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
+    return createFromWizard(project, wizard);
+  }
+
+  public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
     try {
-      return createFromWizard(project, wizard);
+      return doCreateFromWizard(project, wizard);
     }
     finally {
       wizard.disposeIfNeeded();
     }
-  }
-
-  public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
-    Ref<List<Module>> result = Ref.create();
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
-    return result.get();
   }
 
   private static List<Module> doCreateFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
@@ -106,10 +91,10 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
       Project newProject;
       if (projectBuilder instanceof DeprecatedProjectBuilderForImport) {
         // The path to remove import action
-        newProject = ProjectUtil.openOrImport(wizard.getNewProjectFilePath(), null, false);
+        newProject = openProject((DeprecatedProjectBuilderForImport)projectBuilder, wizard.getNewProjectFilePath());
       }
       else {
-        newProject = NewProjectUtil.createFromWizard(wizard, null);
+        newProject = NewProjectUtil.createFromWizard(wizard);
       }
       return newProject == null ? Collections.emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
@@ -120,6 +105,9 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
         return Collections.singletonList(module);
       }
       else {
+        if (!projectBuilder.validate(project, project)) {
+          return Collections.emptyList();
+        }
         return projectBuilder.commit(project);
       }
     }
@@ -131,10 +119,20 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   }
 
   @Nullable
+  private static Project openProject(@NotNull DeprecatedProjectBuilderForImport projectBuilder, @NotNull String projectPath) {
+    VirtualFile file = ProjectUtil.getFileAndRefresh(Paths.get(projectPath));
+    if (file == null) {
+      LOG.warn(String.format("Cannot find project file in vfs `%s`", projectPath));
+      return null;
+    }
+    return projectBuilder.getProjectOpenProcessor().doOpenProject(file, null, false);
+  }
+
+  @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project, @Nullable Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
-    descriptor.setTitle("Select File or Directory to Import");
+    descriptor.setTitle(JavaUiBundle.message("chooser.title.select.file.or.directory.to.import"));
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
@@ -204,7 +202,8 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, provider -> provider.canImport(file, project));
     if (available.isEmpty()) {
-      Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
+      Messages.showInfoMessage(project, JavaUiBundle.message("message.cannot.import.anything.from.0", file.getPath()),
+                               JavaUiBundle.message("dialog.title.cannot.import"));
       return null;
     }
 

@@ -17,25 +17,18 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import org.jetbrains.annotations.NotNull;
 
-abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId {
+abstract class VirtualFileImpl extends VirtualFile {
   private final DummyFileSystem myFileSystem;
   private final VirtualFileDirectoryImpl myParent;
   private String myName;
   protected boolean myIsValid = true;
-  private final int myId = DummyFileIdGenerator.next();
 
   protected VirtualFileImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     myFileSystem = fileSystem;
     myParent = parent;
     myName = name;
-  }
-
-  @Override
-  public int getId() {
-    return myId;
   }
 
   @Override

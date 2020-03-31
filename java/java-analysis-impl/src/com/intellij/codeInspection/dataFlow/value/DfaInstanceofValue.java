@@ -20,28 +20,25 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Used in DFA-aware completion only 
  */
 public class DfaInstanceofValue extends DfaValue {
   private final @NotNull PsiExpression myExpression;
   private final @NotNull PsiType myCastType;
-  private final boolean myNegated;
-  private final @NotNull DfaValue myRelation;
+  private final @NotNull DfaCondition myRelation;
 
-  public DfaInstanceofValue(DfaValueFactory factory,
+  public DfaInstanceofValue(@NotNull DfaValueFactory factory,
                             @NotNull PsiExpression expression,
                             @NotNull PsiType castType,
-                            @NotNull DfaValue relation,
-                            boolean negated) {
+                            @NotNull DfaCondition relation) {
     super(factory);
     myExpression = expression;
     myCastType = castType;
     myRelation = relation;
-    myNegated = negated;
   }
 
   @NotNull
-  public DfaValue getRelation() {
+  public DfaCondition getRelation() {
     return myRelation;
   }
 
@@ -53,14 +50,5 @@ public class DfaInstanceofValue extends DfaValue {
   @NotNull
   public PsiType getCastType() {
     return myCastType;
-  }
-
-  public boolean isNegated() {
-    return myNegated;
-  }
-
-  @Override
-  public DfaValue createNegated() {
-    return new DfaInstanceofValue(myFactory, myExpression, myCastType, myRelation.createNegated(), !myNegated);
   }
 }

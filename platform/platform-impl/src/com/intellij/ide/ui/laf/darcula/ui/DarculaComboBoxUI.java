@@ -1,17 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,10 +194,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Rectangle r = new Rectangle(button.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1));
 
-    int tW = JBUI.scale(9);
-    int tH = JBUI.scale(5);
-    int xU = (r.width - tW) / 2 - JBUI.scale(1);
-    int yU = (r.height - tH) / 2 + JBUI.scale(1);
+    int tW = JBUIScale.scale(9);
+    int tH = JBUIScale.scale(5);
+    int xU = (r.width - tW) / 2 - JBUIScale.scale(1);
+    int yU = (r.height - tH) / 2 + JBUIScale.scale(1);
 
     Path2D path = new Path2D.Float();
     path.moveTo(xU, yU);
@@ -231,9 +233,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
-      boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      g2.setColor(editable ? editor.getBackground() : comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
-
+      g2.setColor(getBackgroundColor());
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
     finally {
@@ -243,6 +243,21 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (!comboBox.isEditable()) {
       checkFocus();
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
+    }
+  }
+
+  private Color getBackgroundColor() {
+    Color bg = comboBox.getBackground();
+    if (comboBox.isEditable() && editor != null) {
+      return comboBox.isEnabled() ? editor.getBackground() :
+             comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : UIUtil.getComboBoxDisabledBackground();
+    }
+    else {
+      Object value = comboBox.getSelectedItem();
+      Color coloredItemColor = value instanceof ColoredItem ? ((ColoredItem)value).getColor(): null;
+      return ObjectUtils.notNull(coloredItemColor,
+              comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg :
+              comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getComboBoxDisabledBackground());
     }
   }
 
@@ -256,12 +271,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
-    ListCellRenderer renderer = comboBox.getRenderer();
-    @SuppressWarnings("unchecked")
-    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
+    //noinspection unchecked
+    ListCellRenderer<Object> renderer = comboBox.getRenderer();
+    Object value = comboBox.getSelectedItem();
+    Component c = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
 
     c.setFont(comboBox.getFont());
-    c.setBackground(comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
+    c.setBackground(getBackgroundColor());
 
     if (hasFocus && !isPopupVisible(comboBox)) {
       c.setForeground(listBox.getForeground());
@@ -309,7 +325,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       // the text jumps as more or less space becomes available.
       // a proper text layout algorithm on painting in DarculaLabelUI can fix that.
       String text = cc.getText();
-      int maxWidth = bounds.width - (padding == null || UIUtil.isUnderDarcula() ? 0 : padding.right);
+      int maxWidth = bounds.width - (padding == null || StartupUiUtil.isUnderDarcula() ? 0 : padding.right);
       if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
         int max0 = ObjectUtils.binarySearch(7, text.length() - 1, idx -> {
           cc.setText(StringUtil.trimMiddle(text, idx));
@@ -461,7 +477,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2, 3) : getDefaultComboBoxInsets();
+    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) : getDefaultComboBoxInsets();
   }
 
   @Override
@@ -471,10 +487,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = getInsets();
-    Dimension abSize = arrowButton.getPreferredSize();
-    if (abSize == null) {
-      abSize = JBUI.emptySize();
-    }
+    Dimension abSize = getArrowButtonPreferredSize(comboBox);
 
     if (isCompact(comboBox) && size != null) {
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
@@ -548,14 +561,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       }
     }
 
-    if (Registry.is("ide.ui.composite.editor.for.combobox")) {
-      // BasicComboboxUI sets focusability depending on the combobox focusability.
-      // JPanel usually is unfocusable and uneditable.
-      // It could be set as an editor when people want to have a composite component as an editor.
-      // In such cases we should restore unfocusable state for panels.
-      if (editor instanceof JPanel) {
-        editor.setFocusable(false);
-      }
+    // BasicComboboxUI sets focusability depending on the combobox focusability.
+    // JPanel usually is unfocusable and uneditable.
+    // It could be set as an editor when people want to have a composite component as an editor.
+    // In such cases we should restore unfocusable state for panels.
+    if (editor instanceof JPanel) {
+      editor.setFocusable(false);
     }
   }
 
@@ -685,8 +696,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      //list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
-      //                                         : UIManager.getColor("Label.background"));
       //noinspection unchecked
       list.setCellRenderer(new MyDelegateRenderer());
     }
@@ -702,15 +711,49 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           listener.propertyChange(evt);
-          if ("renderer".equals(evt.getPropertyName()) ||
-              "editable".equals(evt.getPropertyName())) {
-            configureList();
-            if (isVisible()) {
-              hide();
+          if ("renderer".equals(evt.getPropertyName())) {
+            if (!(list.getCellRenderer() instanceof MyDelegateRenderer)) {
+              //noinspection unchecked
+              list.setCellRenderer(new MyDelegateRenderer());
             }
           }
         }
       };
+    }
+
+    @Override
+    protected int getPopupHeightForRowCount(int maxRowCount) {
+      int minRowCount = Math.min(maxRowCount, comboBox.getItemCount());
+      int height = 0;
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
+
+      for (int i = 0; i < minRowCount; i++) {
+        Object value = list.getModel().getElementAt(i);
+        Component c = renderer.getListCellRendererComponent(list, value, i, false, false);
+
+        // The whole method is copied from the parent class except for the following line
+        // that adjusts the minimum row height of a list cell.
+        // See WideSelectionListUI.updateLayoutState
+        height += UIUtil.updateListRowHeight(c.getPreferredSize()).height;
+      }
+
+      if (height == 0) {
+        height = comboBox.getHeight();
+      }
+
+      Border border = scroller.getViewportBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(null);
+        height += insets.top + insets.bottom;
+      }
+
+      border = scroller.getBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(null);
+        height += insets.top + insets.bottom;
+      }
+
+      return height;
     }
 
     private class MyDelegateRenderer implements ListCellRenderer {

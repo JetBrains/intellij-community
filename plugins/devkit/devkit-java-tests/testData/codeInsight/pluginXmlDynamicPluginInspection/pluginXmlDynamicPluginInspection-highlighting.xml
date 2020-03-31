@@ -1,0 +1,36 @@
+<idea-plugin>
+
+  <id>myPlugin</id>
+  <extensionPoints>
+    <extensionPoint name="dynamicEP" dynamic="true"/>
+    <<warning descr="Non-dynamic extension point 'myPlugin.nonDynamicEP'">extensionPoint</warning> name="nonDynamicEP"/>
+    <<warning descr="Explicit non-dynamic extension point 'myPlugin.explicitNonDynamicEP'">extensionPoint</warning> name="explicitNonDynamicEP" dynamic="false"/>
+  </extensionPoints>
+
+
+  <extensions defaultExtensionNs="myPlugin">
+    <dynamicEP/>
+    <nonDynamicEP/>
+    <explicitNonDynamicEP/>
+  </extensions>
+
+
+  <actions>
+    <group id="requiredIdIsPresent"/>
+    <<warning descr="'id' must be specified for <group>">group</warning>>
+      <separator/>
+      <reference ref="requiredIdIsPresent"/>
+    </group>
+  </actions>
+
+
+  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">application-components</warning>>
+  </application-components>
+
+  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">project-components</warning>>
+  </project-components>
+
+  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">module-components</warning>>
+  </module-components>
+
+</idea-plugin>

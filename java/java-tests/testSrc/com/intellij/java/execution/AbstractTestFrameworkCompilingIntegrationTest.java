@@ -5,8 +5,12 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -35,6 +39,17 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
     finally {
       pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
     }
+  }
+
+  @NotNull
+  @Override
+  protected LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 
   protected String getDefaultMavenRepositoryPath() {

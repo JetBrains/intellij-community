@@ -1,12 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUIScale;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,7 +13,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * @author Alexander Lobas
@@ -26,7 +25,11 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   private static Icon myCachedDisabledJBLogo2x;
 
   HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logo_80) {
-    super(logo_40, createHiDPIDisabledIcon(logo_40), logo_80, createHiDPIDisabledIcon(logo_80));
+    super(logo_40, createHiDPIDisabledIcon(logo_40, true), logo_80, createHiDPIDisabledIcon(logo_80, true));
+  }
+
+  HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logoDisabled_40, @NotNull Icon logo_80, @NotNull Icon logoDisabled_80) {
+    super(logo_40, logoDisabled_40, logo_80, logoDisabled_80);
   }
 
   @Override
@@ -74,12 +77,15 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
     myCachedJBLogo2x = null;
     myCachedErrorLogo2x = null;
     myCachedDisabledJBLogo2x = null;
+    synchronized (DisabledIcons) {
+      DisabledIcons.clear();
+    }
   }
 
   @NotNull
   @Override
-  protected Icon getDisabledIcon(@NotNull Icon icon) {
-    return createHiDPIDisabledIcon(icon);
+  protected Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
+    return createHiDPIDisabledIcon(icon, base);
   }
 
   @NotNull
@@ -117,8 +123,8 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   }
 
   @NotNull
-  private static Icon createHiDPIDisabledIcon(@NotNull Icon icon) {
-    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon));
+  private static Icon createHiDPIDisabledIcon(@NotNull Icon icon, boolean base) {
+    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon, base));
   }
 
   @NotNull

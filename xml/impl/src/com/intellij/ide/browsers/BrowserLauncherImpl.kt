@@ -1,22 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
-import com.intellij.concurrency.JobScheduler
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.AppUIUtil
 import com.intellij.util.Urls
+import com.intellij.xml.XmlBundle
 import org.jetbrains.ide.BuiltInServerManager
-import java.util.concurrent.TimeUnit
 
 class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? {
@@ -47,7 +44,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     return url
   }
 
-  override fun openWithExplicitBrowser(url: String, settings: GeneralSettings, project: Project?) {
+  override fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
     val browserManager = WebBrowserManager.getInstance()
     if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
       browserManager.firstActiveBrowser?.let {
@@ -55,40 +52,26 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
         return
       }
     }
-    else if (SystemInfo.isMac && "open" == settings.browserPath) {
+    else if (SystemInfo.isMac && "open" == browserPath) {
       browserManager.firstActiveBrowser?.let {
         browseUsingPath(url, null, it, project)
         return
       }
     }
 
-    super.openWithExplicitBrowser(url, settings, project)
+    super.openWithExplicitBrowser(url, browserPath, project)
   }
 
-  override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
-    AppUIUtil.invokeOnEdt(Runnable {
-      if (!showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project, noText = IdeBundle.message("button.fix"))) {
+  override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, fix: (() -> Unit)?) {
+    AppUIExecutor.onUiThread().expireWith(project ?: Disposable {}).submit {
+      if (showOkNoDialog(title ?: XmlBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
+                         okText = IdeBundle.message("button.fix"),
+                         noText = Messages.getOkButton())) {
         val browserSettings = BrowserSettings()
         if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser?.let { Runnable { browserSettings.selectBrowser(it) } })) {
-          launchTask?.invoke()
+          fix?.invoke()
         }
       }
-    }, project?.disposed)
-  }
-
-  override fun checkCreatedProcess(browser: WebBrowser?, project: Project?, commandLine: GeneralCommandLine, process: Process, launchTask: (() -> Unit)?) {
-    if (isOpenCommandUsed(commandLine)) {
-      val future = ApplicationManager.getApplication().executeOnPooledThread {
-        try {
-          if (process.waitFor() == 1) {
-            showError(ExecUtil.readFirstLine(process.errorStream, null), browser, project, null, launchTask)
-          }
-        }
-        catch (ignored: InterruptedException) {
-        }
-      }
-      // 10 seconds is enough to start
-      JobScheduler.getScheduler().schedule({ future.cancel(true) }, 10, TimeUnit.SECONDS)
     }
   }
 }

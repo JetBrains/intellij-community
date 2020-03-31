@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
@@ -13,12 +13,13 @@ import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ColorsIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,24 +32,23 @@ import java.util.List;
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
   public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 
-  private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
-
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    for (ElementColorProvider colorProvider: myExtensions) {
-      final Color color = colorProvider.getColorFrom(element);
-      if (color != null) {
-        MyInfo info = new MyInfo(element, color, colorProvider);
-        NavigateAction.setNavigateAction(info, "Choose color", null);
-        return info;
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    return ElementColorProvider.EP_NAME.computeSafeIfAny(provider -> {
+      Color color = provider.getColorFrom(element);
+      if (color == null) {
+        return null;
       }
-    }
-    return null;
+
+      MyInfo info = new MyInfo(element, color, provider);
+      NavigateAction.setNavigateAction(info, "Choose color", null, AllIcons.Actions.Colors);
+      return info;
+    });
   }
 
   @Override
   public String getName() {
-    return "Color preview";
+    return CodeInsightBundle.message("gutter.color.preview");
   }
 
   @NotNull
@@ -65,16 +65,16 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       super(element,
             element.getTextRange(),
             JBUI.scale(new ColorIcon(12, color)),
-            Pass.LINE_MARKERS,
             FunctionUtil.<Object, String>nullConstant(),
             (e, elt) -> {
               if (!elt.isWritable()) return;
 
-              final Editor editor = PsiUtilBase.findEditor(elt);
+              final Editor editor = PsiEditorUtil.findEditor(elt);
               assert editor != null;
 
               if (Registry.is("ide.new.color.picker")) {
-                ColorPicker.showColorPickerPopup(color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)));
+                RelativePoint relativePoint = new RelativePoint(e.getComponent(), e.getPoint());
+                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint, true);
               } else {
                 final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(), "Choose Color", color, true);
                 if (c != null) {
@@ -92,13 +92,13 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
     }
 
     @Override
-    public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+    public Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
       return JBUI.scale(new ColorsIcon(12, infos.stream().map(_info -> ((MyInfo)_info).myColor).toArray(Color[]::new)));
     }
 
     @NotNull
     @Override
-    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
+    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
       return FunctionUtil.nullConstant();
     }
   }

@@ -16,9 +16,6 @@
               "edge": {
                 "version_added": "12"
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": "23"
               },
@@ -71,9 +68,6 @@
                 "edge": {
                   "version_added": null
                 },
-                "edge_mobile": {
-                  "version_added": null
-                },
                 "firefox": {
                   "version_added": false,
                   "notes": "See <a href='https://bugzil.la/841942'>bug 841942</a>."
@@ -121,9 +115,6 @@
                   "notes": "The slider can be oriented vertically by setting the non-standard <code>-webkit-appearance: slider-vertical</code> style on the <code>input</code> element. You shouldn't use this, since it's proprietary, unless you include appropriate fallbacks for users of other browsers."
                 },
                 "edge": {
-                  "version_added": null
-                },
-                "edge_mobile": {
                   "version_added": null
                 },
                 "firefox": {

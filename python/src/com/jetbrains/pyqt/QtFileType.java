@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.pyqt;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -28,13 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -45,14 +31,12 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   private final String myName;
   private final String myDescription;
   private final String myDefaultExtension;
-  private final Icon myIcon;
 
-  QtFileType(String name, String description, String defaultExtension, Icon icon) {
-    super(XMLLanguage.INSTANCE);
+  QtFileType(String name, String description, String defaultExtension) {
+    super(XMLLanguage.INSTANCE, true);
     myName = name;
     myDescription = description;
     myDefaultExtension = defaultExtension;
-    myIcon = icon;
   }
 
   @NotNull
@@ -74,23 +58,13 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   }
 
   @Override
-  public Icon getIcon() {
-    return myIcon;
-  }
-
-  @Override
   public boolean isReadOnly() {
     return false;
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-    return null;
-  }
-
-  @Override
   public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
-    String qtTool = findQtTool(ModuleUtil.findModuleForFile(file, project), getToolName());
+    String qtTool = findQtTool(ModuleUtilCore.findModuleForFile(file, project), getToolName());
     if (qtTool == null) {
       return false;
     }
@@ -98,7 +72,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       Runtime.getRuntime().exec(new String[] { qtTool, file.getPath() } );
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Failed to run Qt Designer: " + e.getMessage(), "Error");
+      Messages.showErrorDialog(project, PyBundle.message("qt.error.failed.run.qt.designer", e.getMessage()), PyBundle.message("qt.run.designer.error"));
     }
     return true;
   }
@@ -108,7 +82,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       if (module == null) {
         return null;
       }
-      Sdk sdk = PythonSdkType.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk == null) {
         return null;
       }

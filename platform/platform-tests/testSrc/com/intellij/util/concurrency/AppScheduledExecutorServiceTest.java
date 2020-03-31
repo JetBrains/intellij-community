@@ -23,8 +23,12 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -57,10 +61,13 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     service = new AppScheduledExecutorService(getName());
+    // LowMemoryManager submits something immediately
+    service.awaitQuiescence(1, TimeUnit.MINUTES);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    //noinspection SSBasedInspection
     try {
       service.shutdownAppScheduledExecutorService();
       assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
@@ -72,26 +79,33 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
-  public void testDelayedWorks() throws InterruptedException {
+  public void testDelayedWorks() throws Exception {
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
+    // avoid conflicts when thread are timed out/restarted, since we are inclined to count them all in this test
+    ((AppScheduledExecutorService.BackendThreadPoolExecutor)service.backendExecutorService).superSetKeepAliveTime(1, TimeUnit.MINUTES);
+    int N = 3;
+    CountDownLatch c = new CountDownLatch(1);
+    // pre-start all threads
+    List<Future<Boolean>> futures = ContainerUtil.map(Collections.nCopies(N, null), __ -> service.submit(() -> c.await(1, TimeUnit.MINUTES)));
+    c.countDown();
+    for (Future<Boolean> future : futures) {
+      future.get();
+    }
 
-    service.invokeAll(Collections.nCopies(service.getBackendPoolCorePoolSize() + 1, Executors.callable(EmptyRunnable.getInstance()))); // pre-start all threads
+    int size = service.getBackendPoolExecutorSize();
+    Assume.assumeTrue("Too low pool parallelism: " + size + " (required at least " + N + ")", size == N);
 
     int delay = 1000;
     long start = System.currentTimeMillis();
     List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
-    List<ScheduledFuture<?>> f = IntStream.range(1, 4).mapToObj(i -> service.schedule(() -> {
+    List<ScheduledFuture<?>> f = IntStream.range(1, N+1).mapToObj(i -> service.schedule(() -> {
       log.add(new LogInfo(i));
       TimeoutUtil.sleep(1000);
     }, delay, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
 
-    assertFalse(service.isShutdown());
-    assertFalse(service.isTerminated());
-    Future<?> f4 = service.submit((Runnable)() -> log.add(new LogInfo(4)));
+    Future<?> f4 = service.submit((Runnable)() -> log.add(new LogInfo(0)));
 
-    assertFalse(service.isShutdown());
-    assertFalse(service.isTerminated());
     assertTrue(f.stream().noneMatch(Future::isDone));
 
     TimeoutUtil.sleep(delay/2);
@@ -107,10 +121,10 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     f.forEach(f1->waitFor(f1::isDone));
 
-    assertEquals(4, log.size());
-    assertEquals(4, log.get(0).runnable);
-    List<Thread> threads = Arrays.asList(log.get(1).currentThread, log.get(2).currentThread, log.get(3).currentThread);
-    assertEquals(log.toString(), 3, new HashSet<>(threads).size()); // must be executed in parallel
+    assertEquals(N+1, log.size());
+    assertEquals(0, log.get(0).runnable); // first executed must be not-delayed task
+    Set<Thread> threads = ContainerUtil.map2Set(log, l->l.currentThread);
+    assertEquals(log.toString(), N, threads.size()); // must be executed in parallel
   }
 
   public void testMustNotBeAbleToShutdown() {
@@ -161,6 +175,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     Future<?> future = service.submit(EmptyRunnable.getInstance());
     future.get();
     service.setBackendPoolCorePoolSize(1);
+    ((ThreadPoolExecutor)service.backendExecutorService).prestartCoreThread();
     assertEquals(1, service.getBackendPoolExecutorSize());
 
     long submitted = System.currentTimeMillis();
@@ -208,12 +223,12 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       assertEquals(1, service.getBackendPoolExecutorSize());
 
       assertEquals(3, log.size());
-      Set<Thread> usedThreads = new HashSet<>(Arrays.asList(log.get(0).currentThread, log.get(1).currentThread, log.get(2).currentThread));
+      Set<Thread> usedThreads = ContainerUtil.map2Set(log, l->l.currentThread);
       assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
     }
     catch (AssertionError e) {
-      System.err.println("ThreadDump: "+ThreadDumper.dumpThreadsToString());
-      System.err.println("Process List: "+LogUtil.getProcessList());
+      System.err.println("ThreadDump: " + ThreadDumper.dumpThreadsToString());
+      System.err.println("Process List: " + LogUtil.getProcessList());
       throw e;
     }
   }
@@ -236,7 +251,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
 
     assertEquals(N, log.size());
-    Set<Thread> usedThreads = ContainerUtil.map2Set(log, logInfo -> logInfo.currentThread);
+    Set<Thread> usedThreads = ContainerUtil.map2Set(log, l -> l.currentThread);
 
     assertEquals(N, usedThreads.size());
   }

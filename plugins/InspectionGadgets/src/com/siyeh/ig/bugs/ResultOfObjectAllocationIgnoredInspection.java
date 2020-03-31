@@ -40,9 +40,8 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
     return SuppressForTestsScopeFix.build(this, context);
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new SmartList<>();
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
@@ -54,12 +53,6 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
     }
     ContainerUtil.addIfNotNull(result, SuppressForTestsScopeFix.build(this, expression));
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.display.name");
   }
 
   @Override

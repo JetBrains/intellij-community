@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AnnotationProcessorProfileSerializer {
   private static final Comparator<String> ALPHA_COMPARATOR = (o1, o2) -> o1.compareToIgnoreCase(o2);
   private static final String ENTRY = "entry";
@@ -35,6 +32,8 @@ public class AnnotationProcessorProfileSerializer {
   private static final String ENABLED = "enabled";
   private static final String OPTION = "option";
   private static final String MODULE = "module";
+  private static final String USE_CLASSPATH = "useClasspath";
+  private static final String USE_PROC_MODULE_PATH = "useProcessorModulePath";
 
   public static void readExternal(ProcessorConfigProfile profile, Element element) {
     profile.setName(element.getAttributeValue(NAME, ""));
@@ -73,7 +72,8 @@ public class AnnotationProcessorProfileSerializer {
 
     final Element pathElement = element.getChild("processorPath");
     if (pathElement != null) {
-      profile.setObtainProcessorsFromClasspath(Boolean.parseBoolean(pathElement.getAttributeValue("useClasspath", "true")));
+      profile.setObtainProcessorsFromClasspath(Boolean.parseBoolean(pathElement.getAttributeValue(USE_CLASSPATH, "true")));
+      profile.setUseProcessorModulePath(Boolean.parseBoolean(pathElement.getAttributeValue(USE_PROC_MODULE_PATH, "false")));
       final StringBuilder pathBuilder = new StringBuilder();
       for (Object entry : pathElement.getChildren(ENTRY)) {
         final String path = ((Element)entry).getAttributeValue(NAME);
@@ -136,13 +136,19 @@ public class AnnotationProcessorProfileSerializer {
     Element pathElement = null;
     if (!profile.isObtainProcessorsFromClasspath()) {
       pathElement = addChild(element, "processorPath");
-      pathElement.setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
+      pathElement.setAttribute(USE_CLASSPATH, Boolean.toString(profile.isObtainProcessorsFromClasspath()));
+      if (profile.isUseProcessorModulePath()) {
+        pathElement.setAttribute(USE_PROC_MODULE_PATH, Boolean.toString(profile.isUseProcessorModulePath()));
+      }
     }
 
     final String path = profile.getProcessorPath();
     if (!StringUtil.isEmpty(path)) {
       if (pathElement == null) {
         pathElement = addChild(element, "processorPath");
+        if (profile.isUseProcessorModulePath()) {
+          pathElement.setAttribute(USE_PROC_MODULE_PATH, Boolean.toString(profile.isUseProcessorModulePath()));
+        }
       }
       final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {

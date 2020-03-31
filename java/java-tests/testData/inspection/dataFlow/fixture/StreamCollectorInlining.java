@@ -8,7 +8,7 @@ import java.util.stream.*;
 public class StreamCollectorInlining {
 
   void testCounting() {
-    long count = Stream.empty().collect(Collectors.counting());
+    long count = <warning descr="Result of 'Stream.empty().collect(Collectors.counting())' is always '0'">Stream.empty().collect(Collectors.counting())</warning>;
     if(<warning descr="Condition 'count > 0' is always 'false'">count > 0</warning>) {
       System.out.println("impossible");
     }
@@ -62,4 +62,16 @@ public class StreamCollectorInlining {
   }
 
   native void foo();
+
+  void testNotNull(List<String> list) {
+    String res = list.stream().collect(Collectors.joining());
+    if (<warning descr="Condition 'res == null' is always 'false'">res == null</warning>) return;
+    Double x = list.stream().collect(Collectors.averagingInt(String::length));
+    if (<warning descr="Condition 'x == null' is always 'false'">x == null</warning>) return;
+    Integer sum = list.stream().collect(Collectors.summingInt(String::length));
+    if (<warning descr="Condition 'sum == null' is always 'false'">sum == null</warning>) return;
+    IntSummaryStatistics stat = list.stream().collect(Collectors.summarizingInt(String::length));
+    if (<warning descr="Condition 'stat == null' is always 'false'">stat == null</warning>) return;
+  }
+
 }

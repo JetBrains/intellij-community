@@ -37,12 +37,6 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("type.parameter.extends.final.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer problemType = (Integer)infos[1];
     final PsiClass aClass = (PsiClass)infos[0];

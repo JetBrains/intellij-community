@@ -44,13 +44,6 @@ import java.util.Set;
 public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -96,9 +89,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         for (int i = 0; i < parameters.length; i++) {
           final PsiParameter parameter = parameters[i];
           final String lambdaParamName = paramListCopy[i].getName();
-          if (lambdaParamName != null) {
-            parameter.setName(lambdaParamName);
-          }
+          parameter.setName(lambdaParamName);
         }
       }
       PsiCodeBlock codeBlock = member.getBody();

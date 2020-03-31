@@ -26,7 +26,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="none" title="py.tests"/>
+            <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.pytest.legacy.py.tests"/>
             <children>
               <component id="97832" class="com.intellij.ui.components.JBLabel" binding="myTargetLabel">
                 <constraints>
@@ -35,7 +35,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.pytest.target"/>
+                  <text resource-bundle="messages/PyBundle" key="runcfg.pytest.target"/>
                 </properties>
               </component>
               <component id="7ea78" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTestScriptTextField">
@@ -45,7 +45,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Path to a file or directory that contains the tests to be executed"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.path.to.a.file.or.directory.that.contains.the.tests.to.be.executed"/>
                 </properties>
               </component>
               <component id="63cd5" class="javax.swing.JTextField" binding="myKeywordsTextField">
@@ -55,7 +55,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Specify the keywords to search for the required tests. -k command line option in py.tests"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.specify.the.keywords.to.search.for.the.required.tests.k.command.line.option.in.py.tests"/>
                 </properties>
               </component>
               <component id="4423e" class="javax.swing.JTextField" binding="myParamsTextField">
@@ -65,7 +65,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Specify py.tests command line options"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.specify.py.tests.command.line.options"/>
                 </properties>
               </component>
               <component id="e538" class="javax.swing.JCheckBox" binding="myParametersCheckBox" default-binding="true">
@@ -73,7 +73,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.pytest.parameters"/>
+                  <text resource-bundle="messages/PyBundle" key="runcfg.pytest.parameters"/>
                 </properties>
               </component>
               <component id="a088b" class="javax.swing.JCheckBox" binding="myKeywordsCheckBox" default-binding="true">
@@ -81,7 +81,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.pytest.keywords"/>
+                  <text resource-bundle="messages/PyBundle" key="runcfg.pytest.keywords"/>
                 </properties>
               </component>
               <vspacer id="6162a">

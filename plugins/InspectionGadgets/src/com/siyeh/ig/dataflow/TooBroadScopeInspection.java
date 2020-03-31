@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Objects;
 
 public class TooBroadScopeInspection extends BaseInspection {
 
@@ -53,12 +52,6 @@ public class TooBroadScopeInspection extends BaseInspection {
    * @noinspection PublicField for externalization
    */
   public boolean m_onlyLookAtBlocks = false;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.broad.scope.display.name");
-  }
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -357,7 +350,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Narrow scope";
+      return InspectionGadgetsBundle.message("too.broad.scope.inspection.fix.family.name");
     }
 
     @Override
@@ -396,7 +389,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
         PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(project).createResourceVariable(
-          Objects.requireNonNull(variable.getName()), variable.getType(), tracker.markUnchanged(initializer), variable);
+          variable.getName(), variable.getType(), tracker.markUnchanged(initializer), variable);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }

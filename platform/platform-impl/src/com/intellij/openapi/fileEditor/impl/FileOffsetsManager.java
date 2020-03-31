@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
@@ -31,7 +31,7 @@ public class FileOffsetsManager {
     private final int[] myConvertedLineOffsets;
     private final boolean myLineOffsetsAreTheSame;
 
-    LineOffsets(final long modificationStamp, @NotNull final int[] originalLineOffsets, @NotNull final int[] convertedLineOffsets) {
+    LineOffsets(final long modificationStamp, final int @NotNull [] originalLineOffsets, final int @NotNull [] convertedLineOffsets) {
       assert convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
         : originalLineOffsets.length + " " + convertedLineOffsets.length;
 
@@ -99,7 +99,7 @@ public class FileOffsetsManager {
 
   @NotNull
   // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertBytes()
-  private static LineOffsets loadLineOffsets(@NotNull final byte[] bytes,
+  private static LineOffsets loadLineOffsets(final byte @NotNull [] bytes,
                                              @NotNull final Charset charset,
                                              final int startOffset,
                                              final long modificationStamp) {
@@ -111,7 +111,7 @@ public class FileOffsetsManager {
     }
     catch (Exception e) {
       // esoteric charsets can throw any kind of exception
-      charBuffer = CharBuffer.wrap(ArrayUtil.EMPTY_CHAR_ARRAY);
+      charBuffer = CharBuffer.wrap(ArrayUtilRt.EMPTY_CHAR_ARRAY);
     }
     return loadLineOffsets(charBuffer, modificationStamp);
   }

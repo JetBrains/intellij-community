@@ -29,10 +29,7 @@ public class ListSelection<T> {
 
   private ListSelection(@NotNull List<T> list, int selectedIndex) {
     myList = list;
-    if (myList.isEmpty()) {
-      mySelectedIndex = -1;
-    }
-    else if (selectedIndex >= 0 && selectedIndex < list.size()) {
+    if (selectedIndex >= 0 && selectedIndex < list.size()) {
       mySelectedIndex = selectedIndex;
     }
     else {
@@ -51,7 +48,7 @@ public class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> create(@NotNull V[] array, V selected) {
+  public static <V> ListSelection<V> create(V @NotNull [] array, V selected) {
     return create(Arrays.asList(array), selected);
   }
 

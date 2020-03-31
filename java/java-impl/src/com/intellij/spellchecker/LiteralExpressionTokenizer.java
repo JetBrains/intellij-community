@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -29,14 +29,14 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     if (literalElementType == JavaTokenType.STRING_LITERAL) {
       text = literalExpression.getInnerText();
     }
-    else if (literalElementType == JavaTokenType.RAW_STRING_LITERAL) {
-      text = literalExpression.getRawString();
+    else if (literalElementType == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      text = literalExpression.getText();
     }
     else {
       text = null;
     }
     
-    if (StringUtil.isEmpty(text) || text.length() <= 2) { // optimisation to avoid expensive injection check
+    if (StringUtil.isEmpty(text) || text.length() <= 2) { // optimization to avoid expensive injection check
       return;
     }
     if (InjectedLanguageUtil.hasInjections(literalExpression)) return;

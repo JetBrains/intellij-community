@@ -130,7 +130,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    * @return described URL
    */
   @NotNull
-  public String getRestApiUrl(@NotNull Object... parts) {
+  public String getRestApiUrl(Object @NotNull ... parts) {
     StringBuilder builder = new StringBuilder(getUrl());
     builder.append(getRestApiPathPrefix());
     if (builder.charAt(builder.length() - 1) == '/') {

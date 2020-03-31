@@ -46,7 +46,7 @@ public class VcsShelveChangesSaver {
     return myShelvedLists;
   }
 
-  public void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+  public void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
     final Map<String, Map<VirtualFile, Collection<Change>>> lists =
       new LocalChangesUnderRoots(myChangeManager, myVcsManager).getChangesByLists(rootsToSave);

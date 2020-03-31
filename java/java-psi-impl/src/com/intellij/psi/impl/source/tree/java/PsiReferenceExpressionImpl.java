@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,11 +33,13 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceExpressionImpl.class);
+  private static final ThreadLocal<Map<PsiReferenceExpression, ResolveResult[]>> ourQualifierCache = ThreadLocal.withInitial(() -> new HashMap<>());
 
   private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
@@ -175,36 +180,50 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
-    private static final TokenSet EXACT_REFS = TokenSet.create(JavaElementType.REFERENCE_EXPRESSION, JavaElementType.BREAK_STATEMENT);
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-
-      List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
-      JavaResolveResult[] result = expression.resolve(parentType, containingFile);
-
-      if (result.length == 0 && incompleteCode && !EXACT_REFS.contains(parentType)) {
-        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+      if (!incompleteCode) {
+        //optimization:
+        //for the expression foo().bar().baz(), first foo() is resolved during resolveAllQualifiers traversal
+        //then next qualifier is picked: foo().bar(); to resolve bar(), foo() should be resolved again
+        //if the global cache worked, then the result is already in ResolveCache
+        //if top level resolve was started in the context where caching is prohibited,
+        //foo() is already in the local cache ourQualifiersCache
+        ResolveResult[] result = ourQualifierCache.get().get(ref);
+        if (result != null) {
+          return result;
+        }
       }
 
-      JavaResolveUtil.substituteResults(expression, result);
+      boolean empty = ourQualifierCache.get().isEmpty();
+      try {
+        resolveAllQualifiers(expression, containingFile);
+        JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-      qualifiers.clear(); // hold qualifier target list until this moment to avoid psi elements inside to GC
+        if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+        }
 
-      return result;
+        JavaResolveUtil.substituteResults(expression, result);
+        return result;
+      }
+      finally {
+        //clear cache for the top level expression
+        if (empty) {
+          ourQualifierCache.remove();
+        }
+      }
     }
 
-    @NotNull
-    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
+    private static void resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
-      if (qualifier == null) return Collections.emptyList();
+      if (qualifier == null) return;
 
-      final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -223,8 +242,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
-          PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
+          PsiReferenceExpressionImpl chainedQualifier = (PsiReferenceExpressionImpl)element;
+          RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+          ResolveResult[] res = resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile);
+          if (stamp.mayCacheNow()) {
+            ourQualifierCache.get().put(chainedQualifier, res);
+          }
         }
 
         // walk only qualifiers, not their argument and other associated stuff
@@ -238,12 +261,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         public void visitClass(PsiClass aClass) { }
       });
-      return qualifiers;
     }
   }
 
-  @NotNull
-  private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] variable = null;
       JavaResolveResult[] result = resolveToVariable(containingFile);
@@ -292,37 +313,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 
-    if (parentType == JavaElementType.BREAK_STATEMENT && getQualifierExpression() == null) {
-      PsiElement breakStatement = getParent();
-
-      JavaResolveResult[] labels = JavaResolveResult.EMPTY_ARRAY;
-      PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(breakStatement, getText());
-      if (labeled != null) {
-        labels = new JavaResolveResult[]{new CandidateInfo(labeled, PsiSubstitutor.EMPTY)};
-      }
-
-      boolean insideSwitchExpression = false;
-      PsiElement context = breakStatement;
-      while ((context = PsiImplUtil.findEnclosingSwitchOrLoop(context.getParent())) != null) {
-        if (context instanceof PsiSwitchExpression) {
-          insideSwitchExpression = true;
-          break;
-        }
-      }
-      if (!insideSwitchExpression) {
-        return labels;
-      }
-      else if (labels.length > 0) {
-        JavaResolveResult[] vars = resolveToVariable(containingFile);
-        return ArrayUtil.mergeArrays(labels, vars);
-      }
-    }
-
     return resolveToVariable(containingFile);
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToMethod(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToMethod(@NotNull PsiFile containingFile) {
     final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
     final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall, containingFile);
     try {
@@ -334,8 +328,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToPackage(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToPackage(@NotNull PsiFile containingFile) {
     final String packageName = getCachedNormalizedText();
     Project project = containingFile.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -353,8 +346,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToClass(@NotNull PsiElement classNameElement, @NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToClass(@NotNull PsiElement classNameElement, @NotNull PsiFile containingFile) {
     final String className = classNameElement.getText();
 
     final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
@@ -362,16 +354,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToVariable(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToVariable(@NotNull PsiFile containingFile) {
     final VariableResolverProcessor processor = new VariableResolverProcessor(this, containingFile);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
     return processor.getResult();
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return PsiImplUtil.multiResolveImpl(this, incompleteCode, OurGenericsResolver.INSTANCE);
   }
 
@@ -508,7 +498,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(element)) {
           myVarNames.add(element.getName());
         }
         return !(element instanceof PsiField) || !myVarNames.contains(element.getName());
@@ -612,9 +602,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeParameters() {
+  public PsiType @NotNull [] getTypeParameters() {
     PsiReferenceParameterList parameterList = getParameterList();
     return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
   }
@@ -770,11 +759,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     switch (role) {
       case ChildRole.REFERENCE_NAME:
         TreeElement lastChild = getLastChildNode();
-        return getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
+        return lastChild == null || getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
-        return getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
+        return firstChild != null && getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);

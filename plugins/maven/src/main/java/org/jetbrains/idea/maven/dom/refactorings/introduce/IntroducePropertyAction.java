@@ -31,7 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -56,7 +56,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 
@@ -109,7 +109,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, "IntroducePropertyAction");
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.IntroducePropertyAction);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);
@@ -231,7 +231,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     }
 
     private static class MyUsageSearcherFactory implements Factory<UsageSearcher> {
@@ -251,7 +251,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
           final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<? super Usage> processor) {
             ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {

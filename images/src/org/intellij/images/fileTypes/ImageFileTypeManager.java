@@ -17,21 +17,14 @@ package org.intellij.images.fileTypes;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ImageFileTypeManager extends FileTypeFactory {
+public abstract class ImageFileTypeManager {
   public static ImageFileTypeManager getInstance() {
     return ServiceManager.getService(ImageFileTypeManager.class);
   }
 
-  /**
-   * Check that file is image.
-   *
-   * @param file File to check
-   * @return Return {@code true} if image file is file with Images file type
-   */
   public abstract boolean isImage(@NotNull VirtualFile file);
 
   @NotNull

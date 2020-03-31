@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class LightClassCodeInsightTest extends LightCodeInsightFixtureTestCase {
+public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -156,9 +156,8 @@ public class LightClassCodeInsightTest extends LightCodeInsightFixtureTestCase {
         ABC_MY_INTERFACE + '.' + fileType.getDefaultExtension(), fileType, source);
     }
 
-    @NotNull
     @Override
-    public PsiClass[] findClasses(@NotNull String qn, @NotNull GlobalSearchScope scope) {
+    public PsiClass @NotNull [] findClasses(@NotNull String qn, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = findClass(qn, scope);
       if (psiClass != null && psiClass == _myInterface) {
         return new PsiClass[]{psiClass};

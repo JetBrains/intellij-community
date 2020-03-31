@@ -10,7 +10,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.io.write
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -27,6 +28,7 @@ import git4idea.repo.GitRepository
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import java.io.File
+import java.nio.file.Paths
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
@@ -55,7 +57,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
       mkdir(path)
     }
     else {
-      touch(path, "initial_content_" + Math.random())
+      touch(path, "initial_content_in_{$path}")
     }
   }
 }
@@ -64,11 +66,16 @@ fun initRepo(project: Project, repoRoot: String, makeInitialCommit: Boolean) {
   cd(repoRoot)
   git(project, "init")
   setupDefaultUsername(project)
+  setupLocalIgnore(repoRoot)
   if (makeInitialCommit) {
     touch("initial.txt")
     git(project, "add initial.txt")
     git(project, "commit -m initial")
   }
+}
+
+fun setupLocalIgnore(repoRoot: String) {
+  Paths.get(repoRoot, ".git", "info", "exclude").write(".shelf")
 }
 
 fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean) {
@@ -93,6 +100,10 @@ fun setupUsername(project: Project, name: String, email: String) {
   git(project, "config user.email '$email'")
 }
 
+fun disableGitGc(project: Project) {
+  git(project, "config gc.auto 0")
+}
+
 /**
  * Creates a Git repository in the given root directory;
  * registers it in the Settings;
@@ -109,7 +120,7 @@ fun createRepository(project: Project, root: String, makeInitialCommit: Boolean)
 
 fun GitRepository.createSubRepository(name: String): GitRepository {
   val childRoot = File(this.root.path, name)
-  PlatformTestCase.assertTrue(childRoot.mkdir())
+  HeavyPlatformTestCase.assertTrue(childRoot.mkdir())
   val repo = createRepository(this.project, childRoot.path)
   this.tac(".gitignore", name)
   return repo
@@ -119,9 +130,11 @@ fun registerRepo(project: Project, root: String): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root, GitVcs.NAME)
   val file = LocalFileSystem.getInstance().findFileByIoFile(File(root))
-  assertFalse(vcsManager.allVcsRoots.isEmpty())
+  assertFalse("There are no VCS roots. Active VCSs: ${vcsManager.allActiveVcss}", vcsManager.allVcsRoots.isEmpty())
   val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
   assertNotNull("Couldn't find repository for root $root", repository)
+  cd(root)
+  disableGitGc(project)
   return repository!!
 }
 

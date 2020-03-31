@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,12 +7,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.function.BiFunction;
 
@@ -34,43 +24,28 @@ import java.util.function.BiFunction;
  * @author tav
  */
 @SuppressWarnings("ConcatenationWithEmptyString")
-public class HidpiInfo extends AnAction implements DumbAware {
-  private static final boolean ENABLED = UIUtil.isJreHiDPIEnabled();
+public final class HidpiInfo extends AnAction implements DumbAware {
+  private static final boolean ENABLED = JreHiDpiUtil.isJreHiDPIEnabled();
 
   private static final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
-  private static final String JRE_HIDPI_MODE_DESC =
-    "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
-    (SystemInfo.isWindows ?
-    "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
-    (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
-    "The mode can not be changed on this platform.");
 
   private static final String MONITOR_RESOLUTION_TEXT = "Monitor resolution";
-  private static final String MONITOR_RESOLUTION_DESC =
-    "<html><span style='font-size:x-small'>" +
-      (ENABLED ?
-    "The current monitor resolution" :
-    "The main monitor resolution") +
-    " (in user space).</span></html>";
 
   private static final String SYS_SCALE_TEXT = "Monitor scale";
-  private static final String SYS_SCALE_DESC =
-    "<html><span style='font-size:x-small'>" +
-    (ENABLED ?
-    "The current monitor scale factor" :
-    "The main monitor scale factor") +
-    ".</span></html>";
 
   private static final String USR_SCALE_TEXT = "User (IDE) scale";
-  private static final String USR_SCALE_DESC =
-    "<html><span style='font-size:x-small'>The global IDE scale factor" +
-    (JBUI.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
+
+  // must be not constant to avoid call to JBUIScale
+  public static String getUsrScaleDesc() {
+    return "<html><span style='font-size:x-small'>The global IDE scale factor" +
+           (JBUIScale.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
     ", overridden by the debug property." :
-    ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
-    (ENABLED ? "pt" : "px") + "</code><br>" +
-    "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +
-    "> Appearance & Behaviour > Appearance > Override default font") +
-    "</code></span></html>";
+     ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
+     (ENABLED ? "pt" : "px") + "</code><br>" +
+     "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +
+     "> Appearance & Behaviour > Appearance > Override default font") +
+           "</code></span></html>";
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
@@ -78,23 +53,58 @@ public class HidpiInfo extends AnAction implements DumbAware {
     if (activeFrame == null) return;
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
-    String _USR_SCALE_DESC = USR_SCALE_DESC.replace("$LABEL_FONT_SIZE", "" + UIUtil.getLabelFont().getSize());
+    String _USR_SCALE_DESC = getUsrScaleDesc().replace("$LABEL_FONT_SIZE", "" + StartupUiUtil.getLabelFont().getSize());
 
     String[] columns = new String[] {
       "Property", "Value", "Description"
     };
 
     String[][] data = new String[][] {
-      {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled", JRE_HIDPI_MODE_DESC},
-      {MONITOR_RESOLUTION_TEXT, "" + bounds.width + "x" + bounds.height, MONITOR_RESOLUTION_DESC},
-      {SYS_SCALE_TEXT, "" + JBUI.sysScale(activeFrame), SYS_SCALE_DESC},
-      {USR_SCALE_TEXT, "" + JBUI.scale(1f), _USR_SCALE_DESC},
+      {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled",
+        "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
+            (SystemInfo.isWindows ?
+        "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
+        (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
+         "The mode can not be changed on this platform.")},
+      {MONITOR_RESOLUTION_TEXT, "" + bounds.width + "x" + bounds.height, "<html><span style='font-size:x-small'>" +
+                                                                           (ENABLED ?
+      "The current monitor resolution" :
+      "The main monitor resolution") +
+                                                                           " (in user space).</span></html>"},
+      {SYS_SCALE_TEXT, "" + JBUIScale.sysScale(activeFrame), "<html><span style='font-size:x-small'>" +
+                                                               (ENABLED ?
+      "The current monitor scale factor" :
+      "The main monitor scale factor") +
+                                                               ".</span></html>"},
+      {USR_SCALE_TEXT, "" + JBUIScale.scale(1f), _USR_SCALE_DESC},
     };
 
-    JTable table = new JTable(data, columns) {
+    if (SystemInfo.isLinux && SystemInfo.isJetBrainsJvm) {
+      try {
+        Class cls = Class.forName("sun.awt.X11GraphicsDevice");
+        MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
+        if (getDpiInfo.isAvailable()) {
+          String[][] dpiInfo = (String[][])getDpiInfo.invoke(activeFrame.getGraphicsConfiguration().getDevice());
+          if (dpiInfo != null && dpiInfo.length > 0) {
+            for (String[] row : dpiInfo) {
+              row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
+            }
+            String[][] _exData = new String[data.length + dpiInfo.length][];
+            System.arraycopy(data, 0, _exData, 0, data.length);
+            System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
+            data = _exData;
+          }
+        }
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+    }
+    final String[][] exData = data;
+
+    JTable table = new JTable(exData, columns) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
-        return (table1, value, isSelected, hasFocus, row1, column1) -> label(data[row1][column1]);
+        return (table1, value, isSelected, hasFocus, row1, column1) -> label(exData[row1][column1]);
       }
 
       @Override
@@ -103,18 +113,17 @@ public class HidpiInfo extends AnAction implements DumbAware {
       }
     };
 
-    BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(data[row][col]).getPreferredSize();
-    int padding = JBUI.scale(10);
+    BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(exData[row][col]).getPreferredSize();
+    int padding = JBUIScale.scale(10);
 
     table.setColumnSelectionAllowed(true);
     TableColumnModel tcm = table.getColumnModel();
     tcm.getColumn(0).setPreferredWidth(size.apply(0, 0).width + padding);
     tcm.getColumn(1).setPreferredWidth(size.apply(1, 1).width + padding);
     tcm.getColumn(2).setPreferredWidth(size.apply(0, 2).width + padding);
-    table.setRowHeight(0, size.apply(0, 2).height);
-    table.setRowHeight(1, size.apply(0, 2).height);
-    table.setRowHeight(2, size.apply(0, 2).height);
-    table.setRowHeight(3, size.apply(3, 2).height);
+    for (int i = 0; i < table.getRowCount(); i++) {
+      table.setRowHeight(i, size.apply(0, 2).height);
+    }
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(table, BorderLayout.CENTER);

@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -17,8 +17,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -86,7 +90,15 @@ public class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected can create symlinks", isSymLinkCreationSupported);
+    Assume.assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
+  }
+
+  public static void assumeWindows() throws AssumptionViolatedException {
+    Assume.assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME, SystemInfo.isWindows);
+  }
+
+  public static void assumeUnix() throws AssumptionViolatedException {
+    Assume.assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
   }
 
   @NotNull
@@ -122,7 +134,8 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> StringUtil.toUpperCase(root.getPath()).charAt(0));
+    Set<Character> roots =
+      StreamEx.of(FileSystems.getDefault().getRootDirectories()).map(root -> StringUtil.toUpperCase(root.toString()).charAt(0)).toSet();
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
         return c;
@@ -149,7 +162,8 @@ public class IoTestUtil {
 
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
-      Thread thread = new Thread(() -> {
+
+      Future<?> thread = ProcessIOExecutorService.INSTANCE.submit(() -> {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
           String line;
           while ((line = reader.readLine()) != null) {
@@ -159,16 +173,15 @@ public class IoTestUtil {
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-      }, "io test");
-      thread.start();
+      });
       int ret = process.waitFor();
-      thread.join();
+      thread.get();
 
       if (ret != 0) {
         throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output);
       }
     }
-    catch (IOException | InterruptedException e) {
+    catch (IOException | InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
@@ -204,7 +217,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull String... namesAndTexts) {
+  public static File createTestJar(@NotNull File jarFile, String @NotNull ... namesAndTexts) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < namesAndTexts.length; i += 2) {
         stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
@@ -240,7 +253,7 @@ public class IoTestUtil {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       FileUtil.visitFiles(root, file -> {
         if (file.isFile()) {
-          String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
+          String path = FileUtil.toSystemIndependentName(Objects.requireNonNull(FileUtil.getRelativePath(root, file)));
           try {
             stream.putNextEntry(new ZipEntry(path));
             try (InputStream is = new FileInputStream(file)) {
@@ -321,21 +334,25 @@ public class IoTestUtil {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection", "ResultOfMethodCallIgnored"})
   private static boolean canCreateSymlinks() {
-    File target = null, link = null;
     try {
-      target = File.createTempFile("IOTestUtil_link_target.", ".txt");
-      link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
-      Files.createSymbolicLink(link.toPath(), target.toPath());
-      return true;
+      Path target = Files.createTempFile("IOTestUtil_link_target.", ".txt");
+      try {
+        Path link = target.getParent().resolve("IOTestUtil_link");
+        try {
+          Files.createSymbolicLink(link, target.getFileName());
+          return true;
+        }
+        finally {
+          Files.deleteIfExists(link);
+        }
+      }
+      finally {
+        Files.delete(target);
+      }
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return false;
-    }
-    finally {
-      if (link != null) link.delete();
-      if (target != null) target.delete();
     }
   }
 }

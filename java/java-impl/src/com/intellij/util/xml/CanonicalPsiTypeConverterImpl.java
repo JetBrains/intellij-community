@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
@@ -53,8 +39,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
     final String typeText = genericDomValue.getStringValue();
     if (typeText == null) {
       return PsiReference.EMPTY_ARRAY;
@@ -63,10 +48,8 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   }
 
   public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, @NotNull final PsiElement element) {
-    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    assert manipulator != null;
     String trimmed = typeText.trim();
-    int offset = manipulator.getRangeInElement(element).getStartOffset() + startOffsetInText + typeText.indexOf(trimmed);
+    int offset = ElementManipulators.getValueTextRange(element).getStartOffset() + startOffsetInText + typeText.indexOf(trimmed);
     if (trimmed.startsWith(ARRAY_PREFIX)) {
       offset += ARRAY_PREFIX.length();
       if (trimmed.endsWith(";")) {
@@ -111,8 +94,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           }
 
           @Override
-          @NotNull
-          public Object[] getVariants() {
+          public Object @NotNull [] getVariants() {
             final Object[] variants = super.getVariants();
             if (myIndex == 0) {
               return ArrayUtil.mergeArrays(variants, PRIMITIVES, ArrayUtil.OBJECT_ARRAY_FACTORY);

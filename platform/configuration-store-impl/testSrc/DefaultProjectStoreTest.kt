@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.externalDependencies.DependencyOnPlugin
@@ -15,7 +15,6 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.delete
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.isEmpty
-import com.intellij.util.loadElement
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.junit.ClassRule
@@ -84,12 +83,12 @@ internal class DefaultProjectStoreTest {
         <main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" />
       </component>""".trimIndent()))
     val stateStore = ProjectManager.getInstance().defaultProject.stateStore as ComponentStoreImpl
-    stateStore.initComponent(defaultTestComponent, null)
+    stateStore.initComponent(defaultTestComponent, null, null)
     try {
       // obviously, project must be directory-based also
       createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) {
         val component = TestComponent()
-        it.stateStore.initComponent(component, null)
+        it.stateStore.initComponent(component, null, null)
         assertThat(component.state).isEqualTo(defaultTestComponent.state)
       }
     }
@@ -105,7 +104,7 @@ internal class DefaultProjectStoreTest {
   @Test
   fun `new project from default - remove workspace component configuration`() {
     val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
-    val element = loadElement(testData.resolve("testData1.xml"))
+    val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
     normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
@@ -118,13 +117,14 @@ internal class DefaultProjectStoreTest {
   @Test
   fun `new IPR project from default - remove workspace component configuration`() {
     val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
-    val element = loadElement(testData.resolve("testData1.xml"))
+    val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
-    moveComponentConfiguration(ProjectManager.getInstance().defaultProject, element) { if (it == "workspace.xml") tempDir.resolve("test.iws") else tempDir.resolve("test.ipr") }
-    assertThat(element).isEqualTo(loadElement(testData.resolve("normalize-ipr.xml")))
-
-    val directoryTree = tempDir.getDirectoryTree()
-    assertThat(directoryTree.trim()).toMatchSnapshot(testData.resolve("testData1-ipr.txt"))
+    val projectFile = tempDir.resolve("test.ipr")
+    moveComponentConfiguration(ProjectManager.getInstance().defaultProject, element, { "" }) {
+      if (it == "workspace.xml") tempDir.resolve("test.iws") else { projectFile }
+    }
+    assertThat(JDOMUtil.isEmpty(element)).isTrue()
+    assertThat(tempDir.getDirectoryTree()).toMatchSnapshot(testData.resolve("testData1-ipr.txt"))
   }
 }

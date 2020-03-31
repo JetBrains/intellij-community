@@ -45,9 +45,8 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return findChildByClass(GrOpenBlock.class);
   }
 
-  @NotNull
   @Override
-  public GrCatchClause[] getCatchClauses() {
+  public GrCatchClause @NotNull [] getCatchClauses() {
     return findChildrenByClass(GrCatchClause.class);
   }
 

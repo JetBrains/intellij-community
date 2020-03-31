@@ -36,7 +36,7 @@ echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
 "$JAVA_BIN" -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
- -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME"
+ -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME" -Dintellij.build.local.plugins.repository=$BUILD_LOCAL_PLUGINS_REPOSITORY
 
 if [ "$?" != "0" ]; then
   echo "Update failed; work IDEA build not modified"
@@ -44,18 +44,22 @@ if [ "$?" != "0" ]; then
   exit 2
 fi
 
-rm -rf "$WORK_IDEA_HOME/lib"
-rm -rf "$WORK_IDEA_HOME/plugins"
+rm -rf "$WORK_IDEA_HOME/lib" &
+rm -rf "$WORK_IDEA_HOME/plugins" &
 
-cp -R "$DEV_IDEA_HOME/out/deploy/"* "$WORK_IDEA_HOME"
+wait
+
+cp -R "$DEV_IDEA_HOME/out/deploy/dist/"* "$WORK_IDEA_HOME" &
 
 OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then
-  cp -a "$DEV_IDEA_HOME/bin/linux/"fsnotifier* "$WORK_IDEA_HOME/bin"
-  cp -a "$DEV_IDEA_HOME/bin/linux/"*.py "$WORK_IDEA_HOME/bin"
-  cp -a "$DEV_IDEA_HOME/bin/linux/"*.so "$WORK_IDEA_HOME/bin"
+  cp -a "$DEV_IDEA_HOME/bin/linux/"fsnotifier* "$WORK_IDEA_HOME/bin" &
+  cp -a "$DEV_IDEA_HOME/bin/linux/"*.py "$WORK_IDEA_HOME/bin" &
+  cp -a "$DEV_IDEA_HOME/bin/linux/"*.so "$WORK_IDEA_HOME/bin" &
 elif [ "$OS_TYPE" = "Darwin" ]; then
-  cp -a "$DEV_IDEA_HOME/bin/mac/"*.dylib "$WORK_IDEA_HOME/bin"
-  cp -a "$DEV_IDEA_HOME/bin/mac/fsnotifier" "$WORK_IDEA_HOME/bin"
-  cp -a "$DEV_IDEA_HOME/bin/mac/restarter" "$WORK_IDEA_HOME/bin"
+  cp -a "$DEV_IDEA_HOME/bin/mac/"*.dylib "$WORK_IDEA_HOME/bin" &
+  cp -a "$DEV_IDEA_HOME/bin/mac/fsnotifier" "$WORK_IDEA_HOME/bin" &
+  cp -a "$DEV_IDEA_HOME/bin/mac/restarter" "$WORK_IDEA_HOME/bin" &
 fi
+
+wait

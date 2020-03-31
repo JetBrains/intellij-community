@@ -6,11 +6,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import one.util.streamex.StreamEx;
 
-public class ControlFlowPerformanceTest extends LightCodeInsightTestCase {
+public class ControlFlowPerformanceTest extends LightJavaCodeInsightTestCase {
   public void testHugeMethodChainControlFlow() {
     PlatformTestUtil.startPerformanceTest(getTestName(false), 15_000, () -> {
       int size = 2500;

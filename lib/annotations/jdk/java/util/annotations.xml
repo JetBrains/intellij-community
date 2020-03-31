@@ -1,2 +1,5 @@
 <root>
+  <item name='java.util.Objects T requireNonNull(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

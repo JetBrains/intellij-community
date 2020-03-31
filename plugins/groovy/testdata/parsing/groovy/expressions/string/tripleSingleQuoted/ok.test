@@ -1,5 +1,8 @@
 ''''''
 '''\\'''
+'''\''''
+''''\''''
+'''''\''''
 
 '''\
 '''
@@ -31,6 +34,15 @@ Groovy script
   PsiElement(new line)('\n')
   Literal
     PsiElement(triple single quoted string)(''''\\'''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(triple single quoted string)(''''\''''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(triple single quoted string)('''''\''''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(triple single quoted string)(''''''\''''')
   PsiElement(new line)('\n\n')
   Literal
     PsiElement(triple single quoted string)(''''\\n'''')

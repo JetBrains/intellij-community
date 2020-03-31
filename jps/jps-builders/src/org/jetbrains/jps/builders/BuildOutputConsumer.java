@@ -25,8 +25,6 @@ import java.util.Collection;
  * Use methods of this interface to register files produced by a builder in the build system. This will allow other builders to process
  * generated files and also update the source-to-output mapping. The build system deletes output files corresponding to changed or deleted
  * source files before the next build starts. Also all output files registered in the mapping are cleared on forced recompilation (rebuild).
- *
- * @author nik
  */
 public interface BuildOutputConsumer {
   /**

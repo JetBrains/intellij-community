@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -41,13 +42,13 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
             val panel = EditorNotificationPanel(LightColors.RED)
-            panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
-            panel.createActionLabel(ProjectBundle.message("library.source.open.class")) {
+            panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
+            panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
               if (!project.isDisposed && clsFile.isValid) {
                 PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
               }
             }
-            panel.createActionLabel(ProjectBundle.message("library.source.show.diff")) {
+            panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
               if (!project.isDisposed && clsFile.isValid) {
                 val cf = DiffContentFactory.getInstance()
                 val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)

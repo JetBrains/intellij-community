@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -28,9 +14,6 @@ import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
   private static final int DEPRECATED = 0x01;
   private static final int INTERFACE = 0x02;
@@ -43,6 +26,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int ANONYMOUS_INNER = 0x100;
   private static final int LOCAL_CLASS_INNER = 0x200;
   private static final int HAS_DOC_COMMENT = 0x400;
+  private static final int RECORD = 0x800;
 
   private final String myQualifiedName;
   private final String myName;
@@ -100,6 +84,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   @Override
   public boolean isEnum() {
     return BitUtil.isSet(myFlags, ENUM);
+  }
+
+  @Override
+  public boolean isRecord() {
+    return BitUtil.isSet(myFlags, RECORD);
   }
 
   @Override
@@ -161,17 +150,42 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static short packFlags(boolean isDeprecated,
-                               boolean isInterface,
-                               boolean isEnum,
-                               boolean isEnumConstantInitializer,
-                               boolean isAnonymous,
-                               boolean isAnnotationType,
-                               boolean isInQualifiedNew,
-                               boolean hasDeprecatedAnnotation, 
-                               boolean anonymousInner,
-                               boolean localClassInner,
-                               boolean hasDocComment
-                                ) {
+                                boolean isInterface,
+                                boolean isEnum,
+                                boolean isEnumConstantInitializer,
+                                boolean isAnonymous,
+                                boolean isAnnotationType,
+                                boolean isInQualifiedNew,
+                                boolean hasDeprecatedAnnotation,
+                                boolean anonymousInner,
+                                boolean localClassInner,
+                                boolean hasDocComment) {
+    return packFlags(isDeprecated,
+                     isInterface,
+                     isEnum,
+                     isEnumConstantInitializer,
+                     isAnonymous,
+                     isAnnotationType,
+                     isInQualifiedNew,
+                     hasDeprecatedAnnotation,
+                     anonymousInner,
+                     localClassInner,
+                     hasDocComment,
+                     false);
+  }
+
+  public static short packFlags(boolean isDeprecated,
+                                boolean isInterface,
+                                boolean isEnum,
+                                boolean isEnumConstantInitializer,
+                                boolean isAnonymous,
+                                boolean isAnnotationType,
+                                boolean isInQualifiedNew,
+                                boolean hasDeprecatedAnnotation,
+                                boolean anonymousInner,
+                                boolean localClassInner,
+                                boolean hasDocComment,
+                                boolean isRecord) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -184,6 +198,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (anonymousInner) flags |= ANONYMOUS_INNER;
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
+    if (isRecord) flags |= RECORD;
     return flags;
   }
 
@@ -193,7 +208,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public boolean isLocalClassInner() {
     return BitUtil.isSet(myFlags, LOCAL_CLASS_INNER);
   }
-  
+
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public String toString() {
@@ -210,6 +225,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
     if (isEnum()) {
       builder.append("enum ");
+    }
+
+    if (isRecord()) {
+      builder.append("record ");
     }
 
     if (isAnnotationType()) {

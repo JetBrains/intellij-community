@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.IXmlTagElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlPsiUtil;
 
 /**
  * @author Maxim.Mossienko
@@ -34,6 +36,6 @@ public class HtmlDocumentImpl extends XmlDocumentImpl {
 
   @Override
   public XmlTag getRootTag() {
-    return (XmlTag)findElementByTokenType(XmlElementType.HTML_TAG);
+    return (XmlTag)XmlPsiUtil.findElement(this, IXmlTagElementType.class::isInstance);
   }
 }

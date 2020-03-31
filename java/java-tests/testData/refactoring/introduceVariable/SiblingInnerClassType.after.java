@@ -4,7 +4,7 @@ class A {
 
   class C {
      void testHere() {
-         B vari = new B();
+         B b = new B();
      }
   }
 }

@@ -34,7 +34,7 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
   }
 
   private fun loadSynonyms() {
-    val root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
       val groupName = configurable.getAttributeValue("configurable_name")

@@ -2,6 +2,10 @@
 import os
 import sys
 import traceback
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, IS_JYTHON, IS_PY36_OR_LESSER, IS_PY38_OR_GREATER, \
+    get_current_thread_id
+from _pydev_bundle import pydev_log
 
 try:
     xrange
@@ -15,12 +19,10 @@ PYTHON_NAMES = ['python', 'jython', 'pypy']
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
 def log_debug(msg):
-    from _pydev_bundle import pydev_log
     pydev_log.debug(msg)
 
 
 def log_error_once(msg):
-    from _pydev_bundle import pydev_log
     pydev_log.error_once(msg)
 
 
@@ -74,7 +76,7 @@ def _on_forked_process():
 
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
-        global_debugger.SetTrace(global_debugger.trace_dispatch, global_debugger.frame_eval_func, global_debugger.dummy_trace_dispatch)
+        global_debugger.enable_tracing()
 
 
 #===============================================================================
@@ -112,16 +114,19 @@ def is_python(path):
     for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-    return sys.platform != 'win32' and is_executable(path) and starts_with_python_shebang(path)
+    return not IS_WINDOWS and is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
-    new_args = []
-    for x in args:
-        if len(x) > 1 and x.startswith('"') and x.endswith('"'):
-            x = x[1:-1]
-        new_args.append(x)
-    return new_args
+    if sys.platform == "win32":
+        new_args = []
+        for x in args:
+            if len(x) > 1 and x.startswith('"') and x.endswith('"'):
+                x = x[1:-1]
+            new_args.append(x)
+        return new_args
+    else:
+        return args
 
 
 def quote_args(args):
@@ -170,7 +175,6 @@ def patch_args(args):
         args = remove_quotes_from_args(args)
 
         from pydevd import SetupHolder
-        import sys
         new_args = []
         if len(args) == 0:
             return args
@@ -227,6 +231,7 @@ def patch_args(args):
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
+        SetupHolder.setup['module'] = False  # clean module param from parent process
         original = setup_to_argv(SetupHolder.setup) + ['--file']
         while i < len(args):
             if args[i] == '-m':
@@ -497,6 +502,19 @@ def create_spawnve(original_name):
     return new_spawnve
 
 
+def create_posix_spawn(original_name):
+    """
+    os.posix_spawn(path, argv, env, *, file_actions=None, ... (6 more))
+    os.posix_spawnp(path, argv, env, *, file_actions=None, ... (6 more))
+    """
+    def new_posix_spawn(path, argv, env, **kwargs):
+        import os
+        argv = patch_args(argv)
+        send_process_created_message()
+        return getattr(os, original_name)(path, argv, env, **kwargs)
+    return new_posix_spawn
+
+
 def create_fork_exec(original_name):
     """
     _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
@@ -551,6 +569,19 @@ def create_CreateProcessWarnMultiproc(original_name):
     return new_CreateProcess
 
 
+def apply_foundation_framework_hack():
+    # Hack in order to prevent the crash on macOS - load the Foundation framework before any forking in the debugger.
+    # See: https://bugs.python.org/issue35219.
+    import ctypes
+    try:
+        ctypes.cdll.LoadLibrary('/System/Library/Frameworks/Foundation.framework/Foundation')
+    except OSError:
+        log_error_once('Failed to load the Foundation framework shared library. Debugging of code that uses `os.fork()` may not work.\n'
+                       'Consider setting the `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` environment variable.')
+    else:
+        log_debug('Successfully loaded the Foundation framework shared library.')
+
+
 def create_fork(original_name):
     def new_fork():
         import os
@@ -574,6 +605,11 @@ def create_fork(original_name):
             frame = frame.f_back
         frame = None  # Just make sure we don't hold on to it.
 
+        if IS_MACOS and IS_PY36_OR_LESSER:
+            is_fork_safety_disabled = os.environ.get('OBJC_DISABLE_INITIALIZE_FORK_SAFETY') == 'YES'
+            if not is_fork_safety_disabled:
+                apply_foundation_framework_hack()
+
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
             if is_new_python_process:
@@ -586,7 +622,6 @@ def create_fork(original_name):
 
 
 def send_process_created_message():
-    from _pydevd_bundle.pydevd_comm import get_global_debugger
     debugger = get_global_debugger()
     if debugger is not None:
         debugger.send_process_created_message()
@@ -639,20 +674,25 @@ def patch_new_process_functions():
     monkey_patch_os('spawnvp', create_spawnv)
     monkey_patch_os('spawnvpe', create_spawnve)
 
-    if sys.platform != 'win32':
-        monkey_patch_os('fork', create_fork)
-        try:
-            import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
-        except ImportError:
-            pass
-    else:
-        # Windows
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
-        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
+    if IS_PY38_OR_GREATER and not IS_WINDOWS:
+        monkey_patch_os('posix_spawn', create_posix_spawn)
+        monkey_patch_os('posix_spawnp', create_posix_spawn)
+
+    if not IS_JYTHON:
+        if not IS_WINDOWS:
+            monkey_patch_os('fork', create_fork)
+            try:
+                import _posixsubprocess
+                monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
+            except ImportError:
+                pass
+        else:
+            # Windows
+            try:
+                import _subprocess
+            except ImportError:
+                import _winapi as _subprocess
+            monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
 
 
 def patch_new_process_functions_with_warning():
@@ -673,20 +713,25 @@ def patch_new_process_functions_with_warning():
     monkey_patch_os('spawnvp', create_warn_multiproc)
     monkey_patch_os('spawnvpe', create_warn_multiproc)
 
-    if sys.platform != 'win32':
-        monkey_patch_os('fork', create_warn_multiproc)
-        try:
-            import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
-        except ImportError:
-            pass
-    else:
-        # Windows
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
-        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
+    if IS_PY38_OR_GREATER and not IS_WINDOWS:
+        monkey_patch_os('posix_spawn', create_warn_multiproc)
+        monkey_patch_os('posix_spawnp', create_warn_multiproc)
+
+    if not IS_JYTHON:
+        if not IS_WINDOWS:
+            monkey_patch_os('fork', create_warn_multiproc)
+            try:
+                import _posixsubprocess
+                monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
+            except ImportError:
+                pass
+        else:
+            # Windows
+            try:
+                import _subprocess
+            except ImportError:
+                import _winapi as _subprocess
+            monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
 
 
 class _NewThreadStartupWithTrace:
@@ -695,25 +740,42 @@ class _NewThreadStartupWithTrace:
         self.original_func = original_func
         self.args = args
         self.kwargs = kwargs
-        self.global_debugger = self.get_debugger()
-
-    def get_debugger(self):
-        from _pydevd_bundle.pydevd_comm import get_global_debugger
-        return get_global_debugger()
 
     def __call__(self):
-        _on_set_trace_for_new_thread(self.global_debugger)
-        global_debugger = self.global_debugger
+        # We monkey-patch the thread creation so that this function is called in the new thread. At this point
+        # we notify of its creation and start tracing it.
+        global_debugger = get_global_debugger()
 
-        if global_debugger is not None and global_debugger.thread_analyser is not None:
-            # we can detect start_new_thread only here
-            try:
-                from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
-                log_new_thread(global_debugger)
-            except:
-                sys.stderr.write("Failed to detect new thread for visualization")
+        thread_id = None
+        if global_debugger is not None:
+            # Note: if this is a thread from threading.py, we're too early in the boostrap process (because we mocked
+            # the start_new_thread internal machinery and thread._bootstrap has not finished), so, the code below needs
+            # to make sure that we use the current thread bound to the original function and not use
+            # threading.currentThread() unless we're sure it's a dummy thread.
+            t = getattr(self.original_func, '__self__', getattr(self.original_func, 'im_self', None))
+            if not isinstance(t, threading.Thread):
+                # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
+                # currentThread).
+                t = threading.currentThread()
 
-        return self.original_func(*self.args, **self.kwargs)
+            if not getattr(t, 'is_pydev_daemon_thread', False):
+                thread_id = get_current_thread_id(t)
+                global_debugger.notify_thread_created(thread_id, t)
+                _on_set_trace_for_new_thread(global_debugger)
+            
+                if getattr(global_debugger, 'thread_analyser', None) is not None:
+                    try:
+                        from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
+                        log_new_thread(global_debugger, t)
+                    except:
+                        sys.stderr.write("Failed to detect new thread for visualization")
+        try:
+            ret = self.original_func(*self.args, **self.kwargs)
+        finally:
+            if thread_id is not None:
+                global_debugger.notify_thread_not_alive(thread_id)
+        
+        return ret
 
 
 class _NewThreadStartupWithoutTrace:
@@ -737,31 +799,37 @@ def _get_threading_modules_to_patch():
     except:
         import _thread
     threading_modules_to_patch.append(_thread)
+    threading_modules_to_patch.append(threading)
 
     return threading_modules_to_patch
 
 threading_modules_to_patch = _get_threading_modules_to_patch()
 
 
-def patch_thread_module(thread):
+def patch_thread_module(thread_module):
 
-    if getattr(thread, '_original_start_new_thread', None) is None:
-        _original_start_new_thread = thread._original_start_new_thread = thread.start_new_thread
+    if getattr(thread_module, '_original_start_new_thread', None) is None:
+        if thread_module is threading:
+            if not hasattr(thread_module, '_start_new_thread'):
+                return  # Jython doesn't have it.
+            _original_start_new_thread = thread_module._original_start_new_thread = thread_module._start_new_thread
+        else:
+            _original_start_new_thread = thread_module._original_start_new_thread = thread_module.start_new_thread
     else:
-        _original_start_new_thread = thread._original_start_new_thread
+        _original_start_new_thread = thread_module._original_start_new_thread
 
     class ClassWithPydevStartNewThread:
 
         def pydev_start_new_thread(self, function, args=(), kwargs={}):
             '''
-            We need to replace the original thread.start_new_thread with this function so that threads started
+            We need to replace the original thread_module.start_new_thread with this function so that threads started
             through it and not through the threading module are properly traced.
             '''
             return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), ())
 
-    # This is a hack for the situation where the thread.start_new_thread is declared inside a class, such as the one below
+    # This is a hack for the situation where the thread_module.start_new_thread is declared inside a class, such as the one below
     # class F(object):
-    #    start_new_thread = thread.start_new_thread
+    #    start_new_thread = thread_module.start_new_thread
     #
     #    def start_it(self):
     #        self.start_new_thread(self.function, args, kwargs)
@@ -770,10 +838,13 @@ def patch_thread_module(thread):
     pydev_start_new_thread = ClassWithPydevStartNewThread().pydev_start_new_thread
 
     try:
-        # We need to replace the original thread.start_new_thread with this function so that threads started through
+        # We need to replace the original thread_module.start_new_thread with this function so that threads started through
         # it and not through the threading module are properly traced.
-        thread.start_new_thread = pydev_start_new_thread
-        thread.start_new = pydev_start_new_thread
+        if thread_module is threading:
+            thread_module._start_new_thread = pydev_start_new_thread
+        else:
+            thread_module.start_new_thread = pydev_start_new_thread
+            thread_module.start_new = pydev_start_new_thread
     except:
         pass
 
@@ -792,6 +863,11 @@ def undo_patch_thread_modules():
 
         try:
             t.start_new = t._original_start_new_thread
+        except:
+            pass
+
+        try:
+            t._start_new_thread = t._original_start_new_thread
         except:
             pass
 

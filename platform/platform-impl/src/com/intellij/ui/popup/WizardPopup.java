@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -32,7 +18,8 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +31,7 @@ import java.awt.event.*;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
+  private static final Logger LOG = Logger.getInstance(WizardPopup.class);
 
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
@@ -55,8 +42,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
 
-  private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer(
-    "Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
+  private final Timer myAutoSelectionTimer =
+    TimerUtil.createNamedTimer("Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
 
   private final MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -68,6 +55,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  /**
+   * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
+   */
   @Deprecated
   public WizardPopup(@NotNull PopupStep<Object> aStep) {
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
@@ -89,10 +79,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
     scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
 
-    scrollPane.setBorder(null);
+    scrollPane.setBorder(JBUI.Borders.empty());
 
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+         isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
 
@@ -238,6 +228,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myLastOwnerPoint = newOwnerPoint;
 
     final Window wnd = SwingUtilities.getWindowAncestor(getContent());
+    if (!wnd.isShowing()) return;
+
     final Point current = wnd.getLocationOnScreen();
 
     setLocation(new Point(current.x - deltaX, current.y - deltaY));
@@ -290,7 +282,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
+  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -299,7 +291,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   private static class MyContainer extends MyContentPanel {
-    private MyContainer(PopupBorder border) {
+    private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);
       setFocusCycleRoot(true);

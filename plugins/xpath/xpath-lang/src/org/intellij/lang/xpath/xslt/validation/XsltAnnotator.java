@@ -16,16 +16,15 @@
 package org.intellij.lang.xpath.xslt.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPathToken;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltContextProviderBase;
@@ -33,50 +32,46 @@ import org.intellij.lang.xpath.xslt.quickfix.ConvertToEntityFix;
 import org.intellij.lang.xpath.xslt.quickfix.FlipOperandsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltAnnotator extends XPath2ElementVisitor implements Annotator {
-
-  private AnnotationHolder myHolder;
-
+public class XsltAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final boolean isXslt = ContextProvider.getContextProvider(psiElement) instanceof XsltContextProviderBase;
     if (isXslt) {
-      try {
-        myHolder = holder;
-        psiElement.accept(this);
-      } finally {
-        myHolder = null;
+      if (psiElement instanceof XPathFile) {
+        visitXPathFile((XPathFile) psiElement, holder);
+      }
+      else if (psiElement instanceof XPathToken) {
+        visitXPathToken((XPathToken) psiElement, holder);
       }
     }
   }
 
-  @Override
-  public void visitXPathFile(XPathFile file) {
+  public void visitXPathFile(XPathFile file, AnnotationHolder holder) {
     final XmlAttribute context = PsiTreeUtil.getContextOfType(file, XmlAttribute.class, true);
     if (context != null) {
       if (XsltSupport.isPatternAttribute(context)) {
-        XsltPatternValidator.validate(myHolder, file);
+        XsltPatternValidator.validate(holder, file);
       } else {
         if (file.getText().trim().length() == 0 && file.getExpression() == null) {
-          myHolder.createErrorAnnotation(file, "Empty XPath expression");
+          holder.newAnnotation(HighlightSeverity.ERROR, "Empty XPath expression").create();
         }
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();
-        if (node != null && node.findChildByType(XPathTokenTypes.LBRACE) != null) {
-          myHolder.createErrorAnnotation(file, "Attribute Value Template is not allowed here");
+        if (node.findChildByType(XPathTokenTypes.LBRACE) != null) {
+          holder.newAnnotation(HighlightSeverity.ERROR, "Attribute Value Template is not allowed here").create();
         }
       }
     }
   }
 
-  @Override
-  public void visitXPathToken(XPathToken token) {
+  public void visitXPathToken(XPathToken token, AnnotationHolder holder) {
     if (XPathTokenTypes.REL_OPS.contains(token.getTokenType())) {
       if (token.textContains('<')) {
-        final Annotation ann = myHolder.createErrorAnnotation(token, "'<' must be escaped as '&lt;' in XSLT documents");
-        ann.registerFix(new ConvertToEntityFix(token));
-        ann.registerFix(new FlipOperandsFix(token));
+        holder.newAnnotation(HighlightSeverity.ERROR, "'<' must be escaped as '&lt;' in XSLT documents")
+        .withFix(new ConvertToEntityFix(token))
+        .withFix(new FlipOperandsFix(token))
+        .create();
       }
     }
   }

@@ -40,13 +40,6 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
 
   public boolean ignoreSingleArgument = true;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("conditional.can.be.pushed.inside.expression.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

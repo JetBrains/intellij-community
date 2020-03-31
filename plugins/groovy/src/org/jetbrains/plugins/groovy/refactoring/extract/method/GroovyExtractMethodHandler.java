@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
@@ -70,7 +56,6 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
-  protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
   @Override
@@ -124,7 +109,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       performRefactoring(initialInfo, editor);
     }
     catch (GrRefactoringError e) {
-      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), getRefactoringName(), HelpID.EXTRACT_METHOD);
     }
   }
 
@@ -195,7 +180,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
       }
-    }), REFACTORING_NAME, null);
+    }), getRefactoringName(), null);
   }
 
   private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {
@@ -222,7 +207,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // does nothing
   }
 
@@ -263,7 +248,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         for (final GrStatement statement : statements) {
           statement.accept(new PsiRecursiveElementVisitor() {
             @Override
-            public void visitElement(final PsiElement element) {
+            public void visitElement(@NotNull final PsiElement element) {
               super.visitElement(element);
               if (element instanceof GrReferenceExpression) {
                 GrReferenceExpression expr = (GrReferenceExpression) element;
@@ -279,5 +264,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         }
       }
     }
+  }
+
+  static String getRefactoringName() {
+    return GroovyRefactoringBundle.message("extract.method.title");
   }
 }

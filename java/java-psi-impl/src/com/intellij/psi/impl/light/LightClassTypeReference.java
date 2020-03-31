@@ -62,6 +62,11 @@ public class LightClassTypeReference extends LightClassReferenceBase implements 
   }
 
   @NotNull
+  public PsiClassType getType() {
+    return myType;
+  }
+
+  @NotNull
   @Override
   public GlobalSearchScope getResolveScope() {
     return myType.getResolveScope();

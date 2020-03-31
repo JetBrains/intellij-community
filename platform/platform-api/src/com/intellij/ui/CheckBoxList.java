@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
@@ -9,6 +9,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +22,6 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author oleg
- */
 public class CheckBoxList<T> extends JBList<JCheckBox> {
   private final static int    RESET_ROLLOVER = -1;
 
@@ -140,7 +138,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
    * @param newIndex new rollover row. If newIndex is -1 then reset old rollover row only.
    */
   private void fireRollOverUpdated(int newIndex) {
-    if (rollOverIndex >= 0) {
+    if (rollOverIndex >= 0 && rollOverIndex < getModel().getSize()) {
       JCheckBox oldRollover = getModel().getElementAt(rollOverIndex);
       oldRollover.getModel().setRollover(false);
     }
@@ -388,6 +386,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
+  @Nls
   @Nullable
   protected String getSecondaryText(int index) {
     return null;

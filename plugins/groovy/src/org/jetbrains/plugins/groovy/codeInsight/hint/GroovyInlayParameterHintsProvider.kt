@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMirrorElement
-import com.intellij.psi.PsiParameter
 import org.jetbrains.plugins.groovy.editor.shouldHideInlayHints
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 
 class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
@@ -38,7 +38,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
   private fun PsiMethod.getMethodInfo(): MethodInfo? {
     val clazzName = containingClass?.qualifiedName ?: return null
     val fullMethodName = StringUtil.getQualifiedName(clazzName, name)
-    val paramNames: List<String> = parameterList.parameters.map { it.name ?: "" }
+    val paramNames: List<String> = parameterList.parameters.map { it.name }
     return MethodInfo(fullMethodName, paramNames, if (language == blackListDependencyLanguage) language else null)
   }
 
@@ -57,7 +57,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
       val result = advancedResolve() as? GroovyMethodResult ?: return null
       val mapping = result.candidate?.argumentMapping ?: return null
 
-      val map: Map<PsiParameter, List<GrExpression>> = argumentList.expressionArguments
+      val map: Map<PsiCallParameter, List<GrExpression>> = argumentList.expressionArguments
         .asSequence()
         .map(::ExpressionArgument)
         .mapNotNull { arg ->
@@ -66,11 +66,12 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
         }
         .groupBy({ it.first }, { it.second })
 
+      val varargParameter = mapping.varargParameter
       val inlays = ArrayList<InlayInfo>(map.size)
       for ((parameter, expressions) in map) {
-        val name = parameter.name ?: continue
+        val name = parameter.parameterName ?: continue
         if (expressions.none(::shouldShowHint)) continue
-        val inlayText = if (mapping.isVararg(parameter)) "...$name" else name
+        val inlayText = if (parameter === varargParameter) "...$name" else name
         inlays += InlayInfo(inlayText, expressions.first().textRange.startOffset)
       }
       return inlays

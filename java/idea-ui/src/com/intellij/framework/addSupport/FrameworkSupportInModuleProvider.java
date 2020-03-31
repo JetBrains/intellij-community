@@ -15,23 +15,23 @@
  */
 package com.intellij.framework.addSupport;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGroup {
 
   @NotNull
@@ -54,6 +54,7 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return !isSupportAlreadyAdded(module, facetsProvider);
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return getFrameworkType().getPresentableName();
@@ -77,9 +78,18 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return getFrameworkType().getId();
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
-    return getFrameworkType().getIcon();
+    Icon icon = getFrameworkType().getIcon();
+    //noinspection ConstantConditions
+    if (icon == null) {
+      Class<?> aClass = getFrameworkType().getClass();
+      Logger logger = Logger.getInstance(FrameworkSupportInModuleProvider.class);
+      PluginException.logPluginError(logger, "FrameworkType::getIcon returns null for " + aClass, null, aClass);
+      return EmptyIcon.ICON_16;
+    }
+    return icon;
   }
 
   @Override

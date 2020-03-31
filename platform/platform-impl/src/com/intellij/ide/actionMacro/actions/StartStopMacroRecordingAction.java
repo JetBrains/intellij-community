@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro.actions;
 
 import com.intellij.icons.AllIcons;
@@ -10,9 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -34,7 +31,7 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (!ActionMacroManager.getInstance().isRecording()) {
       final ActionMacroManager manager = ActionMacroManager.getInstance();
-      manager.startRecording(IdeBundle.message("macro.noname"));
+      manager.startRecording(ActionMacroManager.NO_NAME_NAME);
     }
     else {
       ActionMacroManager.getInstance().stopRecording(e.getProject());

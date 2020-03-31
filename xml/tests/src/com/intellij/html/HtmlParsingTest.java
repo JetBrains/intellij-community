@@ -15,7 +15,7 @@ public class HtmlParsingTest extends XmlParsingTest {
 
   protected HtmlParsingTest(@NotNull String dataPath,
                             @NotNull String fileExt,
-                            @NotNull ParserDefinition... definitions) {
+                            ParserDefinition @NotNull ... definitions) {
     super(dataPath, fileExt, definitions);
   }
 
@@ -87,5 +87,10 @@ public class HtmlParsingTest extends XmlParsingTest {
     doTestHtml("<!--[if !IE]>-->\n" +
                "<link href=\"non-ie.css\" rel=\"stylesheet\">\n" +
                "<!--<![endif]-->");
+  }
+
+  public void testScriptEmbeddingParsing() throws Exception {
+    doTestHtml("<script type=\"foo/bar\"><div></div></script>\n" +
+               "<script type=\"foo/bar\"><div> </div></script>");
   }
 }

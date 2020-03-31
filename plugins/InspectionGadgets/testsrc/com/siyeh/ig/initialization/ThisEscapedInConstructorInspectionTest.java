@@ -16,13 +16,13 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThisEscapedInConstructorInspectionTest extends LightInspectionTestCase {
+public class ThisEscapedInConstructorInspectionTest extends LightJavaInspectionTestCase {
 
   public void testThisEscapedInConstructorInspection() { doTest(); }
   public void testMethodUsers() { doTest(); }

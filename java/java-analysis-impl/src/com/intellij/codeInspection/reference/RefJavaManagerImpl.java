@@ -4,10 +4,10 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -145,7 +145,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
     GlobalInspectionContextBase contextBase = (GlobalInspectionContextBase)myRefManager.getContext();
     Tools tools = contextBase.getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
-    InspectionToolWrapper toolWrapper;
+    InspectionToolWrapper<?,?> toolWrapper;
     if (tools != null) {
       toolWrapper = tools.getEnabledTool(file);
     }
@@ -166,7 +166,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public RefPackage getDefaultPackage() {
     RefPackage defaultPackage = myCachedDefaultPackage;
     if (defaultPackage == null) {
-      myCachedDefaultPackage = defaultPackage = getPackage(InspectionsBundle.message("inspection.reference.default.package"));
+      myCachedDefaultPackage = defaultPackage = getPackage(JavaAnalysisBundle.message("inspection.reference.default.package"));
     }
     return defaultPackage;
   }
@@ -351,7 +351,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new UastVisitorAdapter(new MyJavaElementVisitor(), true) {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           super.visitElement(element);
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
@@ -386,7 +386,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
     if (packageName != null) {
       final Element packageElement = new Element("package");
-      packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
+      packageElement.addContent(packageName.isEmpty() ? JavaAnalysisBundle.message("inspection.reference.default.package") : packageName);
       element.addContent(packageElement);
     }
   }

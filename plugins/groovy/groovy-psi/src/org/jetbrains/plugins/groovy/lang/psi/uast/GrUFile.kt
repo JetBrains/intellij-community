@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.PsiComment
@@ -19,7 +17,7 @@ class GrUFile(override val sourcePsi: GroovyFile, override val languagePlugin: U
 
   override val imports: List<UImportStatement> = emptyList<UImportStatement>() // not implemented
 
-  override val annotations: List<UAnnotation>
+  override val uAnnotations: List<UAnnotation>
     get() = sourcePsi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()
 
   override val classes: List<GrUClass> by lazy { sourcePsi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }

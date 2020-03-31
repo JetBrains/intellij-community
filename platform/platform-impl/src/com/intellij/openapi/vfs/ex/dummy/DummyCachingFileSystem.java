@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.Disposable;
@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.create(
     this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
   public DummyCachingFileSystem(String protocol) {
     myProtocol = protocol;
 
     final Application application = ApplicationManager.getApplication();
-    application.getMessageBus().connect(application).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull final Project project) {
         onProjectOpened(project);

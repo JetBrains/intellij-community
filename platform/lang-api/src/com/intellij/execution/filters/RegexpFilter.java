@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +35,9 @@ import java.util.regex.Pattern;
  * @version 1.0
  */
 public class RegexpFilter implements Filter, DumbAware {
+
+  private static final Logger LOG = Logger.getInstance(RegexpFilter.class);
+
   @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
   @NonNls public static final String LINE_MACROS = "$LINE$";
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
@@ -122,8 +127,16 @@ public class RegexpFilter implements Filter, DumbAware {
   @Override
   public Result applyFilter(@NotNull String line, int entireLength) {
     Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
-    if (!matcher.find()) {
-      return null;
+    try {
+      if (!matcher.find()) {
+        return null;
+      }
+    }
+    catch (ProcessCanceledException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Too long matching '" + line + "' by '" + myPattern + "' in " + getClass().getName());
+      }
+      return null; 
     }
 
     String filePath = matcher.group(FILE_STR);

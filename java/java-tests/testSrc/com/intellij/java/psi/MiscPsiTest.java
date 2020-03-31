@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,23 +9,27 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @SkipSlowTestLocally
-public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
+public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     WriteCommandAction.writeCommandAction(getProject()).run(() -> runnable.run());
@@ -104,7 +94,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     assertInstanceOf(newFile, PsiPlainTextFile.class);
 
-    assertEquals(text, VfsUtil.loadText(newFile.getVirtualFile()));
+    assertEquals(text, VfsUtilCore.loadText(newFile.getVirtualFile()));
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
     assertFalse(FileDocumentManager.getInstance().isFileModified(newFile.getVirtualFile()));
   }
@@ -283,7 +273,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
 
-    GCWatcher.tracking(file.getViewProvider().getDocument()).tryGc();
+    GCWatcher.tracking(file.getViewProvider().getDocument()).ensureCollected();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
@@ -300,7 +290,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(aClass.getNode());
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
-    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).tryGc();
+    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).ensureCollected();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     aClass.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText("void foo(){}", null));
@@ -316,7 +306,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
 
     PsiClass aClass = file.getClasses()[0];
-    GCWatcher.tracking(aClass.getNode()).tryGc();
+    GCWatcher.tracking(aClass.getNode()).ensureCollected();
 
     PsiKeyword kw = assertInstanceOf(aClass.getMethods()[0].getModifierList().getFirstChild(), PsiKeyword.class);
     kw.delete();
@@ -356,7 +346,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     catch (Throwable e) {
       assertTrue(e.getMessage(), e.getMessage().contains("Wrong line separators"));
     }
-    
+
     assertEquals("class A{}", getPsiManager().findFile(vFile).getText());
 
     VfsUtil.saveText(vFile, "class C {}");
@@ -400,5 +390,19 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     });
 
     assertEquals(" class Foo {}", file.getText());
+  }
+
+  public void testGenericLightMethodBuilderEquivalence() {
+    Factory<PsiMethod> createMethod = () -> {
+      LightMethodBuilder method = new LightMethodBuilder(getPsiManager(), "foo");
+      LightTypeParameterBuilder typeParam = new LightTypeParameterBuilder("T", method, 0);
+      method.addTypeParameter(typeParam);
+      PsiClassType tType = JavaPsiFacade.getElementFactory(getProject()).createType(typeParam);
+      method.setMethodReturnType(tType);
+      method.addParameter("p", tType);
+      return method;
+    };
+
+    assertTrue(getPsiManager().areElementsEquivalent(createMethod.create(), createMethod.create()));
   }
 }

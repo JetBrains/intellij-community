@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -6,8 +6,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -17,11 +20,14 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -88,8 +94,7 @@ public abstract class XmlExtension {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  @Nullable
-  public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
   }
 
@@ -126,6 +131,16 @@ public abstract class XmlExtension {
     return element.getNSDescriptor(namespace, strict);
   }
 
+  @NotNull
+  public XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull String namespacePrefix, @NotNull XmlNSDescriptor descriptor) {
+    if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
+      XmlNSDescriptor result = doIfNotNull(descriptor.getDescriptorFile(),
+                                           file -> XmlDocumentImpl.getCachedHtmlNsDescriptor(file, namespacePrefix));
+      return ObjectUtils.notNull(result, () -> new HtmlNSDescriptorImpl(descriptor));
+    }
+    return descriptor;
+  }
+
   @Nullable
   public XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
     return tag.getParentTag();
@@ -156,10 +171,14 @@ public abstract class XmlExtension {
     return descriptor.isRequired();
   }
 
+  public boolean shouldCompleteTag(XmlTag context) {
+    return true;
+  }
+  
   @NotNull
-  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
-                                                                  @NotNull String defaultAttributeQuote,
-                                                                  @NotNull PsiElement context) {
+  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
+                                                                  @NotNull String attributeName,
+                                                                  @NotNull String defaultAttributeQuote) {
     return new AttributeValuePresentation() {
       @NotNull
       @Override
@@ -192,6 +211,10 @@ public abstract class XmlExtension {
   }
 
   public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
+
+  public boolean isValidTagNameChar(final char c) {
+    return false;
+  }
 
   public static boolean shouldIgnoreSelfClosingTag(@NotNull XmlTag tag) {
     final XmlExtension extension = getExtensionByElement(tag);

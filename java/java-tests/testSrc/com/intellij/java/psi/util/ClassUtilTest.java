@@ -19,13 +19,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author yole
  */
-public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
+public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";

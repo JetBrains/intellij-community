@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -36,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * }
  * }</pre>
  * </p>
- *
- * @author Kirill Likhodedov
  */
 public enum GitVersionSpecialty {
 
@@ -116,6 +100,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  KNOWS_REBASE_DROP_ACTION {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 6, 0, 0));
+    }
+  },
+
   CLONE_RECURSE_SUBMODULES {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -159,13 +150,6 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
-    }
-  },
-
-  FOLLOW_IS_BUGGY_IN_THE_LOG {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
     }
   },
 
@@ -264,10 +248,42 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
     }
+  },
+
+  REBASE_MERGES_REPLACES_PRESERVE_MERGES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 22, 0, 0));
+    }
+  },
+
+  STATUS_SUPPORTS_IGNORED_MODES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 16, 0, 0));
+    }
+  },
+
+  STATUS_SUPPORTS_NO_RENAMES {
+    @Override
+    public boolean existsIn (@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 18, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
+  /**
+   * Check version of configured git executable.
+   * Might show modal progress dialog if invoked on EDT.
+   * <p>
+   * NB: In some cases (ex: incorrectly configured executable)
+   * this method can show long modal progress on every invocation.
+   * <p>
+   * This method should not be called from {@link com.intellij.openapi.actionSystem.AnAction#update},
+   * use {@link #existsIn(GitVersion)} and {@link GitExecutableManager#getVersion(Project)} instead
+   * (it will not execute an external process).
+   */
   public boolean existsIn(@NotNull Project project) {
     GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
     return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));

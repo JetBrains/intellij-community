@@ -25,11 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Attributes;
 
-/**
- * @author nik
- */
 public class AppEngineSdkImpl implements AppEngineSdk {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.sdk.impl.AppEngineSdkImpl");
+  private static final Logger LOG = Logger.getInstance(AppEngineSdkImpl.class);
   private Map<String, Set<String>> myClassesWhiteList;
   private Map<String, Set<String>> myMethodsBlackList;
   private final String myHomePath;
@@ -64,14 +61,12 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   @Override
-  @NotNull
-  public File[] getLibraries() {
+  public File @NotNull [] getLibraries() {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared"));
   }
 
-  @NotNull
   @Override
-  public File[] getJspLibraries() {
+  public File @NotNull [] getJspLibraries() {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared/jsp"));
   }
 
@@ -197,8 +192,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getOrmLibSources() {
+  public VirtualFile @NotNull [] getOrmLibSources() {
     final File libsDir = new File(myHomePath, "src/orm");
     final File[] files = libsDir.listFiles();
     List<VirtualFile> roots = new ArrayList<>();

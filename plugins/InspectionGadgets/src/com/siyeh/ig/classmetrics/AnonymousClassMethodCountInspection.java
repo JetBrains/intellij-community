@@ -41,13 +41,6 @@ public class AnonymousClassMethodCountInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.class.with.too.many.methods.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return DEFAULT_METHOD_COUNT_LIMIT;
   }

@@ -62,7 +62,7 @@ class IdeExternalAnnotationsUpdater {
   }
 
   fun updateIdeaJdkAnnotationsIfNecessary(project: Project, ideaJdk: Sdk, buildNumber: BuildNumber) {
-    if (!isInspectionEnabled(project) || !PublicIdeExternalAnnotationsRepository.hasAnnotationsForProduct(buildNumber.productCode)) {
+    if (!isInspectionEnabled(project)) {
       return
     }
 

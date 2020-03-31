@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -19,9 +19,6 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author egor
- */
 public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
   private final int myParamNo;
   private final LambdaMethodFilter myMethodFilter;
@@ -33,14 +30,14 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
   }
 
   @Override
-  public boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
-    if (super.locationMatches(process, frameProxy)) {
+  public boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl frameProxy) throws EvaluateException {
+    if (super.locationMatches(process, location, frameProxy) && frameProxy != null) {
       Value lambdaReference = getLambdaReference(frameProxy);
       if (lambdaReference instanceof ObjectReference) {
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(
           ((ObjectReference)lambdaReference).referenceType(), process.getVirtualMachineProxy().getClassesByNameProvider());
-        Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
-        return location != null && myMethodFilter.locationMatches(process, location);
+        Location newLocation = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
+        return newLocation != null && myMethodFilter.locationMatches(process, newLocation);
       }
     }
     return false;
@@ -58,7 +55,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
             Project project = context.getDebugProcess().getProject();
             long lambdaId = ((ObjectReference)lambdaReference).uniqueID();
             StepIntoBreakpoint breakpoint = new LambdaInstanceBreakpoint(project, lambdaId, pos, myMethodFilter);
-            ClassInstanceMethodFilter.setUpStepIntoBreakpoint(context, breakpoint, hint);
+            DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, true);
             return RequestHint.RESUME;
           }
         }

@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -13,8 +12,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Dependency;
@@ -99,16 +96,9 @@ class RegistrationCheckerUtil {
 
     // <depends> plugin.xml files
     for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
-      final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
-      if (!DomUtil.hasXml(configFileAttribute)) continue;
-
-      final PathReference configFile = configFileAttribute.getValue();
-      if (configFile != null) {
-        final PsiElement resolve = configFile.resolve();
-        if (!(resolve instanceof XmlFile)) continue;
-        final XmlFile depPluginXml = (XmlFile)resolve;
-
-        final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
+      XmlFile depPluginXml = DescriptorUtil.resolveDependencyToXmlFile(dependency);
+      if (depPluginXml != null) {
+        final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPluginFileElement(depPluginXml);
         if (dependentIdeaPlugin != null) {
           if (!finder.processScope(GlobalSearchScope.fileScope(dependentIdeaPlugin.getFile()))) {
             return finder.getTypes();
@@ -147,7 +137,7 @@ class RegistrationCheckerUtil {
     if (pluginXml == null) {
       return null;
     }
-    return DescriptorUtil.getIdeaPlugin(pluginXml);
+    return DescriptorUtil.getIdeaPluginFileElement(pluginXml);
   }
 
 

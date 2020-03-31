@@ -57,17 +57,17 @@ public class MagicCompletionContributor extends CompletionContributor {
       return;
     }
 
-    MagicConstantInspection.AllowedValues allowedValues = getAllowedValues(pos);
+    MagicConstantUtils.AllowedValues allowedValues = getAllowedValues(pos);
     if (allowedValues == null) return;
 
     addCompletionVariants(parameters, result, pos, allowedValues);
   }
 
   @Nullable
-  public static MagicConstantInspection.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
-    MagicConstantInspection.AllowedValues allowedValues = null;
+  public static MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
+    MagicConstantUtils.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
-      MagicConstantInspection.AllowedValues values = MagicConstantInspection.getAllowedValues(pair.first, pair.second, null);
+      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second);
       if (values == null) continue;
       if (allowedValues == null) {
         allowedValues = values;
@@ -181,7 +181,7 @@ public class MagicCompletionContributor extends CompletionContributor {
   private static void addCompletionVariants(@NotNull final CompletionParameters parameters,
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
-                                            MagicConstantInspection.AllowedValues allowedValues) {
+                                            MagicConstantUtils.AllowedValues allowedValues) {
     final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<PsiElement>() {
       @Override
       public int computeHashCode(PsiElement object) {
@@ -193,7 +193,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         return parameters.getOriginalFile().getManager().areElementsEquivalent(o1, o2);
       }
     });
-    if (allowedValues.canBeOred) {
+    if (allowedValues.isFlagSet()) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(pos.getProject());
       PsiExpression zero = factory.createExpressionFromText("0", pos);
       result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(zero, "0"), PRIORITY - 1));
@@ -203,7 +203,7 @@ public class MagicCompletionContributor extends CompletionContributor {
       allowed.add(minusOne);
     }
     List<ExpectedTypeInfo> types = Arrays.asList(JavaSmartCompletionContributor.getExpectedTypes(parameters));
-    for (PsiAnnotationMemberValue value : allowedValues.values) {
+    for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
       if (value instanceof PsiReference) {
         PsiElement resolved = ((PsiReference)value).resolve();
         if (resolved instanceof PsiNamedElement) {

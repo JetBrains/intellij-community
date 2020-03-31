@@ -19,9 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.Utils;
 
-/**
- * @author nik
- */
 public class BuilderStatisticsMessage extends BuildMessage {
   private final String myBuilderName;
   private final int myNumberOfProcessedSources;

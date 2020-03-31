@@ -14,13 +14,15 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 
-import static org.testng.Assert.fail;
+import static com.intellij.openapi.vcs.Executor.overwrite;
+import static org.junit.Assert.fail;
 
 public class HgDeleteTest extends HgSingleUserTest {
 
@@ -29,13 +31,13 @@ public class HgDeleteTest extends HgSingleUserTest {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(file);
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
+    verifyStatus(HgTestOutputParser.removed("a.txt"));
   }
 
   @Test
   public void testDeleteUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"));
+    verifyStatus(HgTestOutputParser.unknown("a.txt"));
     deleteFileInCommand(file);
     Assert.assertFalse(file.exists());
   }
@@ -51,10 +53,11 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    VcsTestUtil.editFileInCommand(myProject, file, "even newer content");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
+    myChangeListManager.ensureUpToDate();
+    overwrite(VfsUtilCore.virtualToIoFile(file), "even newer content");
+    verifyStatus(HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
+    verifyStatus(HgTestOutputParser.removed("a.txt"));
   }
 
   @Test
@@ -63,7 +66,7 @@ public class HgDeleteTest extends HgSingleUserTest {
     createFileInCommand(parent, "a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(parent);
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("com", "a.txt"));
+    verifyStatus(HgTestOutputParser.removed("com", "a.txt"));
   }
 
   /**
@@ -76,6 +79,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testNewlyAddedFileShouldNotBePromptedForRemoval() {
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override
@@ -103,6 +107,7 @@ public class HgDeleteTest extends HgSingleUserTest {
 
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override

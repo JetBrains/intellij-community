@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -17,10 +17,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.io.URLUtil;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -45,8 +42,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
     if (element instanceof XmlAttribute) {
       final XmlAttribute attribute = (XmlAttribute)element;
@@ -242,7 +238,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   static class MyParamMatcher extends NamedTemplateMatcher {
     private final XsltCallTemplate myCall;
     private final String myParamName;
-    private String[] myExcludedNames = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] myExcludedNames = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     MyParamMatcher(String paramName, XsltCallTemplate call) {
       super(XsltCodeInsightUtil.getDocument(call), call.getTemplateName());
@@ -289,7 +285,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   static class MyParamMatcher2 extends MatchTemplateMatcher {
     private final String myParamName;
     private final XsltApplyTemplates myCall;
-    private String[] myExcludedNames = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] myExcludedNames = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     MyParamMatcher2(String paramName, XsltApplyTemplates call) {
       super(XsltCodeInsightUtil.getDocument(call), call.getMode());

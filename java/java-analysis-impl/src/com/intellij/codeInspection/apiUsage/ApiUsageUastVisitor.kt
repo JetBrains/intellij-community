@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.apiUsage
 
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
@@ -10,6 +14,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  * Non-recursive UAST visitor that detects usages of APIs in source code of UAST-supporting languages
  * and reports them via [ApiUsageProcessor] interface.
  */
+@ApiStatus.Experimental
 class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
 
   companion object {
@@ -88,7 +93,10 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //UAST for Kotlin produces UQualifiedReferenceExpression with UCallExpression as selector
       return true
     }
-    val resolved = node.resolve()
+    var resolved = node.resolve()
+    if (resolved == null) {
+      resolved = node.selector.tryResolve()
+    }
     if (resolved is PsiModifierListOwner) {
       apiUsageProcessor.processReference(node.selector, resolved, node.receiver)
     }
@@ -121,6 +129,16 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     if (resolve is PsiModifierListOwner) {
       val sourceNode = node.referenceNameElement ?: workaroundKotlinGetReferenceNameElement(node) ?: node
       apiUsageProcessor.processReference(sourceNode, resolve, node.qualifierExpression)
+
+      //todo support this for other JVM languages
+      val javaMethodReference = node.sourcePsi as? PsiMethodReferenceExpression
+      if (javaMethodReference != null) {
+        //a reference to the functional interface will be added by compiler
+        val resolved = PsiUtil.resolveGenericsClassInType(javaMethodReference.functionalInterfaceType).element
+        if (resolved != null) {
+          apiUsageProcessor.processReference(node, resolved, null)
+        }
+      }
     }
     return true
   }
@@ -221,6 +239,18 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return true
   }
 
+  override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+    val explicitClassReference = (node.uastParent as? UCallExpression)?.classReference
+    if (explicitClassReference == null) {
+      //a reference to the functional interface will be added by compiler
+      val resolved = PsiUtil.resolveGenericsClassInType(node.functionalInterfaceType).element
+      if (resolved != null) {
+        apiUsageProcessor.processReference(node, resolved, null)
+      }
+    }
+    return true
+  }
+
   private fun maybeProcessJavaModuleReference(node: UElement): Boolean {
     val sourcePsi = node.sourcePsi
     val psiParent = sourcePsi?.parent
@@ -263,7 +293,13 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return false
   }
 
-  private fun isInsideImportStatement(node: UElement) = node.sourcePsi.findContaining(UImportStatement::class.java) != null
+  private fun isInsideImportStatement(node: UElement): Boolean {
+    val sourcePsi = node.sourcePsi
+    if (sourcePsi != null && sourcePsi.language == JavaLanguage.INSTANCE) {
+      return PsiTreeUtil.getParentOfType(sourcePsi, PsiImportStatementBase::class.java) != null
+    }
+    return sourcePsi.findContaining(UImportStatement::class.java) != null
+  }
 
   private fun maybeProcessImplicitConstructorInvocationAtSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) {
     val instantiatedClass = subclassDeclaration.javaPsi.superClass ?: return
@@ -288,13 +324,13 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     val superClass = containingUClass.javaPsi.superClass ?: return
     val uastBody = constructor.uastBody
     val uastAnchor = constructor.uastAnchor
-    if (uastAnchor != null && isImplicitCallOfSuperConstructorFromSubclassConstructorBody(uastBody)) {
+    if (uastAnchor != null && isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(uastBody)) {
       val emptyConstructor = superClass.constructors.find { it.parameterList.isEmpty }
       apiUsageProcessor.processConstructorInvocation(uastAnchor, superClass, emptyConstructor, null)
     }
   }
 
-  private fun isImplicitCallOfSuperConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
+  private fun isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
     if (constructorBody == null || constructorBody is UBlockExpression && constructorBody.expressions.isEmpty()) {
       //Empty constructor body => implicit super() call.
       return true
@@ -304,7 +340,12 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //First expression is not super() => the super() is implicit.
       return true
     }
-    return firstExpression.methodName != "super"
+    if (firstExpression.valueArgumentCount > 0) {
+      //Invocation of non-empty super(args) constructor.
+      return false
+    }
+    val methodName = firstExpression.methodIdentifier?.name ?: firstExpression.methodName
+    return methodName != "super" && methodName != "this"
   }
 
   private fun checkMethodOverriding(node: UMethod) {

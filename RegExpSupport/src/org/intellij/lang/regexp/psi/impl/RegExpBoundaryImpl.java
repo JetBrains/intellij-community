@@ -30,9 +30,7 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
     @Override
     @NotNull
     public Type getType() {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType type = child.getElementType();
+        final IElementType type = getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.CARET) {
             return Type.LINE_START;
         } else if (type == RegExpTT.DOLLAR) {
@@ -53,6 +51,8 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
                 return Type.END;
             } else if (s.equals("\\G")) {
                 return Type.PREVIOUS_MATCH;
+            } else if (s.equals("\\K")) {
+                return Type.RESET_MATCH;
             }
         }
         assert false;

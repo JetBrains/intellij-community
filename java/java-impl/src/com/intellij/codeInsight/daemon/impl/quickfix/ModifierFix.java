@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
+  private static final Logger LOG = Logger.getInstance(ModifierFix.class);
 
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
@@ -118,6 +118,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     PsiVariable variable = myVariable == null ? null : myVariable.getElement();
     boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
                           modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
+                          !(variable instanceof SyntheticElement) &&
                           (variable == null || variable.isValid());
 
     if (isAvailable && myShowContainingClass && editor != null) {
@@ -192,7 +193,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                 return true;
               }
             }));
-        }, InspectionsBundle.message("psi.search.overriding.progress"), true, project);
+        }, JavaBundle.message("psi.search.overriding.progress"), true, project);
         if (!modifierLists.isEmpty() && Messages.showYesNoDialog(project,
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.title"),

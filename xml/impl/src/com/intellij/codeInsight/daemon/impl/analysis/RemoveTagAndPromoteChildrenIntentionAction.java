@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XmlEnclosingTagUnwrapper;
@@ -13,6 +12,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public class RemoveTagAndPromoteChildrenIntentionAction implements IntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlErrorMessages.message("remove.tag.quickfix.family");
+    return XmlAnalysisBundle.message("remove.tag.quickfix.family");
   }
 
   @Override

@@ -26,20 +26,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 
-import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
-import java.awt.*;
-import java.awt.datatransfer.*;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.*;
 import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
@@ -51,6 +46,7 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.TooManyListenersException;
 
 public class EditorImpl implements EditorEx {

@@ -2,6 +2,7 @@
 package com.intellij.appengine.cloud;
 
 import com.intellij.appengine.facet.AppEngineAccountDialog;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -22,9 +23,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
-* @author nik
-*/
 public class AppEngineCloudConfigurable extends RemoteServerConfigurable implements Configurable {
   public static final String EMAIL_KEY = "GOOGLE_APP_ENGINE_ACCOUNT_EMAIL";
   private final AppEngineServerConfiguration myConfiguration;
@@ -85,7 +83,7 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
   @Nls
   @Override
   public String getDisplayName() {
-    return "Google App Engine Account";
+    return IdeBundle.message("configurable.AppEngineCloudConfigurable.display.name");
   }
 
   @Nullable

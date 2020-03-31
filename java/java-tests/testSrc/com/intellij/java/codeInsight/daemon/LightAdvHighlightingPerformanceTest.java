@@ -40,8 +40,8 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
     blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
-    blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
+    blockUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockUntil(getProject().getExtensionArea().getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
@@ -53,7 +53,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
-    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent);
+    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent, false);
   }
 
   private String getFilePath(String suffix) {
@@ -106,7 +106,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertEmpty(infos);
   }
 
-
   public void testGetProjectPerformance() {
     configureByFile("/psi/resolve/ThinletBig.java");
     // wait for default project to dispose, otherwise it will be very slow
@@ -123,7 +122,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
       getFile().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           for (int i = 0; i < 10; i++) {
             assertSame(myProject, element.getProject());
           }

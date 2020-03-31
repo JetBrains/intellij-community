@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
   @NonNls public static final String PROTOCOL = "dummy";
-  private VirtualFileDirectoryImpl myRoot;
 
   public static DummyFileSystem getInstance() {
     return (DummyFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -35,28 +34,9 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   }
 
   public VirtualFile createRoot(String name) {
-    myRoot = new VirtualFileDirectoryImpl(this, null, name);
-    fireFileCreated(null, myRoot);
-    return myRoot;
-  }
-
-  @Nullable
-  public VirtualFile findById(int id) {
-    return findById(id, myRoot);
-  }
-
-  @Nullable
-  private static VirtualFile findById(final int id, final VirtualFileImpl r) {
-    if (r == null) return null;
-    if (r.getId() == id) return r;
-    @SuppressWarnings("UnsafeVfsRecursion") final VirtualFile[] children = r.getChildren();
-    if (children != null) {
-      for (VirtualFile f : children) {
-        final VirtualFile child = findById(id, (VirtualFileImpl)f);
-        if (child != null) return child;
-      }
-    }
-    return null;
+    VirtualFileDirectoryImpl root = new VirtualFileDirectoryImpl(this, null, name);
+    fireFileCreated(null, root);
+    return root;
   }
 
   @Override
@@ -91,7 +71,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
     if (parent == null) {
-      throw new IOException(VfsBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
+      throw new IOException(IdeBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
     }
 
     parent.removeChild((VirtualFileImpl)vFile);
@@ -99,7 +79,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   }
 
   @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
     ((VirtualFileImpl)vFile).setName(newName);
@@ -128,7 +108,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
 
   @Override
   @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
     final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
     dir.addChild(child);

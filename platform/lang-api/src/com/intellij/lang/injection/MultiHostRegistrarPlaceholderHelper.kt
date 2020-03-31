@@ -6,12 +6,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.text.TextRangeUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Function
 
 
-@ApiStatus.Experimental
 class MultiHostRegistrarPlaceholderHelper(private val multiHostRegistrar: MultiHostRegistrar) {
 
   private val globalPlaceholders = mutableListOf<Pair<TextRange, String>>()

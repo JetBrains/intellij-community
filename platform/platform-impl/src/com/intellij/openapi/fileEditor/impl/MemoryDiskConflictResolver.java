@@ -18,7 +18,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +33,12 @@ import java.util.Set;
  * @author peter
  */
 class MemoryDiskConflictResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.MemoryDiskConflictResolver");
+  private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 
   private final Set<VirtualFile> myConflicts = new LinkedHashSet<>();
   private Throwable myConflictAppeared;
 
-  void beforeContentChange(@NotNull VirtualFileEvent event) {
+  void beforeContentChange(@NotNull VFileContentChangeEvent event) {
     if (event.isFromSave()) return;
 
     VirtualFile file = event.getFile();

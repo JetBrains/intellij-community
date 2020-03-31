@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.lang.properties.BundleNameEvaluator;
@@ -28,13 +28,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
+class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myTagMode;
   private final String myFallbackKeyName;
   private final String myFallbackGroupName;
 
-  public PropertyKeyReferenceProvider(boolean tagMode, String fallbackKeyName, String fallbackGroupName) {
+  PropertyKeyReferenceProvider(boolean tagMode, String fallbackKeyName, String fallbackGroupName) {
     myTagMode = tagMode;
     myFallbackKeyName = fallbackKeyName;
     myFallbackGroupName = fallbackGroupName;
@@ -46,8 +46,7 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (myTagMode && element instanceof XmlTag) {
       return getTagReferences(((XmlTag)element));
     }
@@ -73,7 +72,7 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       }
 
       if (value != null) {
-        return new PsiReference[]{new MyPropertyReference(value, xmlAttribute.getValueElement(), bundle)};
+        return new PsiReference[]{new MyPropertyReference(value, element, bundle)};
       }
     }
     return PsiReference.EMPTY_ARRAY;
@@ -123,9 +122,9 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       final List<PropertiesFile> allPropertiesFiles = new ArrayList<>(propertiesFiles);
 
       if (propertiesFiles.isEmpty()) {
-      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-        allPropertiesFiles
-          .addAll(propertiesReferenceManager.findPropertiesFiles(projectScope, bundleNameToUse, BundleNameEvaluator.DEFAULT));
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        allPropertiesFiles.addAll(propertiesReferenceManager.findPropertiesFiles(projectScope,
+                                                                                 bundleNameToUse, BundleNameEvaluator.DEFAULT));
       }
       return allPropertiesFiles;
     }

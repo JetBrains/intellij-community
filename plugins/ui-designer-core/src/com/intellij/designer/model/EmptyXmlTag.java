@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.model;
 
 import com.intellij.lang.ASTNode;
@@ -27,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -73,9 +59,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlAttribute[] getAttributes() {
+  public XmlAttribute @NotNull [] getAttributes() {
     return XmlAttribute.EMPTY_ARRAY;
   }
 
@@ -122,21 +107,18 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] getSubTags() {
+  public XmlTag @NotNull [] getSubTags() {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String qname) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String qname) {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String localName, @NonNls String namespace) {
     return XmlTag.EMPTY;
   }
 
@@ -164,7 +146,7 @@ public class EmptyXmlTag implements XmlTag {
 
   @Override
   public String[] knownNamespaces() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -182,15 +164,13 @@ public class EmptyXmlTag implements XmlTag {
   @Override
   public XmlTagValue getValue() {
     return new XmlTagValue() {
-      @NotNull
       @Override
-      public XmlTagChild[] getChildren() {
+      public XmlTagChild @NotNull [] getChildren() {
         return XmlTagChild.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public XmlText[] getTextElements() {
+      public XmlText @NotNull [] getTextElements() {
         return XmlText.EMPTY_ARRAY;
       }
 
@@ -284,9 +264,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -355,9 +334,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return new char[0];
   }
 
@@ -472,9 +450,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return PsiReference.EMPTY_ARRAY;
   }
 

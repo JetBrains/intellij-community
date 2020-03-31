@@ -28,8 +28,13 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
       }
     });
   }
-  public PsiAnnotationPattern qName(@NonNls String qname) {
-    return qName(StandardPatterns.string().equalTo(qname));
+  public PsiAnnotationPattern qName(@NonNls final String qname) {
+    return with(new PatternCondition<PsiAnnotation>("qName") {
+      @Override
+      public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
+        return psiAnnotation.hasQualifiedName(qname);
+      }
+    });
   }
 
   public PsiAnnotationPattern insideAnnotationAttribute(@NotNull final String attributeName, @NotNull final ElementPattern<? extends PsiAnnotation> parentAnnoPattern) {
@@ -38,10 +43,14 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
 
       @Override
       public boolean accepts(@NotNull PsiAnnotation annotation, ProcessingContext context) {
-        PsiElement attr = getParent(annotation);
-        if (attr instanceof PsiArrayInitializerMemberValue) attr = getParent(attr);
+        PsiElement attr = getParentElement(annotation);
+        if (attr instanceof PsiArrayInitializerMemberValue) attr = getParentElement(attr);
         return attrPattern.accepts(attr);
       }
     });
+  }
+
+  private PsiElement getParentElement(@NotNull PsiElement element) {
+    return getParent(element);
   }
 }

@@ -190,12 +190,12 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
       " */", docComment.getText());
   }
 
-  private static PsiElementFactory getFactory() {
+  private PsiElementFactory getFactory() {
     final PsiManager manager = getPsiManager();
     return JavaPsiFacade.getElementFactory(manager.getProject());
   }
 
-  private static void createAndTestTag(String expectedText, String parameterName, String description) throws IncorrectOperationException {
+  private void createAndTestTag(String expectedText, String parameterName, String description) throws IncorrectOperationException {
     PsiElementFactory factory = getFactory();
     final PsiDocTag paramTag = factory.createParamTag(parameterName, description);
     assertEquals(expectedText, paramTag.getText());

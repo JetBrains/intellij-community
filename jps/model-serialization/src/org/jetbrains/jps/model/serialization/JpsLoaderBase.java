@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
-/**
- * @author nik
- */
 public abstract class JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
   private static final int MAX_ATTEMPTS = 5;
@@ -86,7 +84,12 @@ public abstract class JpsLoaderBase {
           throw new CannotLoadJpsModelException(file.toFile(), "Cannot " + (e instanceof IOException ? "read" : "parse") + " file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
         }
 
-        LOG.info("Loading attempt #" + i + " failed", e);
+        LOG.info("Loading attempt #" + i + " failed for " + file.toAbsolutePath(), e);
+        try {
+          LOG.info("File content: " + FileUtil.loadFile(file.toFile()));
+        }
+        catch (IOException ignored) {
+        }
       }
 
       //most likely configuration file is being written by IDE so we'll wait a little

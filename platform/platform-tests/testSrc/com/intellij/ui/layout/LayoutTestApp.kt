@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.migLayout.*
@@ -35,8 +35,8 @@ object IntelliJUiTestApp {
 }
 
 private fun run(laf: LookAndFeel) {
-  val isDebugEnabled = true
-  //    val isDebugEnabled = false
+  //val isDebugEnabled = true
+      val isDebugEnabled = false
   @Suppress("ConstantConditionIf")
   if (isDebugEnabled) {
     LayoutUtil.setGlobalDebugMillis(1000)
@@ -59,7 +59,8 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanel()
 //          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
-    val panel = checkBoxFollowedBySpinner()
+//    val panel = checkBoxFollowedBySpinner()
+    val panel = separatorAndComment()
 
     val dialog = dialog(
       title = "",
@@ -92,7 +93,7 @@ fun simplePanel() {
 
 private fun moveToNotRetinaScreen(dialog: DialogWrapper) {
   val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-  if (!SystemInfoRt.isMac || screenDevices == null || screenDevices.size <= 1) {
+  if (!SystemInfo.isMac || screenDevices == null || screenDevices.size <= 1) {
     return
   }
 

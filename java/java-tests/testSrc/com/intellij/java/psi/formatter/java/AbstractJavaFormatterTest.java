@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -74,7 +75,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
 
-  public static JavaCodeStyleSettings getJavaSettings() {
+  public JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
@@ -89,12 +90,12 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public static CommonCodeStyleSettings getSettings() {
+  public CommonCodeStyleSettings getSettings() {
     CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+  public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }
 
@@ -124,6 +125,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public void doTextTest(@NotNull Action action, @NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
     final PsiFile file = createFile("A.java", text);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
     if (document == null) {
@@ -136,7 +138,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     assertEquals(textAfter, file.getText());
   }
 
-  public void formatEveryoneAndCheckIfResultEqual(@NotNull final String...before) {
+  public void formatEveryoneAndCheckIfResultEqual(final String @NotNull ... before) {
     assert before.length > 1;
     final PsiFile file = createFile("A.java", "");
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
@@ -176,7 +178,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       catch (IncorrectOperationException e) {
         assertTrue(e.getLocalizedMessage(), false);
       }
-    }), action == REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
+    }), action == REFORMAT ? ReformatCodeProcessor.getCommandName() : "", "");
 
     return document.getText();
   }

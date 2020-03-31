@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
 import org.junit.After;
@@ -141,7 +127,7 @@ public class ParametersListTest {
 
   @Test
   public void addParametersString() {
-    checkTokenizer("", ArrayUtil.EMPTY_STRING_ARRAY);
+    checkTokenizer("", ArrayUtilRt.EMPTY_STRING_ARRAY);
     checkTokenizer("a b c",
                    "a", "b", "c");
     checkTokenizer("a \"b\"",
@@ -294,7 +280,7 @@ public class ParametersListTest {
     params.defineProperty("foo.bar.flux", "pref${ix.${env.foo}.${base}.${env.bar}.suf}fix");
     assertEquals("pref${ix.foo.${base}.bar.suf}fix", params.getPropertyValue("foo.bar.flux"));
   }
-  
+
   @After
   public void clearMacros() {
     ParametersList.setTestMacros(null);
@@ -334,5 +320,8 @@ public class ParametersListTest {
 
     final String mixedQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo='d e f'";
     assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
+
+    assertEquals("Empty trailing parameter broken", asList("cmd", "", "-a", "", "", "text", "--long-option", ""),
+                 ParametersListUtil.parse("cmd  -a   'text' --long-option ", false, true, true));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.credentialStore.*
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -20,10 +20,10 @@ import kotlin.properties.Delegates.observable
   Storage(value = "github.xml"),
   Storage(value = "github_settings.xml", deprecated = true)
 ])
-internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : PersistentStateComponent<Array<GithubAccount>> {
+internal class GithubAccountManager : PersistentStateComponent<Array<GithubAccount>> {
   var accounts: Set<GithubAccount> by observable(setOf()) { _, oldValue, newValue ->
     oldValue.filter { it !in newValue }.forEach(this::accountRemoved)
-    LOG.debug("Account list changed to: " + newValue.toString())
+    LOG.debug("Account list changed to: $newValue")
   }
 
   init {
@@ -49,7 +49,7 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
    * Add/update/remove Github OAuth token from application
    */
   fun updateAccountToken(account: GithubAccount, token: String?) {
-    passwordSafe.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
+    PasswordSafe.instance.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
     LOG.debug((if (token == null) "Cleared" else "Updated") + " OAuth token for account: $account")
     ApplicationManager.getApplication()
       .messageBus
@@ -59,7 +59,7 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
   /**
    * Retrieve OAuth token for account from password safe
    */
-  fun getTokenForAccount(account: GithubAccount): String? = passwordSafe.get(createCredentialAttributes(account.id))?.getPasswordAsString()
+  fun getTokenForAccount(account: GithubAccount): String? = PasswordSafe.instance.get(createCredentialAttributes(account.id))?.getPasswordAsString()
 
   override fun getState() = accounts.toTypedArray()
 
@@ -68,7 +68,7 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
   }
 
   companion object {
-    private val LOG = Logger.getInstance(GithubAccountManager::class.java)
+    private val LOG = logger<GithubAccountManager>()
     @JvmStatic
     val ACCOUNT_REMOVED_TOPIC = Topic("GITHUB_ACCOUNT_REMOVED", AccountRemovedListener::class.java)
     @JvmStatic

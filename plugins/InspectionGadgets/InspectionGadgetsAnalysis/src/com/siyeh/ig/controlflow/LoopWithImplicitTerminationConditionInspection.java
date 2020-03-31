@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,20 +27,11 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LoopWithImplicitTerminationConditionInspection
   extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "loop.with.implicit.termination.condition.display.name");
-  }
 
   @Override
   @NotNull
@@ -71,36 +63,12 @@ public class LoopWithImplicitTerminationConditionInspection
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      final PsiExpression loopCondition;
-      final PsiStatement body;
-      final boolean firstStatement;
-      if (parent instanceof PsiWhileStatement) {
-        final PsiWhileStatement whileStatement =
-          (PsiWhileStatement)parent;
-        loopCondition = whileStatement.getCondition();
-        body = whileStatement.getBody();
-        firstStatement = true;
-      }
-      else if (parent instanceof PsiDoWhileStatement) {
-        final PsiDoWhileStatement doWhileStatement =
-          (PsiDoWhileStatement)parent;
-        loopCondition = doWhileStatement.getCondition();
-        body = doWhileStatement.getBody();
-        firstStatement = false;
-      }
-      else if (parent instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)parent;
-        loopCondition = forStatement.getCondition();
-        body = forStatement.getBody();
-        firstStatement = true;
-      }
-      else {
-        return;
-      }
-      if (loopCondition == null) {
-        return;
-      }
+      final PsiConditionalLoopStatement parent = ObjectUtils.tryCast(element.getParent(), PsiConditionalLoopStatement.class);
+      if (parent == null) return;
+      final PsiExpression loopCondition = parent.getCondition();
+      if (loopCondition == null) return;
+      final PsiStatement body = parent.getBody();
+      final boolean firstStatement = !(parent instanceof PsiDoWhileStatement);
       final PsiStatement statement;
       if (body instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
@@ -180,55 +148,42 @@ public class LoopWithImplicitTerminationConditionInspection
     return new LoopWithImplicitTerminationConditionVisitor();
   }
 
-  private static class LoopWithImplicitTerminationConditionVisitor
-    extends BaseInspectionVisitor {
+  private static class LoopWithImplicitTerminationConditionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      if (!BoolUtils.isTrue(condition)) {
-        return;
-      }
-      if (isLoopWithImplicitTerminationCondition(statement, true)) {
-        return;
-      }
-      registerStatementError(statement, Boolean.FALSE);
+      check(statement, false);
     }
 
     @Override
     public void visitDoWhileStatement(PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      if (!BoolUtils.isTrue(condition)) {
-        return;
-      }
-      if (isLoopWithImplicitTerminationCondition(statement, false)) {
-        return;
-      }
-      registerStatementError(statement, Boolean.TRUE);
+      check(statement, true);
     }
 
     @Override
     public void visitForStatement(PsiForStatement statement) {
       super.visitForStatement(statement);
+      check(statement, false);
+    }
+
+    private void check(PsiConditionalLoopStatement statement, boolean doWhile) {
       final PsiExpression condition = statement.getCondition();
       if (!BoolUtils.isTrue(condition)) {
         return;
       }
-      if (isLoopWithImplicitTerminationCondition(statement, true)) {
+      if (isLoopWithImplicitTerminationCondition(statement, !doWhile)) {
         return;
       }
-      registerStatementError(statement, Boolean.FALSE);
+      registerStatementError(statement, doWhile);
     }
 
-    private static boolean isLoopWithImplicitTerminationCondition(
-      PsiLoopStatement statement, boolean firstStatement) {
+    private static boolean isLoopWithImplicitTerminationCondition(PsiLoopStatement statement, boolean firstStatement) {
       final PsiStatement body = statement.getBody();
       final PsiStatement bodyStatement;
       if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)body;
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 0) {
@@ -247,8 +202,7 @@ public class LoopWithImplicitTerminationConditionInspection
       return !isImplicitTerminationCondition(bodyStatement);
     }
 
-    private static boolean isImplicitTerminationCondition(
-      @Nullable PsiStatement statement) {
+    private static boolean isImplicitTerminationCondition(@Nullable PsiStatement statement) {
       if (!(statement instanceof PsiIfStatement)) {
         return false;
       }

@@ -33,7 +33,7 @@ import java.util.*;
  * @author Jeka
  */
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
+  private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
   @PsiModifier.ModifierConstant
   @NotNull
@@ -77,8 +77,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
                             @NotNull PsiMethod method,
                             String newName,
                             CanonicalTypes.Type newType,
-                            @NotNull ParameterInfoImpl[] newParms,
-                            @Nullable ThrownExceptionInfo[] newExceptions,
+                            ParameterInfoImpl @NotNull [] newParms,
+                            ThrownExceptionInfo @Nullable [] newExceptions,
                             boolean generateDelegate,
                             @NotNull Set<PsiMethod> propagateParametersMethods,
                             @NotNull Set<PsiMethod> propagateExceptionsMethods) {
@@ -93,8 +93,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
                             @NotNull PsiMethod method,
                             String newName,
                             CanonicalTypes.Type newType,
-                            @NotNull ParameterInfoImpl[] newParms,
-                            @Nullable ThrownExceptionInfo[] newExceptions,
+                            ParameterInfoImpl @NotNull [] newParms,
+                            ThrownExceptionInfo @Nullable [] newExceptions,
                             boolean generateDelegate,
                             @NotNull Set<PsiMethod> propagateParametersMethods,
                             @NotNull Set<PsiMethod> propagateExceptionsMethods,
@@ -228,8 +228,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public JavaParameterInfo[] getNewParameters() {
+  public JavaParameterInfo @NotNull [] getNewParameters() {
     return newParms;
   }
 
@@ -245,7 +244,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     return isParameterSetOrOrderChanged;
   }
 
-  private void setupExceptions(@Nullable ThrownExceptionInfo[] newExceptions, @NotNull PsiMethod method) {
+  private void setupExceptions(ThrownExceptionInfo @Nullable [] newExceptions, @NotNull PsiMethod method) {
     if (newExceptions == null) {
       newExceptions = JavaThrownExceptionInfo.extractExceptions(method);
     }
@@ -377,14 +376,12 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterNames() {
+  public String @NotNull [] getOldParameterNames() {
     return oldParameterNames;
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterTypes() {
+  public String @NotNull [] getOldParameterTypes() {
     return oldParameterTypes;
   }
 

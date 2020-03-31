@@ -8,8 +8,6 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
 import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  private val innerPolicy = ChangesGroupingPolicyFactory.getInstance(project)?.createGroupingPolicy(project, model)
-
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
     DIRECTORY_POLICY.set(subtreeRoot, this)
 
@@ -20,11 +18,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     return getParentNodeRecursive(nodePath, subtreeRoot)
   }
 
-  private fun getParentNodeRecursive(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>) =
-    getParentFromInnerPolicy(nodePath, subtreeRoot) ?: getParentNodeInternal(nodePath, subtreeRoot)
-
-  @JvmName("getParentNodeInternal")
-  internal fun getParentNodeInternal(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+  private fun getParentNodeRecursive(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
     generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
       val cachingRoot = getCachingRoot(subtreeRoot)
 
@@ -32,7 +26,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
         if (HIERARCHY_UPPER_BOUND.get(subtreeRoot) == it) {
           GRAND_PARENT_CANDIDATE.set(subtreeRoot, it)
           try {
-            return getParentFromInnerPolicy(parentPath, subtreeRoot) ?: getPathNode(parentPath, subtreeRoot) ?: it
+            return getPathNode(parentPath, subtreeRoot) ?: it
           }
           finally {
             GRAND_PARENT_CANDIDATE.set(subtreeRoot, null)
@@ -45,14 +39,6 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     }
 
     return HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
-  }
-
-  private fun getParentFromInnerPolicy(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    innerPolicy?.getParentNodeFor(nodePath, subtreeRoot)?.let {
-      it.markAsHelperNode()
-      return it
-    }
-    return null
   }
 
   private fun getPathNode(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {

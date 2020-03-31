@@ -18,6 +18,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,12 +27,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents;
-import static com.intellij.util.ui.UIUtil.pump;
 
 public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnnotationLocalChangesListener {
-  private static final Logger LOG = getInstance(VcsAnnotationLocalChangesListenerImpl.class);
+  private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
   private final ZipperUpdater myUpdater;
   private final MessageBusConnection myConnection;
@@ -48,7 +47,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap;
 
-  public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
+  public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
     myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
@@ -59,7 +58,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myDirtyChanges = new HashMap<>();
     myDirtyFiles = new HashSet<>();
     myFileAnnotationMap = MultiMap.createSet();
-    myVcsManager = vcsManager;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcsKeySet = new HashSet<>();
 
     myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
@@ -73,7 +72,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       dispatchAllInvocationEvents();
     }
     else {
-      pump();
+      UIUtil.pump();
     }
   }
 

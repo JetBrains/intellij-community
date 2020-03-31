@@ -2,93 +2,96 @@
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
-import java.util.function.Consumer
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
-internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : Binding {
-  private val itemBinding = createElementBindingByType(itemType, context)
+// marker value of collection that skipped because empty
+private const val EMPTY_SKIPPED_COLLECTION = 0
 
-  protected fun createItemConsumer(context: WriteContext): Consumer<Any?> {
-    val writer = context.writer
-    return Consumer {
-      if (it == null) {
-        writer.writeNull()
-      }
-      else {
-        itemBinding.serialize(it, context)
-      }
-    }
-  }
-
-  fun readInto(result: MutableCollection<Any?>, context: ReadContext) {
-    val reader = context.reader
-    reader.stepIn()
-    while (true) {
-      @Suppress("MoveVariableDeclarationIntoWhen")
-      val type = reader.next() ?: break
-      val item = when (type) {
-        IonType.NULL -> null
-        else -> itemBinding.deserialize(context)
-      }
-      result.add(item)
-    }
-    reader.stepOut()
-  }
-}
+private const val EMPTY_JAVA_LIST = 1
+private const val EMPTY_JAVA_SET = 2
+private const val EMPTY_KOTLIN_SET = 4
+private const val EMPTY_KOTLIN_LIST = 3
 
 internal class CollectionBinding(type: ParameterizedType, context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
   private val collectionClass = ClassUtil.typeToClass(type)
 
-  override fun deserialize(context: ReadContext): Collection<Any?> {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Collection<Any?> {
     if (context.reader.type == IonType.INT) {
-      LOG.assertTrue(context.reader.intValue() == 0)
-      return if (Set::class.java.isAssignableFrom(collectionClass)) emptySet() else emptyList()
+      return readEmptyCollection(context)
     }
 
     val result = createCollection()
-    readInto(result, context)
+    readInto(hostObject, result, context)
     return result
+  }
+
+  private fun readEmptyCollection(context: ReadContext): Collection<Any?> {
+    return when (context.reader.intValue()) {
+      EMPTY_JAVA_LIST -> Collections.EMPTY_LIST
+      EMPTY_KOTLIN_LIST -> emptyList()
+      EMPTY_JAVA_SET -> Collections.EMPTY_SET
+      EMPTY_KOTLIN_SET -> emptySet()
+      else -> if (Set::class.java.isAssignableFrom(collectionClass)) emptySet() else emptyList()
+    }
   }
 
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer
     val collection = obj as Collection<*>
+
     if (context.filter.skipEmptyCollection && collection.isEmpty()) {
       // some value must be written otherwise on deserialize null will be used for constructor parameters (and it can be not expected)
-      writer.writeInt(0)
+      writer.writeInt(EMPTY_SKIPPED_COLLECTION.toLong())
       return
     }
 
-    writer.stepIn(IonType.LIST)
-    collection.forEach(createItemConsumer(context))
-    writer.stepOut()
+    when {
+      collection === Collections.EMPTY_LIST -> writer.writeInt(EMPTY_JAVA_LIST.toLong())
+      collection === emptyList<Any>() -> writer.writeInt(EMPTY_KOTLIN_LIST.toLong())
+      collection === Collections.EMPTY_SET -> writer.writeInt(EMPTY_JAVA_SET.toLong())
+      collection === emptyList<Any>() -> writer.writeInt(EMPTY_KOTLIN_SET.toLong())
+      else -> {
+        writer.stepIn(IonType.LIST)
+        collection.forEach(createItemConsumer(context))
+        writer.stepOut()
+      }
+    }
   }
 
   override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     val type = context.reader.type
+    var emptyResult: Collection<Any?>? = null
     if (type == IonType.NULL) {
       property.set(hostObject, null)
       return
     }
-    else if (type == IonType.INT /* empty collection if context.filter.skipEmptyCollection */) {
-      return
+    else if (type == IonType.INT) {
+      emptyResult = readEmptyCollection(context)
     }
 
     @Suppress("UNCHECKED_CAST")
     var result = property.readUnsafe(hostObject) as MutableCollection<Any?>?
     if (result != null && ClassUtil.isMutableCollection(result)) {
       result.clear()
+      if (emptyResult != null) {
+        return
+      }
+    }
+    else if (emptyResult != null) {
+      property.set(hostObject, emptyResult)
+      return
     }
     else {
       result = createCollection()
       property.set(hostObject, result)
     }
-    readInto(result, context)
+    readInto(hostObject, result, context)
   }
 
   private fun createCollection(propertyForDebugPurposes: MutableAccessor? = null): MutableCollection<Any?> {
@@ -113,41 +116,5 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
     }
 
     return ArrayList()
-  }
-}
-
-internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
-  override fun deserialize(context: ReadContext) = readArray(context)
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    val type = context.reader.type
-    if (type == IonType.NULL) {
-      property.set(hostObject, null)
-    }
-    else if (type != IonType.INT) {
-      property.set(hostObject, readArray(context))
-    }
-  }
-
-  override fun serialize(obj: Any, context: WriteContext) {
-    val array = obj as Array<*>
-    val writer = context.writer
-    if (context.filter.skipEmptyArray && array.isEmpty()) {
-      writer.writeInt(0)
-      return
-    }
-
-    writer.stepIn(IonType.LIST)
-    val consumer = createItemConsumer(context)
-    array.forEach { consumer.accept(it) }
-    writer.stepOut()
-  }
-
-  private fun readArray(context: ReadContext): Array<out Any> {
-    val list = ArrayList<Any?>()
-    readInto(list, context)
-    val result = ArrayUtil.newArray(itemClass, list.size)
-    list.toArray(result)
-    return result
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -49,12 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 
-/**
- * @author Mike
- */
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageBaseFix.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -74,32 +58,18 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isAvailableImpl(int offset);
 
-  protected abstract void invokeImpl(PsiClass targetClass);
-
   protected abstract boolean isValidElement(PsiElement result);
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<PsiClass> createInClass) {
     PsiElement element = getElement();
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CreateFromUsage: element =" + element);
-    }
-
-    if (element == null) {
-      return;
-    }
-
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
 
     if (targetClasses.isEmpty()) return;
 
     if (targetClasses.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      doInvoke(project, targetClasses.get(0));
+      doInvoke(targetClasses.get(0), createInClass);
     } else {
-      chooseTargetClass(targetClasses, editor);
+      chooseTargetClass(targetClasses, editor, createInClass);
     }
   }
 
@@ -107,19 +77,19 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
-  private void doInvoke(Project project, final PsiClass targetClass) {
+  private static void doInvoke(final PsiClass targetClass, Consumer<PsiClass> invokeImpl) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
+    IdeDocumentHistory.getInstance(targetClass.getProject()).includeCurrentPlaceAsChangePlace();
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl.accept(targetClass));
   }
 
   @Nullable
   protected abstract PsiElement getElement();
 
-  private void chooseTargetClass(List<PsiClass> classes, final Editor editor) {
+  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<PsiClass> invokeImpl) {
     final PsiClass firstClass = classes.get(0);
     final Project project = firstClass.getProject();
 
@@ -132,7 +102,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       .setRenderer(renderer)
       .setItemChosenCallback((aClass) -> {
         AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-        CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
+        CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(aClass, invokeImpl), getText(), null);
       })
       .setTitle(QuickFixBundle.message("target.class.chooser.title"));
 
@@ -205,14 +175,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
         //usages inside delegating constructor call
         PsiExpression run = ref;
-        while (true) {
-          if (!(run.getParent() instanceof PsiExpression)) break;
+        while (run.getParent() instanceof PsiExpression) {
           run = (PsiExpression)run.getParent();
         }
         if (run.getParent() instanceof PsiExpressionList &&
           run.getParent().getParent() instanceof PsiMethodCallExpression) {
           @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
-          if (calleeText.equals("this") || calleeText.equals("super")) return true;
+          if (calleeText.equals(PsiKeyword.THIS) || calleeText.equals(PsiKeyword.SUPER)) return true;
         }
       }
 

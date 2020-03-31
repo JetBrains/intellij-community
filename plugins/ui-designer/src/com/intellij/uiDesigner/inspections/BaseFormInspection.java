@@ -33,12 +33,6 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nls @NotNull
-  public String getDisplayName() {
-    return "";
-  }
-
-  @Override
   @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");
@@ -61,8 +55,7 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
       return null;
     }
@@ -107,8 +100,7 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nullable
-  public ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
+  public ErrorInfo @Nullable [] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
     FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
     checkComponentProperties(component.getModule(), component, collector);
     return collector.result();

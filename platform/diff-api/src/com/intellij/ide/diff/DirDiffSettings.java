@@ -16,11 +16,13 @@
 package com.intellij.ide.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ public class DirDiffSettings {
   public boolean enableChoosers = true;
   /** If {@code true} it's allowed to synchronize the left and the right parts by copying and deleting files directly in the diff viewer */
   public boolean enableOperations = true;
+  public boolean enableSyncActions = true;
   public CompareMode compareMode = CompareMode.CONTENT;
   public double compareTimestampAccuracy = 0;
   public CustomSourceChooser customSourceChooser;
@@ -73,19 +76,19 @@ public class DirDiffSettings {
   }
 
   public enum CompareMode {
-    CONTENT("Binary Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
-    TEXT("Text"), // compare by text representation (Ignore used charset/line separators).
-    SIZE("Size"), // Compares size only
-    TIMESTAMP("Size and Timestamp"); // Compares size, if equal compares timestamps
+    CONTENT("dirdiff.mode.binary.content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    TEXT("dirdiff.mode.text"), // compare by text representation (Ignore used charset/line separators).
+    SIZE("dirdiff.mode.size"), // Compares size only
+    TIMESTAMP("dirdiff.mode.size.and.timestamp"); // Compares size, if equal compares timestamps
 
-    private final String myPresentableName;
+    private final String myPresentableKey;
 
-    CompareMode(String presentableName) {
-      myPresentableName = presentableName;
+    CompareMode(@PropertyKey(resourceBundle = DiffBundle.BUNDLE) String presentableKey) {
+      myPresentableKey = presentableKey;
     }
 
     public String getPresentableName() {
-      return myPresentableName;
+      return DiffBundle.message(myPresentableKey);
     }
   }
 

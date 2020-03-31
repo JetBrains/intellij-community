@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.wizard;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ import java.util.HashMap;
  * @author Vladimir Kondratyev
  */
 public final class Generator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.Generator");
+  private static final Logger LOG = Logger.getInstance(Generator.class);
 
   private Generator() {
   }
@@ -462,7 +462,7 @@ public final class Generator {
         property2fqClassName.put(binding.myBeanProperty.myName, propertyClassName);
       }
 
-      generateBean(beanClass, ArrayUtil.toStringArray(properties), property2fqClassName);
+      generateBean(beanClass, ArrayUtilRt.toStringArray(properties), property2fqClassName);
 
       return beanClass;
     }

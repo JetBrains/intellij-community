@@ -1,0 +1,214 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.pullrequest.comment.ui
+
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.GithubIcons
+import net.miginfocom.layout.AC
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.ui.InlineIconButton
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
+import java.awt.event.ActionListener
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JPanel
+import javax.swing.text.BadLocationException
+import javax.swing.text.Utilities
+
+object GHPRReviewCommentComponent {
+
+  fun create(reviewDataProvider: GHPRReviewDataProvider,
+             thread: GHPRReviewThreadModel, comment: GHPRReviewCommentModel,
+             avatarIconsProvider: GHAvatarIconsProvider): JComponent {
+
+    val avatarLabel: LinkLabel<*> = LinkLabel.create("") {
+      comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
+    }.apply {
+      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl)
+      isFocusable = true
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
+    val titlePane = HtmlEditorPane().apply {
+      foreground = UIUtil.getContextHelpForeground()
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+    val pendingLabel = JBLabel(" Pending ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
+    }.andOpaque()
+    val resolvedLabel = JBLabel(" Resolved ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+    }.andOpaque()
+
+    val textPane = HtmlEditorPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
+
+    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
+
+    val editorWrapper = Wrapper()
+    val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
+      isVisible = comment.canBeUpdated
+    }
+    val deleteButton = createDeleteButton(reviewDataProvider, comment).apply {
+      isVisible = comment.canBeDeleted
+    }
+
+    val contentPanel = BorderLayoutPanel().andTransparent().addToCenter(textPane).addToBottom(editorWrapper)
+
+    return JPanel(null).apply {
+      isOpaque = false
+      layout = MigLayout(LC().gridGap("0", "0")
+                           .insets("0", "0", "0", "0")
+                           .fill(),
+                         AC().gap("${UI.scale(8)}"))
+
+      add(avatarLabel, CC().pushY())
+      add(titlePane, CC().minWidth("0").split(5).alignX("left"))
+      add(pendingLabel, CC().hideMode(3).alignX("left"))
+      add(resolvedLabel, CC().hideMode(3).alignX("left"))
+      add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
+      add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
+      add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
+    }
+  }
+
+  private fun createDeleteButton(reviewDataProvider: GHPRReviewDataProvider,
+                                 comment: GHPRReviewCommentModel): JComponent {
+    val icon = GithubIcons.Delete
+    val hoverIcon = GithubIcons.DeleteHovered
+    return InlineIconButton(icon, hoverIcon, tooltip = "Delete").apply {
+      actionListener = ActionListener {
+        if (Messages.showConfirmationDialog(this, "Are you sure you want to delete this comment?", "Delete Comment",
+                                            Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
+          reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
+        }
+      }
+    }
+  }
+
+  private fun createEditButton(reviewDataProvider: GHPRReviewDataProvider,
+                               comment: GHPRReviewCommentModel,
+                               editorWrapper: Wrapper,
+                               textPane: JEditorPane): JComponent {
+
+    val action = ActionListener {
+      val linesCount = calcLines(textPane)
+      val text = StringUtil.repeatSymbol('\n', linesCount - 1)
+
+      val model = GHPRSubmittableTextField.Model { newText ->
+        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
+          //comment.update(it)
+        }.handleOnEdt { _, _ ->
+          editorWrapper.setContent(null)
+          editorWrapper.revalidate()
+        }
+      }
+
+      with(model.document) {
+        runWriteAction {
+          setText(text)
+          setReadOnly(true)
+        }
+
+        reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
+          runWriteAction {
+            setReadOnly(false)
+            setText(it)
+          }
+        }
+      }
+
+      val editor = GHPRSubmittableTextField.create(model, "Submit", onCancel = {
+        editorWrapper.setContent(null)
+        editorWrapper.revalidate()
+      })
+      editorWrapper.setContent(editor)
+      GithubUIUtil.focusPanel(editor)
+    }
+    val icon = AllIcons.General.Inline_edit
+    val hoverIcon = AllIcons.General.Inline_edit_hovered
+    return InlineIconButton(icon, hoverIcon, tooltip = "Edit").apply {
+      actionListener = action
+    }
+  }
+
+
+  private fun calcLines(textPane: JEditorPane): Int {
+    var lineCount = 0
+    var offset = 0
+    while (true) {
+      try {
+        offset = Utilities.getRowEnd(textPane, offset) + 1
+        lineCount++
+      }
+      catch (e: BadLocationException) {
+        break
+      }
+    }
+    return lineCount
+  }
+
+  private class Controller(private val model: GHPRReviewCommentModel,
+                           private val titlePane: HtmlEditorPane,
+                           private val pendingLabel: JComponent,
+                           private val resolvedLabel: JComponent,
+                           private val bodyPane: HtmlEditorPane) {
+    init {
+      model.addChangesListener {
+        update()
+      }
+      update()
+    }
+
+    private fun update() {
+      bodyPane.setBody(model.body)
+
+      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
+      //language=HTML
+      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
+
+      when (model.state) {
+        GHPullRequestReviewCommentState.PENDING -> {
+          pendingLabel.isVisible = true
+          titlePane.text = authorName
+        }
+        GHPullRequestReviewCommentState.SUBMITTED -> {
+          pendingLabel.isVisible = false
+          titlePane.text = authorName + """ commented ${GithubUIUtil.formatActionDate(model.dateCreated)}"""
+        }
+      }
+
+      resolvedLabel.isVisible = model.isFirstInResolvedThread
+    }
+  }
+
+  fun factory(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
+    : (GHPRReviewCommentModel) -> JComponent {
+    return { comment ->
+      create(reviewDataProvider, thread, comment, avatarIconsProvider)
+    }
+  }
+}

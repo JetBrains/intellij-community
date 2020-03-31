@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.configurationStore.runInSaveOnFrameDeactivationDisabledMode
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -24,7 +23,7 @@ open class CloseProjectWindowHelper {
   protected open val isShowWelcomeScreenFromSettings
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
-  fun windowClosing(project: Project?) {
+  open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
@@ -40,7 +39,7 @@ open class CloseProjectWindowHelper {
   protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
 
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
-    runInSaveOnFrameDeactivationDisabledMode {
+    runInAutoSaveDisabledMode {
       if (project != null && project.isOpen) {
         ProjectManagerEx.getInstanceEx().closeAndDispose(project)
       }
@@ -55,6 +54,6 @@ open class CloseProjectWindowHelper {
   }
 
   protected open fun quitApp() {
-    ApplicationManagerEx.getApplicationEx().exit()
+    ApplicationManager.getApplication().exit()
   }
 }

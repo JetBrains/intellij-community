@@ -14,9 +14,10 @@ import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import git4idea.stash.GitStashChangesSaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class GitRebaseSpec {
   @NotNull
   public static GitRebaseSpec forNewRebase(@NotNull Project project,
                                            @NotNull GitRebaseParams params,
-                                           @NotNull Collection<GitRepository> repositories,
+                                           @NotNull Collection<? extends GitRepository> repositories,
                                            @NotNull ProgressIndicator indicator) {
     GitUtil.updateRepositories(repositories);
     Map<GitRepository, String> initialHeadPositions = findInitialHeadPositions(repositories, params.getBranch());
@@ -141,13 +142,14 @@ public class GitRebaseSpec {
   }
 
   @NotNull
-  private static GitStashChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  private static GitChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = Git.getInstance();
-    return new GitStashChangesSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"));
+    GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
+    return GitChangesSaver.getSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"), saveMethod);
   }
 
   @NotNull
-  private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<GitRepository> repositories,
+  private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<? extends GitRepository> repositories,
                                                                      @Nullable final String branchToCheckout) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentRevision = findCurrentRevision(repository, branchToCheckout);
@@ -177,7 +179,7 @@ public class GitRebaseSpec {
   }
 
   @NotNull
-  private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<GitRepository> repositories) {
+  private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentBranchName = repository.getCurrentBranchName();
       LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");

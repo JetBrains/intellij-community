@@ -132,9 +132,8 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
     return PsiClassType.EMPTY_ARRAY;
   }
 
@@ -148,15 +147,13 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getSuperTypes(boolean includeSynthetic) {
     PsiClassType baseClassType = getBaseClassType();
     PsiClass baseClass = baseClassType.resolve();
     if (baseClass == null || !baseClass.isInterface()) {

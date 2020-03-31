@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -19,17 +22,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
  * Declares a named component that enables to configure settings.
  *
- * @author nik
  * @see Configurable
  */
 @Tag("configurable")
 public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
+  private static final Logger LOG = Logger.getInstance(ConfigurableEP.class);
 
   /**
    * This attribute specifies the setting name visible to users.
@@ -57,32 +60,56 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("bundle")
   public String bundle;
 
+  @NotNull
   public String getDisplayName() {
-    if (displayName == null) {
-      if (bundle != null) {
-        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
-        displayName = CommonBundle.message(resourceBundle, key);
+    if (displayName != null) {
+      return displayName;
+    }
+
+    ResourceBundle resourceBundle = findBundle();
+    if (resourceBundle == null || key == null) {
+      if (key == null) {
+        LOG.warn("Bundle key missed for " + displayName);
       }
       else {
-        displayName = providerClass != null ? providerClass : instanceClass != null ? instanceClass : implementationClass;
         LOG.warn("Bundle missed for " + displayName);
       }
+
+      if (providerClass == null) {
+        return instanceClass == null ? implementationClass : instanceClass;
+      }
+      else {
+        return providerClass;
+      }
     }
-    return displayName;
+    else {
+      return AbstractBundle.message(resourceBundle, key);
+    }
   }
 
   /**
    * @return a resource bundle using the specified base name or {@code null}
    */
+  @Nullable
   public ResourceBundle findBundle() {
-    return bundle == null ? null : AbstractBundle.getResourceBundle(bundle, myPluginDescriptor != null
-                                                                            ? myPluginDescriptor.getPluginClassLoader()
-                                                                            : getClass().getClassLoader());
+    String pathToBundle = findPathToBundle();
+    if (pathToBundle == null) return null; // a path to bundle is not specified or cannot be found
+    ClassLoader loader = myPluginDescriptor == null ? null : myPluginDescriptor.getPluginClassLoader();
+    return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
+  }
+
+  @Nullable
+  private String findPathToBundle() {
+    if (bundle == null && myPluginDescriptor != null) {
+      // can be unspecified
+      return myPluginDescriptor.getResourceBundleBaseName();
+    }
+    return bundle;
   }
 
   @Property(surroundWithTag = false)
   @XCollection
-  public ConfigurableEP[] children;
+  public List<ConfigurableEP<?>> children;
 
   /**
    * This attribute specifies a name of the extension point of {@code ConfigurableEP} type that will be used to calculate children.
@@ -109,8 +136,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("parentId")
   public String parentId;
 
-  public ConfigurableEP[] getChildren() {
-    for (ConfigurableEP child : children) {
+  @NotNull
+  public List<ConfigurableEP<?>> getChildren() {
+    for (ConfigurableEP<?> child : children) {
       child.myPicoContainer = myPicoContainer;
       child.myPluginDescriptor = myPluginDescriptor;
       child.myProject = myProject;
@@ -225,35 +253,50 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   private Project myProject;
 
   public ConfigurableEP() {
-    this(ApplicationManager.getApplication().getPicoContainer(), null);
+    this(ApplicationManager.getApplication());
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public ConfigurableEP(@NotNull Project project) {
-    this(project.getPicoContainer(), project);
+  protected ConfigurableEP(@NotNull ComponentManager componentManager) {
+    myProject = componentManager instanceof Project ? (Project)componentManager : null;
+    myPicoContainer = componentManager.getPicoContainer();
   }
 
+  /**
+   * @deprecated Use {@link #ConfigurableEP(ComponentManager)}
+   */
+  @Deprecated
+  @NonInjectable
   protected ConfigurableEP(@NotNull PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
+  }
+
+  /**
+   * @deprecated Use {@link #ConfigurableEP(ComponentManager)}
+   */
+  @Deprecated
+  @NonInjectable
+  public ConfigurableEP(@NotNull Project project) {
+    myProject = project;
+    myPicoContainer = project.getPicoContainer();
   }
 
   @NotNull
   protected ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
-        return new ProviderProducer(instantiate(providerClass, myPicoContainer));
+        return new ProviderProducer(instantiateClass(providerClass, myPicoContainer));
       }
       if (instanceClass != null) {
-        return new ClassProducer(myPicoContainer, findClass(instanceClass));
+        return new ClassProducer(myPicoContainer, findExtensionClass(instanceClass));
       }
       if (implementationClass != null) {
-        return new ClassProducer(myPicoContainer, findClass(implementationClass));
+        return new ClassProducer(myPicoContainer, findExtensionClass(implementationClass));
       }
-      throw new RuntimeException("configurable class name is not set");
+      throw new PluginException("configurable class name is not set", getPluginId());
     }
     catch (AssertionError | Exception | LinkageError error) {
-      LOG.error(error);
+      LOG.error(new PluginException(error, getPluginId()));
     }
     return new ObjectProducer();
   }
@@ -275,13 +318,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       return null;
     }
     try {
-      return instantiate(findClass(treeRendererClass), myPicoContainer);
+      return instantiate(findExtensionClass(treeRendererClass), myPicoContainer);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
     }
     catch (AssertionError | LinkageError | Exception e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
     }
     return null;
   }
@@ -363,7 +406,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
         return null;
       }
       catch (AssertionError | LinkageError | Exception e) {
-        LOG.error(e);
+        LOG.error("Cannot create configurable", e);
       }
       return null;
     }

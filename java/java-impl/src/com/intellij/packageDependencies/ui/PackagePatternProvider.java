@@ -3,8 +3,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.GroupByScopeTypeAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -41,13 +41,13 @@ public class PackagePatternProvider extends PatternDialectProvider {
     String scope1 = PatternPackageSet.SCOPE_ANY;
     if (groupParent != null) {
       String name = groupParent.toString();
-      if (TreeModelBuilder.PRODUCTION_NAME.equals(name)) {
+      if (TreeModelBuilder.getProductionName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_SOURCE;
       }
-      else if (TreeModelBuilder.TEST_NAME.equals(name)) {
+      else if (TreeModelBuilder.getTestName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_TEST;
       }
-      else if (TreeModelBuilder.LIBRARY_NAME.equals(name)) {
+      else if (TreeModelBuilder.getLibraryName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_LIBRARY;
       }
     }
@@ -115,7 +115,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
 
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("title.packages");
+    return JavaBundle.message("title.packages");
   }
 
   @Override

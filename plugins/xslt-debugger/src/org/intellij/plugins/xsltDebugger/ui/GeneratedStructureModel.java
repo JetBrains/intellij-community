@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
@@ -43,18 +44,18 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   @NonNls
   private static final String PENDING = "...";
 
-  private static WeakReference<StringInterner> ourSharedInterner;
+  private static WeakReference<Interner<String>> ourSharedInterner;
 
   private final LinkedList<DefaultMutableTreeNode> myCurrentPath = new LinkedList<>();
   private final List<DefaultMutableTreeNode> myLastNodes = new LinkedList<>();
 
-  private final StringInterner myInterner = getInterner();
+  private final Interner<String> myInterner = getInterner();
 
   // we keep a shared string interner across all currently running xslt debugger instances. it should go away once
   // all instances (and their toolwindow contents) are gone. This should minimize the memory usage of the generated
   // structure tree.
-  private static StringInterner getInterner() {
-    StringInterner interner = SoftReference.dereference(ourSharedInterner);
+  private static Interner<String> getInterner() {
+    Interner<String> interner = SoftReference.dereference(ourSharedInterner);
     if (interner == null) {
       interner = new StringInterner();
       ourSharedInterner = new WeakReference<>(interner);

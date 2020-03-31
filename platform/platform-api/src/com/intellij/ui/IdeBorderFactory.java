@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+
+import static com.intellij.openapi.util.registry.Registry.intValue;
 
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
@@ -73,8 +77,7 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty()
+   * @deprecated use {@link JBUI.Borders#empty()}
    */
   @Deprecated
   public static Border createEmptyBorder() {
@@ -82,8 +85,7 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int)
+   * @deprecated use {@link JBUI.Borders#empty(int)}
    */
   @Deprecated
   public static Border createEmptyBorder(int thickness) {
@@ -91,25 +93,29 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int, int, int, int)
+   * @deprecated use {@link JBUI.Borders#empty(int, int, int, int)}
    */
   @Deprecated
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
     return JBUI.Borders.empty(top, left, bottom, right);
   }
 
-  public static TitledBorder createTitledBorder(String s) {
+  public static TitledBorder createTitledBorder(@NlsUI.TitledBorder String s) {
     return createTitledBorder(s, true);
   }
 
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
-    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
+  public static IdeaTitledBorder createTitledBorder(@NlsUI.TitledBorder String title, boolean hasIndent) {
+    int top = Math.max(0, intValue("ide.titled.border.top", TITLED_BORDER_TOP_INSET));
+    int left = Math.max(0, intValue("ide.titled.border.left", TITLED_BORDER_LEFT_INSET));
+    int right = Math.max(0, intValue("ide.titled.border.right", TITLED_BORDER_RIGHT_INSET));
+    int bottom = Math.max(0, intValue("ide.titled.border.bottom", TITLED_BORDER_BOTTOM_INSET));
+    @SuppressWarnings("UseDPIAwareInsets")
+    Insets insets = new Insets(top, left, bottom, right);
     return createTitledBorder(title, hasIndent, insets);
   }
 
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent, Insets insets) {
-    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
+  public static IdeaTitledBorder createTitledBorder(@NlsUI.TitledBorder String title, boolean hasIndent, Insets insets) {
+    int indent = hasIndent ? Math.max(0, intValue("ide.titled.border.indent", TITLED_BORDER_INDENT)) : 0;
     return new IdeaTitledBorder(title, indent, insets);
   }
 
@@ -123,12 +129,12 @@ public class IdeBorderFactory {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsUI.TitledBorder String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true);
+      return IdeBorderFactory.createTitledBorder(title);
     }
   }
 
@@ -137,7 +143,7 @@ public class IdeBorderFactory {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsUI.TitledBorder String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
@@ -151,7 +157,7 @@ public class IdeBorderFactory {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsUI.TitledBorder String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
@@ -165,7 +171,7 @@ public class IdeBorderFactory {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsUI.TitledBorder String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,

@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
@@ -19,7 +17,8 @@ import java.io.File;
  * @author Vladimir Kondratyev
  */
 public class RefCardAction extends AnAction implements DumbAware {
-  private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
+  private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac
+                                                                                      ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -38,8 +37,6 @@ public class RefCardAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isRefCardAvailable());
-    boolean atWelcome = ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
-    e.getPresentation().setIcon(atWelcome ? AllIcons.General.DefaultKeymap : null);
   }
 
   private static boolean isRefCardAvailable() {

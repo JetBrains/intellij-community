@@ -125,8 +125,7 @@ public class JavaCompletionSorting {
     return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
-  @NotNull
-  private static ExpectedTypeInfo[] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
+  private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
     if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
@@ -329,7 +328,7 @@ public class JavaCompletionSorting {
     private final boolean myPreferExact;
     private final CompletionLocation myLocation;
 
-    PreferDefaultTypeWeigher(@NotNull ExpectedTypeInfo[] expectedTypes, CompletionParameters parameters, boolean preferExact) {
+    PreferDefaultTypeWeigher(ExpectedTypeInfo @NotNull [] expectedTypes, CompletionParameters parameters, boolean preferExact) {
       super("defaultType" + (preferExact ? "Exact" : ""));
       myExpectedTypes = ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, info -> {
         PsiType type = removeClassWildcard(info.getType());
@@ -487,20 +486,26 @@ public class JavaCompletionSorting {
 
     @NotNull
     @Override
-    public Comparable weigh(@NotNull LookupElement element) {
+    public Integer weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod && !FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
-        PsiType type = ((PsiMethod)object).getReturnType();
-        final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
-        if (callItem != null) {
-          type = callItem.getSubstitutor().substitute(type);
-        }
-
-        if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return 1;
-      }
-
-      return 0;
+      return object instanceof PsiMethod &&
+             !FunctionalExpressionCompletionProvider.isFunExprItem(element) &&
+             isTooGeneric(element, (PsiMethod)object) ? 1 : 0;
     }
+  }
+
+  static boolean isTooGeneric(@NotNull LookupElement element, PsiMethod method) {
+    PsiType type = method.getReturnType();
+    JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
+    if (callItem != null) {
+      type = callItem.getSubstitutor().substitute(type);
+    }
+
+    if (type instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)type).resolve();
+      return target instanceof PsiTypeParameter && ((PsiTypeParameter)target).getOwner() instanceof PsiMethod;
+    }
+    return false;
   }
 
   private static class PreferSimple extends LookupElementWeigher {

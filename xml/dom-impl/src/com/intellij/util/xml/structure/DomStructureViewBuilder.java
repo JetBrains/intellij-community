@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.xml.structure;
 
@@ -43,7 +43,7 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   public StructureView createStructureView(final FileEditor fileEditor, @NotNull final Project project) {
     return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true) {
       @Override
-      public Promise<AbstractTreeNode> expandPathToElement(final Object element) {
+      public Promise<AbstractTreeNode<?>> expandPathToElement(final Object element) {
         if (element instanceof XmlElement && ((XmlElement)element).isValid()) {
           final XmlElement xmlElement = (XmlElement)element;
           XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);

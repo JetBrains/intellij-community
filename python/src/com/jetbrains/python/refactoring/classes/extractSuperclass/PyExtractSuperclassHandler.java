@@ -21,7 +21,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.vp.Creator;
@@ -32,16 +32,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Dennis.Ushakov
  */
 public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
-
-
   @Override
   protected void doRefactorImpl(@NotNull final Project project,
                                 @NotNull final PyClass classUnderRefactoring,
                                 @NotNull final PyMemberInfoStorage infoStorage,
                                 @NotNull final Editor editor) {
     //TODO: Move to presenter
-    if (PyUtil.filterOutObject(infoStorage.getClassMemberInfos(classUnderRefactoring)).isEmpty()) {
+    if (PyRefactoringUtil.filterOutObject(infoStorage.getClassMemberInfos(classUnderRefactoring)).isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle
         .message("refactoring.extract.super.class.no.members.allowed"), RefactoringBundle.message("extract.superclass.elements.header"),
                                           null);
@@ -70,11 +67,15 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return REFACTORING_NAME;
+    return getRefactoringName();
   }
 
   @Override
   protected String getHelpId() {
     return "refactoring.extractSuperclass";
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("extract.superclass.title");
   }
 }

@@ -29,8 +29,8 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     val LOG = Logger.getInstance(ExternalAnnotationsRepositoryResolver::class.java)
   }
 
-  override fun resolve(project: Project, library: Library, mavenId: String?): Library {
-    var mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return library
+  override fun resolve(project: Project, library: Library, mavenId: String?): Boolean {
+    var mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return false
     var roots = JarRepositoryManager
       .loadDependenciesSync(project,
                              mavenLibDescriptor,
@@ -40,7 +40,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       as MutableList<OrderRoot>?
 
     if (roots == null || roots.isEmpty()) {
-      mavenLibDescriptor = extractDescriptor(mavenId, library, true) ?: return library
+      mavenLibDescriptor = extractDescriptor(mavenId, library, true) ?: return false
       roots = JarRepositoryManager
         .loadDependenciesSync(project,
                               mavenLibDescriptor,
@@ -54,10 +54,10 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       updateLibrary(roots, mavenLibDescriptor, library)
     }
 
-    return library
+    return roots != null && roots.isNotEmpty()
   }
 
-  override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Library {
+  override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Boolean {
     val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
     val repos = if (location.repositoryUrls.isNotEmpty()) {
       location.repositoryUrls.mapIndexed { index, url ->
@@ -71,10 +71,13 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
 
     val roots = JarRepositoryManager
                   .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
-                ?: return library
+
+    if (roots == null || roots.isEmpty()) {
+      return false;
+    }
 
     invokeAndWaitIfNeeded { updateLibrary(roots, descriptor, library) }
-    return library
+    return true;
   }
 
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> {

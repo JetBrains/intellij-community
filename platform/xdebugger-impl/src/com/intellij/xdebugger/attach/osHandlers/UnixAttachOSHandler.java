@@ -4,22 +4,25 @@ package com.intellij.xdebugger.attach.osHandlers;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
+import com.intellij.xdebugger.attach.LocalAttachHost;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public abstract class UnixAttachOSHandler extends AttachOSHandler {
   private static final String PTRACE_SCOPE_PATH = "/proc/sys/kernel/yama/ptrace_scope";
   private static final String GET_PROCESS_USER = "ps -a -x -o user,pid | grep %d | awk '{print $1}'";
+  private static final GeneralCommandLine ENV_COMMAND_LINE = new GeneralCommandLine("env");
+
+  private Map<String, String> myEnvironment;
 
   private static final Logger LOGGER = Logger.getInstance(UnixAttachOSHandler.class);
 
@@ -78,6 +81,19 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
     }
 
     return 1; // default PTRACE_SCOPE value
+  }
+
+  @Nullable
+  protected String getenv(String name) throws Exception {
+    if (myHost instanceof LocalAttachHost) {
+      return EnvironmentUtil.getValue(name);
+    }
+
+    if (myEnvironment == null) {
+      myEnvironment = EnvironmentUtil.parseEnv(myHost.getProcessOutput(ENV_COMMAND_LINE).getStdout().split("\n"));
+    }
+
+    return myEnvironment.get(name);
   }
 
   public boolean isOurProcess(int pid) {

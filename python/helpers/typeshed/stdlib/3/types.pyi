@@ -6,7 +6,7 @@
 import sys
 from typing import (
     Any, Awaitable, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
-    Union, overload, Type
+    Union, overload, Type, Iterable
 )
 
 # ModuleType is exported from this module, but for circular import
@@ -20,63 +20,109 @@ _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
 
 class _Cell:
-    cell_contents = ...  # type: Any
+    cell_contents: Any
 
 class FunctionType:
-    __closure__ = ...  # type: Optional[Tuple[_Cell, ...]]
-    __code__ = ...  # type: CodeType
-    __defaults__ = ...  # type: Optional[Tuple[Any, ...]]
-    __dict__ = ...  # type: Dict[str, Any]
-    __globals__ = ...  # type: Dict[str, Any]
-    __name__ = ...  # type: str
-    __qualname__ = ...  # type: str
-    __annotations__ = ...  # type: Dict[str, Any]
-    __kwdefaults__ = ...  # type: Dict[str, Any]
+    __closure__: Optional[Tuple[_Cell, ...]]
+    __code__: CodeType
+    __defaults__: Optional[Tuple[Any, ...]]
+    __dict__: Dict[str, Any]
+    __globals__: Dict[str, Any]
+    __name__: str
+    __qualname__: str
+    __annotations__: Dict[str, Any]
+    __kwdefaults__: Dict[str, Any]
+    def __init__(self, code: CodeType, globals: Dict[str, Any], name: Optional[str] = ..., argdefs: Optional[Tuple[object, ...]] = ..., closure: Optional[Tuple[_Cell, ...]] = ...) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
     def __get__(self, obj: Optional[object], type: Optional[type]) -> MethodType: ...
 LambdaType = FunctionType
 
 class CodeType:
     """Create a code object.  Not for the faint of heart."""
-    co_argcount = ...  # type: int
-    co_kwonlyargcount = ...  # type: int
-    co_nlocals = ...  # type: int
-    co_stacksize = ...  # type: int
-    co_flags = ...  # type: int
-    co_code = ...  # type: bytes
-    co_consts = ...  # type: Tuple[Any, ...]
-    co_names = ...  # type: Tuple[str, ...]
-    co_varnames = ...  # type: Tuple[str, ...]
-    co_filename = ...  # type: str
-    co_name = ...  # type: str
-    co_firstlineno = ...  # type: int
-    co_lnotab = ...  # type: bytes
-    co_freevars = ...  # type: Tuple[str, ...]
-    co_cellvars = ...  # type: Tuple[str, ...]
-    def __init__(
-        self,
-        argcount: int,
-        kwonlyargcount: int,
-        nlocals: int,
-        stacksize: int,
-        flags: int,
-        codestring: bytes,
-        constants: Tuple[Any, ...],
-        names: Tuple[str, ...],
-        varnames: Tuple[str, ...],
-        filename: str,
-        name: str,
-        firstlineno: int,
-        lnotab: bytes,
-        freevars: Tuple[str, ...] = ...,
-        cellvars: Tuple[str, ...] = ...,
-    ) -> None: ...
+    co_argcount: int
+    if sys.version_info >= (3, 8):
+        co_posonlyargcount: int
+    co_kwonlyargcount: int
+    co_nlocals: int
+    co_stacksize: int
+    co_flags: int
+    co_code: bytes
+    co_consts: Tuple[Any, ...]
+    co_names: Tuple[str, ...]
+    co_varnames: Tuple[str, ...]
+    co_filename: str
+    co_name: str
+    co_firstlineno: int
+    co_lnotab: bytes
+    co_freevars: Tuple[str, ...]
+    co_cellvars: Tuple[str, ...]
+    if sys.version_info >= (3, 8):
+        def __init__(
+            self,
+            argcount: int,
+            posonlyargcount: int,
+            kwonlyargcount: int,
+            nlocals: int,
+            stacksize: int,
+            flags: int,
+            codestring: bytes,
+            constants: Tuple[Any, ...],
+            names: Tuple[str, ...],
+            varnames: Tuple[str, ...],
+            filename: str,
+            name: str,
+            firstlineno: int,
+            lnotab: bytes,
+            freevars: Tuple[str, ...] = ...,
+            cellvars: Tuple[str, ...] = ...,
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            argcount: int,
+            kwonlyargcount: int,
+            nlocals: int,
+            stacksize: int,
+            flags: int,
+            codestring: bytes,
+            constants: Tuple[Any, ...],
+            names: Tuple[str, ...],
+            varnames: Tuple[str, ...],
+            filename: str,
+            name: str,
+            firstlineno: int,
+            lnotab: bytes,
+            freevars: Tuple[str, ...] = ...,
+            cellvars: Tuple[str, ...] = ...,
+        ) -> None: ...
+    if sys.version_info >= (3, 8):
+        def replace(
+            self,
+            *,
+            co_argcount: int = ...,
+            co_posonlyargcount: int = ...,
+            co_kwonlyargcount: int = ...,
+            co_nlocals: int = ...,
+            co_stacksize: int = ...,
+            co_flags: int = ...,
+            co_firstlineno: int = ...,
+            co_code: bytes = ...,
+            co_consts: Tuple[Any, ...] = ...,
+            co_names: Tuple[str, ...] = ...,
+            co_varnames: Tuple[str, ...] = ...,
+            co_freevars: Tuple[str, ...] = ...,
+            co_cellvars: Tuple[str, ...] = ...,
+            co_filename: str = ...,
+            co_name: str = ...,
+            co_lnotab: bytes = ...,
+        ) -> CodeType: ...
 
 class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, mapping: Mapping[_KT, _VT]) -> None: ...
     def __getitem__(self, k: _KT) -> _VT: ...
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
+    def copy(self) -> Mapping[_KT, _VT]: ...
 
 class SimpleNamespace:
     def __init__(self, **kwargs: Any) -> None: ...
@@ -85,10 +131,10 @@ class SimpleNamespace:
     def __delattr__(self, name: str) -> None: ...
 
 class GeneratorType:
-    gi_code = ...  # type: CodeType
-    gi_frame = ...  # type: FrameType
-    gi_running = ...  # type: bool
-    gi_yieldfrom = ...  # type: Optional[GeneratorType]
+    gi_code: CodeType
+    gi_frame: FrameType
+    gi_running: bool
+    gi_yieldfrom: Optional[GeneratorType]
     def __iter__(self) -> GeneratorType: ...
     def __next__(self) -> Any: ...
     def close(self) -> None: ...
@@ -111,13 +157,13 @@ if sys.version_info >= (3, 6):
         def athrow(self, val: BaseException) -> Awaitable[_T_co]: ...
         @overload
         def athrow(self, typ: Type[BaseException], val: BaseException, tb: TracebackType = ...) -> Awaitable[_T_co]: ...
-        def aclose(self) -> Awaitable[_T_co]: ...
+        def aclose(self) -> Awaitable[None]: ...
 
 class CoroutineType:
-    cr_await = ...  # type: Optional[Any]
-    cr_code = ...  # type: CodeType
-    cr_frame = ...  # type: FrameType
-    cr_running = ...  # type: bool
+    cr_await: Optional[Any]
+    cr_code: CodeType
+    cr_frame: FrameType
+    cr_running: bool
     def close(self) -> None: ...
     def send(self, arg: Any) -> Any: ...
     @overload
@@ -141,18 +187,50 @@ class _StaticFunctionType:
     def __get__(self, obj: Optional[object], type: Optional[type]) -> FunctionType: ...
 
 class MethodType:
-    __func__ = ...  # type: _StaticFunctionType
-    __self__ = ...  # type: object
-    __name__ = ...  # type: str
-    __qualname__ = ...  # type: str
-    def __init__(self, func: Callable, obj: object) -> None: ...
+    __func__: _StaticFunctionType
+    __self__: object
+    __name__: str
+    __qualname__: str
+    def __init__(self, func: Callable[..., Any], obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
-    __self__ = ...  # type: Union[object, ModuleType]
-    __name__ = ...  # type: str
-    __qualname__ = ...  # type: str
+    __self__: Union[object, ModuleType]
+    __name__: str
+    __qualname__: str
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 BuiltinMethodType = BuiltinFunctionType
+
+if sys.version_info >= (3, 7):
+    class WrapperDescriptorType:
+        __name__: str
+        __qualname__: str
+        __objclass__: type
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+        def __get__(self, obj: Any, type: type = ...) -> Any: ...
+
+    class MethodWrapperType:
+        __self__: object
+        __name__: str
+        __qualname__: str
+        __objclass__: type
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+        def __eq__(self, other: Any) -> bool: ...
+        def __ne__(self, other: Any) -> bool: ...
+
+    class MethodDescriptorType:
+        __name__: str
+        __qualname__: str
+        __objclass__: type
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+        def __get__(self, obj: Any, type: type = ...) -> Any: ...
+
+    class ClassMethodDescriptorType:
+        __name__: str
+        __qualname__: str
+        __objclass__: type
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+        def __get__(self, obj: Any, type: type = ...) -> Any: ...
+
 
 class TracebackType:
     if sys.version_info >= (3, 7):
@@ -170,34 +248,38 @@ class TracebackType:
     def tb_lineno(self) -> int: ...
 
 class FrameType:
-    f_back = ...  # type: FrameType
-    f_builtins = ...  # type: Dict[str, Any]
-    f_code = ...  # type: CodeType
-    f_globals = ...  # type: Dict[str, Any]
-    f_lasti = ...  # type: int
-    f_lineno = ...  # type: int
-    f_locals = ...  # type: Dict[str, Any]
-    f_trace = ...  # type: Callable[[], None]
+    f_back: Optional[FrameType]
+    f_builtins: Dict[str, Any]
+    f_code: CodeType
+    f_globals: Dict[str, Any]
+    f_lasti: int
+    f_lineno: int
+    f_locals: Dict[str, Any]
+    f_trace: Callable[[], None]
     if sys.version_info >= (3, 7):
-        f_frace_lines: bool
+        f_trace_lines: bool
         f_trace_opcodes: bool
 
     def clear(self) -> None: ...
 
 class GetSetDescriptorType:
-    __name__ = ...  # type: str
-    __objclass__ = ...  # type: type
+    __name__: str
+    __objclass__: type
     def __get__(self, obj: Any, type: type = ...) -> Any: ...
     def __set__(self, obj: Any) -> None: ...
     def __delete__(self, obj: Any) -> None: ...
 class MemberDescriptorType:
-    __name__ = ...  # type: str
-    __objclass__ = ...  # type: type
+    __name__: str
+    __objclass__: type
     def __get__(self, obj: Any, type: type = ...) -> Any: ...
     def __set__(self, obj: Any) -> None: ...
     def __delete__(self, obj: Any) -> None: ...
 
-def new_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...) -> type: ...
+if sys.version_info >= (3, 7):
+    def new_class(name: str, bases: Iterable[object] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...) -> type: ...
+    def resolve_bases(bases: Iterable[object]) -> Tuple[Any, ...]: ...
+else:
+    def new_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...) -> type: ...
 def prepare_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ...) -> Tuple[type, Dict[str, Any], Dict[str, Any]]: ...
 
 # Actually a different type, but `property` is special and we want that too.

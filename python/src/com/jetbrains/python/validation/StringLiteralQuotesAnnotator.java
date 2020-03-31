@@ -2,10 +2,11 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -62,7 +63,7 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
       }
     }
     if (nodeText.length() == 1 || lastChar != firstQuote || precedingBackslashCount % 2 != 0) {
-      getHolder().createErrorAnnotation(stringNode, PyBundle.message("ANN.missing.closing.quote", firstQuote));
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.missing.closing.quote", firstQuote)).range(stringNode).create();
       return true;
     }
     return false;
@@ -78,7 +79,7 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
         startOffset = stringNode.getTextRange().getStartOffset() + startOffset + 1;
       }
       final TextRange highlightRange = new TextRange(startOffset, stringNode.getTextRange().getEndOffset());
-      getHolder().createErrorAnnotation(highlightRange, PyBundle.message("ANN.missing.closing.triple.quotes"));
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.missing.closing.triple.quotes")).range(highlightRange).create();
       return true;
     }
     return false;

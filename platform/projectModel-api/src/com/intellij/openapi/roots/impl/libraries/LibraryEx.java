@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +31,7 @@ import java.util.List;
 /**
  *  @author dsl
  */
+@ApiStatus.NonExtendable
 public interface LibraryEx extends Library {
   @NotNull
   List<String> getInvalidRootUrls(@NotNull OrderRootType type);
@@ -49,15 +52,23 @@ public interface LibraryEx extends Library {
    * won't be counted as belonging to this library so they won't be indexed.
    * @return URLs of excluded directories
    */
-  @NotNull
-  String[] getExcludedRootUrls();
+  String @NotNull [] getExcludedRootUrls();
 
   /**
    * @see #getExcludedRootUrls()
    * @return excluded directories
    */
-  @NotNull
-  VirtualFile[] getExcludedRoots();
+  VirtualFile @NotNull [] getExcludedRoots();
+
+  @Nullable("will return non-null value only for module level libraries")
+  Module getModule();
+
+  /**
+   * In case of modifiable library returns origin library it was created from
+   */
+  @ApiStatus.Internal
+  @Nullable
+  Library getSource();
 
   interface ModifiableModelEx extends ModifiableModel {
     void setProperties(LibraryProperties properties);
@@ -69,6 +80,13 @@ public interface LibraryEx extends Library {
     PersistentLibraryKind<?> getKind();
 
     /**
+     * Removes custom library kind and associated properties if any
+     */
+    void forgetKind();
+
+    void restoreKind();
+
+    /**
      * Add a URL to list of directories excluded from the library. The directory specified by {@code url} must be located under some
      * of the library roots.
      * @see LibraryEx#getExcludedRootUrls()
@@ -78,7 +96,6 @@ public interface LibraryEx extends Library {
 
     boolean removeExcludedRoot(@NotNull String url);
 
-    @NotNull
-    String[] getExcludedRootUrls();
+    String @NotNull [] getExcludedRootUrls();
   }
 }

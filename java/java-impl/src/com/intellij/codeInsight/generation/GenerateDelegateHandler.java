@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,11 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author mike
- */
 public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateDelegateHandler.class);
   private boolean myToCopyJavaDoc;
 
   @Override
@@ -125,7 +109,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         for (PsiParameter parameter : parameters) {
-          if (name.equals(parameter.getName())) {
+          if (parameter.getName().equals(name)) {
             call.append("this.");
             break;
           }
@@ -162,7 +146,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
-    GenerateMembersUtil.copyAnnotations(methodCandidate.getElement().getModifierList(), method.getModifierList(), 
+    GenerateMembersUtil.copyAnnotations(methodCandidate.getElement().getModifierList(), method.getModifierList(),
                                         SuppressWarnings.class.getName(), Override.class.getName());
 
     if (isMethodStatic || modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
@@ -206,8 +190,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     }
   }
 
-  @Nullable
-  private PsiMethodMember[] chooseMethods(PsiElementClassMember targetMember, PsiFile file, Editor editor, Project project) {
+  private PsiMethodMember @Nullable [] chooseMethods(PsiElementClassMember targetMember, PsiFile file, Editor editor, Project project) {
     PsiClassType.ClassResolveResult resolveResult = null;
     final PsiDocCommentOwner target = targetMember.getElement();
     if (target instanceof PsiField) {
@@ -322,7 +305,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(targetElements, false, false, project);
-      chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
+      chooser.setTitle(JavaBundle.message("generate.delegate.target.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 
@@ -338,8 +321,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return null;
   }
 
-  @Nullable
-  private static PsiElementClassMember[] getTargetElements(PsiFile file, Editor editor) {
+  private static PsiElementClassMember @Nullable [] getTargetElements(PsiFile file, Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;

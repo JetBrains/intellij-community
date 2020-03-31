@@ -65,7 +65,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   @NotNull
   public final String getText() {
     final String text = myText;
-    return text != null? text : getDefaultText();
+    return text != null ? text : getDefaultText();
   }
 
   @Override
@@ -75,7 +75,7 @@ public abstract class FileTemplateBase implements FileTemplate {
     }
     else {
       final String converted = StringUtil.convertLineSeparators(text);
-      myText = converted.equals(getDefaultText())? null : converted;
+      myText = converted.equals(getDefaultText()) ? null : StringUtil.internEmptyString(converted);
     }
   }
 
@@ -86,22 +86,22 @@ public abstract class FileTemplateBase implements FileTemplate {
 
   @Override
   @NotNull
-  public final String getText(Map attributes) throws IOException{
+  public final String getText(@NotNull Map attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
   @Override
   @NotNull
-  public final String getText(Properties attributes) throws IOException{
+  public final String getText(@NotNull Properties attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
   @Override
-  @NotNull
-  public final String[] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException {
+  public final String @NotNull [] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException {
     return FileTemplateUtil.calculateAttributes(getText(), properties, false, project);
   }
 
+  @NotNull
   @Override
   public FileTemplateBase clone() {
     try {

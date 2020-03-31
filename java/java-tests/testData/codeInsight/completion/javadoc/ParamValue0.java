@@ -3,5 +3,5 @@ class C{
     /**
      * @param <caret>
      */
-    private int foo(int a, char b, String c) {}
+    private <A, B> int foo(int a, char b, String c) {}
 }

@@ -3,11 +3,11 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SortedCollectionWithNonComparableKeysInspectionTest extends LightInspectionTestCase {
+public class SortedCollectionWithNonComparableKeysInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSortedCollectionWithNonComparableKeys() {
     doTest();

@@ -1,3 +1,5 @@
+from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
+
 try:
     from code import InteractiveConsole
 except ImportError:
@@ -103,6 +105,13 @@ def exec_code(code, globals, locals, debugger):
 
     code_executor.add_exec(code, debugger)
 
+    ipython = code_executor.interpreter.ipython
+    for key in dict_keys(ipython.user_ns):
+        locals[key] = ipython.user_ns[key]
+    for key in dict_keys(locals):
+        if key not in ipython.user_ns:
+            locals.pop(key)
+
     return False
 
 
@@ -183,9 +192,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
-        need_more = exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
+        need_more = exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
-            pydevd_save_locals.save_locals(frame)
+            update_frame_local_variables_and_save(frame, updated_globals)
         return need_more
 
     interpreter = ConsoleWriter()
@@ -206,12 +215,32 @@ def console_exec(thread_id, frame_id, expression, dbg):
     # Case 3
 
     try:
-        Exec(code, updated_globals, frame.f_locals)
-
+        # It is important that globals and locals we pass to the exec function are the same object.
+        # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
+        # because it contains globals and locals in the right precedence.
+        # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
+        Exec(code, updated_globals, updated_globals)
     except SystemExit:
         raise
     except:
         interpreter.showtraceback()
     else:
-        pydevd_save_locals.save_locals(frame)
+        update_frame_local_variables_and_save(frame, updated_globals)
     return False
+
+
+def update_frame_local_variables_and_save(frame, values):
+    """Update the frame local variables with the values from `values`, remove those that no longer exist, and save."""
+    # It is important to access to `frame.f_locals` through a local reference.
+    # Any changes done to it will be lost as soon as we access the attribute next time.
+    f_locals, f_globals = frame.f_locals, frame.f_globals
+
+    for key, value in dict_iter_items(values):
+        if key not in f_globals or value is not f_globals[key]:
+            f_locals[key] = value
+
+    for key in dict_keys(f_locals):
+        if key not in values:
+            f_locals.pop(key)
+
+    pydevd_save_locals.save_locals(frame)

@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface BuildTargetIndex extends BuildTargetRegistry {
 
   List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
@@ -35,6 +32,9 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
    */
   boolean isDummy(@NotNull BuildTarget<?> target);
 
+  /**
+   * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
+   */
   @Deprecated
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 

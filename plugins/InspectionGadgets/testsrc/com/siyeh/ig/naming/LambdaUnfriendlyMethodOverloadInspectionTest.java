@@ -16,13 +16,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LambdaUnfriendlyMethodOverloadInspectionTest extends LightInspectionTestCase {
+public class LambdaUnfriendlyMethodOverloadInspectionTest extends LightJavaInspectionTestCase {
 
   public void testLambdaUnfriendlyMethodOverload() {
     doTest();

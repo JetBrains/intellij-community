@@ -83,8 +83,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return mySimpleDomModelFactory.getModelByConfigFile(psiFile);
   }
 
-  @NotNull
-  public Object[] computeDependencies(@Nullable M model, @Nullable S scope) {
+  public Object @NotNull [] computeDependencies(@Nullable M model, @Nullable S scope) {
 
     final ArrayList<Object> dependencies = new ArrayList<>();
     dependencies.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
@@ -151,8 +150,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
       }
 
       @Override
-      @NotNull
-      public Object[] computeDependencies(@Nullable final M model, @Nullable final S scope) {
+      public Object @NotNull [] computeDependencies(@Nullable final M model, @Nullable final S scope) {
         return BaseDomModelFactory.this.computeDependencies(model, scope);
       }
 
@@ -175,8 +173,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
       }
 
       @Override
-      @NotNull
-      public Object[] computeDependencies(@Nullable final M model, @Nullable final S scope) {
+      public Object @NotNull [] computeDependencies(@Nullable final M model, @Nullable final S scope) {
         return BaseDomModelFactory.this.computeDependencies(model, scope);
       }
 

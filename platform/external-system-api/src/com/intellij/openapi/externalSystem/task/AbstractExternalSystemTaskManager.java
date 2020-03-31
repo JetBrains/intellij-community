@@ -25,6 +25,6 @@ public abstract class AbstractExternalSystemTaskManager<S extends ExternalSystem
                                     @Nullable S settings,
                                     @NotNull final List<String> vmOptions,
                                     @NotNull List<String> scriptParameters,
-                                    @Nullable String jvmAgentSetup,
+                                    @Nullable String jvmParametersSetup,
                                     @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException;
 }

@@ -1,7 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
@@ -21,20 +21,6 @@ public class ReplaceCommand extends SearchCommand {
     final Runnable searchStarter = () -> new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
     myReplaceUsageViewContext = new ReplaceUsageViewContext(mySearchContext, myConfiguration, searchStarter);
     return myReplaceUsageViewContext;
-  }
-
-  @Override
-  protected void findStarted() {
-    super.findStarted();
-
-    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress(true);
-  }
-
-  @Override
-  protected void findEnded() {
-    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress( false );
-
-    super.findEnded();
   }
 
   @Override

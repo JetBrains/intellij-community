@@ -3,14 +3,17 @@ package org.jetbrains.yaml;
 
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
+ * @deprecated to be removed in 2020.1
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+@Deprecated
 public class YAMLFileTypeLoader extends FileTypeFactory {
   @Override
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    consumer.consume(YAMLFileType.YML, YAMLFileType.DEFAULT_EXTENSION + ";yaml");
   }
 }

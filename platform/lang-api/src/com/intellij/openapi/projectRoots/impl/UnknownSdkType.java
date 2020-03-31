@@ -4,20 +4,22 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Used as a plug for all SDKs which type cannot be determined (for example, plugin that registered a custom type has been deinstalled)
+ *
  * @author Eugene Zhuravlev
  */
-public class UnknownSdkType extends SdkType{
-  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<>();
+public class UnknownSdkType extends SdkType {
+  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new ConcurrentHashMap<>();
 
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for
@@ -71,6 +73,15 @@ public class UnknownSdkType extends SdkType{
 
   @Override
   public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
+    if (additionalData instanceof UnknownSdkAdditionalData) {
+      ((UnknownSdkAdditionalData)additionalData).save(additional);
+    }
+  }
+
+  @Nullable
+  @Override
+  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
+    return new UnknownSdkAdditionalData(additional);
   }
 
   @NotNull
@@ -82,5 +93,23 @@ public class UnknownSdkType extends SdkType{
   @Override
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdk;
+  }
+
+  @Override
+  public boolean allowCreationByUser() {
+    return false;
+  }
+
+  private static class UnknownSdkAdditionalData implements SdkAdditionalData {
+    @NotNull
+    private final Element myAdditionalElement;
+
+    UnknownSdkAdditionalData(@NotNull Element element) {
+      myAdditionalElement = element.clone();
+    }
+
+    void save(@NotNull Element additional) {
+      JDOMUtil.copyMissingContent(myAdditionalElement, additional);
+    }
   }
 }

@@ -85,25 +85,25 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     return getTestName(false) + type.getExtension();
   }
 
-  protected static FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+  protected FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     final FoldRegion[] result = new FoldRegion[1];
-    myEditor.getFoldingModel().runBatchFoldingOperation(
-      () -> result[0] = myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder));
+    getEditor().getFoldingModel().runBatchFoldingOperation(
+      () -> result[0] = getEditor().getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder));
     return result[0];
   }
 
-  protected static FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+  protected FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
     toggleFoldRegionState(region, false);
     return region;
   }
 
-  protected static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setExpanded(expanded));
+  protected void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
+    getEditor().getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setExpanded(expanded));
   }
 
-  protected static FoldRegion getFoldRegion(int startOffset) {
-    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
+  protected FoldRegion getFoldRegion(int startOffset) {
+    FoldRegion[] foldRegions = getEditor().getFoldingModel().getAllFoldRegions();
     for (FoldRegion foldRegion : foldRegions) {
       if (foldRegion.getStartOffset() == startOffset) {
         return foldRegion;
@@ -111,15 +111,15 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
     throw new IllegalArgumentException(String.format(
       "Can't find fold region with start offset %d. Registered fold regions: %s. Document text: '%s'",
-      startOffset, Arrays.toString(foldRegions), myEditor.getDocument().getCharsSequence()
+      startOffset, Arrays.toString(foldRegions), getEditor().getDocument().getCharsSequence()
     ));
   }
 
-  protected static void foldOccurrences(String textToFoldRegexp, final String placeholder) {
-    final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(myEditor.getDocument().getCharsSequence());
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+  protected void foldOccurrences(String textToFoldRegexp, final String placeholder) {
+    final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(getEditor().getDocument().getCharsSequence());
+    getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
       while (matcher.find()) {
-        FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
+        FoldRegion foldRegion = getEditor().getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
         assertNotNull(foldRegion);
         foldRegion.setExpanded(false);
       }
@@ -127,8 +127,8 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public void assertSelectionRanges(int[][] ranges) {
-    int[] selectionStarts = myEditor.getSelectionModel().getBlockSelectionStarts();
-    int[] selectionEnds = myEditor.getSelectionModel().getBlockSelectionEnds();
+    int[] selectionStarts = getEditor().getSelectionModel().getBlockSelectionStarts();
+    int[] selectionEnds = getEditor().getSelectionModel().getBlockSelectionEnds();
     int actualRangeCount = selectionStarts.length;
     int[][] actualRanges = new int[actualRangeCount][];
     for (int i = 0; i < actualRangeCount; i++) {
@@ -138,11 +138,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public EditorMouseFixture mouse() {
-    return new EditorMouseFixture((EditorImpl)myEditor);
+    return new EditorMouseFixture((EditorImpl)getEditor());
   }
 
   public void setEditorVisibleSize(int widthInChars, int heightInChars) {
-    EditorTestUtil.setEditorVisibleSize(myEditor, widthInChars, heightInChars);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), widthInChars, heightInChars);
   }
 
   /**
@@ -152,9 +152,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
    * For each caret its visual position and visual positions of selection start an and should be provided in the following order:
    * line, caretColumn, selectionStartColumn, selectionEndColumn
    */
-  public static void verifyCaretsAndSelections(int... coordinates) {
+  public void verifyCaretsAndSelections(int... coordinates) {
     int caretCount = coordinates.length / 4;
-    List<Caret> carets = myEditor.getCaretModel().getAllCarets();
+    List<Caret> carets = getEditor().getCaretModel().getAllCarets();
     assertEquals("Unexpected caret count", caretCount, carets.size());
     for (int i = 0; i < caretCount; i++) {
       Caret caret = carets.get(i);
@@ -164,35 +164,51 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  public static void verifySoftWrapPositions(Integer... positions) {
+  public void verifySoftWrapPositions(Integer... positions) {
     List<Integer> softWrapPositions = new ArrayList<>();
-    for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+    for (SoftWrap softWrap : getEditor().getSoftWrapModel().getSoftWrapsForRange(0, getEditor().getDocument().getTextLength())) {
       softWrapPositions.add(softWrap.getStart());
     }
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
-  protected void configureSoftWraps(int charCountToWrapAt) {
-    EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
+  public void verifyFoldingState(String state) {
+    assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
 
-  public static Inlay addInlay(int offset) {
+  protected void configureSoftWraps(int charCountToWrapAt) {
+    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt);
+  }
+
+  public Inlay addInlay(int offset) {
     return addInlay(offset, false);
   }
 
-  public static Inlay addInlay(int offset, int widthInPixels) {
-    return EditorTestUtil.addInlay(myEditor, offset, false, widthInPixels);
+  public Inlay addInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addInlay(getEditor(), offset, false, widthInPixels);
   }
 
-  public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
-    return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
+  public Inlay addInlay(int offset, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addInlay(getEditor(), offset, relatesToPrecedingText);
   }
 
-  public static Inlay addBlockInlay(int offset) {
-    return EditorTestUtil.addBlockInlay(myEditor, offset);
+  public Inlay addBlockInlay(int offset) {
+    return addBlockInlay(offset, false);
   }
 
-  protected static void runWriteCommand(ThrowableRunnable r) {
+  public Inlay addBlockInlay(int offset, boolean showAbove) {
+    return addBlockInlay(offset, showAbove, 0);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, showAbove, widthInPixels);
+  }
+
+  public Inlay addAfterLineEndInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addAfterLineEndInlay(getEditor(), offset, widthInPixels);
+  }
+
+  protected void runWriteCommand(ThrowableRunnable r) {
     try {
       WriteCommandAction.writeCommandAction(getProject()).run(r);
     }
@@ -201,7 +217,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  protected static void runFoldingOperation(Runnable r) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(r);
+  protected void runFoldingOperation(Runnable r) {
+    getEditor().getFoldingModel().runBatchFoldingOperation(r);
   }
 }

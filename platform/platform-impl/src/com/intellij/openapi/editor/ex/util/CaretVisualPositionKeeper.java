@@ -28,7 +28,10 @@ import java.util.Map;
 /**
  * Allows to keep caret's position in editor window at the same vertical position for operations, that can potentially move caret.
  * An instance of this class is to be created before the operation, method {@link #restoreOriginalLocation(boolean)} should be called after it.
+ *
+ * @deprecated Use {@link EditorScrollingPositionKeeper} instead.
  */
+@Deprecated
 public class CaretVisualPositionKeeper {
   private final Map<Editor, Integer> myCaretRelativeVerticalPositions = new HashMap<>();
 

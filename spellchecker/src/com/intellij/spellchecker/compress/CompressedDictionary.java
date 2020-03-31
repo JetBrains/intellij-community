@@ -47,7 +47,7 @@ public final class CompressedDictionary implements Dictionary {
     this.name = name;
   }
 
-  private void addToDictionary(@NotNull byte[] word) {
+  private void addToDictionary(byte @NotNull [] word) {
     SortedSet<byte[]> set = rawData.get(word.length);
     if (set == null) {
       set = createSet();
@@ -109,7 +109,7 @@ public final class CompressedDictionary implements Dictionary {
 
 
   @Override
-  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+  public void consumeSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
       getWords(word.charAt(0), 0, Integer.MAX_VALUE, consumer);
   }
 
@@ -132,16 +132,6 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   @Override
-  public boolean isEmpty() {
-    return wordsCount <= 0;
-  }
-
-  @Override
-  public void traverse(@NotNull Consumer<String> action) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   @NotNull
   public Set<String> getWords() {
     Set<String> words = new THashSet<>();
@@ -151,12 +141,6 @@ public final class CompressedDictionary implements Dictionary {
     }
     return words;
   }
-
-  @Override
-  public int size() {
-    return wordsCount;
-  }
-
 
   @Override
   public String toString() {
@@ -185,10 +169,10 @@ public final class CompressedDictionary implements Dictionary {
     return dictionary;
   }
 
-  public static int compareArrays(@NotNull byte[] array1, @NotNull byte[] array2) {
+  public static int compareArrays(byte @NotNull [] array1, byte @NotNull [] array2) {
     return compareArrays(array1, 0, array1.length, array2);
   }
-  private static int compareArrays(@NotNull byte[] array1, int start1, int length1, @NotNull byte[] array2) {
+  private static int compareArrays(byte @NotNull [] array1, int start1, int length1, byte @NotNull [] array2) {
     if (length1 != array2.length) {
       return length1 < array2.length ? -1 : 1;
     }
@@ -206,11 +190,11 @@ public final class CompressedDictionary implements Dictionary {
   }
 
 
-  public static boolean contains(@NotNull byte[] goal, @NotNull byte[] data) {
+  public static boolean contains(byte @NotNull [] goal, byte @NotNull [] data) {
     return binarySearchNew(goal, 0, data.length / goal.length, data) >= 0;
   }
 
-  public static int binarySearchNew(@NotNull byte[] goal, int fromIndex, int toIndex, @NotNull byte[] data) {
+  public static int binarySearchNew(byte @NotNull [] goal, int fromIndex, int toIndex, byte @NotNull [] data) {
     int unitLength = goal.length;
     return ObjectUtils.binarySearch(fromIndex, toIndex, mid -> compareArrays(data, mid * unitLength, unitLength, goal));
   }

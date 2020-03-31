@@ -224,14 +224,16 @@ class ReturnReplacementContext {
     }
   }
 
-  @NotNull
-  private static PsiElement[] extractTail(PsiStatement current, PsiCodeBlock block) {
+  private static PsiElement @NotNull [] extractTail(PsiStatement current, PsiCodeBlock block) {
     PsiElement[] children = block.getChildren();
     int pos = ArrayUtil.indexOf(children, current);
     assert pos >= 0;
     PsiElement rBrace = block.getRBrace();
     int endPos = rBrace == null ? children.length : ArrayUtil.lastIndexOf(children, rBrace);
     assert endPos >= pos;
+    if (pos + 1 < children.length && children[pos + 1] instanceof PsiWhiteSpace) {
+      pos++;
+    }
     return Arrays.copyOfRange(children, pos + 1, endPos);
   }
 
@@ -289,34 +291,53 @@ class ReturnReplacementContext {
     }
     PsiCodeBlock block = tryCast(myReturnStatement.getParent(), PsiCodeBlock.class);
     new CommentTracker().deleteAndRestoreComments(myReturnStatement);
-    cleanUpEmptyBlocks(block);
+    PsiElement place = cleanUpEmptyBlocks(block);
+    stripUnnecessaryBlocks(place);
   }
 
-  private static void cleanUpEmptyBlocks(PsiCodeBlock block) {
-    if (block == null || !block.isEmpty()) return;
+  private void stripUnnecessaryBlocks(PsiElement place) {
+    while (place != null && place != myBlock) {
+      if (place instanceof PsiBlockStatement) {
+        PsiIfStatement parentIf = tryCast(place.getParent(), PsiIfStatement.class);
+        if (parentIf != null && parentIf.getElseBranch() == place) {
+          PsiIfStatement childIf = tryCast(ControlFlowUtils.stripBraces((PsiStatement)place), PsiIfStatement.class);
+          if (childIf != null) {
+            place = place.replace(childIf);
+          }
+        }
+      }
+      place = place.getParent();
+    }
+  }
+
+  private static PsiElement cleanUpEmptyBlocks(PsiCodeBlock block) {
+    if (block == null || !block.isEmpty()) return block;
     PsiBlockStatement blockStatement = tryCast(block.getParent(), PsiBlockStatement.class);
-    if (blockStatement == null) return;
+    if (blockStatement == null) return block;
     PsiIfStatement parent = tryCast(blockStatement.getParent(), PsiIfStatement.class);
-    if (parent == null) return;
+    if (parent == null) return block;
     PsiExpression condition = parent.getCondition();
-    if (condition == null) return;
+    if (condition == null) return block;
     if (blockStatement == parent.getElseBranch()) {
       new CommentTracker().deleteAndRestoreComments(blockStatement);
+      return parent;
     }
-    else if (blockStatement == parent.getThenBranch()) {
+    if (blockStatement == parent.getThenBranch()) {
       if (parent.getElseBranch() != null) {
         new CommentTracker().replaceAndRestoreComments(blockStatement, parent.getElseBranch());
         parent.getElseBranch().delete();
         CommentTracker ct = new CommentTracker();
         String negatedCondition = BoolUtils.getNegatedExpressionText(condition, ct);
         ct.replaceAndRestoreComments(condition, negatedCondition);
+        return parent;
       }
-      else if (!SideEffectChecker.mayHaveSideEffects(condition)) {
+      if (!SideEffectChecker.mayHaveSideEffects(condition)) {
         PsiCodeBlock parentBlock = tryCast(parent.getParent(), PsiCodeBlock.class);
         new CommentTracker().deleteAndRestoreComments(parent);
-        cleanUpEmptyBlocks(parentBlock);
+        return cleanUpEmptyBlocks(parentBlock);
       }
     }
+    return block;
   }
 
   static void replaceSingleReturn(@NotNull Project project,

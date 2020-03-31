@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.util.DocumentUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,8 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private final boolean myAddOnce;
-  private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
+  private final String DEFAULT_FOLDING_MESSAGE = PyBundle.message("python.console");
+  private static final String PYTHON_PREFIX = "Python";
   private int myStartLineOffset = 0;
   private final List<String> firstLinePrefix = ImmutableList.of("Python", "PyDev console");
   private final List<String> lastLinePrefix = ImmutableList.of("IPython", "[", "PyDev console");
@@ -77,7 +79,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
             if (lineText.startsWith(prefix)) {
               start = document.getLineStartOffset(line);
               startLine = line;
-              if (prefix.equals("Python")) {
+              if (prefix.equals(PYTHON_PREFIX)) {
                 placeholderText = lineText;
               }
               break;
@@ -87,7 +89,8 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
 
         if (!doNotAddFoldingAgain) {
           for (String prefix : lastLinePrefix) {
-            if (lineText.startsWith(prefix) && (!prefix.equals("[") || (prefix.equals("[") && prevLineText.startsWith("Python")))) {
+            if (lineText.startsWith(prefix) && (!prefix.equals("[")) ||
+                (prefix.equals("[") && prevLineText != null && prevLineText.startsWith(PYTHON_PREFIX))) {
               finish = document.getLineEndOffset(line);
               finishLine = line;
               doNotAddFoldingAgain = myAddOnce;

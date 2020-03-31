@@ -44,9 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   private static final Logger LOG = Logger.getInstance(IncArtifactBuilder.class);
   public static final String BUILDER_NAME = "Artifacts builder";

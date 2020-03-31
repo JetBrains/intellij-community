@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -23,34 +23,24 @@ import org.jetbrains.annotations.Nullable;
  *   &lt;programRunner implementation="RunnerClassFQN"/&gt;
  * &lt;/extensions&gt;
  *
- * @param <Settings>
- * @see GenericProgramRunner
+ * @see AsyncProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
-  ExtensionPointName<ProgramRunner<RunnerSettings>> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
+  ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = new ExtensionPointName<>("com.intellij.programRunner");
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
   }
 
   @Nullable
-  static ProgramRunner findRunnerById(@NotNull String id) {
-    for (ProgramRunner registeredRunner : PROGRAM_RUNNER_EP.getExtensionList()) {
-      if (id.equals(registeredRunner.getRunnerId())) {
-        return registeredRunner;
-      }
-    }
-    return null;
+  static ProgramRunner<?> findRunnerById(@NotNull String id) {
+    return PROGRAM_RUNNER_EP.findFirstSafe(it -> id.equals(it.getRunnerId()));
   }
 
   @Nullable
   static ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    for (ProgramRunner<RunnerSettings> runner : PROGRAM_RUNNER_EP.getExtensionList()) {
-      if (runner.canRun(executorId, settings)) {
-        return runner;
-      }
-    }
-    return null;
+    //noinspection unchecked
+    return (ProgramRunner<RunnerSettings>)PROGRAM_RUNNER_EP.findFirstSafe(it -> it.canRun(executorId, settings));
   }
 
   /**
@@ -58,7 +48,8 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    *
    * @return the program runner ID.
    */
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getRunnerId();
 
   /**
@@ -68,7 +59,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @param profile the configuration being run.
    * @return true if the runner can handle it, false otherwise.
    */
-  boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile);
+  boolean canRun(@NotNull String executorId, @NotNull RunProfile profile);
 
   /**
    * Creates a block of per-configuration settings used by this program runner.
@@ -77,16 +68,37 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @return the per-runner settings, or null if this runner doesn't use any per-runner settings.
    */
   @Nullable
-  Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
+  default Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
+    return null;
+  }
 
-  void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException;
+  default void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+    throws RuntimeConfigurationException {
+  }
 
-  void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
+  /**
+   * @deprecated Not used by platform.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  default void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
+  }
 
   @Nullable
-  SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
+  default SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration) {
+    return null;
+  }
 
   void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
-  void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
+
+  /**
+   * @deprecated Use {@link #execute(ExecutionEnvironment)} and {@link ExecutionEnvironment#setCallback(Callback)}
+   */
+  @Deprecated
+  default void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
+    if (callback != null) {
+      environment.setCallback(callback);
+    }
+    execute(environment);
+  }
 }

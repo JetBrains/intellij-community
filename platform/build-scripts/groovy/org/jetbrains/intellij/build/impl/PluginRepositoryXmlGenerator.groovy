@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -9,9 +9,6 @@ import groovy.transform.Immutable
 import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.BuildContext
 
-/**
- * @author nik
- */
 @CompileStatic
 class PluginRepositoryXmlGenerator {
   private final BuildContext buildContext
@@ -74,7 +71,7 @@ class PluginRepositoryXmlGenerator {
       vendor: xml.vendor.text(),
       sinceBuild: versionNode?.attribute("since-build") ?: buildNumber,
       untilBuild: versionNode?.attribute("until-build") ?: buildNumber,
-      version: buildNumber,
+      version: xml.version.text(),
       description: xml.description.text(),
       relativeFilePath: FileUtil.getRelativePath(targetDirectory, pluginZip),
       size: pluginZip.length(),

@@ -65,18 +65,31 @@ public class IdeaGateway {
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
-    boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+
+    // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
+    if (numberOfOpenProjects == 0) {
+      if (shouldBeInContent) return false; // there is no project, so the file can't be in content
+      if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
+
+      return true;
+    }
+
+    boolean isExcludedFromAll = true;
+    boolean isInContent = false;
+
     for (int i = 0; i < numberOfOpenProjects; ++i) {
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
-      if (index.isExcluded(f)) return false;
+      if (index.isUnderIgnored(f)) return false;
       isInContent |= index.isInContent(f);
+      isExcludedFromAll &= index.isExcluded(f);
     }
+
+    if (isExcludedFromAll) return false;
     if (shouldBeInContent && !isInContent) return false;
 
-    // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
-    return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+    return true;
   }
 
   @NotNull
@@ -145,7 +158,7 @@ public class IdeaGateway {
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
     return isVersioned(f) && !f.isDirectory() &&
-           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.findRootType(f) != null);
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {
@@ -434,7 +447,7 @@ public class IdeaGateway {
     return d.getText().getBytes(charset);
   }
 
-  public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {
+  public String stringFromBytes(byte @NotNull [] bytes, @NotNull String path) {
     VirtualFile file = findVirtualFile(path);
     Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
     return CharsetToolkit.bytesToString(bytes, charset);

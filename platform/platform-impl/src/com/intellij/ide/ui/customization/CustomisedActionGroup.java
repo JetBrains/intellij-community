@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ public class CustomisedActionGroup extends ActionGroup {
   private final String myRootGroupName;
 
   private int mySchemeModificationStamp = -1;
+  private int myGroupModificationStamp = -1;
 
   public CustomisedActionGroup(String shortName,
                                final ActionGroup group,
@@ -30,12 +32,14 @@ public class CustomisedActionGroup extends ActionGroup {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-    int currentStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    if (mySchemeModificationStamp < currentStamp || myChildren == null || !(myGroup instanceof DefaultActionGroup)) {
+  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
+    int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
+    int currentGroupStamp = myGroup instanceof DefaultActionGroup ? ((DefaultActionGroup)myGroup).getModificationStamp() : -1;
+    if (mySchemeModificationStamp < currentSchemaStamp || myGroupModificationStamp < currentGroupStamp || ArrayUtil.isEmpty(myChildren) ||
+        myGroup instanceof DynamicActionGroup || !(myGroup instanceof DefaultActionGroup)) {
       myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
-      mySchemeModificationStamp = currentStamp;
+      mySchemeModificationStamp = currentSchemaStamp;
+      myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
@@ -72,4 +76,8 @@ public class CustomisedActionGroup extends ActionGroup {
   }
 
   public ActionGroup getOrigin() { return myGroup; }
+
+  public void resetChildren() {
+    myChildren = null;
+  }
 }

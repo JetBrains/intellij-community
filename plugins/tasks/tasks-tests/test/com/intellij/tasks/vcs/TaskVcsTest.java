@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.vcs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,8 +13,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -24,18 +23,27 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
 import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.CommitHandlersNotifier;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
-import icons.TasksIcons;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private TestRepository myRepository;
@@ -44,6 +52,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   private ChangeListManagerImpl myChangeListManager;
   private TaskManagerImpl myTaskManager;
+  private String TEST_FILE = "Test.txt";;
 
   public void testInitialState() {
     assertEquals(1, myTaskManager.getLocalTasks().size());
@@ -97,7 +106,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary", activeChangeList.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, anotherChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), anotherChangeList.getName());
 
     myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
@@ -111,7 +120,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     assertNotNull(activeChangeList);
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(activeChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, activeChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), activeChangeList.getName());
 
     assertEquals(localTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
@@ -141,7 +150,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList("Default (1)");
     assertNotNull(defaultChangeListActive);
     assertTrue(defaultChangeListActive.isDefault());
-    LocalChangeList defaultChangeListInactive = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeListInactive = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeListInactive);
     LocalChangeList anotherChangeList = myChangeListManager.findChangeList("TEST-001 Summary");
     assertNotNull(anotherChangeList);
@@ -150,7 +159,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("Default (1)", defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListInactive.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeListInactive.getName());
 
     assertEquals(anotherTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
@@ -171,7 +180,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalTask anotherTask = myTaskManager.findTask("TEST-001");
     assertNotNull(anotherTask);
 
-    LocalChangeList defaultChangeList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeList = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeList);
     LocalChangeList anotherChangeList = myChangeListManager.findChangeList("TEST-001 Summary");
     assertNotNull(anotherChangeList);
@@ -182,7 +191,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeList.getName());
   }
 
   public void testAddChangeListViaVcsAction() {
@@ -205,7 +214,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, defaultTask.getChangeLists().size());
     assertEquals(3, myChangeListManager.getChangeListsCopy().size());
 
-    LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeListActive);
     assertTrue(myChangeListManager.getDefaultListName(), defaultChangeListActive.isDefault());
 
@@ -215,7 +224,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(anotherChangeList);
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListActive));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListActive.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
     assertEquals("Default (1)", defaultChangeListInactive.getName());
@@ -312,12 +321,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     EasyMock.replay(panel);
 
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
-
-    List<CheckinHandler> handlers = Arrays.asList(checkinHandler);
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), handlers, null, "Commit", false);
+      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), "Commit", false);
 
+    committer.addResultHandler(new CommitHandlersNotifier(singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
   }
 
@@ -334,12 +342,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @NotNull
   private List<Change> addChanges(@NotNull LocalChangeList list) {
-    VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
+    VirtualFile file = myFixture.getTempDirFixture().createFile(TEST_FILE);
     FilePath path = VcsUtil.getFilePath(file);
     Change change = new Change(null,
                                new CurrentContentRevision(path));
 
-    List<Change> changes = Collections.singletonList(change);
+    List<Change> changes = singletonList(change);
     myChangeProvider.setChanges(changes);
 
     VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
@@ -416,6 +424,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     LocalTaskImpl strange = new LocalTaskImpl("1", "very long and strange summary");
     assertEquals("very-long", myTaskManager.suggestBranchName(strange));
+    assertEquals("very_long", myTaskManager.suggestBranchName(strange, "_"));
 
     myTaskManager.getState().branchNameFormat = "{id} {summary}";
 
@@ -425,7 +434,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testShelveChanges() {
-
     LocalTask activeTask = myTaskManager.getActiveTask();
     addChanges(myChangeListManager.getDefaultChangeList());
 
@@ -439,6 +447,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
 
     assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
+    //avoid overwrite file conflict
+    VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(TEST_FILE);
+    if (virtualFile.exists()) {
+      VfsTestUtil.deleteFile(virtualFile);
+    }
     myTaskManager.activateTask(activeTask, true);
     Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
     assertNotEmpty(changes);
@@ -492,13 +505,14 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     vcsManager.waitForInitialized();
 
     String tempDirPath = myFixture.getTempDirFixture().getTempDirPath();
-    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
+    vcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
     assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myRepository = new TestRepository();
     myRepository.setTasks(new MyTask());
-    myTaskManager.setRepositories(Collections.singletonList(myRepository));
+    myTaskManager.setRepositories(singletonList(myRepository));
+    PlatformTestUtil.saveProject(getProject());
   }
 
   @Override
@@ -543,10 +557,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     public boolean isModifiedDocumentTrackingRequired() {
       return false;
     }
-
-    @Override
-    public void doCleanup(List<VirtualFile> files) {
-    }
   }
 
   private class MyTask extends Task {
@@ -567,16 +577,15 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       return null;
     }
 
-    @NotNull
     @Override
-    public Comment[] getComments() {
+    public Comment @NotNull [] getComments() {
       return Comment.EMPTY_ARRAY;
     }
 
     @NotNull
     @Override
     public Icon getIcon() {
-      return TasksIcons.Unknown;
+      return AllIcons.FileTypes.Unknown;
     }
 
     @NotNull

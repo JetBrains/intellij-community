@@ -19,12 +19,11 @@ import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferExposingByteArrayInputStream extends UnsyncByteArrayInputStream {
-  public BufferExposingByteArrayInputStream(@NotNull byte[] buf) {
+  public BufferExposingByteArrayInputStream(byte @NotNull [] buf) {
     super(buf);
   }
 
-  @NotNull
-  public byte[] getInternalBuffer() {
+  public byte @NotNull [] getInternalBuffer() {
     return myBuffer;
   }
 }

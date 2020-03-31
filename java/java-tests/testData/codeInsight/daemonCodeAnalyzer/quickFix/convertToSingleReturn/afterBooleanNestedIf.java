@@ -12,12 +12,10 @@ class Test {
                 s = arr[1];
                 if (s == null) {
                     result = false;
-                } else {
-                    if (arr.length > 3) {
-                        s = arr[2];
-                        if (s != null && s.isEmpty()) {
-                            result = false;
-                        }
+                } else if (arr.length > 3) {
+                    s = arr[2];
+                    if (s != null && s.isEmpty()) {
+                        result = false;
                     }
                 }
             }

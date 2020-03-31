@@ -15,29 +15,18 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-/**
- * @deprecated use {@link ContainerUtil#createSoftKeySoftValueMap()} instead
- */
-@Deprecated
-public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
+final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  @Deprecated
-  public SoftKeySoftValueHashMap() {
-    DeprecatedMethodException.report("Use ContainerUtil#createSoftKeySoftValueMap() instead");
+  SoftKeySoftValueHashMap() {
   }
-
-  SoftKeySoftValueHashMap(boolean goodConstructor) {
-  }
-
 
   private static class ValueReference<K,V> extends SoftReference<V> {
     private final RefHashMap.Key<K> key;
@@ -49,7 +38,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   // returns true if some refs were tossed
-  boolean processQueue() {
+  private boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
       @SuppressWarnings("unchecked")

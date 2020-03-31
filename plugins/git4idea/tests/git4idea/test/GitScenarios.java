@@ -57,7 +57,7 @@ public class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  public static void branchWithCommit(Collection<GitRepository> repositories, final String name, final String file, final String content) {
+  public static void branchWithCommit(Collection<? extends GitRepository> repositories, final String name, final String file, final String content) {
     for (GitRepository repository : repositories) {
       branchWithCommit(repository, name, file, content);
     }
@@ -66,7 +66,7 @@ public class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  public static void branchWithCommit(Collection<GitRepository> repositories, String name) {
+  public static void branchWithCommit(Collection<? extends GitRepository> repositories, String name) {
     GitScenarios.branchWithCommit(repositories, name, "branch_file.txt", "branch content");
   }
 

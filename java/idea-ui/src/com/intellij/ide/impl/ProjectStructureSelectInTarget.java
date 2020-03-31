@@ -16,11 +16,12 @@
 package com.intellij.ide.impl;
 
 import com.intellij.facet.*;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -41,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author nik
- */
 public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(final SelectInContext context) {
@@ -54,7 +52,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
       return o instanceof Facet;
     }
     return fileIndex.isInContent(file) || fileIndex.isInLibrary(file)
-           || StdFileTypes.IDEA_MODULE.equals(file.getFileType()) && findModuleByModuleFile(context.getProject(), file) != null;
+           || FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE) && findModuleByModuleFile(context.getProject(), file) != null;
   }
 
   @Override
@@ -70,7 +68,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
       module = facet == null? null : facet.getModule();
     }
     else {
-      Module moduleByIml = file.getFileType().equals(StdFileTypes.IDEA_MODULE) ? findModuleByModuleFile(project, file) : null;
+      Module moduleByIml = FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE) ? findModuleByModuleFile(project, file) : null;
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       module = moduleByIml != null ? moduleByIml : fileIndex.getModuleForFile(file);
       facet = fileIndex.isInSourceContent(file) ? null : findFacet(project, file);
@@ -129,7 +127,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
   }
 
   public String toString() {
-    return IdeBundle.message("select.in.project.settings");
+    return JavaUiBundle.message("select.in.project.settings");
   }
 
   @Override

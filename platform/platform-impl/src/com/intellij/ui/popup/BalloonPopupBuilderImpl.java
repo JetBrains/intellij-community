@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -6,10 +6,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,22 +23,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BalloonPopupBuilderImpl implements BalloonBuilder {
+public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Nullable private final Map<Disposable, List<Balloon>> myStorage;
   @Nullable private Disposable myAnchor;
 
   private final JComponent myContent;
 
-  private Color   myBorder             = IdeTooltipManager.getInstance().getBorderColor(true);
-  @Nullable private Insets myBorderInsets = null;
-  private Color   myFill               = MessageType.INFO.getPopupBackground();
+  private Color myBorder = IdeTooltipManager.getInstance().getBorderColor(true);
+  @Nullable private Insets myBorderInsets;
+  private Color myFill = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
-  private boolean myHideOnKeyOutside   = true;
-  private long    myFadeoutTime        = -1;
-  private boolean myShowCallout        = true;
-  private boolean myCloseButtonEnabled = false;
-  private boolean myHideOnFrameResize  = true;
-  private boolean myHideOnLinkClick    = false;
+  private boolean myHideOnKeyOutside = true;
+  private long myFadeoutTime = -1;
+  private boolean myShowCallout = true;
+  private boolean myCloseButtonEnabled;
+  private boolean myHideOnFrameResize = true;
+  private boolean myHideOnLinkClick;
 
   private ActionListener myClickHandler;
   private boolean        myCloseOnClick;
@@ -52,11 +53,10 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private String  myTitle;
   private Insets  myContentInsets = JBUI.insets(2);
   private boolean myShadow        = true;
-  private boolean mySmallVariant  = false;
-
+  private boolean mySmallVariant;
   private Balloon.Layer myLayer;
-  private boolean myBlockClicks = false;
-  private boolean myRequestFocus = false;
+  private boolean myBlockClicks;
+  private boolean myRequestFocus;
 
   private Dimension myPointerSize;
   private int       myCornerToPointerDistance = -1;
@@ -211,7 +211,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
-  public BalloonBuilder setTitle(@Nullable String title) {
+  public BalloonBuilder setTitle(@Nullable @NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
@@ -278,22 +278,19 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
       List<Balloon> balloons = myStorage.get(myAnchor);
       if (balloons == null) {
         myStorage.put(myAnchor, balloons = new ArrayList<>());
-        Disposer.register(myAnchor, new Disposable() {
-          @Override
-          public void dispose() {
-            List<Balloon> toDispose = myStorage.remove(myAnchor);
-            if (toDispose != null) {
-              for (Balloon balloon : toDispose) {
-                if (!balloon.isDisposed()) {
-                  Disposer.dispose(balloon);
-                }
+        Disposer.register(myAnchor, () -> {
+          List<Balloon> toDispose = myStorage.remove(myAnchor);
+          if (toDispose != null) {
+            for (Balloon balloon : toDispose) {
+              if (!balloon.isDisposed()) {
+                Disposer.dispose(balloon);
               }
             }
           }
         });
       }
       balloons.add(result);
-      result.addListener(new JBPopupAdapter() {
+      result.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (!result.isDisposed()) {

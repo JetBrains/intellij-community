@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.serialization.JpsGlobalExtensionSerializer;
  * @author Eugene Zhuravlev
  */
 public class JpsIntelliLangConfigurationSerializer extends JpsGlobalExtensionSerializer {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.intellilang.model.impl.JpsIntelliLangConfigurationSerializer");
+  private static final Logger LOG = Logger.getInstance(JpsIntelliLangConfigurationSerializer.class);
   private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
   private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
 

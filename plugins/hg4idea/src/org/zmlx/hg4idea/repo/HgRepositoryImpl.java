@@ -2,7 +2,6 @@
 
 package org.zmlx.hg4idea.repo;
 
-import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
@@ -41,7 +40,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull private Set<String> myOpenedBranches = Collections.emptySet();
 
   @NotNull private volatile HgConfig myConfig;
-  private boolean myIsFresh = true;
   private final HgLocalIgnoredHolder myLocalIgnoredHolder;
 
 
@@ -55,10 +53,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(getProject(), rootDir);
     myLocalIgnoredHolder = new HgLocalIgnoredHolder(this, HgUtil.getRepositoryManager(getProject()));
-    myLocalIgnoredHolder.setupVfsListener();
+    myLocalIgnoredHolder.setupListeners();
     Disposer.register(this, myLocalIgnoredHolder);
     myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
-    myLocalIgnoredHolder.addUpdateStateListener(new IgnoredToExcludedSynchronizer(getProject()));
     update();
   }
 
@@ -202,11 +199,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   @Override
-  public boolean isFresh() {
-    return myIsFresh;
-  }
-
-  @Override
   public void update() {
     HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
@@ -236,7 +228,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull
   private HgRepoInfo readRepoInfo() {
-    myIsFresh = myIsFresh && myReader.isFresh();
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
@@ -271,7 +262,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     }
 
     @Override
-    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
+    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
       myChangesViewI.scheduleRefresh();

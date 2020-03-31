@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -28,22 +29,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
+  private static final Logger LOG = Logger.getInstance(JavaMethodsConflictResolver.class);
 
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
   protected LanguageLevel myLanguageLevel;
-
-  public JavaMethodsConflictResolver(@NotNull PsiExpressionList list, @NotNull LanguageLevel languageLevel) {
-    this(list, null, languageLevel);
-  }
+  @NotNull private final PsiFile myContainingFile;
 
   public JavaMethodsConflictResolver(@NotNull PsiElement argumentsList,
                                      PsiType[] actualParameterTypes,
-                                     @NotNull LanguageLevel languageLevel) {
+                                     @NotNull LanguageLevel languageLevel, @NotNull PsiFile containingFile) {
     myArgumentsList = argumentsList;
     myActualParameterTypes = actualParameterTypes;
     myLanguageLevel = languageLevel;
+    myContainingFile = containingFile;
   }
 
   @Override
@@ -60,6 +59,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
+    checkStaticMethodsOfInterfaces(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.create(key -> key.getSubstitutor(false));
     boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), map, true);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -71,9 +73,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, getActualParametersLength(), map, false);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
-    checkStaticMethodsOfInterfaces(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     if (atLeastOneMatch) {
@@ -119,15 +118,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
-                             @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
+  protected void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
+                                @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
     checkSpecifics(conflicts, applicabilityLevel, null, 0);
   }
 
-  public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
-                             @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
-                             Map<MethodCandidateInfo, PsiSubstitutor> map,
-                             int offset) {
+  protected void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
+                                @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
+                                Map<MethodCandidateInfo, PsiSubstitutor> map,
+                                int offset) {
     final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
 
     int conflictsCount = conflicts.size();
@@ -186,12 +185,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkSameSignatures(conflicts, null);
   }
 
-  protected void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
+  private void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
     Set<PsiMethod> superMethods = new HashSet<>();
-    GlobalSearchScope resolveScope = myArgumentsList.getResolveScope();
+    GlobalSearchScope resolveScope = ResolveScopeManager.getInstance(myContainingFile.getProject()).getResolveScope(myContainingFile);
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
@@ -261,10 +260,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return map != null ? map.get(existing) : existing.getSubstitutor(false);
   }
 
-  private static boolean areTypeParametersAgree(@NotNull CandidateInfo info) {
-    return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
-  }
-
   /**
    * choose to accept static interface methods during search to get "Static interface methods must be invoked on containing interface class only" error
    * instead of non clear javac message that symbol not found
@@ -273,21 +268,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
    */
   private void checkStaticMethodsOfInterfaces(@NotNull List<CandidateInfo> conflicts) {
     if (!(myArgumentsList instanceof PsiExpressionList)) return;
-    PsiClass qualifierClass = null;
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
       if (!(conflict instanceof MethodCandidateInfo)) continue;
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (conflict.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) continue;
+        PsiElement currentFileResolveScope = conflict.getCurrentFileResolveScope();
+        if (currentFileResolveScope instanceof PsiImportStaticStatement) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
-          if (qualifierClass == null) {
-            qualifierClass = getQualifiedClass(method);
-            if (qualifierClass == null) return;
-          }
+          PsiClass qualifierClass = getQualifiedClass(currentFileResolveScope);
 
-          if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
+          if (qualifierClass != null &&
+              !containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
             iterator.remove();
           }
         }
@@ -295,7 +288,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private PsiClass getQualifiedClass(PsiMethod method) {
+  private PsiClass getQualifiedClass(PsiElement resolveScope) {
     final PsiElement parent = myArgumentsList.getParent();
     if (parent instanceof PsiMethodCallExpression) {
       final PsiExpression expression = ((PsiMethodCallExpression)parent).getMethodExpression().getQualifierExpression();
@@ -305,11 +298,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return (PsiClass)resolve;
         }
       }
-      else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
-        PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, true)) {
-          return qualifierClass;
-        }
+      else if (expression == null && resolveScope instanceof PsiClass) {
+        return (PsiClass)resolveScope;
       }
 
       if (expression != null) {
@@ -319,10 +309,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return null;
   }
 
-  public boolean checkParametersNumber(@NotNull List<? extends CandidateInfo> conflicts,
-                                       final int argumentsCount,
-                                       Map<MethodCandidateInfo, PsiSubstitutor> map,
-                                       boolean ignoreIfStaticsProblem) {
+  private boolean checkParametersNumber(@NotNull List<? extends CandidateInfo> conflicts,
+                                        final int argumentsCount,
+                                        Map<MethodCandidateInfo, PsiSubstitutor> map,
+                                        boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
@@ -493,13 +483,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       boolean boxingInFirst = false;
       if (isBoxingUsed(classSubstitutor1.substitute(types1[i]), argType, arg)) {
-        boxingHappened[0] |= true;
+        boxingHappened[0] = true;
         boxingInFirst = true;
       }
 
       boolean boxingInSecond = false;
       if (isBoxingUsed(classSubstitutor2.substitute(types2[i]), argType, arg)) {
-        boxingHappened[1] |= true;
+        boxingHappened[1] = true;
         boxingInSecond = true;
       }
       sameBoxing &= boxingInFirst == boxingInSecond;
@@ -508,18 +498,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (boxingHappened[0] && !boxingHappened[1]) return Specifics.SECOND;
 
     if (sameBoxing) {
-      final PsiSubstitutor siteSubstitutor1 = getSiteSubstitutor(info1);
-      final PsiSubstitutor siteSubstitutor2 = getSiteSubstitutor(info2);
+      final PsiSubstitutor siteSubstitutor = getSiteSubstitutor(info1).putAll(getSiteSubstitutor(info2));
 
-      final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor2);
-      final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1);
+      final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor);
+      final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor);
 
-      final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite,
-                                                                           myLanguageLevel);
-      boolean applicable12 = isApplicableTo(types2AtSite, method1, myLanguageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2);
+      final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor, types1, types2AtSite, myLanguageLevel);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, myLanguageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor);
 
-      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, myLanguageLevel);
-      boolean applicable21 = isApplicableTo(types1AtSite, method2, myLanguageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1);
+      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor, types2, types1AtSite, myLanguageLevel);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, myLanguageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor);
 
       if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
@@ -535,7 +523,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
 
       if (applicable12 || applicable21) {
-
         if (applicable12 && !applicable21) return Specifics.SECOND;
         if (applicable21 && !applicable12) return Specifics.FIRST;
 
@@ -550,8 +537,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
 
         if (abstract1 && MethodSignatureUtil.areOverrideEquivalent(method1, method2)) { // abstract1 && abstract2
-          final PsiType returnType1 = siteSubstitutor1.substitute(method1.getReturnType());
-          final PsiType returnType2 = siteSubstitutor2.substitute(method2.getReturnType());
+          final PsiType returnType1 = siteSubstitutor.substitute(method1.getReturnType());
+          final PsiType returnType2 = siteSubstitutor.substitute(method2.getReturnType());
           if (returnType1 != null && returnType2 != null && returnType1.isAssignableFrom(returnType2)) {
             return Specifics.SECOND;
           }
@@ -587,7 +574,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final boolean varargs1 = info1.isVarargs();
     final boolean varargs2 = info2.isVarargs();
-    if (varargs1 ^ varargs2) {
+    if (varargs1 != varargs2) {
       return varargs1 ? Specifics.SECOND : Specifics.FIRST;
     }
 
@@ -613,27 +600,30 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     ProgressManager.checkCanceled();
     final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType
                                                               : PsiPolyExpressionUtil.isExpressionOfPrimitiveType(arg);
-    return parameterType instanceof PsiPrimitiveType ^ isExpressionTypePrimitive;
+    return parameterType instanceof PsiPrimitiveType != isExpressionTypePrimitive;
   }
 
-  private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
+  /**
+   * @param siteSubstitutor should contain mapping for both candidates sites to align types in hierarchy
+   */
+  private boolean isApplicableTo(PsiType @NotNull [] types2AtSite,
                                  @NotNull PsiMethod method1,
-                                 @NotNull final LanguageLevel languageLevel,
+                                 @NotNull LanguageLevel languageLevel,
                                  boolean varargsPosition,
                                  @NotNull PsiSubstitutor methodSubstitutor1,
                                  @NotNull PsiMethod method2,
-                                 final PsiSubstitutor siteSubstitutor1) {
+                                 PsiSubstitutor siteSubstitutor) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method1.getTypeParameters().length > 0 && myArgumentsList instanceof PsiExpressionList) {
       final PsiElement parent = myArgumentsList.getParent();
       if (parent instanceof PsiCallExpression) {
-        return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
+        return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
     final PsiUtil.ApplicabilityChecker applicabilityChecker = (left, right, allowUncheckedConversion, argId) -> {
       if (right instanceof PsiClassType) {
         final PsiClass rightClass = ((PsiClassType)right).resolve();
         if (rightClass instanceof PsiTypeParameter) {
-          right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
+          right = new PsiImmediateClassType(rightClass, siteSubstitutor);
         }
       }
       return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
@@ -659,8 +649,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return false;
   }
 
-  @NotNull
-  private static PsiType[] typesAtSite(@NotNull PsiType[] types1, @NotNull PsiSubstitutor siteSubstitutor1) {
+  private static PsiType @NotNull [] typesAtSite(PsiType @NotNull [] types1, @NotNull PsiSubstitutor siteSubstitutor1) {
     final PsiType[] types = PsiType.createArray(types1.length);
     for (int i = 0; i < types1.length; i++) {
       types[i] = siteSubstitutor1.substitute(types1[i]);
@@ -669,11 +658,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @NotNull
-  private static PsiSubstitutor calculateMethodSubstitutor(@NotNull PsiTypeParameter[] typeParameters,
+  private static PsiSubstitutor calculateMethodSubstitutor(PsiTypeParameter @NotNull [] typeParameters,
                                                            @NotNull PsiMethod method,
                                                            @NotNull PsiSubstitutor siteSubstitutor,
-                                                           @NotNull PsiType[] types1,
-                                                           @NotNull PsiType[] types2,
+                                                           PsiType @NotNull [] types1,
+                                                           PsiType @NotNull [] types2,
                                                            @NotNull LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
       .inferTypeArguments(typeParameters, types1, types2, languageLevel);
@@ -702,8 +691,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public void checkPrimitiveVarargs(@NotNull List<? extends CandidateInfo> conflicts,
-                                    final int argumentsCount) {
+  private void checkPrimitiveVarargs(@NotNull List<? extends CandidateInfo> conflicts,
+                                     final int argumentsCount) {
     if (JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7)) return;
     CandidateInfo objectVararg = null;
     for (CandidateInfo conflict : conflicts) {

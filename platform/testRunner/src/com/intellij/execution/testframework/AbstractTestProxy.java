@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,26 +116,6 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     super.dispose();
     for (AbstractTestProxy proxy : getChildren()) {
       Disposer.dispose(proxy);
-    }
-  }
-
-  /**
-   * to be deleted in 2017.1
-   */
-  @Deprecated
-  public static void flushOutput(AbstractTestProxy testProxy) {
-    testProxy.flush();
-
-    AbstractTestProxy parent = testProxy.getParent();
-    while (parent != null) {
-      final List<? extends AbstractTestProxy> children = parent.getChildren();
-      if (!testProxy.isInProgress() && testProxy.equals(children.get(children.size() - 1))) {
-        parent.flush();
-      } else {
-        break;
-      }
-      testProxy = parent;
-      parent = parent.getParent();
     }
   }
 

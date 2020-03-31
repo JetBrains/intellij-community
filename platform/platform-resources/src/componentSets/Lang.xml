@@ -1,51 +1,8 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
-      <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.util.gist.GistManager</interface-class>
-      <implementation-class>com.intellij.util.gist.GistManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.stubs.StubIndex</interface-class>
-      <implementation-class>com.intellij.psi.stubs.StubIndexImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.tools.ToolManager</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.psi.stubs.SerializationManager</interface-class>
-      <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.psi.PsiManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.PsiManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.psi.impl.file.impl.PsiVFSListener</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.PsiDocumentManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.PsiDocumentManagerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -65,15 +22,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
@@ -87,16 +35,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
-      <loadForDefaultProject/>
-      <!-- <skipForDefaultProject/> -->
-    </component>
-
-    <component>
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <loadForDefaultProject/>
@@ -105,22 +43,9 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonListeners</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
-    </component>
 
     <component>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
-      <loadForDefaultProject/>
     </component>
 
     <component>
@@ -137,11 +62,6 @@
       <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
       <headless-implementation-class/>
     </component>
-
-    <component>
-      <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
-      <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
-    </component>
   </project-components>
 
   <module-components>
@@ -154,11 +74,4 @@
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.openapi.roots.impl.libraries.LibraryKindLoader"/>
-    <applicationInitializedListener implementation="com.intellij.ide.script.IdeStartupScripts"/>
-    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
-                    serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
-  </extensions>
 </idea-plugin>

@@ -29,9 +29,6 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
-/**
- * @author nik
- */
 public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   public void testCopyChangedFile() {
     String file1 = createFile("dir/a.txt", "aaa");

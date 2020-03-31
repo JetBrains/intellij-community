@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -14,7 +15,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,7 +44,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     myIsInner = myContainingClass.getContainingClass() != null
                 && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
 
-    setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
+    setTitle(ReplaceConstructorWithFactoryHandler.getRefactoringName());
 
     myTfTargetClassName = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(new ChooseClassAction(), "", project, true);
 
@@ -90,7 +91,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    panel.add(new JLabel(RefactoringBundle.message("factory.method.name.label")), gbc);
+    panel.add(new JLabel(JavaRefactoringBundle.message("factory.method.name.label")), gbc);
 
     gbc.gridx++;
     gbc.weightx = 1.0;
@@ -118,7 +119,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private JPanel createTargetPanel() {
     JPanel targetClassPanel = new JPanel(new BorderLayout());
     if (!myIsInner) {
-      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
+      JLabel label = new JLabel(JavaRefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTfTargetClassName);
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTfTargetClassName, BorderLayout.CENTER);
@@ -132,8 +133,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
         parent = parent.getParent();
       }
 
-      myTargetClassNameCombo = new JComboBox(ArrayUtil.toStringArray(list));
-      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
+      myTargetClassNameCombo = new JComboBox(ArrayUtilRt.toStringArray(list));
+      JLabel label = new JLabel(JavaRefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTargetClassNameCombo.getEditor().getEditorComponent());
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTargetClassNameCombo, BorderLayout.CENTER);
@@ -173,9 +174,9 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final PsiClass targetClass =
       JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
-      CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
-                                              message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("class.0.not.found", targetClassName));
+      CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.getRefactoringName(),
+                                             message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
       return;
     }
 

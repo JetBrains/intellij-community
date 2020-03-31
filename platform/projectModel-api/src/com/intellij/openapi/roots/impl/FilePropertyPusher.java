@@ -22,18 +22,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 /**
- * @author Gregory.Shrago
+ * Represents a non-linear operation which is executed before indexing process is started {@link PushedFilePropertiesUpdater#pushAllPropertiesNow()}.
+ * During this process any pusher is allowed to set some properties to any of files being indexed.
+ * Most frequently property represents some kind of "language level"
+ * which is in most cases required to determine the algorithm of stub and other indexes building.
+ * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}.
  */
 public interface FilePropertyPusher<T> {
-  ExtensionPointName<FilePropertyPusher> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
+  ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
-  void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater);
+  default void initExtra(@NotNull Project project, @NotNull MessageBus bus) { }
+
+  /**
+   * @deprecated
+   * use {@link FilePropertyPusher#initExtra(Project, MessageBus)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  @SuppressWarnings("unused")
+  default void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
+    initExtra(project, bus);
+  }
+
   @NotNull
   Key<T> getFileDataKey();
   boolean pushDirectoriesOnly();
@@ -56,6 +73,11 @@ public interface FilePropertyPusher<T> {
 
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
+  /**
+   * @deprecated not used anymore
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   interface Engine {
     void pushAll();
     void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);

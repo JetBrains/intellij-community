@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlExtension.AttributeValuePresentation;
@@ -101,7 +102,11 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   @NotNull
   private static AttributeValuePresentation getValuePresentation(@NotNull Editor editor, @NotNull PsiFile file, @NotNull String quote) {
     PsiElement atParent = getAttributeCandidate(editor, file, true);
-    XmlAttributeDescriptor descriptor = atParent instanceof XmlAttribute ? ((XmlAttribute)atParent).getDescriptor() : null;
-    return XmlExtension.getExtension(file).getAttributeValuePresentation(descriptor, quote, file);
+    XmlAttributeDescriptor descriptor;
+    if (atParent instanceof XmlAttribute) {
+      XmlTag parent = ((XmlAttribute)atParent).getParent();
+      return XmlExtension.getExtension(file).getAttributeValuePresentation(parent, ((XmlAttribute)atParent).getName(), quote);
+    }
+    return XmlExtension.getExtension(file).getAttributeValuePresentation(null, "", quote);
   }
 }

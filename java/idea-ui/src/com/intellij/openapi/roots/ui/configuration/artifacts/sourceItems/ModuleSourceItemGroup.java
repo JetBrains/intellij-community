@@ -35,9 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class ModuleSourceItemGroup extends PackagingSourceItem {
   private final Module myModule;
 

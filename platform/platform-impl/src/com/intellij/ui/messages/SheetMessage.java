@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
@@ -13,23 +12,21 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * Created by Denis Fokin
  */
-class SheetMessage implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
-
+final class SheetMessage implements Disposable {
   private final JDialog myWindow;
   private final Window myParent;
   private final SheetController myController;
@@ -39,7 +36,7 @@ class SheetMessage implements Disposable {
   private Image staticImage;
   private int imageHeight;
 
-  SheetMessage(final Window owner,
+  SheetMessage(@Nullable Window owner,
                final String title,
                final String message,
                final Icon icon,
@@ -53,12 +50,13 @@ class SheetMessage implements Disposable {
 
     maximizeIfNeeded(owner);
 
-    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
+    @NonNls String hiddenTitle = "This should not be shown";
+    myWindow = new JDialog(owner, hiddenTitle, Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
     //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
     // project being loaded. Let's employ the focus manager then.
-    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
+    myParent = owner == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
@@ -144,7 +142,7 @@ class SheetMessage implements Disposable {
     Component focusCandidate = beforeShowFocusOwner.get();
 
     if (focusCandidate == null) {
-      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedFrame());
+      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedIdeWindow());
     }
 
     final Component finalFocusCandidate = focusCandidate;
@@ -163,16 +161,17 @@ class SheetMessage implements Disposable {
   }
 
   private void _showTouchBar() {
-    if (!TouchBarsManager.isTouchBarAvailable())
+    if (!TouchBarsManager.isTouchBarEnabled()) {
       return;
+    }
 
     final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
-    if (tb != null)
+    if (tb != null) {
       Disposer.register(this, tb);
+    }
   }
 
-  private static void maximizeIfNeeded(final Window owner) {
-    if (owner == null) return;
+  private static void maximizeIfNeeded(@Nullable Window owner) {
     if (owner instanceof Frame) {
       Frame f = (Frame)owner;
       if (f.getState() == Frame.ICONIFIED) {

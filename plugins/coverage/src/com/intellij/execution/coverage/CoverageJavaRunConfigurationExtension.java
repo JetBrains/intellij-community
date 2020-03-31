@@ -33,6 +33,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(@NotNull RunConfigurationBase configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -185,15 +186,14 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return listener;
   }
 
-  @Nullable
-  private static String[] getFilters(JavaCoverageEnabledConfiguration coverageEnabledConfiguration) {
+  private static String @Nullable [] getFilters(JavaCoverageEnabledConfiguration coverageEnabledConfiguration) {
     final ClassFilter[] patterns = coverageEnabledConfiguration.getCoveragePatterns();
     if (patterns != null) {
       final List<String> filters = new ArrayList<>();
       for (ClassFilter classFilter : patterns) {
         filters.add(classFilter.getPattern());
       }
-      return ArrayUtil.toStringArray(filters);
+      return ArrayUtilRt.toStringArray(filters);
     }
     return null;
   }

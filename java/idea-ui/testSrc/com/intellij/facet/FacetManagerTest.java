@@ -4,17 +4,16 @@ package com.intellij.facet;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.facet.mock.MockFacet;
+import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockFacetType;
 import com.intellij.facet.mock.MockSubFacetType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
+import org.junit.Assume;
 
 
-/**
- * @author nik
- */
 public class FacetManagerTest extends FacetTestCase {
   public void testAddDeleteFacet() {
     final FacetManager manager = getFacetManager();
@@ -48,7 +47,7 @@ public class FacetManagerTest extends FacetTestCase {
     assertTrue(facet.isDisposed());
   }
 
-  public void testAddSubFacet() {
+  public void testAddRemoveSubFacet() {
     final MockFacet mockFacet = addFacet();
     assertNull(getFacetManager().getFacetByType(mockFacet, MockSubFacetType.ID));
     assertNull(getFacetManager().getFacetByType(mockFacet, MockFacetType.ID));
@@ -56,6 +55,42 @@ public class FacetManagerTest extends FacetTestCase {
     final Facet subFacet = addSubFacet(mockFacet, "sub");
     assertSame(subFacet, getFacetManager().getFacetByType(mockFacet, MockSubFacetType.ID));
     assertNull(getFacetManager().getFacetByType(mockFacet, MockFacetType.ID));
+
+    ModifiableFacetModel model = getFacetManager().createModifiableModel();
+    model.removeFacet(subFacet);
+    commit(model);
+
+    assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
+    assertSame(mockFacet, getFacetManager().getFacetByType(MockFacetType.ID));
+
+    model = getFacetManager().createModifiableModel();
+    model.removeFacet(mockFacet);
+    commit(model);
+    assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
+  }
+  
+  public void testAddRemoveFacetWithSubFacet() {
+    assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
+    assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
+
+    ModifiableFacetModel model = getFacetManager().createModifiableModel();
+    MockFacet mockFacet = new MockFacet(myModule, "mock");
+    model.addFacet(mockFacet);
+    Facet subFacet = MockSubFacetType.getInstance().createFacet(myModule, "mock", new MockFacetConfiguration(), mockFacet);
+    model.addFacet(subFacet);
+    commit(model);
+
+    assertSame(subFacet, getFacetManager().getFacetByType(mockFacet, MockSubFacetType.ID));
+    assertSame(mockFacet, getFacetManager().getFacetByType(MockFacetType.ID));
+    assertNull(getFacetManager().getFacetByType(mockFacet, MockFacetType.ID));
+
+    model = getFacetManager().createModifiableModel();
+    model.removeFacet(subFacet);
+    model.removeFacet(mockFacet);
+    commit(model);
+
+    assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
+    assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
   }
 
   public void testRenameNewFacet() {
@@ -110,16 +145,17 @@ public class FacetManagerTest extends FacetTestCase {
 
   @Nullable
   private Element write() {
-    FacetManagerState state = getFacetManager().getState();
+    FacetManagerState state = ((FacetManagerImpl)getFacetManager()).getState();
     return XmlSerializer.serialize(state);
   }
 
   private void read(@Nullable Element element) {
-    getFacetManager().loadState(element == null ? new FacetManagerState() : XmlSerializer.deserialize(element, FacetManagerState.class));
+    ((FacetManagerImpl)getFacetManager()).loadState(element == null ? new FacetManagerState() : XmlSerializer.deserialize(element, FacetManagerState.class));
   }
 
   public void testExternalization() {
-    final FacetManager manager = getFacetManager();
+    FacetManager manager = getFacetManager();
+    Assume.assumeTrue("Not applicable to workspace model", manager instanceof FacetManagerImpl);
     assertNull(write());
 
     addFacet();

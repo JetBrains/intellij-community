@@ -84,7 +84,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                 // we're in a method
                 // TODO: all string constants go to Settings
                 String paramName = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
-                final boolean isNew = PyNames.NEW.equals(func.getName());
+                final boolean isNew = PyUtil.isNewMethod(func);
                 if (flags.isMetaclassMethod() && isNew) {
                   paramName = "typ";
                 }

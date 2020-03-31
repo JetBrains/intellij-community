@@ -20,7 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -38,9 +38,8 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensions
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
     // avoid 'IntellijIdeaRulezzz' placeholder
     PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
     String orderValue = ElementManipulators.getValueText(originalElement);
@@ -198,12 +197,11 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       return PomService.convertToPsi(target);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
       if (extensionPoint == null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       List<ExtensionCandidate> candidates = locateExtensionsByExtensionPoint(extensionPoint);
@@ -228,7 +226,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public String getUnresolvedMessagePattern() {
       ExtensionPoint ep = myExtension.getExtensionPoint();
-      return "Cannot resolve ''{0}'' " + (ep != null ? ep.getEffectiveName() + " " : "") + "extension";
+      return "Cannot resolve ''{0}'' " + (ep != null ? ep.getEffectiveQualifiedName() + " " : "") + "extension";
     }
 
     @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -21,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Provides data for event which is fired when the name or writable status of a virtual file is changed.
+ * Provides data for an event that is fired when the name or writable status of a virtual file is changed.
  *
  * @see VirtualFileListener#beforePropertyChange(VirtualFilePropertyEvent)
  * @see VirtualFileListener#propertyChanged(VirtualFilePropertyEvent)
@@ -32,7 +18,7 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
   private final Object myNewValue;
 
   public VirtualFilePropertyEvent(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue){
-    super(requestor, file, file.getName(), file.getParent());
+    super(requestor, file, file.getParent(), 0, 0);
     myPropertyName = propertyName;
     myOldValue = oldValue;
     myNewValue = newValue;

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -8,12 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Comparator;
 
-public final class FileComparator implements Comparator<NodeDescriptor> {
+@SuppressWarnings("rawtypes")
+public final class FileComparator implements Comparator<NodeDescriptor<?>> {
   private static final FileComparator INSTANCE = new FileComparator();
 
-  private FileComparator() {
-    // empty
-  }
+  private FileComparator() { }
 
   public static FileComparator getInstance() {
     return INSTANCE;
@@ -23,16 +21,20 @@ public final class FileComparator implements Comparator<NodeDescriptor> {
   public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
     int weight1 = getWeight(nodeDescriptor1);
     int weight2 = getWeight(nodeDescriptor2);
+    if (weight1 != weight2) return weight1 - weight2;
 
-    if (weight1 != weight2) {
-      return weight1 - weight2;
-    }
+    String node1Text = nodeDescriptor1.toString();
+    String node2Text = nodeDescriptor2.toString();
+    boolean isNode1Unc = node1Text.startsWith("\\\\");
+    boolean isNode2Unc = node2Text.startsWith("\\\\");
+    if (isNode1Unc && !isNode2Unc) return 1;
+    if (isNode2Unc && !isNode1Unc) return -1;
 
-    return nodeDescriptor1.toString().compareToIgnoreCase(nodeDescriptor2.toString());
+    return node1Text.compareToIgnoreCase(node2Text);
   }
 
-   private static int getWeight(NodeDescriptor descriptor) {
-     VirtualFile file = ((FileNodeDescriptor)descriptor).getElement().getFile();
-     return file == null || file.isDirectory() ? 0 : 1;
-   }
+  private static int getWeight(NodeDescriptor<?> descriptor) {
+    VirtualFile file = ((FileNodeDescriptor)descriptor).getElement().getFile();
+    return file == null || file.isDirectory() ? 0 : 1;
+  }
 }

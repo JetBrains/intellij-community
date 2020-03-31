@@ -39,7 +39,7 @@ import java.util.*;
  * @author dsl
  */
 public final class Match {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.Match");
+  private static final Logger LOG = Logger.getInstance(Match.class);
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();
@@ -153,7 +153,6 @@ public final class Match {
       myParameterValues.put(psiVariable, values);
       final ArrayList<PsiElement> elements = new ArrayList<>();
       myParameterOccurrences.put(psiVariable, elements);
-      return true;
     }
     else {
       for (PsiElement val : currentValue) {
@@ -168,8 +167,8 @@ public final class Match {
         }
       }
       myParameterOccurrences.get(psiVariable).add(value);
-      return true;
     }
+    return true;
   }
 
   public ReturnValue getReturnValue() {

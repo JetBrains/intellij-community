@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
@@ -42,7 +42,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
 
   private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
   private final ProgressWindow myProgressWindow;
-  private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
+  private String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
   private final List<HotSwapProgressListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -86,10 +86,10 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     List<String> warnings = getMessages(MessageCategory.WARNING);
 
     if (!errors.isEmpty()) {
-      notifyUser(DebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors, true), NotificationType.ERROR);
+      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors, true), NotificationType.ERROR);
     }
     else if (!warnings.isEmpty()){
-      notifyUser(DebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings, true), NotificationType.WARNING);
+      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings, true), NotificationType.WARNING);
     }
     else if (!myMessages.isEmpty()){
       List<String> messages = new ArrayList<>();
@@ -147,9 +147,9 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   private String buildMessage(List<String> messages, boolean withRestart) {
     StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
     if (SoftReference.dereference(mySessionRef) != null) {
-      res.append("\n").append(DebuggerBundle.message("status.hot.swap.completed.stop"));
+      res.append("\n").append(JavaDebuggerBundle.message("status.hot.swap.completed.stop"));
       if (withRestart) {
-        res.append("&nbsp;&nbsp;&nbsp;&nbsp;").append(DebuggerBundle.message("status.hot.swap.completed.restart"));
+        res.append("&nbsp;&nbsp;&nbsp;&nbsp;").append(JavaDebuggerBundle.message("status.hot.swap.completed.restart"));
       }
     }
     return res.toString();
@@ -209,7 +209,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
 
   @Override
   public void setDebuggerSession(DebuggerSession session) {
-    myTitle = DebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
+    myTitle = JavaDebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
     myProgressWindow.setTitle(myTitle);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,17 +52,11 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
     writeBooleanOption(node, "ignoreStaticFields", true);
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
     return "FieldNameHidesFieldInSuperclass";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.name.hides.in.superclass.display.name");
   }
 
   @Override
@@ -78,9 +73,10 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "field.name.hides.in.superclass.ignore.option"),
-                                          this, "m_ignoreInvisibleFields");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"), "m_ignoreInvisibleFields");
+    panel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.static.field.option"), "ignoreStaticFields");
+    return panel;
   }
 
   @Override

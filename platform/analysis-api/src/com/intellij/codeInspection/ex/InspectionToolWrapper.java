@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 
 /**
  * @author Dmitry Avdeev
@@ -25,10 +26,11 @@ import java.net.URL;
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolWrapper");
+  private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);
 
   protected T myTool;
   protected final E myEP;
+  @Nullable private HighlightDisplayKey myDisplayKey;
 
   protected InspectionToolWrapper(@NotNull E ep) {
     this(null, ep);
@@ -58,6 +60,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public void initialize(@NotNull GlobalInspectionContext context) {
+    getTool().initialize(context);
   }
 
   @NotNull
@@ -70,7 +73,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       //noinspection unchecked
       myTool = tool = (T)myEP.instantiateTool();
       if (!tool.getShortName().equals(myEP.getShortName())) {
-        LOG.error(new PluginException("Short name not matched for " + tool.getClass() + ": getShortName() = #" + tool.getShortName() + "; ep.shortName = #" + myEP.getShortName(), myEP.getPluginId()));
+        LOG.error(new PluginException("Short name not matched for " + tool.getClass() + ": getShortName() = #" + tool.getShortName() + "; ep.shortName = #" + myEP.getShortName(), myEP.getPluginDescriptor().getPluginId()));
       }
     }
     return tool;
@@ -142,8 +145,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
 
-  @NotNull
-  public String[] getGroupPath() {
+  public String @NotNull [] getGroupPath() {
     if (myEP == null) {
       return getTool().getGroupPath();
     }
@@ -161,28 +163,23 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     final String description = getStaticDescription();
     if (description != null) return description;
     try {
-      URL descriptionUrl = getDescriptionUrl();
-      if (descriptionUrl == null) return null;
-      return ResourceUtil.loadText(descriptionUrl);
+      InputStream descriptionStream = getDescriptionStream();
+      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) { }
 
     return getTool().loadDescription();
   }
 
-  private URL getDescriptionUrl() {
+  private InputStream getDescriptionStream() {
     Application app = ApplicationManager.getApplication();
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return superGetDescriptionUrl();
-    }
     String fileName = getDescriptionFileName();
-    return myEP.getLoaderForClass().getResource("inspectionDescriptions/" + fileName);
-  }
 
-  @Nullable
-  private URL superGetDescriptionUrl() {
-    final String fileName = getDescriptionFileName();
-    return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
+    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
+    }
+
+    return myEP.getLoaderForClass().getResourceAsStream("inspectionDescriptions/" + fileName);
   }
 
   @NotNull
@@ -220,6 +217,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  @NotNull
-  public abstract JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context);
+  public abstract JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context);
+
+  public HighlightDisplayKey getDisplayKey() {
+    HighlightDisplayKey key = myDisplayKey;
+    if (key == null) {
+      myDisplayKey = key = HighlightDisplayKey.find(getShortName());
+    }
+    return key;
+  }
 }

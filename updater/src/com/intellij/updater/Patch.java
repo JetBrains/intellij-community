@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -143,29 +143,15 @@ public class Patch {
 
   private static void writeActions(DataOutputStream dataOut, List<? extends PatchAction> actions) throws IOException {
     dataOut.writeInt(actions.size());
-
     for (PatchAction each : actions) {
       int key;
-      Class clazz = each.getClass();
-
-      if (clazz == CreateAction.class) {
-        key = CREATE_ACTION_KEY;
-      }
-      else if (clazz == UpdateAction.class) {
-        key = UPDATE_ACTION_KEY;
-      }
-      else if (clazz == UpdateZipAction.class) {
-        key = UPDATE_ZIP_ACTION_KEY;
-      }
-      else if (clazz == DeleteAction.class) {
-        key = DELETE_ACTION_KEY;
-      }
-      else if (clazz == ValidateAction.class) {
-        key = VALIDATE_ACTION_KEY;
-      }
-      else {
-        throw new RuntimeException("Unknown action " + each);
-      }
+      Class<?> clazz = each.getClass();
+      if (clazz == CreateAction.class) key = CREATE_ACTION_KEY;
+      else if (clazz == UpdateAction.class) key = UPDATE_ACTION_KEY;
+      else if (clazz == UpdateZipAction.class) key = UPDATE_ZIP_ACTION_KEY;
+      else if (clazz == DeleteAction.class) key = DELETE_ACTION_KEY;
+      else if (clazz == ValidateAction.class) key = VALIDATE_ACTION_KEY;
+      else throw new RuntimeException("Unknown action " + each);
       dataOut.writeInt(key);
       each.write(dataOut);
     }
@@ -234,8 +220,7 @@ public class Patch {
     File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      // always collect files and folders - to avoid cases such as IDEA-152249
-      files = Utils.collectRelativePaths(toDir);
+      files = Utils.collectRelativePaths(toDir.toPath());
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -248,7 +233,7 @@ public class Patch {
     }
 
     if (myIsStrict) {
-      // in strict mode, add delete actions for unknown files
+      // in the strict mode, add delete actions for unknown files
       for (PatchAction action : myActions) {
         files.remove(action.getPath());
       }
@@ -270,7 +255,7 @@ public class Patch {
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // do not warn about files which are going to be deleted
+        // do not warn about files going to be deleted
         result = null;
       }
 
@@ -310,10 +295,11 @@ public class Patch {
         forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, _backupDir));
       }
       else {
+        //noinspection SSBasedInspection
         List<PatchAction> specialActions = actionsToApply.stream().filter(PatchAction::mandatoryBackup).collect(Collectors.toList());
         if (!specialActions.isEmpty()) {
           backupDir = Utils.getTempFile("partial_backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
           File _backupDir = backupDir;
           forEach(specialActions, "Preparing update...", ui, action -> action.backup(toDir, _backupDir));
         }
@@ -362,14 +348,9 @@ public class Patch {
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
     }
 
-    File jre64 = new File(toDir.getAbsolutePath() + "/jre64");
-    File jbr = new File(toDir.getAbsolutePath() + "/jbr");
-    if (jbr.exists())  Runner.logger().info("jbr bundled: " + jbr.getAbsolutePath());
-    if (jre64.exists())  Runner.logger().info("jre64 bundled: " + jre64.getAbsolutePath());
     for (File directory : createdDirectories) {
       File[] children = directory.listFiles();
-      if (children != null && pruningEmptyDir(toDir, directory, jre64, jbr) &&
-          createdOptionalFiles.containsAll(Arrays.asList(children))) {
+      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
         Runner.logger().info("Pruning empty directory: " + directory);
         try {
           Utils.delete(directory);
@@ -389,13 +370,6 @@ public class Patch {
     }
 
     return new PatchFileCreator.ApplicationResult(true, appliedActions);
-  }
-
-  private boolean pruningEmptyDir(File toDir, File directory, File jre64, File jbr) {
-    return ((!directory.getAbsolutePath().contains("jre64") ||
-             (directory.getAbsolutePath().contains("jre64") && !jre64.exists())) &&
-            (!directory.getAbsolutePath().contains("jbr") ||
-             (directory.getAbsolutePath().contains("jbr") && !jbr.exists())));
   }
 
   public void revert(List<? extends PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
@@ -441,8 +415,7 @@ public class Patch {
 
   public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
-    //always collect files and folders to avoid cases such as IDEA-152249
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir.toPath());
     for (String each : paths) {
       if (!ignoredFiles.contains(each)) {
         result.put(each, digestFile(new File(dir, each), normalize));

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class DirectoryIndexRestoreTest extends JavaProjectTestCase {
   private VirtualFile myTempVFile;
   private String myTestDirPath;

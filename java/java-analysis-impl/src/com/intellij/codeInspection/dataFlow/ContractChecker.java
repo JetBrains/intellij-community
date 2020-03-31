@@ -6,11 +6,12 @@ import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstrai
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +34,7 @@ class ContractChecker {
     private boolean myMayReturnNormally = false;
 
     ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+      super(true);
       myMethod = method;
       myContract = contract;
       myOwnContract = ownContract;
@@ -72,11 +74,10 @@ class ContractChecker {
       return super.visitMethodCall(instruction, runner, memState);
     }
 
-    @NotNull
     @Override
-    public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
-                                                      @NotNull DataFlowRunner runner,
-                                                      @NotNull DfaMemoryState state) {
+    public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
+                                                                @NotNull DataFlowRunner runner,
+                                                                @NotNull DfaMemoryState state) {
       if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
         ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
       }
@@ -86,11 +87,11 @@ class ContractChecker {
       return super.visitControlTransfer(instruction, runner, state);
     }
 
-    private Map<PsiElement, String> getErrors() {
-      HashMap<PsiElement, String> errors = new HashMap<>();
+    private Map<PsiElement, @InspectionMessage String> getErrors() {
+      HashMap<PsiElement, @InspectionMessage String> errors = new HashMap<>();
       for (PsiElement element : myViolations) {
         if (!myNonViolations.contains(element)) {
-          errors.put(element, "Contract clause '" + myContract + "' is violated");
+          errors.put(element, JavaAnalysisBundle.message("inspection.contract.checker.contract.violated", myContract));
         }
       }
 
@@ -98,14 +99,18 @@ class ContractChecker {
         if (myOwnContract && !myMayReturnNormally &&
             !(PsiUtil.canBeOverridden(myMethod) && ControlFlowUtils.methodAlwaysThrowsException(myMethod))) {
           for (PsiElement element : myFailures) {
-            errors.put(element, "Return value of clause '" + myContract + "' could be replaced with 'fail' as method always fails"+
-                                (myContract.isTrivial() ? "" : " in this case"));
+            if (myContract.isTrivial()) {
+              errors.put(element, JavaAnalysisBundle.message("inspection.contract.checker.method.always.fails.trivial", myContract));
+            }
+            else {
+              errors.put(element, JavaAnalysisBundle.message("inspection.contract.checker.method.always.fails.nontrivial", myContract));
+            }
           }
         }
-      } else if (myFailures.isEmpty() && errors.isEmpty()) {
+      } else if (myFailures.isEmpty() && errors.isEmpty() && myMayReturnNormally) {
         PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
         errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
-                   "Contract clause '" + myContract + "' is violated: no exception is thrown");
+                   JavaAnalysisBundle.message("inspection.contract.checker.no.exception.thrown", myContract));
       }
 
       return errors;
@@ -117,27 +122,27 @@ class ContractChecker {
     }
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+  static Map<PsiElement, @InspectionMessage String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    DataFlowRunner runner = new StandardDataFlowRunner(false, null);
+    DataFlowRunner runner = new DataFlowRunner(method.getProject(), null);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = runner.createMemoryState();
     final DfaValueFactory factory = runner.getFactory();
     for (int i = 0; i < contract.getParameterCount(); i++) {
       ValueConstraint constraint = contract.getParameterConstraint(i);
-      DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
+      DfaValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i]);
-        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
+        initialState.applyCondition(dfaParam.cond(RelationType.equivalence(!negated), comparisonValue));
       }
     }
 
     ContractCheckerVisitor visitor = new ContractCheckerVisitor(method, contract, ownContract);
-    runner.analyzeMethod(body, visitor, false, Collections.singletonList(initialState));
+    runner.analyzeMethod(body, visitor, Collections.singletonList(initialState));
     return visitor.getErrors();
   }
 }

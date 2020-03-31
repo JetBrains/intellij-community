@@ -16,18 +16,17 @@
 package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class ManifestCompletionTest extends LightCompletionTestCase {
   public void testHeaderNameCompletionVariants() {
-    LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
+    configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor", "Specification-Version");
     assertNotContainItems("Specification-Title");
   }
 
   public void testHeaderNameEnterCompletion() {
-    LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
+    configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");
     selectItem(myItems[0], '\n');
@@ -35,7 +34,7 @@ public class ManifestCompletionTest extends LightCompletionTestCase {
   }
 
   public void testHeaderNameColonCompletion() {
-    LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
+    configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");
     selectItem(myItems[0], ':');
@@ -43,7 +42,7 @@ public class ManifestCompletionTest extends LightCompletionTestCase {
   }
 
   public void testHeaderNameSpaceCompletion() {
-    LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
+    configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");
     selectItem(myItems[0], ' ');

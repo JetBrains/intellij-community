@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.ExecutionException;
@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +19,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo;
 import java.io.File;
 
 public class JdkBundle {
-  private static final String BUNDLED_JDK_DIR_NAME =
-    SystemInfo.isMac ? "jdk" : SystemInfo.is64Bit ? "jre64" : SystemInfo.isWindows ? "jre32" : "jre";
+  private static final String BUNDLED_JDK_DIR_NAME = "jbr";
 
   private final File myLocation;
   private final JdkVersionInfo myVersionInfo;
@@ -64,9 +62,13 @@ public class JdkBundle {
     return myJdk;
   }
 
-  public boolean isOperational() {
-    if (myBoot) return true;
+  @NotNull
+  public File getHome() {
+    return getVMExecutable().getParentFile().getParentFile();
+  }
 
+  @NotNull
+  public File getVMExecutable() {
     File home = myLocation;
     if (SystemInfo.isMac) {
       File contents = new File(home, "Contents/Home");
@@ -78,13 +80,23 @@ public class JdkBundle {
     if (!javaPath.isFile()) {
       javaPath = new File(home, SystemInfo.isWindows ? "jre\\bin\\java.exe" : "jre/bin/java");
     }
+    return javaPath;
+  }
+
+  public boolean isOperational() {
+    if (myBoot) return true;
+
+    File javaPath = getVMExecutable();
+    if (SystemInfo.isUnix && !javaPath.canExecute()) {
+      return false;
+    }
 
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(javaPath.getPath(), "-version"));
       return output.getExitCode() == 0;
     }
     catch (ExecutionException e) {
-      Logger.getInstance(JdkBundle.class).error(e);
+      Logger.getInstance(JdkBundle.class).debug(e);
       return false;
     }
   }
@@ -144,73 +156,4 @@ public class JdkBundle {
 
     return null;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated does not belong to the class (to be removed in IDEA 2019) */
-  @Deprecated
-  public String getVisualRepresentation() {
-    StringBuilder representation = new StringBuilder();
-
-    representation.append("java ");
-    representation.append(myVersionInfo.version);
-
-    if (myBoot || myBundled) {
-      representation.append(" [");
-      if (myBoot) representation.append(myBundled ? "boot, " : "boot");
-      if (myBundled) representation.append("bundled");
-      representation.append("]");
-    }
-
-    return representation.toString();
-  }
-
-  /** @deprecated useless (to be removed in IDEA 2019) */
-  @Deprecated
-  public String getBundleName() {
-    return "java";
-  }
-
-  /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
-  @Deprecated
-  public Version getVersion() {
-    JavaVersion v = myVersionInfo.version;
-    return v.feature <= 8 ? new Version(1, v.feature, 0) : new Version(v.feature, 0, v.update);
-  }
-
-  /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
-  @Deprecated
-  public Integer getUpdateNumber() {
-    return myVersionInfo.version.update;
-  }
-
-  /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
-    return createBundle(jvm, boot, bundled, true);
-  }
-
-  /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public static JdkBundle createBundle(@NotNull File jvm, boolean boot, @SuppressWarnings("unused") boolean bundled, boolean matchArch) {
-    JdkBundle bundle = createBundle(jvm, boot);
-    if (matchArch && bundle != null) {
-      Bitness arch = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
-      if (arch != bundle.myVersionInfo.bitness) {
-        bundle = null;
-      }
-    }
-    return bundle;
-  }
-
-  /** @deprecated use {@link #createBundled()} (to be removed in IDEA 2019) */
-  @Deprecated
-  public static File getBundledJDKAbsoluteLocation() {
-    return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
-  }
-
-  /** @deprecated use {@link SystemInfo#is64Bit} (to be removed in IDEA 2019) */
-  @Deprecated public static final Bitness runtimeBitness = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
-
-  //</editor-fold>
 }

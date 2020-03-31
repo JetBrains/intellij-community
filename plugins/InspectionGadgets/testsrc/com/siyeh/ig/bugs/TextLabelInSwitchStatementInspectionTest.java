@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TextLabelInSwitchStatementInspectionTest extends LightInspectionTestCase {
+@SuppressWarnings({"TextLabelInSwitchStatement", "UnusedLabel"})
+public class TextLabelInSwitchStatementInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSwitchStatement() {
     doTest("class Type {\n" +
@@ -31,8 +31,8 @@ public class TextLabelInSwitchStatementInspectionTest extends LightInspectionTes
            "    void x(E e) {\n" +
            "        int i = switch (e) {\n" +
            "            case A,B:\n" +
-           "            /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: break 1;\n" +
-           "            case C: break 0;\n" +
+           "            /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: yield 1;\n" +
+           "            case C: yield 0;\n" +
            "        };\n" +
            "    }\n" +
            "}");
@@ -47,7 +47,7 @@ public class TextLabelInSwitchStatementInspectionTest extends LightInspectionTes
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Override

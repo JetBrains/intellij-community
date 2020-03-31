@@ -27,7 +27,7 @@ public class MissingArrayConstructorBracketFixer implements Fixer {
     if (!(psiElement instanceof PsiNewExpression)) return;
     PsiNewExpression expr = (PsiNewExpression)psiElement;
     int count = 0;
-    for (PsiElement element : expr.getChildren()) {
+    for (PsiElement element = expr.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element.getNode().getElementType() == JavaTokenType.LBRACKET) {
         count++;
       } else if (element.getNode().getElementType() == JavaTokenType.RBRACKET) {

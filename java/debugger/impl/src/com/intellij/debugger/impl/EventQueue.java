@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 
 public class EventQueue<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.EventQueue");
+  private static final Logger LOG = Logger.getInstance(EventQueue.class);
 
   private final LinkedList[] myEvents;
   private final ReentrantLock myLock;

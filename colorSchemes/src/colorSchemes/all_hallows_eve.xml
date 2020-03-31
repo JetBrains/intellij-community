@@ -610,6 +610,67 @@
         <option name="BACKGROUND" value="434242" />
       </value>
     </option>
+    <option name="GO_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="GO_BUILTIN_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option name="GO_BUILTIN_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="C83730" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+    <option name="GO_BUILTIN_VARIABLE">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="GO_EXPORTED_FUNCTION" />
+    <option name="GO_EXPORTED_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="C83730" />
+      </value>
+    </option>
+    <option name="GO_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="GO_LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="GO_LOCAL_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="GO_LOCAL_FUNCTION" />
+    <option name="GO_LOCAL_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="C83730" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="GO_METHOD_RECEIVER" />
+    <option baseAttributes="DEFAULT_IDENTIFIER" name="GO_PACKAGE" />
+    <option name="GO_PACKAGE_EXPORTED_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option name="GO_PACKAGE_LOCAL_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_TYPE_REFERENCE" />
     <option name="GQL_ID">
       <value>
         <option name="FOREGROUND" value="3387CC" />
@@ -867,6 +928,9 @@
       <value>
         <option name="FOREGROUND" value="CCCC33" />
       </value>
+    </option>
+    <option name="JavaScript:INJECTED_LANGUAGE_FRAGMENT">
+      <value/>
     </option>
     <option name="LABEL">
       <value>
@@ -1246,7 +1310,6 @@
     <option name="RUBY_PARAMETER_ID">
       <value>
         <option name="FONT_TYPE" value="2" />
-        <option name="FOREGROUND" value="E4E100" />
       </value>
     </option>
     <option name="RUBY_REGEXP">

@@ -75,21 +75,14 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
     final InspectionGadgetsFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {
       return new InspectionGadgetsFix[] {new RenameFix()};
     }
     return new InspectionGadgetsFix[] {new RenameFix(), suppressFix};
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import io.netty.bootstrap.Bootstrap;
@@ -36,7 +36,7 @@ public class ExternalJavacProcess {
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
   private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<UUID, Boolean>();
-  private final ExecutorService myThreadPool = Executors.newCachedThreadPool();
+  private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
@@ -71,7 +71,7 @@ public class ExternalJavacProcess {
    * @param args: SessionUUID, host, port,
    */
   public static void main(String[] args) {
-    //myGlobalStart = System.currentTimeMillis();
+    //myGlobalStart = System.nanoTime();
     UUID uuid = null;
     String host = null;
     int port = -1;
@@ -106,10 +106,10 @@ public class ExternalJavacProcess {
 
     final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
     try {
-      //final long connectStart = System.currentTimeMillis();
+      //final long connectStart = System.nanoTime();
       if (process.connect(host, port)) {
-        //final long connectEnd = System.currentTimeMillis();
-        //System.err.println("Connected in " + (connectEnd - connectStart) + " ms; since start: " + (connectEnd - myGlobalStart));
+        //final long connectEnd = System.nanoTime();
+        //System.err.println("Connected in " + TimeUnit.NANOSECONDS.toMillis(connectEnd - connectStart) + " ms; since start: " + TimeUnit.NANOSECONDS.toMillis(connectEnd - myGlobalStart));
         process.myConnectFuture.channel().writeAndFlush(
           JavacProtoUtil.toMessage(uuid, JavacProtoUtil.createRequestAckResponse())
         );
@@ -142,13 +142,13 @@ public class ExternalJavacProcess {
                                                   Collection<? extends File> files,
                                                   Collection<? extends File> classpath,
                                                   Collection<? extends File> platformCp,
-                                                  Collection<? extends File> modulePath,
+                                                  ModulePath modulePath,
                                                   Collection<? extends File> upgradeModulePath,
                                                   Collection<? extends File> sourcePath,
                                                   Map<File, Set<File>> outs,
                                                   final CanceledStatus canceledStatus) {
-    final long compileStart = System.currentTimeMillis();
-    //System.err.println("Compile start; since global start: " + (compileStart - myGlobalStart));
+    final long compileStart = System.nanoTime();
+    //System.err.println("Compile start; since global start: " + TimeUnit.NANOSECONDS.toMillis(compileStart - myGlobalStart));
     final DiagnosticOutputConsumer diagnostic = new DiagnosticOutputConsumer() {
       @Override
       public void javaFileLoaded(File file) {
@@ -198,9 +198,9 @@ public class ExternalJavacProcess {
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
     }
     finally {
-      final long compileEnd = System.currentTimeMillis();
-      System.err.println("Compiled in " + (compileEnd - compileStart) + " ms");
-      //System.err.println("Compiled in " + (compileEnd - compileStart) + " ms; since global start: " + (compileEnd - myGlobalStart));
+      final long compileEnd = System.nanoTime();
+      System.err.println("Compiled in " + TimeUnit.NANOSECONDS.toMillis(compileEnd - compileStart) + " ms");
+      //System.err.println("Compiled in " + TimeUnit.NANOSECONDS.toMillis(compileEnd - compileStart) + " ms; since global start: " + TimeUnit.NANOSECONDS.toMillis(compileEnd - myGlobalStart));
     }
   }
 
@@ -237,7 +237,14 @@ public class ExternalJavacProcess {
               final List<File> cp = toFiles(request.getClasspathList());
               final List<File> platformCp = toFiles(request.getPlatformClasspathList());
               final List<File> srcPath = toFiles(request.getSourcepathList());
-              final List<File> modulePath = toFiles(request.getModulePathList());
+
+              final ModulePath.Builder modulePathBuilder = ModulePath.newBuilder();
+              final Map<String, String> namesMap = request.getModuleNamesMap();
+              for (String path : request.getModulePathList()) {
+                modulePathBuilder.add(namesMap.get(path), new File(path));
+              }
+              final ModulePath modulePath = modulePathBuilder.create();
+              
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
               final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
@@ -248,7 +255,7 @@ public class ExternalJavacProcess {
                 }
                 outs.put(new File(outputGroup.getOutputRoot()), srcRoots);
               }
-              myThreadPool.submit(new Runnable() {
+              myThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
                   try {
@@ -307,15 +314,15 @@ public class ExternalJavacProcess {
 
   public void stop() {
     try {
-      //final long stopStart = System.currentTimeMillis();
-      //System.err.println("Exiting. Since global start " + (stopStart - myGlobalStart));
+      //final long stopStart = System.nanoTime();
+      //System.err.println("Exiting. Since global start " + TimeUnit.NANOSECONDS.toMillis(stopStart - myGlobalStart));
       final ChannelFuture future = myConnectFuture;
       if (future != null) {
         future.channel().close().await();
       }
       myEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).await();
-      //final long stopEnd = System.currentTimeMillis();
-      //System.err.println("Stop completed in " + (stopEnd - stopStart) + "ms; since global start: " + ((stopEnd - myGlobalStart)));
+      //final long stopEnd = System.nanoTime();
+      //System.err.println("Stop completed in " + TimeUnit.NANOSECONDS.toMillis(stopEnd - stopStart) + "ms; since global start: " + TimeUnit.NANOSECONDS.toMillis(stopEnd - myGlobalStart));
       System.exit(0);
     }
     catch (Throwable e) {

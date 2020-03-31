@@ -25,13 +25,12 @@ import com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, ElementStub> {
-
-  final static ObjectStubSerializer INSTANCE = new ElementStubSerializer();
 
   @Override
   public void serialize(@NotNull ElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
@@ -46,8 +45,13 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   @NotNull
   @Override
   public ElementStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(),
-                           dataStream.readVarInt(), dataStream.readBoolean(), dataStream.readName(), dataStream.readUTFFast());
+    return new ElementStub(parentStub,
+                           Objects.requireNonNull(dataStream.readNameString()),
+                           dataStream.readNameString(),
+                           dataStream.readVarInt(),
+                           dataStream.readBoolean(),
+                           dataStream.readNameString(),
+                           dataStream.readUTFFast());
   }
 
   @Override
@@ -66,7 +70,7 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   @NotNull
   @Override
   public String getExternalId() {
-    return "ElementStubSerializer";
+    return "xml.ElementStubSerializer";
   }
 
   @Override

@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class XmlSurroundDescriptor implements SurroundDescriptor {
   @Override
-  @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
     if (childrenInRange == null) {
       final PsiElement elementAt = file.findElementAt(startOffset);
@@ -62,7 +62,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return Surrounder.EMPTY_ARRAY; //everything is in live templates now
   }
 

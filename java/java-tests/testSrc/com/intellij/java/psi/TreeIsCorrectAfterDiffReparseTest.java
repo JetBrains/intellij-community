@@ -23,10 +23,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase {
+public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestCase {
 
   public void testIDEADEV41862() {
     @NonNls String part1 = "package com.test;\n" +
@@ -1100,8 +1100,8 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase 
                    "}";
     configureFromFileText("Foo.java", part1 + part2);
 
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(ourProject);
-    final Document doc = docManager.getDocument(myFile);
+    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
+    final Document doc = docManager.getDocument(getFile());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(part1.length(), "/**"));
 
 

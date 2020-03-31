@@ -3,12 +3,11 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
-public class FormTypeRegistrar implements StartupActivity, DumbAware {
+public class FormTypeRegistrar implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {

@@ -5,46 +5,49 @@ import com.intellij.ide.IdeBundle
 import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.navigation.ChooseByNameRegistry
 import com.intellij.navigation.GotoClassContributor
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 
-class GotoClassPresentationUpdater : PreloadingActivity() {
-  override fun preload(indicator: ProgressIndicator) {
-    //we need to change the template presentation to show the proper text for the action in Settings | Keymap
-    val presentation = ActionManager.getInstance().getAction("GotoClass").templatePresentation
-    presentation.text = getActionTitle() + "..."
-    presentation.description = IdeBundle.message("go.to.class.action.description", getElementKinds().joinToString("/"))
+object GotoClassPresentationUpdater {
+  @JvmStatic
+  fun getTabTitle(): String {
+    val split = getActionTitle().split("/".toRegex()).take(2).toTypedArray()
+    return split[0] + if (split.size > 1) " +" else ""
   }
 
-  companion object {
-    @JvmStatic
-    fun getTabTitle(pluralize: Boolean): String {
-      val split = getActionTitle().split("/".toRegex()).take(2).toTypedArray()
-      return if (pluralize) StringUtil.pluralize(split[0]) else split[0] + if (split.size > 1) " +" else ""
-    }
+  @JvmStatic
+  fun getTabTitlePluralized(): String = getActionTitlePluralized()[0]
 
-    @JvmStatic
-    fun getActionTitle(): String {
-      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
-      val mainContributor = ChooseByNameRegistry.getInstance().classModelContributors
-                              .filterIsInstance(GotoClassContributor::class.java)
-                              .firstOrNull { it.elementLanguage in primaryIdeLanguages }
-      val text = mainContributor?.elementKind ?: IdeBundle.message("go.to.class.kind.text")
-      return StringUtil.capitalizeWords(text, " /", true, true)
-    }
+  @JvmStatic
+  fun getActionTitle(): String =
+    StringUtil.capitalizeWords(getGotoClassContributor()?.elementKind ?: IdeBundle.message("go.to.class.kind.text"), " /", true, true)
 
-    @JvmStatic
-    fun getElementKinds(): Set<String> {
-      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
-      return ChooseByNameRegistry.getInstance().classModelContributors
-        .filterIsInstance(GotoClassContributor::class.java)
-        .sortedBy {
-          val index = primaryIdeLanguages.indexOf(it.elementLanguage)
-          if (index == -1) primaryIdeLanguages.size else index
-        }
-        .flatMapTo(LinkedHashSet()) { it.elementKind.split("/") }
-    }
+  @JvmStatic
+  fun getActionTitlePluralized(): List<String> =
+    (getGotoClassContributor()?.elementKindsPluralized ?:
+     listOf(IdeBundle.message("go.to.class.kind.text.pluralized"))).map { StringUtil.capitalize(it) }
+
+  @JvmStatic
+  fun getElementKinds(): Set<String> {
+    return getElementKinds { it.elementKind.split("/") }
+  }
+
+  @JvmStatic
+  fun getElementKindsPluralized(): Set<String> {
+    return getElementKinds { it.elementKindsPluralized }
+  }
+
+  private fun getGotoClassContributor(): GotoClassContributor? = ChooseByNameRegistry.getInstance().classModelContributors
+    .filterIsInstance(GotoClassContributor::class.java)
+    .firstOrNull { it.elementLanguage in IdeLanguageCustomization.getInstance().primaryIdeLanguages }
+
+  private fun getElementKinds(transform: (GotoClassContributor) -> Iterable<String>): LinkedHashSet<String> {
+    val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
+    return ChooseByNameRegistry.getInstance().classModelContributors
+      .filterIsInstance(GotoClassContributor::class.java)
+      .sortedBy {
+        val index = primaryIdeLanguages.indexOf(it.elementLanguage)
+        if (index == -1) primaryIdeLanguages.size else index
+      }
+      .flatMapTo(LinkedHashSet(), transform)
   }
 }

@@ -43,6 +43,6 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
 
   @Override
   public String getOutputEditorDisplayName() {
-    return OutputEditor.NAME;
+    return OutputEditor.getName();
   }
 }

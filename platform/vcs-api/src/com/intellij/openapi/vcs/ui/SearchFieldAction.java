@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +26,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   private final SearchTextField myField;
 
   public SearchFieldAction(String text) {
-    super("Find: ");
+    super(VcsBundle.messagePointer("action.SearchFieldAction.text.find"));
     myField = new SearchTextField(true) {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent e) {
@@ -50,7 +52,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     Border border = myField.getBorder();
     Border emptyBorder = JBUI.Borders.empty(3, 0, 2, 0);
     if (border instanceof CompoundBorder) {
-      if (!UIUtil.isUnderDarcula()) {
+      if (!StartupUiUtil.isUnderDarcula()) {
         myField.setBorder(new CompoundBorder(emptyBorder, ((CompoundBorder)border).getInsideBorder()));
       }
     }
@@ -63,7 +65,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     if (text.length() > 0) {
       final JLabel label = new JLabel(text);
       //label.setFont(label.getFont().deriveFont(Font.ITALIC));
-      label.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+      label.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
       label.setBorder(JBUI.Borders.emptyLeft(3));
       myComponent.add(label);
     }

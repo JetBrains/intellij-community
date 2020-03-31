@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,12 +24,13 @@ import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public class UnrollLoopAction extends PsiElementBaseIntentionAction {
-  private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
-                                                            staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
-  private static final CallMatcher SINGLETON_CONSTRUCTOR =
-    anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
-          staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
-
+  private static class Holder {
+    private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
+                                                              staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
+    private static final CallMatcher SINGLETON_CONSTRUCTOR =
+      anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
+            staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
+  }
   /**
    * Do not show the intention if approximate size of generated code exceeds given value to prevent
    * accidental code blow up or out-of-memory error
@@ -55,7 +56,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
       boolean acceptable = PsiTreeUtil.processElements(statement, e -> {
-        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedElement() == loop) return false;
+        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedStatement() == loop) return false;
         if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return false;
         return true;
       });
@@ -93,10 +94,10 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       }
       if (expression instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-        if (SINGLETON_CONSTRUCTOR.test(call)) {
+        if (Holder.SINGLETON_CONSTRUCTOR.test(call)) {
           return Arrays.asList(call.getArgumentList().getExpressions());
         }
-        if (LIST_CONSTRUCTOR.test(call)) {
+        if (Holder.LIST_CONSTRUCTOR.test(call)) {
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if (args.length > 1 || MethodCallUtils.isVarArgCall(call)) {
             return Arrays.asList(args);
@@ -149,7 +150,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.unroll.loop.family");
+    return JavaBundle.message("intention.unroll.loop.family");
   }
 
   @Override
@@ -209,6 +210,6 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     PsiIfStatement ifStatement = (PsiIfStatement)statement;
     if (ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return false;
     PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelExpression() == null;
+    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelIdentifier() == null;
   }
 }

@@ -2,11 +2,11 @@
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.statistics.AbstractRunConfigurationTypeUsagesCollector.RunConfigurationUtilValidator;
+import com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.RunConfigurationUtilValidator;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RunConfigurationValidatorTest extends LightPlatformTestCase {
 
-  private static void doTest(@NotNull ValidationResultType expected, @NotNull CustomUtilsWhiteListRule validator,
+  private static void doTest(@NotNull ValidationResultType expected, @NotNull CustomWhiteListRule validator,
                              @NotNull String data, @NotNull EventContext context) {
     final Disposable disposable = Disposer.newDisposable();
     try {
@@ -35,10 +35,20 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     }
   }
 
-  private static void doValidateEventId(@NotNull String eventId, @NotNull FeatureUsageData eventData) {
+  private static void doValidateFactory(@NotNull FeatureUsageData eventData) {
+    doValidateData(eventData, "factory");
+  }
+
+  private static void doValidateConfigId(@NotNull FeatureUsageData eventData) {
+    doValidateData(eventData, "id");
+  }
+
+  private static void doValidateData(@NotNull FeatureUsageData eventData, @NotNull String field) {
     final RunConfigurationUtilValidator validator = new RunConfigurationUtilValidator();
-    final EventContext context = EventContext.create(eventId, eventData.build());
-    doTest(ValidationResultType.ACCEPTED, validator, eventId, context);
+    final EventContext context = EventContext.create("configured.in.project", eventData.build());
+    final Object data = eventData.build().get(field);
+    assertTrue(data instanceof String);
+    doTest(ValidationResultType.ACCEPTED, validator, (String)data, context);
   }
 
   private static void doRejectEventId(@NotNull String eventId, @NotNull FeatureUsageData eventData) {
@@ -47,60 +57,92 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     doTest(ValidationResultType.REJECTED, validator, eventId, context);
   }
 
+  private static void doRejectConfigId(@NotNull FeatureUsageData eventData) {
+    doRejectData(eventData, "id");
+  }
+
+  private static void doRejectFactory(@NotNull FeatureUsageData eventData) {
+    doRejectData(eventData, "factory");
+  }
+
+  private static void doRejectData(@NotNull FeatureUsageData eventData, @NotNull String field) {
+    final RunConfigurationUtilValidator validator = new RunConfigurationUtilValidator();
+    final EventContext context = EventContext.create("configured.in.project", eventData.build());
+    final Object data = eventData.build().get(field);
+    assertTrue(data instanceof String);
+    doTest(ValidationResultType.REJECTED, validator, (String)data, context);
+  }
+
   public void testRunConfigurationWithOneFactory() {
-    doValidateEventId("FirstTestRunConfigurationType", newFeatureUsageData());
+    doValidateConfigId(newFeatureUsageData().addData("id", "FirstTestRunConfigurationType"));
   }
 
   public void testAnotherRunConfigurationWithOneFactory() {
-    doValidateEventId("SecondTestRunConfigurationType", newFeatureUsageData());
+    doValidateConfigId(newFeatureUsageData().addData("id", "SecondTestRunConfigurationType"));
   }
 
   public void testAnotherRunConfigurationWithEmptyName() {
-    doValidateEventId("SecondTestRunConfigurationType", newFeatureUsageData());
+    doValidateConfigId(newFeatureUsageData().addData("id", "SecondTestRunConfigurationType"));
   }
 
   public void testThirdPartyRunConfigurationWithOneFactory() {
-    doValidateEventId("third.party", newFeatureUsageData());
+    doValidateConfigId(newFeatureUsageData().addData("id", "third.party"));
   }
 
   public void testRejectUnknownRunConfiguration() {
-    doRejectEventId("UnknownTestRunConfigurationType", newFeatureUsageData());
+    doRejectConfigId(newFeatureUsageData().addData("id", "UnknownTestRunConfigurationType"));
   }
 
   public void testRejectEmptyRunConfiguration() {
-    doRejectEventId("", newFeatureUsageData());
+    doRejectConfigId(newFeatureUsageData().addData("id", ""));
+  }
+
+  public void testRejectNoEmptyRunConfiguration() {
+    doRejectFactory(newFeatureUsageData().addData("factory", "Local"));
   }
 
   public void testRunConfigurationWithIncorrectFactory() {
-    doRejectEventId("FirstTestRunConfigurationType/Local", newFeatureUsageData());
+    doRejectConfigId(newFeatureUsageData().addData("id", "FirstTestRunConfigurationType/Local"));
   }
 
   public void testRunConfigurationWithLocalFactory() {
-    doValidateEventId("MultiFactoryTestRunConfigurationType/Local", newFeatureUsageData());
+    final FeatureUsageData data = newFeatureUsageData().
+      addData("factory", "Local").
+      addData("id", "MultiFactoryTestRunConfigurationType");
+    doValidateConfigId(data);
+    doValidateFactory(data);
   }
 
   public void testRunConfigurationWithRemoteFactory() {
-    doValidateEventId("MultiFactoryTestRunConfigurationType/Remote", newFeatureUsageData());
+    final FeatureUsageData data = newFeatureUsageData().
+      addData("factory", "Remote").
+      addData("id", "MultiFactoryTestRunConfigurationType");
+    doValidateConfigId(data);
+    doValidateFactory(data);
   }
 
   public void testRunConfigurationWithEmptyFactory() {
-    doValidateEventId("MultiFactoryTestRunConfigurationType/", newFeatureUsageData());
+    doRejectEventId("MultiFactoryTestRunConfigurationType/", newFeatureUsageData());
   }
 
   public void testRejectRunConfigurationWithUnknownFactory() {
-    doRejectEventId("MultiFactoryTestRunConfigurationType/Unknown", newFeatureUsageData());
+    final FeatureUsageData data = newFeatureUsageData().
+      addData("factory", "Unknown").
+      addData("id", "MultiFactoryTestRunConfigurationType");
+    doRejectConfigId(data);
+    doRejectFactory(data);
   }
 
   public void testRejectRunConfigurationWithEmptyName() {
-    doRejectEventId("/Remote", newFeatureUsageData());
+    doRejectConfigId(newFeatureUsageData().addData("id", "/Remote"));
   }
 
   public void testRejectRunConfigurationWithEmptyNameAndFactory() {
-    doRejectEventId("/", newFeatureUsageData());
+    doRejectEventId("/", newFeatureUsageData().addData("id", "/"));
   }
 
   public void testRejectRunConfigurationWithTwoMuchValues() {
-    doRejectEventId("RunConfigName/Factory/AnotherValue", newFeatureUsageData());
+    doRejectEventId("RunConfigName/Factory/AnotherValue", newFeatureUsageData().addData("id", "RunConfigName/Factory/AnotherValue"));
   }
 
   @NotNull

@@ -5,39 +5,47 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class UIThemeProvider implements PluginAware {
   public static final ExtensionPointName<UIThemeProvider> EP_NAME = ExtensionPointName.create("com.intellij.themeProvider");
-  private PluginDescriptor myDescriptor;
+  private PluginDescriptor myPluginDescriptor;
 
   @Attribute("path")
+  @RequiredElement
   public String path;
 
   @Attribute("id")
+  @RequiredElement
   public String id;
 
   @Nullable
   public UITheme createTheme() {
     try {
-      ClassLoader loader = myDescriptor != null ? myDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-      return UITheme.loadFromJson(loader.getResourceAsStream(path), id, loader);
+      ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
+      InputStream stream = classLoader.getResourceAsStream(path);
+      if (stream == null) {
+        Logger.getInstance(getClass()).warn("Cannot find theme resource: " + path + " (classLoader=" + classLoader + ", pluginDescriptor=" + myPluginDescriptor + ")");
+        return null;
+      }
+      return UITheme.loadFromJson(stream, id, classLoader);
     }
-    catch (IOException e) {
-      Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', " +
-                                          "pluginId=" + (myDescriptor != null ? myDescriptor.getPluginId().getIdString() : "(none)"), e);
+    catch (Exception e) {
+      Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', pluginDescriptor=" + myPluginDescriptor, e);
       return null;
     }
   }
 
   @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
-    myDescriptor = pluginDescriptor;
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
   }
 }

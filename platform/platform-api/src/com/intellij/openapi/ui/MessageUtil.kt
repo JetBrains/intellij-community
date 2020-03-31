@@ -3,22 +3,34 @@
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsUI.Button
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import javax.swing.Icon
 
-fun showYesNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?, yesText: String = Messages.YES_BUTTON, noText: String = Messages.NO_BUTTON, icon: Icon? = null): Boolean {
+fun showYesNoDialog(title: @DialogTitle String,
+                    message: @DialogMessage String,
+                    project: Project?,
+                    yesText: @Button String = Messages.getYesButton(),
+                    noText: @Button String = Messages.getNoButton(),
+                    icon: Icon? = null): Boolean {
   return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
 }
 
-fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?, yesText: String = Messages.OK_BUTTON, noText: String = Messages.NO_BUTTON, icon: Icon? = null): Boolean {
-  return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
+fun showOkNoDialog(title: @DialogTitle String,
+                   message: @DialogMessage String,
+                   project: Project?,
+                   okText: @Button String = Messages.getOkButton(),
+                   noText: @Button String = Messages.getNoButton(),
+                   icon: Icon? = null): Boolean {
+  return Messages.showYesNoDialog(project, message, title, okText, noText, icon) == Messages.YES
 }
 
 @Messages.OkCancelResult
-fun showOkCancelDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String,
-                       @Nls(capitalization = Nls.Capitalization.Sentence) message: String,
-                       okText: String,
-                       cancelText: String = Messages.CANCEL_BUTTON,
+fun showOkCancelDialog(title: @DialogTitle String,
+                       message: @DialogMessage String,
+                       okText: @Button String,
+                       cancelText: @Button String = Messages.getCancelButton(),
                        icon: Icon? = null,
                        doNotAskOption: DialogWrapper.DoNotAskOption? = null,
                        project: Project? = null): Int {

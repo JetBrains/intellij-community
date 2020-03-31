@@ -68,6 +68,8 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
                  "MODULE_1\n" +   //working dir
                  "mod1\n" +       //module name
                  "CLASSPATH\n" +
+                 "\n" +           //module path
+                 "0\n" +
                  "1\n" +          //number of classes
                  "p.T1\n" +       //list of classes 
                  "\n" +           //empty filters
@@ -75,6 +77,8 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
                  "MODULE_2\n" +   //working dir
                  "mod2\n" +       //module name
                  "CLASSPATH\n" +
+                 "\n" +           //module path
+                 "0\n" +
                  "1\n" +          //number of classes
                  "p.T2",          //class names 
                  file);
@@ -129,7 +133,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = StringUtil.convertLineSeparators(fileContent);
     final String[] lines = fileContent.split("\n");
     lines[3] = "CLASSPATH";
-    lines[9] = "CLASSPATH";
+    lines[11] = "CLASSPATH";
     return StringUtil.join(lines, "\n");
   }
 

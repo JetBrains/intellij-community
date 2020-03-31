@@ -16,9 +16,6 @@
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.testFramework.LightPlatformTestCase;
-import org.junit.Test;
-
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 
 /**
  * @author Nikolay Matveev

@@ -17,9 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.packaging.artifacts.ArtifactType;
 
-/**
- * @author nik
- */
 public interface IExtractArtifactDialog {
   String getArtifactName();
 

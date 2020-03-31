@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.SunToolkit;
@@ -16,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +35,8 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
 
-  public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText) {
+  public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent,
+                          @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     myApp.assertIsDispatchThread();
@@ -41,11 +45,11 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   private void startStealingInputEvents() {
     IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof InputEvent) {
+      if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
         myInputEvents.offer((InputEvent)event);
         return true;
       }
-      if (isUrgentInvocationEvent(event)) {
+      if (event instanceof InvocationEvent && isUrgentInvocationEvent(event)) {
         myInvocationEvents.offer((InvocationEvent)event);
         return true;
       }
@@ -54,13 +58,15 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private static boolean isUrgentInvocationEvent(AWTEvent event) {
-    // LWCToolkit does invokeAndWait which blocks native event processing until finished. The OS considers that blockage to be
+    // LWCToolkit does 'invokeAndWait', which blocks native event processing until finished. The OS considers that blockage to be
     // app freeze, stops rendering UI and shows beach-ball cursor. We want the UI to act (almost) normally in write-action progresses,
     // so we let these specific events to be dispatched, hoping they wouldn't access project/code model.
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
-    return event instanceof InvocationEvent && event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
+
+    //noinspection SpellCheckingInspection
+    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
            event instanceof MyInvocationEvent;
   }
 
@@ -167,7 +173,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   /**
    * Repaint just the dialog panel. We must not call custom paint methods during write action,
-   * because they might access the model which might be inconsistent at that moment.
+   * because they might access the model, which might be inconsistent at that moment.
    */
   private void paintProgress() {
     getDialog().myRepaintRunnable.run();
@@ -224,7 +230,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private static class MyInvocationEvent extends InvocationEvent {
-    public MyInvocationEvent(Object source, Runnable runnable) {
+    MyInvocationEvent(Object source, Runnable runnable) {
       super(source, runnable);
     }
   }

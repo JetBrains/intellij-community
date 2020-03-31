@@ -3,7 +3,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.regex.Matcher;
@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * @author Dmitry Avdeev
  */
-public class FileTemplatesProcessingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FileTemplatesProcessingTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

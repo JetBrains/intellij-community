@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
@@ -8,17 +8,14 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -26,18 +23,14 @@ import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.tasks.TasksBundle;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
@@ -48,9 +41,6 @@ import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
  */
 public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
-  private static final Pattern ERRORS_NUMBER_PATTERN = Pattern.compile("^\\[INFO] (\\d+) errors\\s*$");
-  private static final Pattern WARNING_PATTERN = Pattern.compile("^\\[WARNING]");
-
   @Override
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
@@ -58,11 +48,11 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull Collection<? extends ProjectTask> tasks) {
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
-    buildModuleFiles(project, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
-    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
-    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
+    buildModuleFiles(project, context, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
+    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
+    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
-    buildArtifacts(project, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
+    buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
   }
 
   @Override
@@ -153,6 +143,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static void buildModules(@NotNull Project project,
+                                   @NotNull ProjectTaskContext context,
                                    @Nullable ProjectTaskNotification callback,
                                    @NotNull Collection<? extends ModuleBuildTask> moduleBuildTasks) {
     if (moduleBuildTasks.isEmpty()) return;
@@ -208,7 +199,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
                                              explicitProfiles.getDisabledProfiles()));
     }
 
-    runBatch(project, mavenRunner, "Maven Build", commands, callback);
+    runBatch(project, mavenRunner, "Maven Build", commands, context, callback);
   }
 
   @NotNull
@@ -219,94 +210,57 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     return compileOnly ? "compile" : "install";
   }
 
-  public static void runBatch(@NotNull Project project, @NotNull MavenRunner mavenRunner, @NotNull String title,
-                              @NotNull List<MavenRunnerParameters> commands, @Nullable ProjectTaskNotification callback) {
+  public static void runBatch(@NotNull Project project,
+                              @NotNull MavenRunner mavenRunner,
+                              @NotNull String title,
+                              @NotNull List<MavenRunnerParameters> commands,
+                              @NotNull ProjectTaskContext context,
+                              @Nullable ProjectTaskNotification callback) {
+
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      AtomicInteger errors = new AtomicInteger();
-      AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD, 0);
 
-      console.addProcessListener(new ProcessAdapter() {
-
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          super.processTerminated(event);
-        }
-
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          String line = event.getText();
-
-          Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
-          if (errorsMatcher.matches()) {
-            try {
-              errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
-            }
-            catch (NumberFormatException ignore) {
-            }
-          }
-
-          Matcher warningMatcher = WARNING_PATTERN.matcher(line);
-          if (warningMatcher.find()) {
-            warnings.incrementAndGet();
-          }
-        }
-      });
 
       FileDocumentManager.getInstance().saveAllDocuments();
-
-      new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          mavenRunner.runBatch(commands, null, null, TasksBundle.message("maven.tasks.executing"), indicator, console);
-        }
-
-        @Override
-        public boolean shouldStartInBackground() {
-          return mavenRunner.getSettings().isRunMavenInBackground();
-        }
-
-        @Override
-        public void processSentToBackground() {
-          mavenRunner.getSettings().setRunMavenInBackground(true);
-        }
-
-        @Override
-        public void onCancel() {
-          if (callback != null) {
-            callback.finished(new ProjectTaskResult(true, errors.get(), warnings.get()));
+      for (MavenRunnerParameters command : commands) {
+        MavenRunConfigurationType.runConfiguration(project, command, null, null, descriptor -> {
+          if(callback == null){
+            return;
           }
-        }
-
-        @Override
-        public void onSuccess() {
-          if (callback != null) {
-            callback.finished(new ProjectTaskResult(false, errors.get(), warnings.get()));
+          ProcessHandler handler = descriptor.getProcessHandler();
+          if (handler != null) {
+            handler.addProcessListener(new ProcessAdapter() {
+              @Override
+              public void processTerminated(@NotNull ProcessEvent event) {
+                if (event.getExitCode() == 0) {
+                  callback.finished(new ProjectTaskResult(false, 0, 0));
+                }
+                else {
+                  callback.finished(new ProjectTaskResult(true, 0, 0));
+                }
+              }
+            });
           }
-        }
-
-        @Override
-        public void onThrowable(@NotNull Throwable error) {
-          if (callback != null) {
-            callback.finished(new ProjectTaskResult(false, errors.get(), warnings.get()));
-          }
-        }
-      }.queue();
+        }, true);
+      }
     });
   }
 
   private static void buildModuleFiles(@NotNull Project project,
+                                       @NotNull ProjectTaskContext context,
                                        @Nullable ProjectTaskNotification callback,
                                        @NotNull Collection<? extends ModuleFilesBuildTask> moduleFilesBuildTasks) {
-    buildModules(project, callback, moduleFilesBuildTasks);
+    buildModules(project, context, callback, moduleFilesBuildTasks);
   }
 
-  private static void buildArtifacts(Project project, ProjectTaskNotification callback, List<? extends ProjectModelBuildTask> tasks) {
+  private static void buildArtifacts(@NotNull Project project,
+                                     @NotNull ProjectTaskContext context,
+                                     @Nullable ProjectTaskNotification callback,
+                                     List<? extends ProjectModelBuildTask> tasks) {
     for (ProjectModelBuildTask buildTask : tasks) {
       if (buildTask.getBuildableElement() instanceof Artifact) {
         for (MavenArtifactBuilder artifactBuilder : MavenArtifactBuilder.EP_NAME.getExtensions()) {
           if (artifactBuilder.isApplicable(buildTask)) {
-            artifactBuilder.build(project, buildTask, callback);
+            artifactBuilder.build(project, buildTask, context, callback);
           }
         }
       }

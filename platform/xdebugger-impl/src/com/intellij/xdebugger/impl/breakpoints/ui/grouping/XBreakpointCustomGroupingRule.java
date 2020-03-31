@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.Collection;
  */
 public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
   public XBreakpointCustomGroupingRule() {
-    super("by-group", "Show user groups");
+    super("by-group", XDebuggerBundle.message("breakpoints.show.user.groups"));
   }
 
   @Override

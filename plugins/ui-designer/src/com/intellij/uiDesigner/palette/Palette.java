@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -52,10 +51,9 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 @State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
-public final class Palette implements Disposable, PersistentStateComponent<Element> {
+public final class Palette implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(Palette.class);
 
-  private final MyLafManagerListener myLafManagerListener;
   private final Map<Class, IntrospectedProperty[]> myClass2Properties;
   private final Map<String, ComponentItem> myClassName2Item;
   /*All groups in the palette*/
@@ -102,9 +100,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * Invoked by reflection
    */
-  public Palette(Project project) {
+  public Palette(@Nullable Project project) {
     myProject = project;
-    myLafManagerListener = project == null ? null : new MyLafManagerListener();
     myClass2Properties = new HashMap<>();
     myClassName2Item = new HashMap<>();
     myGroups = new ArrayList<>();
@@ -112,10 +109,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     if (project != null) {
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
-    }
 
-    if (myLafManagerListener != null) {
-      LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+      project.getMessageBus().connect().subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
     }
   }
 
@@ -153,13 +148,6 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   void fireGroupsChanged() {
     for (Listener listener : myListeners) {
       listener.groupsChanged(this);
-    }
-  }
-
-  @Override
-  public void dispose() {
-    if (myLafManagerListener != null) {
-      LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
     }
   }
 
@@ -544,8 +532,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       new IntEnumEditor(pairs), false);
   }
 
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final RadComponent component) {
+  public IntrospectedProperty @NotNull [] getIntrospectedProperties(@NotNull final RadComponent component) {
     return getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
   }
 
@@ -554,8 +541,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
+  public IntrospectedProperty @NotNull [] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
     // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {

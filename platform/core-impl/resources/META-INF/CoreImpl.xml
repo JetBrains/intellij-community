@@ -1,0 +1,67 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
+    </extensionPoint>
+    <extensionPoint name="psi.treeChangePreprocessor"
+                    interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider" dynamic="true"/>
+    <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
+    </extensionPoint>
+    <extensionPoint name="psi.symbolReferenceProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.model.psi.PsiSymbolReferenceProviderBean">
+      <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
+      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint name="psi.implicitReferenceProvider"
+                    dynamic="true"
+                    interface="com.intellij.model.psi.ImplicitReferenceProvider"/>
+    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
+    </extensionPoint>
+    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
+    <extensionPoint name="treeCopyHandler" interface="com.intellij.psi.impl.source.tree.TreeCopyHandler" dynamic="true"/>
+    <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
+                        serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.PerformanceWatcher" preload="notHeadless"/>
+
+    <projectService serviceInterface="com.intellij.psi.PsiManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
+                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
+                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.pom.PomModel"
+                    serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
+                    serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
+                        serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
+                    serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
+                        serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
+    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
+    <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
+                    serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
+    <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
+  </extensions>
+</idea-plugin>

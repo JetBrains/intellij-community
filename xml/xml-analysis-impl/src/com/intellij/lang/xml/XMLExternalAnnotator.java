@@ -17,16 +17,16 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,12 +67,6 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
     annotationResult.apply(holder);
   }
 
-  private static void appendFixes(final Annotation annotation, final IntentionAction... actions) {
-    if (actions != null) {
-      for (IntentionAction action : actions) annotation.registerFix(action);
-    }
-  }
-
   static class MyHost implements Validator.ValidationHost {
     private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<>();
 
@@ -93,45 +87,31 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
                                          final String message,
                                          @NotNull final Validator.ValidationHost.ErrorType type,
                                          AnnotationHolder myHolder,
-                                         @NotNull final IntentionAction... fixes) {
+                                         final IntentionAction @NotNull ... fixes) {
     if (message != null && !message.isEmpty()) {
+      HighlightSeverity severity = type == Validator.ValidationHost.ErrorType.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
       if (context instanceof XmlTag) {
-        addMessagesForTag((XmlTag)context, message, type, myHolder, fixes);
+        addMessagesForTreeChild(XmlTagUtil.getStartTagNameElement((XmlTag)context), severity, message, myHolder, fixes);
+
+        addMessagesForTreeChild(XmlTagUtil.getEndTagNameElement((XmlTag)context), severity, message, myHolder, fixes);
       }
       else {
-        if (type == Validator.ValidationHost.ErrorType.ERROR) {
-          appendFixes(myHolder.createErrorAnnotation(context, message), fixes);
-        }
-        else {
-          appendFixes(myHolder.createWarningAnnotation(context, message), fixes);
-        }
+        addMessagesForTreeChild(context, severity, message, myHolder,fixes);
       }
     }
   }
 
-  private static void addMessagesForTag(XmlTag tag, String message, Validator.ValidationHost.ErrorType type, AnnotationHolder myHolder, IntentionAction... actions) {
-    XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
-
-    addMessagesForTreeChild(childByRole, type, message, myHolder, actions);
-
-    childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    addMessagesForTreeChild(childByRole, type, message, myHolder, actions);
-  }
-
-  private static void addMessagesForTreeChild(final XmlToken childByRole,
-                                              final Validator.ValidationHost.ErrorType type,
+  private static void addMessagesForTreeChild(final PsiElement token,
+                                              final HighlightSeverity type,
                                               final String message,
-                                              AnnotationHolder myHolder, IntentionAction... actions) {
-    if (childByRole != null) {
-      Annotation annotation;
-      if (type == Validator.ValidationHost.ErrorType.ERROR) {
-        annotation = myHolder.createErrorAnnotation(childByRole, message);
-      }
-      else {
-        annotation = myHolder.createWarningAnnotation(childByRole, message);
-      }
+                                              AnnotationHolder myHolder, IntentionAction @NotNull ... actions) {
+    if (token != null) {
+      AnnotationBuilder builder = myHolder.newAnnotation(type, message).range(token);
 
-      appendFixes(annotation, actions);
+      for (IntentionAction action : actions) {
+        builder = builder.withFix(action);
+      }
+      builder.create();
     }
   }
 }

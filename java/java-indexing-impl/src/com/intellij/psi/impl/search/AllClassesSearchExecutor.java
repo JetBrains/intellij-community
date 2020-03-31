@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -23,15 +22,29 @@ import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
+    if (scope == GlobalSearchScope.EMPTY_SCOPE) {
+      return true;
+    }
+
     if (scope instanceof GlobalSearchScope) {
-      return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
+      PsiManager manager = PsiManager.getInstance(queryParameters.getProject());
+      manager.startBatchFilesProcessingMode();
+      try {
+        return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
+      }
+      finally {
+        manager.finishBatchFilesProcessingMode();
+      }
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)scope).getScope();
@@ -53,15 +66,15 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     });
 
     List<String> sorted = new ArrayList<>(names);
-    Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+    sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
     return processClassesByNames(parameters.getProject(), scope, sorted, processor);
   }
 
-  public static boolean processClassesByNames(Project project,
-                                              final GlobalSearchScope scope,
-                                              Collection<String> names,
-                                              Processor<? super PsiClass> processor) {
+  public static boolean processClassesByNames(@NotNull Project project,
+                                              @NotNull GlobalSearchScope scope,
+                                              @NotNull Collection<String> names,
+                                              @NotNull Processor<? super PsiClass> processor) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
@@ -75,8 +88,8 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  public static boolean processClassNames(final Project project, final GlobalSearchScope scope, final Processor<? super String> processor) {
-    boolean success = DumbService.getInstance(project).runReadActionInSmartMode((Computable<Boolean>)() ->
+  public static boolean processClassNames(@NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super String> processor) {
+    boolean success = DumbService.getInstance(project).runReadActionInSmartMode(() ->
       PsiShortNamesCache.getInstance(project).processAllClassNames(s -> {
         ProgressManager.checkCanceled();
         return processor.process(s);
@@ -91,7 +104,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
     final JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!stopped[0]) {
           super.visitElement(element);
         }
@@ -104,7 +117,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     } : new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!stopped[0]) {
           super.visitElement(element);
         }

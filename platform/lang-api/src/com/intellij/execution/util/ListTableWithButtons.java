@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -16,15 +15,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Observable;
 
-/**
- * @author traff
- */
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = new ArrayList<>();
   private JPanel myPanel;
-  private final TableView<T> myTableView;
+  @NotNull private final TableView<T> myTableView;
   private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
   private final ToolbarDecorator myDecorator;
@@ -116,7 +115,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
     myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
 
-    List<T> aliveElements = new ArrayList<>(myElements.size() - selectedRows.length);
+    List<T> aliveElements = new ArrayList<>();
     for(int row = 0; row < myTableView.getRowCount(); ++row) {
       T selectedElement = myElements.get(row);
       if(!myTableView.isRowSelected(row) || !canDeleteElement(selectedElement)) {
@@ -222,8 +221,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean isEmpty(T element);
 
-  @NotNull
-  protected AnActionButton[] createExtraActions() {
+  protected AnActionButton @NotNull [] createExtraActions() {
     return new AnActionButton[0];
   }
 

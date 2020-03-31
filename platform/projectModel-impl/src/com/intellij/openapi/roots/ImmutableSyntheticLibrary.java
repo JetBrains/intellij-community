@@ -7,23 +7,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 class ImmutableSyntheticLibrary extends SyntheticLibrary {
 
-  private final Collection<VirtualFile> myBinaryRoots;
-  private final Collection<VirtualFile> mySourceRoots;
+  private final List<VirtualFile> mySourceRoots;
+  private final List<VirtualFile> myBinaryRoots;
   private final Set<VirtualFile> myExcludedRoots;
   private final Condition<VirtualFile> myExcludeCondition;
 
-  ImmutableSyntheticLibrary(@NotNull Collection<VirtualFile> sourceRoots,
-                            @NotNull Collection<VirtualFile> binaryRoots,
+  ImmutableSyntheticLibrary(@NotNull List<VirtualFile> sourceRoots,
+                            @NotNull List<VirtualFile> binaryRoots,
                             @NotNull Set<VirtualFile> excludedRoots,
                             @Nullable Condition<VirtualFile> excludeCondition) {
-    mySourceRoots = ContainerUtil.unmodifiableOrEmptyCollection(sourceRoots);
-    myBinaryRoots = ContainerUtil.unmodifiableOrEmptyCollection(binaryRoots);
+    mySourceRoots = immutableOrEmptyList(sourceRoots);
+    myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
   }
@@ -68,4 +66,9 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   public int hashCode() {
     return Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
+
+  @NotNull
+  private static <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
+    return list.isEmpty() ? Collections.emptyList() : ContainerUtil.immutableList(list);
+  } 
 }

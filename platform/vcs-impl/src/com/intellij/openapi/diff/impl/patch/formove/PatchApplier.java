@@ -53,13 +53,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * for patches. for shelve.
  */
-public class PatchApplier<Unused> {
+public class PatchApplier {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
@@ -133,12 +135,10 @@ public class PatchApplier<Unused> {
                                     patchInfo -> patchInfo.getApplyPatch().getPatch());
   }
 
-  @CalledInAwt
   public void execute() {
     execute(true, false);
   }
 
-  @CalledInAwt
   public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
     return executePatchGroup(Collections.singletonList(this), myTargetChangeList, showSuccessNotification, silentAddDelete);
   }
@@ -166,58 +166,61 @@ public class PatchApplier<Unused> {
     }
   }
 
-  @CalledInAwt
   public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList) {
     return executePatchGroup(group, localChangeList, true, false);
   }
 
-  @CalledInAwt
-  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
-                                                   boolean showSuccessNotification, boolean silentAddDelete) {
+  static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
+                                            boolean showSuccessNotification, boolean silentAddDelete) {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, "Applying patch...", () -> {
+    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, VcsBundle.getString("patch.apply.progress.title"), () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       }
 
-      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
+      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.before.patch.label.text"));
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
-      try {
-        runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-            applier.addSkippedItems(trigger);
-          }
-          trigger.prepare();
-          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-            refStatus.set(null);
-          }
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-          }
-        }, VcsBundle.message("patch.apply.command"), null));
-      }
-      finally {
-        VcsFileListenerContextHelper.getInstance(project).clearContext();
-        LocalHistory.getInstance().putSystemLabel(project, "After patch");
-      }
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+              applier.addSkippedItems(trigger);
+            }
+            trigger.prepare();
+            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+              refStatus.set(null);
+            }
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+            }
+          }, VcsBundle.message("patch.apply.command"), null));
+        }
+        finally {
+          VcsFileListenerContextHelper.getInstance(project).clearContext();
+          LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
+        }
+      });
       result = refStatus.get();
       result = result == null ? ApplyPatchStatus.FAILURE : result;
 
       trigger.processIt();
 
+      AtomicBoolean doRollback = new AtomicBoolean();
       if (result == ApplyPatchStatus.FAILURE) {
-        suggestRollback(project, group, beforeLabel);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+         doRollback.set(askToRollback(project, group));
+        });
       }
-      else if (result == ApplyPatchStatus.ABORT) {
-        rollbackUnderProgress(project, beforeLabel);
+      if (result == ApplyPatchStatus.ABORT || doRollback.get()) {
+        rollbackUnderProgressIfNeeded(project, beforeLabel);
       }
 
       if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(result)) {
@@ -226,7 +229,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier<?> applier : group) {
+      for (PatchApplier applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }
@@ -237,30 +240,37 @@ public class PatchApplier<Unused> {
     }, true);
   }
 
-  private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
-    Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
+  @CalledInAwt
+  private static boolean askToRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group) {
+    Collection<FilePatch> allFailed = ContainerUtil.concat(group, PatchApplier::getFailedPatches);
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
+    List<FilePath> filePaths =
+      ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
-    if (undoApplyPatchDialog.showAndGet()) {
-      rollbackUnderProgress(project, beforeLabel);
-    }
+    return undoApplyPatchDialog.showAndGet();
   }
 
-  private static void rollbackUnderProgress(@NotNull final Project project,
-                                            @NotNull final Label labelToRevert) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+  private static void rollbackUnderProgressIfNeeded(@NotNull final Project project, @NotNull final Label labelToRevert) {
+    Runnable rollback = () -> {
       try {
         labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("Apply Patch Aborted", "All files changed during apply patch action were rolled back");
+          .notifyImportantWarning(VcsBundle.message("patch.apply.aborted.title"), VcsBundle.message("patch.apply.aborted.message"));
       }
       catch (LocalHistoryException e) {
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("Rollback Failed", "Try using 'Local History' dialog to perform revert manually.");
+          .notifyImportantWarning(VcsBundle.message("patch.apply.rollback.failed.title"),
+                                  VcsBundle.message("patch.apply.rollback.failed.message"));
       }
-    }, "Rollback Applied Changes...", true, project);
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollback, VcsBundle.message("patch.apply.rollback.progress.title"), true, project);
+    }
+    else {
+      progress(VcsBundle.message("patch.apply.rollback.progress"));
+      rollback.run();
+    }
   }
 
 

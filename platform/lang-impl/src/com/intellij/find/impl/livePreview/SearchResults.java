@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
@@ -7,9 +7,12 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
-public class SearchResults implements DocumentListener {
+public class SearchResults implements DocumentListener, CaretListener {
 
   public int getStamp() {
     return ++myStamp;
@@ -44,6 +47,20 @@ public class SearchResults implements DocumentListener {
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
     myCursorPositions.clear();
+  }
+
+  @Override
+  public void caretPositionChanged(@NotNull CaretEvent event) {
+    Caret caret = event.getCaret();
+    if (caret != null && myEditor.getCaretModel().getAllCarets().size() == 1 && caret.isUpToDate()) {
+      int offset = caret.getOffset();
+      FindResult occurrenceAtCaret = getOccurrenceAtCaret();
+      if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
+        moveCursorTo(occurrenceAtCaret, false, false);
+        myEditor.getCaretModel().moveToOffset(offset);
+      }
+    }
+    notifyCursorMoved();
   }
 
   public enum Direction {UP, DOWN}
@@ -73,6 +90,7 @@ public class SearchResults implements DocumentListener {
 
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
+  private boolean myUpdating;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
@@ -82,6 +100,7 @@ public class SearchResults implements DocumentListener {
     myEditor = editor;
     myProject = project;
     myEditor.getDocument().addDocumentListener(this);
+    myEditor.getCaretModel().addCaretListener(this);
     mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
@@ -139,7 +158,9 @@ public class SearchResults implements DocumentListener {
     void searchResultsUpdated(@NotNull SearchResults sr);
     void cursorMoved();
 
-    void updateFinished();
+    default void updateFinished() {}
+    default void beforeSelectionUpdate() {}
+    default void afterSelectionUpdate() {}
   }
   public void addListener(@NotNull SearchResultsListener srl) {
     myListeners.add(srl);
@@ -160,6 +181,11 @@ public class SearchResults implements DocumentListener {
   @Nullable
   public FindResult getCursor() {
     return myCursor;
+  }
+
+  public int getCursorVisualIndex() {
+    FindResult occurrenceAtCaret = getOccurrenceAtCaret();
+    return occurrenceAtCaret != null ? myOccurrences.indexOf(occurrenceAtCaret) + 1 : -1;
   }
 
   @NotNull
@@ -216,7 +242,8 @@ public class SearchResults implements DocumentListener {
       }
 
       long documentTimeStamp = editor.getDocument().getModificationStamp();
-      final Runnable searchCompletedRunnable = () -> {
+
+      UIUtil.invokeLaterIfNeeded(() -> {
         if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
           searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
           result.setDone();
@@ -224,14 +251,7 @@ public class SearchResults implements DocumentListener {
         else {
           result.setRejected();
         }
-      };
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        searchCompletedRunnable.run();
-      }
-      else {
-        UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
-      }
+      });
     });
     return result;
   }
@@ -320,9 +340,10 @@ public class SearchResults implements DocumentListener {
     if (editor != getEditor() || myDisposed || editor.isDisposed()) {
       return;
     }
+    setUpdating(false);
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
-    Collections.sort(myOccurrences, Comparator.comparingInt(TextRange::getStartOffset));
+    myOccurrences.sort(Comparator.comparingInt(TextRange::getStartOffset));
 
     myFindModel = findModel;
     myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
@@ -331,14 +352,28 @@ public class SearchResults implements DocumentListener {
     notifyChanged();
     if (myCursor == null || !myCursor.equals(oldCursorRange)) {
       if (toChangeSelection) {
-        mySelectionManager.updateSelection(true, true);
+        updateSelection(true, true, true);
       }
       notifyCursorMoved();
     }
-    dumpIfNeeded();
+    notifyUpdateFinished();
   }
 
-  private void dumpIfNeeded() {
+  private void updateSelection(boolean removePreviousSelection, boolean removeAllPreviousSelections, boolean adjustScrollPosition) {
+    for (SearchResultsListener listener : myListeners) {
+      listener.beforeSelectionUpdate();
+    }
+    try {
+      mySelectionManager.updateSelection(removePreviousSelection, removeAllPreviousSelections, adjustScrollPosition);
+    }
+    finally {
+      for (SearchResultsListener listener : myListeners) {
+        listener.afterSelectionUpdate();
+      }
+    }
+  }
+
+  private void notifyUpdateFinished() {
     for (SearchResultsListener listener : myListeners) {
       listener.updateFinished();
     }
@@ -413,12 +448,26 @@ public class SearchResults implements DocumentListener {
 
   @Nullable
   private FindResult firstOccurrenceAtOrAfterCaret() {
+    FindResult occurrence = getOccurrenceAtCaret();
+    if (occurrence != null) return occurrence;
+    occurrence = getFirstOccurrenceInSelection();
+    if (occurrence != null) return occurrence;
+    return firstOccurrenceAfterCaret();
+  }
+
+  @Nullable
+  private FindResult getOccurrenceAtCaret() {
     int offset = getEditor().getCaretModel().getOffset();
     for (FindResult occurrence : myOccurrences) {
       if (offset <= occurrence.getEndOffset() && offset >= occurrence.getStartOffset()) {
         return occurrence;
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private FindResult getFirstOccurrenceInSelection() {
     int selectionStartOffset = getEditor().getSelectionModel().getSelectionStart();
     int selectionEndOffset = getEditor().getSelectionModel().getSelectionEnd();
     for (FindResult occurrence : myOccurrences) {
@@ -426,7 +475,7 @@ public class SearchResults implements DocumentListener {
         return occurrence;
       }
     }
-    return firstOccurrenceAfterCaret();
+    return null;
   }
 
   private void notifyChanged() {
@@ -555,7 +604,7 @@ public class SearchResults implements DocumentListener {
         }
       }
 
-      moveCursorTo(next, false);
+      moveCursorTo(next, false, true);
     }
     push();
   }
@@ -597,18 +646,18 @@ public class SearchResults implements DocumentListener {
       }
     }
     if (toNotify) {
-      moveCursorTo(next, retainOldSelection);
+      moveCursorTo(next, retainOldSelection, true);
     }
     else {
       myCursor = next;
     }
   }
 
-  public void moveCursorTo(FindResult next, boolean retainOldSelection) {
+  public void moveCursorTo(FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
     if (next != null && !mySelectionManager.isSelected(next)) {
       retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
       myCursor = next;
-      mySelectionManager.updateSelection(!retainOldSelection, false);
+      updateSelection(!retainOldSelection, false, adjustScrollPosition);
       notifyCursorMoved();
     }
   }
@@ -616,10 +665,19 @@ public class SearchResults implements DocumentListener {
   private void notifyCursorMoved() {
     for (SearchResultsListener listener : myListeners) {
       listener.cursorMoved();
+      listener.searchResultsUpdated(this);
     }
   }
 
   public boolean isUpToDate() {
     return myDocumentTimestamp == myEditor.getDocument().getModificationStamp();
+  }
+
+  void setUpdating(boolean value) {
+    myUpdating = value;
+  }
+
+  public boolean isUpdating() {
+    return myUpdating;
   }
 }

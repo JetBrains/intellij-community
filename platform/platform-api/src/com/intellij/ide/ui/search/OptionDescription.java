@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class OptionDescription implements Comparable{
+public class OptionDescription implements Comparable<OptionDescription> {
   private final String myOption;
   private final String myHit;
   private final String myPath;
@@ -18,16 +17,15 @@ public class OptionDescription implements Comparable{
     this(null, hit, null);
   }
 
-  public OptionDescription(final String option, final String hit, final String path) {
+  public OptionDescription(String option, String hit, String path) {
     this(option, null, hit, path);
   }
 
-
-  public OptionDescription(final String option, final String configurableId, final String hit, final String path) {
+  public OptionDescription(String option, String configurableId, String hit, String path) {
     this(option, configurableId, hit, path, null);
   }
 
-  public OptionDescription(final String option, final String configurableId, final String hit, final String path, String groupName) {
+  public OptionDescription(String option, String configurableId, String hit, String path, String groupName) {
     myOption = option;
     myHit = hit;
     myPath = path;
@@ -49,7 +47,6 @@ public class OptionDescription implements Comparable{
     return myPath;
   }
 
-
   public String getConfigurableId() {
     return myConfigurableId;
   }
@@ -67,7 +64,6 @@ public class OptionDescription implements Comparable{
   }
 
   public void invokeInternalEditor() {
-
   }
 
   public String toString() {
@@ -99,13 +95,12 @@ public class OptionDescription implements Comparable{
   }
 
   @Override
-  public int compareTo(final Object o) {
-    final OptionDescription description = ((OptionDescription)o);
-    if (Comparing.strEqual(myHit, description.getHit())){
-      return myOption != null ? myOption.compareTo(description.getOption()) : 0;
+  public int compareTo(final OptionDescription o) {
+    if (Comparing.strEqual(myHit, o.getHit())) {
+      return myOption != null ? myOption.compareTo(o.getOption()) : 0;
     }
-    if (myHit != null && description.getHit() != null){
-      return myHit.compareTo(description.getHit());
+    if (myHit != null && o.getHit() != null) {
+      return myHit.compareTo(o.getHit());
     }
     return 0;
   }

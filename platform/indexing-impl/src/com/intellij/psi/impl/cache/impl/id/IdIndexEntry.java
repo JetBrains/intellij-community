@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 public final class IdIndexEntry {
   private final int myWordHashCode;
   
-  public IdIndexEntry(String word, boolean caseSensitive) {
+  public IdIndexEntry(@NotNull String word, boolean caseSensitive) {
     this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word));
   }
 
@@ -36,6 +37,7 @@ public final class IdIndexEntry {
     return myWordHashCode;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -47,6 +49,7 @@ public final class IdIndexEntry {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myWordHashCode;
   }

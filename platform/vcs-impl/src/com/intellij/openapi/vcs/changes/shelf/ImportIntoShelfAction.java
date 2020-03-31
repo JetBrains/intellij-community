@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,12 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
-    super("Import Patches...", "Copies a patch file to the shelf", null);
+    super(VcsBundle.messagePointer("action.ImportIntoShelfAction.text"),
+          VcsBundle.messagePointer("action.ImportIntoShelfAction.description"), null);
   }
 
   @Override
@@ -58,14 +57,13 @@ public class ImportIntoShelfAction extends DumbAwareAction {
 
       final List<VirtualFile> patchTypeFiles = new ArrayList<>();
       final boolean filesFound = pm.runProcessWithProgressSynchronously(
-        (Runnable)() -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)), "Looking for patch files...", true, project);
+        () -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)),
+        VcsBundle.message("looking.for.patch.files"), true, project);
       if (!filesFound || patchTypeFiles.isEmpty()) return;
       if (!patchTypeFiles.equals(files)) {
-        final String message = "Found " + (patchTypeFiles.size() == 1 ?
-                                           "one patch file (" + patchTypeFiles.get(0).getPath() + ")." :
-                                           (patchTypeFiles.size() + " patch files.")) +
-                               "\nContinue with import?";
-        final int toImport = Messages.showYesNoDialog(project, message, "Import Patches", Messages.getQuestionIcon());
+        final String message = patchTypeFiles.size() == 1 ? VcsBundle.message("shelve.import.one.patch.file.prompt", patchTypeFiles.get(0).getPath()) :
+                               VcsBundle.message("shelve.import.patches.prompt", patchTypeFiles.size());
+        final int toImport = Messages.showYesNoDialog(project, message, VcsBundle.message("import.patches"), Messages.getQuestionIcon());
         if (Messages.NO == toImport) return;
       }
       pm.runProcessWithProgressSynchronously(() -> {
@@ -76,12 +74,12 @@ public class ImportIntoShelfAction extends DumbAwareAction {
           ShelvedChangesViewManager.getInstance(project).activateView(lists.get(lists.size() - 1));
         }
         if (!exceptions.isEmpty()) {
-          AbstractVcsHelper.getInstance(project).showErrors(exceptions, "Import patches into shelf");
+          AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("patch.import.to.shelf.tab"));
         }
         if (lists.isEmpty() && exceptions.isEmpty()) {
-          VcsBalloonProblemNotifier.showOverChangesView(project, "No patches found", MessageType.WARNING);
+          VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.import.no.patches.found.warning"), MessageType.WARNING);
         }
-      }, "Import patches into shelf", true, project);
+      }, VcsBundle.message("import.patches.into.shelf"), true, project);
     });
   }
 }

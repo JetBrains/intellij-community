@@ -25,11 +25,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-/**
- * @author nik
- */
 public class SocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request, Response> implements ClientSocketConnection<Request, Response> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.SocketConnectionImpl");
+  private static final Logger LOG = Logger.getInstance(SocketConnectionImpl.class);
   private static final int MAX_CONNECTION_ATTEMPTS = 60;
   private static final int CONNECTION_ATTEMPT_DELAY = 500;
   private final InetAddress myHost;

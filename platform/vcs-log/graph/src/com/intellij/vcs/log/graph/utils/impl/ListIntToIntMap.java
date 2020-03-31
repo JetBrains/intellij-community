@@ -27,13 +27,13 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
   @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
-    return newInstance(thisIsVisible, longSize, DEFAULT_BLOCK_SIZE);
+  public static UpdatableIntToIntMap newInstance(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+    return newInstance(new BooleanFunctionFlags(thisIsVisible, longSize));
   }
 
   @NotNull
-  public static UpdatableIntToIntMap newInstance(final Flags visibleNodes) {
-    return newInstance(integer -> visibleNodes.get(integer), visibleNodes.size());
+  public static UpdatableIntToIntMap newInstance(@NotNull Flags visibleNodes) {
+    return newInstance(visibleNodes, DEFAULT_BLOCK_SIZE);
   }
 
   /**
@@ -42,27 +42,28 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
    *                  getShortIndex access need: blockSize
    */
   @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<? super Integer> thisIsVisible, final int longSize, int blockSize) {
+  public static UpdatableIntToIntMap newInstance(@NotNull Flags visibility, int blockSize) {
+    int longSize = visibility.size();
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
     if (longSize == 0) return IDIntToIntMap.EMPTY;
 
     int sumSize = (longSize - 1) / blockSize + 1;
-    ListIntToIntMap listIntToIntMap = new ListIntToIntMap(thisIsVisible, longSize, blockSize, new int[sumSize]);
+    ListIntToIntMap listIntToIntMap = new ListIntToIntMap(visibility, longSize, blockSize, new int[sumSize]);
     listIntToIntMap.update(0, longSize - 1);
     return listIntToIntMap;
   }
 
-  @NotNull final BooleanFunction<? super Integer> myThisIsVisible;
+  @NotNull final Flags myVisibility;
 
   private final int myLongSize;
 
   private final int myBlockSize;
   private final int[] mySubSumOfBlocks;
 
-  private ListIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize, int blockSize, int[] subSumOfBlocks) {
+  private ListIntToIntMap(@NotNull Flags visibility, int longSize, int blockSize, int[] subSumOfBlocks) {
     myLongSize = longSize;
-    myThisIsVisible = thisIsVisible;
+    myVisibility = visibility;
     myBlockSize = blockSize;
     mySubSumOfBlocks = subSumOfBlocks;
   }
@@ -94,7 +95,7 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     if (blockIndex > 0) prefVisibleCount = mySubSumOfBlocks[blockIndex - 1];
 
     for (int longIndex = blockIndex * myBlockSize; longIndex < myLongSize; longIndex++) {
-      if (myThisIsVisible.fun(longIndex)) prefVisibleCount++;
+      if (myVisibility.get(longIndex)) prefVisibleCount++;
       if (prefVisibleCount > shortIndex) return longIndex;
     }
 
@@ -121,7 +122,7 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     if (blockIndex > 0) sum = mySubSumOfBlocks[blockIndex - 1];
 
     for (int longIndex = blockIndex * myBlockSize; longIndex <= lastLongIndex; longIndex++) {
-      if (myThisIsVisible.fun(longIndex)) sum++;
+      if (myVisibility.get(longIndex)) sum++;
     }
     return sum;
   }

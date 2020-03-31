@@ -1,0 +1,38 @@
+fragment pullRequestInfo on PullRequest {
+  ...pullRequestInfoShort
+
+  bodyHTML
+
+  author {
+    ...actorInfo
+  }
+  createdAt
+
+  reviewRequests(first: 100) {
+    nodes {
+      ... on ReviewRequest {
+        requestedReviewer {
+          ...pullRequestReviewerInfo
+        }
+      }
+    }
+  }
+
+  baseRefName
+  baseRefOid
+  baseRepository {
+    owner {
+      login
+    }
+    isFork
+  }
+
+  headRefName
+  headRefOid
+  headRepository {
+    owner {
+      login
+    }
+    isFork
+  }
+}

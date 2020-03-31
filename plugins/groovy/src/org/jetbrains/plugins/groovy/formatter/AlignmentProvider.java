@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.formatter;
 import com.intellij.formatting.Alignment;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

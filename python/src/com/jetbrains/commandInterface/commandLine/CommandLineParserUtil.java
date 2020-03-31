@@ -19,6 +19,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +46,7 @@ final class CommandLineParserUtil extends GeneratedParserUtilBase {
     if (tokenType == CommandLineElementTypes.EQ) {
       if (leftElement.equals(CommandLineElementTypes.LONG_OPTION_NAME_TOKEN)) {
         if (rightElement == null || TokenType.WHITE_SPACE.equals(rightElement)) {
-          b.error("Space between argument is its value is unexpected");
+          b.error(PyBundle.message("command.line.parser.error.message"));
         }
         b.advanceLexer();
       }

@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.compiler.options;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class ExcludeEntryDescription implements Disposable {
   private boolean myIsFile;
@@ -47,7 +34,7 @@ public class ExcludeEntryDescription implements Disposable {
   }
 
   void setPresentableUrl(String newUrl) {
-    myFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(newUrl)), myParentDisposable, null);
+    myFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(newUrl)), myParentDisposable, null);
     final VirtualFile file = getVirtualFile();
     if (file != null) {
       myIsFile = !file.isDirectory();
@@ -94,7 +81,7 @@ public class ExcludeEntryDescription implements Disposable {
     if(entryDescription.myIncludeSubdirectories != myIncludeSubdirectories) {
       return false;
     }
-    return Comparing.equal(entryDescription.getUrl(), getUrl());
+    return Objects.equals(entryDescription.getUrl(), getUrl());
   }
 
   public int hashCode() {

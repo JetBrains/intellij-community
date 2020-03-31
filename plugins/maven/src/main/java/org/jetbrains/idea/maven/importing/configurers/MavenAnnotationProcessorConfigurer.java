@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.configurers;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -38,9 +39,14 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
   public static final String DEFAULT_BSC_TEST_ANNOTATION_OUTPUT = "target/generated-sources/apt-test";
 
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
-    if (module == null) return;
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
+    WriteAction.runAndWait(() -> doConfigure(mavenProject, project, module));
+  }
 
+  private static void doConfigure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
+    if (project.isDisposed() || module.isDisposed()) {
+      return;
+    }
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null) {
       String versionString = sdk.getVersionString();

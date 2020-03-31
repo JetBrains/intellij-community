@@ -19,18 +19,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.UnsignedShortArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
 public class PausesStat {
   private static final Logger LOG = Logger.getInstance(PausesStat.class);
   private static final int N_MAX = 100000;
-  // stores durations of the event: (timestamp of the event end) - (timestamp of the event start) in milliseconds.
-  private final UnsignedShortArrayList durations = new UnsignedShortArrayList();
   @NotNull private final String myName;
-  private final Thread myEdtThread;
   private boolean started;
   private long startTimeStamp;
+  private Thread currentThread;
+
+  // fields below are guarded by `this`
+
+  // stores durations of the event: (timestamp of the event end) - (timestamp of the event start) in milliseconds.
+  private final UnsignedShortArrayList durations = new UnsignedShortArrayList();
   private int maxDuration;
   private Object maxDurationDescription;
   private int totalNumberRecorded;
@@ -38,11 +40,15 @@ public class PausesStat {
 
   public PausesStat(@NotNull String name) {
     myName = name;
-    if (!EventQueue.isDispatchThread()) throw new IllegalStateException("expected EDT but got "+Thread.currentThread());
-    myEdtThread = Thread.currentThread();
   }
 
-  private void register(int duration) {
+  private synchronized void register(int duration, @NotNull String description) {
+    if (duration > maxDuration) {
+      maxDuration = duration;
+      maxDurationDescription = description;
+    }
+
+    totalNumberRecorded++;
     if (durations.size() == N_MAX) {
       durations.set(indexToOverwrite, duration);
       indexToOverwrite = (indexToOverwrite + 1) % N_MAX;
@@ -53,22 +59,17 @@ public class PausesStat {
   }
 
   public void started() {
-    assertEdt();
     LOG.assertTrue(!started);
     LOG.assertTrue(startTimeStamp == 0, startTimeStamp);
+    currentThread = Thread.currentThread();
     startTimeStamp = System.nanoTime();
     started = true;
   }
 
-  private void assertEdt() {
-    if (Thread.currentThread() != myEdtThread) {
-      LOG.error("wrong thread: "+Thread.currentThread());
-    }
-  }
-
   public void finished(@NotNull String description) {
-    assertEdt();
+    LOG.assertTrue(currentThread == Thread.currentThread());
     LOG.assertTrue(started);
+    currentThread = null;
     started = false;
     long finishStamp = System.nanoTime();
     long startTimeStamp = this.startTimeStamp;
@@ -81,15 +82,10 @@ public class PausesStat {
     }
 
     durationMs = Math.min(durationMs, Short.MAX_VALUE);
-    if (durationMs > maxDuration) {
-      maxDuration = durationMs;
-      maxDurationDescription = description;
-    }
-    totalNumberRecorded++;
-    register(durationMs);
+    register(durationMs, description);
   }
 
-  public String statistics() {
+  public synchronized String statistics() {
     int number = durations.size();
     int[] duration = durations.toArray();
     int total = 0;

@@ -14,9 +14,6 @@
             "edge": {
               "version_added": null
             },
-            "edge_mobile": {
-              "version_added": null
-            },
             "firefox": {
               "version_added": false
             },
@@ -60,9 +57,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": false
               },
@@ -79,10 +73,10 @@
                 "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": "9"
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": "9"
               },
               "webview_android": {
                 "version_added": null
@@ -105,9 +99,6 @@
                 "version_added": null
               },
               "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
                 "version_added": null
               },
               "firefox": {
@@ -155,9 +146,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": false
               },
@@ -200,9 +188,6 @@
                 "version_added": null
               },
               "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
                 "version_added": null
               },
               "firefox": {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.indexing.JavaIndexingBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -38,8 +39,8 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       progress.pushState();
       String className = ReadAction.compute(baseClass::getName);
       progress.setText(className != null ?
-                       PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
-                       PsiBundle.message("psi.search.inheritors.progress"));
+                       JavaIndexingBundle.message("psi.search.inheritors.of.class.progress", className) :
+                       JavaIndexingBundle.message("psi.search.inheritors.progress"));
     }
 
     try {
@@ -77,13 +78,10 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return;
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope);
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters.isIncludeAnonymous());
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
-      if (subClass instanceof PsiAnonymousClass && !parameters.isIncludeAnonymous()) {
-        continue;
-      }
       if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return;
@@ -92,8 +90,12 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull SearchScope searchScopeForNonPhysical) {
-    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
+  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                           @NotNull PsiClass baseClass,
+                                                           @NotNull SearchScope searchScopeForNonPhysical,
+                                                           boolean includeAnonymous) {
+    HighlightingCaches caches = HighlightingCaches.getInstance(project);
+    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = includeAnonymous ? caches.ALL_SUB_CLASSES : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
@@ -105,7 +107,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, scopeToUse).allowParallelProcessing().forEach(subClass -> {
+        DirectClassInheritorsSearch.search(candidate, scopeToUse, includeAnonymous).allowParallelProcessing().forEach(subClass -> {
           ProgressManager.checkCanceled();
           PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue

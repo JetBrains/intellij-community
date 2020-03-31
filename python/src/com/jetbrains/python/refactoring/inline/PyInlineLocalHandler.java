@@ -49,9 +49,8 @@ import java.util.List;
 public class PyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(PyInlineLocalHandler.class.getName());
 
-  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);
-  private static final String HELP_ID = "python.reference.inline";
+  private static final String HELP_ID = "refactoring.inlineVariable";
 
   public static PyInlineLocalHandler getInstance() {
     return EP_NAME.findExtensionOrFail(PyInlineLocalHandler.class);
@@ -103,7 +102,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (def == null || getValue(def) == null) {
       final String key = defPair.second ? "variable.has.no.dominating.definition" : "variable.has.no.initializer";
       final String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
@@ -111,14 +110,14 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{def}, writeAttributes, true, null);
       final String message =
         RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.inline.local.multiassignment", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
     final PsiElement[] refsToInline = PyDefUseUtil.getPostRefs(containerBlock, local, getObject(def));
     if (refsToInline.length == 0) {
       final String message = RefactoringBundle.message("variable.is.never.used", localName);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
@@ -130,7 +129,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final String occurrencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
       final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + " " + occurrencesString;
       final RefactoringMessageDialog dialog =
-        new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
+        new RefactoringMessageDialog(getRefactoringName(), question, HELP_ID, "OptionPane.questionIcon", true, project);
       if (!dialog.showAndGet()) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
@@ -142,7 +141,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
         final String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
         return;
       }
     }
@@ -163,7 +162,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         final String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
@@ -179,8 +178,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
         final PsiElement[] exprs = new PsiElement[refsToInline.length];
         final PyExpression value = prepareValue(def, localName, project);
+        final LanguageLevel level = LanguageLevel.forElement(value);
         final PyExpression withParenthesis =
-          PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
+          PyElementGenerator.getInstance(project).createExpressionFromText(level, "(" + value.getText() + ")");
         final PsiElement lastChild = def.getLastChild();
         if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
           final PsiElement parent = def.getParent();
@@ -294,12 +294,17 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final PsiElement operation = expression.getOperation();
       assert operation != null;
       final String op = operation.getText().replace('=', ' ');
-      return PyElementGenerator.getInstance(project).createExpressionFromText(localName + " " + op + value.getText() + ")");
+      final LanguageLevel level = LanguageLevel.forElement(value);
+      return PyElementGenerator.getInstance(project).createExpressionFromText(level, localName + " " + op + value.getText() + ")");
     }
     return value;
   }
 
   public static String getRefactoringId() {
     return "refactoring.python.inline.local";
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("inline.variable.title");
   }
 }

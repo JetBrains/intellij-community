@@ -34,7 +34,14 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   private final boolean myIsDeleted;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, null, path, revision, null, null, null, null, Collections.emptyList(), false);
+    this(project, null, path, revision);
+  }
+
+  public GitFileRevision(@NotNull Project project,
+                         @Nullable VirtualFile root,
+                         @NotNull FilePath path,
+                         @NotNull GitRevisionNumber revision) {
+    this(project, root, path, revision, null, null, null, null, Collections.emptyList(), false);
   }
 
   public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
@@ -118,8 +125,8 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   @Override
-  public synchronized byte[] loadContent() throws VcsException {
-    VirtualFile root = myRoot != null ? myRoot : GitUtil.getRepositoryForFile(myProject, myPath).getRoot();
+  public synchronized byte @NotNull [] loadContent() throws VcsException {
+    VirtualFile root = myRoot != null ? myRoot : GitUtil.getRootForFile(myProject, myPath);
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
   }
 

@@ -78,7 +78,7 @@ class TypeMayBePrimitive {
   }
 
   void binop() {
-    Integer i = 12;
+    <warning descr="Type may be primitive">Integer</warning> i = 12;
     if (i == new Integer(12)) {
     }
 
@@ -90,12 +90,64 @@ class TypeMayBePrimitive {
     if (b != null) {}
   }
 
-  void varargUse() {
-    Integer i = 12;
-    vararg(i, i, i, i);
+  void bool() {
+    final <warning descr="Type may be primitive">Boolean</warning> b = Boolean.valueOf("true");
+    use(b);
+  }
+}
+
+class StringConcat {
+  private static final String PREFIX = "1l";
+
+  public void foo(Queue<String> queue, long rangeStart, long rangeEnd, long step) throws InterruptedException {
+
+    for (<warning descr="Type may be primitive">Long</warning> number = rangeStart; number <= rangeEnd; number += step) {
+      queue.put(PREFIX + number);
+    }
   }
 
-  void vararg(int k, int... i) {
+  static class Queue<S> {
+    public void put(String s) {
 
+    }
+  }
+}
+
+class ValueOf {
+  public void foo(long step) {
+    <warning descr="Type may be primitive">Long</warning> rangeStart = Long.valueOf("12");
+    for (long number = rangeStart; number <= 12L; number += step) {
+      System.out.println(number);
+    }
+  }
+}
+
+class BoxUnboxBalance {
+  void needBox(Object box) {}
+  void needPrimitive(long prim) {}
+
+  public long test1() {
+    <warning descr="Type may be primitive">Long</warning> l = 12L; // -1 as no prim boxing
+    needBox(l); // +1 as boxed param
+    return l + 12; // -2 as unbox and result boxing removed
+    // Total: -2  ==> remove boxing
+  }
+
+  public Long test2() {
+    Long l = 12L; // -1 as no prim boxing
+    needBox(l); // +1 as boxed param
+    return l; // +1 as box of result
+    // Total: +1  ==> preserve boxing
+  }
+
+  public void loopBoost(int[] arr) {
+    <warning descr="Type may be primitive">Long</warning> l = 12L; // -1 as no prim boxing
+    needBox(l); // +1 as boxed param
+    needBox(l); // +1 as boxed param
+    needBox(l); // +1 as boxed param
+    for (int ignored : arr) {
+      needPrimitive(l); // -1 as parameter must be unboxed, with loop boost -10
+    }
+    // Total: -8  ==> remove boxing
   }
 }

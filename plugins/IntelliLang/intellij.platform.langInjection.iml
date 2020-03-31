@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="intellij.java.langInjection.jps" scope="RUNTIME" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
   <component name="copyright">
     <Base>

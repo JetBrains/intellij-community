@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -24,11 +25,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collection;
 
 public class I18nizeAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeAction");
+  private static final Logger LOG = Logger.getInstance(I18nizeAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -60,11 +63,19 @@ public class I18nizeAction extends AnAction {
     final PsiLiteralExpression literalExpression = getEnclosingStringLiteral(psiFile, editor);
     PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(literalExpression, UExpression.class);
+    NlsInfo.Localized localized = NlsInfo.localized();
+    if (uExpression != null) {
+      NlsInfo info = NlsInfo.forExpression(uExpression);
+      if (info instanceof NlsInfo.Localized) {
+        localized = (NlsInfo.Localized)info;
+      }
+    }
     if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(element) != null) {
-      return new I18nizeConcatenationQuickFix();
+      return new I18nizeConcatenationQuickFix(localized);
     }
     else if (literalExpression != null && literalExpression.getTextRange().contains(range)) {
-      return new I18nizeQuickFix();
+      return new I18nizeQuickFix(localized);
     }
 
     for (I18nizeHandlerProvider handlerProvider : I18nizeHandlerProvider.EP_NAME.getExtensions()) {
@@ -99,7 +110,7 @@ public class I18nizeAction extends AnAction {
       handler.checkApplicability(psiFile, editor);
     }
     catch (IncorrectOperationException ex) {
-      CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), CodeInsightBundle.message("i18nize.error.title"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), JavaI18nBundle.message("i18nize.error.title"), null);
       return;
     }
 
@@ -136,7 +147,7 @@ public class I18nizeAction extends AnAction {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
+    }, PropertiesBundle.message("quickfix.i18n.command.name"), project));
   }
 
   @Override

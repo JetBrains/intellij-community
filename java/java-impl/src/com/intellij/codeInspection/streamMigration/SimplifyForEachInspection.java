@@ -1,10 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,14 +39,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "forEach call can be simplified";
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @NotNull
@@ -66,7 +59,9 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
         boolean opCountChanged = context.myTerminalBlock.getOperationCount() > 1;
         boolean lastOpChanged = !(context.myMigration instanceof ForEachMigration);
         if (opCountChanged || lastOpChanged) {
-          String customMessage = lastOpChanged ? "Replace with " + context.myMigration.getReplacement() : "Extract intermediate operations";
+            String customMessage = lastOpChanged ?
+                                   JavaBundle.message("inspection.simplify.for.each.replace", context.myMigration.getReplacement()) :
+                                   JavaBundle.message("inspection.simplify.for.each.extract.intermediate.operations");
           ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           holder.registerProblem(context.myMainStatement, customMessage, highlightType, getRange(call).shiftRight(-call.getTextOffset()),
                                  new SimplifyForEachFix(customMessage));
@@ -220,7 +215,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify forEach lambda";
+      return JavaBundle.message("quickfix.family.simplify.foreach.lambda");
     }
 
     @Override
@@ -247,7 +242,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
       else {
         myContext = context;
-        setText("Avoid mutation using Stream API '" + simplifyContext.myMigration.getReplacement() + "' operation");
+        setText(JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
       }
     }
 
@@ -287,7 +282,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Avoid mutation using Stream API";
+      return JavaBundle.message("quickfix.family.avoid.mutation.using.stream.api");
     }
   }
 }

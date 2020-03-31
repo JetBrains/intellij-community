@@ -45,13 +45,13 @@ public class JavaMethodResolveHelper {
   private final Set<MethodSignature> myDuplicates = new THashSet<>();
 
   private final MethodCandidatesProcessor myProcessor;
-  @Nullable private final PsiType[] myArgumentTypes;
+  private final PsiType @Nullable [] myArgumentTypes;
 
-  public JavaMethodResolveHelper(@NotNull final PsiElement argumentList, PsiFile containingFile, @Nullable final PsiType[] argumentTypes) {
+  public JavaMethodResolveHelper(@NotNull final PsiElement argumentList, PsiFile containingFile, final PsiType @Nullable [] argumentTypes) {
     myArgumentTypes = argumentTypes;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
     final PsiConflictResolver resolver = argumentTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, argumentTypes,
-                                                                                                                                      languageLevel);
+                                                                                                                                      languageLevel, containingFile);
     myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
       protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,

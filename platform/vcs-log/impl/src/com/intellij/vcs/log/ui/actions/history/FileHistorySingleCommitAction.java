@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.google.common.primitives.Ints;
@@ -25,6 +11,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
@@ -34,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
@@ -74,14 +61,16 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
 
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
     if (commits.size() != 1) return;
-    CommitId commit = notNull(getFirstItem(commits));
+    CommitId commit = Objects.requireNonNull(getFirstItem(commits));
 
     List<Integer> commitIndex = Ints.asList(ui.getLogData().getCommitIndex(commit.getHash(), commit.getRoot()));
     getDetailsGetter(ui).loadCommitsData(commitIndex, details -> {
       if (!details.isEmpty()) {
-        performAction(project, ui, notNull(getFirstItem(details)), e);
+        performAction(project, ui, Objects.requireNonNull(getFirstItem(details)), e);
       }
-    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
+    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project,
+                                                          VcsLogBundle.message(
+                                                            "file.history.action.could.not.load.selected.commits.message", t.getMessage()),
                                                           MessageType.ERROR), null);
   }
 

@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.ByteArrayCharSequence;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,16 +70,15 @@ public abstract class ArchiveHandler {
     }
   }
 
-  @NotNull
-  public String[] list(@NotNull String relativePath) {
+  public String @NotNull [] list(@NotNull String relativePath) {
     EntryInfo entry = getEntryInfo(relativePath);
-    if (entry == null || !entry.isDirectory) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (entry == null || !entry.isDirectory) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     AddonlyKeylessHash<EntryInfo, Object> result = getParentChildrenMap();
 
     Object o = result.get(entry);
     if (o == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY; // directories without children
+      return ArrayUtilRt.EMPTY_STRING_ARRAY; // directories without children
     }
     if (o instanceof EntryInfo) {
       return new String[] {((EntryInfo)o).shortName.toString()};
@@ -136,7 +121,7 @@ public abstract class ArchiveHandler {
     return map;
   }
 
-  private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
+  private @NotNull AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
     THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
@@ -147,19 +132,16 @@ public abstract class ArchiveHandler {
       }
     }
 
-    final AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
-    map.forEachEntry(new TObjectObjectProcedure<EntryInfo, List<EntryInfo>>() {
-      @Override
-      public boolean execute(EntryInfo a, List<EntryInfo> b) {
-        int numberOfChildren = b.size();
-        if (numberOfChildren == 1) {
-          result.add(b.get(0));
-        }
-        else if (numberOfChildren > 1) {
-          result.add(b.toArray(new EntryInfo[numberOfChildren]));
-        }
-        return true;
+    AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
+    map.forEachEntry((parent, children) -> {
+      int numberOfChildren = children.size();
+      if (numberOfChildren == 1) {
+        result.add(children.get(0));
       }
+      else if (numberOfChildren > 1) {
+        result.add(children.toArray(new EntryInfo[numberOfChildren]));
+      }
+      return true;
     });
     return result;
   }
@@ -222,16 +204,20 @@ public abstract class ArchiveHandler {
   protected EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
     EntryInfo entry = map.get(entryName);
     if (entry == null) {
-      Pair<String, String> path = splitPath(entryName);
+      Trinity<String, String, String> path = splitPathAndFix(entryName);
       EntryInfo parentEntry = getOrCreate(map, path.first);
       CharSequence shortName = ByteArrayCharSequence.convertToBytesIfPossible(path.second);
       entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
-      map.put(entryName, entry);
+      map.put(path.third, entry);
     }
     return entry;
   }
 
+  /**
+   * @deprecated Use {@link #splitPathAndFix(String)} instead to correctly handle invalid entry names
+   */
   @NotNull
+  @Deprecated
   protected Pair<String, String> splitPath(@NotNull String entryName) {
     int p = entryName.lastIndexOf('/');
     String parentName = p > 0 ? entryName.substring(0, p) : "";
@@ -239,8 +225,29 @@ public abstract class ArchiveHandler {
     return Pair.create(parentName, shortName);
   }
 
+  /**
+   * @return parentName, shortName, fixedEntryName
+   */
   @NotNull
-  public abstract byte[] contentsToByteArray(@NotNull String relativePath) throws IOException;
+  protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
+    int p = entryName.lastIndexOf('/');
+    // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
+    // Under Windows we can't create files with backslash in the name
+    // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
+    p = Math.max(p, entryName.lastIndexOf('\\'));
+
+    String parentName = p > 0 ? entryName.substring(0, p) : "";
+    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
+    String fixedParent = parentName.replace('\\', '/');
+    //noinspection StringEquality
+    if (fixedParent != parentName) {
+      parentName = fixedParent;
+      entryName = parentName + '/' + shortName;
+    }
+    return Trinity.create(parentName, shortName, entryName);
+  }
+
+  public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
 
   @NotNull
   public InputStream getInputStream(@NotNull String relativePath) throws IOException {

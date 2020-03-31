@@ -25,7 +25,6 @@ import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,9 +51,7 @@ class RefParser {
     List<VcsRef> refs = new ArrayList<>();
     for (String longRefPatch : longRefPaths) {
       VcsRef ref = createRef(hash, longRefPatch, root);
-      if (ref != null) {
-        refs.add(ref);
-      }
+      refs.add(ref);
     }
     return refs;
   }
@@ -67,7 +64,7 @@ class RefParser {
   }
 
   // example input: fb29c80 refs/tags/92.29
-  @Nullable
+  @NotNull
   private VcsRef createRef(@NotNull Hash hash, @NotNull String longRefPath, @NotNull VirtualFile root) {
     String name = getRefName(longRefPath);
     VcsRefType type = GitRefManager.getRefType(name);

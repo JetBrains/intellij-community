@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
-import com.intellij.ToolExtensionPoints
-import com.intellij.openapi.extensions.Extensions
+
+import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
-abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull
   JavaCodeInsightTestFixture getFixture() {
@@ -26,7 +26,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   void setUp() throws Exception {
     super.setUp()
     // avoid PSI/document/model changes are not allowed during highlighting
-    Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList()
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList()
   }
 
   @Override

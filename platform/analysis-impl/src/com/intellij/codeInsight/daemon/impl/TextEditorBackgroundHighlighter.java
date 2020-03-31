@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -13,18 +13,18 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
-  private static final int[] EXCEPT_OVERRIDDEN = {
+  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
+  private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
-    Pass.UPDATE_ALL,
     Pass.LOCAL_INSPECTIONS,
     Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
@@ -33,45 +33,35 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private final Project myProject;
   private final Editor myEditor;
   private final Document myDocument;
-  private PsiFile myFile;
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();
-    renewFile();
   }
 
-  private void renewFile() {
-    if (myFile == null || !myFile.isValid()) {
-      myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      if (myFile != null && !myFile.isValid()) {
-        myFile = null;
-      }
+  @Nullable
+  private PsiFile renewFile() {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    if (file != null) {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     }
-
-    if (myFile != null) {
-      myFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    }
+    return file;
   }
 
   @NotNull
-  List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
+  List<TextEditorHighlightingPass> getPasses(int @NotNull [] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
 
     LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
 
-    renewFile();
-    PsiFile file = myFile;
+    PsiFile file = renewFile();
     if (file == null) return Collections.emptyList();
 
     boolean compiled = file instanceof PsiCompiledFile;
     if (compiled) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-
-    if (compiled) {
-      passesToIgnore = EXCEPT_OVERRIDDEN;
+      passesToIgnore = IGNORE_FOR_COMPILED;
     }
     else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return Collections.emptyList();
@@ -82,15 +72,13 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForVisibleArea() {
+  public TextEditorHighlightingPass @NotNull [] createPassesForVisibleArea() {
     return createPassesForEditor();
   }
 
   @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForEditor() {
-    List<TextEditorHighlightingPass> passes = getPasses(ArrayUtil.EMPTY_INT_ARRAY);
+  public TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
+    List<TextEditorHighlightingPass> passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY);
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
-import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,24 +52,19 @@ public abstract class GitHandler {
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected Process myProcess;
 
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
 
-  @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
+  @Nullable private ThrowableConsumer<? super OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myWithLowPriority;
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myWithNoTty;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
 
@@ -154,24 +148,16 @@ public abstract class GitHandler {
     return toPass;
   }
 
-  /**
-   * @return multicaster for listeners
-   */
+  @NotNull
   protected ProcessEventListener listeners() {
     return myListeners.getMulticaster();
   }
 
-  /**
-   * @return a context project
-   */
   @Nullable
   public Project project() {
     return myProject;
   }
 
-  /**
-   * @return the current working directory
-   */
   @NotNull
   File getWorkingDirectory() {
     return myCommandLine.getWorkDirectory();
@@ -187,11 +173,6 @@ public abstract class GitHandler {
     return myCommand;
   }
 
-  /**
-   * Add listener to handler
-   *
-   * @param listener a listener
-   */
   protected void addListener(@NotNull ProcessEventListener listener) {
     myListeners.addListener(listener);
   }
@@ -210,22 +191,11 @@ public abstract class GitHandler {
     myWithNoTty = true;
   }
 
-  /**
-   * Add string parameters
-   *
-   * @param parameters a parameters to add
-   */
-  public void addParameters(@NonNls @NotNull String... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     addParameters(Arrays.asList(parameters));
   }
 
-  /**
-   * Add parameters from the list
-   *
-   * @param parameters the parameters to add
-   */
-  public void addParameters(List<String> parameters) {
-    checkNotStarted();
+  public void addParameters(@NotNull List<String> parameters) {
     for (String parameter : parameters) {
       myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
     }
@@ -247,45 +217,24 @@ public abstract class GitHandler {
     return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
   }
 
-  /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param parameters a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativePaths(@NotNull FilePath... parameters) {
+  public void addRelativePaths(FilePath @NotNull ... parameters) {
     addRelativePaths(Arrays.asList(parameters));
   }
 
-  /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param filePaths a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
-    checkNotStarted();
+  public void addRelativePaths(@NotNull Collection<? extends FilePath> filePaths) {
     for (FilePath path : filePaths) {
-      if (path instanceof RemoteFilePath) {
-        myCommandLine.addParameter(path.getPath());
-      }
-      else {
-        myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
-      }
+      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
     }
   }
 
-  /**
-   * Add virtual file parameters. The parameters are made relative to the working directory
-   *
-   * @param files a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
-    checkNotStarted();
+  public void addRelativeFiles(@NotNull final Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
     }
+  }
+
+  public void addAbsoluteFile(@NotNull File file) {
+    myCommandLine.addParameter(file.getAbsolutePath());
   }
 
   /**
@@ -295,21 +244,7 @@ public abstract class GitHandler {
     myCommandLine.addParameter("--");
   }
 
-  /**
-   * check that process is not started yet
-   *
-   * @throws IllegalStateException if process has been already started
-   */
-  private void checkNotStarted() {
-    if (isStarted()) {
-      throw new IllegalStateException("The process has been already started");
-    }
-  }
-
-  /**
-   * @return true if process is started
-   */
-  final synchronized boolean isStarted() {
+  private boolean isStarted() {
     return myProcess != null;
   }
 
@@ -335,19 +270,11 @@ public abstract class GitHandler {
     return commandLine;
   }
 
-  /**
-   * @return a character set to use for IO
-   */
   @NotNull
   public Charset getCharset() {
     return myCommandLine.getCharset();
   }
 
-  /**
-   * Set character set for IO
-   *
-   * @param charset a character set
-   */
   public void setCharset(@NotNull Charset charset) {
     myCommandLine.setCharset(charset);
   }
@@ -360,9 +287,7 @@ public abstract class GitHandler {
    * @see #setStderrSuppressed(boolean)
    * @see #setStdoutSuppressed(boolean)
    */
-  @SuppressWarnings({"SameParameterValue"})
-  public void setSilent(final boolean silent) {
-    checkNotStarted();
+  public void setSilent(boolean silent) {
     mySilent = silent;
     if (silent) {
       setStderrSuppressed(true);
@@ -387,7 +312,6 @@ public abstract class GitHandler {
    * @param stdoutSuppressed true if output is not copied to the console
    */
   public void setStdoutSuppressed(final boolean stdoutSuppressed) {
-    checkNotStarted();
     myStdoutSuppressed = stdoutSuppressed;
   }
 
@@ -403,8 +327,7 @@ public abstract class GitHandler {
    *
    * @param stderrSuppressed true if error output is not copied to the console
    */
-  public void setStderrSuppressed(final boolean stderrSuppressed) {
-    checkNotStarted();
+  public void setStderrSuppressed(boolean stderrSuppressed) {
     myStderrSuppressed = stderrSuppressed;
   }
 
@@ -413,7 +336,7 @@ public abstract class GitHandler {
    *
    * @param inputProcessor the processor
    */
-  public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
+  public void setInputProcessor(@Nullable ThrowableConsumer<? super OutputStream, IOException> inputProcessor) {
     myInputProcessor = inputProcessor;
   }
 
@@ -425,6 +348,10 @@ public abstract class GitHandler {
    */
   public void addCustomEnvironmentVariable(String name, String value) {
     myCustomEnv.put(name, value);
+  }
+
+  public boolean containsCustomEnvironmentVariable(@NotNull String key) {
+    return myCustomEnv.containsKey(key);
   }
 
   /**
@@ -475,11 +402,10 @@ public abstract class GitHandler {
     }
   }
 
-  /**
-   * Start process
-   */
-  synchronized void start() {
-    checkNotStarted();
+  private void start() {
+    if (isStarted()) {
+      throw new IllegalStateException("The process has been already started");
+    }
 
     try {
       if (myWithLowPriority) ExecUtil.setupLowPriorityExecution(myCommandLine);
@@ -572,9 +498,9 @@ public abstract class GitHandler {
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
   @Deprecated
-  public synchronized int getExitCode() {
+  public int getExitCode() {
     if (myExitCode == null) {
-      throw new IllegalStateException("Exit code is not yet available");
+      return -1;
     }
     return myExitCode.intValue();
   }
@@ -584,7 +510,7 @@ public abstract class GitHandler {
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
   @Deprecated
-  protected synchronized void setExitCode(int exitCode) {
+  protected void setExitCode(int exitCode) {
     if (myExitCode == null) {
       myExitCode = exitCode;
     }

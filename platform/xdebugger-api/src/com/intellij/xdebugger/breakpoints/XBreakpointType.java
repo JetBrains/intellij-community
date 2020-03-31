@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -32,8 +32,6 @@ import java.util.List;
  *
  * Use this class only for breakpoints like exception breakpoints in Java. If a breakpoint will be put on some line in a file use
  * {@link XLineBreakpointType} instead 
- *
- * @author nik
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
@@ -130,15 +128,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    */
   @NotNull
   public Icon getInactiveDependentIcon() {
-    return getDisabledDependentIcon();
-  }
-
-  /**
-   * @deprecated override {@link #getInactiveDependentIcon()} instead
-   */
-  @Deprecated
-  @NotNull
-  public Icon getDisabledDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 

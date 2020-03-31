@@ -1,14 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertyManipulator;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertyStub;
+import com.intellij.lang.properties.psi.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -25,11 +22,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
-public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
+public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
+  private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
@@ -61,8 +55,13 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @Override
   public void setValue(@NotNull String value) throws IncorrectOperationException {
+    setValue(value, PropertyKeyValueFormat.PRESENTABLE);
+  }
+
+  @Override
+  public void setValue(@NotNull String value, @NotNull PropertyKeyValueFormat format) throws IncorrectOperationException {
     ASTNode node = getValueNode();
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value, getKeyValueDelimiter());
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value, getKeyValueDelimiter(), format);
     ASTNode valueNode = property.getValueNode();
     if (node == null) {
       if (valueNode != null) {
@@ -123,6 +122,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getValue());
   }
 
+  @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    return getKeyNode().getPsi();
+  }
+
 
   public static String unescape(String s) {
     if (s == null) return null;
@@ -131,7 +135,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return sb.toString();
   }
 
-  public static boolean parseCharacters(String s, StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseCharacters(String s, StringBuilder outChars, int @Nullable [] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == s.length() + 1;
     int off = 0;
     int len = s.length();

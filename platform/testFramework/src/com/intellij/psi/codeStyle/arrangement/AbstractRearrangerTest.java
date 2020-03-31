@@ -4,7 +4,6 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileType;
@@ -18,8 +17,8 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 /**
  * @author Denis Zhdanov
  */
-public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   private static final RichTextHandler[] RICH_TEXT_HANDLERS = {new RangeHandler(), new FoldingHandler()};
   private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile("([^\\s]+)=([^\\s]+)");
 
@@ -45,15 +44,15 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     return CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
   }
 
-  protected static ArrangementSectionRule section(@NotNull StdArrangementMatchRule... rules) {
+  protected static ArrangementSectionRule section(StdArrangementMatchRule @NotNull ... rules) {
     return section(null, null, rules);
   }
 
-  protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
+  protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, StdArrangementMatchRule @NotNull ... rules) {
     return ArrangementSectionRule.create(start, end, rules);
   }
 
-  protected static StdArrangementRuleAliasToken alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
+  protected static StdArrangementRuleAliasToken alias(@NotNull String id, StdArrangementMatchRule @NotNull ... rules) {
     return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
   }
 
@@ -73,7 +72,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   }
 
   @NotNull
-  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, @NotNull ArrangementSettingsToken... tokens) {
+  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, ArrangementSettingsToken @NotNull ... tokens) {
     if (tokens.length == 0) {
       return new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(nameFilter)));
     }
@@ -87,7 +86,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   }
 
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken... conditions) {
+  protected static StdArrangementMatchRule rule(ArrangementSettingsToken @NotNull ... conditions) {
     return rule(ContainerUtil.map(conditions, it -> atom(it)));
   }
 
@@ -97,7 +96,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   }
 
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementAtomMatchCondition... conditions) {
+  protected static StdArrangementMatchRule rule(ArrangementAtomMatchCondition @NotNull ... conditions) {
     ArrangementMatchCondition compositeCondition = ArrangementUtil.combine(conditions);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition));
   }
@@ -122,10 +121,29 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   }
 
   protected void doTest(@NotNull Map<String, ?> args) {
+    @SuppressWarnings("unchecked") List<ArrangementGroupingRule> groupingRules =
+      ObjectUtils.coalesce((List<ArrangementGroupingRule>)args.get("groups"), Collections.emptyList());
+
+    List<?> rules = (List<?>)args.get("rules");
+    List<ArrangementSectionRule> sectionRules = getSectionRules(rules);
+
+    @SuppressWarnings("unchecked")
+    List<StdArrangementRuleAliasToken> aliases =
+      ObjectUtils.coalesce((List<StdArrangementRuleAliasToken>)args.get("aliases"), Collections.emptyList());
+
+    final StdArrangementSettings arrangementSettings = new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
+
     String text = (String)args.get("initial");
     String expected = (String)args.get("expected");
     @SuppressWarnings("unchecked") List<TextRange> ranges = (List<TextRange>)args.get("ranges");
 
+    doTestWithSettings(text, expected, arrangementSettings, ranges);
+  }
+
+  protected void doTestWithSettings(@NotNull String text,
+                                    @NotNull String expected,
+                                    @Nullable ArrangementSettings arrangementSettings,
+                                    @Nullable List<TextRange> ranges) {
     Info info = parse(text);
     if (!isEmpty(ranges) && !isEmpty(info.ranges)) {
       fail("Duplicate ranges set: explicit: " + ranges + ", " + "derived: " + info.ranges + ", text:\n" + text);
@@ -144,21 +162,11 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       });
     }
 
-    @SuppressWarnings("unchecked") List<ArrangementGroupingRule> groupingRules = (List<ArrangementGroupingRule>)args.get("groups");
-    if (groupingRules == null) groupingRules = Collections.emptyList();
-
-    List<?> rules = (List<?>)args.get("rules");
-    List<ArrangementSectionRule> sectionRules = getSectionRules(rules);
-
-    @SuppressWarnings("unchecked")
-    List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
-    CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
-    final StdArrangementSettings arrangementSettings =
-      aliases == null ?
-      new StdArrangementSettings(groupingRules, sectionRules) :
-      new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
-    settings.setArrangementSettings(arrangementSettings);
-    ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
+    if (arrangementSettings != null) {
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
+      settings.setArrangementSettings(arrangementSettings);
+    }
+    ArrangementEngine engine = ArrangementEngine.getInstance();
     CommandProcessor.getInstance().executeCommand(getProject(), ()-> engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges), null, null);
 
 
@@ -172,10 +180,14 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     }
   }
 
-  protected List<ArrangementSectionRule> getSectionRules(List<?> rules) {
-    List<ArrangementSectionRule> sectionRules = Collections.emptyList();
-    if (rules != null) sectionRules = ContainerUtil.map(rules, (Function<Object, ArrangementSectionRule>)o -> o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o));
-    return sectionRules;
+  @NotNull
+  protected List<ArrangementSectionRule> getSectionRules(@Nullable List<?> rules) {
+    if (rules == null) {
+      return ContainerUtil.emptyList();
+    }
+    return ContainerUtil.map(rules, o -> o instanceof ArrangementSectionRule
+                                         ? (ArrangementSectionRule)o
+                                         : ArrangementSectionRule.create((StdArrangementMatchRule)o));
   }
 
   private static boolean isEmpty(Collection<?> collection) {

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
+public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -50,7 +50,7 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
       protected String getNewName(Project project, PsiExpression expr, PsiType type) {
         return "aField";
       }
-    }.invoke(getProject(), myEditor, myFile, null);
+    }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile("afterConflictingFieldInContainingClass.java");
   }
 
@@ -66,7 +66,7 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
       protected int getChosenClassIndex(List<PsiClass> classes) {
         return 0;
       }
-    }.invoke(getProject(), myEditor, myFile, null);
+    }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile("afterConflictingFieldInContainingClassLocal.java");
   }
 
@@ -139,7 +139,7 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
       protected PsiType getFieldType(PsiType type) {
         return PsiType.INT;
       }
-    }.invoke(getProject(), myEditor, myFile, null);
+    }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile("afterForcedFieldType.java");
   }
 
@@ -191,11 +191,11 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
       protected int getChosenClassIndex(List<PsiClass> classes) {
         return 0;
       }
-    }.invoke(getProject(), myEditor, myFile, null);
+    }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile("afterStaticFieldInInnerClass.java");
   }
 
-  private static void performRefactoring(BaseExpressionToFieldHandler.InitializationPlace initializationPlace, boolean declareStatic) {
-    new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
+  private void performRefactoring(BaseExpressionToFieldHandler.InitializationPlace initializationPlace, boolean declareStatic) {
+    new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), getEditor(), getFile(), null);
   }
 }

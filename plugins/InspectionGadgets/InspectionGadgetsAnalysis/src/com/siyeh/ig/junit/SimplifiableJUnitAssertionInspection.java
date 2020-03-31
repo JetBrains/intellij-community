@@ -15,17 +15,9 @@
  */
 package com.siyeh.ig.junit;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
-import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableJUnitAssertionInspection extends SimplifiableAssertionInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.junit.assertion.display.name");
-  }
 
   @Override
   protected boolean checkTestNG() {

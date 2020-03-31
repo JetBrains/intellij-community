@@ -16,12 +16,12 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SimpleDateFormatWithoutLocaleInspectionTest extends LightInspectionTestCase {
+public class SimpleDateFormatWithoutLocaleInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new SimpleDateFormatWithoutLocaleInspection();

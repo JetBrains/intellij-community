@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
@@ -9,12 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
   implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
@@ -35,7 +31,7 @@ public final class SortedConfigurableGroup
 
   @Override
   protected Configurable[] buildConfigurables() {
-    Collections.sort(myList, COMPARATOR);
+    myList.sort(COMPARATOR);
     Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
     myList = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
@@ -17,9 +17,11 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -36,31 +38,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.mapIterator;
+import static java.util.Collections.emptyList;
+
 /**
  * @author cdr
  */
-public class ConcatenationInjector implements ConcatenationAwareInjector {
-  private final Configuration myConfiguration;
+public final class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Project myProject;
-  private final TemporaryPlacesRegistry myTemporaryPlacesRegistry;
 
-  private final LanguageInjectionSupport mySupport;
-
-
-  public ConcatenationInjector(Project project) {
-    myConfiguration = Configuration.getProjectInstance(project);
+  public ConcatenationInjector(@NotNull Project project) {
     myProject = project;
-    myTemporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project);
-    mySupport = InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
-
   }
 
   @Override
-  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
     PsiFile containingFile = null;
+    TemporaryPlacesRegistry temporaryPlaceRegistry = TemporaryPlacesRegistry.getInstance(myProject);
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
         hasLiteral = true;
@@ -68,7 +65,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           containingFile = operands[0].getContainingFile();
         }
 
-        tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
+        tempInjectedLanguage = temporaryPlaceRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
         if (tempInjectedLanguage != null) break;
       }
     }
@@ -78,12 +75,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private void processOperandsInjection(@NotNull MultiHostRegistrar registrar,
                                         @NotNull PsiFile containingFile, @Nullable InjectedLanguage tempInjectedLanguage,
-                                        @NotNull PsiElement[] operands) {
+                                        PsiElement @NotNull [] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
     LanguageInjectionSupport injectionSupport = tempLanguage == null
-                                                ? mySupport
+                                                ? InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
                                                 : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
-    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
+    InjectionProcessor injectionProcessor = new InjectionProcessor(Configuration.getProjectInstance(myProject), injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
                                                                           List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
@@ -126,7 +123,6 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
   public static class InjectionProcessor {
-
     private final Configuration myConfiguration;
     private final LanguageInjectionSupport mySupport;
     private final PsiElement[] myOperands;
@@ -201,7 +197,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         private void visitVariableUsages(PsiVariable variable) {
           if (variable == null) return;
-          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
+          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               PsiElement element = psiReference.getElement();
               if (element instanceof PsiExpression) {
@@ -218,6 +214,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         @Override
         public boolean visitVariable(PsiVariable variable) {
+          if (!visitedVars.add(variable)) return false;
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
                               variable.getModifierList() != null ? variable.getModifierList() :
@@ -343,13 +340,13 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     @NotNull
     List<Pair<PsiLanguageInjectionHost, Language>> processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
       Language language = InjectorUtils.getLanguage(injection);
-      if (language == null) return Collections.emptyList();
+      if (language == null) return emptyList();
 
       boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
       Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
       List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
-      if (objects.isEmpty()) return Collections.emptyList();
+      if (objects.isEmpty()) return emptyList();
       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
       int len = objects.size();
       for (int i = 0; i < len; i++) {
@@ -357,7 +354,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         Object o = objects.get(i);
         if (o instanceof String) {
           curPrefix = (String)o;
-          if (i == len - 1) return Collections.emptyList(); // IDEADEV-26751
+          if (i == len - 1) return emptyList(); // IDEADEV-26751
           o = objects.get(++i);
         }
         String curSuffix = null;
@@ -377,7 +374,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (curHost instanceof PsiLiteralExpression) {
-            List<TextRange> injectedArea = injection.getInjectedArea(curHost);
+            List<TextRange> textBlockInjectedArea = getTextBlockInjectedArea(curHost);
+            List<TextRange> injectedArea = (textBlockInjectedArea == null) ? injection.getInjectedArea(curHost) : textBlockInjectedArea;
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
               TextRange.assertProperRange(textRange, injection);
@@ -389,16 +387,23 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
           else {
-            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            TextRange textRange = ElementManipulators.getValueTextRange(curHost);
             TextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
                                       textRange));
           }
         }
       }
+
       if (result.isEmpty()) {
-        return Collections.emptyList();
+        return emptyList();
       }
+
+      // important: here we use \n only as a good-enough delimiter for regexp matching of concatenation parts
+      if (injection.shouldBeIgnored(mapIterator(result.iterator(), r -> r.first), "\n")) {
+        return emptyList();
+      }
+
       List<Pair<PsiLanguageInjectionHost, Language>> res = new ArrayList<>();
       if (separateFiles) {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
@@ -417,6 +422,37 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
       }
       return res;
+    }
+
+    private static List<TextRange> getTextBlockInjectedArea(PsiLanguageInjectionHost host) {
+      if (!(host instanceof PsiLiteralExpression)) {
+        return null;
+      }
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)host;
+      if (!literalExpression.isTextBlock()) {
+        return null;
+      }
+      final TextRange textRange = ElementManipulators.getValueTextRange(host);
+      final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
+      if (indent <= 0) {
+        return Collections.singletonList(textRange);
+      }
+
+      final String text = literalExpression.getText();
+      int startOffset = textRange.getStartOffset() + indent;
+      int endOffset = text.indexOf('\n', startOffset);
+      final List<TextRange> result = new SmartList<>();
+      while (endOffset > 0) {
+        endOffset++;
+        result.add(new TextRange(startOffset, endOffset));
+        startOffset = endOffset + indent;
+        endOffset = text.indexOf('\n', startOffset);
+      }
+      endOffset = textRange.getEndOffset();
+      if (startOffset < endOffset) {
+        result.add(new TextRange(startOffset, endOffset));
+      }
+      return result;
     }
 
     private static boolean isReferenceInject(Language language) {

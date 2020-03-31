@@ -13,9 +13,10 @@
 // limitations under the License.
 package com.intellij.openapi.util.io;
 
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.ByteBuffer;
+import java.io.DataInputStream;
 
 /**
  * A sequence of bytes backed by byte array (or sub-array).
@@ -25,11 +26,11 @@ public class ByteArraySequence implements ByteSequence {
   private final int myOffset;
   private final int myLen;
 
-  public ByteArraySequence(@NotNull byte[] bytes) {
+  public ByteArraySequence(byte @NotNull [] bytes) {
     this(bytes, 0, bytes.length);
   }
 
-  public ByteArraySequence(@NotNull byte[] bytes, int offset, int len) {
+  public ByteArraySequence(byte @NotNull [] bytes, int offset, int len) {
     myBytes = bytes;
     myOffset = offset;
     myLen = len;
@@ -42,8 +43,7 @@ public class ByteArraySequence implements ByteSequence {
    * Implementation method.
    * @return Internal buffer, irrespective myOffset or myLen. May be larger than length().
    */
-  @NotNull
-  public byte[] getBytes() {
+  public byte @NotNull [] getBytes() {
     return myBytes;
   }
 
@@ -111,16 +111,15 @@ public class ByteArraySequence implements ByteSequence {
     return new ByteArraySequence(myBytes, myOffset+start, end-start);
   }
 
-  @NotNull
   @Override
-  public byte[] toBytes() {
+  public byte @NotNull [] toBytes() {
     byte[] bytes = new byte[length()];
     System.arraycopy(myBytes, myOffset, bytes, 0, length());
     return bytes;
   }
 
   @NotNull
-  public ByteBuffer toByteBuffer() {
-    return ByteBuffer.wrap(getBytes(), getOffset(), getLength());
+  public DataInputStream toInputStream() {
+    return new DataInputStream(new UnsyncByteArrayInputStream(myBytes, myOffset, length()));
   }
 }

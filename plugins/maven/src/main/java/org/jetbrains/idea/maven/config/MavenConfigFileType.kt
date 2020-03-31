@@ -3,17 +3,19 @@ package org.jetbrains.idea.maven.config
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import icons.MavenIcons
+import icons.OpenapiIcons.RepositoryLibraryLogo
+import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import javax.swing.Icon
 
-class MavenConfigFileType protected constructor() : LanguageFileType(PlainTextLanguage.INSTANCE) {
+class MavenConfigFileType : LanguageFileType(PlainTextLanguage.INSTANCE, true) {
 
   override fun getName(): String {
     return "MavenConfig"
   }
 
   override fun getDescription(): String {
-    return "MavenConfig"
+    return MavenProjectBundle.message("maven.config.filetype.description")
   }
 
   override fun getDefaultExtension(): String {
@@ -21,11 +23,7 @@ class MavenConfigFileType protected constructor() : LanguageFileType(PlainTextLa
   }
 
   override fun getIcon(): Icon? {
-    return MavenIcons.MavenLogo
-  }
-
-  companion object {
-    val INSTANCE = MavenConfigFileType()
+    return RepositoryLibraryLogo
   }
 }
 

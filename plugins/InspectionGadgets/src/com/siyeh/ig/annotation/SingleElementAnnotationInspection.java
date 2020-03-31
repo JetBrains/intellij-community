@@ -31,12 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class SingleElementAnnotationInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("single.element.annotation.name");
-  }
 
   @NotNull
   @Override

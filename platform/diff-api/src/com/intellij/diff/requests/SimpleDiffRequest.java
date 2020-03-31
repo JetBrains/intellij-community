@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.requests;
 
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,11 +9,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @see com.intellij.diff.DiffContentFactory
+ */
 public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final String myTitle;
   @NotNull private final List<DiffContent> myContents;
   @NotNull private final List<String> myContentTitles;
 
+  /**
+   * Pass {@link DiffContentFactory#createEmpty()} to create request for additions/deletions.
+   */
   public SimpleDiffRequest(@Nullable String title,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,

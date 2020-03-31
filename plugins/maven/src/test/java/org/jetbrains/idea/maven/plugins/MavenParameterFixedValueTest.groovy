@@ -16,12 +16,12 @@
 package org.jetbrains.idea.maven.plugins
 
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Sergey Evdokimov
  */
-class MavenParameterFixedValueTest extends LightCodeInsightFixtureTestCase {
+class MavenParameterFixedValueTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testCompletion() {
     myFixture.configureByText("pom.xml", """

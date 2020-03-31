@@ -35,13 +35,6 @@ public class SystemSetSecurityManagerInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "system.set.security.manager.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.set.security.manager.problem.descriptor");

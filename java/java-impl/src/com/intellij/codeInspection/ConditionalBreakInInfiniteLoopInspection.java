@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +27,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"), "noConversionToDoWhile");
+    panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"), "noConversionToDoWhile");
     return panel;
   }
 
@@ -49,7 +50,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
         visitLoop(statement);
       }
 
-      private void visitLoop(@NotNull PsiLoopStatement loopStatement) {
+      private void visitLoop(@NotNull PsiConditionalLoopStatement loopStatement) {
         PsiElement keyword = getKeyword(loopStatement);
         if(keyword == null) return;
         Context context = Context.from(loopStatement, noConversionToDoWhile);
@@ -62,12 +63,12 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
           SetInspectionOptionFix setInspectionOptionFix =
             new SetInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this,
                                        "noConversionToDoWhile",
-                                       InspectionsBundle.message(
+                                       JavaBundle.message(
                                          "inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
                                        true);
           fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
         }
-        holder.registerProblem(keyword, InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.description"), fixes);
+        holder.registerProblem(keyword, JavaBundle.message("inspection.conditional.break.in.infinite.loop.description"), fixes);
       }
     };
   }
@@ -101,7 +102,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
 
     @Nullable
-    static Context from(@NotNull PsiLoopStatement loopStatement, boolean noConversionToDoWhile) {
+    static Context from(@NotNull PsiConditionalLoopStatement loopStatement, boolean noConversionToDoWhile) {
       if (!ControlFlowUtils.isEndlessLoop(loopStatement)) return null;
       PsiStatement body = loopStatement.getBody();
       if (body == null) return null;
@@ -152,12 +153,12 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.conditional.break.in.infinite.loop");
+      return JavaBundle.message("inspection.conditional.break.in.infinite.loop");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLoopStatement.class);
+      PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiConditionalLoopStatement.class);
       if (loop == null) return;
       Context context = Context.from(loop, false);
       if (context == null) return;

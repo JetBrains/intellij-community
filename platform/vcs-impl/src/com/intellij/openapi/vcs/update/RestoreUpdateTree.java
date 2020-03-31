@@ -1,48 +1,46 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectReloadState;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @State(name = "RestoreUpdateTree", storages = {
   @Storage(StoragePathMacros.CACHE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
 })
-public class RestoreUpdateTree implements PersistentStateComponent<Element> {
+@Service
+public final class RestoreUpdateTree implements PersistentStateComponent<Element> {
   private UpdateInfo myUpdateInfo;
 
-  public RestoreUpdateTree(@NotNull Project project, @NotNull StartupManager startupManager) {
-    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> {
-      if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(project).isAfterAutomaticReload()) {
-        ActionInfo actionInfo = myUpdateInfo.getActionInfo();
+  static final class MyStartUpActivity implements StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      RestoreUpdateTree instance = getInstance(project);
+      UpdateInfo updateInfo = instance.myUpdateInfo;
+      if (updateInfo != null && !updateInfo.isEmpty() && ProjectReloadState.getInstance(project).isAfterAutomaticReload()) {
+        ActionInfo actionInfo = updateInfo.getActionInfo();
         if (actionInfo != null) {
-          ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
-                                                                                  VcsBundle.message("action.display.name.update"), actionInfo,
-                                                                                  false);
+          ProjectLevelVcsManagerEx projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
+          projectLevelVcsManager.showUpdateProjectInfo(updateInfo.getFileInformation(), VcsBundle.message("action.display.name.update"), actionInfo, false);
           CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync();
         }
       }
-      myUpdateInfo = null;
-    });
+      instance.myUpdateInfo = null;
+    }
   }
 
-  public static RestoreUpdateTree getInstance(Project project) {
-    return project.getComponent(RestoreUpdateTree.class);
+  public static RestoreUpdateTree getInstance(@NotNull Project project) {
+    return project.getService(RestoreUpdateTree.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");

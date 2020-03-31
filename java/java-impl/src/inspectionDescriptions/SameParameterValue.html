@@ -1,6 +1,19 @@
 <html>
 <body>
-Reports methods where a value being passed to a particular parameter
-appears to be always the same constant.
+Reports methods where a parameter appears to be always the same constant.<br>
+<br>
+Example:
+<pre>
+<code>static void printPoint(int x, int y) { // x is always 0
+  System.out.println(x + ", " + y);
+}
+
+public static void main(String[] args) {
+  printPoint(0, 1);
+  printPoint(0, 2);
+}
+</code>
+</pre>
+Quick fix: inlines the constant value. This may simplify the method implementation.
 </body>
 </html>

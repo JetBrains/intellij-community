@@ -46,9 +46,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   public static final String NAME = "Google AppEngine Enhancer";
 
@@ -74,6 +71,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     return doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();

@@ -2,12 +2,15 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +36,7 @@ public class InferenceSessionContainer {
   }
 
   void registerNestedSession(InferenceSession session,
-                             PsiType returnType,
+                             @NotNull PsiType returnType,
                              PsiExpression returnExpression) {
     final PsiSubstitutor callSession = findNestedSubstitutor(((PsiCallExpression)returnExpression).getArgumentList(), null);
     if (callSession == null) {
@@ -46,14 +49,24 @@ public class InferenceSessionContainer {
     }
   }
 
-  static PsiSubstitutor infer(@NotNull PsiTypeParameter[] typeParameters,
-                              @NotNull PsiParameter[] parameters,
-                              @NotNull PsiExpression[] arguments,
+  static PsiSubstitutor infer(PsiTypeParameter @NotNull [] typeParameters,
+                              PsiParameter @NotNull [] parameters,
+                              PsiExpression @NotNull [] arguments,
                               @NotNull PsiSubstitutor partialSubstitutor,
                               @NotNull PsiElement parent,
-                              @NotNull ParameterTypeInferencePolicy policy, 
+                              @NotNull ParameterTypeInferencePolicy policy,
                               @Nullable MethodCandidateInfo currentMethod) {
     final PsiExpressionList argumentList = InferenceSession.getArgumentList(parent);
+    class NoContainer {
+      PsiSubstitutor infer(boolean prohibitCaching) {
+        final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
+        inferenceSession.initExpressionConstraints(parameters, arguments,
+                                                   currentMethod != null ? currentMethod.getElement() : null,
+                                                   currentMethod != null && currentMethod.isVarargs());
+        return inferenceSession.performGuardedInference(parameters, arguments, parent, currentMethod, PsiSubstitutor.EMPTY,
+                                                        prohibitCaching);
+      }
+    }
     if (parent instanceof PsiCall) {
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
@@ -100,6 +113,8 @@ public class InferenceSessionContainer {
           if (session != null) {
             final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
+
+            return new NoContainer().infer(true);
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
             return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy).prepareSubstitution();
@@ -108,20 +123,18 @@ public class InferenceSessionContainer {
       }
     }
 
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
-    inferenceSession.initExpressionConstraints(parameters, arguments, 
-                                               currentMethod != null ? currentMethod.getElement() : null, 
-                                               currentMethod != null && currentMethod.isVarargs());
-    return inferenceSession.infer(parameters, arguments, parent, currentMethod);
+    return new NoContainer().infer(false);
   }
 
-  private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,
-                                            @NotNull final PsiExpression[] arguments,
+  private static PsiSubstitutor inferNested(final PsiParameter @NotNull [] parameters,
+                                            final PsiExpression @NotNull [] arguments,
                                             @NotNull final PsiCall parent,
                                             @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
-    if (errorMessages != null) {
+    if (errorMessages != null && !MethodCandidateInfo.isOverloadCheck()) {
+      //for lambda parameter type calculation, the parent inference may contain errors due to skipping that lambda constraints
+      //but the type of the lambda parameter should not depend on the lambda body, thus the nested inference may still provide valid results
       return null;
     }
 
@@ -153,11 +166,10 @@ public class InferenceSessionContainer {
           initialInferenceState = compoundInitialState.getInitialState(call);
           if (initialInferenceState != null) {
             final PsiExpressionList argumentList = call.getArgumentList();
-            final int idx = LambdaUtil.getLambdaIdx(argumentList, gParent);
+            final int idx = argumentList != null ? LambdaUtil.getLambdaIdx(argumentList, gParent) : -1;
             final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(call);
             final PsiElement method = result.getElement();
             if (method instanceof PsiMethod && idx > -1) {
-              LOG.assertTrue(argumentList != null);
               final PsiParameter[] methodParameters = ((PsiMethod)method).getParameterList().getParameters();
               if (methodParameters.length == 0) {
                 break;
@@ -205,22 +217,28 @@ public class InferenceSessionContainer {
       }
     };
     final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
-    for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topLevelSession.getInferenceVariables(), topInferenceSubstitutor));
+    if (!nestedSessions.isEmpty()) {
+      Project project = nestedSessions.keySet().iterator().next().getProject();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      List<InitialInferenceState.VariableInfo> variableInfos = ContainerUtil
+        .map(topLevelSession.getInferenceVariables(), var -> new InitialInferenceState.VariableInfo(var, topInferenceSubstitutor, factory));
+      for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
+        nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, variableInfos, topInferenceSubstitutor));
+      }
     }
 
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
       if (instantiation != PsiType.NULL) {
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(topInferenceSubstitutor.substitute(variable));
         if (psiClass instanceof InferenceVariable) {
-          substitutor = substitutor.put((PsiTypeParameter)psiClass, instantiation);
+          map.put((PsiTypeParameter)psiClass, instantiation);
         }
       }
     }
 
-    return new CompoundInitialState(substitutor, nestedStates);
+    return new CompoundInitialState(PsiSubstitutor.createSubstitutor(map), nestedStates);
   }
 
   @Nullable
@@ -239,7 +257,7 @@ public class InferenceSessionContainer {
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
         topLevelSession.setCurrentMethod(currentMethod);
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
-        topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
+        topLevelSession.performGuardedInference(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result), PsiSubstitutor.EMPTY, false);
         return topLevelSession;
       });
     }
@@ -249,17 +267,18 @@ public class InferenceSessionContainer {
   @NotNull
   private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);
     for (InferenceVariable variable : oldVars) {
       final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());
-      substitutor = substitutor.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
+      map.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
       targetVars.add(newVariable);
       if (variable.isThrownBound()) {
         newVariable.setThrownBound();
       }
       newVariable.putUserData(InferenceSession.ORIGINAL_CAPTURE, variable.getUserData(InferenceSession.ORIGINAL_CAPTURE));
     }
+    PsiSubstitutor substitutor = PsiSubstitutor.createSubstitutor(map);
 
     for (int i = 0; i < targetVars.size(); i++) {
       InferenceVariable var = targetVars.get(i);

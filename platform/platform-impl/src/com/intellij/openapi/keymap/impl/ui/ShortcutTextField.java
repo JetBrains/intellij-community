@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons.General;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
@@ -67,7 +68,8 @@ public final class ShortcutTextField extends ExtendableTextField {
       // RIGHT_PRESSED can be skipped, it depends on WM
       if (
         e.getID() == KeyEvent.KEY_PRESSED
-        || (e.getID() == KeyEvent.KEY_RELEASED && SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
+        || (e.getID() == KeyEvent.KEY_RELEASED &&
+            SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
       ) {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }
@@ -127,7 +129,7 @@ public final class ShortcutTextField extends ExtendableTextField {
 
   @NotNull
   private Action getPopupAction(@NotNull KeyStroke stroke) {
-    return new AbstractAction("Set " + KeymapUtil.getKeystrokeText(stroke)) {
+    return new AbstractAction(IdeBundle.message("button.set.0", KeymapUtil.getKeystrokeText(stroke))) {
       @Override
       public void actionPerformed(ActionEvent event) {
         setKeyStroke(stroke);

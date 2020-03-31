@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
@@ -113,7 +112,7 @@ public class Util {
   @NotNull
   public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method,
                                                      @NotNull final PsiExpression expr,
-                                                     @Nullable final PsiExpression[] occurences) {
+                                                     final PsiExpression @Nullable [] occurences) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 

@@ -44,8 +44,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author gregsh
  */
 public class GeneratedParserUtilBase {
-
-  private static final Logger LOG = Logger.getInstance("org.intellij.grammar.parser.GeneratedParserUtilBase");
+  private static final Logger LOG = Logger.getInstance(GeneratedParserUtilBase.class);
 
   private static final int MAX_RECURSION_LEVEL = parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000);
   private static final int MAX_VARIANTS_SIZE = 10000;
@@ -615,7 +614,7 @@ public class GeneratedParserUtilBase {
       // do not report if there are errors beyond current position
       if (lastErrorPos == initialPos) {
         // do not force, inner recoverRoot might have skipped some tokens
-        reportError(builder, state, frame, elementType != null, false, false);
+        reportError(builder, state, frame, elementType != null && (frame.modifiers & _UPPER_) == 0, false, false);
       }
       else if (lastErrorPos > initialPos) {
         // set error pos here as if it is reported for future reference
@@ -1235,9 +1234,8 @@ public class GeneratedParserUtilBase {
       super(DUMMY_BLOCK);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferences() {
+    public PsiReference @NotNull [] getReferences() {
       return PsiReference.EMPTY_ARRAY;
     }
 

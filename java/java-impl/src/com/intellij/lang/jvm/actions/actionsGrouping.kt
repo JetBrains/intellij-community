@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 
-internal fun List<IntentionAction>.groupActionsByType(): List<IntentionAction> {
+fun List<IntentionAction>.groupActionsByType(language: Language): List<IntentionAction> {
   if (ApplicationManager.getApplication().isUnitTestMode) {
     return this
   }
@@ -17,7 +17,7 @@ internal fun List<IntentionAction>.groupActionsByType(): List<IntentionAction> {
       actions[0]
     }
     else {
-      JvmClassIntentionActionGroup(actions, type, JavaLanguage.INSTANCE)
+      JvmClassIntentionActionGroup(actions, type, language)
     }
   }
   return result

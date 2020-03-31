@@ -1,15 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.diagnostic.EventWatcher;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -32,24 +36,23 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ComponentWithMnemonics;
-import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,10 +113,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private final Alarm mySecondKeystrokePopupTimeout = new Alarm();
 
-  public IdeKeyEventDispatcher(IdeEventQueue queue){
+  public IdeKeyEventDispatcher(@Nullable IdeEventQueue queue){
     myQueue = queue;
-    Application parent = ApplicationManager.getApplication();  // Application is null on early start when e.g. license dialog is shown
-    if (parent != null) Disposer.register(parent, this);
+
+    // Application is null on early start when e.g. license dialog is shown
+    Application parent = ApplicationManager.getApplication();
+    if (parent != null) {
+      Disposer.register(parent, this);
+    }
   }
 
   public boolean isWaitingForSecondKeyStroke(){
@@ -132,8 +139,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    int id = e.getID();
     if (myIgnoreNextKeyTypedEvent) {
-      if (KeyEvent.KEY_TYPED == e.getID()) return true;
+      if (KeyEvent.KEY_TYPED == id) return true;
       myIgnoreNextKeyTypedEvent = false;
     }
 
@@ -143,18 +151,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
     else if (e.getKeyCode() == KeyEvent.VK_ALT) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
       }
     }
@@ -165,10 +173,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == id) removeAltGraph(e);
       return false;
     }
-    if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
+    if (id == KeyEvent.KEY_PRESSED && focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
@@ -251,10 +259,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
-      final Component pane = ((IdeFrameImpl) window).getGlassPane();
+      Component pane = ((JFrame)window).getGlassPane();
       if (pane instanceof IdeGlassPaneEx) {
         return ((IdeGlassPaneEx) pane).isInModalContext();
       }
@@ -339,7 +347,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     } else if (KeyEvent.KEY_RELEASED == eventId) {
 
-      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null), myContext.isModalContext());
+      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null));
 
       if (myContext.getActions().isEmpty()) {
         return false;
@@ -369,7 +377,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke), myContext.isModalContext());
+    updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke));
 
     // consume the wrong second stroke and keep on waiting
     if (myContext.getActions().isEmpty()) {
@@ -436,8 +444,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
-    if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
-      // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
+    if (InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && (!SystemInfo.isMac || Registry.is("ide.mac.alt.mnemonic.without.ctrl"))) {
+      // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics
       if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
           hasMnemonicInWindow(focusOwner, e)) {
         myIgnoreNextKeyTypedEvent = true;
@@ -445,8 +453,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
-    if(myContext.getActions().isEmpty()) {
+    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null));
+    if (myContext.getActions().isEmpty()) {
       // there's nothing mapped for this stroke
       return false;
     }
@@ -465,7 +473,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if(myContext.isHasSecondStroke()){
+    if (myContext.isHasSecondStroke()) {
       myFirstKeyStroke=keyStroke;
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
@@ -502,7 +510,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       setState(KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE);
       return true;
-    }else{
+    }
+    else {
       return processAction(e, myActionProcessor);
     }
   }
@@ -530,38 +539,23 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    final Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
+    Container container = focusOwner == null ? null : ComponentUtil.getWindow(focusOwner);
+    if (container instanceof JFrame) {
+      ComponentWithMnemonics componentWithMnemonics = UIUtil.getParentOfType(ComponentWithMnemonics.class, focusOwner);
+      if (componentWithMnemonics instanceof Container) {
+        container = (Container)componentWithMnemonics;
+      }
+    }
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
   }
 
   private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
     Component component = UIUtil.uiTraverser(container)
       .traverse()
-      .find(c -> hasMnemonic(c, keyCode));
+      .filter(Component::isEnabled)
+      .filter(Component::isShowing)
+      .find(c -> !(c instanceof ActionMenu) && MnemonicHelper.hasMnemonic(c, keyCode));
     return component != null;
-  }
-
-  private static boolean hasMnemonic(@Nullable Component component, int keyCode) {
-    if (component instanceof AbstractButton) {
-      AbstractButton button = (AbstractButton)component;
-      if (button instanceof JBOptionButton) {
-        if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
-            button.getMnemonic() == keyCode) {
-          return true;
-        }
-      }
-      else {
-        if (button.getMnemonic() == keyCode) return true;
-      }
-    }
-    if (component instanceof JLabel) {
-      JLabel label = (JLabel)component;
-      if (label.getDisplayedMnemonic() == keyCode) return true;
-    }
-    if (component instanceof ActionButtonWithText) {
-      if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
-    }
-    return false;
   }
 
   private static boolean hasMnemonicInBalloons(Container container, int code) {
@@ -596,6 +590,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
+      if (e instanceof KeyEvent) {
+        IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
+      }
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -618,17 +615,26 @@ public final class IdeKeyEventDispatcher implements Disposable {
   };
 
   public boolean processAction(final InputEvent e, @NotNull ActionProcessor processor) {
+    return processAction(e, processor, myContext.getDataContext(), myContext.getActions().toArray(AnAction.EMPTY_ARRAY),
+                         myPresentationFactory);
+  }
+
+  private static boolean processAction(final InputEvent e,
+                                       @NotNull ActionProcessor processor,
+                                       DataContext context,
+                                       AnAction[] actions,
+                                       PresentationFactory presentationFactory) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
-    List<AnAction> actions = myContext.getActions();
-    for (final AnAction action : actions.toArray(AnAction.EMPTY_ARRAY)) {
-      Presentation presentation = myPresentationFactory.getPresentation(action);
+    for (final AnAction action : actions) {
+      long startedAt = System.currentTimeMillis();
+      Presentation presentation = presentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
-        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
+        processor.createEvent(e, context, ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
@@ -638,27 +644,31 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
           nonDumbAwareAction.add(actionEvent);
         }
+        logTimeMillis(startedAt, action);
         continue;
       }
 
       if (!presentation.isEnabled()) {
+        logTimeMillis(startedAt, action);
         continue;
       }
 
       processor.onUpdatePassed(e, action, actionEvent);
 
-      if (myContext.getDataContext() instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
-        ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount(), this);
+      if (context instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
+        ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
+        logTimeMillis(startedAt, action);
         return true;
       }
 
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
         () -> processor.performAction(e, action, actionEvent));
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+      logTimeMillis(startedAt, action);
       return true;
     }
 
@@ -666,25 +676,64 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       if (dumbModeWarningListener != null) {
         dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
+        if (e instanceof KeyEvent) { //IDEA-222847
+          IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
+        }
       }
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
 
-      showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
+      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
+                                                    nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
-  private static void showDumbModeWarningLaterIfNobodyConsumesEvent(final InputEvent e, final AnActionEvent... actionEvents) {
-    if (ModalityState.current() == ModalityState.NON_MODAL) {
+  private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
+                                                                    InputEvent e,
+                                                                    ActionProcessor processor,
+                                                                    AnAction[] actions,
+                                                                    PresentationFactory presentationFactory,
+                                                                    AnActionEvent... actionEvents) {
+    if (project == null) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (e.isConsumed()) return;
+      DumbService.getInstance(project).showDumbModeActionBalloon(getActionUnavailableMessage(actionEvents), () -> {
+        //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (e.isConsumed()) return;
-
-          ActionUtil.showDumbModeWarning(actionEvents);
+          DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+            processAction(e, processor, context, actions, presentationFactory);
+          });
         });
+      });
+    });
+  }
+
+  private static @NotNull @Nls String getActionUnavailableMessage(AnActionEvent... actionEvents) {
+    List<String> actionNames = new ArrayList<>();
+    for (final AnActionEvent event : actionEvents) {
+      final String s = event.getPresentation().getText();
+      if (StringUtil.isNotEmpty(s)) {
+        actionNames.add(s);
       }
+    }
+    if (actionNames.isEmpty()) {
+      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+    }
+    else if (actionNames.size() == 1) {
+      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+    }
+    else {
+      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+             ": " + StringUtil.join(actionNames, ", ");
+    }
+  }
+
+  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
+    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
+           IdeBundle.message("0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;
@@ -695,15 +744,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   /**
    * This method fills {@code myActions} list.
-   * @return true if there is a shortcut with second stroke found.
    */
-  public KeyProcessorContext updateCurrentContext(Component component, @NotNull Shortcut sc, boolean isModalContext){
+  public void updateCurrentContext(Component component, @NotNull Shortcut sc) {
     myContext.setFoundComponent(null);
+    myContext.setHasSecondStroke(false);
     myContext.getActions().clear();
 
-    if (isControlEnterOnDialog(component, sc)) return myContext;
-
-    boolean hasSecondStroke = false;
+    if (isControlEnterOnDialog(component, sc)) return;
 
     // here we try to find "local" shortcuts
     for (; component != null; component = component.getParent()) {
@@ -715,7 +762,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         continue;
       }
       for (AnAction action : listOfActions) {
-        hasSecondStroke |= addAction(action, sc);
+        addAction(action, sc);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
       if (!myContext.getActions().isEmpty()) {
@@ -724,21 +771,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    // search in main keymap
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    String[] actionIds = keymap.getActionIds(sc);
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : actionIds) {
-      AnAction action = actionManager.getAction(actionId);
-      if (action != null) {
-        if (isModalContext && !action.isEnabledInModalContext()) {
-          continue;
-        }
-        hasSecondStroke |= addAction(action, sc);
-      }
-    }
+    addActionsFromActiveKeymap(sc);
 
-    if (!hasSecondStroke && sc instanceof KeyboardShortcut) {
+    if (!myContext.isHasSecondStroke() && sc instanceof KeyboardShortcut) {
       // little trick to invoke action which second stroke is a key w/o modifiers, but user still
       // holds the modifier key(s) of the first stroke
 
@@ -748,49 +783,64 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       if (secondKeyStroke != null && secondKeyStroke.getModifiers() != 0 && firstKeyStroke.getModifiers() != 0) {
         final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.getKeyCode(), 0));
-        final String[] additionalActions = keymap.getActionIds(altShortCut);
-        for (final String actionId : additionalActions) {
-          AnAction action = actionManager.getAction(actionId);
-          if (action != null) {
-            if (isModalContext && !action.isEnabledInModalContext()) {
-              continue;
-            }
-            hasSecondStroke |= addAction(action, altShortCut);
-          }
-        }
+        addActionsFromActiveKeymap(altShortCut);
       }
     }
 
-    myContext.setHasSecondStroke(hasSecondStroke);
-    final List<AnAction> actions = myContext.getActions();
-
+    List<AnAction> actions = myContext.getActions();
     if (actions.size() > 1) {
-      final List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-      for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
-        final List<AnAction> promoted = promoter.promote(readOnlyActions, myContext.getDataContext());
-        if (promoted == null || promoted.isEmpty()) continue;
+      rearrangeByPromoters(actions);
+    }
+  }
 
-        actions.removeAll(promoted);
-        actions.addAll(0, promoted);
+  private void rearrangeByPromoters(List<AnAction> actions) {
+    List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
+    for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
+      List<AnAction> promoted = promoter.promote(readOnlyActions, myContext.getDataContext());
+      if (promoted == null || promoted.isEmpty()) continue;
+
+      actions.removeAll(promoted);
+      actions.addAll(0, promoted);
+    }
+  }
+
+  private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager == null) {
+      return;
+    }
+
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
+    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(shortcut);
+    for (String actionId : actionIds) {
+      AnAction action = actionManager.getAction(actionId);
+      if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
+        addAction(action, shortcut);
       }
     }
 
-    return myContext;
+    if (keymap != null && actionIds.length > 0 && shortcut instanceof KeyboardShortcut) {
+      // user pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
+      // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
+      // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
+      SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)shortcut);
+    }
   }
 
   private static final KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
+  private static final KeyboardShortcut CMD_ENTER = KeyboardShortcut.fromString("meta ENTER");
   private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
-    return CONTROL_ENTER.equals(sc)
+    return (CONTROL_ENTER.equals(sc) || (SystemInfo.isMac && CMD_ENTER.equals(sc)))
            && !IdeEventQueue.getInstance().isPopupActive() //avoid Control+Enter in completion
            && DialogWrapper.findInstance(component) != null;
   }
 
-  /**
-   * @return true if action is added and has second stroke
-   */
-  private boolean addAction(AnAction action, @NotNull Shortcut sc) {
-    boolean hasSecondStroke = false;
-
+  private void addAction(AnAction action, @NotNull Shortcut sc) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
       if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
@@ -801,13 +851,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
           myContext.getActions().add(action);
         }
 
-        if (each instanceof KeyboardShortcut) {
-          hasSecondStroke |= ((KeyboardShortcut)each).getSecondKeyStroke() != null;
+        if (each instanceof KeyboardShortcut && ((KeyboardShortcut)each).getSecondKeyStroke() != null) {
+          myContext.setHasSecondStroke(true);
         }
       }
     }
-
-    return hasSecondStroke;
   }
 
   public KeyProcessorContext getContext() {
@@ -884,14 +932,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-          final AnActionEvent event =
-            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                              ActionManager.getInstance(), 0);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-            ActionUtil.performActionDumbAware(action, event);
-          }
-        });
+      AnActionEvent event =
+        new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                          ActionManager.getInstance(), 0);
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+        ActionUtil.performActionDumbAware(action, event);
+      }
     }
 
     @Override
@@ -940,26 +986,30 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static final String POPUP_MENU_PREFIX = "PopupMenu-"; // see PlatformActions.xml
 
   private static boolean processMenuActions(KeyEvent event, MenuElement element) {
-    if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
-      KeymapManager manager = KeymapManager.getInstance();
-      if (manager != null) {
-        JRootPane pane = getMenuActionsHolder(element.getComponent());
-        if (pane != null) {
-          Keymap keymap = manager.getActiveKeymap();
-          if (keymap != null) {
-            // iterate through actions for the specified event
-            for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
-              if (id.startsWith(POPUP_MENU_PREFIX)) {
-                String actionId = id.substring(POPUP_MENU_PREFIX.length());
-                Action action = pane.getActionMap().get(actionId);
-                if (action != null) {
-                  action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
-                  event.consume();
-                  return true; // notify dispatcher that event is processed
-                }
-              }
-            }
-          }
+    if (KeyEvent.KEY_PRESSED != event.getID() || !Registry.is("ide.popup.navigation.via.actions")) {
+      return false;
+    }
+
+    KeymapManager manager = KeymapManager.getInstance();
+    if (manager == null) {
+      return false;
+    }
+
+    JRootPane pane = getMenuActionsHolder(element.getComponent());
+    if (pane == null) {
+      return false;
+    }
+
+    Keymap keymap = manager.getActiveKeymap();
+    // iterate through actions for the specified event
+    for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+      if (id.startsWith(POPUP_MENU_PREFIX)) {
+        String actionId = id.substring(POPUP_MENU_PREFIX.length());
+        Action action = pane.getActionMap().get(actionId);
+        if (action != null) {
+          action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+          event.consume();
+          return true; // notify dispatcher that event is processed
         }
       }
     }
@@ -973,6 +1023,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);
+  }
+
+  private static void logTimeMillis(long startedAt, @NotNull AnAction action) {
+    EventWatcher watcher = EventWatcher.getInstance();
+    if (watcher != null) {
+      watcher.logTimeMillis(action.toString(), startedAt);
+    }
   }
 
   public static boolean removeAltGraph(InputEvent e) {
@@ -1004,7 +1061,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
-  @NonNls private static final Set<String> ALT_GR_LANGUAGES = new HashSet<>(Arrays.asList(
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = ContainerUtil.set(
     "da", // Danish
     "de", // German
     "es", // Spanish
@@ -1026,13 +1083,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     "sr", // Serbian
     "sv", // Swedish
     "tr"  // Turkish
-  ));
-  @NonNls private static final Set<String> ALT_GR_COUNTRIES = new HashSet<>(Arrays.asList(
+  );
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = ContainerUtil.set(
     "DK", // Denmark
     "DE", // Germany
     "FI", // Finland
     "NL", // Netherlands
     "SL", // Slovenia
     "SE"  // Sweden
-  ));
+  );
 }

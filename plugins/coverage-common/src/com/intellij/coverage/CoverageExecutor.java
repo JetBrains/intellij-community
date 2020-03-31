@@ -16,21 +16,23 @@ public class CoverageExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return "Run with Co_verage";
+   return CoverageBundle.message("run.with.coverage");
   }
 
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
-    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
-    return TextWithMnemonic.parse("Run%s with Co_verage").replaceFirst("%s", configName).toString();
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
+    return TextWithMnemonic.parse(CoverageBundle.message("run.with.coverage.mnemonic")).replaceFirst("%s", configName).toString();
   }
 
+  @NotNull
   @Override
   public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @NotNull
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.General.RunWithCoverage;
@@ -49,13 +51,13 @@ public class CoverageExecutor extends Executor {
 
   @Override
   public String getDescription() {
-    return "Run selected configuration with coverage enabled";
+    return CoverageBundle.message("run.selected.configuration.with.coverage.enabled");
   }
 
   @Override
   @NotNull
   public String getActionName() {
-    return "Cover";
+    return CoverageBundle.message("action.name.cover");
   }
 
   @Override

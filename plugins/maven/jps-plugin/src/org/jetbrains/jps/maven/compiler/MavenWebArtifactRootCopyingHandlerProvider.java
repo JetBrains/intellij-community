@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +35,6 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
-/**
- * @author nik
- */
 public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
   private static final Logger LOG = Logger.getInstance(MavenWebArtifactRootCopyingHandlerProvider.class);
 
@@ -170,7 +168,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     private static List<ResourceRootConfiguration> getWebResources(@NotNull File targetDir,
                                                                    @NotNull MavenWebArtifactConfiguration artifactConfig) {
       String webInfClassesPath = toSystemIndependentName(new File(targetDir, "WEB-INF" + File.separator + "classes").getPath());
-      List<ResourceRootConfiguration> result = ContainerUtil.newSmartList();
+      List<ResourceRootConfiguration> result = new SmartList<>();
       for (ResourceRootConfiguration webResource : artifactConfig.webResources) {
         if (!webResource.isFiltered) continue;
 

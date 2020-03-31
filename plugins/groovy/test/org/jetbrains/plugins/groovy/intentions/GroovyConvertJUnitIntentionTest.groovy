@@ -17,12 +17,12 @@ package org.jetbrains.plugins.groovy.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Sergey Evdokimov
  */
-class GroovyConvertJUnitIntentionTest extends LightCodeInsightFixtureTestCase {
+class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testAssertFalse() {
     doTest("""

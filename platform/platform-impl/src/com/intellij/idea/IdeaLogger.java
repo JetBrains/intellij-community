@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -13,27 +14,18 @@ import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
 import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-
-/**
- * @author Mike
- */
-public class IdeaLogger extends Log4jBasedLogger {
+public final class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
 
   private static final ApplicationInfoProvider ourApplicationInfoProvider;
-  private static final String ourCompilationTimestamp;
   private static final ThrowableRenderer ourThrowableRenderer;
 
   static {
@@ -41,19 +33,6 @@ public class IdeaLogger extends Log4jBasedLogger {
       ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
       return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
     };
-
-    String stamp = null;
-    URL resource = Logger.class.getResource("/.compilation-timestamp");
-    if (resource != null) {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-        String s = reader.readLine();
-        if (s != null) {
-          stamp = s.trim();
-        }
-      }
-      catch (IOException ignored) { }
-    }
-    ourCompilationTimestamp = stamp;
 
     ourThrowableRenderer = t -> {
       String[] lines = DefaultThrowableRenderer.render(t);
@@ -70,17 +49,12 @@ public class IdeaLogger extends Log4jBasedLogger {
     };
   }
 
-  @Nullable
-  public static String getOurCompilationTimestamp() {
-    return ourCompilationTimestamp;
-  }
-
   @NotNull
   public static ThrowableRenderer getThrowableRenderer() {
     return ourThrowableRenderer;
   }
 
-  IdeaLogger(@NotNull org.apache.log4j.Logger logger) {
+  IdeaLogger(@NotNull Logger logger) {
     super(logger);
     LoggerRepository repository = myLogger.getLoggerRepository();
     if (repository instanceof ThrowableRendererSupport) {
@@ -99,7 +73,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
@@ -109,7 +83,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);
@@ -134,28 +108,24 @@ public class IdeaLogger extends Log4jBasedLogger {
   private void logErrorHeader(@Nullable Throwable t) {
     myLogger.error(ourApplicationInfoProvider.getInfo());
 
-    if (ourCompilationTimestamp != null) {
-      myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);
-    }
-
     myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown")+
                    "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
                    "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
 
-    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
+    IdeaPluginDescriptor plugin = t == null ? null : findPluginIfInitialized(t);
     if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
       myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
     }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.isComponentsCreated() && !application.isDisposed()) {
+    if (application != null && application.getComponentCreated() && !application.isDisposed()) {
       String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         myLogger.error("Last Action: " + lastPreformedActionId);
       }
 
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
         String currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
@@ -163,5 +133,11 @@ public class IdeaLogger extends Log4jBasedLogger {
         }
       }
     }
+  }
+
+  // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
+  private static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
+    // do not use getInstance here - container maybe already disposed
+    return PluginManagerCore.arePluginsInitialized() ? PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t)) : null;
   }
 }

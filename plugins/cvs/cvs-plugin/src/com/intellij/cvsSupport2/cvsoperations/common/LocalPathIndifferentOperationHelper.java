@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderForLightFiles;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
@@ -33,7 +32,7 @@ import java.util.*;
  * @author lesya
  */
 public class LocalPathIndifferentOperationHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper");
+  private static final Logger LOG = Logger.getInstance(LocalPathIndifferentOperationHelper.class);
   private final Map<File, Entry> myFileToEntryMap = new HashMap<>();
   private final IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
   private final String myRevision;

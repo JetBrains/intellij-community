@@ -21,9 +21,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
@@ -35,16 +33,9 @@ import org.jetbrains.uast.UDeclarationKt;
 import java.util.Set;
 
 public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.only.used.in.one.package.display.name");
-  }
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,

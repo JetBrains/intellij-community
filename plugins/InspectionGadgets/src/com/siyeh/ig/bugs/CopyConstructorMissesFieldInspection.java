@@ -7,33 +7,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Bas Leijdekkers
  */
 public class CopyConstructorMissesFieldInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("copy.constructor.misses.field.display.name");
-  }
 
   @NotNull
   @Override
@@ -75,7 +65,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
                      && (!f.hasModifierProperty(PsiModifier.FINAL) || f.getInitializer() == null))
         .collect(Collectors.toList());
       if (fields.isEmpty()) return;
-      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(0));
       final List<PsiField> assignedFields = new SmartList<>();
       final Set<PsiMethod> methodsOneLevelDeep = new HashSet<>();
       if (!PsiTreeUtil.processElements(method, e -> collectAssignedFields(e, parameter, methodsOneLevelDeep, assignedFields))) {
@@ -119,7 +109,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
           if (variable instanceof PsiField) {
             assignedFields.add((PsiField)variable);
           }
-          ContainerUtilRt.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
+          ContainerUtil.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
         }
       }
       else if (element instanceof PsiMethodCallExpression) {

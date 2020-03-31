@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
-/**
- * @author nik
- */
 public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   private final String myConfigFileName;
   private final String myComponentName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
@@ -12,10 +12,11 @@ import com.intellij.ui.DottedBorder;
 import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -39,20 +40,24 @@ import static java.awt.event.KeyEvent.*;
  * @author Konstantin Bulenkov
  */
 public abstract class JBListTable {
-  protected final JTable myInternalTable;
+  protected final JBTable myInternalTable;
   private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
   protected MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
+  public JBListTable(@NotNull JBTable t, @NotNull Disposable parent) {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
     myMainTable.setStriped(true);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
+  }
+
+  public void setVisibleRowCount(int rowCount) {
+    myInternalTable.setVisibleRowCount(rowCount);
   }
 
   public void stopEditing() {
@@ -106,13 +111,13 @@ public abstract class JBListTable {
     };
 
     Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), JBUI.scaleFontSize(12));
+    font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
 
     if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
+      panel.setBackground(UIUtil.getTableSelectionBackground(true));
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground());
     } else {
       panel.setBackground(UIUtil.getTableBackground());
       if (selected) {
@@ -211,7 +216,7 @@ public abstract class JBListTable {
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
     private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
-    private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
+    private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
     RowResizeAnimator(JTable table) {

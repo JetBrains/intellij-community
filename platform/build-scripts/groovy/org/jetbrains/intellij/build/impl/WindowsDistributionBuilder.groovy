@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
@@ -10,9 +10,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-/**
- * @author nik
- */
 class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties
@@ -33,9 +30,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
+  void copyFilesForOsDistribution(String winDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -44,6 +40,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
+    BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
@@ -66,62 +63,25 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.signExeFile(it.absolutePath)
       }
     }
-    return winDistPath
   }
 
   @Override
   void buildArtifacts(String winDistPath) {
-    def arch = customizer.bundledJreArchitecture
-    //do not include win32 launcher into winzip with 9+ jbr bundled
-    List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    String jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
-    List<String> jreDirectoryPaths = [jreDirectoryPath64]
-
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
-      File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
-      if (archive != null && archive.exists()) {
-        //prepare folder with jre x86 for win archive
-        def jreDirectoryPath = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
-        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
-          tarfileset(dir: "${jreDirectoryPath}/jre32") {
-            include(name: "**/**")
-          }
-        }
-        jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
-      }
+    if (customizer.include32BitLauncher) {
+      buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
     }
 
-    def jreSuffix = buildContext.bundledJreManager.jreSuffix()
-    def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
+    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
-      if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], ".win", winDistPath, excludeList)
-      }
-    }
-
-    if (arch != null && customizer.buildZipWithBundledOracleJre &&
-        (arch != JvmArchitecture.x32 || buildContext.bundledJreManager.is32bitArchSupported())) {
-      String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
-      if (oracleJrePath != null) {
-        buildWinZip([oracleJrePath], "${jreSuffix}-oracle-win", winDistPath)
-      }
-      else {
-        buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
-      }
+      buildWinZip([jreDirectoryPath], ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
-      generateProductJson(productJsonDir, jreDirectoryPath64 != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.is32bitArchSupported())
-      if (secondJreDirectoryPath != null) {
-        generateProductJson(productJsonDir, secondJreDirectoryPath != null)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
-      }
+      generateProductJson(productJsonDir, jreDirectoryPath != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
+        .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
     }
   }
 
@@ -142,6 +102,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
@@ -168,7 +129,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     architectures.each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-      new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
+      new File(winDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
     }
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
@@ -192,7 +153,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
 IDS_APP_TITLE=$productName Launcher
-IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector\\\\config
+IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
 IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
@@ -254,7 +215,7 @@ IDS_VM_OPTIONS=$vmOptions
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
+  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
@@ -266,11 +227,7 @@ IDS_VM_OPTIONS=$vmOptions
       dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix) {
-            excludeList.each {
-              exclude(name: it)
-            }
-          }
+          zipfileset(dir: it, prefix: zipPrefix)
         }
       }
 
@@ -282,7 +239,7 @@ IDS_VM_OPTIONS=$vmOptions
   private void generateProductJson(String targetDir, boolean isJreIncluded) {
     def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    def javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }

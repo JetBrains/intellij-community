@@ -103,7 +103,7 @@ public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E
   }
 
   public static <T> Iterator<T> create(Iterator<? extends T> iterator, Condition<? super T> condition) {
-    if (condition == Condition.TRUE || condition == Conditions.TRUE) return (Iterator<T>)iterator;
+    if (condition == Conditions.alwaysTrue()) return (Iterator<T>)iterator;
     return new FilteringIterator<>(iterator, condition);
   }
 

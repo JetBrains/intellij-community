@@ -21,8 +21,9 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   @Override
   @Nullable
   public T getValue() {
+    boolean computed = myComputed;
     T value = myValue;
-    if (!myComputed) {
+    if (!computed) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute();
       if (stamp.mayCacheNow()) {
@@ -31,6 +32,11 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
       }
     }
     return value;
+  }
+
+  public void drop() {
+    myComputed = false;
+    myValue = null;
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")

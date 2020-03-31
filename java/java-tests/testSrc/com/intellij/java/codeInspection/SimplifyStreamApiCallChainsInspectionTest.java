@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SimplifyStreamApiCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new SimplifyStreamApiCallChainsInspection()};
   }
 

@@ -34,8 +34,7 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   @NotNull
   HighlightSeverity getHighlightSeverity();
   @Override
-  @NotNull
-  LocalQuickFix[] getFixes();
+  LocalQuickFix @NotNull [] getFixes();
   @NotNull
   List<Annotation> getAnnotations();
 

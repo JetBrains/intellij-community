@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -15,6 +15,7 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JsonCachedValues {
+public final class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
 
   @Nullable
@@ -75,6 +76,9 @@ public class JsonCachedValues {
   @Nullable
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
+    //skip content loading for generated schema files (IntellijConfigurationJsonSchemaProviderFactory)
+    if (schemaFile instanceof LightVirtualFile) return null;
+
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
     if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonPointerUtil.normalizeId(value);
     String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
@@ -143,7 +147,7 @@ public class JsonCachedValues {
     if (!catalog.isValid()) return null;
     VirtualFile virtualFile = catalog.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> ((JsonFile)catalog).getTopLevelValue());
+    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> catalog instanceof JsonFile ? ((JsonFile)catalog).getTopLevelValue() : null);
     if (!(value instanceof JsonObject)) return null;
 
     JsonProperty schemas = ((JsonObject)value).findProperty("schemas");
@@ -210,19 +214,28 @@ public class JsonCachedValues {
   }
 
   public static final Key<CachedValue<JsonSchemaObject>> OBJECT_FOR_FILE_KEY = new Key<>("JsonCachedValues.OBJ_KEY");
+
   @Nullable
   static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
     final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
     JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
       VirtualFile virtualFile = originalFile.getVirtualFile();
+      VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
       JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
-      VirtualFile schemaFile = schemaObject == null ? null : service.resolveSchemaFile(schemaObject);
-      PsiFile psiFile = schemaFile == null ? null : originalFile.getManager().findFile(schemaFile);
+      PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
       JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
       return psiFile == null
-             ? CachedValueProvider.Result.create(object, originalFile)
-             : CachedValueProvider.Result.create(object, originalFile, psiFile);
+             ? CachedValueProvider.Result.create(object, originalFile, service)
+             : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
     });
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
+  }
+
+  static VirtualFile getSchemaFile(@NotNull VirtualFile sourceFile, @NotNull JsonSchemaService service) {
+    JsonSchemaServiceImpl serviceImpl = (JsonSchemaServiceImpl)service;
+    Collection<VirtualFile> schemas = serviceImpl.getSchemasForFile(sourceFile, true, false);
+    if (schemas.size() == 0) return null;
+    assert schemas.size() == 1;
+    return schemas.iterator().next();
   }
 }

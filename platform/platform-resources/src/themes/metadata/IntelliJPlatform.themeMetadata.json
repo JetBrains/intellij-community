@@ -15,15 +15,14 @@
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
-      "key": "CompletionPopup.background"
-    },
-    {
-      "key": "CompletionPopup.foreground",
-      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
+      "key": "CompletionPopup.background",
+      "deprecated": true,
+      "description": "Uses Documentation popup color from editor color scheme instead"
     },
     {
       "key": "CompletionPopup.infoForeground",
-      "description": "Gray info text after each completion suggestion (not the gray text on the right)"
+      "description": "Uses Label.infoForeground instead",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.matchForeground",
@@ -31,26 +30,35 @@
     },
     {
       "key": "CompletionPopup.matchSelectionForeground",
-      "description": "The string in the completion suggestions list that matches the entered string when selected"
+      "description": "The string in the completion suggestions list that matches the entered string when selected",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.nonFocusedState",
-      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\""
+      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\"",
+      "deprecated": true
+    },
+    {
+      "key": "CompletionPopup.foreground",
+      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
+    },
+    {
+      "key": "CompletionPopup.nonFocusedMask",
+      "description": "Color mask with alpha to draw over not focused completion list"
     },
     {
       "key": "CompletionPopup.selectionBackground"
     },
     {
-      "key": "CompletionPopup.selectionForeground"
+      "key": "CompletionPopup.selectionForeground",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.selectionInactiveBackground"
     },
     {
-      "key": "CompletionPopup.selectionInactiveInfoForeground"
-    },
-    {
-      "key": "CompletionPopup.selectionInfoForeground"
+      "key": "CompletionPopup.selectionInfoForeground",
+      "deprecated": true
     },
     {
       "key": "Counter.background",
@@ -65,34 +73,92 @@
     },
     {
       "key": "DebuggerTabs.selectedBackground",
-      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground.",
+      "deprecated": true
     },
     {
-    "key": "DefaultTabs.background"
+      "key": "DebuggerTabs.underlineHeight",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.borderColor"
+      "key": "DebuggerTabs.underlinedTabBackground",
+      "description": "Background for the selected tab",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.hoverColor"
+      "key": "Debugger.Variables.collectingDataForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.hoverBackground"
+      "key": "Debugger.Variables.evaluatingExpressionForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.inactiveMaskColor"
+      "key": "Debugger.Variables.modifyingValueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.inactiveUnderlineColor"
+      "key": "Debugger.Variables.changedValueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.underlineColor"
+      "key": "Debugger.Variables.exceptionForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.underlineHeight"
+      "key": "Debugger.Variables.valueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.underlinedTabBackground"
+      "key": "Debugger.Variables.errorMessageForeground",
+      "since": "2019.2"
+    },
+    {
+      "key": "DefaultTabs.background",
+      "since": "2019.2",
+      "description": "Default tabs are applied to all tabs except TabbedPane and unless particular tab keys, e.g. EditorTabs, are set. This key is the background under all tabs."
+    },
+    {
+      "key": "DefaultTabs.borderColor",
+      "since": "2019.2"
+    },
+    {
+      "key": "DefaultTabs.hoverColor",
+      "since": "2019.2",
+      "deprecated": true
+    },
+    {
+      "key": "DefaultTabs.hoverBackground",
+      "since": "2019.2",
+      "description": "Transparent background on hover over tabs, both regular and with file color."
+    },
+    {
+      "key": "DefaultTabs.inactiveMaskColor",
+      "since": "2019.2",
+      "deprecated": true
+    },
+    {
+      "key": "DefaultTabs.inactiveUnderlineColor",
+      "since": "2019.2",
+      "description": "Underline color when the tab is not in focus"
+    },
+    {
+      "key": "DefaultTabs.underlineColor",
+      "since": "2019.2"
+    },
+    {
+      "key": "DefaultTabs.underlineHeight",
+      "since": "2019.2"
+    },
+    {
+      "key": "DefaultTabs.underlinedTabBackground",
+      "since": "2019.2",
+      "description": "Background for the selected tab"
+    },
+    {
+      "key": "DefaultTabs.underlinedTabForeground",
+      "since": "2019.2",
+      "description": "Foreground for the selected tab"
     },
     {
       "key": "Editor.background",
@@ -105,29 +171,36 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "EditorTabs.background"
+      "key": "EditorTabs.background",
+      "description": "Background under all tabs in the editor"
     },
     {
       "key": "EditorTabs.borderColor",
       "description": "The JBEditorTabs component"
     },
     {
-      "key": "EditorTabs.hoverColor"
+      "key": "EditorTabs.hoverColor",
+      "deprecated": true
     },
     {
-      "key": "EditorTabs.hoverBackground"
+      "key": "EditorTabs.hoverBackground",
+      "since": "2019.2",
+      "description": "Transparent overlay on hover"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
-      "description": "Masks inactive tabs to make them darker"
+      "description": "Masks inactive tabs with file color. Does not affect tabs without file color.",
+      "since": "2019.2"
     },
     {
-      "key": "EditorTabs.inactiveUnderlineColor"
+      "key": "EditorTabs.inactiveUnderlineColor",
+      "since": "2019.2"
     },
 
     {
       "key": "EditorTabs.selectedBackground",
-      "description": "Background for all tabs. Inactive tabs also use inactiveColoredFileBackground."
+      "description": "Background for all tabs in 2019.1",
+      "deprecated": true
     },
     {
       "key": "EditorTabs.underlinedTabForeground",
@@ -135,13 +208,14 @@
     },
     {
       "key": "EditorTabs.underlineColor",
-      "description": "The line under the selected tab. Dark themes only"
+      "description": "The line under the selected tab"
     },
     {
       "key": "EditorTabs.underlineHeight"
     },
     {
-      "key": "EditorTabs.underlinedTabBackground"
+      "key": "EditorTabs.underlinedTabBackground",
+      "description": "Background for the selected tab"
     },
     {
       "key": "FileColor.Blue",
@@ -245,16 +319,21 @@
     },
     {
       "key": "HelpTooltip.background",
-      "description": "Tooltips for toolbar buttons and other controls. To replace the current tooltip in future versions"
+      "deprecated": true
     },
     {
       "key": "HelpTooltip.borderColor"
     },
     {
-      "key": "HelpTooltip.foreground"
+      "key": "HelpTooltip.foreground",
+      "deprecated": true
     },
     {
-      "key": "HelpTooltip.shortcutForeground"
+      "key": "HelpTooltip.shortcutForeground",
+      "deprecated": true
+    },
+    {
+      "key": "HelpTooltip.infoForeground"
     },
     {
       "key": "InformationHint.borderColor"
@@ -279,10 +358,12 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
-      "key": "MemoryIndicator.usedBackground"
+      "key": "MemoryIndicator.usedBackground",
+      "since": "2019.2"
     },
     {
-      "key": "MemoryIndicator.allocatedBackground"
+      "key": "MemoryIndicator.allocatedBackground",
+      "since": "2019.2"
     },
     {
       "key": "NavBar.borderColor",
@@ -546,6 +627,18 @@
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
     {
+      "key": "Slider.buttonColor"
+    },
+    {
+      "key": "Slider.buttonBorderColor"
+    },
+    {
+      "key": "Slider.trackColor"
+    },
+    {
+      "key": "Slider.tickColor"
+    },
+    {
       "key": "SpeedSearch.background",
       "description": "A search box that appears on typing in lists, trees, and tables"
     },
@@ -583,10 +676,20 @@
       "key": "TitlePane.background"
     },
     {
-      "key": "TitlePane.infoForeground"
+      "key": "TitlePane.Button.hoverBackground",
+      "since": "2019.3"
     },
     {
-      "key": "TitlePane.inactiveInfoForeground"
+      "key": "TitlePane.inactiveBackground",
+      "since": "2019.3"
+    },
+    {
+      "key": "TitlePane.infoForeground",
+      "since": "2019.2"
+    },
+    {
+      "key": "TitlePane.inactiveInfoForeground",
+      "since": "2019.2"
     },
     {
       "key": "ToggleButton.borderColor"
@@ -605,6 +708,19 @@
     },
     {
       "key": "ToggleButton.onForeground"
+    },
+    {
+      "key": "ToolTip.infoForeground",
+      "description": "\"Inspection Info\" text in inspection error tooltips"
+    },
+    {
+      "key": "ToolTip.shortcutForeground"
+    },
+    {
+      "key": "ToolTip.borderColor"
+    },
+    {
+      "key": "ToolTip.paintBorder"
     },
     {
       "key": "ToolTip.Actions.background",
@@ -639,7 +755,12 @@
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
-      "key": "ToolWindow.HeaderTab.selectedBackground"
+      "key": "ToolWindow.HeaderTab.inactiveUnderlineColor",
+      "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.selectedBackground",
+      "deprecated": true
     },
     {
       "key": "ToolWindow.HeaderTab.selectedInactiveBackground"
@@ -652,7 +773,23 @@
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
     },
     {
+      "key": "ToolWindow.HeaderTab.underlineColor"
+    },
+    {
       "key": "ToolWindow.HeaderTab.underlineHeight"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.underlinedTabBackground",
+      "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
+      "since": "2019.2"
+    },
+    {
+      "key": "Tooltip.separatorColor",
+      "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)",
+      "since": "2019.3"
     },
     {
       "key": "UiDesigner.Panel.background",

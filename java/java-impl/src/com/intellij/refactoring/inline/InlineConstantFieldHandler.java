@@ -17,7 +17,9 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,7 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,11 +46,10 @@ import java.util.List;
  * @author ven
  */
 public class InlineConstantFieldHandler extends JavaInlineActionHandler {
-  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage());
+    return element instanceof PsiField && JavaLanguage.INSTANCE.equals(element.getLanguage());
   }
 
   @Override
@@ -59,20 +59,20 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     PsiExpression initializer = getInitializer(field);
     if (initializer == null) {
-      String message = RefactoringBundle.message("no.initializer.present.for.the.field");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      String message = JavaRefactoringBundle.message("no.initializer.present.for.the.field");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
     if (field instanceof PsiEnumConstant) {
-      String message = REFACTORING_NAME + " is not supported for enum constants";
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      String message = JavaRefactoringBundle.message("inline.constant.field.not.supported.for.enum.constants", getRefactoringName());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
     if (ReferencesSearch.search(field, ProjectScope.getProjectScope(project), false).findFirst() == null) {
-      String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      String message = JavaRefactoringBundle.message("field.0.is.never.used", field.getName());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
@@ -80,18 +80,17 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
       final Ref<Boolean> hasWriteUsages = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
         for (PsiReference reference : ReferencesSearch.search(field)) {
-          final PsiElement referenceElement = reference.getElement();
-          if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+          if (isAccessedForWriting(reference.getElement())) {
             hasWriteUsages.set(true);
             break;
           }
         }
-      }), "Check if Inline Is Possible...", true, project)) {
+      }), JavaRefactoringBundle.message("inline.conflicts.progress"), true, project)) {
         return;
       }
       if (hasWriteUsages.get()) {
-        String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+        String message = JavaRefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getRefactoringName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
         return;
       }
     }
@@ -116,10 +115,31 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     dialog.show();
   }
 
+  private static boolean isAccessedForWriting(PsiElement referenceElement) {
+    if (referenceElement.getLanguage() == JavaLanguage.INSTANCE) {
+      if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+        return true;
+      }
+    }
+    else {
+      for (ReadWriteAccessDetector detector : ReadWriteAccessDetector.EP_NAME.getExtensionList()) {
+        if (detector.getExpressionAccess(referenceElement) != ReadWriteAccessDetector.Access.Read) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   @Nullable
   public static PsiExpression getInitializer(PsiField field) {
     if (field.hasInitializer()) {
-      return field.getInitializer();
+      PsiExpression initializer = field.getInitializer();
+      if (initializer instanceof PsiCompiledElement) {
+        // Could be a literal initializer: we still can inline it, though passing compiled element downstream may cause exceptions
+        initializer = JavaPsiFacade.getElementFactory(field.getProject()).createExpressionFromText(initializer.getText(), field);
+      }
+      return initializer;
     }
 
     if (field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -155,6 +175,10 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME + "...";
+    return getRefactoringName() + "...";
+  }
+
+  private static String getRefactoringName() {
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

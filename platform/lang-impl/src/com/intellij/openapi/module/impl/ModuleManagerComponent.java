@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.ProjectServiceContainerInitializedListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
 @State(
   name = ModuleManagerImpl.COMPONENT_NAME,
   storages = @Storage("modules.xml"),
@@ -49,18 +47,23 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       return;
     }
 
-    myMessageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-      @Override
-      public void projectComponentsInitialized(@NotNull final Project project) {
-        if (project != myProject) return;
-
-        Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
-        loadModules(myModuleModel);
-        activity.end("module count: " + myModuleModel.getModules().length);
-      }
-    });
-
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new ModuleFileListener(this));
+  }
+
+  static final class MyProjectServiceContainerInitializedListener implements ProjectServiceContainerInitializedListener {
+    @Override
+    public void serviceCreated(@NotNull Project project) {
+      Activity activity = StartUpMeasurer.startMainActivity("module loading");
+      ModuleManager moduleManager = getInstance(project);
+      if (!(moduleManager instanceof ModuleManagerImpl)) {
+        return;
+      }
+
+      ModuleManagerImpl manager = (ModuleManagerImpl)moduleManager;
+      manager.loadModules(manager.myModuleModel);
+      activity.end();
+      activity.setDescription("module count: " + manager.myModuleModel.getModules().length);
+    }
   }
 
   @Override
@@ -90,7 +93,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       // it is not modal warning at all
       //Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
       Notifications.Bus.notify(new Notification(
-        "Module Manager",
+        NotificationGroup.createIdWithTitle("Module Manager", ProjectBundle.message("notification.group.module.manager")),
         ProjectBundle.message("module.unknown.type.title"),
         message,
         NotificationType.WARNING
@@ -102,6 +105,12 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
     return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject, filePath);
+  }
+
+  @NotNull
+  @Override
+  protected ModuleEx createNonPersistentModule(@NotNull String name) {
+    return new ModuleImpl(name, myProject, null);
   }
 
   @NotNull
@@ -128,7 +137,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @Override
   protected void fireModulesAdded() {
     for (Module module : myModuleModel.getModules()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireModuleAddedInWriteAction((ModuleEx)module));
+      fireModuleAddedInWriteAction((ModuleEx)module);
     }
   }
 

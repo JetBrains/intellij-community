@@ -28,7 +28,7 @@ public interface NavigationTarget {
    * @return presentation to render this target in navigation popup
    */
   @NotNull
-  TargetPresentation getTargetPresentation();
+  TargetPopupPresentation getTargetPresentation();
 
   /**
    * Two different symbols may have the same navigation target.

@@ -15,24 +15,19 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Represents a destination of Move Classes/Packages refactoring.
@@ -56,10 +51,11 @@ public interface MoveDestination {
    */
   PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException;
 
+  @NotNull
   PackageWrapper getTargetPackage();
 
   PsiDirectory getTargetIfExists(PsiDirectory source);
-  PsiDirectory getTargetIfExists(PsiFile source);
+  PsiDirectory getTargetIfExists(@NotNull PsiFile source);
 
   @Nullable
   String verify(PsiFile source);
@@ -68,7 +64,7 @@ public interface MoveDestination {
   @Nullable
   String verify(PsiPackage source);
 
-  void analyzeModuleConflicts(final Collection<PsiElement> elements, MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);
+  void analyzeModuleConflicts(@NotNull Collection<? extends PsiElement> elements, @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);
 
-  boolean isTargetAccessible(Project project, VirtualFile place);
+  boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place);
 }

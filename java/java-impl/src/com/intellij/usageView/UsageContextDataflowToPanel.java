@@ -17,6 +17,7 @@
 package com.intellij.usageView;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -64,7 +65,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Dataflow to Here";
+      return JavaBundle.message("dataflow.to.here");
     }
   }
 
@@ -85,7 +86,6 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
-      revalidate();
     }
     else {
       PsiElement element = getElementToSliceOn(infos);
@@ -99,8 +99,8 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       Disposer.register(this, (Disposable)panel);
       removeAll();
       add(panel, BorderLayout.CENTER);
-      revalidate();
     }
+    revalidate();
   }
 
   protected boolean isDataflowToThis() {

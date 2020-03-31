@@ -7,11 +7,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AdjustComponentWhenShown;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     add(splitter, BorderLayout.CENTER);
 
     myList = new JBList<>();
-    final Color borderColor = UIUtil.getBorderColor();
+    final Color borderColor = JBColor.border();
     myConfigureRootPanel = new JPanel();
     myConfigureRootPanel.setBorder(BorderFactory.createLineBorder(borderColor));
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myList));

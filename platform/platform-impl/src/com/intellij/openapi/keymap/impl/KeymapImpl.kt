@@ -1,22 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -26,6 +37,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import javax.swing.KeyStroke
+import kotlin.collections.HashSet
 
 private const val KEY_MAP = "keymap"
 private const val KEYBOARD_SHORTCUT = "keyboard-shortcut"
@@ -51,8 +63,16 @@ fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapIm
   return result
 }
 
+private val NOTIFICATION_MANAGER by lazy {
+  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
+  SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
+}
+
+
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
+  private var unknownParentName: String? = null
+
   open var canModify: Boolean = true
 
   @JvmField
@@ -313,7 +333,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return result
   }
 
-  private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): Array<String> {
+  private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {
     // first, get keystrokes from own map
     val list = SmartList<String>()
     for ((key, value) in gestureToListOfIds) {
@@ -333,10 +353,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
     }
-    return sortInRegistrationOrder(list)
+    sortInRegistrationOrder(list)
+    return list
   }
 
-  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
+  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> {
+    return ArrayUtilRt.toStringArray(getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke))
+  }
 
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
@@ -366,9 +389,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         val second = shortcut.secondKeyStroke
         if (second == null) getActionIds(first) else getActionIds(first, second)
       }
-      is MouseShortcut -> getActionIds(shortcut)
-      is KeyboardModifierGestureShortcut -> getActionIds(shortcut)
-      else -> ArrayUtil.EMPTY_STRING_ARRAY
+      is MouseShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
+      is KeyboardModifierGestureShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
+      else -> ArrayUtilRt.EMPTY_STRING_ARRAY
     }
   }
 
@@ -388,12 +411,14 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     while (true)
   }
 
-  override fun getActionIds(shortcut: MouseShortcut): Array<String> = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
+  override fun getActionIds(shortcut: MouseShortcut): List<String> {
+    return getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
+  }
 
-  private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): Array<String> {
+  private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {
     // first, get keystrokes from own map
     var list = shortcutToActionIds(this).get(shortcut)
-    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: ArrayUtilRt.EMPTY_STRING_ARRAY
+    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: emptyList()
     var isOriginalListInstance = list != null
     for (id in parentIds) {
       // add actions from parent keymap only if they are absent in this keymap
@@ -414,7 +439,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         list.add(id)
       }
     }
-    return sortInRegistrationOrder(list)
+    sortInRegistrationOrder(list ?: return emptyList())
+    return list
   }
 
   fun isActionBound(actionId: String): Boolean = keymapManager.boundActions.contains(actionId)
@@ -448,6 +474,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
+    unknownParentName = null
+
     keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let { parentSchemeName ->
       var parentScheme = findParentScheme(parentSchemeName)
       if (parentScheme == null && parentSchemeName == "Default for Mac OS X") {
@@ -456,7 +484,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       if (parentScheme == null) {
-        LOG.error("Cannot find parent scheme $parentSchemeName for scheme $name")
+        LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
+        unknownParentName = parentSchemeName
+        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$parentSchemeName\" for \"$name\"")
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -464,6 +494,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
+    val actionIds = HashSet<String>()
     val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
     for (actionElement in keymapElement.children) {
       if (actionElement.name != ACTION) {
@@ -471,6 +502,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
+      actionIds.add(id)
       val shortcuts = SmartList<Shortcut>()
       // always creates list even if no shortcuts - empty action element means that action overrides parent to denote that no shortcuts
       actionIdToShortcuts.put(id, shortcuts)
@@ -532,6 +564,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
+    ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
     cleanShortcutsCache()
   }
 
@@ -546,8 +579,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1))
     keymapElement.setAttribute(NAME_ATTRIBUTE, name)
 
-    parent?.let {
-      keymapElement.setAttribute(PARENT_ATTRIBUTE, it.name)
+    (parent?.name ?: unknownParentName)?.let {
+      keymapElement.setAttribute(PARENT_ATTRIBUTE, it)
     }
     writeOwnActionIds(keymapElement)
 
@@ -637,7 +670,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           continue
         }
 
-        result.getOrPut(id) { SmartList<KeyboardShortcut>() }.add(shortcut1)
+        result.getOrPut(id) { SmartList() }.add(shortcut1)
       }
     }
 
@@ -669,6 +702,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun equals(other: Any?): Boolean {
     if (other !is KeymapImpl) return false
+    if (other === this) return true
     if (name != other.name) return false
     if (canModify != other.canModify) return false
     if (parent != other.parent) return false
@@ -679,10 +713,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   override fun hashCode(): Int = name.hashCode()
 }
 
-private fun sortInRegistrationOrder(ids: List<String>?): Array<String> {
-  val array = ArrayUtilRt.toStringArray(ids)
-  array.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
-  return array
+private fun sortInRegistrationOrder(ids: MutableList<String>) {
+  ids.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
 }
 
 // compare two lists in any order
@@ -697,4 +729,100 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
     }
   }
   return true
+}
+
+private val macOSKeymap = "com.intellij.plugins.macoskeymap"
+private val gnomeKeymap = "com.intellij.plugins.gnomekeymap"
+private val kdeKeymap = "com.intellij.plugins.kdekeymap"
+private val xwinKeymap = "com.intellij.plugins.xwinkeymap"
+private val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
+private val emacsKeymap = "com.intellij.plugins.emacskeymap"
+private val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
+private val resharperKeymap = "com.intellij.plugins.resharperkeymap"
+private val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
+private val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
+private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
+private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
+private val riderKeymap = "com.intellij.plugins.riderkeymap"
+
+internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
+  val connection = ApplicationManager.getApplication().messageBus.connect()
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    override fun projectOpened(project: Project) {
+      connection.disconnect()
+      ApplicationManager.getApplication().invokeLater(
+        {
+          // TODO remove when PluginAdvertiser implements that
+          @Suppress("SpellCheckingInspection")
+          val pluginId = when (keymapName) {
+            "Mac OS X",
+            "Mac OS X 10.5+" -> macOSKeymap
+            "Default for GNOME" -> gnomeKeymap
+            "Default for KDE" -> kdeKeymap
+            "Default for XWin" -> xwinKeymap
+            "Eclipse",
+            "Eclipse (Mac OS X)" -> eclipseKeymap
+            "Emacs" -> emacsKeymap
+            "NetBeans 6.5" -> netbeansKeymap
+            "ReSharper",
+            "ReSharper OSX" -> resharperKeymap
+            "Sublime Text",
+            "Sublime Text (Mac OS X)" -> sublimeKeymap
+            "Visual Studio",
+            "Visual Studio OSX" -> visualStudioKeymap
+            "Visual Assist",
+            "Visual Assist OSX" -> visualAssistKeymap
+            "Xcode" -> xcodeKeymap
+            "Rider",
+            "Rider OSX"-> riderKeymap
+            else -> null
+          }
+          val action: AnAction? = when (pluginId) {
+            null -> object : NotificationAction(IdeBundle.message("action.text.search.for.keymap", keymapName)) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                //TODO enableSearch("$keymapName /tag:Keymap")?.run()
+                ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PluginManagerConfigurable::class.java)
+              }
+            }
+            else -> object : NotificationAction(IdeBundle.message("action.text.install.keymap", keymapName)) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                val connect = ApplicationManager.getApplication().messageBus.connect()
+                connect.subscribe(KeymapManagerListener.TOPIC, object: KeymapManagerListener {
+                  override fun keymapAdded(keymap: Keymap) {
+                    ApplicationManager.getApplication().invokeLater {
+                      if (keymap.name == keymapName) {
+                        connect.disconnect()
+                        KeymapManagerEx.getInstanceEx().activeKeymap = keymap
+                        val group = NotificationGroup("Keymap", NotificationDisplayType.BALLOON, true)
+                        val notificationManager = SingletonNotificationManager(group, NotificationType.INFORMATION)
+                        notificationManager.notify(IdeBundle.message("notification.content.keymap.successfully.activated", keymapName), project)
+                      }
+                    }
+                  }
+                })
+
+                  PluginsAdvertiser.installAndEnable(project, getPluginIdWithDependencies(pluginId), false) {
+
+                  }
+                notification.expire()
+              }
+
+              fun toPluginIds(vararg ids: String) = ids.map { PluginId.getId(it) }.toSet()
+
+              private fun getPluginIdWithDependencies(pluginId: String): Set<PluginId> {
+                return when (pluginId) {
+                  gnomeKeymap -> toPluginIds(gnomeKeymap, xwinKeymap)
+                  kdeKeymap -> toPluginIds(kdeKeymap, xwinKeymap)
+                  resharperKeymap -> toPluginIds(resharperKeymap, visualStudioKeymap)
+                  xcodeKeymap -> toPluginIds(xcodeKeymap, macOSKeymap)
+                  else -> toPluginIds(pluginId)
+                }
+              }
+            }
+          }
+          NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
+        }, ModalityState.NON_MODAL)
+    }
+  }
+  )
 }

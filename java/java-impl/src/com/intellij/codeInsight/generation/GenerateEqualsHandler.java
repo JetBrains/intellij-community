@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +36,7 @@ import java.util.List;
  * @author dsl
  */
 public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsHandler.class);
   private PsiField[] myEqualsFields;
   private PsiField[] myHashCodeFields;
   private PsiField[] myNonNullFields;
@@ -60,11 +61,11 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     boolean needHashCode = needToGenerateMethod(hashCodeMethod);
     if (!needEquals && !needHashCode) {
       String text = aClass instanceof PsiAnonymousClass
-                    ? CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
-                    : CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning", aClass.getQualifiedName());
+                    ? JavaBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
+                    : JavaBundle.message("generate.equals.and.hashcode.already.defined.warning", aClass.getQualifiedName());
 
       if (Messages.showYesNoDialog(project, text,
-                                   CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
+                                   JavaBundle.message("generate.equals.and.hashcode.already.defined.title"),
                                    Messages.getQuestionIcon()) == Messages.YES) {
         if (!WriteAction.compute(() -> {
           try {
@@ -93,13 +94,19 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
       return null;
     }
 
-    GenerateEqualsWizard wizard = new GenerateEqualsWizard(project, aClass, needEquals, needHashCode);
-    if (!wizard.showAndGet()) {
-      return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myEqualsFields = myHashCodeFields = aClass.getFields();
+      myNonNullFields = PsiField.EMPTY_ARRAY;
+    } else {
+      GenerateEqualsWizard wizard = new GenerateEqualsWizard(project, aClass, needEquals, needHashCode);
+      if (!wizard.showAndGet()) {
+        return null;
+      }
+      myEqualsFields = wizard.getEqualsFields();
+      myHashCodeFields = wizard.getHashCodeFields();
+      myNonNullFields = wizard.getNonNullFields();
     }
-    myEqualsFields = wizard.getEqualsFields();
-    myHashCodeFields = wizard.getHashCodeFields();
-    myNonNullFields = wizard.getNonNullFields();
+
     return DUMMY_RESULT;
   }
 
@@ -107,7 +114,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return equalsMethod == null || !equalsMethod.isPhysical();
   }
 
-  private static boolean hasNonStaticFields(PsiClass aClass) {
+  public static boolean hasNonStaticFields(PsiClass aClass) {
     for (PsiField field : aClass.getFields()) {
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return true;

@@ -106,8 +106,7 @@ final class LookupWithIndentsBuilder {
   /**
    * @return result lookup elements (to display in {@link PsiReference#getVariants()} for example)
    */
-  @NotNull
-  LookupElement[] getResult() {
+  LookupElement @NotNull [] getResult() {
     final List<LookupElement> result = new ArrayList<>(myMap.size());
     for (final Entry<LookupElementBuilder, Pair<String, Integer>> entry : myMap.entrySet()) {
       LookupElementBuilder elementBuilder = entry.getKey();

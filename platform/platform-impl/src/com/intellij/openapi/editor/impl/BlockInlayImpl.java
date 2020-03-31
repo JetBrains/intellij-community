@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -14,6 +17,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
+  private GutterIconRenderer myGutterIconRenderer;
 
   BlockInlayImpl(@NotNull EditorImpl editor,
                  int offset,
@@ -32,18 +36,20 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   }
 
   @Override
-  void doUpdateSize() {
+  void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
-      throw new IllegalArgumentException("Non-negative width should be defined for a block element");
+      throw PluginException.createByClass("Non-negative width should be defined for a block element by " + myRenderer, null,
+                                          myRenderer.getClass());
     }
     int oldHeightInPixels = myHeightInPixels;
     myHeightInPixels = myRenderer.calcHeightInPixels(this);
     if (oldHeightInPixels != myHeightInPixels) getTree().valueUpdated(this);
     if (myHeightInPixels < 0) {
-      throw new IllegalArgumentException("Non-negative height should be defined for a block element");
+      throw PluginException.createByClass("Non-negative height should be defined for a block element by " + myRenderer, null,
+                                          myRenderer.getClass());
     }
-
+    myGutterIconRenderer = myRenderer.calcGutterIconRenderer(this);
   }
 
   @Override
@@ -65,7 +71,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
         y += inlay.getHeightInPixels();
       }
     }
-    return new Point(0, y);
+    return new Point(myEditor.getContentComponent().getInsets().left, y);
   }
 
   @Override
@@ -85,6 +91,12 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
     return myEditor.offsetToVisualPosition(getOffset());
   }
 
+  @Nullable
+  @Override
+  public GutterIconRenderer getGutterIconRenderer() {
+    return myGutterIconRenderer;
+  }
+
   @Override
   public int getAsInt() {
     return myHeightInPixels;
@@ -95,7 +107,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
     return "[Block inlay, offset=" + getOffset() +
            ", width=" + myWidthInPixels +
            ", height=" + myHeightInPixels +
-           "renderer=" + myRenderer +
+           ", renderer=" + myRenderer +
            "]";
   }
 }

@@ -54,8 +54,7 @@ public class GroovyPropertyUtils {
     return getAllSetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllGettersByField(PsiField field) {
+  public static PsiMethod @NotNull [] getAllGettersByField(PsiField field) {
     return getAllGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
   }
 
@@ -111,8 +110,7 @@ public class GroovyPropertyUtils {
     return null;
   }
 
-  @NotNull
-  public static PsiMethod[] getAllGetters(PsiClass aClass, @NotNull String propertyName, boolean isStatic, boolean checkSuperClasses) {
+  public static PsiMethod @NotNull [] getAllGetters(PsiClass aClass, @NotNull String propertyName, boolean isStatic, boolean checkSuperClasses) {
     if (aClass == null) return PsiMethod.EMPTY_ARRAY;
     PsiMethod[] methods;
     if (checkSuperClasses) {
@@ -136,8 +134,7 @@ public class GroovyPropertyUtils {
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllSetters(PsiClass aClass, @NotNull String propertyName, boolean isStatic, boolean checkSuperClasses) {
+  public static PsiMethod @NotNull [] getAllSetters(PsiClass aClass, @NotNull String propertyName, boolean isStatic, boolean checkSuperClasses) {
     if (aClass == null) return PsiMethod.EMPTY_ARRAY;
     PsiMethod[] methods;
     if (checkSuperClasses) {

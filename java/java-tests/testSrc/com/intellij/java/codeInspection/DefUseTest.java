@@ -18,10 +18,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class DefUseTest extends LightCodeInsightFixtureTestCase {
+public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/defUse";
@@ -61,6 +61,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testFieldInitializer() { doTest(); }
   public void testChainedFieldInitializer() { doTest(); }
   public void testVarDeclaration() { doTest(); }
+  public void testSelfAssignment() { doTest(); }
   public void testFieldIgnoringRedundantInitializer() {
     DefUseInspection inspection = new DefUseInspection();
     inspection.REPORT_REDUNDANT_INITIALIZER = false;

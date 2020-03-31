@@ -9,9 +9,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class SortValuesToggleAction extends ToggleAction implements DumbAware {
 
   @Override

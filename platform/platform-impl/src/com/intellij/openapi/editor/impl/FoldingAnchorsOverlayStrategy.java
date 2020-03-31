@@ -16,10 +16,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ class FoldingAnchorsOverlayStrategy {
     FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
     if (visibleFoldRegions != null) {
       for (FoldRegion region : visibleFoldRegions) {
-        if (!region.isValid()) continue;
+        if (!region.isValid() || region.shouldNeverExpand()) continue;
         final int startOffset = region.getStartOffset();
         if (startOffset > lastVisibleOffset) continue;
         final int endOffset = region.getEndOffset();

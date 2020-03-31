@@ -38,7 +38,7 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     prepare("first line\n" +
             "second line<caret>\n" + // this line will be wrapped and caret is positioned after the wrap
             "third line");
-    assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(myEditor, 6));
+    assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     copy();
     verifyResult("first line\n" +
                  "<caret><selection>second line\n" +

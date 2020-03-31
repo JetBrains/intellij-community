@@ -22,7 +22,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (!LambdaUtil.isFunctionalType(myT)) {
       session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
       return false;
@@ -82,7 +82,9 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         });
         if (!isProperType || myExpression.hasFormalParameterTypes()) {
           for (PsiExpression returnExpression : returnExpressions) {
-            constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
+            if (!InferenceSession.ignoreLambdaConstraintTree(returnExpression)) {
+              constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
+            }
           }
         }
         else {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NotNullLazyKey
@@ -17,6 +18,8 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
     file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->
+      if (ModuleType.isInternal(module)) return nextPolicyParent
+
       val grandParent = nextPolicyParent ?: subtreeRoot
       val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
 
@@ -39,8 +42,8 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
     return nextPolicyParent
   }
 
-  class Factory : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ModuleChangesGroupingPolicy = ModuleChangesGroupingPolicy(project, model)
+  internal class Factory : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel) = ModuleChangesGroupingPolicy(project, model)
   }
 
   companion object {

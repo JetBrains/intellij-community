@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.text.StringUtil
 import java.util.*
@@ -22,11 +24,13 @@ fun getHintProviders(): List<Pair<Language, InlayParameterHintsProvider>> {
 fun getBlackListInvalidLineNumbers(text: String): List<Int> {
   val rules = StringUtil.split(text, "\n", true, false)
   return rules
+    .asSequence()
     .mapIndexedNotNull { index, s -> index to s }
     .filter { it.second.isNotEmpty() }
     .map { it.first to MatcherConstructor.createMatcher(it.second) }
     .filter { it.second == null }
     .map { it.first }
+    .toList()
 }
 
 fun getLanguageForSettingKey(language: Language): Language {
@@ -45,4 +49,14 @@ fun getBaseLanguagesWithProviders(): List<Language> {
     .map { (first) -> first }
     .sorted(Comparator.comparing<Language, String> { l -> l.displayName })
     .collect(Collectors.toList())
+}
+
+fun isParameterHintsEnabledForLanguage(language: Language): Boolean {
+  if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return false
+  if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
+  return ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
+}
+
+fun setShowParameterHintsForLanguage(value: Boolean, language: Language) {
+  ParameterNameHintsSettings.getInstance().setIsEnabledForLanguage(value, getLanguageForSettingKey(language))
 }

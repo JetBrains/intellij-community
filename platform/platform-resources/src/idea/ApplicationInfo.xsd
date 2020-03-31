@@ -170,7 +170,7 @@
         Describes the splash screen which is shown when the product is starting.
       </xs:documentation>
     </xs:annotation>
-    
+
     <xs:sequence>
       <xs:element name="progressSlide" minOccurs="0" maxOccurs="unbounded">
         <xs:complexType>
@@ -199,11 +199,12 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:hexBinary" name="textcolor" use="required">
+    <xs:attribute type="xs:hexBinary" name="textcolor">
       <xs:annotation>
         <xs:documentation>
           Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint text on the splash screen. Currently it is used to
           show information about licensee only.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -250,6 +251,7 @@
       <xs:annotation>
         <xs:documentation>
           The X coordinate of a position on the splash screen where information about licensee will be shown.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -257,6 +259,7 @@
       <xs:annotation>
         <xs:documentation>
           The Y coordinate of a position on the splash screen where information about licensee will be shown.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -342,7 +345,9 @@
       <xs:annotation>
         <xs:documentation>
           Path to a 16x16 png file with the product icon.
+          <strong>Deprecated: use 'svg-small' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="size32">
@@ -350,6 +355,7 @@
         <xs:documentation>
           Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="size128" >
@@ -357,6 +363,7 @@
         <xs:documentation>
           Path to a 128x128 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="ico">
@@ -373,12 +380,28 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="svg-small">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an svg file with a simplified version of the product icon which looks good when shown as 16x16 image. The file must be
+          located inside a JAR file in PRODUCT_HOME/lib directory.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="iconEapType">
     <xs:attribute type="xs:string" name="svg" use="required">
       <xs:annotation>
         <xs:documentation>
           Path inside a JAR file (in PRODUCT_HOME/lib directory) to an svg file which contains the product icon for EAP version of the product.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="svg-small">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an svg file with a simplified version of the product icon for EAP versions looks good when shown as 16x16 image.
+          The file must be located inside a JAR file in PRODUCT_HOME/lib directory.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -417,8 +440,22 @@
     <xs:attribute type="xs:string" name="background-url" use="required"/>
   </xs:complexType>
   <xs:complexType name="helpType">
-    <xs:attribute type="xs:string" name="file"/>
-    <xs:attribute type="xs:string" name="root"/>
+    <xs:attribute type="xs:string" name="file">
+      <xs:annotation>
+        <xs:documentation>
+          <strong>Deprecated: JavaHelp isn't used anymore, specify 'webhelp-url' attribute instead.</strong>
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="root">
+      <xs:annotation>
+        <xs:documentation>
+          <strong>Deprecated: JavaHelp isn't used anymore, specify 'webhelp-url' attribute instead.</strong>
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="webhelp-url"/>
     <xs:attribute type="xs:boolean" name="has-help"/>
     <xs:attribute type="xs:boolean" name="has-context-help"/>

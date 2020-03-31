@@ -15,13 +15,15 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
 
   public ShowChangesFromParentsAction() {
-    super("Show Changes to Parents", "Display changes to each merged commit separately", null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.all.changes.from.parent"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.all.changes.from.parent"), null);
   }
 
   @Override

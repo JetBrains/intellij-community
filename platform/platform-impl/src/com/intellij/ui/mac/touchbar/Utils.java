@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionException;
@@ -6,41 +6,39 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class Utils {
+public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
   private static final String TB_SERVER_PROCESS = SystemInfo.isMacOSHighSierra ? "TouchBarServer" : "TouchBarAgent";
 
   public static boolean isTouchBarServerRunning() {
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS);
+    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS)
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     try {
       final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
       return !out.getStdout().isEmpty();
-    } catch (ExecutionException e) {
+    }
+    catch (ExecutionException e) {
       LOG.error(e);
     }
     return false;
   }
 
-  // returns true when success
+  // returns true on success
   public static boolean restartTouchBarServer() {
     try {
-      final ProcessOutput out = ExecUtil.sudoAndGetOutput(new GeneralCommandLine("pkill", TB_SERVER_PROCESS), "");
+      final GeneralCommandLine cmdLine = new GeneralCommandLine("pkill", TB_SERVER_PROCESS)
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
+      final ProcessOutput out = ExecUtil.sudoAndGetOutput(cmdLine, "");
       return out.getStderr().isEmpty();
-    } catch (ExecutionException e) {
-      LOG.error(e);
-    } catch (IOException e) {
+    }
+    catch (ExecutionException | IOException e) {
       LOG.error(e);
     }
 
@@ -48,29 +46,22 @@ public class Utils {
   }
 
   public static String getAppId() {
-    try {
-      final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
-      if (appEx == null) // unit-test case
-        return null;
-    } catch (Throwable e) {
-      LOG.debug(e); // no application
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
 
-    String appId = null;
-    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+    String appId;
+    try (@SuppressWarnings("unused") NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
       final ID dict = Foundation.invoke(bundle, "infoDictionary");
       final ID nsAppID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
       appId = Foundation.toStringViaUTF8(nsAppID);
     }
 
-    if (appId == null || appId.isEmpty())
+    if (appId == null || appId.isEmpty()) {
       LOG.error("can't obtain application id from NSBundle.mainBundle");
+    }
 
     return appId;
   }
-
-  static @Nullable
-  ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
 }

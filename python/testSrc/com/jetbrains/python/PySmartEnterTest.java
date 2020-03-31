@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -27,7 +26,6 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -187,6 +185,31 @@ public class PySmartEnterTest extends PyTestCase {
 
   // PY-15656
   public void testUnclosedParametersListAndTrailingEmptyLines() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterNoDecorators() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterClassMethod() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterStaticMethod() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterWithExistingParameters() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterWithOpenBracket() {
     doTest();
   }
 

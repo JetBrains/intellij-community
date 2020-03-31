@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -22,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
@@ -32,11 +19,11 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -122,7 +109,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public void setPatterns(@Nullable List<Item> patterns) {
     this.patterns.clear();
     if (patterns != null) this.patterns.addAll(patterns);
-    Collections.sort(this.patterns, ITEM_COMPARATOR);
+    this.patterns.sort(ITEM_COMPARATOR);
     myCalculatedPatterns.drop();
   }
 
@@ -140,7 +127,7 @@ public class UserDefinedJsonSchemaConfiguration {
     for (final Item patternText : patterns) {
       switch (patternText.mappingKind) {
         case File:
-          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.getPath()));
+          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
           break;
         case Pattern:
           String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
@@ -178,7 +165,7 @@ public class UserDefinedJsonSchemaConfiguration {
       return project.getBaseDir();
     }
     else {
-      return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
+      return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtilRt.toStringArray(parts));
     }
   }
 
@@ -187,9 +174,8 @@ public class UserDefinedJsonSchemaConfiguration {
     return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
   }
 
-  @NotNull
-  private static String[] pathToParts(@NotNull String path) {
-    return ArrayUtil.toStringArray(pathToPartsList(path));
+  private static String @NotNull [] pathToParts(@NotNull String path) {
+    return ArrayUtilRt.toStringArray(pathToPartsList(path));
   }
 
   @Override
@@ -245,11 +231,11 @@ public class UserDefinedJsonSchemaConfiguration {
       // mock URLs of fragments editor
       return StringUtil.startsWith(path, "http:")
              || StringUtil.startsWith(path, "https:")
-             || StringUtil.startsWith(path, "mock:");
+             || JsonFileResolver.isTempOrMockUrl(path);
     }
 
     @NotNull
-    private static String neutralizePath(@NotNull String path) {
+    public static String neutralizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }
@@ -265,14 +251,14 @@ public class UserDefinedJsonSchemaConfiguration {
     public String getError() {
       switch (mappingKind) {
         case File:
-          return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
+          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
         case Pattern:
-          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches nothing";
+          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
         case Directory:
           return null;
       }
 
-      return "Unknown mapping kind";
+      return JsonBundle.message("schema.configuration.error.unknown.mapping");
     }
 
     public boolean isPattern() {
@@ -293,7 +279,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
     public String getPresentation() {
       if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
-        return mappingKind.getPrefix() + "[Project Directory]";
+        return JsonBundle.message("schema.configuration.project.directory", mappingKind.getPrefix());
       }
       return mappingKind.getPrefix() + getPath();
     }

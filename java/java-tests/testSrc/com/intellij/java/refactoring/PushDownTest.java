@@ -24,12 +24,13 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -124,7 +125,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   public void testClassInheritsUnrelatedDefaultsConflict() {
-    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>I</code></b> and interface <b><code>A</code></b>")));
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>A</code></b> and interface <b><code>I</code></b>")));
   }
 
   public void testStaticToLocal() {
@@ -132,11 +133,11 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   public void testStaticToLocalWithReferenceUpdate() {
-    doTest(conflicts -> assertSameElements(conflicts.values(),
-                                         Arrays.asList("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                     "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
-                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>")));
+    doTest(conflicts -> assertSameElements(new HashSet<>(conflicts.values()),
+                                           ContainerUtil.newHashSet("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                                     "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
+                                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>")));
   }
 
   private void doTest() {
@@ -151,7 +152,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     });
   }
 
-  private void doTest(final Consumer<MultiMap<PsiElement, String>> checkConflicts) {
+  private void doTest(final Consumer<? super MultiMap<PsiElement, String>> checkConflicts) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
@@ -212,7 +213,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     for (MemberInfo member : members) {
       member.setChecked(true);
       if (toAbstract) {
-        member.setToAbstract(toAbstract);
+        member.setToAbstract(true);
       }
     }
 

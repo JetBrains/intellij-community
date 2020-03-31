@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -118,7 +119,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Specify page language";
+    return JavaFXBundle.message("javafx.inject.page.language.intention.family.name");
   }
 
   @Override

@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * User: Dmitry.Krasilschikov
  */
-class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCase {
+class ImplementsExtendsQuickFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/extendsImplementsFix/"
 

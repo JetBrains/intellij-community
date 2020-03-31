@@ -39,12 +39,6 @@ public class CastToConcreteClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cast.to.concrete.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiType type= (PsiType)infos[0];
     return InspectionGadgetsBundle.message("cast.to.concrete.class.problem.descriptor", type.getPresentableText());

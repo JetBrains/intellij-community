@@ -1,3 +1,3 @@
-```{js is a great ecma}
+```{json is a great lang}
 <selection>Customized insertion</selection><caret>
 ```

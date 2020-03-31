@@ -25,9 +25,6 @@ import org.jetbrains.idea.devkit.projectRoots.Sandbox
 import java.io.File
 import java.util.*
 
-/**
- * @author nik
- */
 class PluginModuleCompilationTest : BaseCompilerTestCase() {
   override fun setUpJdk() {
     super.setUpJdk()

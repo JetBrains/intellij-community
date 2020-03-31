@@ -53,7 +53,7 @@ public class MethodListDlg extends DialogWrapper {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         MethodListDlg.this.close(OK_EXIT_CODE);
         return true;
       }

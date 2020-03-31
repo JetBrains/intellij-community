@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JdkBundleList {
   private static final Logger LOG = Logger.getInstance(JdkBundleList.class);
@@ -55,35 +57,4 @@ public class JdkBundleList {
   public JdkBundle getBundle(@NotNull String path) {
     return myBundles.get(path);
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated use {@link #addBundle(JdkBundle)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public void addBundle(@NotNull JdkBundle bundle, @SuppressWarnings("unused") boolean forceOldVersion) {
-    addBundle(bundle);
-  }
-
-  /** @deprecated use {@link #getBundle(String)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public boolean contains(@NotNull String path) {
-    return myBundles.keySet().contains(path);
-  }
-
-  /** @deprecated use {@link #getBundles()} (to be removed in IDEA 2019) */
-  @Deprecated
-  public ArrayList<JdkBundle> toArrayList() {
-    return new ArrayList<>(myBundles.values());
-  }
-
-  /** @deprecated use {@link #addBundlesFromLocation(String, JavaVersion, JavaVersion)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public void addBundlesFromLocation(@NotNull String location, @Nullable Version minVer, @Nullable Version maxVer) {
-    addBundlesFromLocation(location, toJavaVersion(minVer), toJavaVersion(maxVer));
-  }
-  private static JavaVersion toJavaVersion(Version v) {
-    return v == null ? null : v.major == 1 ? JavaVersion.compose(v.minor) : JavaVersion.compose(v.major, v.minor, v.bugfix, 0, false);
-  }
-
-  //</editor-fold>
 }

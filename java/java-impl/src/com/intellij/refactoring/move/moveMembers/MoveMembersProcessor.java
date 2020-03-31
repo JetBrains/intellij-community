@@ -51,14 +51,14 @@ import java.util.*;
  * @author Jeka
  */
 public class MoveMembersProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveMembersProcessor.class);
 
   private PsiClass myTargetClass;
   private final Set<PsiMember> myMembersToMove = new LinkedHashSet<>();
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
+  private String myCommandName = MoveMembersImpl.getRefactoringName();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -99,7 +99,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void setCommandName(final PsiMember[] members) {
     StringBuilder commandName = new StringBuilder();
-    commandName.append(MoveHandler.REFACTORING_NAME);
+    commandName.append(MoveHandler.getRefactoringName());
     commandName.append(" ");
     boolean first = true;
     for (PsiMember member : members) {
@@ -115,13 +115,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveMemberViewDescriptor(PsiUtilCore.toPsiElementArray(myMembersToMove));
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> usagesList = new ArrayList<>();
     for (PsiMember member : myMembersToMove) {
       for (PsiReference psiReference : ReferencesSearch.search(member)) {
@@ -147,7 +146,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     LOG.assertTrue(myMembersToMove.size() == elements.length);
     myMembersToMove.clear();
     for (PsiElement resolved : elements) {
@@ -163,7 +162,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull final UsageInfo[] usages) {
+  protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     try {
       PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
                                                                             GlobalSearchScope.projectScope(myProject));
@@ -348,7 +347,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public void doRun() {
     if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");
-      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
+      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.getRefactoringName(), message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
     super.doRun();

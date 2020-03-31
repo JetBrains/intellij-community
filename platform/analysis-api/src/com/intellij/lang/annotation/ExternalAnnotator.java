@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
@@ -23,21 +9,22 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Implemented by a custom language plugin to process the files in a language by an
- * external annotation tool. The external annotator is expected to be slow and is started
- * after the regular annotator has completed its work.
- * 
- * During indexing only {@link com.intellij.openapi.project.DumbAware} annotators are executed.
+ * external annotation tool ("linter"). External annotators are expected to be (relatively) slow and are started
+ * after regular annotators have completed their work.</p>
+ *
+ * <p>Annotators work in three steps:
+ * <ol>
+ * <li>{@link #collectInformation(PsiFile, Editor, boolean)} is called to collect some data about a file needed for launching a tool</li>
+ * <li>collected data is passed to {@link #doAnnotate} which executes a tool and collect highlighting data</li>
+ * <li>highlighting data is applied to a file by {@link #apply}</li>
+ * </ol>
  *
  * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
 public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   /**
-   * Collects initial information required for annotation. Expected to run within read action.
-   * See {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)} for details.
-   *
-   * @param file file to annotate
-   * @return see {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)}
+   * @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)
    */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file) {
@@ -45,13 +32,13 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   }
 
   /**
-   * Collects initial information required for annotation. This method is called within read action during annotation pass.
-   * Default implementation returns the result of {@link ExternalAnnotator#collectInformation(PsiFile)}
-   * if file has no errors or {@code null} otherwise.
-   * @param file      file to annotate
-   * @param editor    editor in which file's document reside
+   * Collects initial information needed for launching a tool. This method is called within a read action;
+   * non-{@link com.intellij.openapi.project.DumbAware DumbAware} annotators are skipped during indexing.
+   *
+   * @param file      a file to annotate
+   * @param editor    an editor in which file's document reside
    * @param hasErrors indicates if file has errors detected by preceding analyses
-   * @return information to pass to {@link ExternalAnnotator#doAnnotate(InitialInfoType)} or {@code null} if annotation should be skipped
+   * @return information to pass to {@link ExternalAnnotator#doAnnotate(InitialInfoType)}, or {@code null} if not applicable
    */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
@@ -60,9 +47,11 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
 
   /**
    * Collects full information required for annotation. This method is intended for long-running activities
-   * and will be called outside read/write actions during annotation pass.
-   * @param collectedInfo initial information gathered by {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)}
-   * @return annotation result to pass to {@link ExternalAnnotator#apply(PsiFile, AnnotationResultType, AnnotationHolder)}
+   * and will be called outside a read action; implementations should either avoid accessing indices and PSI or
+   * perform needed checks and locks themselves.
+   *
+   * @param collectedInfo initial information gathered by {@link ExternalAnnotator#collectInformation}
+   * @return annotations to pass to {@link ExternalAnnotator#apply(PsiFile, AnnotationResultType, AnnotationHolder)}
    */
   @Nullable
   public AnnotationResultType doAnnotate(InitialInfoType collectedInfo) {
@@ -70,20 +59,21 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   }
 
   /**
-   * Applies results of annotation. This method is called within read action during annotation pass.
-   * @param file file to annotate
-   * @param annotationResult annotation result acquired through {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
-   * @param holder container which receives annotations
+   * Applies collected annotations to the given annotation holder. This method is called within a read action.
+   *
+   * @param file             a file to annotate
+   * @param annotationResult annotations collected in {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
+   * @param holder           a container for receiving annotations
    */
-  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) {
-  }
+  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
 
   /**
-   * Return inspection which should run in batch mode.
-   * When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
+   * <p>Returns an inspection that should run in batch mode.</p>
+   *
+   * <p>When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
    * Implementing {@link com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection}
    * and extending {@link com.intellij.codeInspection.LocalInspectionTool} or {@link GlobalSimpleInspectionTool} would
-   * provide implementation for a batch tool which would run without read action, according to the {@link #doAnnotate(Object)} documentation.
+   * provide implementation for a batch tool that would run without read action, according to the {@link #doAnnotate(Object)} documentation.</p>
    */
   public String getPairedBatchInspectionShortName() {
     return null;

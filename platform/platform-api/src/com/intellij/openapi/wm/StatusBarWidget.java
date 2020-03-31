@@ -1,43 +1,49 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.MouseEvent;
 
+/**
+ * @see StatusBarWidgetFactory
+ */
 public interface StatusBarWidget extends Disposable {
+  /**
+   * @deprecated do not use it
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
   enum PlatformType {
     DEFAULT, MAC
   }
 
-  @NotNull
+  @NonNls @NotNull
   String ID();
 
   @Nullable
-  WidgetPresentation getPresentation(@NotNull PlatformType type);
+  default WidgetPresentation getPresentation() {
+    return getPresentation(SystemInfo.isMac ? PlatformType.MAC : PlatformType.DEFAULT);
+  }
 
-  void install(@NotNull final StatusBar statusBar);
+  /**
+   * @deprecated use this{@link #getPresentation()} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
+  @Nullable
+  default WidgetPresentation getPresentation(@NotNull PlatformType type) {
+    return null;
+  }
+
+  void install(@NotNull StatusBar statusBar);
 
   interface Multiframe extends StatusBarWidget {
     StatusBarWidget copy();
@@ -45,23 +51,32 @@ public interface StatusBarWidget extends Disposable {
 
   interface WidgetPresentation {
     @Nullable
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     String getTooltipText();
+
+    @Nullable
+    default String getShortcutText() { return null; }
 
     @Nullable
     Consumer<MouseEvent> getClickConsumer();
   }
 
   interface IconPresentation extends WidgetPresentation {
-    @NotNull
+    @Nullable
     Icon getIcon();
   }
 
   interface TextPresentation extends WidgetPresentation {
     @NotNull
+    @Nls
     String getText();
 
+    /**
+     * @deprecated unused
+     */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
@@ -74,13 +89,23 @@ public interface StatusBarWidget extends Disposable {
     @Nullable
     String getSelectedValue();
 
+    /**
+     * @deprecated unused
+     */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     default String getMaxValue() { return ""; }
+
+    @Nullable
+    default Icon getIcon() {
+      return null;
+    }
   }
 
   abstract class WidgetBorder implements Border {
-    public static final Border INSTANCE = JBUI.Borders.empty(0, 2);
-    public static final Border WIDE = JBUI.Borders.empty(0, 4);
+    public static final Border ICON = JBUI.Borders.empty(0, 4);
+    public static final Border INSTANCE = JBUI.Borders.empty(0, 6);
+    public static final Border WIDE = JBUI.Borders.empty(0, 6);
   }
 }

@@ -19,7 +19,7 @@ public abstract class ParenthesesTailType extends TailType {
 
   @Override
   public int processTail(final Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
+    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }

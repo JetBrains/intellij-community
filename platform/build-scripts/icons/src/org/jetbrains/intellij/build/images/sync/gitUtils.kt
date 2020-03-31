@@ -5,6 +5,7 @@ import java.io.File
 import java.io.IOException
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.math.max
 
 internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
@@ -43,11 +44,11 @@ private fun listGitTree(
   fileFilter: (File) -> Boolean
 ): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.relativeTo(repo)?.path ?: ""
-  log("Inspecting $repo")
+  log("Inspecting $repo/$relativeDirToList")
   if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
-    .filter { it.isNotBlank() }.map { line ->
+    .filter(String::isNotBlank).map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
       line.splitWithTab()
         .also { if (it.size != 2) error(line) }
@@ -93,7 +94,7 @@ internal data class GitObject(val path: String, val hash: String, val repo: File
  * @return root of repo
  */
 internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
-  dir.isDirectory && dir.listFiles().find { file ->
+  dir.isDirectory && dir.listFiles()?.find { file ->
     file.isDirectory && file.name == ".git"
   } != null -> {
     if (!silent) log("Git repo found in $dir")
@@ -106,17 +107,15 @@ internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
   else -> error("No git repo found in $dir")
 }
 
-internal fun unStageFiles(files: List<String>, repo: File) {
-  // OS has argument length limit
-  splitAndTry(1000, files, repo) {
-    execute(repo, GIT, "reset", "HEAD", *it.toTypedArray())
-  }
+internal fun cleanup(repo: File) {
+  execute(repo, GIT, "reset", "--hard")
+  execute(repo, GIT, "clean", "-xfd")
 }
 
 internal fun stageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
   splitAndTry(1000, files, repo) {
-    execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+    execute(repo, GIT, "add", "--no-ignore-removal", "--ignore-errors", *it.toTypedArray())
   }
 }
 
@@ -135,27 +134,53 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String): String {
-  execute(repo, GIT, "commit", "-m", message)
-  push(repo, "+$branch:$branch")
-  return commitInfo(repo)?.hash ?: error("Unable to read last commit")
+internal fun commit(repo: File, message: String, user: String, email: String) {
+  execute(
+    repo, GIT,
+    "-c", "user.name=$user",
+    "-c", "user.email=$email",
+    "commit", "-m", message,
+    "--author=$user <$email>"
+  )
+}
+
+internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String, force: Boolean = false): CommitInfo {
+  commit(repo, message, user, email)
+  push(repo, branch, user, email, force)
+  return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
 internal fun checkout(repo: File, branch: String) = execute(repo, GIT, "checkout", branch)
 
-internal fun deleteBranch(repo: File, branch: String) {
-  try {
-    push(repo, ":$branch")
+internal fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
+  retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
+    var args = arrayOf("origin", spec)
+    if (force) args += "--force"
+    execute(repo, GIT, "push", *args, withTimer = true)
   }
-  catch (e: Exception) {
-    if (e.message?.contains("remote ref does not exist") == false) throw e
+
+private fun beforePushRetry(e: Throwable, repo: File, spec: String, user: String?, email: String?): Boolean {
+  if (!isGitServerUnavailable(e)) {
+    val specParts = spec.split(':')
+    val identity = if (user != null && email != null) arrayOf(
+      "-c", "user.name=$user",
+      "-c", "user.email=$email"
+    )
+    else emptyArray()
+    execute(repo, GIT, *identity, "pull", "--rebase=true", "origin", if (specParts.count() == 2) {
+      "${specParts[1]}:${specParts[0]}"
+    }
+    else spec, withTimer = true)
   }
+  return true
 }
 
-private fun push(repo: File, spec: String) =
-  retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
-    execute(repo, GIT, "push", "origin", spec, withTimer = true)
-  }
+private fun isGitServerUnavailable(e: Throwable) = with(e.message ?: "") {
+  contains("remote end hung up unexpectedly")
+  || contains("Service is in readonly mode")
+  || contains("failed to lock")
+  || contains("Connection timed out")
+}
 
 @Volatile
 private var origins = emptyMap<File, String>()
@@ -186,11 +211,8 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = commitInfo(repo, "--", path)
+        val commitInfo = monoRepoMergeAwareCommitInfo(repo, path)
         if (commitInfo != null) {
-          if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-            return null
-          }
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
           }
@@ -202,6 +224,26 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
   return latestChangeCommits.getValue(file)
 }
 
+private fun monoRepoMergeAwareCommitInfo(repo: File, path: String) =
+  pathInfo(repo, "--", path)?.let { commitInfo ->
+    if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
+      val strippedPath = path.stripMergedRepoPrefix()
+      commitInfo.parents.asSequence().mapNotNull {
+        pathInfo(repo, it, "--", strippedPath)
+      }.firstOrNull()
+    }
+    else commitInfo
+  }
+
+private fun String.stripMergedRepoPrefix(): String = when {
+  startsWith("community/android/tools-base/") -> removePrefix("community/android/tools-base/")
+  startsWith("community/android/") -> removePrefix("community/android/")
+  startsWith("community/") -> removePrefix("community/")
+  startsWith("contrib/") -> removePrefix("contrib/")
+  startsWith("CIDR/") -> removePrefix("CIDR/")
+  else -> this
+}
+
 /**
  * @return latest commit (or merge) time
  */
@@ -210,7 +252,7 @@ internal fun latestChangeTime(path: String, repo: File): Long {
   val commit = latestChangeCommit(path, repo)
   if (commit == null) return -1
   val mergeCommit = findMergeCommit(repo, commit.hash)
-  return Math.max(commit.timestamp, mergeCommit?.timestamp ?: -1)
+  return max(commit.timestamp, mergeCommit?.timestamp ?: -1)
 }
 
 /**
@@ -225,7 +267,7 @@ private fun findMergeCommit(repo: File, commit: String, searchUntil: String = "H
     .lineSequence().filter { it.isNotBlank() }.toSet()
   // last common commit may be the latest merge
   return ancestryPathList
-    .lastOrNull { firstParentList.contains(it) }
+    .lastOrNull(firstParentList::contains)
     ?.let { commitInfo(repo, it) }
     ?.takeIf {
       // should be merge
@@ -278,64 +320,61 @@ internal fun head(repo: File): String {
   return heads.getValue(repo)
 }
 
-internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
-    .splitNotBlank("/")
-  // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
-  return if (output.size >= 5) {
-    CommitInfo(
-      repo = repo,
-      hash = output[0],
-      timestamp = output[1].splitWithSpace()[0].toLong(),
-      parents = output[2].splitWithSpace(),
-      committerEmail = output[3],
-      subject = output.subList(4, output.size)
-        .joinToString(separator = "/")
-        .removeSuffix(System.lineSeparator())
-    )
-  }
-  else null
-}
+internal fun commitInfo(repo: File, vararg args: String) = gitLog(repo, *args).singleOrNull()
+private fun pathInfo(repo: File, vararg args: String) = gitLog(repo, "--follow", *args).singleOrNull()
+private fun gitLog(repo: File, vararg args: String): List<CommitInfo> =
+  execute(
+    repo, GIT, "log",
+    "--max-count", "1",
+    "--format=%H/%cd/%P/%cn/%ce/%s",
+    "--date=raw", *args
+  ).lineSequence().mapNotNull {
+    val output = it.splitNotBlank("/")
+    // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
+    if (output.size >= 6) {
+      CommitInfo(
+        repo = repo,
+        hash = output[0],
+        timestamp = output[1].splitWithSpace()[0].toLong(),
+        parents = output[2].splitWithSpace(),
+        committer = Committer(name = output[3], email = output[4]),
+        subject = output.subList(5, output.size)
+          .joinToString(separator = "/")
+          .removeSuffix(System.lineSeparator())
+      )
+    }
+    else null
+  }.toList()
 
 internal data class CommitInfo(
   val hash: String,
   val timestamp: Long,
   val subject: String,
+  val committer: Committer,
   val parents: List<String>,
-  val committerEmail: String,
   val repo: File
 )
 
-internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T): T {
-  val (originalUser, originalEmail) = callSafely(printStackTrace = false) {
-    execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator()) to
-      execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
-  } ?: "" to ""
-  return try {
-    configureUser(repo, user, email)
-    block()
-  }
-  finally {
-    callSafely {
-      configureUser(repo, originalUser, originalEmail)
-    }
-  }
-}
+internal data class Committer(val name: String, val email: String)
 
-private fun configureUser(repo: File, user: String, email: String) {
-  execute(repo, GIT, "config", "user.name", user)
-  execute(repo, GIT, "config", "user.email", email)
-}
-
-internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
+internal fun gitStatus(repo: File, includeUntracked: Boolean = false) = Changes().apply {
   execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")
     .lineSequence()
-    .map(String::trim)
-    .filter(String::isNotEmpty)
-    .map { if (it.contains("->")) it.split("->").last() else it }
-    .map { if (it.contains(" ")) it.split(" ").last() else it }
-    .map(String::trim)
-    .toList()
+    .filter(String::isNotBlank)
+    .forEach {
+      val (status, path) = it.splitToSequence("->", " ")
+        .filter(String::isNotBlank)
+        .map(String::trim)
+        .toList()
+      val type = when(status) {
+        "A", "??" -> Changes.Type.ADDED
+        "M" -> Changes.Type.MODIFIED
+        "D" -> Changes.Type.DELETED
+        else -> error("Unknown change type: $status. Git status line: $it")
+      }
+      register(type, listOf(path))
+    }
+}
 
 internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
 
@@ -357,9 +396,9 @@ internal fun changesFromCommit(repo: File, hash: String) =
     }.filterNotNull().groupBy({ it.first }, { it.second })
 
 internal fun gitClone(uri: String, dir: File): File {
-  val filesBeforeClone = dir.listFiles().toList()
+  val filesBeforeClone = dir.listFiles()?.toList() ?: emptyList()
   execute(dir, GIT, "clone", uri)
-  return (dir.listFiles().toList() - filesBeforeClone).first {
+  return ((dir.listFiles()?.toList() ?: emptyList()) - filesBeforeClone).first {
     uri.contains(it.name)
   }
 }

@@ -11,4 +11,4 @@ private List foo(i) {
 }
 
 
-a.<ref>intValue()
+a.<caret>intValue()

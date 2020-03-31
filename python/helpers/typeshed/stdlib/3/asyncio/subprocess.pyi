@@ -2,20 +2,17 @@ from asyncio import events
 from asyncio import protocols
 from asyncio import streams
 from asyncio import transports
-from asyncio.coroutines import coroutine
-from typing import Any, Generator, List, Optional, Text, Tuple, Union, IO
+from typing import Any, Optional, Text, Tuple, Union, IO
 
-__all__: List[str]
-
-PIPE = ...  # type: int
-STDOUT = ...  # type: int
-DEVNULL = ...  # type: int
+PIPE: int
+STDOUT: int
+DEVNULL: int
 
 class SubprocessStreamProtocol(streams.FlowControlMixin,
                                protocols.SubprocessProtocol):
-    stdin = ...  # type: Optional[streams.StreamWriter]
-    stdout = ...  # type: Optional[streams.StreamReader]
-    stderr = ...  # type: Optional[streams.StreamReader]
+    stdin: Optional[streams.StreamWriter]
+    stdout: Optional[streams.StreamReader]
+    stderr: Optional[streams.StreamReader]
     def __init__(self, limit: int, loop: events.AbstractEventLoop) -> None: ...
     def connection_made(self, transport: transports.BaseTransport) -> None: ...
     def pipe_data_received(self, fd: int, data: Union[bytes, Text]) -> None: ...
@@ -24,27 +21,24 @@ class SubprocessStreamProtocol(streams.FlowControlMixin,
 
 
 class Process:
-    stdin = ...  # type: Optional[streams.StreamWriter]
-    stdout = ...  # type: Optional[streams.StreamReader]
-    stderr = ...  # type: Optional[streams.StreamReader]
-    pid = ...  # type: int
+    stdin: Optional[streams.StreamWriter]
+    stdout: Optional[streams.StreamReader]
+    stderr: Optional[streams.StreamReader]
+    pid: int
     def __init__(self,
                  transport: transports.BaseTransport,
                  protocol: protocols.BaseProtocol,
                  loop: events.AbstractEventLoop) -> None: ...
     @property
     def returncode(self) -> int: ...
-    @coroutine
-    def wait(self) -> Generator[Any, None, int]: ...
+    async def wait(self) -> int: ...
     def send_signal(self, signal: int) -> None: ...
     def terminate(self) -> None: ...
     def kill(self) -> None: ...
-    @coroutine
-    def communicate(self, input: Optional[bytes] = ...) -> Generator[Any, None, Tuple[bytes, bytes]]: ...
+    async def communicate(self, input: Optional[bytes] = ...) -> Tuple[bytes, bytes]: ...
 
 
-@coroutine
-def create_subprocess_shell(
+async def create_subprocess_shell(
     *Args: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue  #1236
     stdin: Union[int, IO[Any], None] = ...,
     stdout: Union[int, IO[Any], None] = ...,
@@ -52,10 +46,9 @@ def create_subprocess_shell(
     loop: events.AbstractEventLoop = ...,
     limit: int = ...,
     **kwds: Any
-) -> Generator[Any, None, Process]: ...
+) -> Process: ...
 
-@coroutine
-def create_subprocess_exec(
+async def create_subprocess_exec(
     program: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue  #1236
     *args: Any,
     stdin: Union[int, IO[Any], None] = ...,
@@ -64,4 +57,4 @@ def create_subprocess_exec(
     loop: events.AbstractEventLoop = ...,
     limit: int = ...,
     **kwds: Any
-) -> Generator[Any, None, Process]: ...
+) -> Process: ...

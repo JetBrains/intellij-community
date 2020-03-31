@@ -95,7 +95,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
       final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
-      useEquals = aClass != null && !aClass.isEnum() && !TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName());
+      String fqn;
+      useEquals = aClass != null && !aClass.isEnum() && ((fqn = aClass.getQualifiedName()) == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
     }
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {
@@ -303,6 +304,12 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       firstCaseValue = false;
       if (useEquals) {
         out.append(caseValue).append(".equals(").append(expressionText).append(')');
+      }
+      else if (caseValue.equals("true")) {
+        out.append(expressionText);
+      }
+      else if (caseValue.equals("false")) {
+        out.append("!(").append(expressionText).append(")");
       }
       else {
         out.append(expressionText).append("==").append(caseValue);

@@ -28,7 +28,8 @@ public class ProtocolParser {
     if (!"call_signature".equals(reader.getNodeName())) {
       throw new PyDebuggerException("Expected <call_signature>, found " + reader.getNodeName());
     }
-    final String file = readString(reader, "file", "");
+    String file = reader.getAttribute("file");
+    if (file == null) file = "";
     final String name = readString(reader, "name", "");
     PySignature signature = new PySignature(file, name);
 
@@ -209,7 +210,7 @@ public class ProtocolParser {
 
     final String id = readString(reader, "id", null);
     final String name = readString(reader, "name", null);
-    final String file = readString(reader, "file", null);
+    final String file = reader.getAttribute("file");
     final int line = readInt(reader, "line", 0);
 
     return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
@@ -276,12 +277,13 @@ public class ProtocolParser {
     final String isReturnedValue = readString(reader, "isRetVal", "");
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
+    String shape = readString(reader, "shape", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
-
-    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), "True".equals(isReturnedValue),
+    if (shape.isEmpty()) shape = null;
+    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                             "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), frameAccessor);
   }
 
@@ -301,7 +303,7 @@ public class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, false, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {
@@ -311,6 +313,19 @@ public class ProtocolParser {
     Object[][] data = parseArrayValues(reader, frameAccessor);
     result.setData(data);
     return result.createArrayChunk();
+  }
+
+  public static @NotNull List<Pair<String, Boolean>> parseSmartStepIntoVariants(String text) throws PyDebuggerException {
+    XppReader reader = openReader(text, false);
+    List<Pair<String, Boolean>> variants = Lists.newArrayList();
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      String variantName = read(reader, "name", true);
+      Boolean isVisited = read(reader, "isVisited", true).equals("true");
+      variants.add(Pair.create(variantName, isVisited));
+      reader.moveUp();
+    }
+    return variants;
   }
 
   private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {

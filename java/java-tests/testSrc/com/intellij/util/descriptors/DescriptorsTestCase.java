@@ -7,15 +7,12 @@ package com.intellij.util.descriptors;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
-public abstract class DescriptorsTestCase extends PlatformTestCase {
+public abstract class DescriptorsTestCase extends HeavyPlatformTestCase {
   protected ConfigFileMetaDataProvider myMetaDataProvider;
   protected ConfigFileMetaData myMetaData;
 

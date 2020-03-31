@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -88,7 +89,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
       manager.addMacro(macro);
       removedIds.remove(macro.getActionId());
     }
-    manager.registerActions();
+    manager.registerActions(ActionManager.getInstance());
 
     for (String id : removedIds) {
       Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();

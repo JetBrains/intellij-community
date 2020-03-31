@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
@@ -23,7 +22,6 @@ import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +33,8 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
                                                                            XmlElementType {
 
   private final NotNullLazyValue<XmlContentParticle[]> myParticles = new NotNullLazyValue<XmlContentParticle[]>() {
-    @NotNull
     @Override
-    protected XmlContentParticle[] compute() {
+    protected XmlContentParticle @NotNull [] compute() {
       return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), astNode -> {
         PsiElement element = astNode.getPsi();
         assert element != null;

@@ -56,14 +56,6 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
     nonReproducibleMethods.add("tanh");
   }
 
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.reproducible.math.call.display.name");
-  }
-
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {

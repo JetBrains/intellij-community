@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.EditorKit;
@@ -47,22 +50,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image);
   }
 
-  public JBLabel(@NotNull String text) {
+  public JBLabel(@NotNull @NlsUI.Label String text) {
     super(text);
   }
 
-  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
     setComponentStyle(componentStyle);
   }
 
-  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
     super(text);
     setComponentStyle(componentStyle);
     setFontColor(fontColor);
   }
 
-  public JBLabel(@NotNull String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
@@ -70,7 +73,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image, horizontalAlignment);
   }
 
-  public JBLabel(@NotNull String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 
@@ -144,7 +147,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsUI.Label String text) {
     super.setText(text);
     if (myEditorPane != null) {
       myEditorPane.setText(getText());
@@ -163,6 +166,18 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
       updateTextAlignment();
     }
   }
+
+  public void setIconWithAlignment(Icon icon, int horizontalAlignment, int verticalAlignment) {
+    super.setIcon(icon);
+    if (myIconLabel != null) {
+      myIconLabel.setIcon(icon);
+      myIconLabel.setHorizontalAlignment(horizontalAlignment);
+      myIconLabel.setVerticalAlignment(verticalAlignment);
+      updateLayout();
+      updateTextAlignment();
+    }
+  }
+
 
   @Override
   public void setFocusable(boolean focusable) {
@@ -228,6 +243,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   /**
+   * This listener will be used in 'copyable' mode when a link is updated (clicked, entered, etc.).
+   */
+  @NotNull
+  protected HyperlinkListener createHyperlinkListener() {
+    return BrowserHyperlinkListener.INSTANCE;
+  }
+
+  /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
    * Also 'copyable' label supports web hyperlinks (e.g. opens browser on click)
@@ -283,8 +306,8 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
-        myEditorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+        myEditorPane.addHyperlinkListener(createHyperlinkListener());
+        ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);

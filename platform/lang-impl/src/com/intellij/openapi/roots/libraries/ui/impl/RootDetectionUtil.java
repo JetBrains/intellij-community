@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryRootType;
 import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
@@ -41,11 +42,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class RootDetectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil");
+  private static final Logger LOG = Logger.getInstance(RootDetectionUtil.class);
 
   private RootDetectionUtil() {
   }
@@ -62,10 +60,10 @@ public class RootDetectionUtil {
   @NotNull
   public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
                                             @Nullable Project project, @NotNull final LibraryRootsDetector detector,
-                                            @NotNull OrderRootType[] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
+                                            OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<>();
-    new Task.Modal(project, "Scanning for Roots", true) {
+    new Task.Modal(project, ProjectBundle.message("progress.title.scanning.for.roots"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

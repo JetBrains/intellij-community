@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,15 @@ import javax.swing.*;
 /**
  * Describes a filetype.
  * <p/>
- * Must be registered via {@link com.intellij.openapi.fileTypes.FileTypeFactory}. If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
+ * Must be registered via {@code com.intellij.fileType} extension point or {@link com.intellij.openapi.fileTypes.FileTypeFactory}.
+ * If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
  * can be used for non-static mapping.
  * <p/>
  * Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.
  *
  * @see com.intellij.openapi.fileTypes.StdFileTypes
  * @see com.intellij.openapi.fileTypes.FileTypes
+ * @see INativeFileType
  */
 public interface FileType extends Scheme {
   FileType[] EMPTY_ARRAY = new FileType[0];
@@ -54,6 +57,7 @@ public interface FileType extends Scheme {
    */
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getDescription();
 
   /**
@@ -100,5 +104,5 @@ public interface FileType extends Scheme {
    */
   @Nullable
   @NonNls
-  String getCharset(@NotNull VirtualFile file, @NotNull byte[] content);
+  String getCharset(@NotNull VirtualFile file, byte @NotNull [] content);
 }

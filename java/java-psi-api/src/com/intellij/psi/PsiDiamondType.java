@@ -35,9 +35,8 @@ public abstract class PsiDiamondType extends PsiType {
 
   public static class DiamondInferenceResult {
     public static final DiamondInferenceResult EXPLICIT_CONSTRUCTOR_TYPE_ARGS = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -48,9 +47,8 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult NULL_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -61,9 +59,8 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult RAW_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -74,9 +71,8 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult UNRESOLVED_CONSTRUCTOR = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -87,9 +83,8 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult ANONYMOUS_INNER_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -109,8 +104,7 @@ public abstract class PsiDiamondType extends PsiType {
       myNewExpressionPresentableText = expressionPresentableText;
     }
 
-    @NotNull
-    public PsiType[] getTypes() {
+    public PsiType @NotNull [] getTypes() {
       return myErrorMessage == null ? myInferredTypes.toArray(createArray(myInferredTypes.size())) : PsiType.EMPTY_ARRAY;
     }
 

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,7 +30,8 @@ public class ExecutorManager {
       }
     });
 
-  public static Future<?> execute(Runnable r) {
+  @NotNull
+  public static <T> Future<T> execute(@NotNull Callable<T> r) {
     return myExecutor.submit(r);
   }
 }

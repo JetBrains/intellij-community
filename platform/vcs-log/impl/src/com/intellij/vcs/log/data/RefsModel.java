@@ -64,7 +64,16 @@ public class RefsModel implements VcsLogRefs {
     return myRefs;
   }
 
-  public Collection<VcsRef> refsToCommit(int index) {
+  @NotNull
+  public List<VcsRef> refsToCommit(int index) {
+    if (myRefs.size() <= 10) {
+      for (CompressedRefs refs : myRefs.values()) {
+        if (refs.contains(index)) {
+          return refs.refsToCommit(index);
+        }
+      }
+      return Collections.emptyList();
+    }
     CommitId id = myStorage.getCommitId(index);
     if (id == null) return Collections.emptyList();
     VirtualFile root = id.getRoot();
@@ -82,5 +91,10 @@ public class RefsModel implements VcsLogRefs {
   public Stream<VcsRef> stream() {
     assert !ApplicationManager.getApplication().isDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
+  }
+
+  @NotNull
+  public static RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
+    return new RefsModel(Collections.emptyMap(), Collections.emptySet(), storage, Collections.emptyMap());
   }
 }

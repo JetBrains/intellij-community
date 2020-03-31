@@ -47,7 +47,7 @@ public interface RemoteDebugger extends Remote {
 
   Frame getSourceFrame() throws RemoteException;
 
-  Value eval(String expr) throws RemoteException, Debugger.EvaluationException;
+  Value eval(String expr, String accessToken) throws RemoteException, Debugger.EvaluationException;
 
   List<Variable> getGlobalVariables() throws RemoteException;
 
@@ -76,7 +76,7 @@ public interface RemoteDebugger extends Remote {
 
     String getXPath() throws RemoteException;
 
-    Value eval(String expr) throws RemoteException, Debugger.EvaluationException;
+    Value eval(String expr, String accessToken) throws RemoteException, Debugger.EvaluationException;
 
     List<Variable> getVariables() throws RemoteException;
 

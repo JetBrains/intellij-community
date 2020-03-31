@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -155,14 +157,14 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     super.paintComponent(g);
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
-      g.setColor(UIUtil.getBorderColor());
+      g.setColor(JBColor.border());
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
-        UIUtil.drawLine(g, 0, y, getWidth(), y);
+        LinePainter2D.paint((Graphics2D)g, 0, y, getWidth(), y);
       }
       else {
         int x = (int)myToolbar.getBounds().getMaxX();
-        UIUtil.drawLine(g, x, 0, x, getHeight());
+        LinePainter2D.paint((Graphics2D)g, x, 0, x, getHeight());
       }
     }
   }

@@ -25,7 +25,7 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
   public static <T> SimpleListCellRenderer<T> create(@NotNull String nullValue, @NotNull Function<? super T, String> getText) {
     return new SimpleListCellRenderer<T>() {
       @Override
-      public void customize(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         setText(value == null ? nullValue : getText.fun(value));
       }
     };
@@ -35,7 +35,7 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
   public static <T> SimpleListCellRenderer<T> create(@NotNull Customizer<? super T> customizer) {
     return new SimpleListCellRenderer<T>() {
       @Override
-      public void customize(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         customizer.customize(this, value, index);
       }
     };
@@ -66,7 +66,7 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
     return this;
   }
 
-  public abstract void customize(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
+  public abstract void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
 
   @Override
   public Dimension getPreferredSize() {

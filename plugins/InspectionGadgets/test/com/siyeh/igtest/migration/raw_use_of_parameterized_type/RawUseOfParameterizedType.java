@@ -27,6 +27,14 @@ class RawUseOfParameterizedType {
   void innerClass() {
     Map.Entry<String, String> entry;
   }
+
+  interface Foo {
+    List<?>[] fun(int size);
+  }
+
+  Foo methodRef() {
+    return List[]::new;
+  }
 }
 interface X {
   <warning descr="Raw use of parameterized class 'List'">List</warning> foo(<warning descr="Raw use of parameterized class 'Map'">Map</warning> map);

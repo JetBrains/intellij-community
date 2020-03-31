@@ -9,6 +9,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionManagerBase extends InspectionManager {
   private final Project myProject;
@@ -33,7 +34,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
 
   @NotNull
   @Override
-  public ModuleProblemDescriptor createProblemDescriptor(@Nls @NotNull String descriptionTemplate, Module module, QuickFix... fixes) {
+  public ModuleProblemDescriptor createProblemDescriptor(@Nls @NotNull String descriptionTemplate, @NotNull Module module, QuickFix... fixes) {
     return new ModuleProblemDescriptorImpl(fixes, descriptionTemplate, module);
   }
 
@@ -62,7 +63,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
-                                                   LocalQuickFix[] fixes,
+                                                   LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    boolean isAfterEndOfLine) {
@@ -167,5 +168,9 @@ public abstract class InspectionManagerBase extends InspectionManager {
       }
     }
     return myCurrentProfileName;
+  }
+
+  public void setProfile(@NotNull String name) {
+    myCurrentProfileName = name;
   }
 }

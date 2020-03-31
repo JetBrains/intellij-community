@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.RequestHint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  */
-public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
+public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements SteppingBreakpoint {
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
@@ -44,13 +45,14 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
     return myCustomPosition.getFile().getName();
   }
 
+  @Override
   public boolean isRestoreBreakpoints() {
     return myRestoreBreakpoints;
   }
 
   @Override
   public String getEventMessage(LocatableEvent event) {
-    return DebuggerBundle.message("status.stopped.at.cursor");
+    return JavaDebuggerBundle.message("status.stopped.at.cursor");
   }
 
   @Nullable
@@ -74,5 +76,14 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
       return null;
     }
     return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
+  }
+
+  @Override
+  public void setRequestHint(RequestHint hint) {
+  }
+
+  @Override
+  public boolean track() {
+    return false;
   }
 }

@@ -35,10 +35,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +68,7 @@ public class MavenResumeAction extends AnAction {
 
   private final ProgramRunner myRunner;
   private final ExecutionEnvironment myEnvironment;
+  private final MavenParsingContext myContext;
 
   private int myState = STATE_INITIAL;
 
@@ -74,116 +80,39 @@ public class MavenResumeAction extends AnAction {
 
   private String myResumeModuleId;
 
+  private String myMavenVersion;
+
   public MavenResumeAction(ProcessHandler processHandler,
                            ProgramRunner runner,
-                           ExecutionEnvironment environment) {
-    super("Resume build from specified module", null, AllIcons.RunConfigurations.RerunFailedTests);
+                           ExecutionEnvironment environment,
+                           MavenParsingContext context) {
+    super(RunnerBundle.message("maven.resume.from.title"), null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
     myEnvironment = environment;
+    myContext = context;
 
     final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
+    myMavenVersion = getMavenVersion(runConfiguration);
+
 
     getTemplatePresentation().setEnabled(false);
 
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void processTerminated(@NotNull ProcessEvent event) {
-        if (myState == STATE_WTF) return;
+    if (VersionComparatorUtil.compare(myMavenVersion, "3.5.3") < 0 || context == null) {
+      processHandler.addProcessListener(new LegacyMavenResumeProcessAdapter(runConfiguration));
+    }
+    else {
+      processHandler.addProcessListener(new MavenSpyResumeProcessAdapter(runConfiguration));
+    }
+  }
 
-        if (event.getExitCode() == 0 && myBuildingProjectIndex != myMavenProjectNames.size()) {
-          log(String.format("Build was success, but not all project was build. Project build order: %s, build index: %d",
-                            myMavenProjectNames,
-                            myBuildingProjectIndex ));
-        }
-
-        if (event.getExitCode() == 1 && myBuildingProjectIndex > 0) {
-          if (myBuildingProjectIndex == 1 && !hasResumeFromParameter(runConfiguration)) {
-            return;
-          }
-
-          myResumeFromModuleName = myMavenProjectNames.get(myBuildingProjectIndex - 1);
-
-          MavenProject mavenProject = findProjectByName(myResumeFromModuleName);
-          if (mavenProject != null) {
-            myResumeModuleId = mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId();
-          }
-        }
-      }
-
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType != ProcessOutputTypes.STDOUT) return;
-
-        String text = event.getText().trim();
-        if (text.isEmpty()) return;
-
-        String textWithoutInfo = "";
-        if (text.startsWith("[INFO] ")) {
-          textWithoutInfo = text.substring("[INFO] ".length()).trim();
-        }
-
-        switch (myState) {
-          case STATE_INITIAL: // initial state.
-            if (textWithoutInfo.equals("Reactor build order:")) {
-              myState = STATE_READING_PROJECT_LIST_OLD_MAVEN;
-            }
-            else if (textWithoutInfo.equals("Reactor Build Order:")) {
-              myState = STATE_READING_PROJECT_LIST;
-            }
-            break;
-
-          case STATE_READING_PROJECT_LIST:
-            if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
-              myState = STATE_WAIT_FOR_BUILD;
-            }
-            else if (textWithoutInfo.length() > 0) {
-              myMavenProjectNames.add(textWithoutInfo);
-            } else if (!myMavenProjectNames.isEmpty()) {
-              myState = STATE_WAIT_FOR______;
-            }
-            break;
-
-          case STATE_READING_PROJECT_LIST_OLD_MAVEN:
-            if (textWithoutInfo.length() > 0) {
-              if (text.startsWith("[INFO]   ")) {
-                myMavenProjectNames.add(textWithoutInfo);
-              }
-              else {
-                myState = STATE_WAIT_FOR_BUILD;
-              }
-            }
-            break;
-
-          case STATE_WAIT_FOR_BUILD:
-            if (textWithoutInfo.startsWith("Building ")) {
-              String projectName = textWithoutInfo.substring("Building ".length());
-              if (myBuildingProjectIndex >= myMavenProjectNames.size() ||
-                  !projectName.startsWith(myMavenProjectNames.get(myBuildingProjectIndex))) {
-                myState = STATE_WTF;
-                log(String.format("Invalid project building order. Defined order: %s, error index: %d, invalid line: %s",
-                                  myMavenProjectNames, myBuildingProjectIndex, text));
-                break;
-              }
-
-              myBuildingProjectIndex++;
-            }
-            myState = STATE_WAIT_FOR______;
-            break;
-
-          case STATE_WAIT_FOR______:
-            if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
-              myState = STATE_WAIT_FOR_BUILD;
-            }
-            break;
-
-          case STATE_WTF:
-            break;
-
-          default:
-            throw new IllegalStateException();
-        }
-      }
-    });
+  private static String getMavenVersion(MavenRunConfiguration runConfiguration) {
+    MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
+    if (generalSettings == null) {
+      return MavenServerManager.getInstance().getCurrentMavenVersion();
+    }
+    else {
+      return MavenUtil.getMavenVersion(generalSettings.getEffectiveMavenHome());
+    }
   }
 
   private static boolean hasResumeFromParameter(MavenRunConfiguration runConfiguration) {
@@ -279,7 +208,10 @@ public class MavenResumeAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     if (myResumeFromModuleName != null && myResumeModuleId != null) {
       e.getPresentation().setEnabled(true);
-      e.getPresentation().setText("Resume build from \"" + myResumeFromModuleName + "\"");
+      e.getPresentation().setText(RunnerBundle.message("maven.resume.from.template",  myResumeFromModuleName));
+    }
+    else {
+      e.getPresentation().setEnabled(false);
     }
   }
 
@@ -307,6 +239,150 @@ public class MavenResumeAction extends AnAction {
     }
     catch (ExecutionException e1) {
       Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
+    }
+  }
+
+  private class LegacyMavenResumeProcessAdapter extends ProcessAdapter {
+    private final MavenRunConfiguration myRunConfiguration;
+
+    LegacyMavenResumeProcessAdapter(MavenRunConfiguration runConfiguration) {myRunConfiguration = runConfiguration;}
+
+    @Override
+    public void processTerminated(@NotNull ProcessEvent event) {
+      if (myState == STATE_WTF) return;
+
+      if (event.getExitCode() == 0 && myBuildingProjectIndex != myMavenProjectNames.size()) {
+        log(String.format("Build was success, but not all project was build. Project build order: %s, build index: %d",
+                          myMavenProjectNames,
+                          myBuildingProjectIndex));
+      }
+
+      if (event.getExitCode() == 1 && myBuildingProjectIndex > 0) {
+        if (myBuildingProjectIndex == 1 && !hasResumeFromParameter(myRunConfiguration)) {
+          return;
+        }
+
+        myResumeFromModuleName = myMavenProjectNames.get(myBuildingProjectIndex - 1);
+
+        MavenProject mavenProject = findProjectByName(myResumeFromModuleName);
+        if (mavenProject != null) {
+          myResumeModuleId = mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId();
+        }
+      }
+    }
+
+    @Override
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+      if (outputType != ProcessOutputTypes.STDOUT) return;
+
+      String text = event.getText().trim();
+      if (text.isEmpty()) return;
+
+      String textWithoutInfo = "";
+      if (text.startsWith("[INFO] ")) {
+        textWithoutInfo = text.substring("[INFO] ".length()).trim();
+      }
+
+      switch (myState) {
+        case STATE_INITIAL: // initial state.
+          if (textWithoutInfo.equals("Reactor build order:")) {
+            myState = STATE_READING_PROJECT_LIST_OLD_MAVEN;
+          }
+          else if (textWithoutInfo.equals("Reactor Build Order:")) {
+            myState = STATE_READING_PROJECT_LIST;
+          }
+          break;
+
+        case STATE_READING_PROJECT_LIST:
+          if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
+            myState = STATE_WAIT_FOR_BUILD;
+          }
+          else if (textWithoutInfo.length() > 0) {
+            myMavenProjectNames.add(textWithoutInfo);
+          }
+          else if (!myMavenProjectNames.isEmpty()) {
+            myState = STATE_WAIT_FOR______;
+          }
+          break;
+
+        case STATE_READING_PROJECT_LIST_OLD_MAVEN:
+          if (textWithoutInfo.length() > 0) {
+            if (text.startsWith("[INFO]   ")) {
+              myMavenProjectNames.add(textWithoutInfo);
+            }
+            else {
+              myState = STATE_WAIT_FOR_BUILD;
+            }
+          }
+          break;
+
+        case STATE_WAIT_FOR_BUILD:
+          if (textWithoutInfo.startsWith("Building ")) {
+            String projectName = textWithoutInfo.substring("Building ".length());
+            if (myBuildingProjectIndex >= myMavenProjectNames.size() ||
+                !projectName.startsWith(myMavenProjectNames.get(myBuildingProjectIndex))) {
+              myState = STATE_WTF;
+              log(String.format("Invalid project building order. Defined order: %s, error index: %d, invalid line: %s",
+                                myMavenProjectNames, myBuildingProjectIndex, text));
+              break;
+            }
+
+            myBuildingProjectIndex++;
+          }
+          myState = STATE_WAIT_FOR______;
+          break;
+
+        case STATE_WAIT_FOR______:
+          if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
+            myState = STATE_WAIT_FOR_BUILD;
+          }
+          break;
+
+        case STATE_WTF:
+          break;
+
+        default:
+          throw new IllegalStateException();
+      }
+    }
+  }
+
+  private class MavenSpyResumeProcessAdapter extends ProcessAdapter {
+    private final MavenRunConfiguration myRunConfiguration;
+
+    MavenSpyResumeProcessAdapter(MavenRunConfiguration runConfiguration) {
+
+      myRunConfiguration = runConfiguration;
+    }
+
+    @Override
+    public void processTerminated(@NotNull ProcessEvent event) {
+      myContext.getStartedProjects();
+
+      if (event.getExitCode() == 0 &&
+          myContext.getStartedProjects().size() != 0 &&
+          myContext.getProjectsInReactor().size() != myContext.getStartedProjects().size()) {
+        log(String.format("Build was success, but not all project was build. Project build order: %s, built projects: %s",
+                          myContext.getProjectsInReactor(),
+                          myContext.getStartedProjects()));
+      }
+      if (event.getExitCode() != 0) {
+        if (myContext.getStartedProjects().isEmpty()) {
+          return;
+        }
+        if (myContext.getStartedProjects().size() == 1 && !hasResumeFromParameter(myRunConfiguration)) {
+          return;
+        }
+
+        myResumeModuleId = myContext.getStartedProjects().get(myContext.getStartedProjects().size() - 1);
+        String[] splitted = myResumeModuleId.split(":");
+        if (splitted.length < 2) {
+          myResumeFromModuleName = myResumeModuleId;
+        }
+        else {
+          myResumeFromModuleName = splitted[1];
+        }
+      }
     }
   }
 }

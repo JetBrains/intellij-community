@@ -1,19 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -21,5 +9,23 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public interface CustomizeIDEWizardStepsProvider {
+  /**
+   * Called for the initial IDE customization wizard, which is shown before the splash screen.
+   * The provided steps run before an {@link com.intellij.openapi.application.Application} instance is created,
+   * and thus can change the list of enabled plugins.
+   * If no steps are provided, the dialog is not shown, and loading proceeds to the splash screen.
+   */
   void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps);
+
+  /**
+   * Called for an optional secondary customization dialog shown after the splash screen, right before the welcome screen.
+   * The provided steps run after the {@link com.intellij.openapi.application.Application} is created and initialized.
+   * If no steps are provided, the secondary dialog is not shown, and loading proceeds to the welcome screen.
+   */
+  default void initStepsAfterSplash(@NotNull CustomizeIDEWizardDialog wizardDialog,
+                                    @NotNull List<AbstractCustomizeWizardStep> steps) {}
+
+  default boolean hideSkipButton() {
+    return false;
+  }
 }

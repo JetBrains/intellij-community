@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LazyFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,17 +26,19 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  public BuildTextConsoleView(Project project) {
-    this(project, false);
-  }
-
-  public BuildTextConsoleView(@NotNull Project project, boolean viewer) {
-    super(project, viewer);
+  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<Filter> executionFilters) {
+    super(project, GlobalSearchScope.allScope(project), viewer, false);
+    // add build execution filters with higher priority than all other predefined message filters
+    executionFilters.forEach(this::addMessageFilter);
+    addPredefinedMessageFilters();
   }
 
   @Override
-  public void onEvent(@NotNull BuildEvent event) {
-    if (event instanceof FileMessageEvent) {
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+    if (event instanceof BuildIssueEvent) {
+      BuildConsoleUtils.print(this, ((BuildIssueEvent)event).getGroup(), ((BuildIssueEvent)event).getIssue());
+    }
+    else if (event instanceof FileMessageEvent) {
       boolean isStdOut = ((FileMessageEvent)event).getResult().getKind() != MessageEvent.Kind.ERROR;
       String description = event.getDescription();
       if (description != null) {
@@ -135,6 +126,12 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     print(text, ConsoleViewContentType.getConsoleViewType(attributes));
+  }
+
+  private void addPredefinedMessageFilters() {
+    List<Filter> predefinedMessageFilters =
+      ConsoleViewUtil.computeConsoleFilters(getProject(), this, GlobalSearchScope.allScope(getProject()));
+    predefinedMessageFilters.forEach(this::addMessageFilter);
   }
 }
 

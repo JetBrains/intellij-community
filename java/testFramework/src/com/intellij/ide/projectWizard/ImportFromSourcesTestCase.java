@@ -15,7 +15,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
-public abstract class ImportFromSourcesTestCase extends PlatformTestCase {
+public abstract class ImportFromSourcesTestCase extends HeavyPlatformTestCase {
   private ProjectFromSourcesBuilderImpl myBuilder;
   private File myRootDir;
 

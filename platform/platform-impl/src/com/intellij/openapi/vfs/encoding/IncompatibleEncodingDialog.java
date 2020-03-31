@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -45,7 +32,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     this.charset = charset;
     this.safeToReload = safeToReload;
     this.safeToConvert = safeToConvert;
-    setTitle(virtualFile.getName() + ": Reload or Convert to "+charset.displayName());
+    setTitle(IdeBundle.message("dialog.title.0.reload.or.convert.to.1", virtualFile.getName(), charset.displayName()));
     init();
   }
 
@@ -62,10 +49,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     return label;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    DialogWrapperAction reloadAction = new DialogWrapperAction("Reload") {
+  protected Action @NotNull [] createActions() {
+    DialogWrapperAction reloadAction = new DialogWrapperAction(IdeBundle.message("button.reload")) {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToReload == EncodingUtil.Magic8.NO_WAY) {
@@ -102,7 +88,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       reloadAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     reloadAction.putValue(Action.MNEMONIC_KEY, (int)'R');
-    DialogWrapperAction convertAction = new DialogWrapperAction("Convert") {
+    DialogWrapperAction convertAction = new DialogWrapperAction(IdeBundle.message("button.convert")) {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
@@ -113,7 +99,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
               (error == null
                ? "Encoding '" + charset.displayName() + "' does not support some characters from the text."
                : EncodingUtil.reasonToString(error, virtualFile))),
-            "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
+            IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()), new String[]{"Convert anyway", "Cancel"}, 1,
             AllIcons.General.WarningDialog);
           if (res != 0) {
             doCancelAction();

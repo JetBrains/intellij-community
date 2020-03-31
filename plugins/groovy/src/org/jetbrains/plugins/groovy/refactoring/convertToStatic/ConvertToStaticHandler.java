@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     invokeInner(project, elements);
   }
 
@@ -37,7 +38,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
     new ConvertToStaticProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
   }
 
-  public static Set<GroovyFile> collectFilesForProcessing(@NotNull PsiElement[] elements) {
+  public static Set<GroovyFile> collectFilesForProcessing(PsiElement @NotNull [] elements) {
     Set<GroovyFile> files = new HashSet<>();
     for (PsiElement element : elements) {
       PsiFile containingFile = element.getContainingFile();
@@ -50,7 +51,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
         if (module != null) {
           ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
           index.iterateContentUnderDirectory(directory.getVirtualFile(), file -> {
-            if (!file.isDirectory() && index.isInSourceContent(file) && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType()) {
+            if (!file.isDirectory() && index.isInSourceContent(file) && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
               PsiFile psiFile = element.getManager().findFile(file);
               if (psiFile instanceof GroovyFile) {
                 files.add((GroovyFile)psiFile);

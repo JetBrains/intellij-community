@@ -12,6 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module-library">
       <library name="XmlBeans" type="repository">
@@ -33,7 +34,6 @@
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">

@@ -9,11 +9,9 @@ import com.intellij.execution.dashboard.RunDashboardCustomizer;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.PsiNavigateUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.event.MouseEvent;
 
 public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
   @Override
@@ -26,12 +24,9 @@ public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
   }
 
   @Override
-  public boolean handleDoubleClick(@NotNull MouseEvent event, @NotNull RunDashboardRunConfigurationNode node) {
-    PsiClass mainClass = findMainClass(node.getConfigurationSettings().getConfiguration());
-    if (mainClass == null || !mainClass.isValid()) return false;
-
-    PsiNavigateUtil.navigate(mainClass);
-    return true;
+  @Nullable
+  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
+    return findMainClass(node.getConfigurationSettings().getConfiguration());
   }
 
   @Nullable

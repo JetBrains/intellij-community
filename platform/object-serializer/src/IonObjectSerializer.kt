@@ -4,10 +4,9 @@ package com.intellij.serialization
 import com.amazon.ion.IonException
 import com.amazon.ion.IonType
 import com.amazon.ion.IonWriter
-import com.amazon.ion.system.IonBinaryWriterBuilder
+import com.amazon.ion.impl.bin._Private_IonManagedBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
-import com.amazon.ion.system.IonWriterBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import java.io.IOException
@@ -17,7 +16,7 @@ import java.lang.reflect.Type
 import java.nio.file.Path
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 1
+private const val FORMAT_VERSION = 3
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
@@ -29,7 +28,7 @@ internal class IonObjectSerializer {
 
   @Throws(IOException::class)
   fun writeVersioned(obj: Any, out: OutputStream, expectedVersion: Int, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
-    createIonWriterBuilder(configuration.binary).build(out).use { writer ->
+    createIonWriterBuilder(configuration.binary, out).use { writer ->
       writer.stepIn(IonType.STRUCT)
 
       writer.setFieldName("version")
@@ -108,8 +107,8 @@ internal class IonObjectSerializer {
     }
   }
 
-  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
-    createIonWriterBuilder(configuration.binary).build(outputStream).use { writer ->
+  fun write(obj: Any, out: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
+    createIonWriterBuilder(configuration.binary, out).use { writer ->
       doWrite(obj, writer, configuration, originalType)
     }
   }
@@ -141,7 +140,7 @@ internal class IonObjectSerializer {
       else -> {
         val binding = bindingProducer.getRootBinding(objectClass, originalType ?: objectClass)
         @Suppress("UNCHECKED_CAST")
-        return binding.deserialize(context) as T
+        return binding.deserialize(context, hostObject = null) as T
       }
     }
   }
@@ -183,15 +182,22 @@ private data class ReadContextImpl(override val reader: ValueReader,
   override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, bindingProducer, configuration)
 }
 
-private val binaryWriterBuilder by lazy { IonBinaryWriterBuilder.standard().immutable() }
+internal val binaryWriterBuilder by lazy {
+  val binaryWriterBuilder = _Private_IonManagedBinaryWriterBuilder
+    .create(PooledBlockAllocatorProvider())
+    .withPaddedLengthPreallocation(0)
+    .withStreamCopyOptimization(true)
+  binaryWriterBuilder
+}
+
 private val textWriterBuilder by lazy {
   // line separator is not configurable and platform-dependent (https://github.com/amzn/ion-java/issues/57)
   IonTextWriterBuilder.pretty().immutable()
 }
 
-private fun createIonWriterBuilder(binary: Boolean): IonWriterBuilder {
+private fun createIonWriterBuilder(binary: Boolean, out: OutputStream): IonWriter {
   return when {
-    binary -> binaryWriterBuilder
-    else -> textWriterBuilder
+    binary -> binaryWriterBuilder.newWriter(out)
+    else -> textWriterBuilder.build(out)
   }
 }

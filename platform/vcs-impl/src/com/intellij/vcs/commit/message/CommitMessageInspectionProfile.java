@@ -1,30 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EventListener;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
 public class CommitMessageInspectionProfile extends InspectionProfileImpl
   implements PersistentStateComponent<CommitMessageInspectionProfile.State> {
+
+  @NotNull public static final Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
   private static final String PROFILE_NAME = "Commit Dialog";
   public static final InspectionProfileImpl DEFAULT =
@@ -40,6 +42,18 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   @NotNull
   public static CommitMessageInspectionProfile getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, CommitMessageInspectionProfile.class);
+  }
+
+  @NotNull
+  public static BodyLimitSettings getBodyLimitSettings(@NotNull Project project) {
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    CommitMessageInspectionProfile profile = getInstance(project);
+
+    return new BodyLimitSettings(
+      profile.getBodyRightMargin(),
+      configuration.USE_COMMIT_MESSAGE_MARGIN && profile.isToolEnabled(BodyLimitInspection.class),
+      configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
+    );
   }
 
   public static int getBodyRightMargin(@NotNull Project project) {
@@ -63,10 +77,16 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return getTool(SubjectLimitInspection.class).RIGHT_MARGIN;
   }
 
-  public <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
+  @NotNull
+  public <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
     InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
     //noinspection unchecked
-    return (T)ObjectUtils.notNull(tool).getTool();
+    return (T)Objects.requireNonNull(tool).getTool();
+  }
+
+  public <T extends LocalInspectionTool> boolean isToolEnabled(@NotNull Class<T> aClass) {
+    ToolsImpl tools = getToolsOrNull(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
+    return tools != null && tools.isEnabled();
   }
 
   @Override
@@ -113,14 +133,18 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return result;
   }
 
-  private static class CommitMessageInspectionToolSupplier implements Supplier<List<InspectionToolWrapper>> {
+  private static class CommitMessageInspectionToolSupplier extends InspectionToolsSupplier {
     @NotNull
     @Override
-    public List<InspectionToolWrapper> get() {
+    public List<InspectionToolWrapper> createTools() {
       return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
                        new CommitMessageSpellCheckingInspection())
                    .map(LocalInspectionToolWrapper::new)
                    .collect(Collectors.toList());
     }
+  }
+
+  public interface ProfileListener extends EventListener {
+    void profileChanged();
   }
 }

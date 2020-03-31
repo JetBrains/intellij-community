@@ -1,13 +1,24 @@
 <html>
 <body>
 Reports <b>while</b> loops which iterate
-over collections, and can be replaced with the <b>foreach</b> iteration syntax,
-which is available in Java 5 and newer.
-<p>
-This inspection only reports if the project or module is configured to use a
-language level of 5.0 or higher.
+over collections, and can be replaced with an enhanced <b>for</b> loop (i.e. foreach iteration syntax).
+<!--  'foreach' still used in this description so that the inspection continues to be found using this keyword -->
+Example:
+<pre>
+  Iterator it = c.iterator();
+  while(it.hasNext()) {
+    Object obj = it.next();
+    System.out.println(obj);
+  }
+</pre>
+Can be replaced with:
+<pre>
+  for (Object obj : c) {
+    System.out.println(obj);
+  }
+</pre>
 <!-- tooltip end -->
-<p>
+<p>This inspection only reports if the language level of the project or module is 5 or higher</p>
 
 </body>
 </html>

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
+import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
@@ -8,18 +9,20 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 @State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
-    @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", "Disable")
+    @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", DiffBundle.message("configurable.diff.collapse.unchanged.ranges.disable"))
   }
 
   data class SharedSettings(
@@ -45,6 +48,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var USE_SOFT_WRAPS: Boolean = false,
     var HIGHLIGHTING_LEVEL: HighlightingLevel = HighlightingLevel.INSPECTIONS,
     var READ_ONLY_LOCK: Boolean = true,
+    var BREADCRUMBS_PLACEMENT: BreadcrumbsPlacement = BreadcrumbsPlacement.HIDDEN,
 
     // Fragments settings
     var EXPAND_BY_DEFAULT: Boolean = true
@@ -54,8 +58,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
   }
 
   class TextDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
-                                              private val PLACE_SETTINGS: PlaceSettings) {
-    constructor() : this(SharedSettings(), PlaceSettings())
+                                              private val PLACE_SETTINGS: PlaceSettings,
+                                              val place: String?) {
+    constructor() : this(SharedSettings(), PlaceSettings(), null)
 
     fun addListener(listener: Listener, disposable: Disposable) {
       PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
@@ -125,6 +130,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       get()      = PLACE_SETTINGS.READ_ONLY_LOCK
       set(value) { PLACE_SETTINGS.READ_ONLY_LOCK = value }
 
+    var breadcrumbsPlacement: BreadcrumbsPlacement
+      get()      = PLACE_SETTINGS.BREADCRUMBS_PLACEMENT
+      set(value) { PLACE_SETTINGS.BREADCRUMBS_PLACEMENT = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.breadcrumbsPlacementChanged() }
+
     //
     // Impl
     //
@@ -135,19 +145,22 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
       internal fun getDefaultSettings(place: String): TextDiffSettings =
-        TextDiffSettings(SharedSettings(), service<TextDiffSettingsHolder>().defaultPlaceSettings(place))
+        TextDiffSettings(SharedSettings(), service<TextDiffSettingsHolder>().defaultPlaceSettings(place), place)
     }
 
     interface Listener : EventListener {
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
+      fun breadcrumbsPlacementChanged() {}
+
+      abstract class Adapter : Listener
     }
   }
 
-  fun getSettings(place: String?): TextDiffSettings {
+  fun getSettings(@NonNls place: String?): TextDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
     val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
-    return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
+    return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings, placeKey)
   }
 
   private fun copyStateWithoutDefaults(): State {
@@ -161,6 +174,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     val settings = PlaceSettings()
     if (place == DiffPlaces.CHANGES_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
+      settings.SHOW_LINE_NUMBERS = false
     }
     if (place == DiffPlaces.COMMIT_DIALOG) {
       settings.EXPAND_BY_DEFAULT = false

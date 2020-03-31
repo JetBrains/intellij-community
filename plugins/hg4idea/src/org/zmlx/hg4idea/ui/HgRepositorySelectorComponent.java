@@ -45,7 +45,7 @@ public class HgRepositorySelectorComponent {
   }
 
   public void setTitle(@NotNull String title) {
-    mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
+    mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
   }
 
   @NotNull

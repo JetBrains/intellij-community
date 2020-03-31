@@ -72,11 +72,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (File source : sources) {
-      decompiler.addSource(source);
-    }
     for (File library : libraries) {
       decompiler.addLibrary(library);
+    }
+    for (File source : sources) {
+      decompiler.addSource(source);
     }
 
     decompiler.decompileContext();

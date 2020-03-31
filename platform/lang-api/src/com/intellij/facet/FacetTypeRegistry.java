@@ -20,9 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class FacetTypeRegistry {
 
   public static FacetTypeRegistry getInstance() {
@@ -33,22 +30,19 @@ public abstract class FacetTypeRegistry {
    * @deprecated register {@code facetType} as an extension instead
    */
   @Deprecated
-  public abstract void registerFacetType(FacetType facetType);
+  public abstract void registerFacetType(FacetType<?, ?> facetType);
 
   /**
    * @deprecated register {@code facetType} as an extension instead
    */
   @Deprecated
-  public abstract void unregisterFacetType(FacetType facetType);
+  public abstract void unregisterFacetType(FacetType<?, ?> facetType);
 
-  @NotNull
-  public abstract FacetTypeId[] getFacetTypeIds();
+  public abstract FacetTypeId<?> @NotNull [] getFacetTypeIds();
 
-  @NotNull
-  public abstract FacetType[] getFacetTypes();
+  public abstract FacetType<?, ?> @NotNull [] getFacetTypes();
 
-  @NotNull
-  public abstract FacetType[] getSortedFacetTypes();
+  public abstract FacetType<?, ?> @NotNull [] getSortedFacetTypes();
 
   @Nullable
   public abstract FacetType findFacetType(String id);

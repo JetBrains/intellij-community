@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,23 +17,21 @@ import java.util.regex.Pattern;
 
 /**
  * Tries to detect the path to Git executable.
- *
- * @author Kirill Likhodedov
  */
 public class GitExecutableDetector {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableDetector.class);
   private static final String[] UNIX_PATHS = {
     "/usr/local/bin",
-    "/usr/bin",
     "/opt/local/bin",
+    "/usr/bin",
     "/opt/bin",
     "/usr/local/git/bin"};
 
   private static final String GIT = "git";
   private static final String UNIX_EXECUTABLE = GIT;
 
-  private static final File WIN_ROOT = new File("C:"); // the constant is extracted to be able to create files in "Program Files" in tests
+  private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final String GIT_EXE = "git.exe";
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
@@ -102,7 +86,7 @@ public class GitExecutableDetector {
     }
 
     // greater is better => sorting in the descending order to match the best version first, when iterating
-    Collections.sort(distrs, Collections.reverseOrder(new VersionDirsComparator()));
+    distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
 
     for (File distr : distrs) {
       String exec = checkDistributive(distr);

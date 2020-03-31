@@ -16,26 +16,29 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 
-public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable {
+public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
-  public PersistentEnumeratorDelegate(@NotNull final File file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
+  public PersistentEnumeratorDelegate(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null);
   }
 
-  public PersistentEnumeratorDelegate(@NotNull final File file,
+  public PersistentEnumeratorDelegate(@NotNull final Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
                                       @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
+    myEnumerator = useBtree() ?
+                   new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
                    new PersistentEnumerator<>(file, dataDescriptor, initialSize);
   }
 
@@ -44,11 +47,25 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
                                       final int initialSize,
                                       @Nullable PagedFileStorage.StorageLockContext lockContext,
                                       int version) throws IOException {
+    this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
+  }
+
+  public PersistentEnumeratorDelegate(@NotNull Path file,
+                                      @NotNull KeyDescriptor<Data> dataDescriptor,
+                                      final int initialSize,
+                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      int version) throws IOException {
     myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version) :
                    new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
   }
 
-  static boolean useBtree() {
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return useBtree() ? PersistentBTreeEnumerator.VERSION : PersistentEnumerator.VERSION;
+  }
+
+  @ApiStatus.Internal
+  public static boolean useBtree() {
     String property = System.getProperty("idea.use.btree");
     return !"false".equals(property);
   }
@@ -90,14 +107,17 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
     myEnumerator.force();
   }
 
+  @Override
   public Data valueOf(int id) throws IOException {
     return myEnumerator.valueOf(id);
   }
 
+  @Override
   public int enumerate(Data name) throws IOException {
     return myEnumerator.enumerate(name);
   }
 
+  @Override
   public int tryEnumerate(Data name) throws IOException {
     return myEnumerator.tryEnumerate(name);
   }

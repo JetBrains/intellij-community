@@ -149,5 +149,39 @@ public class ConditionCoveredByFurtherCondition {
     void testIncompleteLambda2(Object x) {
         if (x != null && () -> x instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>
     }
+    
+    void testBooleanChain(boolean b1, boolean b2) {
+        if (<warning descr="Condition '(b1 || b2)' covered by subsequent condition 'b1 != b2'">(b1 || b2)</warning> && b1 != b2) {}
+    }
+
+    void testTwoInstanceOf(Object object) {
+        if (<warning descr="Condition 'object != null' covered by subsequent condition 'object instanceof String || object instanceof Number'">object != null</warning> && (object instanceof String || object instanceof Number)) {}
+    }
+
+    class A {int value;}
+    class AA extends A {}
+
+    public boolean testDerefInBetween(A x) {
+        return x != null && x.value > 0 && x instanceof AA;
+    }
+
+    native Object getFoo();
+
+    public void testOr(@NotNull Object obj) {
+        obj = getFoo();
+        if (obj == null || obj instanceof String) {}
+    }
+    static void test(Object obj) {
+        if (obj == Holder.x || obj instanceof CharSequence) {}
+    }
+
+    static class Holder {
+        static final Object x = new Object();
+    }
+
+    void testChainInstanceof(String arg) {
+        if ((<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Integer'">arg instanceof Integer</error>) || <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Long'">arg instanceof Long</error>) {}
+        if (<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Integer'">arg instanceof Integer</error> || <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Long'">arg instanceof Long</error>) {}
+    }
 }
 enum X {A, B, C}

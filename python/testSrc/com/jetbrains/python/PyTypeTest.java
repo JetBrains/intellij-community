@@ -2,11 +2,11 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -441,14 +441,14 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyOfUnionType() {
-    doTest("Optional[int]", "def f():\n" +
+    doTest("int", "def f():\n" +
                   "    '''\n" +
                   "    :rtype: int or slice\n" +
                   "    '''\n" +
                   "    raise NotImplementedError\n" +
                   "\n" +
                   "x = f()\n" +
-                  "expr = x.start\n");
+                  "expr = x.bit_length()\n");
   }
 
   public void testUndefinedPropertyOfUnionType() {
@@ -2096,6 +2096,79 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(l)");
   }
 
+  // PY-37755
+  public void testGlobalType() {
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    global expr\n" +
+           "    expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    expr = True\n" +
+           "    \n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("Union[bool, int]",
+           "if True:\n" +
+           "    a = True\n" +
+           "else:\n" +
+           "    a = 5\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global a\n" +
+           "        expr = a");
+  }
+
+  // PY-37755
+  public void testNonLocalType() {
+    doTest("bool",
+           "def fun():\n" +
+           "    expr = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal expr\n" +
+           "        expr");
+
+    doTest("bool",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    a = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+
+    doTest("Union[bool, int]",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    if True:\n" +
+           "        a = True\n" +
+           "    else:\n" +
+           "        a = 5\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+  }
+
   // PY-21906
   public void testSOFOnTransitiveNamedTupleFields() {
     final PyExpression expression = parseExpr("from collections import namedtuple\n" +
@@ -2315,14 +2388,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24323
   public void testMethodQualifiedWithUnknownGenericsInstance() {
-    doTest("(object: Any) -> int",
+    doTest("(__value: Any) -> int",
            "my_list = []\n" +
            "expr = my_list.count");
   }
 
   // PY-24323
   public void testMethodQualifiedWithKnownGenericsInstance() {
-    doTest("(object: int) -> int",
+    doTest("(__value: int) -> int",
            "my_list = [1, 2, 2, 3, 3]\n" +
            "expr = my_list.count");
   }
@@ -3232,16 +3305,16 @@ public class PyTypeTest extends PyTestCase {
   public void testGenericTypingProtocolExt() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
-      () -> doMultiFileTest("int",
-                            "from typing_extensions import Protocol\n" +
-                            "from typing import TypeVar\n" +
-                            "T = TypeVar(\"T\")\n" +
-                            "class MyProto1(Protocol[T]):\n" +
-                            "    def func(self) -> T:\n" +
-                            "        pass\n" +
-                            "class MyClass1(MyProto1[int]):\n" +
-                            "    pass\n" +
-                            "expr = MyClass1().func()")
+      () -> doTest("int",
+                   "from typing_extensions import Protocol\n" +
+                   "from typing import TypeVar\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "class MyProto1(Protocol[T]):\n" +
+                   "    def func(self) -> T:\n" +
+                   "        pass\n" +
+                   "class MyClass1(MyProto1[int]):\n" +
+                   "    pass\n" +
+                   "expr = MyClass1().func()")
     );
   }
 
@@ -3370,6 +3443,438 @@ public class PyTypeTest extends PyTestCase {
                    "    assert isinstance(g_b, B)\n" +
                    "    expr = g_b")
     );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        doTest("int", "[expr := 1]");
+        doTest("int", "[expr := (1)]");
+        doTest("int", "expr = (e := 1)");
+        doTest("int", "foo(expr := 1)");
+        doMultiFileTest("Type[A]", "from a import member\nexpr = member");
+
+        assertNull(((PyTargetExpression)parseExpr("(nums := [0 for expr in range(10)])")).findAssignedValue());
+      }
+    );
+  }
+
+  // PY-34945
+  public void testFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final[int] = undefined");
+
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final = 5");
+
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final[int]");
+      }
+    );
+
+    doTest("int",
+           "from typing_extensions import Final\n" +
+           "expr = undefined  # type: Final[int]");
+
+    doTest("int",
+           "from typing_extensions import Final\n" +
+           "expr = 5  # type: Final");
+  }
+
+  // PY-35235
+  public void testTypingLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        doTest("Literal[True]",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal[True] = False");
+
+        doTest("bool",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal[] = False");
+
+        doTest("bool",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal = False");
+
+        doTest("bool",
+               "expr = False");
+      }
+    );
+
+    doTest("Literal[10]",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10]");
+
+    doTest("Literal[-10]",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[-10]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10.5]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10j]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20");
+  }
+
+  // PY-35235
+  public void testTypingLiteralNone() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("None",
+                   "from typing_extensions import Literal\n" +
+                   "expr: Literal[None] = undefined")
+    );
+  }
+
+  // PY-35235
+  public void testTypingLiteralEnum() {
+    // we don't support using `typing.Literal` with enums :(
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("A",
+                            "from typing_extensions import Literal\n" +
+                            "\n" +
+                            "from enum import Enum\n" +
+                            "\n" +
+                            "class A(Enum):\n" +
+                            "    V1 = 1\n" +
+                            "    V2 = 2\n" +
+                            "\n" +
+                            "expr: Literal[A.V1] = undefined")
+    );
+  }
+
+  // PY-35235
+  public void testUnionOfTypingLiterals() {
+    doTest("Literal[-1, 0, 1]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[-1, 0, 1]");
+
+    doTest("Literal[42, \"foo\", True]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[42, \"foo\", True]");
+  }
+
+  // PY-35235
+  public void testTypingLiteralOfTypingLiterals() {
+    doTest("Literal[1, 2, 3, 4, 5]",
+           "from typing_extensions import Literal\n" +
+           "a = Literal[1]\n" +
+           "b = Literal[2, 3]\n" +
+           "c = Literal[4, 5]\n" +
+           "d = Literal[b, c]\n" +
+           "expr = undefined  # type: Literal[a, d]");
+
+    doTest("Union[Literal[1, 2, \"foo\", 5], None]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[Literal[Literal[1, 2], \"foo\"], 5, None]");
+  }
+
+  // PY-40838
+  public void testUnionOfManyTypesInclLiterals() {
+    doTest("Union[Literal[\"1\", 2], bool, None]",
+           "from typing import overload, Literal\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[\"1\"]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[2]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> bool:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> None:\n" +
+           "    pass\n" +
+           "\n" +
+           "def foo1()\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo1()");
+  }
+
+  // PY-35235
+  public void testOverloadsWithTypingLiteral() {
+    final String prefix = "from typing_extensions import Literal\n" +
+                          "from typing import overload\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: Literal[\"a\"]) -> str: ...\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: Literal[\"b\"]) -> bytes: ...\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: str) -> int: ...\n" +
+                          "\n" +
+                          "def foo(p1):\n" +
+                          "    pass\n" +
+                          "\n";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        doTest("Union[str, int]",
+               prefix +
+               "a: Literal[\"a\"]\n" +
+               "expr = foo(a)");
+
+        doTest("int",
+               prefix +
+               "a = \"a\"\n" +
+               "expr = foo(a)");
+
+        doTest("Union[str, int]",
+               prefix +
+               "expr = foo(\"a\")");
+      }
+    );
+  }
+
+  // PY-33651
+  public void testSlicingHomogeneousTuple() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Tuple[int, ...]",
+                   "from typing import Tuple\n" +
+                   "x: Tuple[int, ...]\n" +
+                   "expr = x[0:]")
+    );
+  }
+
+  public void testAnnotatedClsReturnOverloadedClassMethod() {
+    doMultiFileTest("mytime",
+                    "from mytime import mytime\n" +
+                    "expr = mytime.now()");
+  }
+
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("A",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a");
+      }
+    );
+  }
+
+  // PY-33663
+  public void testAnnotatedSelfReturnProperty() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("A",
+                   "from typing import TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    @property\n" +
+                   "    def foo(self: T) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = A().foo")
+    );
+  }
+
+  // PY-30861
+  public void testDontReplaceSpecifiedReturnTypeWithSelf() {
+    doTest("dict",
+           "from collections import defaultdict\n" +
+           "data = defaultdict(dict)\n" +
+           "expr = data['name']");
+  }
+
+  // PY-37601
+  public void testClassWithOwnInitInheritsClassWithGenericCall() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Derived",
+                   "from typing import Any, Generic, TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class Base(Generic[T]):\n" +
+                   "    def __call__(self, p: Any) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Derived(Base):\n" +
+                   "    def __init__():\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = Derived()")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpression() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a['x']");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionUndefinedKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Any",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a[x]");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionRequiredKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionOptionalKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Optional[int]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionSameValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', 42)");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionDifferentValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Union[int, str]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', '')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictAlternativeSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("A",
+               "from typing import TypedDict\n" +
+               "A = TypedDict('A', {'x': int}, total=False)\n" +
+               "expr = A");
+      }
+    );
+  }
+
+  // PY-37678
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doMultiFileTest("Foo",
+                            "import dataclasses as dc\n" +
+                            "\n" +
+                            "@dc.dataclass\n" +
+                            "class Foo:\n" +
+                            "    x: int\n" +
+                            "    y: int\n" +
+                            "\n" +
+                            "foo = Foo(1, 2)\n" +
+                            "expr = dc.replace(foo, x=3)")
+    );
+  }
+
+  // PY-35881
+  public void testResolveToAnotherFileClassWithBuiltinNameField() {
+    doMultiFileTest(
+      "int",
+      "from foo import Foo\n" +
+      "foo = Foo(0)\n" +
+      "expr = foo.id"
+    );
+  }
+
+  // PY-35885
+  public void testFunctionDunderDoc() {
+    doTest("str",
+           "def example():\n" +
+           "    \"\"\"Example Docstring\"\"\"\n" +
+           "    return 0\n" +
+           "expr = example.__doc__");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

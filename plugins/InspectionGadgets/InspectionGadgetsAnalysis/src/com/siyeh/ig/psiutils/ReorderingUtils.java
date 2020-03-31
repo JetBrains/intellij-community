@@ -4,9 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -36,10 +34,10 @@ public class ReorderingUtils {
   public static ThreeState canExtract(@NotNull PsiExpression ancestor, @NotNull PsiExpression expression) {
     if (expression == ancestor) return ThreeState.YES;
     if (PsiUtil.isConstantExpression(expression)) return ThreeState.YES;
-    PsiExpression parent = ObjectUtils.tryCast(expression.getParent(), PsiExpression.class);
+    PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
-      PsiExpression gParent = ObjectUtils.tryCast(parent.getParent(), PsiExpression.class);
-      if (gParent instanceof PsiCallExpression) {
+      PsiExpression gParent = ObjectUtils.tryCast(parent.getParent(), PsiCallExpression.class);
+      if (gParent != null) {
         PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
         int index = ArrayUtil.indexOf(args, expression);
         ThreeState result = ThreeState.YES;
@@ -49,29 +47,30 @@ public class ReorderingUtils {
             break;
           }
         }
-        return and(result, () -> canExtract(ancestor, parent));
+        return and(result, () -> canExtract(ancestor, gParent));
       }
     }
-    if (parent == null) {
+    PsiExpression expressionParent = ObjectUtils.tryCast(parent, PsiExpression.class);
+    if (expressionParent == null) {
       if (PsiTreeUtil.isAncestor(ancestor, expression, true)) {
         return ThreeState.UNSURE;
       }
       throw new IllegalArgumentException("Should be an ancestor");
     }
-    if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiInstanceOfExpression ||
-        parent instanceof PsiTypeCastExpression) {
-      return canExtract(ancestor, parent);
+    if (expressionParent instanceof PsiParenthesizedExpression || expressionParent instanceof PsiInstanceOfExpression ||
+        expressionParent instanceof PsiTypeCastExpression) {
+      return canExtract(ancestor, expressionParent);
     }
-    if (parent instanceof PsiReferenceExpression) {
-      if (((PsiReferenceExpression)parent).getQualifierExpression() == expression) {
-        return canExtract(ancestor, parent);
+    if (expressionParent instanceof PsiReferenceExpression) {
+      if (((PsiReferenceExpression)expressionParent).getQualifierExpression() == expression) {
+        return canExtract(ancestor, expressionParent);
       }
     }
-    if (parent instanceof PsiConditionalExpression) {
-      PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+    if (expressionParent instanceof PsiConditionalExpression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)expressionParent;
       PsiExpression condition = ternary.getCondition();
       if (condition == expression) {
-        return canExtract(ancestor, parent);
+        return canExtract(ancestor, expressionParent);
       }
       ThreeState result;
       if (isSideEffectFree(condition, false) &&
@@ -82,25 +81,25 @@ public class ReorderingUtils {
           areConditionsNecessaryFor(new PsiExpression[]{condition}, expression, ternary.getElseExpression() == expression);
         result = isNecessary ? ThreeState.NO : ThreeState.UNSURE;
       }
-      return and(result, () -> canExtract(ancestor, parent));
+      return and(result, () -> canExtract(ancestor, expressionParent));
     }
-    if (parent instanceof PsiLambdaExpression) {
+    if (expressionParent instanceof PsiLambdaExpression) {
       return ThreeState.NO;
     }
-    if (parent instanceof PsiUnaryExpression) {
-      if (PsiUtil.isIncrementDecrementOperation(parent)) return ThreeState.NO;
-      return canExtract(ancestor, parent);
+    if (expressionParent instanceof PsiUnaryExpression) {
+      if (PsiUtil.isIncrementDecrementOperation(expressionParent)) return ThreeState.NO;
+      return canExtract(ancestor, expressionParent);
     }
-    if (parent instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+    if (expressionParent instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)expressionParent;
       PsiExpression[] operands = polyadic.getOperands();
       int index = ArrayUtil.indexOf(operands, expression);
       if (index == 0) {
-        return canExtract(ancestor, parent);
+        return canExtract(ancestor, expressionParent);
       }
       IElementType tokenType = polyadic.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-        return and(canMoveToStart(polyadic, index), () -> canExtract(ancestor, parent));
+        return and(canMoveToStart(polyadic, index), () -> canExtract(ancestor, expressionParent));
       }
       ThreeState result = ThreeState.YES;
       for (int i=0; i<index; i++) {
@@ -109,13 +108,13 @@ public class ReorderingUtils {
           break;
         }
       }
-      return and(result, () -> canExtract(ancestor, parent));
+      return and(result, () -> canExtract(ancestor, expressionParent));
     }
-    if (parent instanceof PsiAssignmentExpression) {
-      if (expression == ((PsiAssignmentExpression)parent).getLExpression()) return ThreeState.NO;
-      return canExtract(ancestor, parent);
+    if (expressionParent instanceof PsiAssignmentExpression) {
+      if (expression == ((PsiAssignmentExpression)expressionParent).getLExpression()) return ThreeState.NO;
+      return canExtract(ancestor, expressionParent);
     }
-    return and(ThreeState.UNSURE, () -> canExtract(ancestor, parent));
+    return and(ThreeState.UNSURE, () -> canExtract(ancestor, expressionParent));
   }
 
   @NotNull
@@ -276,9 +275,9 @@ public class ReorderingUtils {
   
   static final class ContractFailExceptionProblem extends ExceptionProblem {
     private final DfaValueFactory myFactory;
-    private final List<DfaRelationValue> myConditions;
+    private final List<DfaRelation> myConditions;
 
-    ContractFailExceptionProblem(DfaValueFactory factory, List<DfaRelationValue> conditions) {
+    ContractFailExceptionProblem(DfaValueFactory factory, List<DfaRelation> conditions) {
       super(null);
       myFactory = factory;
       myConditions = conditions;
@@ -296,9 +295,9 @@ public class ReorderingUtils {
           List<ContractValue> conditions = contract.getConditions();
           if (conditions.size() != 1) continue;
           ContractValue cond = conditions.get(0);
-          DfaValue value = cond.fromCall(myFactory, call);
-          if (value instanceof DfaRelationValue) {
-            if (myConditions.contains(retValue == negated ? value : value.createNegated())) {
+          DfaCondition value = cond.fromCall(myFactory, call);
+          if (value instanceof DfaRelation) {
+            if (myConditions.contains(retValue == negated ? value : ((DfaRelation)value).negate())) {
               return true;
             }
           }
@@ -307,22 +306,22 @@ public class ReorderingUtils {
       }
       if (condition instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        DfaRelationValue.RelationType relationType = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
           DfaValue leftVal = myFactory.createValue(left);
           DfaValue rightVal = myFactory.createValue(right);
           if (leftVal == null || rightVal == null) return false;
-          DfaValue value1 = myFactory.createCondition(leftVal, relationType, rightVal);
-          DfaValue value2 = myFactory.createCondition(rightVal, Objects.requireNonNull(relationType.getFlipped()), leftVal);
-          if (value1 instanceof DfaRelationValue) {
-            if (myConditions.contains(negated ? value1 : value1.createNegated())) {
+          DfaCondition value1 = leftVal.cond(relationType, rightVal);
+          DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);
+          if (value1 instanceof DfaRelation) {
+            if (myConditions.contains(negated ? value1 : ((DfaRelation)value1).negate())) {
               return true;
             }
           }
-          if (value2 instanceof DfaRelationValue) {
-            if (myConditions.contains(negated ? value2 : value2.createNegated())) {
+          if (value2 instanceof DfaRelation) {
+            if (myConditions.contains(negated ? value2 : ((DfaRelation)value2).negate())) {
               return true;
             }
           }
@@ -338,13 +337,13 @@ public class ReorderingUtils {
         List<? extends MethodContract> contracts = DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(call));
         contracts = ContainerUtil.filter(contracts, c -> c.getReturnValue().isFail() && c.getConditions().size() == 1);
         if (contracts.isEmpty()) return null;
-        DfaValueFactory factory = new DfaValueFactory(null, false);
-        List<DfaRelationValue> conditions = new ArrayList<>();
+        DfaValueFactory factory = new DfaValueFactory(expression.getProject(), null, false);
+        List<DfaRelation> conditions = new ArrayList<>();
         for (MethodContract contract : contracts) {
           ContractValue condition = contract.getConditions().get(0);
-          DfaValue conditionValue = condition.fromCall(factory, call);
-          if (conditionValue instanceof DfaRelationValue) {
-            conditions.add((DfaRelationValue)conditionValue);
+          DfaCondition conditionValue = condition.fromCall(factory, call);
+          if (conditionValue instanceof DfaRelation) {
+            conditions.add((DfaRelation)conditionValue);
           }
         }
         return new ContractFailExceptionProblem(factory, conditions);

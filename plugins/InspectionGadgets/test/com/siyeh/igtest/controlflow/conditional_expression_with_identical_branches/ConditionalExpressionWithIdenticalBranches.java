@@ -67,9 +67,9 @@ class ConditionalExpressionWithIdenticalBranches {
       default -> throw new InternalError();
     };
     int xz = (i == 10) ? switch (e) {
-      default: break 1;
+      default: yield 1;
     } : switch (e) {
-      default: break 2; // different break value expression
+      default: yield 2; // different yield value expression
     };
     int yy = (i == 10) ? switch (e) {
       default -> throw new InternalError();

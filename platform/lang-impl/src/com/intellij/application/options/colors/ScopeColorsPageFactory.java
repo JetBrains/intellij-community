@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
+class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
   @NotNull
   @Override
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
@@ -43,13 +31,13 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
         return scopePanel;
       }
 
-    }, ColorAndFontOptions.SCOPES_GROUP, options, null, null);
+    }, ColorAndFontOptions.getScopesGroup(), options, null, null);
   }
 
   @NotNull
   @Override
   public String getPanelDisplayName() {
-    return ColorAndFontOptions.SCOPES_GROUP;
+    return ColorAndFontOptions.getScopesGroup();
   }
 
   private static JPanel createChooseScopePanel() {
@@ -60,7 +48,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                    JBUI.emptyInsets(), 0, 0);
 
-    JButton button = new JButton("Manage Scopes...");
+    JButton button = new JButton(LangBundle.message("manage.scopes"));
     button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));
     panel.add(button, gc);
     gc.gridx = GridBagConstraints.REMAINDER;
@@ -89,5 +77,10 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
       }
     });
     return panel;
+  }
+
+  @Override
+  public DisplayPriority getPriority() {
+    return DisplayPriority.OTHER_SETTINGS;
   }
 }

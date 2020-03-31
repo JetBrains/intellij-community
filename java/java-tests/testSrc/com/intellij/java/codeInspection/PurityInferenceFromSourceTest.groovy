@@ -15,17 +15,18 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-
 /**
  * @author peter
  */
 @CompileStatic
-class PurityInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
+class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test getter"() {
     assertPure true, """
@@ -125,24 +126,6 @@ int method() {
 }
 int smthPure(int i) { return i; }
 int smthPure2() { return 42; }
-"""
-  }
-
-  void "test don't analyze void methods"() {
-    assertPure false, """
-void method() {
-  smthPure();
-}
-int smthPure() { return 3; }
-"""
-  }
-
-  void "test don't analyze methods without returns"() {
-    assertPure false, """
-Object method() {
-    smthPure();
-}
-int smthPure() { return 3; }
 """
   }
 
@@ -394,9 +377,52 @@ int get() {
 }
 """
   }
-  
+
+  void "test assertNotNull is pure"() {
+    assertPure true, """
+static void assertNotNull(Object val) {
+  if(val == null) throw new AssertionError();
+}"""
+  }
+
   void "test recursive factorial"() {
     assertPure true, """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
+  }
+
+  void "test calling static method with the same signature in the subclass"() {
+    RecursionManager.assertOnMissedCache(testRootDisposable)
+    def clazz = myFixture.addClass """
+class Super {
+  static void foo() { Sub.foo(); }
+}
+
+class Sub extends Super {
+  static void foo() {
+    unknown();
+    unknown2();
+  }
+}
+
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+  }
+
+  void "test super static method does not affect purity"() {
+    RecursionManager.assertOnMissedCache(testRootDisposable)
+    def clazz = myFixture.addClass """
+class Sub extends Super {
+  static void foo() {
+    unknown();
+    unknown2();
+  }
+}
+
+class Super {
+  static void foo() { }
+}
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+    assert JavaMethodContractUtil.isPure(clazz.superClass.methods[0])
   }
 
   private void assertPure(boolean expected, String classBody) {

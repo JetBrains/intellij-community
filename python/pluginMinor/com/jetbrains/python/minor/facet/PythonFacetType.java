@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.minor.facet;
 
 import com.intellij.facet.Facet;
@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
@@ -26,11 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-import static com.jetbrains.python.PythonModuleTypeBase.PYTHON_MODULE;
+import static com.jetbrains.python.PyNames.PYTHON_MODULE_ID;
 
-/**
- * @author traff
- */
 public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.PythonFacetConfiguration> {
 
   @NonNls
@@ -41,7 +39,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
   }
 
   public PythonFacetType() {
-    super(PythonFacet.ID, ID, "Python");
+    super(PythonFacet.ID, ID, PyBundle.message("python.facet.name"));
   }
 
   @Override
@@ -64,7 +62,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
 
   @Override
   public boolean isSuitableModuleType(ModuleType moduleType) {
-    return !(moduleType.getId().equals(PYTHON_MODULE));
+    return !(moduleType.getId().equals(PYTHON_MODULE_ID));
   }
 
   @Override

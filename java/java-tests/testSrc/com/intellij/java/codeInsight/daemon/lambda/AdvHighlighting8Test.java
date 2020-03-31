@@ -17,11 +17,11 @@ package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AdvHighlighting8Test extends LightCodeInsightFixtureTestCase {
+public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
 
   @Override
@@ -72,6 +72,16 @@ public class AdvHighlighting8Test extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package foo.bar;\n" +
                        "import foo.A;\n" +
                        "abstract class B extends A {}");
+    doTest();
+  }
+
+  public void testPackagePrivateAndSuperMethodReference() {
+    myFixture.addClass("package a;\n" +
+                       "public class A {\n" +
+                       "    protected void foo(int a) {\n" +
+                       "        System.out.println(a);\n" +
+                       "    }\n" +
+                       "}");
     doTest();
   }
 

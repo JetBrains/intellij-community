@@ -24,11 +24,11 @@ class CachePoolImpl implements UrlClassLoader.CachePool {
 
   private final Map<URL, Attributes> myManifestData = new ConcurrentHashMap<URL, Attributes>();
 
-  Attributes getManifestData(URL url) {
+  Attributes getManifestData(@NotNull URL url) {
     return myManifestData.get(url);
   }
 
-  void cacheManifestData(URL url, Attributes manifestAttributes) {
+  void cacheManifestData(@NotNull URL url, @NotNull Attributes manifestAttributes) {
     myManifestData.put(url, manifestAttributes);
   }
 }

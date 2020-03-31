@@ -68,9 +68,9 @@ public class SwitchStatementDensity
                 System.out.println(e);
                 System.out.println(e);
                 System.out.println(e);
-                break 1;
+                yield 1;
             default:
-                break 0;
+                yield 0;
 
         };
     }

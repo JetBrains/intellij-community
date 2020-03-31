@@ -6,6 +6,5 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public interface JqlOrderBy extends JqlElement {
-  @NotNull
-  JqlSortKey[] getSortKeys();
+  JqlSortKey @NotNull [] getSortKeys();
 }

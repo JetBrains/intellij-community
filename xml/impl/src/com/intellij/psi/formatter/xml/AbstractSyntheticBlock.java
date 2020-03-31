@@ -23,6 +23,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.IXmlAttributeElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
@@ -53,7 +54,7 @@ public abstract class AbstractSyntheticBlock implements Block {
 
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractSyntheticBlock");
+  private static final Logger LOG = Logger.getInstance(AbstractSyntheticBlock.class);
 
   public boolean shouldKeepWhiteSpacesInside() {
     return myTag != null && myXmlFormattingPolicy.keepWhiteSpacesInsideTag(myTag);
@@ -240,7 +241,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   protected boolean isAttributeElementType(final IElementType elementType) {
-    return elementType == XmlElementType.XML_ATTRIBUTE;
+    return elementType instanceof IXmlAttributeElementType;
   }
 
 }

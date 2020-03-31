@@ -57,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
@@ -85,7 +86,7 @@ import java.util.*;
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
+  private static final Logger LOG = Logger.getInstance(ChooseByNameBase.class);
 
   @Nullable
   protected final Project myProject;
@@ -156,7 +157,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  private void setNamesSync(boolean checkboxState, @Nullable String[] value) {
+  private void setNamesSync(boolean checkboxState, String @Nullable [] value) {
     synchronized (myNames) {
       myNames[checkboxState ? 1 : 0] = value;
     }
@@ -372,7 +373,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     String checkBoxName = myModel.getCheckBoxName();
     Color fg = UIUtil.getLabelDisabledForeground();
-    Color color = UIUtil.isUnderDarcula() ? ColorUtil.shift(fg, 1.2) : ColorUtil.shift(fg, 0.7);
+    Color color = StartupUiUtil.isUnderDarcula() ? ColorUtil.shift(fg, 1.2) : ColorUtil.shift(fg, 0.7);
     String text = checkBoxName == null
                   ? ""
                   : "<html>" + checkBoxName +
@@ -408,9 +409,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowFindUsagesAction() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         List<Object> objects = myListModel.getItems();
         List<PsiElement> elements = new ArrayList<>(objects.size());
         for (Object object : objects) {
@@ -447,11 +447,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", JBUI.scale(EditorUtil.getDefaultCaretWidth()));
+    myTextField.putClientProperty("caretWidth", JBUIScale.scale(EditorUtil.getDefaultCaretWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
-        new DumbAwareAction("change goto check box", null, null) {
+        new DumbAwareAction(IdeBundle.messagePointer("action.AnActionButton.text.change.goto.check.box")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
@@ -659,7 +659,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     if (component == null || myProject == null || myProject.isDisposed()) return false;
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
+    String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
+    ToolWindow toolWindow = activeToolWindowId == null ? null : toolWindowManager.getToolWindow(activeToolWindowId);
     JComponent toolWindowComponent = toolWindow != null ? toolWindow.getComponent() : null;
     return toolWindowComponent != null &&
            toolWindowComponent.getClientProperty(TEMPORARILY_FOCUSABLE_COMPONENT_KEY) != null &&
@@ -756,8 +757,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
-  @NotNull
-  private synchronized String[] ensureNamesLoaded(boolean checkboxState) {
+  private synchronized String @NotNull [] ensureNamesLoaded(boolean checkboxState) {
     String[] cached = getNamesSync(checkboxState);
     if (cached != null) return cached;
 
@@ -779,8 +779,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return result;
   }
 
-  @NotNull
-  public String[] getNames(boolean checkboxState) {
+  public String @NotNull [] getNames(boolean checkboxState) {
     setNamesSync(checkboxState, null);
     return ensureNamesLoaded(checkboxState);
   }
@@ -857,6 +856,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     else if (window instanceof JDialog) {
       layeredPane = ((JDialog)window).getLayeredPane();
+    }
+    else if (window instanceof JWindow) {
+      layeredPane = ((JWindow)window).getLayeredPane();
     }
     else {
       throw new IllegalStateException("cannot find parent window: project=" + myProject +
@@ -973,7 +975,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   @VisibleForTesting
-  public int calcSelectedIndex(@NotNull Object[] modelElements, @NotNull String trimmedText) {
+  public int calcSelectedIndex(Object @NotNull [] modelElements, @NotNull String trimmedText) {
     if (myModel instanceof Comparator) {
       return 0;
     }
@@ -1042,6 +1044,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public boolean hasPostponedAction() {
     return false;
@@ -1624,8 +1629,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       e.getPresentation().setEnabled(elements.length > 0);
     }
 
-    @NotNull
-    public abstract PsiElement[] getElements();
+    public abstract PsiElement @NotNull [] getElements();
   }
 
   private static class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {

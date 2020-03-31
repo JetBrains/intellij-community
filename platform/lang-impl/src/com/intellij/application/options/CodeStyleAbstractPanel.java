@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
-import com.intellij.ide.ui.search.ComponentHighligtingListener;
+import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -32,7 +32,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -56,11 +56,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighligtingListener {
+public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighlightingListener {
 
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
+  private static final Logger LOG = Logger.getInstance(CodeStyleAbstractPanel.class);
 
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
@@ -101,7 +101,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
     myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighligtingListener.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, this);
 
     updatePreview(true);
   }
@@ -463,6 +463,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return fileType.getDefaultExtension();
   }
 
+  /**
+   * This method is called on any UI changes (controls altered or initialized, preview updated, etc.).
+   * Implementors are expected to update their UI state if needed, keeping models intact.
+   */
   public void onSomethingChanged() {
     setSomethingChanged(true);
     if (myEditor != null) {
@@ -581,8 +585,19 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return Collections.emptySet();
   }
 
+  @NotNull
+  public OptionsContainingConfigurable getOptionIndexer() {
+    return new OptionsContainingConfigurable() {
+      @NotNull
+      @Override
+      public Set<String> processListOptions() {
+        return CodeStyleAbstractPanel.this.processListOptions();
+      }
+    };
+  }
+
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
-    codeStyle.apply(mySettings);
+    codeStyle.apply(mySettings, myDefaultLanguage);
     ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
       myModel.fireAfterCurrentSettingsChanged();
@@ -641,6 +656,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         }
       }
     }
+  }
+
+  public void highlightOptions(@NotNull String searchString) {
   }
 
   @Nullable

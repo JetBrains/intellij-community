@@ -27,6 +27,13 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     return myFixture.getLookupElementStrings();
   }
 
+  private List<String> doTestByTestName() {
+    final String testName = "keywordCompletion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
+  }
+
   public void testKeywordAfterComment() {  // PY-697
     doTest();
   }
@@ -227,5 +234,15 @@ public class PythonKeywordCompletionTest extends PyTestCase {
 
     assertNull(doTestByText("from ... <caret>"));
     myFixture.checkResult("from ... import ");
+  }
+
+  // PY-7018
+  public void testNoNotAndLambdaAfterTargetQualifier() {
+    assertDoesntContain(doTestByTestName(), "not", "lambda");
+  }
+
+  // PY-13111
+  public void testNoForAndYieldInCommentContext() {
+    assertDoesntContain(doTestByTestName(), "for", "yield");
   }
 }

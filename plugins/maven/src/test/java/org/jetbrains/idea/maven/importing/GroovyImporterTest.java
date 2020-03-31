@@ -5,11 +5,13 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
@@ -133,6 +135,36 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  public void testAddingGroovySpecificSources3GmavenPlus() {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.gmavenplus</groupId>" +
+                  "      <artifactId>gmavenplus-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/groovy",
+                      "src/test/java");
+    assertTestResources("project", "src/test/resources");
+  }
+
   public void testGroovyEclipsePlugin() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -194,6 +226,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/groovy",
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
+
+    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
   public void testAddingCustomGroovySpecificSources() {
@@ -214,6 +249,76 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.groovy.maven</groupId>" +
                   "      <artifactId>gmaven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>one</id>" +
+                  "          <goals>" +
+                  "            <goal>compile</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <fileset>" +
+                  "                <directory>${pom.basedir}/src/foo1</directory>" +
+                  "              </fileset>" +
+                  "              <fileset>" +
+                  "                <directory>${pom.basedir}/src/foo2</directory>" +
+                  "              </fileset>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "        <execution>" +
+                  "          <id>two</id>" +
+                  "          <goals>" +
+                  "            <goal>testCompile</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <fileset>" +
+                  "                <directory>${pom.basedir}/src/test-foo1</directory>" +
+                  "              </fileset>" +
+                  "              <fileset>" +
+                  "                <directory>${pom.basedir}/src/test-foo2</directory>" +
+                  "              </fileset>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/foo1",
+                  "src/foo2",
+                  "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test-foo1",
+                      "src/test-foo2",
+                      "src/test/java");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  public void testAddingCustomGroovySpecificSources2GmavenPlus() {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/foo1",
+                         "src/foo2",
+                         "src/test/groovy",
+                         "src/test-foo1",
+                         "src/test-foo2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.gmavenplus</groupId>" +
+                  "      <artifactId>gmavenplus-plugin</artifactId>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>one</id>" +
@@ -480,9 +585,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                     "</build>");
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                             getModule("project"),
-                                                            new IdeModifiableModelsProviderImpl(myProject));
+                                                            new IdeModifiableModelsProviderImpl(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });
@@ -553,6 +658,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     assertExcludes("project", "target");
+  }
+
+  public void testGrEclipseMavenPlugin(){
+
   }
 
 }

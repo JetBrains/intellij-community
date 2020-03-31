@@ -39,6 +39,9 @@
   <action id="EditorEscape">
     <keyboard-shortcut first-keystroke="ESCAPE"/>
   </action>
+  <action id="FocusEditor">
+    <keyboard-shortcut first-keystroke="ESCAPE"/>
+  </action>
   <action id="StepInto">
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
@@ -141,7 +144,7 @@
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="ctrl shift button1"/>
   </action>
-  
+
   <action id="GotoBookmark0">
     <keyboard-shortcut first-keystroke="control 0"/>
   </action>
@@ -301,6 +304,9 @@
   <action id="SwitcherRecentEditedChangedToggleCheckBox">
     <keyboard-shortcut first-keystroke="control E"/>
   </action>
+  <action id="SwitcherIterateItems">
+    <keyboard-shortcut first-keystroke="control E"/>
+  </action>
   <action id="RecentChangedFiles"/>
   <action id="RecentLocations">
     <keyboard-shortcut first-keystroke="control shift E"/>
@@ -320,6 +326,9 @@
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="control Q"/>
     <mouse-shortcut keystroke="alt button2"/>
+  </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift F11"/>
@@ -901,16 +910,16 @@
   <action id="ActivateStructureToolWindow">
     <keyboard-shortcut first-keystroke="alt 7"/>
   </action>
-  <action id="ActivateHierarchyToolWindow">
+  <action id="ActivateHierarchyToolWindow"/>
+  <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="alt 8"/>
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
-    <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>
   <action id="NewElement">
-     <keyboard-shortcut first-keystroke="alt INSERT"/>
-   </action>
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control alt INSERT"/>
   </action>
@@ -982,6 +991,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="control shift F5"/>
+  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
@@ -1008,6 +1020,9 @@
   </action>
   <action id="VcsShowPrevChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
+  </action>
+  <action id="Vcs.ToggleAmendCommitMode">
+    <keyboard-shortcut first-keystroke="alt M"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
@@ -1060,7 +1075,10 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
   <action id="ChangesView.GroupBy.Directory">
-    <keyboard-shortcut first-keystroke="ctrl P"/>
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="ChangesView.GroupBy.Module">
+    <keyboard-shortcut first-keystroke="control alt M"/>
   </action>
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
@@ -1099,6 +1117,11 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
+  <action id="Git.Rename.Local.Branch">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
   <action id="ChangesView.SetDefault">
     <keyboard-shortcut first-keystroke="control SPACE" />
   </action>
@@ -1115,7 +1138,7 @@
     <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
 
@@ -1155,5 +1178,29 @@
   <action id="SearchEverywhere.NavigateToPrevGroup">
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="control UP"/>
+  </action>
+
+  <action id="TodoViewGroupByShowModules">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
+  <action id="TodoViewGroupByShowPackages">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="TodoViewGroupByFlattenPackage">
+    <keyboard-shortcut first-keystroke="control alt C"/>
+  </action>
+
+  <action id="ServiceView.GroupByContributor">
+    <keyboard-shortcut first-keystroke="control alt T"/>
+  </action>
+  <action id="ServiceView.GroupByServiceGroups">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+
+  <action id="ViewInplaceComments">
+    <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
+  </action>
+  <action id="ToggleFindInSelection">
+    <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
 </keymap>

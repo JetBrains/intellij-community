@@ -33,8 +33,7 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
 
   private AddToIgnoreIfAnnotatedByListQuickFix() {}
 
-  @NotNull
-  public static InspectionGadgetsFix[] build(PsiModifierListOwner modifierListOwner, List<String> configurationList) {
+  public static InspectionGadgetsFix @NotNull [] build(PsiModifierListOwner modifierListOwner, List<String> configurationList) {
     final List<InspectionGadgetsFix> fixes = build(modifierListOwner, configurationList, new ArrayList<>());
     return fixes.isEmpty() ? InspectionGadgetsFix.EMPTY_ARRAY : fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
@@ -46,7 +45,13 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
       fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
         InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
         QuickFixBundle.message("fix.add.special.annotation.family"),
-        configurationList, qualifiedName, modifierListOwner)));
+        configurationList, qualifiedName, modifierListOwner)) {
+        @NotNull
+        @Override
+        public Priority getPriority() {
+          return Priority.LOW;
+        }
+      });
       return true;
     });
     return fixes;

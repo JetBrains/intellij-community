@@ -20,7 +20,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase {
+public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PATH = "com/siyeh/igtest/errorhandling/try_identical_catches/";
   private static final String HINT = "Collapse 'catch' blocks";
 
@@ -78,6 +78,10 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
 
   public void testIdenticalNonemptyCatchWithDifferentCommentsProcessOne() {
     doTest(false, true);
+  }
+
+  public void testCatchParameterRewritten() {
+    highlightTest(false);
   }
 
   public void doTest() {

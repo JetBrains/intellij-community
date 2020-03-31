@@ -13,7 +13,7 @@ import java.util.StringTokenizer;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider");
+  private static final Logger LOG = Logger.getInstance(JavaElementSignatureProvider.class);
 
   @Override
   @Nullable

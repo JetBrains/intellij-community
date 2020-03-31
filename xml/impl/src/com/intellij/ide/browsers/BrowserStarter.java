@@ -1,45 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.net.HostAndPort;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.net.URI;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 public class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
-  private final Computable<Boolean> myOutdated;
+  private final BooleanSupplier myOutdated;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
-                        @NotNull Computable<Boolean> outdated) {
+                        @NotNull BooleanSupplier outdated) {
     mySettings = settings;
     myRunConfiguration = runConfiguration;
     myOutdated = outdated;
@@ -97,8 +90,8 @@ public class BrowserStarter {
       checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
     }
     else {
-      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks, opening " + hostAndPort);
-      openPageNow();
+      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks. Failed to open " + hostAndPort);
+      showBrowserOpenTimeoutNotification();
     }
   }
 
@@ -126,6 +119,27 @@ public class BrowserStarter {
   }
 
   private boolean isOutdated() {
-    return myOutdated.compute();
+    return myOutdated.getAsBoolean();
+  }
+
+  private void showBrowserOpenTimeoutNotification() {
+    NotificationGroup group =
+      NotificationGroup.balloonGroup("URL does not respond notification", XmlBundle.message("browser.notification.timeout.group"));
+    NotificationType type = NotificationType.ERROR;
+
+    String title = XmlBundle.message("browser.notification.timeout.title");
+    String url = Objects.requireNonNull(mySettings.getUrl());
+    String openUrlDescription = "open_url";
+    String content = XmlBundle.message("browser.notification.timeout.text", url, openUrlDescription);
+
+    Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
+      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+      if (event.getDescription().equals(openUrlDescription)) {
+        BrowserUtil.open(url);
+        notification.expire();
+      }
+    });
+
+    openBrowserNotification.notify(myRunConfiguration.getProject());
   }
 }

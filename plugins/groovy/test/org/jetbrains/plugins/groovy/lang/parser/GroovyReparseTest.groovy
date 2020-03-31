@@ -3,13 +3,13 @@ package org.jetbrains.plugins.groovy.lang.parser
 
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
+class GroovyReparseTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

@@ -18,9 +18,6 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
-*/
 //todo[nik] delete
 public final class FacetInfo {
   public static final FacetInfo[] EMPTY_ARRAY = new FacetInfo[0];

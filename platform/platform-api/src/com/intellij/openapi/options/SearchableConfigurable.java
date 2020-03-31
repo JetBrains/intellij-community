@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.SearchableOptionContributor;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
@@ -89,9 +90,8 @@ public interface SearchableConfigurable extends Configurable {
         myKids = null;
       }
 
-      @NotNull
       @Override
-      public final Configurable[] getConfigurables() {
+      public final Configurable @NotNull [] getConfigurables() {
         if (myKids != null) return myKids;
         myKids = buildConfigurables();
         return myKids;
@@ -101,10 +101,13 @@ public interface SearchableConfigurable extends Configurable {
     }
   }
 
+  @FunctionalInterface
+  interface Merged {
+    List<Configurable> getMergedConfigurables();
+  }
+
   /**
    * Intended to use some search utility methods with any configurable.
-   *
-   * @author Sergey.Malenkov
    */
   class Delegate implements SearchableConfigurable {
     private final Configurable myConfigurable;

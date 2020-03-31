@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
@@ -10,11 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListActions;
-import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -42,8 +38,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private final NavBarPanel myPanel;
   private final int myIndex;
 
-  public NavBarPopup(final NavBarPanel panel, Object[] siblings, final int selectedIndex) {
-    super(createPopupContent(panel, siblings));
+  public NavBarPopup(final NavBarPanel panel, int sourceItemIndex, Object[] siblings, final int selectedIndex) {
+    super(createPopupContent(panel, sourceItemIndex, siblings));
     myPanel = panel;
     myIndex = selectedIndex;
     setFocusRequestor(getComponent());
@@ -70,7 +66,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         if (e.isPopupTrigger()) return;
         Object value = getList().getSelectedValue();
         if (value != null) {
-          myPanel.navigateInsideBar(value);
+          myPanel.navigateInsideBar(sourceItemIndex, value);
         }
       }
     });
@@ -84,7 +80,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       if (o instanceof JComponent) HintUpdateSupply.hideHint((JComponent)o);
     }
     //noinspection unchecked
-    for (Disposable disposable : ((List<Disposable>)getList().getClientProperty(DISPOSED_OBJECTS))) {
+    for (Disposable disposable : (List<? extends Disposable>)getList().getClientProperty(DISPOSED_OBJECTS)) {
       Disposer.dispose(disposable);
     }
     Disposer.dispose(this);
@@ -95,7 +91,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private void show(final NavBarItem item, boolean checkRepaint) {
-    UIEventLogger.logUIEvent(UIEventId.NavBarNavigate);
+    UIEventLogger.logUIEvent(UIEventId.NavBarShowPopup);
 
     final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
@@ -139,7 +135,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public void dispose() {
   }
 
-  private static JComponent createPopupContent(NavBarPanel panel, Object[] siblings) {
+  private static JComponent createPopupContent(NavBarPanel panel, int sourceItemIndex, Object[] siblings) {
     class MyList<E> extends JBList<E> implements DataProvider, Queryable {
       @Override
       public void putInfo(@NotNull Map<String, String> info) {
@@ -155,29 +151,35 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     JBList<Object> list = new MyList<>();
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    List<Disposable> disposables = new ArrayList<>();
-    list.putClientProperty(DISPOSED_OBJECTS, disposables);
+    List<NavBarItem> items = new ArrayList<>();
+    list.putClientProperty(DISPOSED_OBJECTS, items);
     list.installCellRenderer(obj -> {
-      final NavBarItem navBarItem = new NavBarItem(panel, obj, null);
-      disposables.add(navBarItem);
-      return navBarItem;
+      for (NavBarItem item : items) {
+        if (obj == item.getObject()) {
+          item.update();
+          return item;
+        }
+      }
+      NavBarItem item = new NavBarItem(panel, obj, null, true);
+      items.add(item);
+      return item;
     });
     list.setBorder(JBUI.Borders.empty(5));
     ActionMap map = list.getActionMap();
     map.put(ListActions.Left.ID, createMoveAction(panel, -1));
     map.put(ListActions.Right.ID, createMoveAction(panel, 1));
-    installEnterAction(list, panel, KeyEvent.VK_ENTER);
+    installEnterAction(list, panel, sourceItemIndex, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
-    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
+    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
     component.putClientProperty(JBLIST_KEY, list);
     return component;
   }
 
-  private static void installEnterAction(JBList list, NavBarPanel panel, int keyCode) {
+  private static void installEnterAction(JBList list, NavBarPanel panel, int sourceItemIndex, int keyCode) {
     AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        panel.navigateInsideBar(list.getSelectedValue());
+        panel.navigateInsideBar(sourceItemIndex, list.getSelectedValue());
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);

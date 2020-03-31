@@ -2,7 +2,9 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
@@ -11,6 +13,7 @@ class IgnoredFileWritingAccessExtension(private val project: Project) : NonProje
     IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER
       .getExtensions(project)
       .map(IgnoredFileContentProvider::getFileName).containsIgnoreCase(file.name) && VcsUtil.getVcsRootFor(project, file) != null
+    || (FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence) is IgnoreFileType)
 
   private fun List<String>.containsIgnoreCase(element: String) = any { it.equals(element, true) }
 }

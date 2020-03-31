@@ -18,12 +18,12 @@ package org.jetbrains.plugins.groovy.lang.surroundWith
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.WriteAction
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author peter
  */
-class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
+class SurrounderOrderTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testStatementSurrounders() {
     def names = getSurrounders("<selection>println a</selection>")

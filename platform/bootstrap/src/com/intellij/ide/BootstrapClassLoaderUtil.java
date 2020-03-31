@@ -1,31 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.lang.management.ManagementFactory;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author max
- */
-public class BootstrapClassLoaderUtil extends ClassUtilCore {
+public final class BootstrapClassLoaderUtil {
+  public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
+
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
+  private static final String MARKETPLACE_PLUGIN_DIR = "marketplace";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -33,30 +38,66 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return Logger.getInstance(BootstrapClassLoaderUtil.class);
   }
 
-  @NotNull
-  public static ClassLoader initClassLoader() throws MalformedURLException {
+  public static @NotNull ClassLoader initClassLoader() throws MalformedURLException {
+    List<String> jarOrder = loadJarOrder();
+
     Collection<URL> classpath = new LinkedHashSet<>();
     addParentClasspath(classpath, false);
-    addIDEALibraries(classpath);
+    addIdeaLibraries(classpath, jarOrder);
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
+
+    File mpBoot = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-bootstrap.jar");
+    boolean installMarketplace = mpBoot.exists();
+    if (installMarketplace) {
+      File marketplaceImpl = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-impl.jar");
+      if (marketplaceImpl.exists()) {
+        classpath.add(marketplaceImpl.toURI().toURL());
+      }
+    }
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
+      .logJarAccess(Boolean.getBoolean("idea.log.classpath.info"))
+      .autoAssignUrlsWithProtectionDomain()
       .useCache();
-    if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
+    if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
     }
 
     ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
 
+    if (installMarketplace) {
+      try {
+        List<BytecodeTransformer> transformers = new ArrayList<>();
+        UrlClassLoader spiLoader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
+        for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, spiLoader)) {
+          transformers.add(transformer);
+        }
+        if (!transformers.isEmpty()) {
+          return new TransformingLoader(builder, transformers);
+        }
+      }
+      catch (Throwable e) {
+        // at this point logging is not initialized yet, so reporting the error directly
+        String path = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).getAbsolutePath();
+        String message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at " + path;
+        Main.showMessage("JetBrains Marketplace boot failure", new Exception(message, e));
+      }
+    }
+
     return builder.get();
   }
 
-  private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
-    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
+      if (!ext) {
+        parseClassPathString(System.getProperty("java.class.path"), classpath);
+      }
+    }
+    else {
       String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
       if (ext && extDirs.length == 0) return;
 
@@ -70,10 +111,15 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         }
       }
 
+      String libPath = PathManager.getLibPath();
       for (URLClassLoader loader : loaders) {
         URL[] urls = loader.getURLs();
         for (URL url : urls) {
           String path = urlToPath(url);
+          if (path.startsWith(libPath)) {
+            // we need to add these paths in the order specified in order.txt, so don't add them at this stage
+            continue;
+          }
 
           boolean isExt = false;
           for (String extDir : extDirs) {
@@ -89,9 +135,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         }
       }
     }
-    else if (!ext) {
-      parseClassPathString(ManagementFactory.getRuntimeMXBean().getClassPath(), classpath);
-    }
   }
 
   private static String urlToPath(URL url) throws MalformedURLException {
@@ -103,25 +146,46 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addIDEALibraries(Collection<? super URL> classpath) throws MalformedURLException {
+  private static void addIdeaLibraries(Collection<URL> classpath, Collection<String> jarOrder) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
     URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
-    classpath.add(selfRootUrl);
-
     File libFolder = new File(PathManager.getLibPath());
+    for (String jarName : jarOrder) {
+      if (jarName == null || jarName.isEmpty()) {
+        continue;
+      }
+
+      File jarFile = new File(libFolder, jarName);
+      if (jarFile.exists()) {
+        classpath.add(jarFile.toURI().toURL());
+      }
+    }
+
+    classpath.add(selfRootUrl);
     addLibraries(classpath, libFolder, selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
+  private static List<String> loadJarOrder() {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream resource = BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE);
+    if (resource != null) {
+      try (BufferedReader stream = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+        return FileUtilRt.loadLines(stream);
+      }
+      catch (Exception ignored) { }  // skip, we can load the app
+    }
+    return Collections.emptyList();
+  }
+
+  private static void addLibraries(Collection<URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
     for (File file : files) {
-      if (FileUtil.isJarOrZip(file)) {
+      if (FileUtilRt.isJarOrZip(file)) {
         URL url = file.toURI().toURL();
         if (!selfRootUrl.equals(url)) {
           classPath.add(url);
@@ -130,22 +194,28 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addAdditionalClassPath(Collection<? super URL> classpath) {
+  private static void addAdditionalClassPath(Collection<URL> classpath) {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
   }
 
-  private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
-    if (pathString != null && !pathString.isEmpty()) {
-      try {
-        StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
-        while (tokenizer.hasMoreTokens()) {
-          String pathItem = tokenizer.nextToken();
+  private static void parseClassPathString(String pathString, Collection<URL> classpath) {
+    if (pathString == null || pathString.isEmpty()) {
+      return;
+    }
+
+    try {
+      String libPath = PathManager.getLibPath();
+      StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
+      while (tokenizer.hasMoreTokens()) {
+        String pathItem = tokenizer.nextToken();
+        if (!pathItem.startsWith(libPath)) {
+          // we need to add paths from lib directory in the order specified in order.txt, so don't add them at this stage
           classpath.add(new File(pathItem).toURI().toURL());
         }
       }
-      catch (MalformedURLException e) {
-        getLogger().error(e);
-      }
+    }
+    catch (MalformedURLException e) {
+      getLogger().error(e);
     }
   }
 
@@ -161,5 +231,35 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
     }
     return classpath;
+  }
+
+  private static class TransformingLoader extends UrlClassLoader {
+    private final List<BytecodeTransformer> myTransformers;
+
+    TransformingLoader(Builder builder, List<BytecodeTransformer> transformers) {
+      super(builder);
+      myTransformers = Collections.unmodifiableList(transformers);
+    }
+
+    @Override
+    protected Class<?> _defineClass(String name, byte[] b) {
+      return super._defineClass(name, doTransform(name, null, b));
+    }
+
+    @Override
+    protected Class<?> _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
+      return super._defineClass(name, doTransform(name, protectionDomain, b), protectionDomain);
+    }
+
+    private byte[] doTransform(String name, ProtectionDomain protectionDomain, byte[] bytes) {
+      byte[] b = bytes;
+      for (BytecodeTransformer transformer : myTransformers) {
+        byte[] result = transformer.transform(this, name, protectionDomain, b);
+        if (result != null) {
+          b = result;
+        }
+      }
+      return b;
+    }
   }
 }

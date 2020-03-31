@@ -19,8 +19,7 @@ public interface IntObjectMap<V> {
 
   void clear();
 
-  @NotNull
-  int[] keys();
+  int @NotNull [] keys();
 
   int size();
 

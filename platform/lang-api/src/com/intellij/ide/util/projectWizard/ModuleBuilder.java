@@ -5,11 +5,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -21,11 +21,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -43,7 +45,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
+  private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);
   private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   protected Sdk myJdk;
@@ -52,9 +54,14 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private String myContentEntryPath;
 
   @NotNull
+  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<>();
-    for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
+    for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
       result.add(moduleType.createModuleBuilder());
     }
     for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
@@ -95,7 +102,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Override
   @Nullable
   public String getBuilderId() {
-    ModuleType moduleType = getModuleType();
+    ModuleType<?> moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
 
@@ -120,14 +127,14 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public ModuleWizardStep modifyStep(SettingsStep settingsStep) {
-    ModuleType type = getModuleType();
+    ModuleType<?> type = getModuleType();
     if (type == null) {
       return null;
     }
     else {
       final ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
-      final List<WizardInputField> fields = getAdditionalFields();
-      for (WizardInputField field : fields) {
+      final List<WizardInputField<?>> fields = getAdditionalFields();
+      for (WizardInputField<?> field : fields) {
         field.addToSettings(settingsStep);
       }
       return new ModuleWizardStep() {
@@ -145,7 +152,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
         @Override
         public boolean validate() throws ConfigurationException {
-          for (WizardInputField field : fields) {
+          for (WizardInputField<?> field : fields) {
             if (!field.validate()) {
               return false;
             }
@@ -158,12 +165,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    ModuleType type = getModuleType();
+    ModuleType<?> type = getModuleType();
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
   @NotNull
-  protected List<WizardInputField> getAdditionalFields() {
+  protected List<WizardInputField<?>> getAdditionalFields() {
     return Collections.emptyList();
   }
 
@@ -264,7 +271,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
   }
 
-  public abstract ModuleType getModuleType();
+  public abstract ModuleType<?> getModuleType();
 
   protected ProjectType getProjectType() {
     return null;
@@ -285,8 +292,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(
-        (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module)));
+      StartupManager.getInstance(module.getProject()).runAfterOpened(() -> {
+        GuiUtils.invokeLaterIfNeeded(() -> {
+          ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
+        }, ModalityState.NON_MODAL, module.getDisposed());
+      });
     }
     else {
       onModuleInitialized(module);
@@ -339,7 +349,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsUI.Text
   public String getDescription() {
     return getModuleType().getDescription();
   }

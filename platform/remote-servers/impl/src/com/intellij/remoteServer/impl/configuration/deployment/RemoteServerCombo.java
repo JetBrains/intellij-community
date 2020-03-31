@@ -1,28 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
-import com.intellij.remoteServer.util.CloudBundle;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import com.intellij.util.ui.EmptyIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import javax.swing.JList;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWithBrowseButton implements UserActivityProviderComponent {
   private static final Comparator<RemoteServer<?>> SERVERS_COMPARATOR =
@@ -107,7 +115,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     return myServerListModel.getItems().stream()
       .filter(Objects::nonNull)
       .filter(item -> !(item instanceof TransientItem))
-      .filter(item -> Comparing.equal(item.getServerName(), serverName))
+      .filter(item -> Objects.equals(item.getServerName(), serverName))
       .findAny().orElse(null);
   }
 
@@ -207,7 +215,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   @NotNull
   private List<RemoteServer<S>> getSortedServers() {
     List<RemoteServer<S>> result = new ArrayList<>(RemoteServersManager.getInstance().getServers(myServerType));
-    Collections.sort(result, SERVERS_COMPARATOR);
+    result.sort(SERVERS_COMPARATOR);
     return result;
   }
 
@@ -246,8 +254,8 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     public void render(@NotNull SimpleColoredComponent ui) {
-      ui.setIcon(null);
-      ui.append(CloudBundle.getText("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+      ui.setIcon(EmptyIcon.create(myServerType.getIcon()));
+      ui.append(CloudBundle.message("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Override
@@ -338,7 +346,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     @Override
     public void render(@NotNull SimpleColoredComponent ui) {
       ui.setIcon(null);
-      ui.append(CloudBundle.getText("remote.server.combo.no.servers"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      ui.append(CloudBundle.message("remote.server.combo.no.servers"), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 }

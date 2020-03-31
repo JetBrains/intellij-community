@@ -102,8 +102,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectio
       // don't drill down in classes
     }
 
-    @NotNull
-    public PsiVariable[] getVariables(String name) {
+    public PsiVariable @NotNull [] getVariables(String name) {
       final List<PsiVariable> variableList = variableMap.get(name);
       if (variableList == null) {
         return EMPTY_VARIABLE_LIST;

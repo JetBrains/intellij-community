@@ -31,13 +31,13 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 import java.util.concurrent.Callable
 
 @CompileStatic
-class JavaStubsTest extends LightCodeInsightFixtureTestCase {
+class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test resolve from annotation method default"() {
     def cls = myFixture.addClass("""
@@ -396,4 +396,11 @@ public class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test local record"() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject('a.java', 'class A {\n' +
+                                                                         '  void test() {\n' +
+                                                                         '    record A(String s) { }\n' +
+                                                                         '  }\n' +
+                                                                         '}\n'))
+  }
 }

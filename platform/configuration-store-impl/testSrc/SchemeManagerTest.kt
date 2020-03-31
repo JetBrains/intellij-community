@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +17,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
 import gnu.trove.THashMap
@@ -574,9 +575,9 @@ internal class SchemeManagerTest {
     try {
       val requestedPaths = linkedSetOf<String>()
       val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
-        override fun resolveVirtualFile(path: String): VirtualFile? {
+        override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
           requestedPaths.add(PathUtil.getFileName(path))
-          return super.resolveVirtualFile(path)
+          return super.resolveVirtualFile(path, reasonOperation)
         }
       })
 
@@ -657,7 +658,7 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 
   baseDir.directoryStreamIfExists {
     for (file in it) {
-      val scheme = loadElement(file).deserialize(TestScheme::class.java)
+      val scheme = JDOMUtil.load(file).deserialize(TestScheme::class.java)
       assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file.fileName.toString()))).isEqualTo(scheme.name)
     }
   }

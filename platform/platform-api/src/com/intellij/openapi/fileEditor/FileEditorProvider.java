@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,21 +23,21 @@ public interface FileEditorProvider {
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   /**
-   * @param file file to be tested for acceptance. This
-   * parameter is never {@code null}.
+   * Method is expected to run fast.
    *
-   * @return whether the provider can create valid editor for the specified
-   * {@code file} or not
+   * @param file file to be tested for acceptance.
+   * @return {@code true} if provider can create valid editor for the specified {@code file}.
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
   /**
-   * Creates editor for the specified file. This method
-   * is called only if the provider has accepted this file (i.e. method {@link #accept(Project, VirtualFile)} returned
+   * Creates editor for the specified file.
+   * <p>
+   * This method is called only if the provider has accepted this file (i.e. method {@link #accept(Project, VirtualFile)} returned
    * {@code true}).
    * The provider should return only valid editor.
    *
-   * @return created editor for specified file. This method should never return {@code null}.
+   * @return created editor for specified file.
    */
   @NotNull
   FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file);
@@ -46,14 +46,14 @@ public interface FileEditorProvider {
    * Disposes the specified {@code editor}. It is guaranteed that this method is invoked only for editors
    * created with this provider.
    *
-   * @param editor editor to be disposed. This parameter is always not {@code null}.
+   * @param editor editor to be disposed.
    */
   default void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
   /**
-   * Deserialize state from the specified {@code sourceElement}
+   * Deserialize state from the specified {@code sourceElement}.
    */
   @NotNull
   default FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
@@ -61,21 +61,21 @@ public interface FileEditorProvider {
   }
 
   /**
-   * Serializes state into the specified {@code targetElement}
+   * Serializes state into the specified {@code targetElement}.
    */
   default void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
   }
 
   /**
-   * @return id of type of the editors that are created with this FileEditorProvider. Each FileEditorProvider should have
-   * unique non null id. The id is used for saving/loading of EditorStates.
+   * @return id of type of the editors created with this FileEditorProvider. Each FileEditorProvider should have
+   * unique nonnull id. The id is used for saving/loading of EditorStates.
    */
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getEditorTypeId();
 
   /**
-   * @return policy that specifies how show editor created via this provider be opened
-   *
+   * @return policy that specifies how editor created via this provider should be opened.
    * @see FileEditorPolicy#NONE
    * @see FileEditorPolicy#HIDE_DEFAULT_EDITOR
    * @see FileEditorPolicy#PLACE_BEFORE_DEFAULT_EDITOR

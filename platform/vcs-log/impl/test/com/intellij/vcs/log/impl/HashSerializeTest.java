@@ -38,11 +38,10 @@ public class HashSerializeTest {
     File file = writeToTempFile(hash1, hash2);
     List<HashImpl> hashes = readFromFile(file);
     assertEquals(Arrays.asList(hash1, hash2), hashes);
-
   }
 
   @NotNull
-  private static File writeToTempFile(@NotNull HashImpl... hashes) throws IOException {
+  private static File writeToTempFile(HashImpl @NotNull ... hashes) throws IOException {
     File file = FileUtil.createTempFile("", "");
     try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
       for (HashImpl hash : hashes) {

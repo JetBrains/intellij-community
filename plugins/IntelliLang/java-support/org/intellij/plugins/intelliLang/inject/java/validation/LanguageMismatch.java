@@ -21,45 +21,27 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.pattern.PatternValidator;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Set;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.LANGUAGE_INJECTION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Language Mismatch";
-  }
-
-  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      "Flag usages of non-annotated elements where the usage context implies a certain language", this, "CHECK_NON_ANNOTATED_REFERENCES");
+      IntelliLangBundle.message("flag.usages.of.non.annotated.elements"), this, "CHECK_NON_ANNOTATED_REFERENCES");
   }
 
   @Override
@@ -104,7 +86,7 @@ public class LanguageMismatch extends LocalInspectionTool {
               final String actual = AnnotationUtilEx.calcAnnotationValue(as, "value");
               if (!expected.equals(actual)) {
                 // language annotation values from context and declaration don't match
-                holder.registerProblem(expression, "Language mismatch: Expected '" + expected + "', got '" + actual + "'");
+                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description3", expected, actual));
               }
             }
             else if (CHECK_NON_ANNOTATED_REFERENCES) {
@@ -118,7 +100,7 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
               else if (var instanceof PsiExpressionList) {
                 final PsiExpressionList list = (PsiExpressionList)var;
-                if (Arrays.asList(list.getExpressions()).indexOf(expression) == -1) {
+                if (!ArrayUtil.contains(expression, list.getExpressions())) {
                   return;
                 }
               }
@@ -143,11 +125,11 @@ public class LanguageMismatch extends LocalInspectionTool {
                     return initializer == null ? super.getName() : super.getName() + initializer;
                   }
                 };
-                holder.registerProblem(expression, "Language problem: Found non-annotated reference where '" + expected + "' is expected",
+                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description2", expected),
                                        fix);
               }
               else {
-                holder.registerProblem(expression, "Language problem: Found non-annotated reference where '" + expected + "' is expected");
+                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description", expected));
               }
             }
           }
@@ -156,10 +138,4 @@ public class LanguageMismatch extends LocalInspectionTool {
     }
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "LanguageMismatch";
-  }
 }

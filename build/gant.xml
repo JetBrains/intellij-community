@@ -18,6 +18,14 @@
         <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
       </and>
     </condition>
+    <condition property="gradle.args" value="${intellij.gradle.jdk.build.parameters}" else="--stacktrace">
+      <and>
+        <isset property="intellij.gradle.jdk.build.parameters"/>
+        <not>
+          <equals arg1="${intellij.gradle.jdk.build.parameters}" arg2=""/>
+        </not>
+      </and>
+    </condition>
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
@@ -28,22 +36,17 @@
       <env key="JAVA_HOME" value="${java.path}"/>
       <arg value="${gradle.daemon}"/>
       <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
+      <arg line="${gradle.args}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
 
   <target name="doGant" depends="init">
     <path id="gant.classpath">
-      <fileset dir="${project.home}/build/lib/jps">
-        <include name="*.jar"/>
-      </fileset>
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
       <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps">
         <include name="*.jar"/>
-      </fileset>
-      <fileset dir="${idea.lib}">
-        <include name="snappy-in-java-*.jar"/>
       </fileset>
     </path>
 

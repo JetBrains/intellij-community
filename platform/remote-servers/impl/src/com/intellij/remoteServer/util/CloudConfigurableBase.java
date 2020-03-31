@@ -1,17 +1,16 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.util.text.UniqueNameGenerator;
+import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author michael.golubev
@@ -78,35 +77,8 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
   }
 
   protected boolean isCoreConfigEqual(SC configuration1, SC configuration2) {
-    return Comparing.equal(configuration1.getEmail(), configuration2.getEmail())
-           && Comparing.equal(configuration1.getPasswordSafe(), configuration2.getPasswordSafe());
-  }
-
-  private String generateServerName() {
-    return UniqueNameGenerator.generateUniqueName(myCloudType.getPresentableName(), s -> {
-      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-        if (server.getName().equals(s)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }
-
-  /**
-   * This method is not used anymore and will be removed in 2019.1
-   */
-  @Deprecated
-  protected final RemoteServer<SC> createTempServer() {
-    RemoteServer<SC> tempServer = RemoteServersManager.getInstance().createServer(myCloudType, generateServerName());
-    SC newConfiguration = tempServer.getConfiguration();
-    try {
-      applyCoreTo(newConfiguration, true);
-    }
-    catch (ConfigurationException e) {
-      return null;
-    }
-    return tempServer;
+    return Objects.equals(configuration1.getEmail(), configuration2.getEmail())
+           && Objects.equals(configuration1.getPasswordSafe(), configuration2.getPasswordSafe());
   }
 
   protected abstract JComponent getMainPanel();

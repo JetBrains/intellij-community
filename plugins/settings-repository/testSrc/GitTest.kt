@@ -3,7 +3,6 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.write
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
@@ -367,10 +366,10 @@ internal class GitTest : GitTestCase() {
   }
 
   private suspend fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
-    repositoryManager.createRepositoryIfNeed()
+    repositoryManager.createRepositoryIfNeeded()
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
-    val store = ApplicationStoreImpl(ApplicationManager.getApplication()!!)
+    val store = ApplicationStoreImpl()
     val localConfigPath = tempDirManager.newPath("local_config", refreshVfs = true)
 
     val lafData = """<application>

@@ -75,32 +75,18 @@ def run_pip(args):
         error_no_pip()
 
 
-def do_pyvenv(path, system_site_packages):
+def do_pyvenv(args):
+    import runpy
     try:
-        import venv
+        import ensurepip
+        sys.argv[1:] = args
+    except ImportError:
+        sys.argv[1:] = ['--without-pip'] + args
+
+    try:
+        runpy.run_module('venv', run_name='__main__', alter_sys=True)
     except ImportError:
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
-    # In Python >= 3.4 venv.create() has a new parameter with_pip=False
-    # that allows to automatically install setuptools and pip with the module
-    # ensurepip. Unfortunately, we cannot use this parameter and have to
-    # bootstrap these packages ourselves, since some distributions of CPython
-    # on Ubuntu don't include ensurepip.
-    venv.create(path, system_site_packages=system_site_packages)
-
-
-def do_untar(name):
-    import tempfile
-
-    directory_name = tempfile.mkdtemp("pycharm-management")
-
-    import tarfile
-
-    tar = tarfile.open(name)
-    for item in tar:
-        tar.extract(item, directory_name)
-
-    sys.stdout.write(directory_name+chr(10))
-    sys.stdout.flush()
 
 
 def mkdtemp_ifneeded():
@@ -148,11 +134,6 @@ def main():
                     import shutil
                     shutil.rmtree(rmdir)
 
-        elif cmd == 'untar':
-            if len(sys.argv) < 2:
-                usage()
-            name = sys.argv[2]
-            do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()
@@ -162,12 +143,7 @@ def main():
             opts, args = getopt.getopt(sys.argv[2:], '', ['system-site-packages'])
             if len(args) != 1:
                 usage()
-            path = args[0]
-            system_site_packages = False
-            for opt, arg in opts:
-                if opt == '--system-site-packages':
-                    system_site_packages = True
-            do_pyvenv(path, system_site_packages)
+            do_pyvenv(sys.argv[2:])
         else:
             usage()
     except Exception:

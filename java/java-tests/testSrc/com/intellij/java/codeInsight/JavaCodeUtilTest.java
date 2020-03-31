@@ -7,9 +7,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class JavaCodeUtilTest extends LightCodeInsightTestCase {
+public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
   public void testReplace() {
     PsiFileFactory instance = PsiFileFactory.getInstance(getProject());
     PsiJavaFile aFile = (PsiJavaFile)instance
@@ -36,7 +36,7 @@ public class JavaCodeUtilTest extends LightCodeInsightTestCase {
                           "        ArrayList \n" + //note whitespace after
                           "    }\n" +
                           "}");
-    PsiClass aClass = ((PsiJavaFile)myFile).getClasses()[0];
+    PsiClass aClass = ((PsiJavaFile)getFile()).getClasses()[0];
     PsiCodeBlock body = aClass.getMethods()[0].getBody();
     PsiReferenceExpression expression = (PsiReferenceExpression)((PsiExpressionStatementImpl)body.getStatements()[0]).getExpression();
 
@@ -53,6 +53,6 @@ public class JavaCodeUtilTest extends LightCodeInsightTestCase {
                  "    void foo(){\n" +
                  "        ArrayList \n" +
                  "    }\n" +
-                 "}", myFile.getText());
+                 "}", getFile().getText());
   }
 }

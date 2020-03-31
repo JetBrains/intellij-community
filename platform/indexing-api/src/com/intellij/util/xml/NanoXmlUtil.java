@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.xml;
 
@@ -21,11 +21,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
 
-/**
- * @author mike
- */
 public class NanoXmlUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.NanoXmlUtil");
+  private static final Logger LOG = Logger.getInstance(NanoXmlUtil.class);
 
   private NanoXmlUtil() {
   }
@@ -153,9 +150,15 @@ public class NanoXmlUtil {
     return result.toString();
   }
 
+  /**
+   * @deprecated left for API compatibility
+   */
   @Deprecated
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
-    // used externally
+
+    /**
+     * @deprecated left for API compatibility
+     */
     @Deprecated
     protected static void stop() throws ParserStoppedXmlException {
       throw ParserStoppedXmlException.INSTANCE;

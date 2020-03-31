@@ -6,7 +6,7 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
@@ -36,7 +36,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     copyToolsConfigurations(source, project)
   }
 
-  override fun createTools(project: Project?): List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>> = source.getDefaultStates(project).map { it.tool }
+  override fun createTools(project: Project?): List<InspectionToolWrapper<out InspectionProfileEntry, out InspectionEP>> = source.getDefaultStates(project).map { it.tool }
 
   private fun copyToolsConfigurations(profile: InspectionProfileImpl, project: Project?) {
     try {
@@ -113,8 +113,10 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     description = model.description
     isProjectLevel = model.isProjectLevel
     myLockedProfile = model.myLockedProfile
-    myChangedToolNames = model.myChangedToolNames
-    myTools = model.myTools
+    myChangedToolNames = null
+    if (model.wasInitialized()) {
+      myTools = model.myTools
+    }
     profileManager = model.profileManager
   }
 
@@ -126,7 +128,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
 }
 
 fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionProfileModifiableModel>) {
-  ProjectInspectionProfileManager.getInstance(project).currentProfile.edit { action.consume(this) }
+  InspectionProjectProfileManager.getInstance(project).currentProfile.edit { action.consume(this) }
 }
 
 inline fun InspectionProfileImpl.edit(task: InspectionProfileModifiableModel.() -> Unit) {

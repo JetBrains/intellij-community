@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +18,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlEnumType extends YamlScalarType {
-  private String[] myLiterals = ArrayUtil.EMPTY_STRING_ARRAY;
-  private String[] myHiddenLiterals = ArrayUtil.EMPTY_STRING_ARRAY;
-  private String[] myDeprecatedLiterals = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String[] myLiterals = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  private String[] myHiddenLiterals = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  private String[] myDeprecatedLiterals = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
 
   public YamlEnumType(@NotNull String typeName) {
@@ -90,7 +88,7 @@ public class YamlEnumType extends YamlScalarType {
 
   @NotNull
   @Override
-  public List<LookupElement> getValueLookups(@NotNull YAMLScalar context) {
+  public List<LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
     return Stream.concat(
       Arrays.stream(myLiterals).map((String literal) -> createValueLookup(literal, false)),
       Arrays.stream(myDeprecatedLiterals).map((String literal) -> createValueLookup(literal, true))
@@ -105,8 +103,7 @@ public class YamlEnumType extends YamlScalarType {
   }
 
 
-  @NotNull
-  private static String[] cloneArray(@NotNull String[] array) {
-    return array.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : array.clone();
+  private static String @NotNull [] cloneArray(String @NotNull [] array) {
+    return array.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : array.clone();
   }
 }

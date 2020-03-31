@@ -17,15 +17,16 @@
 package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -62,7 +63,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Don't report unused jars inside used library", this, "IGNORE_LIBRARY_PARTS");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("don.t.report.unused.jars.inside.used.library"), this, "IGNORE_LIBRARY_PARTS");
   }
 
   @Nullable
@@ -71,50 +72,67 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     return new UnusedLibraryGraphAnnotator(refManager);
   }
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefModule) {
-      final RefModule refModule = (RefModule)refEntity;
-      final Module module = refModule.getModule();
-     
-      VirtualFile[] givenRoots =
-        OrderEnumerator.orderEntries(module).withoutSdk()
-          .withoutModuleSourceEntries()
-          .withoutDepModules()
-          .classes()
-          .getRoots();
+  public boolean isReadActionNeeded() {
+    return false;
+  }
 
-      if (givenRoots.length == 0) return null;
-
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
-
-      if (usedRoots != null) {
-        appendUsedRootDependencies(usedRoots, givenRoots);
+  @Override
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    RefManager refManager = globalContext.getRefManager();
+    for (Module module : ModuleManager.getInstance(globalContext.getProject()).getModules()) {
+      if (scope.containsModule(module)) {
+        RefModule refModule = refManager.getRefModule(module);
+        if (refModule != null) {
+          CommonProblemDescriptor[] descriptors = getDescriptors(manager, refModule, module);
+          if (descriptors != null) {
+            problemDescriptionsProcessor.addProblemElement(refModule, descriptors);
+          }
+        }
       }
+    }
+  }
 
+  private CommonProblemDescriptor @Nullable [] getDescriptors(@NotNull InspectionManager manager,
+                                                              RefModule refModule,
+                                                              Module module) {
+    VirtualFile[] givenRoots =
+      ReadAction.compute(() -> OrderEnumerator.orderEntries(module).withoutSdk()
+        .withoutModuleSourceEntries()
+        .withoutDepModules()
+        .classes()
+        .getRoots());
+
+    if (givenRoots.length == 0) return null;
+
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
+
+    if (usedRoots != null) {
+      appendUsedRootDependencies(usedRoots, givenRoots);
+    }
+
+    return ReadAction.compute(() -> {
       final List<CommonProblemDescriptor> result = new ArrayList<>();
       for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry && 
-            !((LibraryOrderEntry)entry).isExported() && 
+        if (entry instanceof LibraryOrderEntry &&
+            !((LibraryOrderEntry)entry).isExported() &&
             ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
-          final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
+          final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
-            String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
+            String message = JavaAnalysisBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
             result.add(manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), null)));
           }
           else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
             final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
             String message =
-              InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
+              JavaAnalysisBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
             CommonProblemDescriptor descriptor =
-              ((LibraryOrderEntry)entry).isModuleLevel() 
+              ((LibraryOrderEntry)entry).isModuleLevel()
               ? manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), files))
               : manager.createProblemDescriptor(message);
             result.add(descriptor);
@@ -123,12 +141,11 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
       }
 
       return result.isEmpty() ? null : result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
-    }
-    return null;
+    });
   }
 
   private static void appendUsedRootDependencies(@NotNull Set<VirtualFile> usedRoots,
-                                                 @NotNull VirtualFile[] givenRoots) {
+                                                 VirtualFile @NotNull [] givenRoots) {
     //classes per root
     Map<VirtualFile, Set<String>> fromClasses = new THashMap<>();
     //classes uses in root, ignoring self & jdk
@@ -205,13 +222,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("unused.library.display.name");
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -248,7 +259,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
+      return myFiles == null ? JavaAnalysisBundle.message("detach.library.quickfix.name") : JavaAnalysisBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override

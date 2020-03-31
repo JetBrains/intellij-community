@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))])
+@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))], reportStatistic = true)
 class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSettings> {
   var flattenPackages: Boolean = false
   var showMembers: Boolean = false
@@ -18,6 +18,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var showModules: Boolean = true
   var flattenModules: Boolean = false
   var showExcludedFiles: Boolean = true
+  var showVisibilityIcons: Boolean = false
   var showLibraryContents: Boolean = true
   var hideEmptyPackages: Boolean = true
   var compactDirectories: Boolean = false

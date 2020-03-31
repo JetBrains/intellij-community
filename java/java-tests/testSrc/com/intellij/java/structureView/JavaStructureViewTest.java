@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.structureView;
 
 import com.intellij.ide.structureView.impl.java.*;
@@ -10,7 +10,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -57,8 +57,14 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   }
 
   private List<PsiAnonymousClass> getAllAnonymous() {
-    JBTreeTraverser<AbstractTreeNode> traverser = JBTreeTraverser.from(AbstractTreeNode::getChildren);
-    return traverser.withRoots(JBIterable.of(getElements()).filter(AbstractTreeNode.class))
+    JBTreeTraverser<AbstractTreeNode<?>> traverser = JBTreeTraverser.from(AbstractTreeNode::getChildren);
+    List<AbstractTreeNode<?>> roots = new ArrayList<>();
+    for (Object element : getElements()) {
+      if (element instanceof AbstractTreeNode) {
+        roots.add((AbstractTreeNode<?>)element);
+      }
+    }
+    return traverser.withRoots(roots)
       .traverse()
       .map(StructureViewComponent::unwrapValue)
       .filter(PsiAnonymousClass.class)
@@ -75,9 +81,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testAnonymousInsideAnonymous() {
     Object[] elements = getElements();
     TreeElementWrapper last = (TreeElementWrapper)elements[elements.length - 1];
-    Collection<AbstractTreeNode> children = last.getChildren();
+    Collection<AbstractTreeNode<?>> children = last.getChildren();
     assertEquals(1, children.size());
-    assertEquals(3, ((AbstractTreeNode)((List)children).get(0)).getChildren().size());
+    assertEquals(3, ((AbstractTreeNode<?>)((List)children).get(0)).getChildren().size());
   }
 
   private Object[] getElements() {
@@ -95,8 +101,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     return ref.get();
   }
 
-  @NotNull
-  private static Object[] getElements(@NotNull StructureViewComponent svc) {
+  private static Object @NotNull [] getElements(@NotNull StructureViewComponent svc) {
     TreeModel model = svc.getTree().getModel();
     Object first = TreeUtil.getFirstNodePath(svc.getTree()).getLastPathComponent();
     return TreeUtil.nodeChildren(first, model).map(TreeUtil::getUserObject).toList().toArray();

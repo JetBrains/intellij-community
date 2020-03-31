@@ -31,9 +31,6 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable {
   public ToggleLineBreakpointAction() {
     super(true);
@@ -53,7 +50,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
       event.getPresentation().setIcon(AllIcons.Debugger.Db_set_breakpoint);
 
     final boolean selected = hasLineBreakpoint(event);
-    event.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+    Toggleable.setSelected(event.getPresentation(), selected);
   }
 
   private static boolean hasLineBreakpoint(@NotNull AnActionEvent e) {

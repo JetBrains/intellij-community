@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -25,6 +25,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +49,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +87,7 @@ public class MemoryAgentUtil {
     ParametersList parametersList = parameters.getVMParametersList();
     if (parametersList.getParameters().stream().anyMatch(x -> x.contains("memory_agent"))) return;
     boolean isInDebugMode = Registry.is("debugger.memory.agent.debug");
-    File agentFile = null;
+    Path agentFile = null;
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
@@ -109,9 +112,8 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String agentFileName = agentFile.getName();
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
-                                                            MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.toAbsolutePath().toString(), "debugger-memory-agent",
+                                                            MEMORY_AGENT_EXTRACT_DIRECTORY);
     if (path == null) {
       return;
     }
@@ -181,13 +183,13 @@ public class MemoryAgentUtil {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
-  private static File getAgentFile(boolean isInDebugMode, String jdkPath)
+  private static Path getAgentFile(boolean isInDebugMode, String jdkPath)
     throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
         LOG.info("Local memory agent will be used: " + debugAgentPath);
-        return new File(debugAgentPath);
+        return Paths.get(debugAgentPath);
       }
     }
 
@@ -284,13 +286,13 @@ public class MemoryAgentUtil {
           if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
             Project project = env.getProject();
             String name = env.getRunProfile().getName();
-            String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
+            String windowId = RunContentManager.getInstance(project).getToolWindowIdByEnvironment(env);
 
             Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
               .toArray(Attachment.EMPTY_ARRAY);
             RuntimeExceptionWithAttachments exception =
               new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
-            String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
+            String checkboxName = JavaDebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
             String description =
               "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
               checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";

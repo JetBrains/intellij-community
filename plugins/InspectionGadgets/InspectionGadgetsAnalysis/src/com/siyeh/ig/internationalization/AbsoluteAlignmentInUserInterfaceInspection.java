@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -27,7 +28,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -67,13 +67,6 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     boxLayoutConstants.put("Y_AXIS", "PAGE_AXIS");
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -101,13 +94,13 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     @Override
     public String getName() {
       final String shortClassName = myClassName.substring(myClassName.lastIndexOf('.') + 1);
-      return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.quickfix", shortClassName, myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", shortClassName + "." + myReplacement);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with constant";
+      return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.fix.family.name");
     }
 
     @Override

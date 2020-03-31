@@ -18,7 +18,7 @@ package com.intellij.editor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ import java.io.File;
 /**
  * @author Rustam Vishnyakov
  */
-public class XmlEditorTest extends LightCodeInsightTestCase {
+public class XmlEditorTest extends LightJavaCodeInsightTestCase {
   private String getTestFilePath(boolean isOriginal) {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;
   }
@@ -35,11 +35,11 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
   public void testEnterPerformance() {
     configureByFile(getTestFilePath(true));
     for (int i = 0; i < 3; i++) {
-      EditorTestUtil.performTypingAction(myEditor, '\n');
+      EditorTestUtil.performTypingAction(getEditor(), '\n');
     }
     PlatformTestUtil.startPerformanceTest("Xml editor enter", 5000, () -> {
       for (int i = 0; i < 3; i ++) {
-        EditorTestUtil.performTypingAction(myEditor, '\n');
+        EditorTestUtil.performTypingAction(getEditor(), '\n');
       }
     }).attempts(1).assertTiming();
     checkResultByFile(getTestFilePath(false));

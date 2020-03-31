@@ -16,6 +16,7 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
-import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -41,12 +41,12 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data) {
+  public static Info getInfo(byte @NotNull [] data) {
     return getInfo(data, null);
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
+  public static Info getInfo(byte @NotNull [] data, @Nullable String inputName) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
@@ -54,7 +54,7 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  private static Info getSvgInfo(@NotNull byte[] data) {
+  private static Info getSvgInfo(byte @NotNull [] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -72,7 +72,7 @@ public class ImageInfoReader {
 
   private static Info getSvgSize(byte[] data) {
     try {
-      Dimension2D size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
+      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
       return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {
@@ -99,9 +99,7 @@ public class ImageInfoReader {
         return new Info(w, h, bpp, false);
       }
     }
-    catch (Throwable e) {
-      LOG.warn(inputName, e);
-    }
+    catch (Throwable ignore) {}
     return null;
   }
 

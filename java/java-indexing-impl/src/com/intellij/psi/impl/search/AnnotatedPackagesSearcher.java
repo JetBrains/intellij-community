@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, AnnotatedPackagesSearch.Parameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedPackagesSearcher");
+  private static final Logger LOG = Logger.getInstance(AnnotatedPackagesSearcher.class);
 
   @Override
   public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<? super PsiPackage> consumer) {

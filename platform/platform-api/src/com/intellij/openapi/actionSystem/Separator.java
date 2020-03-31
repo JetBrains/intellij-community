@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,23 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Represents a separator.
  */
-public final class Separator extends AnAction implements DumbAware {
+@SuppressWarnings("ComponentNotRegistered")
+public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
 
   private static final Separator ourInstance = new Separator();
+  private final Supplier<String> myDynamicText;
 
   @NotNull
   public static Separator getInstance() {
@@ -38,27 +44,29 @@ public final class Separator extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static Separator create(@Nullable String text) {
+  public static Separator create(@Nullable @Nls String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 
-  private final String myText;
-
   public Separator() {
-    myText = null;
+    myDynamicText = () -> null;
   }
 
   public Separator(@Nullable String text) {
-    myText = text;
+    myDynamicText = () -> text;
+  }
+
+  public Separator(@NotNull Supplier<String> dynamicText) {
+    myDynamicText = dynamicText;
   }
 
   public String getText() {
-    return myText;
+    return myDynamicText.get();
   }
 
   @Override
   public String toString() {
-    return "Separator (" + myText + ")";
+    return "Separator (" + myDynamicText.get() + ")";
   }
 
   @Override

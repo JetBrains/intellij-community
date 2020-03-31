@@ -17,6 +17,7 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -29,7 +30,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class InlineLocalTest extends LightCodeInsightTestCase {
+public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -116,7 +117,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     catch (RuntimeException ex) {
       exception = ex.getMessage();
     }
-    String error = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", "text"));
+    String error = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", "text"));
     assertEquals(error, exception);
   }
 
@@ -353,15 +354,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   private void doTest(final boolean inlineDef, LanguageLevel languageLevel) {
     String fileName = prepareTest(languageLevel);
     if (!inlineDef) {
-      performInline(getProject(), myEditor);
+      performInline(getProject(), getEditor());
     }
     else {
-      performDefInline(getProject(), myEditor);
+      performDefInline(getProject(), getEditor());
     }
     checkResultByFile(fileName + ".after");
   }
 
-  private void doTestConflict(@NotNull final String conflict, @NotNull final String... rest) {
+  private void doTestConflict(@NotNull final String conflict, final String @NotNull ... rest) {
     List<String> expected = new ArrayList<>(Arrays.asList(rest));
     expected.add(conflict);
 
@@ -392,7 +393,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   public static void performInline(Project project, Editor editor) {
     PsiLocalVariable element = getTarget(editor);
-    InlineLocalHandler.invoke(project, editor, element, null);
+    InlineLocalHandler.inlineVariable(project, editor, element, null);
   }
 
   public static void performDefInline(Project project, Editor editor) {
@@ -401,6 +402,6 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     final PsiElement local = reference.resolve();
     assertTrue(local instanceof PsiLocalVariable);
 
-    InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
+    InlineLocalHandler.inlineVariable(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
   }
 }

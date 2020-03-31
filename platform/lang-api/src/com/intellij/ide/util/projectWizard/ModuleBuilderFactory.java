@@ -28,13 +28,6 @@ public class ModuleBuilderFactory extends AbstractExtensionPointBean {
   public String builderClass;
 
   public ModuleBuilder createBuilder() {
-    try {
-      return instantiate(builderClass, ApplicationManager.getApplication().getPicoContainer());
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return instantiateClass(builderClass, ApplicationManager.getApplication().getPicoContainer());
   }
-
-
 }

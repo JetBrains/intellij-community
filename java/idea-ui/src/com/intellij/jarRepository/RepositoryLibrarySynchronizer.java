@@ -16,6 +16,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -24,7 +25,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -32,8 +32,8 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.Alarm;
@@ -49,7 +49,7 @@ import java.util.function.Predicate;
 /**
  * @author gregsh
  */
-public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware{
+public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     if (version == null) {
@@ -81,7 +81,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
           return true;
         });
       }
-      for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+      for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
         if (predicate.test(library)) {
           result.add(library);
         }
@@ -122,10 +122,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
                              ? "'" + LibraryUtil.getPresentableName(validLibraries.iterator().next()) + "' library"
                              : validLibraries.size() + " libraries";
         Notifications.Bus.notify(new Notification(
-          "Repository", "Repository libraries cleanup", "Duplicated URLs were removed from " + libraryText + ". " +
-                                                        "These duplicated URLs were produced due to a bug in a previous " +
-                                                        ApplicationNamesInfo.getInstance().getFullProductName() +
-                                                        " version and might cause performance issues.",
+          "Repository", JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
+          JavaUiBundle.message("notification.text.duplicated.urls.were.removed", libraryText, ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION
         ), project);
       }, project.getDisposed());

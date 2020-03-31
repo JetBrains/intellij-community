@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -27,16 +26,6 @@ abstract class UndoRedo {
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  //public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
-  //  do {
-  //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
-  //    undoOrRedo.doExecute();
-  //    boolean shouldRepeat = undoOrRedo.isTransparent() && undoOrRedo.hasMoreActions();
-  //    if (!shouldRepeat) break;
-  //  }
-  //  while (true);
-  //}
-  //
   protected UndoRedo(UndoManagerImpl manager, FileEditor editor) {
     myManager = manager;
     myEditor = editor;
@@ -81,14 +70,14 @@ abstract class UndoRedo {
 
   public boolean execute(boolean drop, boolean disableConfirmation) {
     if (!myUndoableGroup.isUndoable()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
+      reportCannotUndo(IdeBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
       return false;
     }
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
+      reportCannotUndo(IdeBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
       return false;
     }
 
@@ -183,41 +172,35 @@ abstract class UndoRedo {
   }
 
   private boolean askUser() {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String actionText = getActionName(myUndoableGroup.getCommandName());
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+    String actionText = getActionName(myUndoableGroup.getCommandName());
+    return Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
+                                          Messages.getQuestionIcon()) == Messages.OK;
   }
 
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String message = CommonBundle.message("undo.conflicting.change.confirmation.message") + "\n" +
-                       getActionName(other.myUndoableGroup.getCommandName()) + "?";
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
+                     getActionName(other.myUndoableGroup.getCommandName()) + "?";
+    return Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
+                                          Messages.getQuestionIcon()) == Messages.OK;
   }
 
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
 
+    FileEditorState stateToRestore = pair.getState();
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
     // not possible to restore it. For example, it's not possible to
     // restore scroll proportion if editor doesn not have scrolling any more.
     FileEditorState currentState = myEditor.getState(FileEditorStateLevel.UNDO);
-    if (onlyIfDiffers && currentState.equals(pair.getState())) {
+    if (onlyIfDiffers && currentState.equals(stateToRestore)) {
       return false;
     }
 
-    myEditor.setState(pair.getState());
-    return true;
+    myEditor.setState(stateToRestore);
+    FileEditorState newState = myEditor.getState(FileEditorStateLevel.UNDO);
+    return newState.equals(stateToRestore);
   }
 
   public boolean isBlockedByOtherChanges() {

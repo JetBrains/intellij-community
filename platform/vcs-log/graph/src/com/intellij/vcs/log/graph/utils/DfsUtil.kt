@@ -91,6 +91,8 @@ class DfsWalk(private val startNodes: Collection<Int>, private val graph: LiteLi
  * When a all the siblings of the node are visited, exitNode is called.
  */
 fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
+  if (start < 0 || start >= nodesCount()) return
+
   val visited = BitSetFlags(nodesCount(), false)
 
   val stack = IntStack()

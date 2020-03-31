@@ -54,7 +54,7 @@ public class ShuffleNamesAction extends AnAction {
     final ArrayList<String> split = new ArrayList<>(100);
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof LeafPsiElement) {
           String type = ((LeafPsiElement)element).getElementType().toString();
           String text = element.getText();
@@ -70,7 +70,7 @@ public class ShuffleNamesAction extends AnAction {
 
           boolean isQuoted = quote.length() > 0;
           boolean isNumber = false;
-          if (isQuoted || type.equals("ID") || type.contains("IDENT") && !"ts".equals(text) ||
+          if (isQuoted || type.equals("ID") || type.equals("word") || type.contains("IDENT") && !"ts".equals(text) ||
               (isNumber = text.matches("[0-9]+"))) {
             String replacement = map.get(text);
             if (replacement == null) {

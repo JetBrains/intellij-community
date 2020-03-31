@@ -1,22 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
-public class DateFormatUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
+public final class DateFormatUtil {
+  private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -27,7 +34,7 @@ public class DateFormatUtil {
   public static final long YEAR = DAY * 365;
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
 
-  // do not expose this constants - they are very likely to be changed in future
+  // do not expose these constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT;
   private static final SyncDateFormat TIME_FORMAT;
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
@@ -144,8 +151,15 @@ public class DateFormatUtil {
     return doFormatPretty(time, true);
   }
 
-  @NotNull
+  public static boolean isPrettyFormattingPossible(long time) {
+    return _doFormatPretty(time, true).second;
+  }
+
   private static String doFormatPretty(long time, boolean formatTime) {
+    return _doFormatPretty(time, formatTime).first;
+  }
+  @NotNull
+  private static Pair<String, Boolean> _doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
     Calendar c = Calendar.getInstance();
 
@@ -164,36 +178,36 @@ public class DateFormatUtil {
     if (formatTime) {
       long delta = currentTime - time;
       if (delta >= 0 && delta <= HOUR + MINUTE) {
-        return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
+        return Pair.create(UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE)), Boolean.TRUE);
       }
     }
 
     boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
-      String result = CommonBundle.message("date.format.today");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      String result = UtilBundle.message("date.format.today");
+      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
     boolean isYesterdayOnPreviousYear =
       (currentYear == year + 1) && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
     if (isYesterday) {
-      String result = CommonBundle.message("date.format.yesterday");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      String result = UtilBundle.message("date.format.yesterday");
+      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
-    return formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time);
+    return Pair.create(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
   }
 
   @NotNull
   public static String formatFrequency(long time) {
-    return CommonBundle.message("date.frequency", formatBetweenDates(time, 0));
+    return UtilBundle.message("date.frequency", formatBetweenDates(time, 0));
   }
 
   @NotNull
   public static String formatBetweenDates(long d1, long d2) {
     long delta = Math.abs(d1 - d2);
-    if (delta == 0) return CommonBundle.message("date.format.right.now");
+    if (delta == 0) return UtilBundle.message("date.format.right.now");
 
     int n = -1;
     int i;
@@ -207,7 +221,7 @@ public class DateFormatUtil {
 
     if (d2 > d1) {
       if (n <= 0) {
-        return CommonBundle.message("date.format.a.few.moments.ago");
+        return UtilBundle.message("date.format.a.few.moments.ago");
       }
       else {
         return someTimeAgoMessage(PERIODS[i], n);
@@ -215,7 +229,7 @@ public class DateFormatUtil {
     }
     else if (d2 < d1) {
       if (n <= 0) {
-        return CommonBundle.message("date.format.in.a.few.moments");
+        return UtilBundle.message("date.format.in.a.few.moments");
       }
       else {
         return composeInSomeTimeMessage(PERIODS[i], n);
@@ -235,39 +249,50 @@ public class DateFormatUtil {
     return ABOUT_DATE_FORMAT.format(time);
   }
 
+  /**
+   * Return sample date, that can be used to determine preferred string width.
+   * <p>
+   * We should not use {@code new Date()} to ensure results are reproducible (and to avoid "Today" for pretty formats).
+   * Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
+   */
+  @NotNull
+  public static Date getSampleDateTime() {
+    //noinspection deprecation
+    return new Date(100, Calendar.DECEMBER, 31, 23, 59);
+  }
 
   //<editor-fold desc="Helpers.">
   private static String someTimeAgoMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
-        return CommonBundle.message("date.format.n.days.ago", n);
+        return UtilBundle.message("date.format.n.days.ago", n);
       case MINUTE:
-        return CommonBundle.message("date.format.n.minutes.ago", n);
+        return UtilBundle.message("date.format.n.minutes.ago", n);
       case HOUR:
-        return CommonBundle.message("date.format.n.hours.ago", n);
+        return UtilBundle.message("date.format.n.hours.ago", n);
       case MONTH:
-        return CommonBundle.message("date.format.n.months.ago", n);
+        return UtilBundle.message("date.format.n.months.ago", n);
       case WEEK:
-        return CommonBundle.message("date.format.n.weeks.ago", n);
+        return UtilBundle.message("date.format.n.weeks.ago", n);
       default:
-        return CommonBundle.message("date.format.n.years.ago", n);
+        return UtilBundle.message("date.format.n.years.ago", n);
     }
   }
 
   private static String composeInSomeTimeMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
-        return CommonBundle.message("date.format.in.n.days", n);
+        return UtilBundle.message("date.format.in.n.days", n);
       case MINUTE:
-        return CommonBundle.message("date.format.in.n.minutes", n);
+        return UtilBundle.message("date.format.in.n.minutes", n);
       case HOUR:
-        return CommonBundle.message("date.format.in.n.hours", n);
+        return UtilBundle.message("date.format.in.n.hours", n);
       case MONTH:
-        return CommonBundle.message("date.format.in.n.months", n);
+        return UtilBundle.message("date.format.in.n.months", n);
       case WEEK:
-        return CommonBundle.message("date.format.in.n.weeks", n);
+        return UtilBundle.message("date.format.in.n.weeks", n);
       default:
-        return CommonBundle.message("date.format.in.n.years", n);
+        return UtilBundle.message("date.format.in.n.years", n);
     }
   }
 
@@ -326,6 +351,7 @@ public class DateFormatUtil {
       }
     }
 
+    Pointer CFLocaleCopyCurrent();
     Pointer CFDateFormatterCreate(Pointer allocator, Pointer locale, long dateStyle, long timeStyle);
     Pointer CFDateFormatterGetFormat(Pointer formatter);
     long CFStringGetLength(Pointer str);
@@ -333,19 +359,24 @@ public class DateFormatUtil {
     void CFRelease(Pointer p);
   }
 
-  // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
     CF cf = Native.load("CoreFoundation", CF.class);
-    return new DateFormat[]{
-      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
-      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
-      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
-      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
-    };
+    Pointer locale = cf.CFLocaleCopyCurrent();
+    try {
+      return new DateFormat[]{
+        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
+        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
+        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
+        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
+      };
+    }
+    finally {
+      cf.CFRelease(locale);
+    }
   }
 
-  private static DateFormat getMacFormat(CF cf, long dateStyle, long timeStyle) {
-    Pointer formatter = cf.CFDateFormatterCreate(null, null, dateStyle, timeStyle);
+  private static DateFormat getMacFormat(CF cf, Pointer locale, long dateStyle, long timeStyle) {
+    Pointer formatter = cf.CFDateFormatterCreate(null, locale, dateStyle, timeStyle);
     if (formatter == null) throw new IllegalStateException("CFDateFormatterCreate: null");
     try {
       Pointer format = cf.CFDateFormatterGetFormat(formatter);

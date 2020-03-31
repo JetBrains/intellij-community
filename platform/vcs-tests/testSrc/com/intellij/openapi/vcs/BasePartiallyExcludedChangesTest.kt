@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.util.Disposer
@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
-import java.util.stream.Stream
 
 abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTest() {
   protected lateinit var stateHolder: MyStateHolder
@@ -17,23 +16,29 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
     stateHolder.updateExclusionStates()
   }
 
-  protected inner class MyStateHolder : PartiallyExcludedFilesStateHolder<FilePath>(getProject(), DEFAULT.asListNameToId()) {
+  protected inner class MyStateHolder : PartiallyExcludedFilesStateHolder<FilePath>(getProject()) {
     val paths = HashSet<FilePath>()
 
     init {
-      myUpdateQueue.isPassThrough = false
       Disposer.register(testRootDisposable, this)
     }
 
-    override fun getTrackableElementsStream(): Stream<FilePath> = paths.stream()
+    override val trackableElements: Sequence<FilePath> get() = paths.asSequence()
 
-    override fun findElementFor(tracker: PartialLocalLineStatusTracker): FilePath? {
+    override fun getChangeListId(element: FilePath): String = DEFAULT.asListNameToId()
+
+    override fun findElementFor(tracker: PartialLocalLineStatusTracker, changeListId: String): FilePath? {
       return paths.find { it.virtualFile == tracker.virtualFile }
     }
 
     override fun findTrackerFor(element: FilePath): PartialLocalLineStatusTracker? {
       val file = element.virtualFile ?: return null
       return PartialChangesUtil.getPartialTracker(getProject(), file)
+    }
+
+    fun toggleElements(elements: Collection<FilePath>) {
+      val hasExcluded = elements.any { getExclusionState(it) != ExclusionState.ALL_INCLUDED }
+      if (hasExcluded) includeElements(elements) else excludeElements(elements)
     }
 
     fun waitExclusionStateUpdate() {
@@ -68,7 +73,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
 
   protected fun assertIncluded(vararg paths: String) {
     val expected = paths.toFilePaths().toSet()
-    val actual = stateHolder.includedSet
+    val actual = stateHolder.getIncludedSet()
     assertSameElements(actual.map { it.name }, expected.map { it.name })
     assertSameElements(actual, expected)
   }

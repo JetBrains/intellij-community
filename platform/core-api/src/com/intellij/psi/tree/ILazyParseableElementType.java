@@ -5,6 +5,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,12 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
    *
    * @param chameleon the node to parse.
    * @return the parsed contents of the node in the form PsiBuilder.
+   *
+   * @deprecated Not needed anymore, override {@link ILazyParseableElementType#parseContents(ASTNode)}
+   *             or implement {@link ILightLazyParseableElementType} instead.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public PsiBuilder parseLight(ASTNode chameleon) {
     throw new UnsupportedOperationException(String.valueOf(chameleon));
   }
@@ -85,7 +91,11 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
     return null;
   }
 
+  @Override
   public boolean reuseCollapsedTokens() {
     return false;
   }
+
+  // Please, add no more public methods here. Add them to `ILazyParseableElementTypeBase` instead.
+  // If you are not sure about the API stability, use `ApiStatus.Experimental` annotation
 }

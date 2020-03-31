@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 /**
  * @author Kir
  */
-public class TimeoutCachedValue<T> implements Getter<T> {
+public final class TimeoutCachedValue<T> implements Getter<T> {
   private final long myTimeoutMs;
   @NotNull private final Supplier<? extends T> myValueSupplier;
   private long myLastCalcTime;
@@ -25,8 +25,8 @@ public class TimeoutCachedValue<T> implements Getter<T> {
     if (hasUpToDateValue()) {
       return myCache;
     }
-    myLastCalcTime = System.currentTimeMillis();
     myCache = myValueSupplier.get();
+    myLastCalcTime = System.currentTimeMillis();
     return myCache;
   }
 

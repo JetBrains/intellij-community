@@ -17,4 +17,9 @@ class CompositeBuildMessageLogger extends BuildMessageLogger {
   void processMessage(LogMessage message) {
     loggers*.processMessage(message)
   }
+
+  @Override
+  void dispose() {
+    loggers*.dispose()
+  }
 }

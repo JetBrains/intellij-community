@@ -187,11 +187,10 @@ public class TestsUIUtil {
       if (icon.hideProgress(project, TESTS)) {
         if (problemsCounter > 0) {
           icon.setErrorBadge(project, String.valueOf(problemsCounter));
-          icon.requestAttention(project, false);
         } else {
           icon.setOkBadge(project, true);
-          icon.requestAttention(project, false);
         }
+        icon.requestAttention(project, false);
       }
     }
   }

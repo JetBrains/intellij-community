@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import gnu.trove.Equality;
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Svetlana.Zemlyanskaya
@@ -68,7 +55,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       return new StdArrangementRuleAliasToken(original.getName(), original.getDefinitionRules());
     }
   };
-  private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Comparing.equal(o1.getId(), o2.getId());
+  private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Objects.equals(o1.getId(), o2.getId());
 
   @NotNull private final Set<String> myUsedTokenIds;
   @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
@@ -99,14 +86,14 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
   @Nls
   @Override
   public String getDisplayName() {
-    return "Custom Composite Tokens";
+    return ApplicationBundle.message("configurable.ArrangementRuleAliasesListEditor.display.name");
   }
 
   @Nullable
   @Override
   public String askForProfileName(String titlePattern) {
     String title = MessageFormat.format(titlePattern, subjDisplayName());
-    return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+    return Messages.showInputDialog(LangBundle.message("message.new.0.name", subjDisplayName()), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
         return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;

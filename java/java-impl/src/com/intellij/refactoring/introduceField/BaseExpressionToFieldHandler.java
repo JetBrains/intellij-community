@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.introduceField;
 
@@ -27,6 +13,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +40,7 @@ import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
+import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -71,7 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler");
+  private static final Logger LOG = Logger.getInstance(BaseExpressionToFieldHandler.class);
 
   public enum InitializationPlace {
     IN_CURRENT_METHOD,
@@ -100,13 +87,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     final PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null || LambdaUtil.notInferredType(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
 
     if (PsiType.VOID.equals(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
@@ -156,13 +143,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                            PsiType tempType) {
     if (myParentClass == null) {
       if (FileTypeUtils.isInServerPageFile(file)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
+        CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
                                             getRefactoringName(), getHelpID());
         return true;
       }
       else if ("package-info.java".equals(file.getName())) {
         CommonRefactoringUtil
-          .showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+          .showErrorHint(project, editor, JavaRefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
                          getRefactoringName(), getHelpID());
         return true;
       }
@@ -188,10 +175,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
-    if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
+    if (!Comparing.strEqual(IntroduceConstantHandler.getRefactoringNameText(), getRefactoringName()) &&
         IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
         isStaticFinalInitializer(selectedExpr) != null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return true;
     }
@@ -447,7 +434,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiExpression rExpression = expr.getRExpression();
       LOG.assertTrue(rExpression != null);
       rExpression.replace(initializerExpr);
-      final PsiReferenceExpression fieldReference = RenameJavaVariableProcessor.createMemberReference(field, context);
+      final PsiReferenceExpression fieldReference = RenameJavaMemberProcessor.createMemberReference(field, context);
       expr.getLExpression().replace(fieldReference);
 
       return statement;
@@ -956,7 +943,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiElement psiElement = expression.resolve();
-      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
+      if ((PsiUtil.isJvmLocalVariable(psiElement)) &&
           !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
         myElementReference = expression;
       }
@@ -1002,7 +989,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (myElementReference != null) return;
       super.visitElement(element);
     }

@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.template;
 
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -12,7 +12,9 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
-public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
+import java.util.Arrays;
+
+public class LiveTemplateAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -46,6 +48,14 @@ public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
     type("-");
     assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
+  }
+
+  public void testShowTemplatesDifferingOnlyByCase() {
+    createTemplate("wC");
+    createTemplate("wc");
+    myFixture.configureByText("a.java", "class C { { <caret> }}");
+    type("w");
+    assertTrue(myFixture.getLookupElementStrings().toString(), myFixture.getLookupElementStrings().containsAll(Arrays.asList("wC", "wc")));
   }
 
   private TemplateImpl createTemplate(String key) {

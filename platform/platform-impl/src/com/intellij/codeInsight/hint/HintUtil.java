@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ public class HintUtil {
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey.createColorKey("RECENT_LOCATIONS_SELECTION", new JBColor(0xE9EEF5, 0x383838));
+  public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x3B4C57));
 
   private HintUtil() {
   }
@@ -65,14 +68,14 @@ public class HintUtil {
     return notNull(colorsScheme.getColor(RECENT_LOCATIONS_SELECTION_KEY), RECENT_LOCATIONS_SELECTION_KEY.getDefaultColor());
   }
 
-  public static JComponent createInformationLabel(@NotNull String text) {
+  public static JComponent createInformationLabel(@NotNull @HintText String text) {
     return createInformationLabel(text, null, null, null);
   }
 
-  public static JComponent createInformationLabel(@NotNull String text,
+  public static JComponent createInformationLabel(@NotNull @HintText String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
-                                                  @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                                  @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
@@ -85,7 +88,7 @@ public class HintUtil {
     return new HintHint()
       .setBorderColor(INFORMATION_BORDER_COLOR)
       .setTextBg(getInformationColor())
-      .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
+      .setTextFg(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
       .setAwtTooltip(true);
   }
@@ -103,12 +106,12 @@ public class HintUtil {
     return createInformationLabel(text, null);
   }
 
-  public static JComponent createQuestionLabel(String text) {
+  public static JComponent createQuestionLabel(@HintText String text) {
     final Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 
-  public static JComponent createQuestionLabel(String text, Icon icon) {
+  public static JComponent createQuestionLabel(@HintText String text, Icon icon) {
     Color bg = getQuestionColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
       .setTextFg(JBColor.foreground())
@@ -151,10 +154,10 @@ public class HintUtil {
     return new HintLabel(component);
   }
 
-  public static JComponent createErrorLabel(@NotNull String text,
+  public static JComponent createErrorLabel(@NotNull @HintText String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener,
-                                            @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                            @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
                                       .setTextFg(JBColor.foreground())
@@ -167,12 +170,12 @@ public class HintUtil {
   }
 
   @NotNull
-  public static JComponent createErrorLabel(@NotNull String text) {
+  public static JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null, null);
   }
 
   @NotNull
-  private static HintLabel createLabel(String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -188,7 +191,7 @@ public class HintUtil {
   }
 
   private static Font getBoldFont() {
-    return UIUtil.getLabelFont().deriveFont(Font.BOLD);
+    return StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
   @NotNull
@@ -207,7 +210,7 @@ public class HintUtil {
   }
 
   @NotNull
-  public static String prepareHintText(@NotNull String text, @NotNull HintHint hintHint) {
+  public static String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
 
@@ -222,7 +225,7 @@ public class HintUtil {
 
   private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
                                      @Nullable MouseListener mouseListener,
-                                     @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                     @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     if (hyperlinkListener != null) {
       label.myPane.addHyperlinkListener(hyperlinkListener);
     }
@@ -230,13 +233,14 @@ public class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(s -> {
+      Consumer<? super String> consumer = s -> {
         label.myPane.setText(s);
 
         // Force preferred size recalculation.
         label.setPreferredSize(null);
         label.myPane.setPreferredSize(null);
-      });
+      };
+      updatedTextConsumer.set(consumer);
     }
   }
 
@@ -260,9 +264,11 @@ public class HintUtil {
       // the tooltip contents right away.
       if (myPane != null) {
         return myPane.requestFocusInWindow();
-      } else if (myColored != null) {
+      }
+      if (myColored != null) {
         return myColored.requestFocusInWindow();
-      } else if (myIcon != null) {
+      }
+      if (myIcon != null) {
         return myIcon.requestFocusInWindow();
       }
       return super.requestFocusInWindow();

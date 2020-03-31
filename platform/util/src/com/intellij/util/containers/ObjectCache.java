@@ -53,6 +53,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
       cacheSize = MIN_SIZE;
     }
     myTop = myBack = 0;
+    //noinspection unchecked
     myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
       myCache[i] = new CacheEntry<>();
@@ -287,6 +288,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
 
     @Override
     public void remove() {
+      //noinspection unchecked
       myCache.remove((K)myCache.myCache[myCurrentEntry].key);
     }
   }

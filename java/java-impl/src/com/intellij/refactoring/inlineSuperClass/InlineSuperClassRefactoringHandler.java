@@ -17,7 +17,8 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -42,7 +43,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   @Override
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
-    if (element.getLanguage() != StdLanguages.JAVA) return false;
+    if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
     Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search((PsiClass)element).findAll();
     return inheritors.size() > 0;
   }
@@ -51,7 +52,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
     if (!superClass.getManager().isInProject(superClass)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.super.non.project.class.warning.message"), REFACTORING_NAME, null);
       return;
     }
 

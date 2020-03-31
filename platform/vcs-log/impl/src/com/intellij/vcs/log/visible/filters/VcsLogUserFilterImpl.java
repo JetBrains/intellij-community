@@ -2,27 +2,24 @@
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @ApiStatus.Internal
-public class VcsLogUserFilterImpl implements VcsLogUserFilter {
+class VcsLogUserFilterImpl implements VcsLogUserFilter {
   private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
-
-  @NotNull public static final String ME = "me";
 
   @NotNull private final Collection<String> myUsers;
   @NotNull private final Map<VirtualFile, VcsUser> myData;
@@ -61,13 +58,18 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @NotNull
   private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
     Set<VcsUser> users = new HashSet<>();
-    if (ME.equals(name)) {
+    if (VcsLogFilterObject.ME.equals(name)) {
       VcsUser vcsUser = myData.get(root);
       if (vcsUser != null) {
         users.addAll(getUsers(vcsUser.getName())); // do not just add vcsUser, also add synonyms
         String emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.getEmail());
         if (emailNamePart != null) {
-          users.addAll(getUsers(emailNamePart));
+          Set<String> emails = ContainerUtil.map2Set(users, user -> VcsUserUtil.emailToLowerCase(user.getEmail()));
+          for (VcsUser candidateUser : getUsers(emailNamePart)) {
+            if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.getEmail()))) {
+              users.add(candidateUser);
+            }
+          }
         }
       }
       else {
@@ -81,8 +83,18 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   }
 
   @NotNull
-  public Collection<String> getUserNamesForPresentation() {
+  @Override
+  public Collection<String> getValuesAsText() {
     return myUsers;
+  }
+
+  @Override
+  public @NotNull String getDisplayText() {
+    List<String> users = ContainerUtil.map(myUsers, user -> {
+      String me = VcsLogBundle.message("vcs.log.user.filter.me");
+      return user.equals(VcsLogFilterObject.ME) ? me : user;
+    });
+    return StringUtil.join(users, ", ");
   }
 
   @Override
@@ -92,7 +104,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
       if (!users.isEmpty()) {
         return users.contains(commit.getAuthor());
       }
-      else if (!name.equals(ME)) {
+      else if (!name.equals(VcsLogFilterObject.ME)) {
         String lowerUser = VcsUserUtil.nameToLowerCase(name);
         boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
                          VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
@@ -105,23 +117,31 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     });
   }
 
-  private Set<VcsUser> getUsers(@NotNull String name) {
-    Set<VcsUser> result = new HashSet<>();
-
-    result.addAll(myAllUsersByNames.get(VcsUserUtil.getNameInStandardForm(name)));
-    result.addAll(myAllUsersByEmails.get(VcsUserUtil.getNameInStandardForm(name)));
-
-    return result;
-  }
-
   @NotNull
-  @Override
-  public String getPresentation() {
-    return StringUtil.join(getUserNamesForPresentation(), ", ");
+  private Set<VcsUser> getUsers(@NotNull String name) {
+    String standardName = VcsUserUtil.getNameInStandardForm(name);
+
+    Set<VcsUser> result = new HashSet<>();
+    result.addAll(myAllUsersByNames.get(standardName));
+    result.addAll(myAllUsersByEmails.get(standardName));
+    return result;
   }
 
   @Override
   public String toString() {
     return "author: " + StringUtil.join(myUsers, ", ");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogUserFilterImpl filter = (VcsLogUserFilterImpl)o;
+    return Comparing.haveEqualElements(myUsers, filter.myUsers);
+  }
+
+  @Override
+  public int hashCode() {
+    return Comparing.unorderedHashcode(myUsers);
   }
 }

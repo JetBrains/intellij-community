@@ -31,7 +31,7 @@ import java.util.Set;
 public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Disposable {
   private final Set<Change> myOriginalChanges;
 
-  public ChangesBrowserWithRollback(@NotNull Project project, @NotNull List<Change> changes) {
+  public ChangesBrowserWithRollback(@NotNull Project project, @NotNull List<? extends Change> changes) {
     super(project, false, true);
     myOriginalChanges = new HashSet<>(changes);
 

@@ -78,6 +78,9 @@ public class IndexPattern {
       int flags = 0;
       if (!myCaseSensitive) {
         flags = Pattern.CASE_INSENSITIVE;
+        if (StringUtil.findFirst(myPatternString, c -> c >= 0x80) >= 0) {
+          flags |= Pattern.UNICODE_CASE;
+        }
       }
       myPattern = Pattern.compile(myPatternString, flags);
       String optimizedPattern = myPatternString;

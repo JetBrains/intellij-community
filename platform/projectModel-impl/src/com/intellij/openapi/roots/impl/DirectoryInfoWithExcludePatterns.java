@@ -11,9 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;
@@ -83,7 +80,9 @@ class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
       current = current.getParent();
     }
     if (current == null) {
-      LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
+      IllegalArgumentException e = new IllegalArgumentException("File " + file + " is not under this directory (" + myRoot + ")");
+      LOG.warn(e);
+      throw e;
     }
     return false;
   }

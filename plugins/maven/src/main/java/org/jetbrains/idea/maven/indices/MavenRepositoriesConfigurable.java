@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.icons.AllIcons;
@@ -7,13 +7,16 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -28,14 +31,13 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.idea.maven.indices.MavenSearchIndex.Kind.REMOTE;
-
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
   private JBTable myIndicesTable;
   private JButton myUpdateButton;
+  private JPanel myBorderPanel;
 
   private AnimatedIcon myUpdatingIcon;
   private Timer myRepaintTimer;
@@ -44,6 +46,10 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   public MavenRepositoriesConfigurable(Project project) {
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
+
+    myBorderPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.repositories.title"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
   }
 
   @Override
@@ -83,7 +89,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                       new MyIconCellRenderer());
 
-    myIndicesTable.getEmptyText().setText("No remote repositories");
+    myIndicesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
 
     updateButtonsState();
   }
@@ -163,7 +169,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
         myIndicesTable.repaint();
       }
     };
-    myRepaintTimer = UIUtil.createNamedTimer("Maven repaint",AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);
+    myRepaintTimer = TimerUtil.createNamedTimer("Maven repaint", AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);
     myRepaintTimer.start();
   }
 
@@ -227,7 +233,6 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
-          if (i.getKind() != REMOTE) return IndicesBundle.message("maven.index.updated.notapplicable");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
           return myManager.getUpdatingState(i);

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class HtmlCompatibilityData {
   @Nullable
   public static Map getTagData(@Nullable XmlTag tag) {
     if (tag == null) return null;
-    String key = tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
+    String key = tag.isCaseSensitive() ?
                  tag.getName() :
                  StringUtil.toLowerCase(tag.getName());
     if ("input".equals(key)) {
@@ -83,8 +82,8 @@ public class HtmlCompatibilityData {
     PsiElement element = tag;
     while (element != null && !(element instanceof PsiFile)) {
       if (element instanceof XmlTag) {
-        String name = element instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
-                     ((XmlTagImpl)element).getName() :
+        String name = tag.isCaseSensitive() ?
+                     ((XmlTag)element).getName() :
                      StringUtil.toLowerCase(((XmlTag)element).getName());
 
         if (MATH.equals(name)) {
@@ -103,7 +102,7 @@ public class HtmlCompatibilityData {
   public static Map getAttributeData(@Nullable XmlTag tag, String attributeName) {
     Object data = getTagData(tag);
     if (data != null) {
-      Object attributeData = ((Map)data).get(StringUtil.toLowerCase(attributeName));
+      Object attributeData = ((Map)data).get(attributeName);
       if (attributeData != null) return (Map)attributeData;
     }
     if (ourGlobalAttributesCache.get() == null) {

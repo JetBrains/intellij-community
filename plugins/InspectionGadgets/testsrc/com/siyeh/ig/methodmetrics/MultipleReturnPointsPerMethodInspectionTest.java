@@ -16,14 +16,13 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleReturnPointsPerMethodInspectionTest extends LightInspectionTestCase {
+public class MultipleReturnPointsPerMethodInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMultipleReturnPointsPerMethod() {
     doTest();

@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.impl.ShadowPainter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,9 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.icons.AllIcons.Ide.Shadow.*;
 
-/**
- * @author Sergey.Malenkov
- */
 final class WindowShadowPainter extends AbstractPainter {
   private static final ShadowPainter PAINTER = new ShadowPainter(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft);
   private static final long MASK = AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK;
@@ -58,7 +55,7 @@ final class WindowShadowPainter extends AbstractPainter {
 
   @Override
   public void executePaint(Component component, Graphics2D g) {
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window != null) {
       if (myComponent != component) {
         myComponent = component;

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 
-/**
- * @author nik
- */
 public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
   private final JpsElementChildRole<E> myRole;
   private final String myId;

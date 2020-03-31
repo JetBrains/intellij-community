@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dyoma
  */
 public class Enumerator<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.Enumerator");
+  private static final Logger LOG = Logger.getInstance(Enumerator.class);
   private final TObjectIntHashMap<T> myNumbers;
   private int myNextNumber = 1;
 
@@ -39,13 +39,11 @@ public class Enumerator<T> {
     myNextNumber = 1;
   }
 
-  @NotNull
-  public int[] enumerate(@NotNull T[] objects) {
+  public int @NotNull [] enumerate(T @NotNull [] objects) {
     return enumerate(objects, 0, 0);
   }
 
-  @NotNull
-  public int[] enumerate(@NotNull T[] objects, final int startShift, final int endCut) {
+  public int @NotNull [] enumerate(T @NotNull [] objects, final int startShift, final int endCut) {
     int[] idx = ArrayUtil.newIntArray(objects.length - startShift - endCut);
     for (int i = startShift; i < objects.length - endCut; i++) {
       final T object = objects[i];

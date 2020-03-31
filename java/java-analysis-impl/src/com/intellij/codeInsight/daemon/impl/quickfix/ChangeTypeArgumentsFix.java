@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +18,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 /**
  * @author cdr
@@ -46,7 +33,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
 
   ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
                          PsiClass psiClass,
-                         @NotNull PsiExpression[] expressions,
+                         PsiExpression @NotNull [] expressions,
                          @NotNull PsiElement context) {
     myTargetMethod = targetMethod;
     myPsiClass = psiClass;
@@ -58,17 +45,17 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   @NotNull
   public String getText() {
     final PsiSubstitutor substitutor = inferTypeArguments();
-    return "Change type arguments to <" + StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
+    return JavaAnalysisBundle.message("change.type.arguments.to.0", StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
       final PsiType substituted = substitutor.substitute(typeParameter);
       return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
-    }, ", ") + ">";
+    }, ", "));
   }
 
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Change type arguments";
+    return JavaAnalysisBundle.message("change.type.arguments");
   }
 
   @Override
@@ -113,7 +100,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiTypeElement[] elements = parameterList.getTypeParameterElements();
     for (int i = elements.length - 1; i >= 0; i--) {
-      PsiType typeArg = assertNotNull(psiSubstitutor.substitute(typeParameters[i]));
+      PsiType typeArg = Objects.requireNonNull(psiSubstitutor.substitute(typeParameters[i]));
       PsiElement replaced = elements[i].replace(factory.createTypeElement(typeArg));
       JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(replaced);
     }
@@ -133,7 +120,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   }
 
 
-  public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
+  public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList list,
                                         @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass) {
@@ -144,7 +131,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
     }
   }
 
-  private static void registerIntention(@NotNull PsiExpression[] expressions,
+  private static void registerIntention(PsiExpression @NotNull [] expressions,
                                         @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass,
                                         @NotNull JavaResolveResult candidate,

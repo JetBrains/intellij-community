@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -9,7 +9,7 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
 import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
@@ -48,7 +47,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
 
   private static final PsiJavaElementPattern.Capture<PsiElement> FIELD_TYPE_ARGUMENT_PATTERN = psiElement().afterLeaf(",")
     .withParent(
-      psiExpression().methodCallParameter(2, methodPattern(ArrayUtil.toStringArray(FIELD_HANDLE_FACTORY_NAMES))));
+      psiExpression().methodCallParameter(2, methodPattern(ArrayUtilRt.toStringArray(FIELD_HANDLE_FACTORY_NAMES))));
 
 
   @NotNull

@@ -50,9 +50,8 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
     myRepository = ServiceManager.getService(HeaderParserRepository.class);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return getUnwrappedText().isEmpty() ? PsiReference.EMPTY_ARRAY : myRepository.getReferences(this);
   }
 

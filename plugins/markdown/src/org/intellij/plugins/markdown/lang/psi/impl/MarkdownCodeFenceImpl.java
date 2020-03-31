@@ -152,7 +152,8 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
       }
 
       if (newContent.contains("```") || newContent.contains("~~~")) {
-        return null;
+        MarkdownPsiElement textElement = MarkdownPsiElementFactory.createTextElement(element.getProject(), newContent);
+        return textElement instanceof MarkdownCodeFenceImpl ? (MarkdownCodeFenceImpl)element.replace(textElement) : null;
       }
 
       String indent = calculateIndent(element);

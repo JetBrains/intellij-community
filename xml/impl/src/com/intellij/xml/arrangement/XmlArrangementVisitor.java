@@ -51,6 +51,12 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   public void visitXmlTag(XmlTag tag) {
     final XmlElementArrangementEntry entry = createNewEntry(tag, XML_TAG, tag.getName(), tag.getNamespace());
     processEntry(entry, tag);
+    if (entry != null) {
+      postProcessTag(tag, entry);
+    }
+  }
+
+  protected void postProcessTag(@NotNull XmlTag xmlTagValue, @NotNull XmlElementArrangementEntry entry) {
   }
 
   @Override

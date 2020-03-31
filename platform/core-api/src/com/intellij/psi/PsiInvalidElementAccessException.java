@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -34,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 
-/**
- * @author mike
- */
 public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
@@ -96,8 +79,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return new PsiInvalidElementAccessException(node, message);
   }
 
-  @NotNull
-  private static Attachment[] createAttachments(@Nullable Object trace) {
+  private static Attachment @NotNull [] createAttachments(@Nullable Object trace) {
     return trace == null
            ? Attachment.EMPTY_ARRAY
            : new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
@@ -147,9 +129,8 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return myDiagnostic;
   }
 

@@ -1,55 +1,51 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+
 public class DummyChangesViewContentManager implements ChangesViewContentI {
   @Override
-  public void setUp(ToolWindow toolWindow) {
-
+  public void attachToolWindow(@NotNull ToolWindow toolWindow) {
   }
 
   @Override
-  public boolean isAvailable() {
-    return false;
+  public void addContent(@NotNull Content content) {
+    Disposer.dispose(content);
   }
 
   @Override
-  public void addContent(final Content content) {
+  public void removeContent(@NotNull Content content) {
   }
 
   @Override
-  public void removeContent(final Content content) {
+  public void setSelectedContent(@NotNull Content content) {
   }
 
   @Override
-  public void setSelectedContent(final Content content) {
+  public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
   }
 
+  @Nullable
   @Override
-  public <T> T getActiveComponent(final Class<T> aClass) {
+  public <T> T getActiveComponent(@NotNull Class<T> aClass) {
     return null;
   }
 
   @Override
-  public void selectContent(final String tabName) {
+  public void selectContent(@NotNull String tabName) {
+  }
+
+  @NotNull
+  @Override
+  public List<Content> findContents(@NotNull Predicate<Content> predicate) {
+    return Collections.emptyList();
   }
 }

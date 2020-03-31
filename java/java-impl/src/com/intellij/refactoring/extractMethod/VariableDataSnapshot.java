@@ -11,17 +11,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-public class VariableDataSnapshot extends AbstractVariableData {
-  @Nullable final SmartPsiElementPointer<PsiVariable> myVariable;
-  @Nullable final SmartTypePointer myType;
+class VariableDataSnapshot extends AbstractVariableData {
+  @Nullable private final SmartPsiElementPointer<PsiVariable> myVariable;
+  @Nullable private final SmartTypePointer myType;
 
-  public VariableDataSnapshot(@NotNull VariableData data, @NotNull Project project) {
+  VariableDataSnapshot(@NotNull VariableData data, @NotNull Project project) {
     this(data.variable, data.type, data.name, data.originalName, data.passAsParameter, project);
   }
 
-  public VariableDataSnapshot(@Nullable PsiVariable variable, @Nullable PsiType type,
-                              String name, String originalName, boolean passAsParameter,
-                              @NotNull Project project) {
+  VariableDataSnapshot(@Nullable PsiVariable variable, @Nullable PsiType type,
+                       String name, String originalName, boolean passAsParameter,
+                       @NotNull Project project) {
     myVariable = variable != null ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer(variable) : null;
     myType = type != null ? SmartTypePointerManager.getInstance(project).createSmartTypePointer(type) : null;
     this.name = name;
@@ -35,9 +35,9 @@ public class VariableDataSnapshot extends AbstractVariableData {
     if (variable != null) {
       PsiType type = getType();
       VariableData data = new VariableData(variable, type);
-      data.name = this.name;
-      data.originalName = this.originalName;
-      data.passAsParameter = this.passAsParameter;
+      data.name = name;
+      data.originalName = originalName;
+      data.passAsParameter = passAsParameter;
       return data;
     }
     return null;

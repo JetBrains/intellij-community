@@ -122,6 +122,10 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testIntroduceVariableForSideEffectQualifier() {
     doTest(myDefaultHint + " (side effects)");
   }
+  
+  public void testIntroduceVariableForNewInQualifier() {
+    doTest(myDefaultHint + " (side effects)");
+  }
 
   public void testCollapseToExpressionLambdaWhenCast() {
     doTest();

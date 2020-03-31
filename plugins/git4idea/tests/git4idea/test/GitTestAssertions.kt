@@ -7,10 +7,14 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
-import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.HeavyPlatformTestCase.assertTrue
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -20,7 +24,6 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import java.io.File
 import java.util.*
 
@@ -62,11 +65,11 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
 
   val actualChanges = GitChangeUtils.getStagedChanges(project, root)
   for (change in cb.changes) {
-    val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] is not staged", found)
+    val found = actualChanges.find(change.gitDiffChangeMatcher)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] is not staged", found)
     actualChanges.remove(found)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  assertTrue(actualChanges.isEmpty())
 }
 
 fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
@@ -76,11 +79,11 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
   val allChanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
   val actualChanges = allChanges.toMutableSet()
   for (change in cb.changes) {
-    val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
+    val found = actualChanges.find(change.changeMatcher)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
     actualChanges.remove(found)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  assertTrue(actualChanges.isEmpty())
 }
 
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
@@ -100,12 +103,12 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
 }
 
 fun ChangeListManager.assertNoChanges() {
-  PlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
+  HeavyPlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
 }
 
 fun ChangeListManager.assertOnlyDefaultChangelist() {
-  PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  PlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
+  HeavyPlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
+  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.getDefaultName(), defaultChangeList.name)
 }
 
 fun ChangeListManager.waitScheduledChangelistDeletions() {
@@ -118,7 +121,7 @@ fun ChangeListManager.waitScheduledChangelistDeletions() {
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
   val changeLists = changeListsCopy
   val list = changeLists.find { it.comment == comment }
-  PlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
+  HeavyPlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
   return list!!
 }
 
@@ -130,32 +133,40 @@ fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Ch
   val cb = ChangesBuilder()
   cb.changes()
 
-  VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-  ensureUpToDate()
-
   val vcsChanges = allChanges
   val allChanges = mutableListOf<Change>()
   val actualChanges = HashSet(vcsChanges)
 
   for (change in cb.changes) {
-    val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] not found\n$vcsChanges", found)
+    val found = actualChanges.find(change.changeMatcher)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] not found\n$vcsChanges", found)
     actualChanges.remove(found)
     allChanges.add(found!!)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  HeavyPlatformTestCase.assertEmpty(actualChanges)
   return allChanges
 }
 
 class ChangesBuilder {
-  data class AChange(val type: FileStatus, val nameBefore: String?, val nameAfter: String, val matcher: (Change) -> Boolean) {
-    constructor(type: FileStatus, nameAfter: String, matcher: (Change) -> Boolean) : this(type, null, nameAfter, matcher)
+
+
+  data class AChange(val type: FileStatus,
+                     val nameBefore: String?,
+                     val nameAfter: String?,
+                     val matcher: (FileStatus, FilePath?, FilePath?) -> Boolean,
+                     val changeMatcher: (Change) -> Boolean) {
+
+    val gitDiffChangeMatcher: (GitChangeUtils.GitDiffChange) -> Boolean = { it -> matcher(it.status, it.beforePath, it.afterPath) }
+
+    constructor(type: FileStatus, nameBefore: String?, nameAfter: String?, matcher: (FileStatus, FilePath?, FilePath?) -> Boolean)
+      : this(type, nameBefore, nameAfter, matcher,
+             changeMatcher = { matcher(it.fileStatus, it.beforeRevision?.file, it.afterRevision?.file) })
 
     override fun toString(): String {
-      when (type) {
-        Change.Type.NEW -> return "A: $nameAfter"
-        Change.Type.DELETED -> return "D: $nameAfter"
-        Change.Type.MOVED -> return "M: $nameBefore -> $nameAfter"
+      when {
+        type == FileStatus.ADDED -> return "A: $nameAfter"
+        type == FileStatus.DELETED -> return "D: $nameAfter"
+        nameBefore != nameAfter -> return "M: $nameBefore -> $nameAfter"
         else -> return "M: $nameAfter"
       }
     }
@@ -164,29 +175,55 @@ class ChangesBuilder {
   val changes = linkedSetOf<AChange>()
 
   fun deleted(name: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
-      it.fileStatus == FileStatus.DELETED && it.beforeRevision.relativePath == name && it.afterRevision == null
-    }))
+    assertTrue(changes.add(AChange(FileStatus.DELETED, nameBefore = name, nameAfter = null)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.DELETED && beforePath.relativePath == name && afterPath == null
+                           }))
+  }
+
+  fun added(name: String, newContent: String) {
+    val addition = AChange(FileStatus.ADDED, nameBefore = null, nameAfter = name,
+                           matcher = { status, beforePath, afterPath ->
+                             status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name },
+                           changeMatcher = { change ->
+                             change.afterRevision!!.content == newContent
+                           })
+    assertTrue(changes.add(addition))
   }
 
   fun added(name: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {
-      it.fileStatus == FileStatus.ADDED && it.beforeRevision == null && it.afterRevision.relativePath == name
-    }))
+    assertTrue(changes.add(AChange(FileStatus.ADDED, nameBefore = null, nameAfter = name)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name
+                           }))
   }
 
-  fun modified(name:String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, name) {
-      it.fileStatus == FileStatus.MODIFIED && it.beforeRevision.relativePath == name && it.afterRevision.relativePath == name
-    }))
+  fun modified(name: String, oldContent: String, newContent: String) {
+    val modification = AChange(FileStatus.MODIFIED, nameBefore = name, nameAfter = name,
+                               matcher = { status, beforePath, afterPath ->
+                                status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
+                              },
+                               changeMatcher = { change ->
+                                change.beforeRevision!!.content == oldContent &&
+                                change.afterRevision!!.content == newContent
+                              })
+    assertTrue(changes.add(modification))
+  }
+
+  fun modified(name: String) {
+    assertTrue(changes.add(AChange(FileStatus.MODIFIED, nameBefore = name, nameAfter = name)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
+                           }))
   }
 
   fun rename(from: String, to: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
-      (it.isRenamed || it.isMoved) && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
+    assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) { status, beforePath, afterPath ->
+      beforePath != null && afterPath != null && beforePath.path != afterPath.path &&
+      from == beforePath.relativePath && to == afterPath.relativePath
     }))
   }
 }
 
-private val ContentRevision?.relativePath: String
-  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().systemIndependentPath, this!!.file.path, '/')!!
+private val FilePath?.relativePath: String
+  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().systemIndependentPath, this!!.path, '/')!!

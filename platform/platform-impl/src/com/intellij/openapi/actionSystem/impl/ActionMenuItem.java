@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.Disposable;
@@ -9,19 +11,21 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
@@ -78,7 +82,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       init();
     }
     else {
-      setText("loading...");
+      setText(IdeBundle.message("menu.item.loading"));
     }
   }
 
@@ -99,16 +103,13 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     installSynchronizer();
   }
 
-  /**
-   * We have to make this method public to allow BegMenuItemUI to invoke it.
-   */
   @Override
   public void fireActionPerformed(ActionEvent event) {
-    AnAction action = myAction.getAction();
-    if (action != null && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      MainMenuCollector.getInstance().record(action);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isDisposed() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      MainMenuCollector.getInstance().record(myAction.getAction());
     }
-    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> super.fireActionPerformed(event));
   }
 
   @Override
@@ -160,7 +161,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
-  private void setAcceleratorFromShortcuts(@NotNull Shortcut[] shortcuts) {
+  private void setAcceleratorFromShortcuts(Shortcut @NotNull [] shortcuts) {
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         final KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
@@ -199,7 +200,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private void updateIcon(AnAction action) {
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       action.update(myEvent);
-      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+      myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
       }
@@ -223,8 +224,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           icon = new PoppedIcon(icon, 16, 16);
         }
         Icon disabled = myPresentation.getDisabledIcon();
-        if (disabled == null)
-          disabled = IconLoader.getDisabledIcon(icon);
+        if (disabled == null) {
+          disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
+        }
         Icon selected = myPresentation.getSelectedIcon();
         if (selected == null)
           selected = icon;
@@ -238,7 +240,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   @Override
   public void setIcon(Icon icon) {
-    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
       // JDK can't paint correctly our HiDPI icons at the system menu bar
       icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
     }
@@ -271,24 +273,26 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
 
     @Override
-    public void actionPerformed(final ActionEvent e) {
-      final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
-      final ActionCallback typeAhead = new ActionCallback();
-      final String id = ActionManager.getInstance().getId(myAction.getAction());
+    public void actionPerformed(@NotNull ActionEvent e) {
+      IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
+      ActionCallback typeAhead = new ActionCallback();
+      String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
-      fm.typeAheadUntil(typeAhead, getText());
-      fm.runOnOwnContext(myContext, () -> {
+
+      focusManager.typeAheadUntil(typeAhead, getText());
+      focusManager.runOnOwnContext(myContext, () -> {
+        AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
-          new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
+          currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
         final AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
-          fm.doWhenFocusSettlesDown(typeAhead::setDone);
+          focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
           ActionUtil.performActionDumbAware(menuItemAction, event);
           actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
         }
@@ -344,7 +348,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
           setText(myPresentation.getText());
-          Window window = UIUtil.getWindow(ActionMenuItem.this);
+          Window window = ComponentUtil.getWindow(ActionMenuItem.this);
           if (window != null) window.pack();
         }
         else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name) || SELECTED.equals(name)) {

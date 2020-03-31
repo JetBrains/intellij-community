@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.google.common.collect.Maps;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,19 +29,22 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static git4idea.GitUtil.getRepositoryManager;
 import static java.util.stream.Collectors.toList;
@@ -68,14 +70,14 @@ abstract class GitBranchOperation {
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
   protected GitBranchOperation(@NotNull Project project, @NotNull Git git,
-                               @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<GitRepository> repositories) {
+                               @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<? extends GitRepository> repositories) {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
 
     myRepositories = getRepositoryManager(project).sortByDependency(repositories);
-    myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
-    myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
+    myCurrentHeads = ContainerUtil.newMapFromKeys(repositories.iterator(), repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
+    myInitialRevisions = ContainerUtil.newMapFromKeys(repositories.iterator(), GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();
     mySkippedRepositories = new ArrayList<>();
     myRemainingRepositories = new ArrayList<>(myRepositories);
@@ -90,6 +92,7 @@ abstract class GitBranchOperation {
   public abstract String getSuccessMessage();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected abstract String getRollbackProposal();
 
   /**
@@ -98,6 +101,7 @@ abstract class GitBranchOperation {
    * Some operations (like checkout new branch) can be not mentioned in these dialogs, so their operation names would be not used.
    */
   @NotNull
+  @Nls
   protected abstract String getOperationName();
 
   /**
@@ -167,11 +171,6 @@ abstract class GitBranchOperation {
   }
 
   @NotNull
-  protected Collection<GitRepository> getRemainingRepositories() {
-    return myRemainingRepositories;
-  }
-
-  @NotNull
   protected List<GitRepository> getRemainingRepositoriesExceptGiven(@NotNull final GitRepository currentRepository) {
     List<GitRepository> repositories = new ArrayList<>(myRemainingRepositories);
     repositories.remove(currentRepository);
@@ -235,11 +234,6 @@ abstract class GitBranchOperation {
     }
   }
 
-  @NotNull
-  protected String repositories() {
-    return pluralize("repository", getSuccessfulRepositories().size());
-  }
-
   /**
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
@@ -264,7 +258,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyBranchWillChange() {
-    String currentBranch = myCurrentHeads.values().iterator().next();
+    String currentBranch = ContainerUtil.getFirstItem(myCurrentHeads.values());
     if (currentBranch != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;
@@ -316,7 +310,7 @@ abstract class GitBranchOperation {
   }
 
   protected void fatalLocalChangesError(@NotNull String reference) {
-    String title = String.format("Couldn't %s %s", getOperationName(), reference);
+    String title = GitBundle.message("branch.operation.could.not.0.operation.name.1.reference", getOperationName(), reference);
     if (wereSuccessful()) {
       showFatalErrorDialogWithRollback(title, "");
     }
@@ -353,7 +347,7 @@ abstract class GitBranchOperation {
    * local changes.
    */
   @NotNull
-  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<GitRepository> repositories,
+  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
                                                                             @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {
@@ -371,7 +365,7 @@ abstract class GitBranchOperation {
 
   /**
    * When checkout or merge operation on a repository fails with the error "local changes would be overwritten by...",
-   * affected local files are captured by the {@link git4idea.commands.GitMessageWithFilesDetector detector}.
+   * affected local files are captured by the {@link GitMessageWithFilesDetector detector}.
    * Then all remaining (non successful repositories) are searched if they are about to fail with the same problem.
    * All collected local changes which prevent the operation, together with these repositories, are returned.
    * @param currentRepository          The first repository which failed the operation.
@@ -412,8 +406,8 @@ abstract class GitBranchOperation {
     }
     return StringUtil.join(grouped.entrySet(), entry -> {
       String roots = StringUtil.join(entry.getValue(), file -> file.getName(), ", ");
-      return entry.getKey() + " (in " + roots + ")";
-    }, "<br/>");
+      return GitBundle.message("branch.operation.in", entry.getKey(), roots);
+    }, UIUtil.BR);
   }
 
   @NotNull

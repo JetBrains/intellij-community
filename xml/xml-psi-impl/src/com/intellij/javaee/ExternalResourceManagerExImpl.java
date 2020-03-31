@@ -10,7 +10,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -19,8 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
@@ -56,13 +58,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private final Set<String> myIgnoredResources = new TreeSet<>();
   private final Set<String> myStandardIgnoredResources = new TreeSet<>();
 
-  private final NotNullLazyValue<Map<String, Map<String, Resource>>> myStandardResources = new AtomicNotNullLazyValue<Map<String, Map<String, Resource>>>() {
-    @NotNull
-    @Override
-    protected Map<String, Map<String, Resource>> compute() {
-      return computeStdResources();
-    }
-  };
+  private final ClearableLazyValue<Map<String, Map<String, Resource>>> myStandardResources = ClearableLazyValue.create(() -> computeStdResources());
 
   private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = () -> {
     MultiMap<String, String> result = new MultiMap<>();
@@ -101,11 +97,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
     }
 
+    myStandardIgnoredResources.clear();
     myStandardIgnoredResources.addAll(registrar.getIgnored());
     return registrar.getResources();
   }
 
-  private final List<ExternalResourceListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String RESOURCE_ELEMENT = "resource";
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
@@ -114,6 +110,15 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls private static final String XML_SCHEMA_VERSION = "xml-schema-version";
 
   private static final String DEFAULT_VERSION = "";
+
+  public ExternalResourceManagerExImpl() {
+    StandardResourceProvider.EP_NAME.addExtensionPointListener(this::dropCache, null);
+  }
+
+  private void dropCache() {
+    myStandardResources.drop();
+    incModificationCount();
+  }
 
   @Override
   public boolean isStandardResource(VirtualFile file) {
@@ -237,7 +242,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       addResourcesFromMap(result, version, myStandardResources.getValue());
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
@@ -248,9 +253,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   /**
-   * @see #registerResourceTemporarily(String, String, Disposable)
+   * @deprecated use {@link #registerResourceTemporarily(String, String, Disposable)}
    */
-  @Deprecated()
+  @Deprecated
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
     registerResourceTemporarily(url, location, parentDisposable);
@@ -311,7 +316,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
-    return ArrayUtil.toStringArray(urls);
+    return ArrayUtilRt.toStringArray(urls);
   }
 
   @Override
@@ -422,13 +427,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     myStandardResources.getValue();
 
     if (myIgnoredResources.isEmpty()) {
-      return ArrayUtil.toStringArray(myStandardIgnoredResources);
+      return ArrayUtilRt.toStringArray(myStandardIgnoredResources);
     }
 
     Set<String> set = new THashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
     set.addAll(myIgnoredResources);
     set.addAll(myStandardIgnoredResources);
-    return ArrayUtil.toStringArray(set);
+    return ArrayUtilRt.toStringArray(set);
   }
 
   @Override
@@ -529,20 +534,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
-  @Override
-  public void addExternalResourceListener(ExternalResourceListener listener) {
-    myListeners.add(listener);
-  }
-
-  @Override
-  public void removeExternalResourceListener(ExternalResourceListener listener) {
-    myListeners.remove(listener);
-  }
-
   private void fireExternalResourceChanged() {
-    for (ExternalResourceListener listener : myListeners) {
-      listener.externalResourceChanged();
-    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ExternalResourceListener.TOPIC).externalResourceChanged();
     incModificationCount();
   }
 

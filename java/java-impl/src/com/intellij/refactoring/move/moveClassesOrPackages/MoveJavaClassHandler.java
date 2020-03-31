@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class MoveJavaClassHandler implements MoveClassHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler");
+  private static final Logger LOG = Logger.getInstance(MoveJavaClassHandler.class);
 
   @Override
   public void finishMoveClass(@NotNull PsiClass aClass) {

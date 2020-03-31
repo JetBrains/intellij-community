@@ -16,25 +16,22 @@
 package com.intellij.execution.filters;
 
 import com.intellij.mock.MockDumbService;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.List;
 
-public class CompositeFilterTest {
+public class CompositeFilterTest extends LightPlatformTestCase {
+  private CompositeFilter myCompositeFilter;
 
-  protected CompositeFilter myCompositeFilter;
-
-  @Before
-  public void setUp() {
+  public void setUp() throws Exception {
+    super.setUp();
     myCompositeFilter = new CompositeFilter(new MockDumbService(null));
     myCompositeFilter.setForceUseAllFilters(false);
   }
 
-  @Test
   public void testApplyNextFilter() {
     Assert.assertNull(applyFilter());
 
@@ -62,7 +59,6 @@ public class CompositeFilterTest {
 
   }
 
-  @Test
   public void testApplyBadFilter() {
     myCompositeFilter.addFilter(throwSOEFilter());
     try {
@@ -100,38 +96,22 @@ public class CompositeFilterTest {
   }
 
   private static Filter returnNullFilter() {
-    return new Filter() {
-      @Nullable
-      @Override
-      public Result applyFilter(@NotNull String line, int entireLength) {
-        return null;
-      }
-    };
+    return (__1, __2) -> null;
   }
 
   private static Filter returnResultFilter() {
-    return new Filter() {
-      @Nullable
-      @Override
-      public Result applyFilter(@NotNull String line, int entireLength) {
-        return createResult();
-      }
-    };
+    return (__1, __2) -> createFilterResult();
   }
 
   private static Filter returnContinuingResultFilter() {
-    return new Filter() {
-      @Nullable
-      @Override
-      public Result applyFilter(@NotNull String line, int entireLength) {
-        Result result = createResult();
-        result.setNextAction(NextAction.CONTINUE_FILTERING);
-        return result;
-      }
+    return (__1, __2) -> {
+      Filter.Result result = createFilterResult();
+      result.setNextAction(Filter.NextAction.CONTINUE_FILTERING);
+      return result;
     };
   }
 
-  private static Filter.Result createResult() {
+  private static Filter.Result createFilterResult() {
     return new Filter.Result(1, 1, null, null);
   }
 }

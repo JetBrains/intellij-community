@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.configuration.RunConfigurationExtensionBase;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -18,16 +19,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Interface for run configurations which can be managed by a user and displayed in the UI.
+ * A run configuration which can be managed by a user and displayed in the UI.
+ * <p>
+ * If debugger is provided by plugin, it should also implement {@link RunConfigurationWithSuppressedDefaultDebugAction}.
+ * Otherwise (in case of disabled plugin) debug action may be enabled in UI but with no reaction.
  *
  * @see com.intellij.execution.RunManager
  * @see RunConfigurationBase
- *
- * If debugger is provided by plugin, RunConfiguration should also implement RunConfigurationWithSuppressedDefaultDebugAction
- * Otherwise (in case of disabled plugin) debug action may be enabled in UI but with no reaction
- * @see RunConfigurationWithSuppressedDefaultDebugAction
- *
  * @see RefactoringListenerProvider
+ * @see RunConfigurationExtensionBase
  */
 public interface RunConfiguration extends RunProfile, Cloneable {
   DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
@@ -105,7 +105,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    *
    * @return the unique ID of the configuration.
    */
-  @Deprecated
   default int getUniqueID() {
     return System.identityHashCode(this);
   }

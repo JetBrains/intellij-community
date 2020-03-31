@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,11 +28,7 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
 
   public GotoLineNumberDialog(Project project) {
     super(project, true);
-    setTitle("Go to Line/Column");
-  }
-
-  private static boolean isInternal() {
-    return ApplicationManagerEx.getApplicationEx().isInternal();
+    setTitle(IdeBundle.message("dialog.title.go.to.line.column"));
   }
 
   @Override
@@ -96,7 +93,7 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel label = new JLabel("[Line] [:column]:");
+    JLabel label = new JLabel(IdeBundle.message("label.line.column"));
     panel.add(label, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -105,12 +102,12 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     panel.add(myField, gbConstraints);
     myField.setText(String.format("%d:%d", getLine() + 1, getColumn() + 1));
 
-    if (isInternal()) {
+    if (ApplicationManager.getApplication().isInternal()) {
       gbConstraints.gridy = 1;
       gbConstraints.weightx = 0;
       gbConstraints.weighty = 1;
       gbConstraints.anchor = GridBagConstraints.EAST;
-      final JLabel offsetLabel = new JLabel("Offset:");
+      final JLabel offsetLabel = new JLabel(IdeBundle.message("label.offset"));
       panel.add(offsetLabel, gbConstraints);
 
       gbConstraints.fill = GridBagConstraints.BOTH;

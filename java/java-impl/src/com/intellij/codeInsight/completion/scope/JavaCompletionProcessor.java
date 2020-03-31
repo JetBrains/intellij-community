@@ -100,7 +100,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC){
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStatic = true;
     }
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
@@ -141,7 +141,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     if (element instanceof PsiVariable) {
       String name = ((PsiVariable)element).getName();
       if (myShadowedNames.contains(name)) return true;
-      if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      if (PsiUtil.isJvmLocalVariable(element)) {
         myShadowedNames.add(name);
       }
     }
@@ -264,7 +264,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     return JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
   }
 
-  public void setCompletionElements(@NotNull Object[] elements) {
+  public void setCompletionElements(Object @NotNull [] elements) {
     for (Object element: elements) {
       CompletionElement completion = new CompletionElement(element, PsiSubstitutor.EMPTY);
       myResults.put(completion, completion);

@@ -24,7 +24,7 @@ import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlFileElement extends FileElement implements XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.XmlFileElement");
+  private static final Logger LOG = Logger.getInstance(XmlFileElement.class);
 
   public XmlFileElement(CharSequence text) {
     super(XML_FILE, text);

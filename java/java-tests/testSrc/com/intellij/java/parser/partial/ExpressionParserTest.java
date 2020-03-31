@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
@@ -30,11 +30,13 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testInstanceOf0() { doParserTest("a instanceof String"); }
   public void testInstanceOf1() { doParserTest("a instanceof"); }
+  public void testInstanceOf2() { doParserTest("x instanceof Foo v"); }
 
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
 
-  public void testCast() { doParserTest("(Type)var"); }
+  public void testCast0() { doParserTest("(Type)var"); }
+  public void testCast1() { doParserTest("(double)1 / 5"); }
 
   public void testParenth0() { doParserTest("(c)"); }
   public void testParenth1() { doParserTest("(this).f--"); }
@@ -142,9 +144,9 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression24() { doParserTest("var -> var"); }
   public void testLambdaExpression25() { doParserTest("(var) -> var"); }
   public void testLambdaExpression26() { doParserTest("(var var) -> var"); }
-  public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
+  public void testLambdaExpression27() { doParserTest("z > (w) -> v"); }
 
-  public void testRawLiteral0() { doParserTest("`.`"); }
+  public void testTextBlockLiteral0() { doParserTest("\"\"\".\"\"\""); }
 
   public void testSwitch0() { doParserTest("switch (i) { case 1 -> 1; default -> 2; }"); }
 

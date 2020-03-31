@@ -17,9 +17,9 @@ package com.intellij.java.psi.resolve;
 
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightResolveTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class ResolveVariableTest extends LightResolveTestCase {
   public void testAnonymousConstructorArg() {
     PsiElement target = configureAndResolve();
@@ -59,7 +59,6 @@ public class ResolveVariableTest extends LightResolveTestCase {
   public void testVisibility4() {
     PsiElement target = configureAndResolve();
     assertEquals("a", ((PsiLocalVariable)target).getName());
-    assertTrue(target instanceof PsiLocalVariable);
   }
 
   public void testQualified1() {

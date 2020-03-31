@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.options.ConfigurationException;
@@ -70,7 +71,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       String getLaunchCommandLine(RemoteConnection connection) {
         String commandLine = JDK5to8.getLaunchCommandLine(connection);
         if (connection.isUseSockets() && !connection.isServerMode()) {
-          commandLine = commandLine.replace(connection.getAddress(), "*:" + connection.getAddress());
+          commandLine = commandLine.replace(connection.getApplicationAddress(), "*:" + connection.getApplicationAddress());
         }
         return commandLine;
       }
@@ -129,7 +130,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private final JPanel          mainPanel;
   private final JTextArea       myArgsArea = new JTextArea();
   private final JComboBox<Mode> myModeCombo = new ComboBox<>(Mode.values());
-  private final JBCheckBox      myAutoRestart = new JBCheckBox("Auto restart");
+  private final JBCheckBox      myAutoRestart = new JBCheckBox(ExecutionBundle.message("auto.restart"));
   private final JComboBox<Transport> myTransportCombo = new ComboBox<>(Transport.values());
 
   private final ConfigurationModuleSelector myModuleSelector;
@@ -151,11 +152,11 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
             return null;
           }
           else {
-            return new ValidationInfo("Incorrect port range. Set value between 0 and 65535", myPort);
+            return new ValidationInfo(ExecutionBundle.message("incorrect.port.range.set.value.between"), myPort);
           }
         }
         catch (NumberFormatException nfe) {
-          return new ValidationInfo("Port value should be a number between 0 and 65535", myPort);
+          return new ValidationInfo(ExecutionBundle.message("port.value.should.be.a.number.between"), myPort);
         }
       }
       else {
@@ -195,7 +196,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     updateArgsText(vi);
 
     DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
-    ddl.setToolTipText("JVM arguments format");
+    ddl.setToolTipText(ExecutionBundle.message("jvm.arguments.format"));
 
     gc.gridx = 0;
     gc.gridy++;
@@ -204,9 +205,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.insets = JBUI.insetsTop(10);
 
-    mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("&Command line arguments for remote JVM:").
+    mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel(ExecutionBundle.message("command.line.arguments.for.remote.jvm")).
       moveLabelOnTop().withTopRightComponent(ddl).
-                               withComment("Copy and paste the arguments to the command line when JVM is started").createPanel(), gc);
+                               withComment(ExecutionBundle.message("copy.and.paste.the.arguments.to.the.command.line.when.jvm.is.started")).createPanel(), gc);
 
     ModuleDescriptionsComboBox myModuleCombo = new ModuleDescriptionsComboBox();
     myModuleCombo.allowEmptySelection("<whole project>");
@@ -218,8 +219,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.insets = JBUI.insetsTop(21);
-    mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use &module classpath:").
-      withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
+    mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel(ExecutionBundle.message("use.module.classpath")).
+      withComment(ExecutionBundle.message("first.search.for.sources.of.the.debugged.classes")).createPanel(), gc);
 
     gc.gridy++;
     gc.fill = GridBagConstraints.REMAINDER;

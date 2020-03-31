@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UI;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -91,13 +91,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     hintLabel.setFont(JBUI.Fonts.smallFont());
     //noinspection UseDPIAwareInsets
     body.add(hintLabel, new GridBagConstraints(
-      0, GridBagConstraints.RELATIVE, 1, 1, 1.0,  0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-      new Insets(JBUI.scale(16), 0, JBUI.scale(10), 0), 0, 0)
+      0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+      new Insets(JBUIScale.scale(16), 0, JBUIScale.scale(10), 0), 0, 0)
     );
   }
 
   private static String getParagraphTag() {
-    return "<p style=\"margin-bottom:"+JBUI.scale(10)+"px;\">";
+    return "<p style=\"margin-bottom:" + JBUIScale.scale(10) + "px;\">";
   }
 
   @NotNull
@@ -105,7 +105,14 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(StringUtil.toLowerCase(consent.getName())), consent.isAccepted());
+      String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
+      if (ConsentOptions.getInstance().isEAP()) {
+        final Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
+        if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId())) {
+          checkBoxText += " when using EAP versions";
+        }
+      }
+      final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
@@ -115,12 +122,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
       viewer.setOpaque(false);
       viewer.setFocusable(false);
-      viewer.setCaret(new DefaultCaret(){
-        @Override
-        protected void adjustVisibility(Rectangle nloc) {
-          //do nothing to avoid autoscroll
-        }
-      });
+      UIUtil.doNotScrollToCaret(viewer);
       viewer.addHyperlinkListener(new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -135,11 +137,11 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
       styleSheet.addRule("body {margin-top:0;padding-top:0;}");
       //styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-      styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+      styleSheet.addRule("h2, em {margin-top:" + JBUIScale.scaleFontSize((float)20) + "pt;}");
       styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-      styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-      styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-      styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+      styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+      styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+      styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
       styleSheet.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
       styleSheet.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
       styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");

@@ -16,8 +16,7 @@ public interface BatchSuppressManager {
       return ServiceManager.getService(BatchSuppressManager.class);
     }
   }
-  @NotNull
-  SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey key);
+  SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey key);
 
   boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId);
 

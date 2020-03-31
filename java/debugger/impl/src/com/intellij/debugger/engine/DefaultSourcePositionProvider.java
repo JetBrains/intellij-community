@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -21,10 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.ClassNotPreparedException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,10 +96,15 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess != null) {
         try {
-          List<Location> locations = type.allLineLocations();
-          if (!locations.isEmpty()) {
-            // important: use the last location to be sure the position will be within the anonymous class
-            aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
+          // important: use the last location to be sure the position will be within the anonymous class
+          // and do not use type.allLineLocations as it fetches line tables for all methods
+          List<Method> methods = type.methods();
+          for (int i = methods.size() - 1; i >= 0; i--) {
+            List<Location> locations = methods.get(i).allLineLocations();
+            if (!locations.isEmpty()) {
+              aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
+              break;
+            }
           }
         }
         catch (AbsentInformationException | ClassNotPreparedException ignored) {

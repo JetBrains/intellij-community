@@ -18,7 +18,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   private final boolean myHaveMergeSources;
   private final boolean myHasLocalSource;
 
-  public SvnHistorySession(SvnVcs vcs, final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
+  public SvnHistorySession(SvnVcs vcs, final List<? extends VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
                            @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
     super(revisions, currentRevision);
     myVcs = vcs;

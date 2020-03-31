@@ -32,9 +32,17 @@ public abstract class ThreesideDiffChangeBase {
 
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
   @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
+  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public ThreesideDiffChangeBase(@NotNull MergeConflictType type) {
     myType = type;
+  }
+
+  @CalledInAwt
+  public void destroy() {
+    destroyHighlighters();
+    destroyInnerHighlighters();
+    destroyOperations();
   }
 
   @CalledInAwt
@@ -69,6 +77,24 @@ public abstract class ThreesideDiffChangeBase {
       highlighter.dispose();
     }
     myInnerHighlighters.clear();
+  }
+
+  @CalledInAwt
+  protected void installOperations() {
+  }
+
+  @CalledInAwt
+  protected void destroyOperations() {
+    for (DiffGutterOperation operation : myOperations) {
+      operation.dispose();
+    }
+    myOperations.clear();
+  }
+
+  public void updateGutterActions(boolean force) {
+    for (DiffGutterOperation operation : myOperations) {
+      operation.update(force);
+    }
   }
 
   //
@@ -123,8 +149,12 @@ public abstract class ThreesideDiffChangeBase {
     boolean resolved = isResolved(side);
     boolean ignored = !resolved && getInnerFragments() != null;
     boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, resolved, false,
-                                                         shouldHideWithoutLineNumbers, side == ThreeSide.BASE));
+    myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
+                            .withIgnored(ignored)
+                            .withResolved(resolved)
+                            .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
+                            .withHideStripeMarkers(side == ThreeSide.BASE)
+                            .done());
   }
 
   protected void createInnerHighlighter(@NotNull ThreeSide side) {

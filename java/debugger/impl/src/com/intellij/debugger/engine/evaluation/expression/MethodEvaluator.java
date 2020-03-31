@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodEvaluator
@@ -7,7 +7,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.Patches;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.MethodEvaluator");
+  private static final Logger LOG = Logger.getInstance(MethodEvaluator.class);
   private final JVMName myClassName;
   private final JVMName myMethodSignature;
   private final String myMethodName;
@@ -79,7 +79,7 @@ public class MethodEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
     if (!(object instanceof ObjectReference || isInvokableType(object))) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
     }
     List<Value> args = new ArrayList<>(myArgumentEvaluators.length);
     for (Evaluator evaluator : myArgumentEvaluators) {
@@ -98,7 +98,7 @@ public class MethodEvaluator implements Evaluator {
 
       if (referenceType == null) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
+          JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
         );
       }
       final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
@@ -129,7 +129,7 @@ public class MethodEvaluator implements Evaluator {
         jdiMethod = DebuggerUtils.findMethod(referenceType, myMethodName, signature);
       }
       if (jdiMethod == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
       if (myMustBeVararg && !jdiMethod.isVarArgs()) {
         // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
@@ -152,7 +152,7 @@ public class MethodEvaluator implements Evaluator {
             }
           }
         }
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message(
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message(
           "evaluation.error.no.static.method", DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature)));
       }
 
@@ -239,9 +239,9 @@ public class MethodEvaluator implements Evaluator {
     ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
 
     if (invokerClass != null) {
-      List<Method> methods = invokerClass.methodsByName("invoke");
-      if (!methods.isEmpty()) {
-        return debugProcess.invokeMethod(evaluationContext, invokerClass, methods.get(0),
+      Method method = DebuggerUtils.findMethod(invokerClass, "invoke", null);
+      if (method != null) {
+        return debugProcess.invokeMethod(evaluationContext, invokerClass, method,
                Arrays.asList(obj, ((VirtualMachineProxyImpl)debugProcess.getVirtualMachineProxy()).mirrorOf(name)));
       }
     }

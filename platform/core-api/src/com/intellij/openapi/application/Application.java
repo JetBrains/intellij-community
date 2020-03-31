@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,23 +17,70 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Provides access to core application-wide functionality and methods for working with the IDE's
- * thread model.
+ * Provides access to core application-wide functionality and methods for working with the IDE's thread model.
  * <p>
- * The thread model defines two main types of actions which can access the PSI and other
- * IDE data structures: read actions (which do not modify the data) and write actions (which modify
- * some data).
+ * The thread model defines three types of locks which provide access the PSI and other IDE data structures:
+ * <ul>
+ *   <li><b>Read lock</b> provides read access to the data. Can be obtained from any thread concurrently with other Read locks
+ *   and Write Intent lock.</li>
+ *   <li><b>Write Intent lock</b> provides read access to the data and the ability to acquire Write lock. Can be obtained from
+ *   any thread concurrently with Read locks, but cannot be acquired if another Write Intent lock is held on another thread.</li>
+ *   <li><b>Write lock</b> provides read and write access to the data. Can only be obtained from under Write Intent lock.
+ *   Cannot be acquired if a Read lock is held on another thread.</li>
+ * </ul>
  * <p>
- * You can call methods requiring read access from the Swing event-dispatch thread without using
- * {@link #runReadAction} method. If you need to invoke such methods from another thread you have to use
- * {@link #runReadAction}. Multiple read actions can run at the same time without locking each other.
+ * The compatibility matrix for these locks is reflected below.
+ * <table>
+ *   <tr><th style="width: 20px;"></th><th style="width: 15px;">R</th><th style="width: 15px;">IW</th><th style="width: 15px;">W</th></tr>
+ *   <tr><th>R</th><td>+</td><td>+</td><td>-</td></tr>
+ *   <tr><th>IW</th><td>+</td><td>-</td><td>-</td></tr>
+ *   <tr><th>W</th><td>-</td><td>-</td><td>-</td></tr>
+ * </table>
  * <p>
- * Write actions can be called only from the Swing thread using {@link #runWriteAction} method.
+ * Obtaining locks manually is not recommended. The recommended way to obtain read and write locks is to run so-called
+ * "read actions" and "write actions" via {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * <p>
+ * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
+ * via {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
+ * <p>
+ * Multiple read actions can run at the same time without locking each other.
+ * <p>
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
  * <p>
- * See also <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
+ * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
+
+  /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * with {@link ModalityState#defaultModalityState()} modality state.
+   *
+   * @param action the runnable to execute.
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(@NotNull Runnable action);
+
+  /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * when IDE is in the specified modality state (or a state with less modal dialogs open).
+   *
+   * @param action the runnable to execute.
+   * @param modal  the state in which action will be executed
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(Runnable action, ModalityState modal);
+
+  /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * when IDE is in the specified modality state (or a state with less modal dialogs open)
+   * - unless the expiration condition is fulfilled.
+   *
+   * @param action  the runnable to execute.
+   * @param modal   the state in which action will be executed
+   * @param expired condition to check before execution.
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired);
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
@@ -105,10 +153,10 @@ public interface Application extends ComponentManager {
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
-   * Returns true if there is currently executing write action of the specified class.
+   * Returns {@code true} if there is currently executing write action of the specified class.
    *
    * @param actionClass the class of the write action to return.
-   * @return true if the action is running, or false if no action of the specified class is currently executing.
+   * @return {@code true} if the action is running, or {@code false} if no action of the specified class is currently executing.
    */
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
@@ -126,6 +174,12 @@ public interface Application extends ComponentManager {
    * Asserts whether the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();
+
+  /**
+   * Asserts whether the method is being called from under the Write Intent lock
+   */
+  @ApiStatus.Experimental
+  void assertIsWriteThread();
 
   /**
    * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
@@ -168,10 +222,14 @@ public interface Application extends ComponentManager {
    */
   void exit();
 
+  default void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    exit();
+  }
+
   /**
    * Checks if the write access is currently allowed.
    *
-   * @return true if the write access is currently allowed, false otherwise.
+   * @return {@code true} if the write access is currently allowed, {@code false} otherwise.
    * @see #assertWriteAccessAllowed()
    * @see #runWriteAction(Runnable)
    */
@@ -181,7 +239,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the read access is currently allowed.
    *
-   * @return true if the read access is currently allowed, false otherwise.
+   * @return {@code true} if the read access is currently allowed, {@code false} otherwise.
    * @see #assertReadAccessAllowed()
    * @see #runReadAction(Runnable)
    */
@@ -189,12 +247,22 @@ public interface Application extends ComponentManager {
   boolean isReadAccessAllowed();
 
   /**
-   * Checks if the current thread is the Swing dispatch thread.
+   * Checks if the current thread is the Swing dispatch thread and has IW lock acquired.
    *
-   * @return true if the current thread is the Swing dispatch thread, false otherwise.
+   * @see #isWriteThread()
+   * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
    */
   @Contract(pure = true)
   boolean isDispatchThread();
+
+  /**
+   * Checks if the current thread has IW lock acquired, which grants read access and the ability to run write actions.
+   *
+   * @return {@code true} if the current thread has IW lock acquired, {@code false} otherwise.
+   */
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  boolean isWriteThread();
 
   /**
    * @return a facade, which lets to call all those invokeLater() with a ActionCallback handle returned.
@@ -204,8 +272,8 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, with {@link ModalityState#defaultModalityState()} modality state. This will happen after all
-   * pending AWT events have been processed.<p/>
+   * AWT event dispatching thread under Write Intent lock, with {@link ModalityState#defaultModalityState()} modality state.
+   * This will happen after all pending AWT events have been processed.<p/>
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -216,7 +284,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread - unless the expiration condition is fulfilled.
+   * AWT event dispatching thread under Write Intent lock - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
    * (or a state with less modal dialogs open).<p/>
    * <p>
@@ -226,11 +294,11 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
    */
-  void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDEA is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when IDE is in the specified modality
    * state (or a state with less modal dialogs open).
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
@@ -243,7 +311,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDEA is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when IDE is in the specified modality
    * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    * <p>
@@ -254,11 +322,11 @@ public interface Application extends ComponentManager {
    * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
    */
-  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
-   * AWT event dispatching thread, when the IDE is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when the IDE is in the specified modality
    * state (or a state with less modal dialogs open). This call blocks until all pending AWT events have been processed and (then)
    * {@code runnable.run()} returns.</p>
    *
@@ -336,8 +404,22 @@ public interface Application extends ComponentManager {
   /**
    * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
+   * This method may also be used for additional debug checks or logging in test mode.
+   * <p></p>
+   * Please avoid doing things differently depending on the result of this method, because this leads to
+   * testing something synthetic instead of what really happens in production.
+   * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues. 
+   * It's more robust to write a bit more code in tests to accommodate for production behavior than vice versa.
+   * For example:
+   * <ul>
+   *   <li>To wait for an {@code invokeLater} in tests, you can call {@code PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()}</li>
+   *   <li>To wait for asynchronous non-blocking read operations, you can call {@code NonBlockingReadActionImpl.waitForAsyncTaskCompletion()}</li>
+   *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc callbacks and call {@code PlatformTestUtil.waitFor*}</li>
+   *   <li>To emulate user interaction with a simple yes/no dialog, use {@code Messages.setTestDialog(...)}</li>
+   *   <li>For other UI interaction, try {@link com.intellij.ui.UiInterceptors UiInterceptors}</li>
+   * </ul>
    *
-   * @return true if IDEA is running unit tests, false otherwise
+   * @return {@code true} if IDE is running unit tests, {@code false} otherwise
    */
   boolean isUnitTestMode();
 
@@ -345,7 +427,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * No UI should be shown when IDE is running in this mode.
    *
-   * @return true if IDE is running in UI-less mode, false otherwise
+   * @return {@code true} if IDE is running in UI-less mode, {@code false} otherwise
    */
   boolean isHeadlessEnvironment();
 
@@ -353,7 +435,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
-   * @return true if IDE is running in command line  mode, false otherwise
+   * @return {@code true} if IDE is running in command line  mode, {@code false} otherwise
    */
   boolean isCommandLine();
 
@@ -390,14 +472,17 @@ public interface Application extends ComponentManager {
   <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
-   * @return true if application is currently disposing (but not yet disposed completely)
+   * @deprecated Use {@link #isDisposed()}.
    */
-  boolean isDisposeInProgress();
+  @Deprecated
+  default boolean isDisposeInProgress() {
+    return isDisposed();
+  }
 
   /**
    * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.
    *
-   * @return true if IDE can restart itself, false otherwise.
+   * @return {@code true} if IDE can restart itself, {@code false} otherwise.
    */
   boolean isRestartCapable();
 
@@ -409,7 +494,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the application is active.
    *
-   * @return true if one of application windows is focused, false -- otherwise
+   * @return {@code true} if one of application windows is focused, {@code false} otherwise
    */
   boolean isActive();
 
@@ -418,19 +503,20 @@ public interface Application extends ComponentManager {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   AccessToken acquireReadActionLock();
 
   /**
-   * Returns lock used for write operations, should be closed in finally block
-   *
-   * @see #runWriteAction
-   * @see WriteAction#run(ThrowableRunnable)
-   * @see WriteAction#compute(ThrowableComputable)
+   * @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
    */
   @NotNull
   @Deprecated
-  AccessToken acquireWriteActionLock(@NotNull Class marker);
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
+  /**
+   * Checks if IDE is running in <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a> to enable additional features for plugin development.
+   */
   boolean isInternal();
 
   boolean isEAP();

@@ -2,7 +2,6 @@
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
-import com.intellij.execution.services.ServiceViewModel.ServiceViewModelListener;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -22,19 +21,10 @@ import java.util.List;
 
 class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
   private final ServiceViewModel myModel;
-  private final ServiceViewModelListener myListener;
   private final Object myRoot = ObjectUtils.sentinel("services root");
-  private volatile boolean myFlat = false;
 
-  ServiceViewTreeModel(ServiceViewModel model) {
+  ServiceViewTreeModel(@NotNull ServiceViewModel model) {
     myModel = model;
-    myListener = new ServiceViewModelListener() {
-      @Override
-      public void rootsChanged() {
-        treeStructureChanged(new TreePath(myRoot), null, null);
-      }
-    };
-    myModel.addModelListener(myListener);
   }
 
   @NotNull
@@ -45,28 +35,18 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
 
   @Override
   public void dispose() {
-    myModel.removeModelListener(myListener);
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    return object != myRoot && (myFlat || myModel.getChildren(((ServiceViewItem)object)).isEmpty());
+    return object != myRoot && myModel.getChildren(((ServiceViewItem)object)).isEmpty();
   }
 
   @Override
   public List<?> getChildren(Object parent) {
-    if (myFlat) {
-      if (parent == myRoot) {
-        return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node -> new ArrayList<>(myModel.getChildren(node)))
-          .withRoots(myModel.getRoots())
-          .traverse(TreeTraversal.LEAVES_DFS)
-          .toList();
-      }
-      return Collections.emptyList();
-    }
-
     if (parent == myRoot) {
-      return myModel.getRoots();
+      myModel.initRootsIfNeeded();
+      return myModel.getVisibleRoots();
     }
     return myModel.getChildren(((ServiceViewItem)parent));
   }
@@ -76,19 +56,14 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
     return myRoot;
   }
 
-  boolean isFlat() {
-    return myFlat;
-  }
-
-  void setFlat(boolean flat) {
-    myFlat = flat;
+  void rootsChanged() {
     treeStructureChanged(new TreePath(myRoot), null, null);
   }
 
   Promise<TreePath> findPath(@NotNull Object service, @NotNull Class<?> contributorClass) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    getInvoker().runOrInvokeLater(() -> {
-      List<? extends ServiceViewItem> roots = myModel.getRoots();
+    getInvoker().invoke(() -> {
+      List<? extends ServiceViewItem> roots = myModel.getVisibleRoots();
       ServiceViewItem serviceNode = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
         contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(myModel.getChildren(node)) : null)
         .withRoots(roots)

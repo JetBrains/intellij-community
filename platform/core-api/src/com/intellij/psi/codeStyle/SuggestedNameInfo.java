@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,16 +15,15 @@ public abstract class SuggestedNameInfo {
   @SuppressWarnings("UnusedDeclaration")
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
 
-  public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtil.EMPTY_STRING_ARRAY) {
+  public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtilRt.EMPTY_STRING_ARRAY) {
   };
 
   /**
    * The suggested names.
    */
-  @NotNull
-  public final String[] names;
+  public final String @NotNull [] names;
 
-  public SuggestedNameInfo(@NotNull String[] names) {
+  public SuggestedNameInfo(String @NotNull [] names) {
     this.names = names;
   }
 
@@ -54,7 +39,7 @@ public abstract class SuggestedNameInfo {
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;
 
-    public Delegate(@NotNull String[] names, @NotNull SuggestedNameInfo delegate) {
+    public Delegate(String @NotNull [] names, @NotNull SuggestedNameInfo delegate) {
       super(names);
       myDelegate = delegate;
     }

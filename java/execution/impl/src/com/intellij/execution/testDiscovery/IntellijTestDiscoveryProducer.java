@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -29,7 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
+  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "https://intellij-test-discovery.labs.intellij.net";
 
   private static final NotNullLazyValue<ObjectReader> JSON_READER = NotNullLazyValue.createValue(() -> new ObjectMapper().readerFor(TestsSearchResult.class));
 
@@ -42,8 +44,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.empty();
     }
     try {
-      List<String> bareClasses = ContainerUtil.newSmartList();
-      List<Couple<String>> allTogether = ContainerUtil.newSmartList();
+      List<String> bareClasses = new SmartList<>();
+      List<Couple<String>> allTogether = new SmartList<>();
 
       classesAndMethods.forEach(couple -> {
         if (couple.second == null) bareClasses.add(couple.first);
@@ -97,7 +99,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -112,7 +114,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files/affected/by-test-classes";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -214,7 +216,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     private String className;
 
     @Nullable
-    private List<String> files = ContainerUtil.newSmartList();
+    private List<String> files = new SmartList<>();
 
     @Nullable
     private String message;
@@ -262,20 +264,25 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) throws IOException {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      List<String> result = ProgressManager.getInstance().run(
-        new Task.WithResult<List<String>, IOException>(project,
-                                                       "Searching for Affected File Paths...",
-                                                       true) {
-          @Override
-          protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
-            return query.compute();
-          }
-        });
-      return result == null ? Collections.emptyList() : result;
+  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) {
+    try {
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        List<String> result = ProgressManager.getInstance().run(
+          new Task.WithResult<List<String>, IOException>(project,
+                                                         ExecutionBundle.message("searching.for.affected.file.paths"),
+                                                         true) {
+            @Override
+            protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
+              return query.compute();
+            }
+          });
+        return result == null ? Collections.emptyList() : result;
+      }
+      return query.compute();
     }
-    return query.compute();
+    catch (IOException e) {
+      LOG.error("Can't execute remote query", e);
+      return Collections.emptyList();
+    }
   }
-
 }

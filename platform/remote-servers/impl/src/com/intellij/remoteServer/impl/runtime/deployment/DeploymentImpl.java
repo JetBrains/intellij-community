@@ -13,9 +13,6 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeploymentImpl<D extends DeploymentConfiguration> implements Deployment {
   private final ServerConnectionImpl<D> myConnection;
   private final String myName;

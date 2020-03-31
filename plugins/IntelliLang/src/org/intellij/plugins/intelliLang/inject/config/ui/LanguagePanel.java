@@ -28,6 +28,7 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,6 @@ import javax.swing.event.AncestorEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
@@ -55,7 +55,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
 
     myLanguage.setModel(new DefaultComboBoxModel<>(languageIDs));
     myLanguage.setRenderer(new ColoredListCellRenderer<String>() {
-      final Set<String> IDs = new HashSet<>(Arrays.asList(languageIDs));
+      final Set<String> IDs = ContainerUtil.set(languageIDs);
 
       @Override
       protected void customizeCellRenderer(@NotNull JList list, String s, int index, boolean selected, boolean hasFocus) {

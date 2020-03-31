@@ -40,10 +40,8 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
         final PsiField field = GroovyPropertyUtils.findFieldForAccessor(method, true);
         if (field != null) {
           final String propertyName = field.getName();
-          if (propertyName != null) {
-            final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method), session);
-            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, method, processor);
-          }
+          final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method), session);
+          collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, method, processor);
         }
       }
     }

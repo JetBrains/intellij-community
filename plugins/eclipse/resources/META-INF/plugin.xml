@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Eclipse Interoperability</name>
   <id>org.jetbrains.idea.eclipse</id>
+  <category>Other Tools</category>
   <description>
       <![CDATA[
         Enables interoperability with Eclipse and provides the following features:
@@ -16,13 +17,14 @@
     </description>
 
   <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
-    <fileTypeFactory implementation="org.jetbrains.idea.eclipse.config.EclipseFileTypeFactory"/>
+    <fileType name="Eclipse" implementationClass="org.jetbrains.idea.eclipse.config.EclipseFileType" fileNames=".classpath;.project" fieldName="INSTANCE"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <schemeImporter 
         name="Eclipse XML Profile"
@@ -34,10 +36,12 @@
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
+    <notificationWhitelist groupIds="Unknown Natures Detected"/>
   </extensions>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
-      <add-to-group group-id="ExportImportGroup" anchor="last"/>
+      <override-text place="MainMenu" text="Project to Eclipse..."/>
+      <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
   </actions>
   <extensionPoints>

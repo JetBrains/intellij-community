@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -10,17 +10,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
 import javax.swing.JCheckBox
-
-/**
- * @author traff
- */
-
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project,
@@ -29,7 +23,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     val sdk: Sdk? = findSdk(project)
 
     if (sdk != null &&
-        (PythonSdkType.isVirtualEnv(sdk) || PythonSdkType.isConda(sdk)) &&
+        (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
         PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
       // in case of virtualenv sdk on unix we activate virtualenv
       val path = sdk.homePath
@@ -41,17 +35,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           //TODO: fix conda for fish
 
           findActivateScript(path, shellPath)?.let { activate ->
-            val pathEnv = EnvironmentUtil.getEnvironmentMap().get("PATH")
-            if (pathEnv != null) {
-              envs.put("PATH", pathEnv)
-            }
             envs.put("JEDITERM_SOURCE",  activate.first)
             envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
           }
         }
         else {
           //for other shells we read envs from activate script by the default shell and pass them to the process
-          envs.putAll(PythonSdkType.activateVirtualEnv(sdk))
+          envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
         }
       }
     }
@@ -69,8 +59,8 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
   private fun findSdk(project: Project): Sdk? {
     for (m in ModuleManager.getInstance(project).modules) {
-      val sdk: Sdk? = PythonSdkType.findPythonSdk(m)
-      if (sdk != null && !PythonSdkType.isRemote(sdk)) {
+      val sdk: Sdk? = PythonSdkUtil.findPythonSdk(m)
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
         return sdk
       }
     }
@@ -86,7 +76,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
 
-    var myCheckbox: JCheckBox = JCheckBox("Activate virtualenv")
+    var myCheckbox: JCheckBox = JCheckBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text"))
 
     override fun createComponent() = myCheckbox
 

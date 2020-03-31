@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.HtmlPanel;
@@ -52,7 +53,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
         return mySelection == null || mySelection.isEmpty();
       }
     };
-    myStatusText.setText("Commit message");
+    myStatusText.setText(VcsBundle.message("file.history.details.empty.status"));
     myStatusText.attachTo(this);
 
     setPreferredSize(new JBDimension(150, 100));

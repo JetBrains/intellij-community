@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public abstract class SignatureHintProcessor {
       }
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   public abstract String getHintName();
@@ -34,7 +34,7 @@ public abstract class SignatureHintProcessor {
   @NotNull
   public abstract List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                           @NotNull PsiSubstitutor substitutor,
-                                                          @NotNull String[] options);
+                                                          String @NotNull [] options);
 
   @Nullable
   public static SignatureHintProcessor getHintProcessor(@NotNull String hint) {

@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import java.io.File;
  * @author maxim
  */
 @SuppressWarnings("ConstantConditions")
-public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlDocumentationTest extends BasePlatformTestCase {
 
   public void testXmlDoc() {
     doOneTest("1.xml", "display-name", false, "web-app_2_3.dtd");
@@ -101,12 +101,14 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
     String text = context.generateDoc();
     assertNotNull(text);
-    assertEquals(stripFirstLine(expectedText), stripFirstLine(StringUtil.convertLineSeparators(text)));
+    assertEquals(stripFirstLine(expectedText).replaceAll("\\s+",""), stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+",""));
 
     if (completionVariant != null) {
       vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() +baseFileNames[0] + ".expected.completion.html"));
       expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
-      assertEquals(stripFirstLine(expectedText), stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n")));
+      assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
+                   stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
+                     .replaceAll("\\s+", ""));
     }
   }
 

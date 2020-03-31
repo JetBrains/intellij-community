@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.SearchScope;
@@ -41,13 +40,17 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -448,7 +451,7 @@ class SliceUtil {
                                paramSeqNo, specificMethodCall);
     }
 
-    Collection<PsiMethod> superMethods = new THashSet<>(Arrays.asList(method.findDeepestSuperMethods()));
+    Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
     superMethods.add(method);
 
     final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
@@ -675,7 +678,7 @@ class SliceUtil {
             if (paramSynthetic.equals(syntheticField)) {
               PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
               int nesting = calcNewIndexNesting(indexNesting, anno);
-              if (!handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
+              if (substitutor != null && !handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
             }
           }
         }
@@ -688,7 +691,7 @@ class SliceUtil {
             int newNesting = calcNewIndexNesting(indexNesting, sourceAnno);
             PsiExpression sourceArgument = expressions[si];
             PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
-            if (!handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
+            if (substitutor != null && !handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
           }
         }
       }
@@ -713,7 +716,7 @@ class SliceUtil {
     if (map == null) return substitutor;
     Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
-    return PsiSubstitutorImpl.createSubstitutor(newMap);
+    return PsiSubstitutor.createSubstitutor(newMap);
   }
 
   @Nullable

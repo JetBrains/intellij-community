@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.common
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
-import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
@@ -26,18 +11,16 @@ import java.io.File
 import java.util.*
 
 interface RenderLogTestBase {
-  fun getTestFile(testName: String, ext: String): File
+  fun getTestDataPath(): String
 
-  private fun getRenderFile(testName: String) = getTestFile(testName, "render.txt")
-  private fun getLogFile(testName: String) = getTestFile(testName, "log.txt")
+  private fun getTestFile(testName: String, ext: String) =
+    File(getTestDataPath(), testName.substringBeforeLast('.') + '.' + ext)
 
-  fun check(testName: String, file: UFile) {
-    check(testName, file, true)
-  }
+  fun check(testName: String, file: UFile) = check(testName, file, true)
 
   fun check(testName: String, file: UFile, checkParentConsistency: Boolean) {
-    val renderFile = getRenderFile(testName)
-    val logFile = getLogFile(testName)
+    val renderFile = getTestFile(testName, "render.txt")
+    val logFile = getTestFile(testName, "log.txt")
 
     assertEqualsToFile("Render string", renderFile, file.asRenderString())
     assertEqualsToFile("Log string", logFile, file.asRecursiveLogString())
@@ -87,9 +70,9 @@ interface RenderLogTestBase {
         val uElement = element.toUElement()
         val expectedParents = parentMap[element]
         if (expectedParents != null) {
-          TestCase.assertNotNull("Expected to be able to convert PSI element $element", uElement)
+          Assert.assertNotNull("Expected to be able to convert PSI element $element", uElement)
           val parents = generateSequence(uElement!!.uastParent) { it.uastParent }.joinToString { it.asLogString() }
-          TestCase.assertEquals(
+          Assert.assertEquals(
             "Inconsistent parents for $uElement (converted from $element) parent: -> ${uElement.uastParent}",
             expectedParents,
             parents)
@@ -102,27 +85,26 @@ interface RenderLogTestBase {
   fun UFile.checkContainingFileForAllElements() {
     accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
-        if (node is PsiElement) {
+        if (node is PsiElement && node.isPhysical) {
           val uElement = node.sourcePsi.toUElement()!!
-          TestCase.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
+          Assert.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
                                 this@checkContainingFileForAllElements,
                                 uElement.getContainingUFile())
         }
 
         val uastAnchor = (node as? UDeclaration)?.uastAnchor
         if (uastAnchor != null) {
-          TestCase.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
+          Assert.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
                                 node.sourcePsiElement!!.containingFile!!, uastAnchor.sourcePsi?.containingFile)
         }
 
         val anchorPsi = uastAnchor?.sourcePsi
         if (anchorPsi != null) {
-          TestCase.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
+          Assert.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
         }
 
         return false
       }
     })
   }
-
 }

@@ -11,7 +11,6 @@ overload = object()
 Any = object()
 TypeVar = object()
 _promote = object()
-no_type_check = object()
 
 class _SpecialForm(object):
     def __getitem__(self, typeargs: Any) -> object: ...
@@ -22,6 +21,12 @@ Protocol: _SpecialForm = ...
 Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
 ClassVar: _SpecialForm = ...
+Final: _SpecialForm = ...
+_F = TypeVar('_F', bound=Callable[..., Any])
+def final(f: _F) -> _F: ...
+Literal: _SpecialForm = ...
+# TypedDict is a (non-subscriptable) special form.
+TypedDict: object = ...
 
 class GenericMeta(type): ...
 
@@ -29,6 +34,22 @@ class GenericMeta(type): ...
 # This type is equivalent to the None type, but the no-op Union is necessary to
 # distinguish the None type from the None value.
 NoReturn = Union[None]
+
+# These type variables are used by the container types.
+_T = TypeVar('_T')
+_S = TypeVar('_S')
+_KT = TypeVar('_KT')  # Key type.
+_VT = TypeVar('_VT')  # Value type.
+_T_co = TypeVar('_T_co', covariant=True)  # Any type covariant containers.
+_V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
+_KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
+_VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
+_T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
+_TC = TypeVar('_TC', bound=Type[object])
+_C = TypeVar("_C", bound=Callable[..., Any])
+
+no_type_check = object()
+def no_type_check_decorator(decorator: _C) -> _C: ...
 
 # Type aliases and type constructors
 
@@ -52,56 +73,39 @@ AnyStr = TypeVar('AnyStr', str, unicode)
 
 # Abstract base classes.
 
-# These type variables are used by the container types.
-_T = TypeVar('_T')
-_S = TypeVar('_S')
-_KT = TypeVar('_KT')  # Key type.
-_VT = TypeVar('_VT')  # Value type.
-_T_co = TypeVar('_T_co', covariant=True)  # Any type covariant containers.
-_V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
-_KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
-_VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
-_T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
-_TC = TypeVar('_TC', bound=Type[object])
+def runtime_checkable(cls: _TC) -> _TC: ...
 
-def runtime(cls: _TC) -> _TC: ...
-
-@runtime
+@runtime_checkable
 class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __int__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class SupportsFloat(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __float__(self) -> float: ...
 
-@runtime
+@runtime_checkable
 class SupportsComplex(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __complex__(self) -> complex: ...
 
-@runtime
+@runtime_checkable
 class SupportsAbs(Protocol[_T_co]):
     @abstractmethod
     def __abs__(self) -> _T_co: ...
 
-@runtime
-class SupportsRound(Protocol[_T_co]):
-    @abstractmethod
-    def __round__(self, ndigits: int = ...) -> _T_co: ...
-
-@runtime
+@runtime_checkable
 class Reversible(Protocol[_T_co]):
     @abstractmethod
     def __reversed__(self) -> Iterator[_T_co]: ...
 
-@runtime
+@runtime_checkable
 class Sized(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __len__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class Hashable(Protocol, metaclass=ABCMeta):
     # TODO: This is special, in that a subclass of a hashable class may not be hashable
     #   (for example, list vs. object). It's not obvious how to represent this. This class
@@ -109,12 +113,12 @@ class Hashable(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __hash__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class Iterable(Protocol[_T_co]):
     @abstractmethod
     def __iter__(self) -> Iterator[_T_co]: ...
 
-@runtime
+@runtime_checkable
 class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def next(self) -> _T_co: ...
@@ -139,7 +143,7 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @property
     def gi_running(self) -> bool: ...
 
-@runtime
+@runtime_checkable
 class Container(Protocol[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
@@ -227,23 +231,26 @@ class MappingView(object):
     def __len__(self) -> int: ...
 
 class ItemsView(MappingView, AbstractSet[Tuple[_KT_co, _VT_co]], Generic[_KT_co, _VT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[Tuple[_KT_co, _VT_co]]: ...
 
 class KeysView(MappingView, AbstractSet[_KT_co], Generic[_KT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_KT_co]: ...
 
 class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
-@runtime
+@runtime_checkable
 class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_value: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+    def __exit__(self, __exc_type: Optional[Type[BaseException]],
+                 __exc_value: Optional[BaseException],
+                 __traceback: Optional[TracebackType]) -> Optional[bool]: ...
 
 class Mapping(Iterable[_KT], Container[_KT], Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
@@ -341,7 +348,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     def __enter__(self) -> IO[AnyStr]: ...
     @abstractmethod
     def __exit__(self, t: Optional[Type[BaseException]], value: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> bool: ...
+                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
 
 class BinaryIO(IO[str]):
     # TODO readinto
@@ -399,9 +406,11 @@ class Match(Generic[AnyStr]):
 
     def groups(self, default: AnyStr = ...) -> Tuple[AnyStr, ...]: ...
     def groupdict(self, default: AnyStr = ...) -> Dict[str, AnyStr]: ...
-    def start(self, group: Union[int, str] = ...) -> int: ...
-    def end(self, group: Union[int, str] = ...) -> int: ...
-    def span(self, group: Union[int, str] = ...) -> Tuple[int, int]: ...
+    def start(self, __group: Union[int, str] = ...) -> int: ...
+    def end(self, __group: Union[int, str] = ...) -> int: ...
+    def span(self, __group: Union[int, str] = ...) -> Tuple[int, int]: ...
+    @property
+    def regs(self) -> Tuple[Tuple[int, int], ...]: ...  # undocumented
 
 # We need a second TypeVar with the same definition as AnyStr, because
 # Pattern is generic over AnyStr (determining the type of its .pattern
@@ -443,8 +452,9 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable, globalns: Optional[dict[Text, Any]] = ...,
-                   localns: Optional[dict[Text, Any]] = ...) -> None: ...
+def get_type_hints(
+    obj: Callable[..., Any], globalns: Optional[Dict[Text, Any]] = ..., localns: Optional[Dict[Text, Any]] = ...,
+) -> None: ...
 
 @overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
@@ -454,16 +464,34 @@ def cast(tp: str, obj: Any) -> Any: ...
 # Type constructors
 
 # NamedTuple is special-cased in the type checker
-class NamedTuple(tuple):
-    _fields = ...  # type: Tuple[str, ...]
+class NamedTuple(Tuple[Any, ...]):
+    _fields: Tuple[str, ...]
 
-    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ..., *,
-                 verbose: bool = ..., rename: bool = ..., **kwargs: Any) -> None: ...
+    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ...,
+                 **kwargs: Any) -> None: ...
 
     @classmethod
     def _make(cls: Type[_T], iterable: Iterable[Any]) -> _T: ...
 
-    def _asdict(self) -> dict: ...
+    def _asdict(self) -> Dict[str, Any]: ...
     def _replace(self: _T, **kwargs: Any) -> _T: ...
 
+# Internal mypy fallback type for all typed dicts (does not exist at runtime)
+class _TypedDict(Mapping[str, object], metaclass=ABCMeta):
+    def copy(self: _T) -> _T: ...
+    # Using NoReturn so that only calls using mypy plugin hook that specialize the signature
+    # can go through.
+    def setdefault(self, k: NoReturn, default: object) -> object: ...
+    # Mypy plugin hook for 'pop' expects that 'default' has a type variable type.
+    def pop(self, k: NoReturn, default: _T = ...) -> object: ...
+    def update(self: _T, __m: _T) -> None: ...
+    def has_key(self, k: str) -> bool: ...
+    def viewitems(self) -> ItemsView[str, object]: ...
+    def viewkeys(self) -> KeysView[str]: ...
+    def viewvalues(self) -> ValuesView[object]: ...
+    def __delitem__(self, k: NoReturn) -> None: ...
+
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...
+
+# This itself is only available during type checking
+def type_check_only(func_or_cls: _C) -> _C: ...

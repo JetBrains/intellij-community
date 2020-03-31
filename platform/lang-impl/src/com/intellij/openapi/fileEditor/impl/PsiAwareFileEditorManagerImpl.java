@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -12,14 +11,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
-  private final PsiManager myPsiManager;
+public final class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   private final WolfTheProblemSolver myProblemSolver;
 
   /**
@@ -36,14 +31,10 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
    */
   private final FileEditorPsiTreeChangeListener myPsiTreeChangeListener;
 
-  public PsiAwareFileEditorManagerImpl(final Project project,
-                                       final PsiManager psiManager,
-                                       final WolfTheProblemSolver problemSolver,
-                                       DockManager dockManager) {
-    super(project, dockManager);
+  public PsiAwareFileEditorManagerImpl(@NotNull Project project) {
+    super(project);
 
-    myPsiManager = psiManager;
-    myProblemSolver = problemSolver;
+    myProblemSolver = WolfTheProblemSolver.getInstance(project);
     myPsiTreeChangeListener = new FileEditorPsiTreeChangeListener(this);
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
@@ -68,7 +59,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   protected void projectOpened(@NotNull MessageBusConnection connection) {
     super.projectOpened(connection);
 
-    myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener);
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
   }
 
   @Override
@@ -80,29 +71,19 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   @Override
   public String getFileTooltipText(@NotNull final VirtualFile file) {
     final StringBuilder tooltipText = new StringBuilder();
-    final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
-    if (module != null && ModuleManager.getInstance(getProject()).getModules().length > 1) {
-      tooltipText.append("[");
-      tooltipText.append(module.getName());
-      tooltipText.append("] ");
+    if (Registry.is("ide.tab.tooltip.module")) {
+      final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
+      if (module != null && ModuleManager.getInstance(getProject()).getModules().length > 1) {
+        tooltipText.append("[");
+        tooltipText.append(module.getName());
+        tooltipText.append("] ");
+      }
     }
     tooltipText.append(super.getFileTooltipText(file));
     return tooltipText.toString();
   }
 
-  @Override
-  protected Editor getOpenedEditor(@NotNull final Editor editor, final boolean focusEditor) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-    Document document = editor.getDocument();
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    if (!focusEditor || documentManager.isUncommited(document)) {
-      return editor;
-    }
-
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
-  }
-
-  private class MyProblemListener implements ProblemListener {
+  private final class MyProblemListener implements ProblemListener {
     @Override
     public void problemsAppeared(@NotNull final VirtualFile file) {
       updateFile(file);

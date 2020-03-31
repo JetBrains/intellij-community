@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.pom.java.LanguageLevel;
 
 public class StatementParserTest extends JavaParsingTestCase {
   public StatementParserTest() {
@@ -26,7 +27,13 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testBreakNormal0() { doParserTest("break;"); }
   public void testBreakNormal1() { doParserTest("break LABEL;"); }
   public void testBreakIncomplete() { doParserTest("break"); }
-  public void testBreakExpr() { doParserTest("break boo();"); }
+
+  public void testYield() { doParserTest("yield yield;"); }
+  public void testYieldNested() { doParserTest("yield switch (0) { default: yield 42; };"); }
+  public void testYieldIncomplete0() { doParserTest("yield "); }
+  public void testYieldIncomplete1() { doParserTest("yield x"); }
+  public void testYieldCall() { doParserTest("foo.yield();"); }
+  public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }
@@ -177,6 +184,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete3() { doParserTest("while(cond"); }
   public void testWhileIncomplete4() { doParserTest("while(cond)"); }
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
+
+  public void testConstructorRef() { doParserTest("Foo::new"); }
+  public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }
 
   private void doBlockParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));

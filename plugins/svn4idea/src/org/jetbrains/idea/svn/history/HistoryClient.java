@@ -31,6 +31,6 @@ public interface HistoryClient extends SvnClient {
              boolean discoverChangedPaths,
              boolean includeMergedRevisions,
              long limit,
-             @Nullable String[] revisionProperties,
+             String @Nullable [] revisionProperties,
              @Nullable LogEntryConsumer handler) throws VcsException;
 }

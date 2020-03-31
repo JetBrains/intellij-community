@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.options;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -57,7 +58,7 @@ public class ExternalOptionHelper {
     }
     catch (Exception e) {
       logger.info(e);
-      Messages.showErrorDialog(e.getMessage(), "Import Failure");
+      Messages.showErrorDialog(e.getMessage(), CopyrightBundle.message("dialog.title.import.failure"));
       return null;
     }
   }

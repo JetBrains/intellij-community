@@ -27,7 +27,7 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
   public void testAction() {
     EdtTestUtil.runInEdtAndWait(() -> {
       configureByFile(getBeforeFileName());
-      EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 120, 20); // some actions require visible area to be defined, like EditorPageUp
       executeAction(getActionName());
       checkResultByFile(getAfterFileName());
     });
@@ -40,7 +40,7 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
     if (pos < 0) {
       return null;
     }
-    return pos < 0 ? null : fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
+    return fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
   }
 
   private String getBeforeFileName() {

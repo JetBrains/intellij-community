@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
@@ -39,9 +24,6 @@ import java.io.IOException;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 
-/**
- * @author max
- */
 public class ClassFileViewProvider extends SingleRootFileViewProvider {
   private static final Key<Boolean> IS_INNER_CLASS = Key.create("java.is.inner.class.key");
 
@@ -50,7 +32,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file, boolean eventSystemEnabled) {
-    super(manager, file, eventSystemEnabled, JavaLanguage.INSTANCE, JavaClassFileType.INSTANCE);
+    super(manager, file, eventSystemEnabled, JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -77,11 +59,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return detectInnerClass(file, null);
   }
 
-  public static boolean isInnerClass(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {
     return detectInnerClass(file, content);
   }
 
-  private static boolean detectInnerClass(VirtualFile file, @Nullable byte[] content) {
+  private static boolean detectInnerClass(VirtualFile file, byte @Nullable [] content) {
     String name = file.getNameWithoutExtension();
     int p = name.lastIndexOf('$', name.length() - 2);
     if (p <= 0) return false;

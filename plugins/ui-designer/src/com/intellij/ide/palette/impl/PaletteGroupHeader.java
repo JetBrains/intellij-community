@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.DnDEvent;
@@ -87,10 +87,6 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       public void cleanUpOnLeave() {
         setBorderPainted(false);
       }
-
-      @Override
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-      }
     }, this);
 
     addFocusListener(new FocusAdapter() {
@@ -126,14 +122,14 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
   @Override public Color getBackground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionBackground();
+      return UIUtil.getListSelectionBackground(true);
     }
     return super.getBackground();
   }
 
   @Override public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground();
+      return UIUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }

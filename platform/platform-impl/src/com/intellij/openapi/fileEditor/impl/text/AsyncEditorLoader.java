@@ -4,10 +4,13 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -85,7 +88,16 @@ public class AsyncEditorLoader {
     ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
-        Runnable runnable = myTextEditor.loadEditorInBackground();
+        Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> {
+          try {
+            return myTextEditor.loadEditorInBackground();
+          } catch (ProcessCanceledException e) {
+            throw e;
+          } catch (Exception e) {
+            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
+            return null;
+          }
+        });
         future.complete(runnable);
         return runnable;
       })
@@ -115,7 +127,8 @@ public class AsyncEditorLoader {
   private boolean worthWaiting() {
     // cannot perform commitAndRunReadAction in parallel to EDT waiting
     return !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed();
+           !ApplicationManager.getApplication().isWriteAccessAllowed() &&
+           !EditorsSplitters.isOpenedInBulk(myTextEditor.myFile);
   }
 
   private static <T> T resultInTimeOrNull(@NotNull Future<T> future) {
@@ -140,10 +153,7 @@ public class AsyncEditorLoader {
       continuation.run();
     }
 
-    if (myEditorComponent.isLoading()) {
-      myEditorComponent.stopLoading();
-    }
-    myEditorComponent.getContentPanel().setVisible(true);
+    myEditorComponent.loadingFinished();
 
     if (myDelayedState != null && PsiDocumentManager.getInstance(myProject).isCommitted(myEditor.getDocument())) {
       TextEditorState state = new TextEditorState();
@@ -157,6 +167,8 @@ public class AsyncEditorLoader {
       myEditor.getScrollingModel().disableAnimation();
       runnable.run();
     }
+    myDelayedActions.clear();
+
     myEditor.getScrollingModel().enableAnimation();
 
     if (FileEditorManager.getInstance(myProject).getSelectedTextEditor() == myEditor) {

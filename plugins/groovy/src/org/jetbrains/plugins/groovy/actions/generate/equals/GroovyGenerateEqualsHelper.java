@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -240,7 +238,7 @@ public class GroovyGenerateEqualsHelper {
 
       ArrayList<PsiField> equalsFields = new ArrayList<>();
       ContainerUtil.addAll(equalsFields, myEqualsFields);
-      Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
+      equalsFields.sort(EqualsFieldsComparator.INSTANCE);
 
       for (PsiField field : equalsFields) {
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -449,7 +447,6 @@ public class GroovyGenerateEqualsHelper {
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;
       final String name1 = f1.getName();
       final String name2 = f2.getName();
-      assert name1 != null && name2 != null;
       return name1.compareTo(name2);
     }
   }

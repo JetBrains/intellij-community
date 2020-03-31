@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
@@ -23,7 +22,7 @@ import kotlin.collections.HashMap
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 11, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 12, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -93,7 +92,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
       }
     }
     var pureInitializer = true
-    if (!initializers.isEmpty()) {
+    if (initializers.isNotEmpty()) {
       val visitor = PurityInferenceVisitor(tree, aClass, fieldModifiers, true)
       for (initializer in initializers) {
         walkMethodBody(initializer, visitor::visitNode)
@@ -110,21 +109,26 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val clsData = classData[tree.getParent(method)]
     val fieldMap = clsData?.fieldModifiers ?: emptyMap()
     // Constructor which has super classes may implicitly call impure super constructor, so don't infer purity for subclasses
-    val ctor = clsData != null && !clsData.hasSuper && clsData.hasPureInitializer && 
-               LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
+    val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
+    val maybeImpureCtor = ctor && (clsData == null || clsData.hasSuper || !clsData.hasPureInitializer)
     val statements = ContractInferenceInterpreter.getStatements(body, tree)
 
     val contractInference = ContractInferenceInterpreter(tree, method, body)
     val contracts = contractInference.inferContracts(statements)
 
-    val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.getParameters(), body)
+    val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.parameters, body)
     val purityVisitor = PurityInferenceVisitor(tree, body, fieldMap, ctor)
     for (statement in statements) {
-      walkMethodBody(statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
+      walkMethodBody(statement) {
+        nullityVisitor.visitNode(it)
+        if (!maybeImpureCtor) {
+          purityVisitor.visitNode(it)
+        }
+      }
     }
     val notNullParams = inferNotNullParameters(tree, method, statements)
 
-    return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
+    return createData(body, contracts, nullityVisitor.result, if (maybeImpureCtor) null else purityVisitor.result, notNullParams)
   }
 
   private fun walkMethodBody(root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
@@ -159,7 +163,7 @@ fun getIndexedData(method: PsiMethodImpl): MethodData? {
       val spine = (file as PsiFileImpl).stubbedSpine
       var methodIndex = 0
       for (i in 0 until spine.stubCount) {
-        if (spine.getStubType(i) === JavaElementType.METHOD) {
+        if (spine.getStubType(i) === METHOD) {
           fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
           methodIndex++
         }

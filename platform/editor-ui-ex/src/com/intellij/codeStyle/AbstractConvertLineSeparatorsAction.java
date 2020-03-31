@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeStyle;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,6 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,18 +23,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 /**
  * @author Nikolai Matveev
  */
-public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
+public abstract class AbstractConvertLineSeparatorsAction extends AnAction implements DumbAware, LightEditCompatible {
+  private static final Logger LOG = Logger.getInstance(AbstractConvertLineSeparatorsAction.class);
 
   @NotNull
   private final String mySeparator;
 
-  protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(separator + " - " + text, separator.getSeparatorString());
+  protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<String> text, @NotNull LineSeparator separator) {
+    this(separator + " - " + text.get(), separator.getSeparatorString());
   }
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
@@ -90,11 +80,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     VirtualFile projectVirtualDirectory = ProjectKt.getStateStore(project).getDirectoryStoreFile();
     final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @NotNull
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {
-          if (shouldProcess(file, project)) {
+          if (shouldProcess(file)) {
             changeLineSeparators(project, file, mySeparator);
           }
           return file.isDirectory() && (file.equals(projectVirtualDirectory) || fileTypeManager.isFileIgnored(file)) ? SKIP_CHILDREN : CONTINUE;
@@ -103,19 +93,18 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-  public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
+  public static boolean shouldProcess(@NotNull VirtualFile file) {
     return !(file.isDirectory()
              || !file.isWritable()
              || file instanceof VirtualFileWindow
              || FileTypeRegistry.getInstance().isFileIgnored(file)
              || file.getFileType().isBinary()
-             || file.equals(project.getProjectFile())
-             || file.equals(project.getWorkspaceFile()));
+             || file.getFileType() instanceof InternalFileType);
   }
 
-  public static void changeLineSeparators(@NotNull final Project project,
-                                          @NotNull final VirtualFile virtualFile,
-                                          @NotNull final String newSeparator) {
+  public static void changeLineSeparators(@NotNull Project project,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull String newSeparator) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {

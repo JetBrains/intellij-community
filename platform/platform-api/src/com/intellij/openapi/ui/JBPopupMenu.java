@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -81,7 +68,7 @@ public class JBPopupMenu extends JPopupMenu {
     super.paint(g);
     LayoutManager layout = getLayout();
     if (layout instanceof MyLayout) {
-      ((MyLayout)layout).paintIfNeed(g);
+      ((MyLayout)layout).paintIfNeeded(g);
     }
   }
 
@@ -94,7 +81,7 @@ public class JBPopupMenu extends JPopupMenu {
     MyLayout(final JPopupMenu target) {
       super(target, BoxLayout.PAGE_AXIS);
       myTarget = target;
-      myTimer = UIUtil.createNamedTimer("PopupTimer", 40, this);
+      myTimer = TimerUtil.createNamedTimer("PopupTimer", 40, this);
       myTarget.addPopupMenuListener(new PopupMenuListener() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -146,11 +133,6 @@ public class JBPopupMenu extends JPopupMenu {
         myScrollDirection = -1;
       }
       else {
-        myScrollDirection = 0;
-      }
-      if (myScrollDirection == 0) {
-        myTarget.revalidate();
-        myTarget.repaint();
         return;
       }
 
@@ -168,7 +150,7 @@ public class JBPopupMenu extends JPopupMenu {
         myShift = newShift;
         myTarget.revalidate();
         myTarget.repaint();
-        Window w = UIUtil.getWindow(myTarget.getComponent());
+        Window w = ComponentUtil.getWindow(myTarget.getComponent());
         if (w != null) {
           for (Window window : w.getOwnedWindows()) {
             window.dispose();
@@ -190,7 +172,7 @@ public class JBPopupMenu extends JPopupMenu {
       ColorUtil.withAlpha(JBColor.background(), .1),
     };
 
-    public void paintIfNeed(Graphics g) {
+    public void paintIfNeeded(Graphics g) {
       if (myShift > 0) {
         for (int i = 0; i < dim.length; i++) {
           g.setColor(dim[i]);
@@ -236,7 +218,9 @@ public class JBPopupMenu extends JPopupMenu {
     @Override
     public Dimension preferredLayoutSize(Container target) {
       Dimension dimension = super.preferredLayoutSize(target);
-      dimension.height = Math.min(getMaxHeight(), dimension.height);
+      int maxHeight = getMaxHeight();
+      switchTimer(dimension.height > maxHeight);
+      dimension.height = Math.min(maxHeight, dimension.height);
       return dimension;
     }
   }

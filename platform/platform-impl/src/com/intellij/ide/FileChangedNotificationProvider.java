@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 public final class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
@@ -66,12 +65,15 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
             continue;
           }
 
-          Set<VirtualFile> openFiles = ContainerUtil.newHashSet(FileEditorManager.getInstance(project).getSelectedFiles());
+          List<String> openFilePaths = ContainerUtil.map(FileEditorManager.getInstance(project).getSelectedFiles(), f -> f.getPath());
           EditorNotifications notifications = EditorNotifications.getInstance(project);
           for (VFileEvent event : events) {
-            VirtualFile file = event.getFile();
-            if (file != null && openFiles.contains(file)) {
-              notifications.updateNotifications(file);
+            String path = event.getPath();
+            if (openFilePaths.contains(path)) {
+              VirtualFile file = event.getFile();
+              if (file != null) {
+                notifications.updateNotifications(file);
+              }
             }
           }
         }

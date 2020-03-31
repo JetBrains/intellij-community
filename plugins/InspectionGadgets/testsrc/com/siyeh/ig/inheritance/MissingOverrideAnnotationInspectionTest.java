@@ -20,11 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MissingOverrideAnnotationInspectionTest extends LightInspectionTestCase {
+public class MissingOverrideAnnotationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest();

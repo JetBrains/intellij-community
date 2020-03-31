@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -22,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -60,10 +47,10 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
 
   private boolean skipUpdateUI;
-  private final MavenModuleBuilder myBuilder;
+  private final AbstractMavenModuleBuilder myBuilder;
   @Nullable private final StepAdapter myStep;
 
-  public MavenArchetypesStep(MavenModuleBuilder builder, @Nullable StepAdapter step) {
+  public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
     Disposer.register(this, myLoadingIcon);
@@ -76,7 +63,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
     JPanel loadingPanel = new JPanel(new GridBagLayout());
     JPanel bp = new JPanel(new BorderLayout(10, 10));
-    bp.add(new JLabel("Loading archetype list..."), BorderLayout.NORTH);
+    bp.add(new JLabel(MavenWizardBundle.message("maven.structure.wizard.loading.archetypes.list")), BorderLayout.NORTH);
     bp.add(myLoadingIcon, BorderLayout.CENTER);
 
     loadingPanel.add(bp, new GridBagConstraints());
@@ -174,7 +161,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
     List<MavenArchetype> list = new ArrayList<>(archetypes);
 
-    Collections.sort(list, (o1, o2) -> {
+    list.sort((o1, o2) -> {
       String key1 = o1.groupId + ":" + o1.artifactId;
       String key2 = o2.groupId + ":" + o2.artifactId;
 
@@ -224,7 +211,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   public void updateArchetypesList(final MavenArchetype selected) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLoadingIcon.setBackground(myArchetypesTree.getBackground());
+    myLoadingIcon.setBackground(RenderingUtil.getBackground(myArchetypesTree));
 
     ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "loading");
 

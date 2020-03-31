@@ -2,8 +2,7 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.newui.CellPluginComponent
-import com.intellij.ide.plugins.newui.TabHeaderComponent
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
@@ -27,7 +26,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   fun isPluginInstalled(pluginName: String): Boolean =
     step("check whether plugin '$pluginName' installed") {
       val result = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
-      logInfo("plugin '$pluginName' is ${if(result) "" else "NOT"}installed")
+      logInfo("plugin '$pluginName' is ${if (result) "" else "NOT"}installed")
       return@step result
     }
 
@@ -43,8 +42,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
 
   fun showInstalledPlugins() {
     step("show 'Installed' tab") {
-      val tabHeader: TabHeaderComponent = findTabHeader()
-      robot().click(tabHeader, tabHeader.getTabLocation("Installed"))
+      jLabel("Installed").click()
     }
   }
 
@@ -73,21 +71,18 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
 
   fun cancel() = findAndClickCancelButton(this)
 
-  fun findPluginsAppearedOnTheScreen(): Iterable<IdeaPluginDescriptor> =
-    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java,
+  private fun findPluginsAppearedOnTheScreen(): List<IdeaPluginDescriptor> =
+    waitUntilFoundList(findPluginCardsPanel(), ListPluginComponent::class.java,
                        Timeouts.defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
 
   private fun findCheckBox(pluginName: String) =
     waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, Timeouts.defaultTimeout) { true }
 
-  private fun findTabHeader(): TabHeaderComponent =
-    waitUntilFound(target(), TabHeaderComponent::class.java, Timeouts.defaultTimeout) { true }
-
   private fun findPluginCardsPanel(): ConfigurableCardPanel =
     waitUntilFound(target(), ConfigurableCardPanel::class.java, Timeouts.defaultTimeout) { true }
 
-  private fun findCellPluginComponent(pluginName: String): CellPluginComponent =
-    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java,
+  private fun findCellPluginComponent(pluginName: String): ListPluginComponent =
+    waitUntilFound(findPluginCardsPanel(), ListPluginComponent::class.java,
                    Timeouts.defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
 
   private fun findPluginDetailsLink(pluginName: String): JLabel =
@@ -96,13 +91,15 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   class PluginDetailsFixture(robot: Robot, dialog: JDialog) : JDialogFixture(robot, dialog) {
 
     fun pluginVersion(): String =
-      waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.text.startsWith("v") || it.text == "bundled" }.text
+      waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) {
+        it.getClientProperty("TextFieldWithoutMargins") == true && it.isShowing
+      }.text.takeWhile { it != ' ' }
 
     fun isPluginEnabled(): Boolean = findEnableDisableButton().text == "Disable"
 
     fun isPluginInstalled(): Boolean {
       val enableDisableButtonsCount: Int = robot().finder().findAll(GuiTestUtilKt.typeMatcher(JButton::class.java) {
-        it !is JBOptionButton && (it.text == "Disable" || it.text == "Enable")
+        it !is JBOptionButton && it.isShowing && (it.text == "Disable" || it.text == "Enable")
       }).size
       return when (enableDisableButtonsCount) {
         0 -> false
@@ -131,14 +128,10 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
       robot().click(list, list.indexToLocation(getUninstallItemIndex(list)))
     }
 
-    fun back() {
-      val backButton: JButton = waitUntilFound(target(), JButton::class.java, Timeouts.defaultTimeout) { it.text == "Plugins" }
-      robot().click(backButton)
-    }
-
     private fun findEnableDisableButton(): JButton =
-      waitUntilFound(target(), JButton::class.java,
-                     Timeouts.defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
+      waitUntilFound(target(), JButton::class.java, Timeouts.defaultTimeout) {
+        it !is JBOptionButton && it.isShowing && (it.text == "Enable" || it.text == "Disable")
+      }
 
     private fun getUninstallItemIndex(list: JList<*>): Int = list.getNextMatch("Uninstall", 0, Position.Bias.Forward)
   }

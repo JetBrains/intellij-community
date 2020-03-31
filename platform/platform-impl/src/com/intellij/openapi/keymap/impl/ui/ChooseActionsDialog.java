@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -7,6 +7,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -17,7 +18,7 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -53,7 +54,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         doOKAction();
         return true;
       }
@@ -68,7 +69,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Add Actions to Quick List");
+    setTitle(IdeBundle.message("dialog.title.add.actions.to.quick.list"));
     init();
   }
 
@@ -91,7 +92,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
   public String[] getTreeSelectedActionIds() {
     TreePath[] paths = myActionsTree.getTree().getSelectionPaths();
-    if (paths == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (paths == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     ArrayList<String> actions = new ArrayList<>();
     for (TreePath path : paths) {
@@ -107,7 +108,7 @@ public class ChooseActionsDialog extends DialogWrapper {
         }
       }
     }
-    return ArrayUtil.toStringArray(actions);
+    return ArrayUtilRt.toStringArray(actions);
   }
 
   private JPanel createToolbarPanel() {

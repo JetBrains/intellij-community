@@ -59,7 +59,7 @@ public class PyNegateComparisonIntention extends PyBaseIntentionAction {
       PyElementType operator = binaryExpression.getOperator();
       if (comparisonStrings.containsKey(operator)) {
         setText(PyBundle.message("INTN.negate.$0.to.$1", comparisonStrings.get(operator),
-                                 comparisonStrings.get(invertedComparasions.get(operator))));
+                                    comparisonStrings.get(invertedComparasions.get(operator))));
         return true;
       }
       binaryExpression = PsiTreeUtil.getParentOfType(binaryExpression, PyBinaryExpression.class);
@@ -90,7 +90,8 @@ public class PyNegateComparisonIntention extends PyBaseIntentionAction {
           parent.replace(newElement);
         }
         else {
-          binaryExpression.replace(elementGenerator.createExpressionFromText("not " + newElement.getText()));
+          final LanguageLevel level = LanguageLevel.forElement(file);
+          binaryExpression.replace(elementGenerator.createExpressionFromText(level, "not " + newElement.getText()));
         }
         return;
       }

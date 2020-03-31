@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
@@ -12,9 +12,6 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
 
-/**
- * @author egor
- */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class CaptureAgent {
   public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
@@ -414,8 +411,8 @@ public class CaptureAgent {
       }
     }
 
-    List<Class> classes = new ArrayList<Class>(classNames.size());
-    for (Class aClass : ourInstrumentation.getAllLoadedClasses()) {
+    List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
+    for (Class<?> aClass : ourInstrumentation.getAllLoadedClasses()) {
       if (classNames.contains(aClass.getName())) {
         classes.add(aClass);
       }

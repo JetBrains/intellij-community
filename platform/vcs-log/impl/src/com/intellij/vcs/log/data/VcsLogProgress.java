@@ -7,10 +7,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +23,8 @@ public class VcsLogProgress implements Disposable {
   @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
   private boolean myDisposed = false;
 
-  public VcsLogProgress(@NotNull Project project, @NotNull Disposable parent) {
-    VcsLogUtil.registerWithParentAndProject(parent, project, this);
+  public VcsLogProgress(@NotNull Disposable parent) {
+    Disposer.register(parent, this);
   }
 
   @NotNull
@@ -194,7 +193,7 @@ public class VcsLogProgress implements Disposable {
   public static class ProgressKey {
     @NotNull private final String myName;
 
-    public ProgressKey(@NotNull String name) {
+    public ProgressKey(@NonNls @NotNull String name) {
       myName = name;
     }
 

@@ -1,16 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.openapi.util.text.StringUtil;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addIfDiffers;
+import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 
 public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
   @NotNull
@@ -19,10 +17,15 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
     return "debugger.settings.ide";
   }
 
+  @Override
+  public int getVersion() {
+    return 2;
+  }
+
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
-    Set<UsageDescriptor> set = new HashSet<>();
+  public Set<MetricEvent> getMetrics() {
+    Set<MetricEvent> set = new HashSet<>();
 
     DebuggerSettings settings = DebuggerSettings.getInstance();
     DebuggerSettings sDefault = new DebuggerSettings();
@@ -45,10 +48,5 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
     addBoolIfDiffers(set, settings, sDefault, s -> s.INSTRUMENTING_AGENT, "instrumentingAgent");
 
     return set;
-  }
-
-  private static <T> void addBoolIfDiffers(Set<UsageDescriptor> set, T settingsBean, T defaultSettingsBean,
-                                           Function1<T, Boolean> valueFunction, String featureId) {
-    addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, (it) -> it ? featureId : "no" + StringUtil.capitalize(featureId));
   }
 }

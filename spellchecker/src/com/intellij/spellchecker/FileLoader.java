@@ -28,7 +28,7 @@ import java.nio.charset.Charset;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class FileLoader implements Loader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
+  private static final Logger LOG = Logger.getInstance(FileLoader.class);
 
   private final String url;
   private final String name;
@@ -50,7 +50,7 @@ public class FileLoader implements Loader {
   @Override
   public void load(@NotNull Consumer<String> consumer) {
     final VirtualFile file = findFileByIoFile(new File(url), true);
-    if (file == null) {
+    if (file == null || file.isDirectory()) {
       return;
     }
     final Charset charset = file.getCharset();

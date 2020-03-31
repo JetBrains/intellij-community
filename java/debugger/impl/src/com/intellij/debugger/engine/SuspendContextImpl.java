@@ -1,21 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -29,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author lex
  */
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextImpl");
+  private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
   private final int mySuspendPolicy;
@@ -47,6 +50,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
+  private int myFrameCount = -1;
 
   private JavaExecutionStack myActiveExecutionStack;
 
@@ -67,6 +71,40 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myThread = threadProxy;
   }
 
+  public int frameCount() {
+    if (myFrameCount == -1) {
+      try {
+        myFrameCount = myThread != null ? myThread.frameCount() : 0;
+      }
+      catch (EvaluateException e) {
+        myFrameCount = 0;
+      }
+    }
+    return myFrameCount;
+  }
+
+  @Nullable
+  public Location getLocation() {
+    // getting location from the event set is much faster than obtaining the frame and getting it from there
+    if (myEventSet != null) {
+      LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
+      if (event != null) {
+        if (myThread != null && !myThread.getThreadReference().equals(event.thread())) {
+          LOG.error("Invalid thread");
+        }
+        return event.location();
+      }
+    }
+    try {
+      StackFrameProxyImpl frameProxy = getFrameProxy();
+      return frameProxy != null ? frameProxy.location() : null;
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
+    return null;
+  }
+
   protected abstract void resumeImpl();
 
   protected void resume(){
@@ -77,7 +115,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        myKeptReferences.forEach(DebuggerUtilsEx::enableCollection);
+        // delay enable collection to speedup the resume
+        for (ObjectReference r : myKeptReferences) {
+          myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
+        }
         myKeptReferences.clear();
       }
 
@@ -116,7 +157,17 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public StackFrameProxyImpl getFrameProxy() {
     assertNotResumed();
     try {
-      return myThread != null && myThread.frameCount() > 0 ? myThread.frame(0) : null;
+      if (myThread != null) {
+        int frameCount = myThread.frameCount();
+        if (myFrameCount != -1 && myFrameCount != frameCount) {
+          LOG.error("Incorrect frame count");
+        }
+        myFrameCount = frameCount;
+        if (frameCount > 0) {
+          return myThread.frame(0);
+        }
+      }
+      return null;
     }
     catch (EvaluateException ignored) {
       return null;
@@ -180,7 +231,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (myEventSet != null) {
       return myEventSet.toString();
     }
-    return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
+    return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
   }
 
   public void keep(ObjectReference reference) {

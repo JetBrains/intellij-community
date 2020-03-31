@@ -3,10 +3,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -17,8 +19,11 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -62,21 +67,23 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         if (body == null) return;
         WrapperTypeMayBePrimitiveDetectingVisitor visitor = new WrapperTypeMayBePrimitiveDetectingVisitor();
         body.accept(visitor);
-        for (PsiLocalVariable variable : visitor.getVariablesToUnbox()) {
-          holder.registerProblem(variable.getTypeElement(), InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.name"),
-                                 new ConvertWrapperTypeToPrimitive());
+        for (PsiVariable variable : visitor.getVariablesToUnbox()) {
+          PsiElement elementToHighlight = variable.getTypeElement() != null ? variable.getTypeElement() : variable;
+          holder.registerProblem(elementToHighlight, JavaBundle.message("inspection.wrapper.type.may.be.primitive.name"), new ConvertWrapperTypeToPrimitive());
         }
       }
     };
   }
 
   private static class BoxingInfo {
-    private final @NotNull PsiLocalVariable myVariable;
+    private final @NotNull PsiVariable myVariable;
     boolean myHasReferences = false;
-    private int myBoxedUnnecessaryOperationCount = 0;
-    private int myUnboxedUnnecessaryOperationCount = 0;
 
-    private BoxingInfo(@NotNull PsiLocalVariable variable) {myVariable = variable;}
+    // Change in count of operations after removing boxing (inexact, due to loops)
+    // If less than 0 - worth to remove
+    private int myAfterRemovalOperationCountDiff = 0;
+
+    private BoxingInfo(@NotNull PsiVariable variable) {myVariable = variable;}
 
     /**
      * Check, whether expression passed as argument is suitable to be right part of assignment or initializer when variable will be primitive
@@ -86,19 +93,21 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
      */
     boolean checkExpression(@NotNull PsiExpression expression) {
       if (expression.getType() instanceof PsiPrimitiveType && !PsiType.NULL.equals(expression.getType())) {
-        myBoxedUnnecessaryOperationCount++;
+        myAfterRemovalOperationCountDiff -= 1;
       }
-      else if (!isValueOfCall(expression)) {
-        if (NullabilityUtil.getExpressionNullability(expression) != Nullability.NOT_NULL) { // not safe using with primitive
+      else if (isValueOfCall(expression)) {
+        myAfterRemovalOperationCountDiff -= 1;
+      }
+      else {
+        if (NullabilityUtil.getExpressionNullability(expression, true) != Nullability.NOT_NULL) { // not safe using with primitive
           return false;
         }
-        myUnboxedUnnecessaryOperationCount++;
+        myAfterRemovalOperationCountDiff += 1;
       }
       return true;
     }
-
     boolean primitiveReplacementReducesUnnecessaryOperationCount() {
-      return myUnboxedUnnecessaryOperationCount < myBoxedUnnecessaryOperationCount;
+      return myAfterRemovalOperationCountDiff < 0;
     }
   }
 
@@ -107,20 +116,25 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
   }
 
   private static class WrapperTypeMayBePrimitiveDetectingVisitor extends JavaRecursiveElementWalkingVisitor {
-    private static final int IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER = 10;
+    private static final int IN_LOOP_OPERATION_MULTIPLIER = 10;
 
     // name to list of boxes
     private final Map<String, List<BoxingInfo>> myBoxingMap = new HashMap<>();
 
     @Override
+    public void visitClass(PsiClass aClass) {
+      // To avoid revisiting elements from child method
+    }
+
+    @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
+      if (variable instanceof PsiField) return;
       if (!TypeConversionUtil.isPrimitiveWrapper(variable.getType())) return;
       PsiExpression initializer = variable.getInitializer();
       BoxingInfo boxingInfo = new BoxingInfo(variable);
       if (initializer != null && !boxingInfo.checkExpression(initializer)) return;
       String name = variable.getName();
-      if (name == null) return;
       ArrayList<BoxingInfo> infos = new ArrayList<>();
       infos.add(boxingInfo);
       myBoxingMap.put(name, infos);
@@ -138,8 +152,11 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         BoxingInfo boxingInfo = iterator.next();
         if (!ExpressionUtils.isReferenceTo(expression, boxingInfo.myVariable)) continue;
         boxingInfo.myHasReferences = true;
-        if (!referenceUseAllowUnboxing(expression, boxingInfo)) {
+        final Integer boxingRemovalImpact = afterBoxingRemovalReferenceBoostedImpact(expression, boxingInfo);
+        if (boxingRemovalImpact == null)  {
           iterator.remove();
+        } else {
+          boxingInfo.myAfterRemovalOperationCountDiff += boxingRemovalImpact;
         }
         break;
       }
@@ -148,8 +165,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    public List<PsiLocalVariable> getVariablesToUnbox() {
-      List<PsiLocalVariable> variables = new ArrayList<>();
+    public List<PsiVariable> getVariablesToUnbox() {
+      List<PsiVariable> variables = new ArrayList<>();
       for (List<BoxingInfo> infos : myBoxingMap.values()) {
         for (BoxingInfo boxingInfo : infos) {
           if (boxingInfo.myHasReferences && boxingInfo.primitiveReplacementReducesUnnecessaryOperationCount()) {
@@ -167,98 +184,132 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return ourAllowedInstanceCalls.contains(call.getMethodExpression().getReferenceName());
     }
 
-    private static boolean referenceUseAllowUnboxing(@NotNull PsiReferenceExpression expression,
-                                                     @NotNull BoxingInfo boxingInfo) {
+    @Nullable("When use not allows unboxing")
+    private static Integer afterBoxingRemovalReferenceBoostedImpact(@NotNull PsiReferenceExpression expression,
+                                                             @NotNull BoxingInfo boxingInfo) {
+      Integer impact = afterBoxingRemovalReferenceImpact(expression, boxingInfo);
+      if (impact == null) return null;
+      final LocalSearchScope scope = tryCast(boxingInfo.myVariable.getUseScope(), LocalSearchScope.class);
+      if (scope == null) return impact;
+      final PsiElement[] scopeElements = scope.getScope();
+      PsiLoopStatement loop =
+        PsiTreeUtil.getParentOfType(expression, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class, PsiMethod.class);
+      if (loop != null
+          && StreamEx.of(scopeElements).anyMatch(scopeElement -> PsiTreeUtil.isAncestor(scopeElement, loop, false))
+                           && !PsiTreeUtil.isAncestor(loop, boxingInfo.myVariable, true)) {
+        impact *= IN_LOOP_OPERATION_MULTIPLIER;
+      }
+      return impact;
+    }
+
+    @Nullable("When use not allows unboxing")
+    private static Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
+                                                             @NotNull BoxingInfo boxingInfo) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call != null) {
-        return TO_STRING.test(call) || HASH_CODE.test(call) || isAllowedInstanceCall(call);
+        if(!TO_STRING.test(call) && !HASH_CODE.test(call) && !isAllowedInstanceCall(call)) return null;
       }
       if (parent instanceof PsiExpressionList) {
-        PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiCallExpression)) return true;
-        PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();
-        int argumentsIndex = ArrayUtil.indexOf(arguments, expression);
-        if (argumentsIndex == -1) return true;
-        PsiCallExpression callExpression = (PsiCallExpression)grandParent;
-        PsiMethod method = callExpression.resolveMethod();
-        if (method == null) return true;
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
-        if (parameterIndex < 0) return false;
-        PsiParameter parameter = parameters[parameterIndex];
-        PsiType type = parameter.getType();
-        if (type instanceof PsiPrimitiveType) {
-          boxingInfo.myBoxedUnnecessaryOperationCount++;
-        }
-        else {
-          boxingInfo.myUnboxedUnnecessaryOperationCount++;
-        }
+        return expressionListImpactAfterBoxingRemoval((PsiExpressionList)parent, expression);
       }
       else if (parent instanceof PsiAssignmentExpression) {
-        PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
-        if (rExpression == null) return true;
-        if (!boxingInfo.checkExpression(rExpression)) return false;
+        final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+        final PsiType lExprType = assignment.getLExpression().getType();
+        if (lExprType != null && TypeUtils.isJavaLangString(lExprType)) return 0;
+        PsiExpression rExpression = assignment.getRExpression();
+        if (rExpression == null) return 0;
+        if (!boxingInfo.checkExpression(rExpression)) return null;
+        return TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType()) != null ? -2 : -1;
       }
       else if (parent instanceof PsiSynchronizedStatement) {
-        return false;
+        return null;
       }
-      else if (parent instanceof PsiBinaryExpression) {
-        return binaryExpressionUseAllowUnboxing((PsiBinaryExpression)parent, boxingInfo);
+      else if (parent instanceof PsiPolyadicExpression) {
+        return polyadicExpressionImpactAfterBoxingRemoval((PsiPolyadicExpression)parent, expression);
       }
       else if (parent instanceof PsiReturnStatement) {
         PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class);
         if (method != null) {
           PsiType returnType = method.getReturnType();
           if (returnType != null) {
-            if (returnType instanceof PsiPrimitiveType) {
-              boxingInfo.myBoxedUnnecessaryOperationCount++;
-            }
-            else {
-              boxingInfo.myUnboxedUnnecessaryOperationCount++;
-            }
+            return returnType instanceof PsiPrimitiveType ? -1 : 1;
           }
         }
       }
-      return true;
+      return 0;
     }
 
-    private static boolean binaryExpressionUseAllowUnboxing(@NotNull PsiBinaryExpression binaryExpression,
-                                                            @NotNull BoxingInfo boxingInfo) {
-      IElementType operationTokenType = binaryExpression.getOperationTokenType();
-      PsiExpression other = ExpressionUtils.getOtherOperand(binaryExpression, boxingInfo.myVariable);
-      if (other == null) return false;
-      PsiType type = other.getType();
-      if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) {
-        if (!(type instanceof PsiPrimitiveType) || PsiType.NULL.equals(type)) return false;
-        boxingInfo.myBoxedUnnecessaryOperationCount++;
-      }
+    @Nullable("When use not allows unboxing")
+    private static Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
+                                                                  @NotNull PsiReferenceExpression reference) {
+      PsiElement grandParent = expressionList.getParent();
+      if (!(grandParent instanceof PsiCallExpression)) return null;
+      PsiExpression[] arguments = expressionList.getExpressions();
+      int argumentsIndex = ArrayUtil.indexOf(arguments, reference);
+      if (argumentsIndex == -1) return null;
+      PsiCallExpression callExpression = (PsiCallExpression)grandParent;
+      PsiMethod method = callExpression.resolveMethod();
+      if (method == null) return null;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
+      if (parameterIndex < 0) return null;
+      PsiParameter parameter = parameters[parameterIndex];
+      PsiType type = parameter.getType();
+      return type instanceof PsiPrimitiveType ? -1 : 1;
+    }
 
-      int boxedUnnecessaryOpImpact = 0;
-      int unboxedUnnecessaryOpImpact = 0;
-      if (type instanceof PsiPrimitiveType) {
-        if (PsiType.NULL.equals(type)) return false;
-        if (TypeConversionUtil.convertEQtoOperation(binaryExpression.getOperationTokenType()) != null) {
-          boxedUnnecessaryOpImpact += 2;
+    /**
+     * @param haveBoxAfter if call has wrapper type in one of operands after removal boxing
+     */
+    private static int getBinOpImpact(boolean haveBoxAfter, IElementType operationTokenType) {
+      if (!haveBoxAfter) return -1;
+      if (operationTokenType == JavaTokenType.EQEQ || operationTokenType == JavaTokenType.NE) return -1;
+      final boolean isRelational = operationTokenType == JavaTokenType.GT || operationTokenType == JavaTokenType.GE ||
+                        operationTokenType == JavaTokenType.LT || operationTokenType == JavaTokenType.LE;
+      return isRelational ? 0 : 1;
+    }
+
+    @Nullable("When use not allows unboxing")
+    private static Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
+                                                                      PsiReferenceExpression reference) {
+      final PsiExpression[] operands = polyadic.getOperands();
+      final IElementType tokenType = polyadic.getOperationTokenType();
+
+      int afterRemovalOpCountDiff = 0;
+      int referenceIndex = -1;
+      boolean leftPartBoxed = false;
+      boolean hasLeftPart = false;
+      boolean isPlus = polyadic.getOperationTokenType() == JavaTokenType.PLUS;
+      for (int i = 0; i < operands.length; i++) {
+        PsiExpression operand = PsiUtil.skipParenthesizedExprDown(operands[i]);
+        if (operand == null) return null;
+        // Assume all polyadic expressions are left associative, so handle left side
+        if (operand == reference) {
+          referenceIndex = i;
+          break;
+        }
+        hasLeftPart = true;
+        final PsiType operandType = operand.getType();
+        if (isPlus && TypeUtils.isJavaLangString(operandType)) {
+          return afterRemovalOpCountDiff; // everything else will be string
+        }
+        if (!(operandType instanceof PsiPrimitiveType)) {
+          if (NullabilityUtil.getExpressionNullability(operand, true) != Nullability.NOT_NULL) return null;
+          leftPartBoxed = true;
         }
       }
-      else {
-        if (NullabilityUtil.getExpressionNullability(other) != Nullability.NOT_NULL) return false;
-        boxedUnnecessaryOpImpact += 3;
-        unboxedUnnecessaryOpImpact += 3;
+      if (hasLeftPart) {
+        afterRemovalOpCountDiff += getBinOpImpact(leftPartBoxed, tokenType);
       }
-      PsiLoopStatement binopLoop =
-        PsiTreeUtil.getParentOfType(binaryExpression, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class);
-      PsiLoopStatement variableLoop =
-        PsiTreeUtil.getParentOfType(boxingInfo.myVariable, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class);
-      if (binopLoop != null && binopLoop == variableLoop) {
-        boxedUnnecessaryOpImpact *= IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER;
-        unboxedUnnecessaryOpImpact *= IN_LOOP_ASSIGNMENT_OPERATION_MULTIPLIER;
-      }
-      boxingInfo.myBoxedUnnecessaryOperationCount += boxedUnnecessaryOpImpact;
-      boxingInfo.myUnboxedUnnecessaryOperationCount += unboxedUnnecessaryOpImpact;
 
-      return true;
+      int nextOperandIndex = referenceIndex + 1;
+      if (nextOperandIndex < operands.length) {
+        final PsiExpression next = operands[nextOperandIndex];
+        if (ExpressionUtils.isNullLiteral(next)) return null;
+        afterRemovalOpCountDiff += getBinOpImpact(!(next.getType() instanceof PsiPrimitiveType), tokenType);
+      }
+      return afterRemovalOpCountDiff;
     }
   }
 
@@ -274,7 +325,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
+      return JavaBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
     }
 
     @Override

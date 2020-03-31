@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
+import org.jetbrains.intellij.build.impl.PlatformLayout
 
-/**
- * @author nik
- */
+import java.util.function.Consumer
+
 @CompileStatic
 class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {
@@ -16,25 +15,29 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
+    scrambleMainJar = false
     buildCrossPlatformDistribution = true
 
-    productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES + [
-      "intellij.platform.duplicates.analysis",
-      "intellij.platform.structuralSearch",
-      "intellij.java.structuralSearch",
-      "intellij.java.typeMigration",
-      "intellij.platform.main"
-    ]
+    productLayout.productImplementationModules = ["intellij.platform.main"]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
-    productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModules = ["intellij.idea.community.main"]
-    productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES + ["intellij.java.plugin"]
+    productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.buildAllCompatiblePlugins = false
+    productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+      JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
-    productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
+
+    def commonCustomizer = productLayout.platformLayoutCustomizer
+    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
+      commonCustomizer.accept(layout)
+      layout.customize {
+        withModule("intellij.platform.duplicates.analysis")
+        withModule("intellij.platform.structuralSearch")
+      }
+    } as Consumer<PlatformLayout>
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = [
@@ -66,7 +69,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
         icoPathForEAP = "$projectHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
-        fileAssociations = ["java", "groovy", "kt"]
+        fileAssociations = ["java", "groovy", "kt", "kts"]
       }
 
       @Override
@@ -79,9 +82,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
         "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
       }
-
-      @Override
-      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
     }
   }
 
@@ -89,7 +89,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        iconPngPath = "$projectHome/platform/icons/compatibilityResources/icon_CE_128.png"
         iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
@@ -116,7 +116,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
-        fileAssociations = ["java", "groovy", "kt"]
+        fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"

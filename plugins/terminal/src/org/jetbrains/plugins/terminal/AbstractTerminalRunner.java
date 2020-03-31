@@ -1,10 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,29 +23,31 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
+import com.pty4j.windows.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author traff
- */
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
   @NotNull
@@ -108,7 +112,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                   @Nullable VirtualFile currentWorkingDirectory,
                                                   boolean deferSessionUntilFirstShown) {
 
-    JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
+    JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
     Runnable openSession = () -> openSessionForFile(terminalWidget, currentWorkingDirectory);
     if (deferSessionUntilFirstShown) {
       UiNotifyConnector.doWhenFirstShown(terminalWidget, openSession);
@@ -171,7 +175,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, final Component toFocus) {
     // Show in run toolwindow
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
+    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, myDescriptor);
 
     // Request focus
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
@@ -205,7 +209,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         // Create Server process
-        final T process = createProcess(directory, terminalWidget.getCommandHistoryFilePath());
+        final T process = createProcess(directory, ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget));
         TtyConnector connector = createTtyConnector(process);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Initial resize to " + size);
@@ -247,22 +251,31 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   private void printError(@NotNull JBTerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
     LOG.info(errorMessage, e);
+    StringBuilder message = new StringBuilder();
     if (terminalWidget.getTerminal().getCursorX() > 1) {
-      terminalWidget.getTerminal().newLine();
-      terminalWidget.getTerminal().carriageReturn();
+      message.append("\n");
     }
-    terminalWidget.getTerminal().writeCharacters(errorMessage);
-    terminalWidget.getTerminal().newLine();
-    terminalWidget.getTerminal().carriageReturn();
-    terminalWidget.getTerminal().writeCharacters(e.getMessage());
-    terminalWidget.getTerminal().newLine();
-    terminalWidget.getTerminal().newLine();
-    terminalWidget.getTerminal().carriageReturn();
+    message.append(errorMessage).append("\n").append(e.getMessage()).append("\n\n");
+    WinPtyException winptyException = ExceptionUtil.findCause(e, WinPtyException.class);
+    if (winptyException != null) {
+      message.append(winptyException.getMessage()).append("\n\n");
+    }
+    writeString(terminalWidget.getTerminal(), message.toString());
     terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
-    AppUIUtil.invokeOnEdt(() -> {
+    AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
       if (!Disposer.isDisposed(terminalWidget)) {
         terminalWidget.getTerminalPanel().setCursorVisible(false);
       }
-    }, myProject.getDisposed());
+    });
+  }
+
+  private static void writeString(@NotNull Terminal terminal, @NotNull String message) {
+    String str = StringUtil.convertLineSeparators(message, LineSeparator.LF.getSeparatorString());
+    List<String> lines = StringUtil.split(str, LineSeparator.LF.getSeparatorString(), true, false);
+    for (String line : lines) {
+      terminal.writeCharacters(line);
+      terminal.carriageReturn();
+      terminal.newLine();
+    }
   }
 }

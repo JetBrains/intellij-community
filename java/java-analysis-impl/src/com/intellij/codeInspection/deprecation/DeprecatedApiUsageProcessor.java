@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
@@ -91,10 +91,10 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
       if (elementToHighlight == null) {
         return;
       }
-      String description = JavaErrorMessages.message(myForRemoval
+      String description = JavaErrorBundle.message(myForRemoval
                                                      ? "marked.for.removal.default.constructor"
                                                      : "deprecated.default.constructor",
-                                                     instantiatedClass.getQualifiedName());
+                                                   instantiatedClass.getQualifiedName());
       myHolder.registerProblem(elementToHighlight, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
     }
   }
@@ -113,8 +113,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     }
 
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
-      String description = JavaErrorMessages.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
-                                                     getPresentableName(aClass));
+      String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
+                                                   getPresentableName(aClass));
       myHolder.registerProblem(methodNameElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
     }
   }

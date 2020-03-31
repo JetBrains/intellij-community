@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.text.NameUtilCore;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +16,7 @@ import java.util.*;
  * @author dsl
  */
 public class NameSuggester {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.NameSuggester");
+  private static final Logger LOG = Logger.getInstance(NameSuggester.class);
   private final String[] myOldClassName;
   private final String[] myNewClassName;
   private final List<OriginalToNewChange> myChanges; // sorted from right to left
@@ -41,21 +27,17 @@ public class NameSuggester {
   public NameSuggester(String oldClassName, String newClassName) {
     myOldClassNameAsGiven = oldClassName;
     myNewClassNameAsGiven = newClassName;
-    myOldClassName = NameUtil.splitNameIntoWords(oldClassName);
-    myNewClassName = NameUtil.splitNameIntoWords(newClassName);
+    myOldClassName = NameUtilCore.splitNameIntoWords(oldClassName);
+    myNewClassName = NameUtilCore.splitNameIntoWords(newClassName);
 
     myChanges = new ArrayList<>();
-    int oldIndex = myOldClassName.length - 1;
     int oldLastMatch = myOldClassName.length;
     int newLastMatch = myNewClassName.length;
 
-    while(oldIndex >= 0) {
+    for (int oldIndex = myOldClassName.length - 1; oldIndex >= 0; oldIndex--) {
       final String patternWord = myOldClassName[oldIndex];
       final int matchingWordIndex = findInNewBackwardsFromIndex(patternWord, newLastMatch - 1);
-      if (matchingWordIndex < 0) { // no matching word
-        oldIndex--;
-      }
-      else { // matching word found
+      if (matchingWordIndex >= 0) { // matching word found
         if (oldIndex + 1 <= oldLastMatch - 1 || matchingWordIndex + 1 <= newLastMatch - 1) {
           final OriginalToNewChange change = new OriginalToNewChange(
             oldIndex + 1, oldLastMatch - 1, matchingWordIndex + 1, newLastMatch - 1);
@@ -63,7 +45,6 @@ public class NameSuggester {
         }
         oldLastMatch = oldIndex;
         newLastMatch = matchingWordIndex;
-        oldIndex--;
       }
     }
     if (0 <= oldLastMatch - 1 || 0 <= newLastMatch - 1) {
@@ -90,7 +71,7 @@ public class NameSuggester {
 
   public String suggestName(final String propertyName) {
     if (myOldClassNameAsGiven.equals(propertyName)) return myNewClassNameAsGiven;
-    final String[] propertyWords = NameUtil.splitNameIntoWords(propertyName);
+    final String[] propertyWords = NameUtilCore.splitNameIntoWords(propertyName);
     TIntIntHashMap matches = calculateMatches(propertyWords);
     if (matches.isEmpty()) return propertyName;
     TreeMap<Pair<Integer,Integer>, String> replacements = calculateReplacements(propertyWords, matches);
@@ -172,7 +153,7 @@ public class NameSuggester {
    * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>((pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst()));
+    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>(Comparator.comparing(pair -> pair.getFirst()));
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;

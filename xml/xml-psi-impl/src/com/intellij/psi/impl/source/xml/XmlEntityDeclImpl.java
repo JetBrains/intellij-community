@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -31,9 +17,6 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
 public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, XmlElementType {
   public XmlEntityDeclImpl() {
     super(XML_ENTITY_DECL);
@@ -83,7 +66,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     final PsiElement nameElement = getNameElement();
 
     if (nameElement != null) {
-      return ElementManipulators.getManipulator(nameElement).handleContentChange(
+      return ElementManipulators.handleContentChange(
         nameElement,
         new TextRange(0,nameElement.getTextLength()),
         name
@@ -117,7 +100,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return setOriginalElement(generated, originalElement);
   }
 
-  private PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
+  private static PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
     PsiElement e = generated;
     while (e != null) {
       e.putUserData(XmlElement.DEPENDING_ELEMENT, dependsOnElement);
@@ -126,7 +109,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return generated;
   }
 
-  private PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
+  private static PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
     PsiElement e = element;
     while (e != null) {
       e.putUserData(XmlElement.INCLUDING_ELEMENT, (XmlElement)valueElement);
@@ -142,16 +125,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     if (attributeValue != null) {
       final String value = attributeValue.getValue();
-      if (value != null) {
-        XmlFile xmlFile = XmlUtil.findNamespaceByLocation(baseFile, value);
-        if (xmlFile != null) {
-          return xmlFile;
-        }
+      XmlFile xmlFile = XmlUtil.findNamespaceByLocation(baseFile, value);
+      if (xmlFile != null) {
+        return xmlFile;
+      }
 
-        final int i = XmlUtil.getPrefixLength(value);
-        if (i > 0) {
-          return XmlUtil.findNamespaceByLocation(baseFile, value.substring(i));
-        }
+      final int i = XmlUtil.getPrefixLength(value);
+      if (i > 0) {
+        return XmlUtil.findNamespaceByLocation(baseFile, value.substring(i));
       }
     }
 

@@ -16,14 +16,27 @@
 package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import javax.xml.namespace.QName;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -31,10 +44,16 @@ import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
-import org.intellij.lang.xpath.psi.*;
-
-import javax.xml.namespace.QName;
-import java.util.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.QNameElement;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathToken;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.jetbrains.annotations.NotNull;
 
 public class CompletionLists {
   public static final String INTELLIJ_IDEA_RULEZ = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
@@ -42,19 +61,15 @@ public class CompletionLists {
   private CompletionLists() {
   }
 
-  public static final Set<String> NODE_TYPE_FUNCS = new HashSet<>(Arrays.asList(
-    "text", "node", "comment", "processing-instruction"
-  ));
+  public static final Set<String> NODE_TYPE_FUNCS = ContainerUtil.set("text", "node", "comment", "processing-instruction");
 
-  public static final Set<String> NODE_TYPE_FUNCS_V2 = new HashSet<>(Arrays.asList(
-    "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute", "document-node"
-  ));
+  public static final Set<String> NODE_TYPE_FUNCS_V2 = ContainerUtil
+    .set("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
+         "document-node");
 
-  public static final Set<String> OPERATORS = new HashSet<>(Arrays.asList(
-    "mul", "div", "and", "or"
-  ));
+  public static final Set<String> OPERATORS = ContainerUtil.set("mul", "div", "and", "or");
 
-  public static final Set<String> AXIS_NAMES = new HashSet<>(Arrays.asList(
+  public static final Set<String> AXIS_NAMES = ContainerUtil.set(
     "ancestor",
     "ancestor-or-self",
     "attribute",
@@ -68,9 +83,9 @@ public class CompletionLists {
     "preceding",
     "preceding-sibling",
     "self"
-  ));
+  );
 
-  private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = s -> {
+  private static final com.intellij.util.Function<String,LookupElement> FUNCTION_MAPPING = s -> {
     if (s.equals("processing-instruction")) {
       return new FunctionLookup(s, s + "(pi-target?)");
     } else {
@@ -78,7 +93,7 @@ public class CompletionLists {
     }
   };
 
-  public static Collection<Lookup> getFunctionCompletions(XPathElement element) {
+  public static Collection<LookupElement> getFunctionCompletions(XPathElement element) {
     final XPathFile xpathFile = (XPathFile)element.getContainingFile();
 
     final ContextProvider contextProvider = ContextProvider.getContextProvider(xpathFile);
@@ -107,7 +122,7 @@ public class CompletionLists {
     }
 
     final Map<Pair<QName, Integer>, ? extends Function> functions = contextProvider.getFunctionContext().getFunctions();
-    final List<Lookup> lookups = new ArrayList<>(functions.size());
+    final List<LookupElement> lookups = new ArrayList<>(functions.size());
     for (Map.Entry<Pair<QName, Integer>, ? extends Function> entry : functions.entrySet()) {
       final Function functionDecl = entry.getValue();
       final QName f = entry.getKey().first;
@@ -130,12 +145,12 @@ public class CompletionLists {
     return lookups;
   }
 
-  public static Collection<Lookup> getVariableCompletions(XPathElement reference) {
+  public static Collection<LookupElement> getVariableCompletions(XPathElement reference) {
     final ContextProvider contextProvider = ContextProvider.getContextProvider(reference);
     final VariableContext resolver = contextProvider.getVariableContext();
     if (resolver != null) {
       final Object[] variablesInScope = resolver.getVariablesInScope(reference);
-      final List<Lookup> lookups = new ArrayList<>(variablesInScope.length);
+      final List<LookupElement> lookups = new ArrayList<>(variablesInScope.length);
       for (final Object o : variablesInScope) {
         if (o instanceof PsiNamedElement) {
           final String type;
@@ -161,7 +176,7 @@ public class CompletionLists {
     }
   }
 
-  public static Collection<Lookup> getNodeTestCompletions(final XPathNodeTest element) {
+  public static Collection<LookupElement> getNodeTestCompletions(final XPathNodeTest element) {
     if (!element.isNameTest()) {
       return Collections.emptyList();
     }
@@ -179,7 +194,7 @@ public class CompletionLists {
 
     final boolean insidePrefix = suffix.contains(INTELLIJ_IDEA_RULEZ + ":");
 
-    final Set<Lookup> list = new HashSet<>();
+    final Set<LookupElement> list = new HashSet<>();
     addNameCompletions(contextProvider, element, list);
 
     final String namespacePrefix = prefixedName.getPrefix();
@@ -225,7 +240,7 @@ public class CompletionLists {
     return list;
   }
 
-  private static XPathNodeTest.PrincipalType addContextNames(XPathNodeTest element, ContextProvider contextProvider, PrefixedName prefixedName, Set<? super Lookup> list) {
+  private static XPathNodeTest.PrincipalType addContextNames(XPathNodeTest element, ContextProvider contextProvider, PrefixedName prefixedName, Set<? super LookupElement> list) {
     final NamespaceContext namespaceContext = contextProvider.getNamespaceContext();
     final XmlElement context = contextProvider.getContextElement();
 
@@ -270,7 +285,7 @@ public class CompletionLists {
     return (p != null && p.length() > 0 ? p + ":" : "");
   }
 
-  private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<? super Lookup> list, XmlElement context) {
+  private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<? super LookupElement> list, XmlElement context) {
     if (namespaceContext != null) {
       final Collection<String> knownPrefixes = namespaceContext.getKnownPrefixes(context);
       for (String prefix : knownPrefixes) {
@@ -281,7 +296,7 @@ public class CompletionLists {
     }
   }
 
-  private static void addNameCompletions(ContextProvider contextProvider, final XPathNodeTest element, final Set<? super Lookup> list) {
+  private static void addNameCompletions(ContextProvider contextProvider, final XPathNodeTest element, final Set<? super LookupElement> list) {
     final PrefixedName prefixedName = element.getQName();
     final XPathNodeTest.PrincipalType principalType = element.getPrincipalType();
 
@@ -293,7 +308,7 @@ public class CompletionLists {
     for (PsiFile xpathFile : files) {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement e) {
+        public void visitElement(@NotNull PsiElement e) {
           if (e instanceof XPathNodeTest) {
             final XPathNodeTest nodeTest = (XPathNodeTest)e;
 
@@ -303,7 +318,7 @@ public class CompletionLists {
               if (_prefixedName != null && prefixedName != null) {
                 final String localName = _prefixedName.getLocalName();
                 if (!"*".equals(localName) && !localName.contains(INTELLIJ_IDEA_RULEZ)) {
-                  if (Comparing.equal(_prefixedName.getPrefix(), prefixedName.getPrefix())) {
+                  if (Objects.equals(_prefixedName.getPrefix(), prefixedName.getPrefix())) {
                     list.add(new NodeLookup(localName, _principalType));
                   } else if (prefixedName.getPrefix() == null) {
                     list.add(new NodeLookup(_prefixedName.toString(), _principalType));
@@ -340,15 +355,15 @@ public class CompletionLists {
     return uri.equals(namespaceURI);
   }
 
-  public static Collection<Lookup> getNodeTypeCompletions(XPathElement context) {
+  public static Collection<LookupElement> getNodeTypeCompletions(XPathElement context) {
     final Set<String> funcs = context.getXPathVersion() == XPathVersion.V1 ?
             NODE_TYPE_FUNCS : NODE_TYPE_FUNCS_V2;
 
     return ContainerUtil.map(funcs, FUNCTION_MAPPING);
   }
 
-  public static Collection<Lookup> getAxisCompletions() {
-    final ArrayList<Lookup> lookups = new ArrayList<>(AXIS_NAMES.size());
+  public static Collection<LookupElement> getAxisCompletions() {
+    final ArrayList<LookupElement> lookups = new ArrayList<>(AXIS_NAMES.size());
     for (String s : AXIS_NAMES) {
       lookups.add(new AxisLookup(s));
     }
@@ -357,7 +372,7 @@ public class CompletionLists {
 
   @SuppressWarnings({"RawUseOfParameterizedType"})
   public static Class[] getAllInterfaces(Class<?> clazz) {
-    Set<Class> set = new HashSet<>();
+    Set<Class<?>> set = new HashSet<>();
     do {
       ContainerUtil.addAll(set, clazz.getInterfaces());
       clazz = clazz.getSuperclass();

@@ -14,7 +14,7 @@ The master branch contains the source code which will be used to create the next
 and build numbers for older releases of IntelliJ IDEA can be found on the page of
 [Build Number Ranges](http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html).
 
-If you intend to make open source contributions to the IntelliJ Platform,
+If you intend to make open-source contributions to the IntelliJ Platform,
 see [Contributing to the IntelliJ Project](http://www.jetbrains.org/display/IJOS/Contribute) for more information.
 
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
@@ -36,23 +36,22 @@ for the IntelliJ Platform.
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
 * If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g. Kotlin),
   [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
-* If IntelliJ IDEA displays and error about a Gradle configuration not found,
+* If IntelliJ IDEA displays an error about a Gradle configuration not found,
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u91 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
+JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
 1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
 2. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to `<JDK_16_HOME>`. If you don’t want to install JDK 1.6
-   then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs
-   in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
+   then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
    * If not already present, add the corresponding path for tools.jar to the Classpath for "**IDEA jdk**" JDK.
 3. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/working-with-projects.html#path-variables)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 4. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also set the "User-local build process VM options" to `-Xmx2G`.
+   to enable the "Compile independent modules in parallel" option. Also, set the "User-local build process VM options" to `-Xmx2G`.
    These changes will greatly reduce the compile time.
 
 ### Building the IntelliJ Application Source Code
@@ -63,7 +62,7 @@ To build installation packages, run the `ant` command in `<IDEA_HOME>` directory
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
 
-To run tests on the build, apply these setting to the **Run | Edit Run Configurations... | Defaults | JUnit** configuration tab:
+To run tests on the build, apply these setting to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 

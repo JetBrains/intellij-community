@@ -60,8 +60,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myVcsManager = vcsManager;
     }
 
-    @NotNull
-    public VirtualFile[] execute() {
+    public VirtualFile @NotNull [] execute() {
       try {
         ourInProgress.set(Boolean.TRUE);
         return myVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
@@ -82,9 +81,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  private SvnFileUrlMappingImpl(@NotNull Project project) {
     myProject = project;
-    myRootsHelper = new MyRootsHelper(project, vcsManager);
+    myRootsHelper = new MyRootsHelper(project, ProjectLevelVcsManager.getInstance(project));
     myChecker = new SvnCompatibilityChecker(project);
   }
 
@@ -262,8 +261,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getNotFilteredRoots() {
+  public VirtualFile @NotNull [] getNotFilteredRoots() {
     return myRootsHelper.execute();
   }
 
@@ -293,8 +291,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Override
   public void loadState(@NotNull final SvnMappingSavedPart state) {
-    ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
-      VcsInitObject.AFTER_COMMON, (DumbAwareRunnable)() -> getApplication().executeOnPooledThread(() -> {
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(
+      VcsInitObject.AFTER_COMMON, () -> getApplication().executeOnPooledThread(() -> {
         SvnMapping mapping = new SvnMapping();
         SvnMapping realMapping = new SvnMapping();
         try {

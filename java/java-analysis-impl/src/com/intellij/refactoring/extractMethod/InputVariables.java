@@ -37,49 +37,56 @@ import java.util.*;
 public class InputVariables {
   private final List<VariableData> myInputVariables;
 
-  private List<? extends PsiVariable> myInitialParameters;
+  private final List<? extends PsiVariable> myInitialParameters;
   private final Project myProject;
   private final LocalSearchScope myScope;
 
-  private ParametersFolder myFolding;
+  private final ParametersFolder myFolding;
   private boolean myFoldingAvailable;
 
-  private Set<? extends PsiField> myUsedInstanceFields;
-  private boolean       myPassFields;
+  @NotNull
+  private final Set<? extends PsiField> myUsedInstanceFields;
+  private boolean myPassFields;
 
-  public InputVariables(final List<? extends PsiVariable> inputVariables,
-                        Project project,
-                        LocalSearchScope scope,
-                        boolean foldingAvailable) {
+  public InputVariables(@NotNull List<? extends PsiVariable> inputVariables,
+                        @NotNull Project project,
+                        @NotNull LocalSearchScope scope,
+                        boolean foldingAvailable,
+                        @NotNull Set<? extends PsiField> usedInstanceFields) {
     myInitialParameters = inputVariables;
     myProject = project;
     myScope = scope;
     myFoldingAvailable = foldingAvailable;
     myFolding = new ParametersFolder();
+    myUsedInstanceFields = usedInstanceFields;
     myInputVariables = wrapInputVariables(inputVariables);
   }
 
   /**
    * copy use only
    */
-  private InputVariables(List<? extends VariableData> inputVariables,
-                         Project project,
-                         LocalSearchScope scope) {
+  private InputVariables(@NotNull List<? extends VariableData> inputVariableData,
+                         @NotNull Project project,
+                         @NotNull LocalSearchScope scope,
+                         boolean foldingAvailable,
+                         @NotNull ParametersFolder folding,
+                         @NotNull List<? extends PsiVariable> initialParameters,
+                         @NotNull Set<? extends PsiField> usedInstanceFields) {
+    myInitialParameters = initialParameters;
     myProject = project;
     myScope = scope;
-    myInputVariables = new ArrayList<>(inputVariables);
+    myFoldingAvailable = foldingAvailable;
+    myInputVariables = new ArrayList<>(inputVariableData);
+    myFolding = folding;
+    myUsedInstanceFields = usedInstanceFields;
   }
 
   public boolean isFoldable() {
     return myFolding.isFoldable();
   }
 
-  public void setUsedInstanceFields(Set<? extends PsiField> usedInstanceFields) {
-    myUsedInstanceFields = usedInstanceFields;
-  }
-
   public void setPassFields(boolean passFields) {
-    if (myUsedInstanceFields == null || myUsedInstanceFields.isEmpty()) {
+    if (!hasInstanceFields()) {
       return;
     }
     myPassFields = passFields;
@@ -92,9 +99,10 @@ public class InputVariables {
     return myPassFields;
   }
 
-  public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
+  @NotNull
+  private List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-    final ArrayList<VariableData> inputData = new ArrayList<>(inputVariables.size());
+    List<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
       final String defaultName = getParameterName(var);
       String name = nameGenerator.generateUniqueName(defaultName);
@@ -108,7 +116,8 @@ public class InputVariables {
           final PsiType currentType = casts.get(block);
           final PsiType castType = ((PsiTypeCastExpression)parent).getType();
           casts.put(block, casts.containsKey(block) && currentType == null ? null : getBroaderType(currentType, castType));
-        } else {
+        }
+        else {
           casts.put(block, null);
         }
       }
@@ -121,7 +130,7 @@ public class InputVariables {
           }
         }
         if (currentType != null) {
-          currentType = checkTopLevelInstanceOf(currentType);
+          currentType = checkTopLevelInstanceOf(currentType, myScope);
           if (currentType != null) {
             type = currentType;
           }
@@ -133,7 +142,9 @@ public class InputVariables {
       data.passAsParameter = true;
       inputData.add(data);
 
-      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
+      if (myFoldingAvailable) {
+        myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
+      }
     }
 
 
@@ -149,7 +160,7 @@ public class InputVariables {
     }
 
 
-    if (myPassFields && myUsedInstanceFields != null) {
+    if (myPassFields) {
       for (PsiField var : myUsedInstanceFields) {
         final VariableData data = new VariableData(var, var.getType());
         data.name = nameGenerator.generateUniqueName(getParameterName(var));
@@ -160,41 +171,41 @@ public class InputVariables {
     return inputData;
   }
 
-  private String getParameterName(PsiVariable var) {
-    String name = var.getName();
-    if (!(var instanceof PsiParameter)) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-      VariableKind kind = codeStyleManager.getVariableKind(var);
-      name = codeStyleManager.variableNameToPropertyName(name, kind);
-      name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+  @NotNull
+  private String getParameterName(@NotNull PsiVariable var) {
+    if (var instanceof PsiParameter) {
+      return ((PsiParameter)var).getName();
     }
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+    VariableKind kind = codeStyleManager.getVariableKind(var);
+    String name = codeStyleManager.variableNameToPropertyName(var.getName(), kind);
+    name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
     return name;
   }
 
   @Nullable
-  private PsiType checkTopLevelInstanceOf(final PsiType currentType) {
-    final PsiElement[] scope = myScope.getScope();
+  private static PsiType checkTopLevelInstanceOf(PsiType currentType, @NotNull LocalSearchScope localSearchScope) {
+    final PsiElement[] scope = localSearchScope.getScope();
     if (scope.length == 1 && scope[0] instanceof PsiIfStatement) {
       final PsiExpression condition = ((PsiIfStatement)scope[0]).getCondition();
       if (condition != null) {
-        class CheckInstanceOf {
-          boolean check(PsiInstanceOfExpression expr) {
-            final PsiTypeElement checkType = expr.getCheckType();
-            return checkType == null || !checkType.getType().equals(currentType);
-          }
-        }
-        CheckInstanceOf checker = new CheckInstanceOf();
-        final PsiInstanceOfExpression[] expressions = PsiTreeUtil.getChildrenOfType(condition, PsiInstanceOfExpression.class);
+        PsiInstanceOfExpression[] expressions = PsiTreeUtil.getChildrenOfType(condition, PsiInstanceOfExpression.class);
         if (expressions != null) {
           for (PsiInstanceOfExpression instanceOfExpression : expressions) {
-            if (!checker.check(instanceOfExpression)) return null;
+            if (isOfCurrentType(instanceOfExpression, currentType)) return null;
           }
-        } else if (condition instanceof PsiInstanceOfExpression) {
-           if (!checker.check((PsiInstanceOfExpression)condition)) return null;
+        }
+        else if (condition instanceof PsiInstanceOfExpression) {
+          if (isOfCurrentType((PsiInstanceOfExpression)condition, currentType)) return null;
         }
       }
     }
     return currentType;
+  }
+
+  private static boolean isOfCurrentType(@NotNull PsiInstanceOfExpression expr, PsiType currentType) {
+    final PsiTypeElement checkType = expr.getCheckType();
+    return checkType != null && checkType.getType().equals(currentType);
   }
 
   @Nullable
@@ -203,7 +214,8 @@ public class InputVariables {
       if (castType != null) {
         if (TypeConversionUtil.isAssignable(castType, currentType)) {
           return castType;
-        } else if (!TypeConversionUtil.isAssignable(currentType, castType)) {
+        }
+        if (!TypeConversionUtil.isAssignable(currentType, castType)) {
           for (PsiType superType : castType.getSuperTypes()) {
             if (TypeConversionUtil.isAssignable(superType, currentType)) {
               return superType;
@@ -219,11 +231,12 @@ public class InputVariables {
     return currentType;
   }
 
+  @NotNull
   public List<VariableData> getInputVariables() {
     return myInputVariables;
   }
 
-  public PsiExpression replaceWrappedReferences(PsiElement[] elements, PsiExpression expression) {
+  public PsiExpression replaceWrappedReferences(PsiElement @NotNull [] elements, PsiExpression expression) {
     if (!myFoldingAvailable) return expression;
 
     boolean update = elements[0] == expression;
@@ -231,8 +244,8 @@ public class InputVariables {
     return update ? (PsiExpression)elements[0] : expression;
   }
 
-  public boolean toDeclareInsideBody(PsiVariable variable) {
-    final ArrayList<VariableData> knownVars = new ArrayList<>(myInputVariables);
+  public boolean toDeclareInsideBody(@NotNull PsiVariable variable) {
+    List<VariableData> knownVars = new ArrayList<>(myInputVariables);
     for (VariableData data : knownVars) {
       if (data.variable.equals(variable)) {
         return false;
@@ -241,16 +254,16 @@ public class InputVariables {
     return !myFolding.wasExcluded(variable);
   }
 
-  public boolean contains(PsiVariable variable) {
+  public boolean contains(@NotNull PsiVariable variable) {
     for (VariableData data : myInputVariables) {
       if (data.variable.equals(variable)) return true;
     }
     return false;
   }
 
-  public void removeParametersUsedInExitsOnly(PsiElement codeFragment,
-                                              Collection<? extends PsiStatement> exitStatements,
-                                              ControlFlow controlFlow,
+  public void removeParametersUsedInExitsOnly(@NotNull PsiElement codeFragment,
+                                              @NotNull Collection<? extends PsiStatement> exitStatements,
+                                              @NotNull ControlFlow controlFlow,
                                               int startOffset,
                                               int endOffset) {
     final LocalSearchScope scope = new LocalSearchScope(codeFragment);
@@ -268,7 +281,7 @@ public class InputVariables {
     }
   }
 
-  private static boolean isInExitStatements(PsiElement element, Collection<? extends PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(@NotNull PsiElement element, @NotNull Collection<? extends PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }
@@ -276,23 +289,21 @@ public class InputVariables {
   }
 
 
+  @NotNull
   public InputVariables copy() {
-    final InputVariables inputVariables = new InputVariables(myInputVariables, myProject, myScope);
-    inputVariables.myFoldingAvailable = myFoldingAvailable;
-    inputVariables.myFolding = myFolding;
-    inputVariables.myInitialParameters = myInitialParameters;
-    return inputVariables;
+    return new InputVariables(myInputVariables, myProject, myScope, myFoldingAvailable, myFolding, myInitialParameters, Collections.emptySet());
   }
 
   @NotNull
   public InputVariables copyWithoutFolding() {
-    return new InputVariables(myInitialParameters, myProject, myScope, false);
+    return new InputVariables(myInitialParameters, myProject, myScope, false, Collections.emptySet());
   }
 
-  public void appendCallArguments(VariableData data, StringBuilder buffer) {
+  public void appendCallArguments(@NotNull VariableData data, @NotNull StringBuilder buffer) {
     if (myFoldingAvailable) {
       buffer.append(myFolding.getGeneratedCallArgument(data));
-    } else {
+    }
+    else {
       if (!TypeConversionUtil.isAssignable(data.type, data.variable.getType())) {
         buffer.append("(").append(data.type.getCanonicalText()).append(")");
       }
@@ -300,6 +311,7 @@ public class InputVariables {
     }
   }
 
+  @NotNull
   public ParametersFolder getFolding() {
     return myFolding;
   }
@@ -312,7 +324,7 @@ public class InputVariables {
     myInputVariables.addAll(wrapInputVariables(myInitialParameters));
   }
 
-  public void annotateWithParameter(PsiJavaCodeReferenceElement reference) {
+  public void annotateWithParameter(@NotNull PsiJavaCodeReferenceElement reference) {
     if (myInputVariables.isEmpty()) return;
     final PsiElement element = reference.resolve();
     for (VariableData data : myInputVariables) {
@@ -354,6 +366,6 @@ public class InputVariables {
   }
 
   public boolean hasInstanceFields() {
-    return myUsedInstanceFields != null && !myUsedInstanceFields.isEmpty();
+    return !myUsedInstanceFields.isEmpty();
   }
 }

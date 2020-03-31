@@ -26,7 +26,9 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,10 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
+  @NotNull
+  private PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
 
   // PY-19773
   public void testReexportedName() {
@@ -74,12 +80,25 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-21563
   public void testCombineFromImportsForReferencesInTypeComment() {
-    doMultiFileAutoImportTest("Import this name");
+    doMultiFileAutoImportTest("Import 'typing.Set'");
   }
 
   // PY-25234
   public void testBinarySkeletonStdlibModule() {
-    doMultiFileAutoImportTest("Import 'sys'");
+    runWithAdditionalFileInLibDir(
+      "re.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInSkeletonDir(
+          "sys.py",
+          "# encoding: utf-8\n" +
+          "# module sys\n" +
+          "# from (built-in)\n" +
+          "# by generator 1.138\n" +
+          "path = 10",
+          (___) -> doMultiFileAutoImportTest("Import 'sys'")
+        )
+    );
   }
 
   // PY-25234
@@ -133,6 +152,105 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testAlwaysSplitFromImports() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
     doMultiFileAutoImportTest("Import 'mod.bar()'");
+  }
+
+  // PY-20976
+  public void testCombinedElementOrdering() {
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path",
+                                                 "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path")
+        )
+    );
+  }
+
+  // PY-20976
+  public void testOrderingLocalBeforeStdlib() {
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "path = 10",
+      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path")
+    );
+  }
+
+  // PY-20976
+  public void testOrderingUnderscoreInPath() {
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "path = 10",
+      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "_private.path")
+    );
+  }
+
+  // PY-20976
+  public void testOrderingSymbolBeforeModule() {
+    doTestProposedImportsOrdering("foo", "first.module.foo()", "first.a.foo");
+  }
+
+  // PY-20976
+  public void testOrderingModuleBeforePackage() {
+    doTestProposedImportsOrdering("foo", "b.foo", "a.foo");
+  }
+
+  // PY-20976
+  public void testOrderingPathComponentsNumber() {
+    doTestProposedImportsOrdering("foo", "c.foo", "b.c.foo", "a.b.c.foo");
+  }
+
+  // PY-20976
+  public void testOrderingWithExistingImport() {
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path")
+        )
+    );
+  }
+
+  // PY-34818
+  public void testReferenceInsideFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doMultiFileAutoImportTest("Import");
+    });
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportBeginning() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportInTheMiddle() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportEnd() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  private void doTestProposedImportsOrdering(@NotNull String text, String @NotNull ... expected) {
+    doMultiFileAutoImportTest("Import", fix -> {
+      final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText(text));
+      assertNotNull(candidates);
+      assertContainsInRelativeOrder(candidates, expected);
+      return false;
+    });
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {

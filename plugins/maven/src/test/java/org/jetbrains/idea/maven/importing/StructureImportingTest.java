@@ -847,7 +847,19 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule());
   }
 
-  public void testPreviewLanguageLevel() {
+  public void testPreviewLanguageLevelOneLine() {
+    doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelArg() {
+    doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelCompilerArg() {
+    doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n");
+  }
+
+  private void doTestPreview(String compilerArgs) {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -859,19 +871,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <artifactId>maven-compiler-plugin</artifactId>\n" +
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
-                  "          <release>12</release>\n" +
-                  "          <compilerArgs>\n" +
-                  "              <arg>--enable-preview</arg>\n" +
-                  "          </compilerArgs>\n" +
-                  "          <source>12</source>\n" +
-                  "          <target>12</target>\n" +
+                  "          <release>13</release>\n" +
+                             compilerArgs +
+                  "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
                   "      </configuration>\n" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_12_PREVIEW, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_13_PREVIEW, getLanguageLevelForModule());
   }
 
   public void testInheritingLanguageLevelFromPluginManagementSection() {

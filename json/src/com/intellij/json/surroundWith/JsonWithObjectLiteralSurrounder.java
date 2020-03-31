@@ -41,7 +41,7 @@ public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return !JsonPsiUtil.isPropertyKey(elements[0]) && (elements[0] instanceof JsonProperty || elements.length == 1);
   }
 
@@ -49,7 +49,7 @@ public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
   @Override
   public TextRange surroundElements(@NotNull Project project,
                                     @NotNull Editor editor,
-                                    @NotNull PsiElement[] elements) throws IncorrectOperationException {
+                                    PsiElement @NotNull [] elements) throws IncorrectOperationException {
 
     if (!isApplicable(elements)) {
       return null;

@@ -17,13 +17,11 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualFile, VirtualFilePattern> {
   public VirtualFilePattern() {
     super(VirtualFile.class);
@@ -33,7 +31,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     return with(new PatternCondition<VirtualFile>("ofType") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        return type.equals(virtualFile.getFileType());
+        return FileTypeRegistry.getInstance().isFileOfType(virtualFile, type);
       }
     });
   }
@@ -42,7 +40,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     return withName(PlatformPatterns.string().equalTo(name));
   }
 
-  public VirtualFilePattern withExtension(@NotNull final String... alternatives) {
+  public VirtualFilePattern withExtension(final String @NotNull ... alternatives) {
     return with(new PatternCondition<VirtualFile>("withExtension") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {

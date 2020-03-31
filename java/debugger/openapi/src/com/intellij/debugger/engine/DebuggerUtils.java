@@ -1,13 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -30,7 +30,9 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -39,13 +41,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class DebuggerUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
+  private static final Logger LOG = Logger.getInstance(DebuggerUtils.class);
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
-  public static final Set<String> ourPrimitiveTypeNames = new HashSet<>(Arrays.asList(
+  public static final Set<String> ourPrimitiveTypeNames = ContainerUtil.set(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
-  ));
+  );
 
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
     debugProcess.putUserData(TO_STRING_METHOD_KEY, null);
@@ -78,17 +81,11 @@ public abstract class DebuggerUtils {
       }
       if (value instanceof ObjectReference) {
         if (value instanceof ArrayReference) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append("[");
-          for (Iterator<Value> iterator = ((ArrayReference)value).getValues().iterator(); iterator.hasNext();) {
-            final Value element = iterator.next();
-            builder.append(getValueAsString(evaluationContext, element));
-            if (iterator.hasNext()) {
-              builder.append(",");
-            }
+          final StringJoiner joiner = new StringJoiner(",", "[", "]");
+          for (final Value element : ((ArrayReference)value).getValues()) {
+            joiner.add(getValueAsString(evaluationContext, element));
           }
-          builder.append("]");
-          return builder.toString();
+          return joiner.toString();
         }
 
         final ObjectReference objRef = (ObjectReference)value;
@@ -102,36 +99,59 @@ public abstract class DebuggerUtils {
           }
           catch (Exception ignored) {
             throw EvaluateExceptionUtil.createEvaluateException(
-              DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+              JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
           }
         }
         if (toStringMethod == null) {
-          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+          throw EvaluateExceptionUtil.createEvaluateException(
+            JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
-        final Value result = evaluationContext.computeAndKeep(
-          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0));
-        // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
-        // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-        if (result == null) {
-          return "null";
-        }
-        return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+        return processCollectibleValue(
+          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
+          result -> {
+            // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
+            // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
+            if (result == null) {
+              return "null";
+            }
+            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+          }
+        );
       }
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
 
-  public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
-    throws EvaluateException {
-    StackFrameProxy frameProxy = context.getFrameProxy();
-    if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.is.being.initialized"));
+  public static <R, T extends Value> R processCollectibleValue(
+    @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+    @NotNull Function<T, R> processor) throws EvaluateException {
+    int retries = 10;
+    while (true) {
+      T result = valueComputable.compute();
+      try {
+        return processor.apply(result);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          throw oce;
+        }
+      }
     }
   }
+
+  public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
+    throws EvaluateException {
+    Location location = getInstance().getLocation(context.getSuspendContext());
+    if (location != null && location.method().isConstructor() && reference.equals(context.computeThisObject())) {
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.is.being.initialized"));
+    }
+  }
+
+  protected abstract Location getLocation(SuspendContext context);
 
   public static final int MAX_DISPLAY_LABEL_LENGTH = 1024 * 5;
 
@@ -166,18 +186,52 @@ public abstract class DebuggerUtils {
     }
 
     Method method = null;
-    if (methodSignature != null) {
-      if (refType instanceof ClassType) {
-        method = ((ClassType)refType).concreteMethodByName(methodName, methodSignature);
-      }
-      if (method == null) {
-        method = ContainerUtil.getFirstItem(refType.methodsByName(methodName, methodSignature));
-      }
+    // speedup the search by not gathering all methods through the class hierarchy
+    if (refType instanceof ClassType) {
+      method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
     }
-    else {
-      method = ContainerUtil.getFirstItem(refType.methodsByName(methodName));
+    if (method == null) {
+      method = ContainerUtil.getFirstItem(
+        methodSignature != null ? refType.methodsByName(methodName, methodSignature) : refType.methodsByName(methodName));
     }
     return method;
+  }
+
+  /**
+   * Optimized version of {@link com.sun.jdi.ClassType#concreteMethodByName(java.lang.String, java.lang.String)}.
+   * It does not gather all visible methods before checking so can return early
+   */
+  @Nullable
+  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature)  {
+    Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
+    LinkedList<ReferenceType> types = new LinkedList<>();
+    // first check classes
+    while (type != null) {
+      for (Method candidate : type.methods()) {
+        if (candidate.name().equals(name) && signatureChecker.process(candidate)) {
+          return !candidate.isAbstract() ? candidate : null;
+        }
+      }
+      types.add(type);
+      type = type.superclass();
+    }
+    // then interfaces
+    Set<ReferenceType> checkedInterfaces = new HashSet<>();
+    ReferenceType t;
+    while ((t = types.poll()) != null) {
+      if (t instanceof ClassType) {
+        types.addAll(0, ((ClassType)t).interfaces());
+      }
+      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+        for (Method candidate : t.methods()) {
+          if (candidate.name().equals(name) && signatureChecker.process(candidate) && !candidate.isAbstract()) {
+            return candidate;
+          }
+        }
+        types.addAll(0, ((InterfaceType)t).superinterfaces());
+      }
+    }
+    return null;
   }
 
   public static boolean isNumeric(Value value) {
@@ -310,9 +364,10 @@ public abstract class DebuggerUtils {
           return result;
         }
 
-        for (InterfaceType iface : clsType.allInterfaces()) {
-          if (typeEquals(iface, superType)) {
-            return iface;
+        for (InterfaceType iface : clsType.interfaces()) {
+          result = getSuperType(iface, superType);
+          if (result != null) {
+            return result;
           }
         }
       }
@@ -421,10 +476,11 @@ public abstract class DebuggerUtils {
   public static void checkSyntax(PsiCodeFragment codeFragment) throws EvaluateException {
     PsiElement[] children = codeFragment.getChildren();
 
-    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.empty.code.fragment"));
+    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(
+      JavaDebuggerBundle.message("evaluation.error.empty.code.fragment"));
     for (PsiElement child : children) {
       if (child instanceof PsiErrorElement) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }
   }

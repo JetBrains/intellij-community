@@ -33,14 +33,14 @@ public interface CustomUncommenter {
    * Finds commented block in provided text.
    *
    * @param text text to search comment for.
-   * @return commented block (including comment prefix and suffix!) or null if text does not contain any  commented blocks.
+   * @return commented block (including comment prefix and suffix!) or null if text does not contain any commented blocks.
    */
   @Nullable
   TextRange findMaximumCommentedRange(@NotNull CharSequence text);
 
 
   /**
-   * Returns couples each pointing to comment prefix and suffiix:
+   * Returns couples each pointing to comment prefix and suffix:
    * [commentPrefix-start,commentPrefix-end] -- [commentSuffix-start,commentSuffix-end].
    * If block has several commented areas you may provide all of them.
    *

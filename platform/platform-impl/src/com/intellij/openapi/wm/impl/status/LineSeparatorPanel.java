@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -11,14 +11,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
   public LineSeparatorPanel(@NotNull Project project) {
-    super(project);
+    super(project, true);
   }
 
   @NotNull
@@ -28,18 +30,12 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
     String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    String toolTipText;
-    String panelText;
-    if (lineSeparator != null) {
-      toolTipText = String.format("Line separator: %s", StringUtil.escapeLineBreak(lineSeparator));
-      panelText = LineSeparator.fromString(lineSeparator).toString();
+    if (lineSeparator == null) {
+      return WidgetState.HIDDEN;
     }
-    else {
-      toolTipText = "No line separator";
-      panelText = "n/a";
-    }
-
-    return new WidgetState(toolTipText, panelText, lineSeparator != null);
+    String toolTipText = String.format("Line Separator: %s", StringUtil.escapeLineBreak(lineSeparator));
+    String panelText = LineSeparator.fromString(lineSeparator).toString();
+    return new WidgetState(toolTipText, panelText, true);
   }
 
   @Nullable
@@ -51,7 +47,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      "Line Separator",
+      UIBundle.message("status.bar.line.separator.widget.name"),
       (ActionGroup)group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -59,20 +55,15 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     );
   }
 
-  @Override
-  protected void registerCustomListeners() {
-    // nothing
-  }
-
   @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
+  protected StatusBarWidget createInstance(@NotNull Project project) {
     return new LineSeparatorPanel(project);
   }
 
   @NotNull
   @Override
   public String ID() {
-    return "LineSeparator";
+    return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
   }
 }

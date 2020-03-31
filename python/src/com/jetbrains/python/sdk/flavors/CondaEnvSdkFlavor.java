@@ -19,9 +19,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -40,23 +42,32 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   private CondaEnvSdkFlavor() {
   }
 
-  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
-    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
-
-  public static final CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
+  public static CondaEnvSdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(CondaEnvSdkFlavor.class);
+  }
 
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public boolean isPlatformIndependent() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     final List<String> results = new ArrayList<>();
-    final Sdk sdk = ReadAction.compute(() -> PythonSdkType.findPythonSdk(module));
+    final Sdk sdk = ReadAction.compute(() -> PythonSdkUtil.findPythonSdk(module));
     try {
       final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
       for (String environment : environments) {
         results.addAll(ReadAction.compute(() -> {
           final VirtualFile root = StandardFileSystems.local().findFileByPath(environment);
-          return StreamEx.of(findInRootDirectory(root))
-            .filter(s -> getCondaEnvRoot(s) != null)
-            .toList();
+          final Collection<String> found = findInRootDirectory(root);
+          if (PyCondaSdkCustomizer.Companion.getInstance().getDetectEnvironmentsOutsideEnvsFolder()) {
+            return found;
+          }
+          else {
+            return StreamEx.of(found).filter(s -> getCondaEnvRoot(s) != null).toList();
+          }
         }));
       }
     }
@@ -69,7 +80,7 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
     if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkType.isConda(file.getPath());
+    return PythonSdkUtil.isConda(file.getPath());
   }
 
   @Nullable

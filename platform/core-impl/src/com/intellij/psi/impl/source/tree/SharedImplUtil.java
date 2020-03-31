@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 //TODO: rename/regroup?
 
 public class SharedImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SharedImplUtil");
+  private static final Logger LOG = Logger.getInstance(SharedImplUtil.class);
   private static final boolean CHECK_FOR_READ_ACTION = DebugUtil.DO_EXPENSIVE_CHECKS || ApplicationManager.getApplication().isInternal();
 
   private SharedImplUtil() {
@@ -158,8 +158,7 @@ public class SharedImplUtil {
     return node.getTreeParent().getPsi().getManager();
   }
 
-  @NotNull
-  public static ASTNode[] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
+  public static ASTNode @NotNull [] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
     int count = countChildrenOfType(node, elementType);
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;

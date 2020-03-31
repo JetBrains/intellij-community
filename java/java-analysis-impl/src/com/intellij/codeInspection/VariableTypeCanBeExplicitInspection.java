@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -47,7 +48,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
 
       private void registerTypeElementProblem(PsiTypeElement typeElement) {
         holder.registerProblem(typeElement,
-                               "'var' can be replaced with explicit type",
+                               JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceVarWithExplicitTypeFix());
       }
@@ -70,7 +71,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace 'var' with explicit type";
+      return JavaAnalysisBundle.message("replace.var.with.explicit.type");
     }
 
     @Override

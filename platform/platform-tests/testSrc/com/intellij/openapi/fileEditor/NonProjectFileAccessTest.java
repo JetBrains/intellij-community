@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -7,10 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
@@ -22,15 +21,18 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +47,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
-    ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
+    ServiceContainerUtil.replaceService(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
   }
@@ -136,7 +139,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       try {
-        VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
+        VirtualFile moduleDir = VfsUtil.createDirectoryIfMissing(getProject().getBasePath() + "/moduleWithoutContentRoot");
         moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
         moduleModel.commit();
       }
@@ -316,12 +319,12 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final Set<VirtualFile> requested = new LinkedHashSet<>();
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
+    ServiceContainerUtil.registerExtension(getProject(), WritingAccessProvider.EP, new WritingAccessProvider() {
       @NotNull
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
         requested.addAll(files);
-        HashSet<VirtualFile> denied = new HashSet<>(Arrays.asList(filesToDeny));
+        Set<VirtualFile> denied = ContainerUtil.set(filesToDeny);
         denied.retainAll(files);
         return denied;
       }
@@ -330,7 +333,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void registerAccessCheckExtension(Collection<VirtualFile> filesToAllow, Collection<VirtualFile> filesToDeny) {
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), NonProjectFileWritingAccessExtension.EP_NAME,
+    ServiceContainerUtil.registerExtension(getProject(), NonProjectFileWritingAccessExtension.EP_NAME,
                                        new NonProjectFileWritingAccessExtension() {
                                          @Override
                                          public boolean isWritable(@NotNull VirtualFile file) {
@@ -404,7 +407,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void typeInChar(Editor e, char c) {
-    getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
+    getActionManager();
+    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
   private DataContext createDataContextFor(final Editor editor) {

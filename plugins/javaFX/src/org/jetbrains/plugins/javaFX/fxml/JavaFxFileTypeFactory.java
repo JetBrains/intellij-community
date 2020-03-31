@@ -1,16 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxFileTypeFactory extends FileTypeFactory {
+public class JavaFxFileTypeFactory implements FileTypeUsageSchemaDescriptor {
+  @Override
+  public boolean describes(@NotNull VirtualFile file) {
+    return isFxml(file);
+  }
+
   @NonNls public static final String FXML_EXTENSION = "fxml";
   @NonNls static final String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;
 
@@ -32,12 +36,5 @@ public class JavaFxFileTypeFactory extends FileTypeFactory {
   @NotNull
   public static FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION);
-  }
-
-  @Override
-  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    final FileType fileType = consumer.getStandardFileTypeByName("XML");
-    assert fileType != null;
-    consumer.consume(fileType, FXML_EXTENSION);
   }
 }

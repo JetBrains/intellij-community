@@ -433,6 +433,12 @@ public class PyTypingTest extends PyTestCase {
                        "Union[List[C], C]");
   }
 
+  // PY-37515
+  public void testNoStringLiteralInjectionUnderCall() {
+    doTestNoInjectedText("class Model:\n" +
+                         "    field: call('<caret>List[str]')");
+  }
+
   // PY-15810
   public void testNoStringLiteralInjectionForNonTypingStrings() {
     doTestNoInjectedText("class C:\n" +
@@ -1472,6 +1478,19 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = Sub().m()\n");
+  }
+
+  // PY-35235
+  public void testNoStringLiteralInjectionForTypingLiteral() {
+    doTestNoInjectedText("from typing import Literal\n" +
+                         "a: Literal[\"f<caret>oo\"]\n");
+
+    doTestNoInjectedText("from typing import Literal\n" +
+                         "a: Literal[42, \"f<caret>oo\", True]\n");
+
+    doTestNoInjectedText("from typing import Literal\n" +
+                         "MyType = Literal[42, \"f<caret>oo\", True]\n" +
+                         "a: MyType\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

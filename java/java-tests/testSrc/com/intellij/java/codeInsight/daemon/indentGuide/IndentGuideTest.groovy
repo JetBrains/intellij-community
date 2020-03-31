@@ -3,15 +3,17 @@
  */
 package com.intellij.java.codeInsight.daemon.indentGuide
 
+import com.intellij.openapi.editor.IndentGuideDescriptor
+import com.intellij.openapi.editor.IndentsModel
 import com.intellij.openapi.editor.impl.IndentsModelImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
 /**
  * @author Denis Zhdanov
  */
-class IndentGuideTest extends LightCodeInsightFixtureTestCase {
+class IndentGuideTest extends BaseIndentGuideTest {
 
   @Override
   protected void setUp() throws Exception {
@@ -133,6 +135,19 @@ class Test {
     )
   }
 
+  void "test tabs indent"() {
+    doTest(
+      """\
+class Test {
+		void m() {
+		|
+		|  int v;
+		}
+}
+"""
+    )
+  }
+
   void testCodeConstructStartLine() {
     myFixture.configureByText("${getTestName(false)}.java", """\
 class C {
@@ -148,63 +163,78 @@ class C {
     assert guide.toString() == "2 (1-2-4)"
   }
 
+  void testIndentModel() {
+    myFixture.configureByText("${getTestName(false)}.java", """\
+class C {
+       }""")
+
+    def model = myFixture.editor.indentsModel as IndentsModelImpl
+    def nLines = myFixture.editor.document.lineCount
+    def nCols = myFixture.editor.document.getLineEndOffset(0)
+
+    model.assumeIndents([])
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        def actual = model.getDescriptor(start, end)?.indentLevel
+        assertNull("Indent at lines $start-$end, level: $actual is present, but it shouldn't", actual)
+      }
+    }
+
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        for (int level = 0; level < nCols; level++) {
+          model.assumeIndents([new IndentGuideDescriptor(level, start, end)])
+          def actual = model.getDescriptor(start, end)?.indentLevel
+          assertNotNull("Indent at ${level} for lines ${start} - ${end} is missing", actual)
+          assertEquals("Expected indent at lines ${start} - ${end}, level: ${level}, found at ${actual}", level, actual)
+        }
+      }
+    }
+
+    model.assumeIndents([new IndentGuideDescriptor(0, 0, 1), new IndentGuideDescriptor(1, 1, 2)])
+    def actual = model.getDescriptor(0, 1)?.indentLevel
+    assertNotNull("Indent at 0 for lines 0 - 1 is missing", actual)
+    assertEquals("Expected indent at lines 0 - 1, level: 0, found at $actual", 0, actual)
+    actual = model.getDescriptor(1, 2)?.indentLevel
+    assertNotNull("Indent at 1 for lines 1 - 2 is missing", actual)
+    assertEquals("Expected indent at lines 1 - 2, level: 1, found at $actual", 1, actual)
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        actual = model.getDescriptor(start, end)?.indentLevel
+        if (start == 0 && end == 1 && actual == 0 || start == 1 && end == 2 && actual == 1) continue
+        assertNull("Indent at lines $start-$end, level: $actual is present, but it shouldn't", actual)
+      }
+    }
+  }
+
   private void doTest(@NotNull String text) {
-    IndentGuideTestData testData = parse(text)
-    myFixture.configureByText("${getTestName(false)}.java", testData.documentText)
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.file, myFixture.editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
-    IndentsModelImpl model = myFixture.editor.indentsModel as IndentsModelImpl
-    assertEquals(
-      "expected to find ${testData.guides.size()} indent guides (" +
-      "${testData.guides.collect { startLine, endLine, level -> "$level ($startLine-$endLine)"}}) " +
-      "but got ${model.indents.size()} (${model.indents})",
-      testData.guides.size(), model.indents.size()
-    )
+    doTest(text, { IndentModelGuidesProvider.create(it) })
+  }
 
-    testData.guides.each {
-      def descriptor = model.getDescriptor(it[0], it[1])
-      assertNotNull("expected to find an indent guide at lines ${it[0]}-${it[1]}", descriptor)
-      assertEquals(
-        "expected that indent guide descriptor at lines ${it[0]}-${it[1]} has indent ${it[2]} but got ${descriptor.indentLevel}",
-        it[2], descriptor.indentLevel
-      )
+  private static class IndentModelGuidesProvider implements IndentGuidesProvider {
+
+    private final IndentsModel myIndentsModel
+    private final List<Guide> myGuides
+
+    private IndentModelGuidesProvider(IndentsModel indentsModel, List<Guide> guides) {
+      myIndentsModel = indentsModel
+      myGuides = guides
+    }
+
+    private static IndentModelGuidesProvider create(CodeInsightTestFixture fixture) {
+      def indentsModel = fixture.editor.indentsModel
+      def guides = extractIndentGuides(indentsModel)
+      return new IndentModelGuidesProvider(indentsModel, guides)
+    }
+
+    private static List<Guide> extractIndentGuides(IndentsModel indentsModel) {
+      (indentsModel as IndentsModelImpl).indents.collect {new Guide(it.startLine, it.endLine, it.indentLevel)}
+    }
+
+    @NotNull
+    @Override
+    List<Guide> getGuides() {
+      return myGuides
     }
   }
-  
-  @NotNull
-  private static IndentGuideTestData parse(@NotNull String text) {
-    def buffer = new StringBuilder()
-    def indentGuides = []
-    def prevLineIndents = [:] // indent level -> start line
-    int shift, i, textStart
-    text.eachLine { lineText, line ->
-      shift = textStart = 0
-      def endedGuides = prevLineIndents.clone() as Map
-      for (i = lineText.indexOf('|', 0); i >= 0; i = lineText.indexOf('|', textStart)) {
-        def indentLevel = i - shift
-        if (prevLineIndents[indentLevel]) {
-          endedGuides.remove(indentLevel)
-        }
-        else {
-          prevLineIndents[indentLevel] = line - 1
-        }
-        shift++
-        buffer << lineText[textStart..<i]
-        textStart = i + 1
-      }
-      endedGuides.each { level, startLine ->
-        indentGuides << [startLine, line, level]
-        prevLineIndents.remove(level)
-      }
-      if (textStart < lineText.length()) {
-        buffer << lineText[textStart..-1]
-      }
-      buffer << '\n'
-    }
-    new IndentGuideTestData(documentText: buffer[0..-2], guides: indentGuides)
-  }
-}
-
-class IndentGuideTestData {
-  String documentText
-  List guides // List of three element lists: [start indent line; end indent line; indent level]
 }

@@ -31,12 +31,12 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   private PsiType myS;
 
   public TypeCompatibilityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
-    myT = t;
-    myS = s;
+    myT = t.annotate(TypeAnnotationProvider.EMPTY);
+    myS = s.annotate(TypeAnnotationProvider.EMPTY);
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
       if (!assignable) {

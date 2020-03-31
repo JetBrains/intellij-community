@@ -7,7 +7,7 @@ public class Main {
       switch (str) {
         case "foo" -> {
           System.out.println("here");
-          break "FOO";
+          yield "FOO";
         }
         case "bar", "beer" -> "BAR";
         case "baz" -> "bAz";
@@ -17,15 +17,17 @@ public class Main {
     final String numericString2 =
       switch (str) {
         case "foo":
-          break "FOO";
+          yield "FOO";
         case "bar":
-          break "BAR";
+          yield "BAR";
         case "baz", "zub":
           System.out.println("here");
-          break "bAz";
+          yield "bAz";
         default:
-          break "default";
+          yield "default";
       };
+
     return numericString + numericString2;
   }
+
 }

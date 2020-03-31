@@ -83,15 +83,9 @@ public class MethodMayBeStaticInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox("Ignore 'default' methods", IGNORE_DEFAULT_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox("Quick fix replaces instance qualifiers with class references", REPLACE_QUALIFIER_ATTR_NAME);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.ignore.default.methods.option"), IGNORE_DEFAULT_METHODS_ATTR_NAME);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.replaces.qualifiers.with.class.references.option"), REPLACE_QUALIFIER_ATTR_NAME);
     return optionsPanel;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.may.be.static.display.name");
   }
 
   @Override
@@ -142,11 +136,8 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
-      for (Condition<PsiElement> addin : addins) {
-        if (addin.value(method)) {
-          return;
-        }
+      for (Condition<PsiElement> addin : InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensionList()) {
+        if (addin.value(method)) return;
       }
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface()) {

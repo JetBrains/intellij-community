@@ -1,4 +1,7 @@
-from _pydev_imps._pydev_saved_modules import threading
+try:
+    import queue
+except:
+    import Queue as queue
 
 
 def wrapper(fun):
@@ -62,7 +65,14 @@ def factory_wrapper(fun):
     def inner(*args, **kwargs):
         obj = fun(*args, **kwargs)
         return ObjectWrapper(obj)
+
     return inner
+
+
+class QueueWrapper(ObjectWrapper):
+    def __init__(self, maxsize=0):
+        real_queue = queue._real_Queue(maxsize)
+        super().__init__(real_queue)
 
 
 def wrap_threads():
@@ -75,30 +85,23 @@ def wrap_threads():
     threading.RLock = factory_wrapper(threading.RLock)
 
     # queue patching
-    try:
-        import queue  # @UnresolvedImport
-        queue.Queue = factory_wrapper(queue.Queue)
-    except:
-        import Queue
-        Queue.Queue = factory_wrapper(Queue.Queue)
+    queue._real_Queue = queue.Queue
+    queue.Queue = QueueWrapper
 
 
 class AsyncioTaskWrapper(ObjectWrapper):
     _asyncio_future_blocking = True
 
+    def __init__(self, *args, **kwargs):
+        import asyncio
+        real_task = asyncio.tasks._OrigTask(*args, **kwargs)
+        super().__init__(real_task)
+
     def __await__(self, *args, **kwargs):
         return self.wrapped_object.__await__(*args, **kwargs)
-
-
-def asyncio_factory_wrapper(fun):
-    def inner(*args, **kwargs):
-        obj = fun(*args, **kwargs)
-        wrapper = AsyncioTaskWrapper(obj)
-        return wrapper
-    return inner
 
 
 def wrap_asyncio():
     import asyncio
     asyncio.tasks._OrigTask = asyncio.tasks.Task
-    asyncio.tasks.Task = asyncio_factory_wrapper(asyncio.tasks.Task)
+    asyncio.tasks.Task = AsyncioTaskWrapper

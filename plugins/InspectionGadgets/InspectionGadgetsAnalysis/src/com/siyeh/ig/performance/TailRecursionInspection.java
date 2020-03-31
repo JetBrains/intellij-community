@@ -41,12 +41,6 @@ public class TailRecursionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("tail.recursion.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("tail.recursion.problem.descriptor");
   }
@@ -273,7 +267,6 @@ public class TailRecursionInspection extends BaseInspection {
         for (Integer index : sortedNodes) {
           final PsiParameter parameter = parameters[index];
           final String parameterName = parameter.getName();
-          assert parameterName != null;
           final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[index]);
           assert argument != null;
           if (argument instanceof PsiReferenceExpression) {

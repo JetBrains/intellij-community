@@ -73,6 +73,18 @@
     <keyboard-shortcut first-keystroke="meta N"/>
   </action>
 
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="control shift SLASH"/>
+    <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+    <keyboard-shortcut first-keystroke="meta shift SLASH"/>
+    <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+    <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+  </action>
+  <action id="SwiftGenerateDocComment">
+    <keyboard-shortcut first-keystroke="meta alt SLASH"/>
+    <keyboard-shortcut first-keystroke="meta alt DIVIDE"/>
+  </action>
+
   <action id="$Cut">
     <keyboard-shortcut first-keystroke="meta X"/> <!--disable shift DELETE-->
   </action>
@@ -360,6 +372,7 @@
     <keyboard-shortcut first-keystroke="control F1"/>
     <keyboard-shortcut first-keystroke="alt SPACE"/>
   </action>
+  <action id="ToggleRenderedDocPresentation"/>
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="control meta E"/>
     <keyboard-shortcut first-keystroke="shift F6"/>
@@ -449,6 +462,7 @@
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
   <action id="SwitcherRecentEditedChangedToggleCheckBox"/>
+  <action id="SwitcherIterateItems"/>
   <action id="RecentChangedFiles" />
   <action id="ToggleLineBreakpoint">
     <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
@@ -593,6 +607,10 @@
   </action>
 
   <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control meta E"/>
+    <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
+  <action id="Git.Rename.Local.Branch">
     <keyboard-shortcut first-keystroke="control meta E"/>
     <keyboard-shortcut first-keystroke="shift F6"/>
   </action>

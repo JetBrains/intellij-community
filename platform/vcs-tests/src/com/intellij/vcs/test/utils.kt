@@ -3,28 +3,8 @@ package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import org.junit.Assert.assertEquals
-import org.picocontainer.MutablePicoContainer
-
-inline fun <reified Int : Any, reified Impl : Int> overrideService(project: Project): Impl {
-  val key = Int::class.java.name
-  val picoContainer = project.picoContainer as MutablePicoContainer
-  picoContainer.unregisterComponent(key)
-  picoContainer.registerComponentImplementation(key, Impl::class.java)
-  return project.service<Int>() as Impl
-}
-
-inline fun <reified Int : Any, reified Impl : Int> overrideService(): Impl {
-  val key = Int::class.java.name
-  val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-  picoContainer.unregisterComponent(key)
-  picoContainer.registerComponentImplementation(key, Impl::class.java)
-  return service<Int>() as Impl
-}
 
 fun assertNotification(type: NotificationType, title: String, content: String, actions: List<String>?, actual: Notification): Notification {
   assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)

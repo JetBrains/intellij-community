@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,8 @@ import java.util.ResourceBundle;
  * @author Dmitry Avdeev
  * @see LocalInspectionEP
  */
-public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
+public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
+  private static final Logger LOG = Logger.getInstance(InspectionEP.class);
 
   /**
    * @see GlobalInspectionTool
@@ -42,26 +43,32 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("shortName")
   public String shortName;
 
+  @NonNls
   @NotNull
   public String getShortName() {
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
-    return shortName == null ? shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
+    return shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
-  @Nls
   public String getDisplayName() {
-    return displayName == null ? displayName = getLocalizedString(bundle, key) : displayName;
+    return displayName != null ? displayName : getLocalizedString(bundle, key);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
-  @Nls
   public String getGroupDisplayName() {
-    return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
+    return groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
   }
 
+  @Override
+  @Nullable
+  public String getGroupKey() {
+    return groupKey;
+  }
   /**
    * Message key for {@link #displayName}.
    *
@@ -81,7 +88,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public String bundle;
 
   /**
-   * Non-localized display name. Use {@link #key} for I18N.
+   * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
    */
   @Attribute("displayName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -106,24 +113,24 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public String groupBundle;
 
   /**
-   * Non-localized group display name. Use {@link #groupKey} for I18N.
+   * Non-localized group display name used in UI (Settings|Editor|Inspections). Use {@link #groupKey} for I18N.
    */
   @Attribute("groupName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String groupDisplayName;
 
   /**
-   * Comma-delimited list of parent groups (excluding groupName), e.g. {@code "Java,Java language level migration aids"}.
+   * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("groupPath")
   public String groupPath;
 
-  @Nullable
-  public String[] getGroupPath() {
+  public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
     if (groupPath == null) {
-      return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
+      return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
     return ArrayUtil.append(groupPath.split(","), name);
   }
@@ -159,7 +166,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
-                                    "and short name: " + shortName, getPluginId()));
+                                    "and short name: " + shortName, getPluginDescriptor().getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
@@ -174,29 +181,23 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Nullable
   private String getLocalizedString(@Nullable String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName :
-                            bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
+                            bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
-    return CommonBundle.message(resourceBundle, key);
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
+    return AbstractBundle.message(resourceBundle, key);
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");
 
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    try {
-      final InspectionProfileEntry entry = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
-      entry.myNameProvider = this;
-      return entry;
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    // must create a new instance for each invocation
+    InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
+    entry.myNameProvider = this;
+    return entry;
   }
 
   @Override

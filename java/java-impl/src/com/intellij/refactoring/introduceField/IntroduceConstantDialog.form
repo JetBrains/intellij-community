@@ -21,7 +21,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/RefactoringBundle" key="introduce.constant.field.of.type"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.constant.field.of.type"/>
             </properties>
           </component>
           <xy id="610f" binding="myTypePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
@@ -67,7 +67,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/RefactoringBundle" key="introduce.constant.introduce.to.class"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="introduce.constant.introduce.to.class"/>
         </properties>
       </component>
       <xy id="31fde" binding="myTargetClassNamePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
@@ -94,7 +94,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/RefactoringBundle" key="delete.variable.declaration"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="delete.variable.declaration"/>
         </properties>
       </component>
       <component id="a0ffe" class="javax.swing.JCheckBox" binding="myCbNonNls">
@@ -103,7 +103,7 @@
         </constraints>
         <properties>
           <selected value="false"/>
-          <text resource-bundle="messages/RefactoringBundle" key="annotate.field.as.nonnls.checkbox"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="annotate.field.as.nonnls.checkbox"/>
         </properties>
       </component>
       <grid id="46a1d" binding="myVisibilityPanel" layout-manager="BorderLayout" hgap="0" vgap="0">

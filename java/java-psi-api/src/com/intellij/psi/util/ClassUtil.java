@@ -16,7 +16,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -110,7 +109,7 @@ public class ClassUtil {
       private int myCurrentIdx;
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
         }
@@ -275,10 +274,10 @@ public class ClassUtil {
     StringBuilder signature = new StringBuilder();
     signature.append("(");
     for (PsiParameter param : method.getParameterList().getParameters()) {
-      signature.append(toAsm(param.getType()));
+      signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(toAsm(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
     return signature.toString();
   }
 
@@ -294,12 +293,12 @@ public class ClassUtil {
   private static PsiTypeVisitor<String> createSignatureVisitor() {
     return new PsiTypeVisitor<String>() {
       @Override
-      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public String visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType.getCanonicalText();
       }
 
       @Override
-      public String visitClassType(PsiClassType classType) {
+      public String visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return "";
@@ -308,7 +307,7 @@ public class ClassUtil {
       }
 
       @Override
-      public String visitArrayType(PsiArrayType arrayType) {
+      public String visitArrayType(@NotNull PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         String typePresentation = componentType.accept(this);
         if (arrayType.getDeepComponentType() instanceof PsiPrimitiveType) {
@@ -323,35 +322,45 @@ public class ClassUtil {
   }
 
   @NotNull
-  private static String toAsm(@NotNull PsiType psiType) {
+  public static String getClassObjectPresentation(@NotNull PsiType psiType) {
+     return toBinary(psiType, false);
+  }
+
+  @NotNull
+  public static String getBinaryPresentation(@NotNull PsiType psiType) {
+    return toBinary(psiType, true);
+  }
+
+  @NotNull
+  private static String toBinary(@NotNull PsiType psiType, final boolean slashes) {
     return Optional.of(psiType)
                    .map(type -> TypeConversionUtil.erasure(type))
-                   .map(type -> type.accept(createAsmSignatureVisitor()))
+                   .map(type -> type.accept(createBinarySignatureVisitor(slashes)))
                    .orElseGet(() -> psiType.getPresentableText());
   }
 
-  private static PsiTypeVisitor<String> createAsmSignatureVisitor() {
+  private static PsiTypeVisitor<String> createBinarySignatureVisitor(boolean slashes) {
     return new PsiTypeVisitor<String>() {
       @Override
-      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public String visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType.getKind().getBinaryName();
       }
 
       @Override
-      public String visitClassType(PsiClassType classType) {
+      public String visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return "";
         }
         String jvmClassName = getJVMClassName(aClass);
         if (jvmClassName != null) {
-          jvmClassName = "L" + jvmClassName.replace(".", "/") + ";";
+          jvmClassName = "L" + (slashes ? jvmClassName.replace(".", "/") : jvmClassName) + ";";
         }
         return jvmClassName;
       }
 
       @Override
-      public String visitArrayType(PsiArrayType arrayType) {
+      public String visitArrayType(@NotNull PsiArrayType arrayType) {
         return "[" + arrayType.getComponentType().accept(this);
       }
     };

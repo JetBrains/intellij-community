@@ -15,25 +15,27 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
+import com.intellij.openapi.file.exclude.EnforcedPlainTextFileType;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class EnforcedPlaintTextFileTypeManagerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class EnforcedPlaintTextFileTypeManagerTest extends BasePlatformTestCase {
   public void testMarkAsPlainText() {
     EnforcedPlainTextFileTypeManager manager = EnforcedPlainTextFileTypeManager.getInstance();
-    VirtualFile file = myFixture.getTempDirFixture().createFile("test.java");
+    VirtualFile file = myFixture.getTempDirFixture().createFile("test.xml");
     FileType originalType = file.getFileType();
-    assertEquals("JAVA", originalType.getName());
+    assertEquals(StdFileTypes.XML, originalType);
     manager.markAsPlainText(getProject(), file);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
     FileType changedType = file.getFileType();
-    assertEquals(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT, changedType.getName());
+    assertEquals(EnforcedPlainTextFileType.INSTANCE, changedType);
+    assertTrue(FileTypeManager.getInstance().isFileOfType(file, EnforcedPlainTextFileType.INSTANCE));
+    assertFalse(FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.XML));
     manager.resetOriginalFileType(getProject(), file);
     FileType revertedType = file.getFileType();
     assertEquals(originalType, revertedType);

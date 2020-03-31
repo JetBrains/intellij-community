@@ -6,17 +6,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
 class SimpleTextFragment extends TextFragment {
-  @NotNull
-  private final char[] myText;
+  private final char @NotNull [] myText;
   @NotNull
   private final Font myFont;
 
-  SimpleTextFragment(@NotNull char[] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
+  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
     super(end - start);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
@@ -38,16 +38,18 @@ class SimpleTextFragment extends TextFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
-    g.setFont(myFont);
-    int xAsInt = (int)x;
-    int yAsInt = (int)y;
-    if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
-      g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
-    }
-    else {
-      g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
-    }
+  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+    return g -> {
+      g.setFont(myFont);
+      int xAsInt = (int)x;
+      int yAsInt = (int)y;
+      if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
+        g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
+      }
+      else {
+        g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
+      }
+    };
   }
 
   @Override

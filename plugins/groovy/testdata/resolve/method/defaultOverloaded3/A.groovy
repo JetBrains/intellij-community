@@ -1,1 +1,1 @@
-"abc"[0..1].<ref>endsWith("ab")
+"abc"[0..1].<caret>endsWith("ab")

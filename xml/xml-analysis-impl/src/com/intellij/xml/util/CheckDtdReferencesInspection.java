@@ -19,7 +19,6 @@ package com.intellij.xml.util;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElementVisitor;
@@ -28,7 +27,6 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.xml.XmlEntityRef;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -72,17 +70,5 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.check.dtd.references");
   }
 }

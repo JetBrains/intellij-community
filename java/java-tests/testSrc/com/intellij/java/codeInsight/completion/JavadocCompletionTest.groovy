@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -32,13 +18,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
-/**
- * @author mike
- */
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private JavaCodeStyleSettings javaSettings
 
@@ -82,12 +64,17 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testParamValueCompletion() {
     configureByFile("ParamValue0.java")
-    assertStringItems("a", "b", "c")
+    assertStringItems("a", "b", "c", "<A>", "<B>")
   }
 
   void testParamValueWithPrefixCompletion() {
     configureByFile("ParamValue1.java")
     assertStringItems("a1", "a2", "a3")
+  }
+
+  void testTypeParamValueWithPrefix() {
+    configureByTestName()
+    assertStringItems("<A>", "<B>")
   }
 
   void testDescribedParameters() {
@@ -118,7 +105,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   @NotNull
   private List<String> getLookupElementStrings() {
-    return ObjectUtils.assertNotNull(myFixture.getLookupElementStrings())
+    return Objects.requireNonNull(myFixture.getLookupElementStrings())
   }
 
   void testSee4() {
@@ -244,6 +231,20 @@ class Foo {
     myFixture.type('\n intParam\n@para')
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
+  }
+
+  void "test suggest type param names"() {
+    myFixture.configureByText "a.java", '''
+/**
+* @par<caret>
+*/
+class Foo<T,V>{}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param <T>', 'param <V>'
+    myFixture.type('\n <T>\n@para')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param <V>'
   }
 
   void "test fqns in package info"() {
@@ -652,6 +653,13 @@ class Foo {
     assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
   }
 
+  void "test insert link to method in a q-named class"() {
+    myFixture.configureByText 'a.java', "/** a. java.io.File#liFi<caret> */ interface Foo {}"
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult "import java.io.File;\n\n/** a. {@link File#listFiles()} */ interface Foo {}"
+  }
+
   void "test insert link to field"() {
     myFixture.configureByText 'a.java', "/** a. #fo<caret> */ interface Foo { int foo; }}"
     myFixture.completeBasic()
@@ -670,7 +678,7 @@ class Foo {
     myFixture.completeBasic()
     myFixture.checkResult "/** {@code null<caret>} */"
   }
-  
+
   void "test no link inside code tag"() {
     myFixture.configureByText 'a.java', "/** {@code FBG<caret>} */ interface FooBarGoo {}"
     myFixture.completeBasic()

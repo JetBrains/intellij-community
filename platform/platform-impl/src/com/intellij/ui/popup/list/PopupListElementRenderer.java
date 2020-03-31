@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -110,18 +109,15 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
-      final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
-      myNextStepLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                  : AllIcons.Icons.Ide.NextStep
-                                         : AllIcons.Icons.Ide.NextStepGrayed);
+      myNextStepLabel.setIcon(isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
     }
     else {
       myNextStepLabel.setVisible(false);
-      //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
     }
 
-    setSelected(myNextStepLabel, isSelected);
-
+    setSelected(myComponent, isSelected && isSelectable);
+    setSelected(myTextLabel, isSelected && isSelectable);
+    setSelected(myNextStepLabel, isSelected && isSelectable);
 
     if (myShortcutLabel != null) {
       myShortcutLabel.setEnabled(isSelectable);
@@ -135,8 +131,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
           }
         }
       }
-      setSelected(myShortcutLabel, isSelected);
-      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
+      setSelected(myShortcutLabel, isSelected && isSelectable);
+      myShortcutLabel.setForeground(isSelected && isSelectable ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
   }
 }

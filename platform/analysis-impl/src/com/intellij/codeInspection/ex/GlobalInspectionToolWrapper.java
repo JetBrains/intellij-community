@@ -39,18 +39,16 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
 
   @Override
   public void initialize(@NotNull GlobalInspectionContext context) {
-    super.initialize(context);
     RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     final RefGraphAnnotator annotator = getTool().getAnnotator(refManager);
     if (annotator != null) {
       refManager.registerGraphAnnotator(annotator);
     }
-    getTool().initialize(context);
+    super.initialize(context);
   }
 
   @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
+  public JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     GlobalInspectionTool tool = getTool();
     JobDescriptor[] additionalJobs = ObjectUtils.notNull(tool.getAdditionalJobs(context), JobDescriptor.EMPTY_ARRAY);
     StdJobDescriptors stdJobDescriptors = context.getStdJobDescriptors();
@@ -79,6 +77,12 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       return null;
     }
     return new LocalInspectionToolWrapper(sharedTool){
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return GlobalInspectionToolWrapper.this.getDisplayName();
+      }
+
       @Nullable
       @Override
       public String getLanguage() {

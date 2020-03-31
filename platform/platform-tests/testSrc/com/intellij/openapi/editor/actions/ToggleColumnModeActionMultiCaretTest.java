@@ -16,9 +16,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ToggleColumnModeActionMultiCaretTest extends BasePlatformTestCase {
   public void testSingleCaretWithoutSelection() {
     doTestToggleOnOff("line1\n" +
                       "line<caret>2",

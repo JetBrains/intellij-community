@@ -172,7 +172,7 @@
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="alt SLASH"/>
   </action>
-  <action id="ReloadFromDisk">
+  <action id="SynchronizeCurrentFile">
     <keyboard-shortcut first-keystroke="alt U"/>
     <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="U"/>
   </action>
@@ -318,9 +318,11 @@
   <action id="IntroduceField"/>
   <action id="RecentFiles"/>
   <action id="SwitcherRecentEditedChangedToggleCheckBox"/>
+  <action id="SwitcherIterateItems"/>
   <action id="EditorTab"/>
   <action id="EditorDeleteLine"/>
   <action id="PreviousProjectWindow"/>
+  <action id="Vcs.ToggleAmendCommitMode"/>
   <action id="Vcs.ShowMessageHistory"/>
   <action id="GotoImplementation"/>
   <action id="EditorScrollUp"/>
@@ -329,4 +331,5 @@
   <action id="ChangesView.Move"/>
   <action id="MoveStatementUp"/>
   <action id="MoveStatementDown"/>
+  <action id="ToggleRenderedDocPresentation"/>
 </keymap>

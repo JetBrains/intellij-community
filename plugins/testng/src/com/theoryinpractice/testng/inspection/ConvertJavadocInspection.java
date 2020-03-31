@@ -39,13 +39,6 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return INSPECTION_NAME;
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

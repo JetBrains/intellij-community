@@ -1,14 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Bas Leijdekkers
@@ -24,18 +19,16 @@ public class ConstantOnWrongSideOfComparisonInspectionMerger extends InspectionE
     return "ConstantOnWrongSideOfComparison";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       CONSTANT_ON_LHS,
       CONSTANT_ON_RHS
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "ConstantOnLeftSideOfComparison",
       "ConstantOnRightSideOfComparison"

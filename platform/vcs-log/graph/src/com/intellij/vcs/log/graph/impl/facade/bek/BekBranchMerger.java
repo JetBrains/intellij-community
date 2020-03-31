@@ -16,8 +16,8 @@ class BekBranchMerger {
   @NotNull private final List<Integer> myInverseResultList = new ArrayList<>();
 
   BekBranchMerger(@NotNull List<? extends BekBranch> bekBranches,
-                         @NotNull BekEdgeRestrictions edgeRestrictions,
-                         @NotNull TimestampGetter timestampGetter) {
+                  @NotNull BekEdgeRestrictions edgeRestrictions,
+                  @NotNull TimestampGetter timestampGetter) {
     myBekBranches = bekBranches;
     myEdgeRestrictions = edgeRestrictions;
     myTimestampGetter = timestampGetter;

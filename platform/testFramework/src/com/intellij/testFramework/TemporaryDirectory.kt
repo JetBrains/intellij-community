@@ -18,6 +18,36 @@ import java.nio.file.Paths
 import kotlin.properties.Delegates
 
 class TemporaryDirectory : ExternalResource() {
+  companion object {
+    @JvmStatic
+    fun generateTemporaryPath(fileName: String): Path {
+      val tempDirectory = Paths.get(FileUtilRt.getTempDirectory())
+      var path = tempDirectory.resolve(fileName)
+
+      if (!path.exists()) {
+        return path
+      }
+
+      var i = 0
+      var ext = FileUtilRt.getExtension(fileName)
+      if (ext.isNotEmpty()) {
+        ext = ".$ext"
+      }
+      val name = FileUtilRt.getNameWithoutExtension(fileName)
+
+      do {
+        path = tempDirectory.resolve("${name}_$i$ext")
+        i++
+      }
+      while (path.exists() && i < 9)
+
+      if (path.exists()) {
+        throw IOException("Cannot generate unique random path with '$name' prefix under '$path'")
+      }
+      return path
+    }
+  }
+
   private val paths = SmartList<Path>()
 
   private var sanitizedName: String by Delegates.notNull()
@@ -67,21 +97,6 @@ class TemporaryDirectory : ExternalResource() {
     VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     return virtualFile!!
   }
-}
-
-fun generateTemporaryPath(fileName: String?): Path {
-  val tempDirectory = Paths.get(FileUtilRt.getTempDirectory())
-  var path = tempDirectory.resolve(fileName)
-  var i = 0
-  while (path.exists() && i < 9) {
-    path = tempDirectory.resolve("${fileName}_$i")
-    i++
-  }
-
-  if (path.exists()) {
-    throw IOException("Cannot generate unique random path")
-  }
-  return path
 }
 
 fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)

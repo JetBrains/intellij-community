@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit4;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -20,7 +6,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.idea.Bombed;
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -32,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
@@ -58,11 +44,11 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
-     ModuleRootModificationUtil.updateModel(myModule, 
+     ModuleRootModificationUtil.updateModel(myModule,
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
   public void testRunPackage() throws Exception {
@@ -74,7 +60,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   public void testSelectedMethods() throws Exception {
-    final IdeaTestApplication testApplication = IdeaTestApplication.getInstance();
+    final TestApplicationManager testApplication = TestApplicationManager.getInstance();
     try {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
@@ -119,7 +105,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   public void testPatternConfiguration() throws Exception {
-    final IdeaTestApplication testApplication = IdeaTestApplication.getInstance();
+    final TestApplicationManager testApplication = TestApplicationManager.getInstance();
     try {
       JUnitConfiguration configuration = new JUnitConfiguration("pattern", getProject());
       JUnitConfiguration.Data data = configuration.getPersistentData();
@@ -177,7 +163,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     RunConfiguration configuration = createConfiguration(aClass);
     ((JUnitConfiguration)configuration).setRepeatMode(RepeatCount.N);
     ((JUnitConfiguration)configuration).setRepeatCount(2);
-    
+
 
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     String systemOutput = processOutput.sys.toString(); //command line
@@ -193,6 +179,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
     assertEmpty(processOutput.out);
+    //ensure warning is ignored if started on java 11
+    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release\n");
     assertEmpty(processOutput.err);
     List<TestIgnored> ignoredTests = processOutput.messages.stream()
       .filter(TestIgnored.class::isInstance)
@@ -209,7 +197,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
     assertEquals(1, processOutput.messages.stream().filter(TestStarted.class::isInstance).count());
-    
+
   }
 
   @Bombed(month = Calendar.AUGUST, day = 31, user = "Timur Yuldashev", description = "IDEA-174534")

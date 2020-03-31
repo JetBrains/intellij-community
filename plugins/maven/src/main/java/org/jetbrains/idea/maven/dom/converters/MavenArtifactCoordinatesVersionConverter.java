@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.Collections;
 import java.util.Set;

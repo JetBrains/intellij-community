@@ -30,8 +30,7 @@ public class MavenDefaultModelsProvider implements MavenModelsProvider {
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
 

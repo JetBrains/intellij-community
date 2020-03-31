@@ -23,7 +23,6 @@ import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -92,7 +91,7 @@ public class MorphingAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup morphingGroup = new DefaultActionGroup("Morphing", true);
+    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> "Morphing");
     for (MetaModel morphingModel : models) {
       morphingGroup.add(new MorphingAction(designer, area, selection, morphingModel));
     }

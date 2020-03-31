@@ -17,14 +17,11 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclaration;
-import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
 
@@ -145,14 +142,14 @@ public interface RefMethod extends RefJavaElement {
    * @return the list of exceptions declared but not thrown, or null if there are no
    * such exceptions.
    */
-  @Nullable PsiClass[] getUnThrownExceptions();
+  PsiClass @Nullable [] getUnThrownExceptions();
 
   /**
    * Returns the list of reference graph nodes for the method parameters.
    *
    * @return the method parameters.
    */
-  @NotNull RefParameter[] getParameters();
+  RefParameter @NotNull [] getParameters();
 
   /**
    * Returns the class to which the method belongs.

@@ -25,22 +25,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 
-class GroovyInferenceSessionBuilder constructor(
+open class GroovyInferenceSessionBuilder constructor(
   private val context: PsiElement,
   private val candidate: GroovyMethodCandidate,
   private val contextSubstitutor: PsiSubstitutor
 ) {
 
-  private var expressionFilters = mutableSetOf<ExpressionPredicate>()
+  protected var expressionFilters = mutableSetOf<ExpressionPredicate>()
 
-  private var skipClosureBlock = true
+  protected var skipClosureBlock = true
 
   fun resolveMode(skipClosureBlock: Boolean): GroovyInferenceSessionBuilder {
     //TODO:add explicit typed closure constraints
@@ -55,41 +56,58 @@ class GroovyInferenceSessionBuilder constructor(
     return this
   }
 
-  fun skipClosureIn(call: GrMethodCall): GroovyInferenceSessionBuilder {
+  fun skipClosureIn(call: GrCall): GroovyInferenceSessionBuilder {
     expressionFilters.add {
-      it !is GrFunctionalExpression || call != GrClosureSignatureUtil.findCall(it)
+      it !is GrFunctionalExpression || call != getContainingCall(it)
     }
     return this
   }
 
-  fun build(): GroovyInferenceSession {
+  protected fun collectExpressionFilters() {
     if (skipClosureBlock) expressionFilters.add(ignoreFunctionalExpressions)
+  }
+
+  open fun build(): GroovyInferenceSession {
+    collectExpressionFilters()
 
     val session = GroovyInferenceSession(candidate.method.typeParameters, contextSubstitutor, context, skipClosureBlock, expressionFilters)
-    session.initArgumentConstraints(candidate.argumentMapping)
-    return session
+    return doBuild(session)
+  }
+
+  protected fun doBuild(basicSession: GroovyInferenceSession): GroovyInferenceSession {
+    basicSession.initArgumentConstraints(candidate.argumentMapping)
+    return basicSession
   }
 }
 
-fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
-  val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
+fun buildTopLevelSession(place: PsiElement,
+                         session: GroovyInferenceSession = constructDefaultInferenceSession(place)): GroovyInferenceSession {
   val expression = findExpression(place) ?: return session
   val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
     OperatorExpressionConstraint(expression as GrOperatorExpression)
   }
+  else if (expression is GrSafeCastExpression && expression.operand !is GrFunctionalExpression) {
+    val result = expression.reference.advancedResolve() as? GroovyMethodResult ?: return session
+    MethodCallConstraint(null, result, expression)
+  }
   else {
     val mostTopLevelExpression = getMostTopLevelExpression(expression)
-    val left = getExpectedType(mostTopLevelExpression)
-    ExpressionConstraint(left, mostTopLevelExpression)
+    val typeAndPosition = getExpectedTypeAndPosition(mostTopLevelExpression)
+    ExpressionConstraint(typeAndPosition, mostTopLevelExpression)
   }
   session.addConstraint(startConstraint)
   return session
 }
 
-private fun findExpression(place: PsiElement): GrExpression? {
+private fun constructDefaultInferenceSession(place: PsiElement): GroovyInferenceSession {
+  return GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
+}
+
+fun findExpression(place: PsiElement): GrExpression? {
   val parent = place.parent
   return when {
     parent is GrAssignmentExpression && parent.lValue === place -> parent
+    place is GrIndexProperty -> place
     parent is GrMethodCall -> parent
     parent is GrNewExpression -> parent
     parent is GrClassTypeElement -> parent.parent as? GrSafeCastExpression
@@ -118,48 +136,78 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
 }
 
 fun getExpectedType(expression: GrExpression): PsiType? {
-  val parent = expression.parent
-  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrFunctionalExpression::class.java)
+  return getExpectedTypeAndPosition(expression)?.type
+}
 
-  if (parent is GrReturnStatement && parentMethod != null) {
-    return parentMethod.returnType
-  }
-  else if (isExitPoint(expression) && parentMethod != null) {
-    val returnType = parentMethod.returnType
-    if (TypeConversionUtil.isVoidType(returnType)) return null
-    return returnType
-  }
-  else if (parent is GrAssignmentExpression && expression == parent.rValue) {
-    val lValue = skipParentheses(parent.lValue, false)
+private fun getExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
+  return getAssignmentOrReturnExpectedTypeAndPosition(expression)
+         ?: getArgumentExpectedType(expression)
+}
+
+private fun getAssignmentOrReturnExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
+  return getAssignmentExpectedType(expression)?.let { ExpectedType(it, ASSIGNMENT) }
+         ?: getReturnExpectedType(expression)?.let { ExpectedType(it, RETURN_VALUE) }
+}
+
+fun getAssignmentOrReturnExpectedType(expression: GrExpression): PsiType? {
+  return getAssignmentExpectedType(expression)
+         ?: getReturnExpectedType(expression)
+}
+
+fun getAssignmentExpectedType(expression: GrExpression): PsiType? {
+  val parent: PsiElement = expression.parent
+  if (parent is GrAssignmentExpression && expression == parent.rValue) {
+    val lValue: PsiElement? = skipParentheses(parent.lValue, false)
     return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
   }
   else if (parent is GrVariable) {
     return parent.declaredType
   }
   else if (parent is GrListOrMap) {
-    val pParent = parent.parent
+    val pParent: PsiElement? = parent.parent
     if (pParent is GrVariableDeclaration && pParent.isTuple) {
-      val index = parent.initializers.indexOf(expression)
+      val index: Int = parent.initializers.indexOf(expression)
       return pParent.variables.getOrNull(index)?.declaredType
     }
     else if (pParent is GrTupleAssignmentExpression) {
-      val index = parent.initializers.indexOf(expression)
-      val expressions = pParent.lValue.expressions
-      val lValue = expressions.getOrNull(index)
-      return (lValue?.staticReference?.resolve() as? GrVariable)?.declaredType
+      val index: Int = parent.initializers.indexOf(expression)
+      val expressions: Array<out GrReferenceExpression> = pParent.lValue.expressions
+      val lValue: GrReferenceExpression = expressions.getOrNull(index) ?: return null
+      val variable: GrVariable? = lValue.staticReference.resolve() as? GrVariable
+      return variable?.declaredType
     }
   }
-  else if (parent is GrArgumentList) {
-    val call = parent.parent as? GrCallExpression ?: return null
-    val result = call.advancedResolve() as? GroovyMethodResult ?: return null
-    val mapping = result.candidate?.argumentMapping ?: return null
-    return result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression)))
-  }
-
   return null
 }
 
+private fun getReturnExpectedType(expression: GrExpression): PsiType? {
+  val parent: PsiElement = expression.parent
+  val parentMethod: GrMethod? = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, false, GrFunctionalExpression::class.java)
+  if (parentMethod == null) {
+    return null
+  }
+  if (parent is GrReturnStatement) {
+    return parentMethod.returnType
+  }
+  else if (isExitPoint(expression)) {
+    val returnType: PsiType = parentMethod.returnType ?: return null
+    if (TypeConversionUtil.isVoidType(returnType)) return null
+    return returnType
+  }
+  return null
+}
+
+private fun getArgumentExpectedType(expression: GrExpression): ExpectedType? {
+  val parent = expression.parent as? GrArgumentList ?: return null
+  val call = parent.parent as? GrCallExpression ?: return null
+  val result = call.advancedResolve() as? GroovyMethodResult ?: return null
+  val mapping = result.candidate?.argumentMapping ?: return null
+  val type = result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression))) ?: return null
+  return ExpectedType(type, METHOD_PARAMETER)
+}
+
 internal typealias ExpressionPredicate = (GrExpression) -> Boolean
+
 private val ignoreFunctionalExpressions: ExpressionPredicate = { it !is GrFunctionalExpression }
 
 private fun isExitPoint(place: GrExpression): Boolean {

@@ -27,20 +27,17 @@ public class JavacFileData {
 
   private final String myFilePath;
   private final TObjectIntHashMap<JavacRef> myRefs;
-  private final TObjectIntHashMap<JavacRef> myImportRefs;
   private final List<JavacTypeCast> myCasts;
   private final List<JavacDef> myDefs;
   private final Set<JavacRef> myImplicitRefs;
 
   public JavacFileData(@NotNull String path,
                        @NotNull TObjectIntHashMap<JavacRef> refs,
-                       @NotNull TObjectIntHashMap<JavacRef> importRefs,
                        @NotNull List<JavacTypeCast> casts,
                        @NotNull List<JavacDef> defs,
                        @NotNull Set<JavacRef> implicitRefs) {
     myFilePath = path;
     myRefs = refs;
-    myImportRefs = importRefs;
     myCasts = casts;
     myDefs = defs;
     myImplicitRefs = implicitRefs;
@@ -62,11 +59,6 @@ public class JavacFileData {
   }
 
   @NotNull
-  public TObjectIntHashMap<JavacRef> getImportRefs() {
-    return myImportRefs;
-  }
-
-  @NotNull
   public List<JavacTypeCast> getCasts() {
     return myCasts;
   }
@@ -83,7 +75,6 @@ public class JavacFileData {
     try {
       stream.writeUTF(getFilePath());
       saveRefs(stream, getRefs());
-      saveRefs(stream, getImportRefs());
       saveCasts(stream, getCasts());
       saveDefs(stream, getDefs());
       saveImplicitToString(stream, getImplicitToStringRefs());
@@ -99,12 +90,12 @@ public class JavacFileData {
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
     try {
-      return new JavacFileData(in.readUTF(),
-                               readRefs(in),
-                               readRefs(in),
-                               readCasts(in),
-                               readDefs(in),
-                               readImplicitToString(in));
+      final String path = in.readUTF();
+      final TObjectIntHashMap<JavacRef> refs = readRefs(in);
+      final List<JavacTypeCast> casts = readCasts(in);
+      final List<JavacDef> defs = readDefs(in);
+      final Set<JavacRef> implicitRefs = readImplicitToString(in);
+      return new JavacFileData(path, refs, casts, defs, implicitRefs);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -213,10 +204,16 @@ public class JavacFileData {
     }
     else if (ref instanceof JavacRef.JavacField) {
       out.writeByte(FIELD_MARKER);
+      final String containingClass = ((JavacRef.JavacField)ref).getContainingClass();
+      out.writeUTF(containingClass == null? "" : containingClass);
       out.writeUTF(ref.getOwnerName());
+      final String descriptor = ((JavacRef.JavacField)ref).getDescriptor();
+      out.writeUTF(descriptor == null? "" : descriptor);
     }
     else if (ref instanceof JavacRef.JavacMethod) {
       out.writeByte(METHOD_MARKER);
+      final String containingClass = ((JavacRef.JavacMethod)ref).getContainingClass();
+      out.writeUTF(containingClass == null? "" : containingClass);
       out.writeUTF(ref.getOwnerName());
       out.write(((JavacRef.JavacMethod)ref).getParamCount());
     }
@@ -231,11 +228,27 @@ public class JavacFileData {
     final byte marker = in.readByte();
     switch (marker) {
       case CLASS_MARKER:
-        return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), in.readUTF());
+        final boolean isAnonymous = in.readBoolean();
+        final Set<Modifier> classModifiers = readModifiers(in);
+        final String className = in.readUTF();
+        return new JavacRef.JavacClassImpl(isAnonymous, classModifiers, className);
+
       case METHOD_MARKER:
-        return new JavacRef.JavacMethodImpl(in.readUTF(), in.readByte(), readModifiers(in), in.readUTF());
+        final String methodContainingClass = in.readUTF();
+        final String methodOwnerName = in.readUTF();
+        final byte methodParamCount = in.readByte();
+        final Set<Modifier> methodModifiers = readModifiers(in);
+        final String methodName = in.readUTF();
+        return new JavacRef.JavacMethodImpl(methodContainingClass, methodOwnerName, methodParamCount, methodModifiers, methodName);
+
       case FIELD_MARKER:
-        return new JavacRef.JavacFieldImpl(in.readUTF(), readModifiers(in), in.readUTF());
+        final String fieldContainingClass = in.readUTF();
+        final String fieldOwnerName = in.readUTF();
+        final String fieldDescriptor = in.readUTF();
+        final Set<Modifier> fieldModifiers = readModifiers(in);
+        final String fieldName = in.readUTF();
+        return new JavacRef.JavacFieldImpl(fieldContainingClass, fieldOwnerName, fieldModifiers, fieldName, fieldDescriptor);
+
       default:
         throw new IllegalStateException("unknown marker " + marker);
     }

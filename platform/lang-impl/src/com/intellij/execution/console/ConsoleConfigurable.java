@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
@@ -15,18 +16,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AddEditDeleteListPanel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
@@ -53,13 +52,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     if (myMainComponent == null) {
       myMainComponent = new JPanel(new BorderLayout());
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
-      myCommandsHistoryLimitField = new JTextField(3);
+      myCommandsHistoryLimitField = new JTextField(4);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
       myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> {
         myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
         myConsoleBufferSizeWarningLabel.setVisible(myCbOverrideConsoleCycleBufferSize.isSelected());
       });
-      myConsoleCycleBufferSizeField = new JTextField(3);
+      myConsoleCycleBufferSizeField = new JTextField(4);
       myConsoleBufferSizeWarningLabel = new JLabel();
       myConsoleBufferSizeWarningLabel.setForeground(JBColor.red);
       myConsoleCycleBufferSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -79,8 +78,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
-        northPanel.add(new JLabel(" KB"), gridBag.next());
-        northPanel.add(Box.createHorizontalStrut(JBUI.scale(20)), gridBag.next());
+        northPanel.add(new JLabel(ExecutionBundle.message("settings.console.kb")), gridBag.next());
+        northPanel.add(Box.createHorizontalStrut(JBUIScale.scale(20)), gridBag.next());
         northPanel.add(myConsoleBufferSizeWarningLabel, gridBag.next());
       }
       if (!editFoldingsOnly()) {
@@ -91,13 +90,15 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter, BorderLayout.CENTER);
       myPositivePanel =
-        new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
-      myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
+        new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
+                                 ApplicationBundle.message("console.enter.substring.folded"));
+      myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
+                                                 ApplicationBundle.message("console.enter.substring.dont.fold:"));
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 
-      myPositivePanel.getEmptyText().setText("Fold nothing");
-      myNegativePanel.getEmptyText().setText("No exceptions");
+      myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
+      myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
     }
     return myMainComponent;
   }
@@ -214,9 +215,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Console";
+    return ExecutionBundle.message("configurable.ConsoleConfigurable.display.name");
   }
 
   @Override
@@ -234,6 +234,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
 
     @Override
+    protected Border createTitledBorder(String title) {
+      return IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false);
+    }
+
+    @Override
     @Nullable
     protected String findItemToAdd() {
       return showEditDialog("");
@@ -241,7 +246,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding Pattern", Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
+      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
           return !StringUtil.isEmpty(inputString);

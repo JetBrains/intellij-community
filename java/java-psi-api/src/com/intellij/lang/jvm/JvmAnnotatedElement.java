@@ -7,8 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface JvmAnnotatedElement extends JvmElement {
 
-  @NotNull
-  JvmAnnotation[] getAnnotations();
+  JvmAnnotation @NotNull [] getAnnotations();
 
   @Nullable
   default JvmAnnotation getAnnotation(@NotNull @NonNls String fqn) {

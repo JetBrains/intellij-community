@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
+import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vcs.changes.ignore.psi.util.updateIgnoreBlock
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
@@ -18,8 +19,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -61,7 +64,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   }
 
   fun `test gitignore content in config dir`() {
-    val gitIgnore = File("$projectPath/$DIRECTORY_STORE_FOLDER/$GITIGNORE")
+    val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").create().file
     if (gitIgnore.exists()) gitIgnore.delete()
 
     val shelf = File(ShelveChangesManager.getShelfPath(project))
@@ -126,7 +129,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       /test/
       /file.txt
     """
-    val gitIgnore = File("$projectPath/$GITIGNORE")
+    val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText(
       """
     $firstBlock
@@ -139,10 +142,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# first block"
-    val psiIgnore = updateIgnoreBlock(project, ignoreVF, ignoreGroup,
+    updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
                                       IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
 
     assertGitignoreValid(gitIgnore, """
     $newFirstBlock
@@ -179,7 +181,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       /test/
       /file.txt
     """
-    val gitIgnore = File("$projectPath/$GITIGNORE")
+    val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText(
       """
     $firstBlock
@@ -192,10 +194,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# middle block"
-    val psiIgnore = updateIgnoreBlock(project, ignoreVF, ignoreGroup,
+    updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
                                       IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
 
     assertGitignoreValid(gitIgnore, """
     $firstBlock
@@ -232,7 +233,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       /test/
       /file.txt
     """
-    val gitIgnore = File("$projectPath/$GITIGNORE")
+    val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText(
       """
     $firstBlock
@@ -245,10 +246,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# last block"
-    val psiIgnore = updateIgnoreBlock(project, ignoreVF, ignoreGroup,
+    updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
                                       IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
 
     assertGitignoreValid(gitIgnore, """
     $firstBlock
@@ -303,14 +303,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# first block"
-    val psiIgnore = addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
-                                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
-                                                IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project),
-                                                IgnoredBeanFactory.ignoreFile("$projectPath/file2.txt", project),
-                                                IgnoredBeanFactory.ignoreFile("$projectPath/file3.txt", project),
-                                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED_CHILD/", project),
-                                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
+    addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
+                              IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
+                              IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project),
+                              IgnoredBeanFactory.ignoreFile("$projectPath/file2.txt", project),
+                              IgnoredBeanFactory.ignoreFile("$projectPath/file3.txt", project),
+                              IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED_CHILD/", project),
+                              IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED", project))
 
     assertGitignoreValid(gitIgnore, """
     $newFirstBlock
@@ -318,6 +317,69 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     $middleBlock
 
     $lastBlock
+    """)
+  }
+
+  fun `test add to group to empty ignore file`() {
+    val gitIgnore = file(GITIGNORE).create().file
+    gitIgnore.writeText("")
+    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
+                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
+    )
+    assertGitignoreValid(gitIgnore, """
+      # ignore group
+      /test/
+    """)
+  }
+
+  fun `test add to empty ignore group`() {
+    val gitIgnore = file(GITIGNORE).create().file
+    gitIgnore.writeText("# ignore group")
+    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
+                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
+    )
+    assertGitignoreValid(gitIgnore, """
+      # ignore group
+      /test/
+    """)
+  }
+
+  fun `test add to group with remaining last empty group`() {
+    val gitIgnore = file(GITIGNORE).create().file
+    gitIgnore.writeText("# ignore group\nfoo\n# bar")
+    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
+                                IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
+    )
+    assertGitignoreValid(gitIgnore, """
+      # ignore group
+      foo
+      /test/
+      # bar
+    """)
+  }
+
+  fun `test add to empty ignore file`() {
+    val gitIgnore = file(GITIGNORE).create().file
+    gitIgnore.writeText("")
+    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    addNewElements(project, ignoreVF, listOf(IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)))
+    assertGitignoreValid(gitIgnore, """
+      /test/
+    """)
+  }
+
+
+  fun `test add to ignore file without trailing newline`() {
+    val gitIgnore = file(GITIGNORE).create().file
+    gitIgnore.writeText("foo")
+    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    addNewElements(project, ignoreVF, listOf(IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)))
+    assertGitignoreValid(gitIgnore, """
+      foo
+      /test/
     """)
   }
 
@@ -355,7 +417,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       /$EXCLUDED_CHILD/
       /$EXCLUDED/
     """
-    val gitIgnore = File("$projectPath/$GITIGNORE")
+    val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText(
       """
     $firstBlock
@@ -368,14 +430,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# middle block"
-    val psiIgnore = addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
+    addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file2.txt", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file3.txt", project),
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED_CHILD", project),
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/$EXCLUDED", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
 
     assertGitignoreValid(gitIgnore, """
     $firstBlock
@@ -418,7 +479,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       /file3.txt
       /file4.txt
     """
-    val gitIgnore = File("$projectPath/$GITIGNORE")
+    val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText(
       """
     $firstBlock
@@ -431,13 +492,12 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val ignoreVF = getVirtualFile(gitIgnore) ?: return
     val ignoreGroup = "# last block"
-    val psiIgnore = addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
+    addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file.txt", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file2.txt", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file3.txt", project),
                                                 IgnoredBeanFactory.ignoreFile("$projectPath/file4.txt", project))
-    gitIgnore.writeText(psiIgnore?.text ?: "", projectCharset)
 
     assertGitignoreValid(gitIgnore, """
     $firstBlock
@@ -457,7 +517,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     vcsConfiguration.USE_CUSTOM_SHELF_PATH = true
     vcsConfiguration.CUSTOM_SHELF_PATH = shelfDir.path
 
-    assertTrue(File("$projectPath/$GITIGNORE").apply {
+    assertTrue(file(GITIGNORE).create().file.apply {
       writeText("/subdir/shelf")
       LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     }.exists())
@@ -475,11 +535,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {
   val gitIgnoreExpectedContentList = gitIgnoreExpectedContent.trimIndent().lines()
 
+  UIUtil.invokeAndWaitIfNeeded(Runnable { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() })
+
   UsefulTestCase.assertExists(ignoreFile)
   val generatedGitIgnoreContent = ignoreFile.readText()
-  PlatformTestCase.assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
-  PlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
-  PlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+  HeavyPlatformTestCase.assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
+  HeavyPlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
+  HeavyPlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }
 
 internal fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

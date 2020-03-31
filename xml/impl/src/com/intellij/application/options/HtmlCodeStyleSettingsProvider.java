@@ -17,7 +17,6 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -30,13 +29,16 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
-
-  public static final String DISPLAY_NAME = ApplicationBundle.message("title.html");
+  public static class Holder {
+    public static String getDisplayName() {
+      return "HTML";
+    }
+  }
 
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, DISPLAY_NAME) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, Holder.getDisplayName()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new HtmlCodeStyleMainPanel(settings, originalSettings);
@@ -51,7 +53,7 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return DISPLAY_NAME;
+    return Holder.getDisplayName();
   }
 
   @Nullable

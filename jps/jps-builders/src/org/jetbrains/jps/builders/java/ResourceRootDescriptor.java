@@ -27,9 +27,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class ResourceRootDescriptor extends BuildRootDescriptor {
   @NotNull private final File myRoot;
   @NotNull private final ResourcesTarget myTarget;
@@ -69,7 +66,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public FileFilter createFileFilter() {
     final JpsProject project = getTarget().getModule().getProject();
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
     return file -> !excludes.isExcluded(file);
   }
 

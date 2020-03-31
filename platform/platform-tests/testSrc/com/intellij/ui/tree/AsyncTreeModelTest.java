@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -24,7 +25,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.diagnostic.ThreadDumper.dumpThreadsToString;
-import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static com.intellij.util.ui.tree.TreeUtil.expandAll;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
@@ -442,13 +442,9 @@ public final class AsyncTreeModelTest {
       try {
         promise.blockingGet(seconds, SECONDS);
       }
-      catch (Exception exception) {
-        //noinspection InstanceofCatchParameter because of Kotlin
-        if (exception instanceof TimeoutException) {
-          System.err.println(dumpThreadsToString());
-          fail(seconds + " seconds is not enough for " + toString());
-        }
-        throw exception;
+      catch (TimeoutException exception) {
+        System.err.println(dumpThreadsToString());
+        fail(seconds + " seconds is not enough for " + toString());
       }
       finally {
         Disposer.dispose(disposable);
@@ -516,7 +512,7 @@ public final class AsyncTreeModelTest {
     private void runOnModelThread(@NotNull Runnable task) {
       if (model instanceof InvokerSupplier) {
         InvokerSupplier supplier = (InvokerSupplier)model;
-        supplier.getInvoker().runOrInvokeLater(wrap(task));
+        supplier.getInvoker().invoke(wrap(task));
       }
       else {
         runOnSwingThread(task);
@@ -644,7 +640,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class EventDispatchThreadModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.EDT(this);
+    private final Invoker invoker = Invoker.forEventDispatchThread(this);
 
     private EventDispatchThreadModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -658,7 +654,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class BackgroundThreadModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.BackgroundThread(this);
+    private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
     private BackgroundThreadModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -672,7 +668,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class BackgroundPoolModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.BackgroundPool(this);
+    private final Invoker invoker = Invoker.forBackgroundPoolWithReadAction(this);
 
     private BackgroundPoolModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -689,7 +685,7 @@ public final class AsyncTreeModelTest {
     private final boolean mutable;
 
     private Node(String content, boolean mutable) {
-      this(mutable, content, EMPTY_OBJECT_ARRAY);
+      this(mutable, content, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
 
     private Node(String content, Object... children) {
@@ -702,7 +698,7 @@ public final class AsyncTreeModelTest {
       for (Object child : children) {
         add(child instanceof MutableTreeNode
             ? (MutableTreeNode)child
-            : new Node(mutable, child, EMPTY_OBJECT_ARRAY));
+            : new Node(mutable, child, ArrayUtilRt.EMPTY_OBJECT_ARRAY));
       }
     }
 
@@ -740,7 +736,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnEventDispatchThread(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.EDT(this);
+      private final Invoker invoker = Invoker.forEventDispatchThread(this);
 
       @NotNull
       @Override
@@ -758,7 +754,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnBackgroundThread(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.BackgroundThread(this);
+      private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
       @NotNull
       @Override
@@ -776,7 +772,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnBackgroundPool(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.BackgroundPool(this);
+      private final Invoker invoker = Invoker.forBackgroundPoolWithReadAction(this);
 
       @NotNull
       @Override
@@ -810,7 +806,7 @@ public final class AsyncTreeModelTest {
     private volatile Object myGroup;
 
     public void setGroup(Object group, @NotNull Runnable task) {
-      getInvoker().runOrInvokeLater(() -> {
+      getInvoker().invoke(() -> {
         myGroup = group;
         treeStructureChanged(null, null, null);
         task.run();
@@ -867,11 +863,6 @@ public final class AsyncTreeModelTest {
         if (group.equals(parent) && myNode.equals(child)) return 0;
       }
       if (myNode.equals(parent) && myLeaf.equals(child)) return 0;
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public void valueForPathChanged(TreePath path, Object value) {
       throw new IllegalStateException();
     }
 

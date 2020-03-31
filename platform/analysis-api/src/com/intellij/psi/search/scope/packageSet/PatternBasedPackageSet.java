@@ -33,10 +33,7 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
     myModulePatternText = modulePatternText;
     Pattern moduleGroupPattern = null;
     Pattern modulePattern = null;
-    if (modulePatternText == null || modulePatternText.isEmpty()) {
-      modulePattern = null;
-    }
-    else {
+    if (modulePatternText != null && !modulePatternText.isEmpty()) {
       if (modulePatternText.startsWith("group:")) {
         int index = modulePatternText.indexOf(':', 6);
         if (index == -1) index = modulePatternText.length();

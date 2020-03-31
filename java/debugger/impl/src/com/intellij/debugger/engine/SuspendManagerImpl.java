@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * @author lex
  */
 public class SuspendManagerImpl implements SuspendManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManager");
+  private static final Logger LOG = Logger.getInstance(SuspendManager.class);
 
   private final Deque<SuspendContextImpl> myEventContexts = new ConcurrentLinkedDeque<>();
   /**

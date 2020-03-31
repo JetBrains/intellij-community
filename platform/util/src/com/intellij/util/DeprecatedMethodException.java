@@ -2,17 +2,32 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class DeprecatedMethodException extends RuntimeException {
+  private static final Set<String> BEAT_DEAD_HORSE = ContainerUtil.newConcurrentSet();
   private static final Logger LOG = Logger.getInstance(DeprecatedMethodException.class);
-  private DeprecatedMethodException(String message) {
+  private DeprecatedMethodException(@NotNull String message) {
     super(message);
   }
 
   public static void report(@NotNull String message) {
+    String text = "This method in '" + ReflectionUtil.findCallerClass(2) +
+                      "' is deprecated and going to be removed soon. " + message;
+    if (BEAT_DEAD_HORSE.add(text)) {
+      LOG.warn(new DeprecatedMethodException(text));
+    }
+  }
 
-    LOG.warn(new DeprecatedMethodException("This method in " + ReflectionUtil.findCallerClass(2) +
-                                           " is deprecated and going to be removed soon. "+message));
+  public static void reportDefaultImplementation(@NotNull Class<?> thisClass, @NotNull String methodName, @NotNull String message) {
+    Class<?> superClass = ReflectionUtil.findCallerClass(2);
+    String text = "The default implementation of method '" +superClass.getName()+"."+methodName+"' is deprecated, you need to override it in '" +
+                  thisClass + "'. " + message;
+    if (BEAT_DEAD_HORSE.add(text)) {
+      LOG.warn(new DeprecatedMethodException(text));
+    }
   }
 }

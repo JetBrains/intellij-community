@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,12 +27,13 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
                                    @NotNull PostfixTemplateEditor editor,
                                    @NotNull String templateType,
                                    @Nullable PostfixTemplate template) {
-    super(null, parentComponent, false, IdeModalityType.IDE);
+    super(null, parentComponent, true, IdeModalityType.IDE);
     myEditor = editor;
     Disposer.register(getDisposable(), editor);
     String initialName = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
     myTemplateNameTextField = new JBTextField(initialName);
-    setTitle(template != null ? "Edit '" + initialName + "' template" : "Create new " + templateType + " template");
+    setTitle(template != null ? CodeInsightBundle.message("dialog.title.edit.0.template", initialName)
+                              : CodeInsightBundle.message("dialog.title.create.new.0.template", templateType));
     init();
   }
 
@@ -46,7 +48,7 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   protected List<ValidationInfo> doValidateAll() {
     String templateName = myTemplateNameTextField.getText();
     if (!StringUtil.isJavaIdentifier(templateName)) {
-      return Collections.singletonList(new ValidationInfo("Template key must be an identifier", myTemplateNameTextField));
+      return Collections.singletonList(new ValidationInfo(CodeInsightBundle.message("message.template.key.must.be.an.identifier"), myTemplateNameTextField));
     }
     return super.doValidateAll();
   }
@@ -59,7 +61,7 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return FormBuilder.createFormBuilder()
-      .addLabeledComponent("Key:", myTemplateNameTextField)
+      .addLabeledComponent(CodeInsightBundle.message("label.template.key"), myTemplateNameTextField)
       .addComponentFillVertically(myEditor.getComponent(), UIUtil.DEFAULT_VGAP)
       .getPanel();
   }

@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
+  </extensions>
+</idea-plugin>

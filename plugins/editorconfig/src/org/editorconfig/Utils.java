@@ -26,6 +26,7 @@ import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
@@ -38,8 +39,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Utils {
+
+  public static final String EDITOR_CONFIG_FILE_NAME = ".editorconfig";
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
 
@@ -117,7 +121,7 @@ public class Utils {
     final VirtualFile child = baseDir.findChild(".editorconfig");
     if (child != null) {
       final String message = ".editorconfig already present in " + baseDir.getPath() + "\nOverwrite?";
-      if (Messages.showYesNoDialog(project, message, ".editorconfig exists", null) == Messages.NO) return;
+      if (Messages.showYesNoDialog(project, message, EditorConfigBundle.message("dialog.title.editorconfig.exists"), null) == Messages.NO) return;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -137,7 +141,7 @@ public class Utils {
   @NotNull
   private static String getTrailingSpacesLine() {
     final Boolean trimTrailingSpaces = getTrimTrailingSpaces();
-    return trimTrailingSpaces != null ? StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=" + trimTrailingSpaces : "";
+    return trimTrailingSpaces != null ? StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=" + trimTrailingSpaces + "\n" : "";
   }
 
   @Nullable
@@ -169,7 +173,7 @@ public class Utils {
   @NotNull
   public static String getEncodingLine(@NotNull Project project) {
     String encoding = getEncoding(project);
-    return encoding != null ? EncodingManager.charsetKey + "=" + encoding : "";
+    return encoding != null ? EncodingManager.charsetKey + "=" + encoding + "\n" : "";
   }
 
   @Nullable
@@ -185,16 +189,16 @@ public class Utils {
 
   @NotNull
   public static String buildPattern(FileType fileType) {
-    final StringBuilder result = new StringBuilder();
-    final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
-    for (FileNameMatcher matcher : associations) {
-      if (result.length() != 0) result.append(",");
-      result.append(matcher.getPresentableString());
-    }
+    List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
+    String result = associations
+            .stream()
+            .map(matcher -> matcher.getPresentableString())
+            .sorted()
+            .collect(Collectors.joining(","));
     if (associations.size() > 1) {
-      result.insert(0, "{").append("}");
+      return "{" + result + "}";
     }
-    return result.toString();
+    return result;
   }
 
   private static boolean equalIndents(CommonCodeStyleSettings.IndentOptions commonIndentOptions,

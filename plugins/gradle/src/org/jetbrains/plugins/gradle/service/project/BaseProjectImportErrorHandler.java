@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.issue.BuildIssue;
@@ -21,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
@@ -32,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
 import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
-import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
 import java.io.FileNotFoundException;
@@ -87,10 +71,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
     LOG.debug(String.format("Failed to run Gradle project at '%1$s'", projectPath), error);
 
-    if (error instanceof ProcessCanceledException) {
-      return new ExternalSystemException("Project build was cancelled");
-    }
-
     Throwable rootCause = executionErrorHandler.getRootCause();
     String location = executionErrorHandler.getLocation();
     if (location == null && !StringUtil.isEmpty(buildFilePath)) {
@@ -122,24 +102,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
           OpenGradleSettingsCallback.ID);
         return createUserFriendlyError(msg, location, OpenGradleSettingsCallback.ID);
       }
-    }
-
-    final String rootCauseText = rootCause.toString();
-    if (StringUtil.startsWith(rootCauseText, "org.gradle.api.internal.MissingMethodException")) {
-      String method = parseMissingMethod(rootCauseText);
-      String msg = "Build script error, unsupported Gradle DSL method found: '" + method + "'!";
-      msg += (EMPTY_LINE + "Possible causes could be:  ");
-      msg += String.format(
-        "%s  - you are using Gradle version where the method is absent (<a href=\"%s\">Fix Gradle settings</a>)",
-        '\n', OpenGradleSettingsCallback.ID);
-      //msg += String.format(
-      //  "%s  - you didn't apply Gradle plugin which provides the method (<a href=\"%s\">Apply Gradle plugin</a>)",
-      //  '\n', ApplyGradlePluginCallback.ID);
-      msg += String.format(
-        "%s  - or there is a mistake in a build script (<a href=\"%s\">Goto source</a>)",
-        '\n', GotoSourceNotificationCallback.ID);
-      return createUserFriendlyError(
-        msg, location, OpenGradleSettingsCallback.ID, /*ApplyGradlePluginCallback.ID,*/ GotoSourceNotificationCallback.ID);
     }
 
     if (rootCause instanceof OutOfMemoryError) {

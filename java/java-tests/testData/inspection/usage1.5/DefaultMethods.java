@@ -27,7 +27,7 @@ public class <error descr="Default method 'remove' is not overridden. It would c
   }
 
   public <T extends Iterator<String>> T typedIterator() {
-    return (T) <error descr="Cannot resolve method 'iterator()'">iterator</error>();
+    return (T) <error descr="Cannot resolve method 'iterator' in 'DefaultMethods'">iterator</error>();
   }
 
   {

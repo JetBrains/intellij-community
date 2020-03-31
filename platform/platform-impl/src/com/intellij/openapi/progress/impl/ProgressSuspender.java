@@ -24,37 +24,41 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.util.Set;
 
 /**
  * @author peter
  */
+@ApiStatus.Internal
 public class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
   public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
 
   private final Object myLock = new Object();
-  private final Thread myThread;
   private static final Application ourApp = ApplicationManager.getApplication();
   @NotNull private final String mySuspendedText;
   @Nullable private String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
-  @NotNull private final ProgressIndicatorEx myAttachedToProgress;
+  private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
   private boolean myClosed;
 
   private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
-    myAttachedToProgress = progress;
-    myThread = Thread.currentThread();
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
 
-    ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, this);
+    attachToProgress(progress);
     
     new ProgressIndicatorListenerAdapter() {
       @Override
@@ -73,7 +77,9 @@ public class ProgressSuspender implements AutoCloseable {
       mySuspended = false;
       ((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(myHook);
     }
-    ((UserDataHolder) myAttachedToProgress).putUserData(PROGRESS_SUSPENDER, null);
+    for (ProgressIndicator progress : myProgresses) {
+      ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, null);
+    }
   }
 
   public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
@@ -83,6 +89,14 @@ public class ProgressSuspender implements AutoCloseable {
   @Nullable
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
     return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
+  }
+
+  /**
+   * Associates an additional progress indicator with this suspender, so that its {@code #checkCanceled} can later block the calling thread.
+   */
+  public void attachToProgress(@NotNull ProgressIndicatorEx progress) {
+    myProgresses.add(progress);
+    ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, this);
   }
 
   @NotNull
@@ -127,8 +141,15 @@ public class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendedStatusChanged(this);
   }
 
-  private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+  private boolean freezeIfNeeded(ProgressIndicator current) {
+    if (isCurrentThreadHoldingKnownLocks()) {
+      return false;
+    }
+
+    if (current == null) {
+      current = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    }
+    if (current == null || !myProgresses.contains(current)) {
       return false;
     }
 
@@ -144,7 +165,19 @@ public class ProgressSuspender implements AutoCloseable {
       return true;
     }
   }
-  
+
+  private static boolean isCurrentThreadHoldingKnownLocks() {
+    if (ourApp.isReadAccessAllowed()) {
+      return true;
+    }
+
+    ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
+    if (infos.length > 0 && infos[0].getLockedMonitors().length > 0) {
+      return true;
+    }
+    return false;
+  }
+
   public interface SuspenderListener {
     /** Called (on any thread) when a new progress is created with suspension capability */
     default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {}

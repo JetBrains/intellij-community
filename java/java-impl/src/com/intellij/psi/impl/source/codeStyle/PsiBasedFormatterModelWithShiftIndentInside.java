@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormattingModel {
   private static final Logger LOG =
-      Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
+    Logger.getInstance(PsiBasedFormatterModelWithShiftIndentInside.class);
 
   private final Project myProject;
 
@@ -79,7 +79,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
 
            @NonNls final String cdataStartMarker = "<![CDATA[";
            final int cdataPos = text.indexOf(cdataStartMarker);
-           if (cdataPos != -1 && whiteSpace.indexOf(cdataStartMarker) == -1) {
+           if (cdataPos != -1 && !whiteSpace.contains(cdataStartMarker)) {
              whiteSpace = DocumentBasedFormattingModel.mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
              if (whiteSpace == null) return null;
            }
@@ -89,7 +89,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
          }
 
          @NonNls final String cdataEndMarker = "]]>";
-         if(type == XmlTokenType.XML_CDATA_END && whiteSpace.indexOf(cdataEndMarker) == -1) {
+         if(type == XmlTokenType.XML_CDATA_END && !whiteSpace.contains(cdataEndMarker)) {
            final ASTNode at = findElementAt(prevNode.getStartOffset());
 
            if (at != null && at.getPsi() instanceof PsiWhiteSpace) {

@@ -28,7 +28,6 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
         EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
         final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
         if (dataContext != null) {
-          actionHandler.execute(editor, dataContext);
+          actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
           return true;
         }
       }

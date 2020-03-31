@@ -20,18 +20,17 @@ import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
  */
 public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> {
 
-  final static FileStubSerializer INSTANCE = new FileStubSerializer();
-
   @NotNull
   @Override
   public String getExternalId() {
-    return "FileStubSerializer";
+    return "xml.FileStubSerializer";
   }
 
   @Override
@@ -46,7 +45,8 @@ public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> 
   @NotNull
   @Override
   public FileStub deserialize(@NotNull StubInputStream dataStream, Stub parentStub) throws IOException {
-    return new FileStub(dataStream.readName(), dataStream.readName(), dataStream.readName(), dataStream.readName());
+    return new FileStub(Objects.requireNonNull(dataStream.readNameString()),
+                        dataStream.readNameString(), dataStream.readNameString(), dataStream.readNameString());
   }
 
   @Override

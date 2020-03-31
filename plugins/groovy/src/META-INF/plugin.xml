@@ -1,12 +1,19 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
+  <category>Languages</category>
   <description><![CDATA[
-  Adds support for Groovy language, including <a href="http://docs.groovy-lang.org/latest/html/documentation/grape.html">Grape</a> and
-  <a href="https://gant.github.io/">Gant</a>.
+  Adds support for the <a href="https://groovy-lang.org/">Groovy</b> language.
+   <ul>
+     <li>Coding assistance: code completion, inspections, refactorings, quick documentation, and much more</li>
+     <li>Interactive Groovy console to evaluate code expressions without compilation: <b>Tools | Groovy Console</b></li>
+     <li>Support for the <a href="https://docs.groovy-lang.org/latest/html/documentation/grape.html">Grape</a> dependency manager and
+     <a href="https://gant.github.io/">Gant</a> for scripting Ant tasks using Groovy</li>
+   </ul>
   ]]></description>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
@@ -19,7 +26,12 @@
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
 
-  <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
+  <resource-bundle>messages.GroovyBundle</resource-bundle>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex$MyFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
@@ -31,6 +43,7 @@
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
+    <extensionPoint name="typeAugmenter" interface="org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter"/>
     <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor"
@@ -49,9 +62,6 @@
                     interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
     <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
-    <!--suppress DeprecatedClassUsageInspection -->
-    <extensionPoint name="callExpressionTypeCalculator"
-                    interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
@@ -88,7 +98,7 @@
     <extensionPoint name="gdslScriptProvider" interface="org.jetbrains.plugins.groovy.dsl.GdslScriptProvider"/>
     <extensionPoint name="expectedPackageNameProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
     <extensionPoint name="delegatesToProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider"/>
-    <extensionPoint name="expressionFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyExpressionFilter"/>
+    <extensionPoint name="elementFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyElementFilter"/>
     <extensionPoint name="inlayHintFilter" interface="org.jetbrains.plugins.groovy.editor.GroovyInlayHintFilter"/>
   </extensionPoints>
 
@@ -146,7 +156,6 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
-    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
                       namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
@@ -176,8 +185,6 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculator" order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
@@ -192,8 +199,6 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultUnaryExpressionTypeCalculator"/>
-
-    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
@@ -213,7 +218,10 @@
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEnhancer"/>
+
+    <typeAugmenter implementation="org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter"/>
+    <typeAugmenter implementation="org.jetbrains.plugins.groovy.intentions.style.inference.ClosureParameterAugmenter"/>
 
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SimpleTypeHintProcessor"/>
@@ -249,6 +257,7 @@
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCharConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNumberConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrWildcardTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrEnumConverter"/>
@@ -256,8 +265,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCollectionToArrayConverter"/>
-
-    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.typing.GrCollectionConstructorConverter"/>
 
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
@@ -283,10 +291,12 @@
     <mvc.runCommandHandler implementation="org.jetbrains.plugins.groovy.mvc.actions.DefaultMvcRunCommandActionHandler" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtMethodFilter" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.GrDefaultMethodComparator" order="last"/>
+    <overloadResolver implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtOverloadResolver" order="last"/>
     <overloadResolver implementation="org.jetbrains.plugins.groovy.lang.resolve.impl.DistanceOverloadResolver" order="last"/>
     <expectedPackageNameProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.DefaultExpectedPackageNameProvider"
                                  order="last"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider" id="default" order="last"/>
+    <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.InferredDelegatesToProvider" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -294,23 +304,32 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy" hashBangs="groovy"
+              implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
+    <fileType name="gdsl" extensions="gdsl"
+              implementationClass="org.jetbrains.plugins.groovy.GdslFileType" fieldName="INSTANCE"/>
+
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
 
-    <registryKey key="groovy.console.project.view.names" defaultValue="false"
-                 description="Substitute console file name with selected module/version for this console file"/>
     <registryKey key="groovy.document.based.formatting" defaultValue="false"
                  description="Enables Document based formatting instead of PSI based"/>
     <registryKey key="groovy.return.type.optimization" defaultValue="true"
                  description="Whether to skip substitutor computation if return type doesn't depend on it"/>
+    <registryKey key="groovy.assert.element.kind.in.resolve" defaultValue="true"
+                 description="Whether to throw error if the element is unexpected in resolve processor"/>
+    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
+                 description="Allows to collect method usages for more precise type inference"/>
+    <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
+                 description="Enable type inference with using info from explicitly typed closures"/>
+
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
-
-    <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>
@@ -357,19 +376,15 @@
     <codeInsight.createFieldFromUsageHelper language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
+    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyParameterTypeHintsInlayProvider"/>
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
 
-    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
-    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.dgm.DGMFileTypeFactory"/>
-
-    <projectConfigurable groupId="build.tools" groupWeight="100" instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"
-                         id="reference.settingsdialog.project.gant"
-                         displayName="Gant"/>
+    <fileType name="DGM"
+              implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
@@ -459,7 +474,7 @@
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
 
-    <defaultLiveTemplatesProvider implementation="org.jetbrains.plugins.groovy.template.GroovyTemplatesProvider"/>
+    <defaultLiveTemplates file="liveTemplates/Groovy.xml"/>
 
     <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
     <variableTypeCalculator implementation="org.jetbrains.plugins.groovy.template.GroovyVariableTypeCalculator"/>
@@ -499,6 +514,8 @@
     <inlineActionHandler implementation="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineLocalHandler"/>
 
     <refactoring.moveClassHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler"/>
+    <refactoring.moveInnerHandler language="Groovy"
+                                  implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyInnerHandler"/>
     <refactoring.moveClassToInnerHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.GroovyMoveClassToInnerHandler"/>
     <moveFileHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyFileHandler"/>
     <refactoring.moveMemberHandler language="Groovy"
@@ -512,6 +529,7 @@
     <codeInsight.gotoSuper language="Groovy"
                            implementationClass="org.jetbrains.plugins.groovy.codeInsight.navigation.actions.GroovyGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
+    <completion.plainTextSymbol language="Groovy" implementationClass="com.intellij.codeInsight.completion.JvmPlainTextSymbolCompletionContributor"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyNoVariantsDelegator"
                             id="groovyBasic2ClassName" order="first, after liveTemplates"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"
@@ -552,7 +570,6 @@
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerSettings"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
     <externalSystem.codeStyleConfigurationImporter implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleImporter"/>
 
@@ -617,7 +634,9 @@
                             implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
-                         displayName="Groovy Compiler" parentId="project.propCompiler"/>
+                         bundle="messages.GroovyBundle"
+                         key="configurable.GroovyCompilerConfigurable.display.name"
+                         parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
@@ -642,11 +661,6 @@
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>
 
-    <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
-
-    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverterProvider"/>
-    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyRunConfigurationConverterProvider"/>
-
     <fileIconProvider implementation="org.jetbrains.plugins.groovy.GroovyFileIconProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
@@ -659,7 +673,7 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
@@ -679,7 +693,6 @@
     <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
     <lang.namesValidator implementationClass="org.jetbrains.plugins.groovy.lang.GroovyNamesValidator" language="Groovy"/>
 
-    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex"/>
 
@@ -709,34 +722,34 @@
                         implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
 
     <lang.jvm.actions.jvmElementActionsFactory implementation="org.jetbrains.plugins.groovy.annotator.intentions.elements.GroovyElementActionsFactory"/>
-    <localInspection displayName="Unused declaration"
+    <localInspection language="Groovy" displayName="Unused declaration"
                      groupPath="Groovy"
                      groupKey="inspection.redundancy" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection" unfair="true"/>
 
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="second.unsafe.call" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="unused.assignment" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="unused.inc.dec" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="unassigned.access" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMissingReturnStatement"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="no.return.display.name" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
@@ -987,18 +1000,18 @@
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="clashing.getters" groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="gr.package" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="gr.deprecated.api.usage" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" displayName="Nested conditional expression"
@@ -1022,16 +1035,16 @@
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="unnecessary.qualified.reference" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" displayName="Statement with empty body"
                      groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyEmptyStatementBodyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="pointless.boolean.display.name" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
@@ -1084,8 +1097,8 @@
                      groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="access.to.inaccessible.element" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection" unfair="true"/>
     <localInspection language="Groovy" groupPath="Groovy"
@@ -1097,18 +1110,18 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="incorrect.range.argument" groupKey="inspection.bugs"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="new.instance.of.singleton" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="check.labeled.statement" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" displayName="Class naming convention"
@@ -1168,8 +1181,8 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.annotations"
-                     bundle="org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyTransformationsBundle"
+                     groupBundle="messages.GroovyBundle"
                      key="singleton.constructor.inspection" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.transformations.singleton.SingletonConstructorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" displayName="@DelegatesTo inspection"
@@ -1177,8 +1190,8 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection"/>
 
     <localInspection language="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
+                     bundle="messages.GroovyInspectionBundle"
+                     groupBundle="messages.GroovyBundle"
                      groupPath="Groovy"
                      groupKey="inspection.data.flow"
                      key="variable.can.be.final"
@@ -1186,7 +1199,7 @@
 
     <localInspection language="Groovy"
                      groupPath="Groovy"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     bundle="messages.GroovyInspectionBundle"
                      groupKey="groovy.probable.bugs"
                      key="equals.between.inconvertible.types"
                      enabledByDefault="true"
@@ -1199,9 +1212,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
-    <psi.referenceContributor language="Groovy"
-                              implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
@@ -1236,6 +1246,9 @@
 
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader"/>
+
+    <pathMacroContributor implementation="org.jetbrains.plugins.groovy.mvc.MvcPathMacros"/>
+    <notificationWhitelist groupIds="Groovy DSL errors;Grape;Mvc notifications;"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1243,61 +1256,40 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
-            text="Execute Groovy Code"
-            description="Execute Groovy code in console"/>
+    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"/>
 
     <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
-           popup="true"
-           text="Gr_oovy Resources"
-           description="Run the compiler for Groovy files in resource roots to check for compilation issues">
-      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"
-              text="_Build Resources"
-              description="Run the incremental compiler for Groovy files in resource roots to check for compilation issues"/>
-      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"
-              text="_Rebuild Resources"
-              description="Run the compiler for all Groovy files in resource roots to check for compilation issues"/>
+           popup="true">
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"/>
       <add-to-group group-id="BuildMenu"/>
     </group>
 
-    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
-            text="Groovy Class" description="Create new Groovy class">
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
     </action>
-    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
-            text="Groovy Script" description="Create new Groovy script">
-      <add-to-group group-id="NewGroup" anchor="last"/>
-    </action>
-
-    <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
-            text="Gant Script" description="Create new Gant script">
+    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
     <action id="ConvertGroovyToJava"
-            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-            text="Convert to Java"
-            description="Convert Groovy files to Java">
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
     <action id="ConvertToCompileStatic"
-            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
-            text="Convert to @CompileStatic"
-            description="Convert Groovy files to @CompileStatic">
+            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
-            text="Dump Groovy Control Flow"
             internal="true">
       <add-to-group group-id="Internal"/>
     </action>
 
     <action id="ExcludeFromStubGeneration"
-            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
-            text="Exclude from Stub Generation" description="Don't generate Java stubs for this Groovy file on compilation">
+            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction">
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
 
@@ -1305,58 +1297,46 @@
     <group id="GroovyGenerateGroup1">
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
-              text="to_String()" description="Generate toString() method"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
-              text="Constructor" description="Generates constructor"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
-              text="Getter" description="Generates getter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
-              text="Setter" description="Generates setter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
-              text="Getter and Setter" description="Generates getter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
-              text="equals() and hashCode()" description="Action generates equals and hashCode now"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
-              text="methodMissing()" description="Action generates propertyMissing()"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-              text="propertyMissing()" description="Action generates propertyMissing()"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="JavaGenerateGroup1"/>
     </group>
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            text="Generate GroovyDoc..." description="Generating Groovy documentation"
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
-            text="Groovy Shell..." description="Launch Groovy shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup" text="Grails/Griffon">
+    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
       <action id="Mvc.Upgrade"
-              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
-              text="Change SDK Version" description="Change Grails/Griffon SDK version">
+              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction">
       </action>
 
-      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction"
-              text="Run Command" description="Run arbitrary Grails/Griffon command">
+      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction">
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
       </action>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
@@ -1365,21 +1345,8 @@
     </group>
 
     <action id="groovy.scripting.shell"
-            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"
-            text="Groovy IDE Scripting Shell"/>
+            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"/>
   </actions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
-    </component>
-  </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
-    </component>
-  </project-components>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>
@@ -1397,4 +1364,5 @@
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="geb-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="spock-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="gant-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

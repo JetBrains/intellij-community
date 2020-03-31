@@ -7,6 +7,9 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap AbstractHashedMap(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap NULL'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>

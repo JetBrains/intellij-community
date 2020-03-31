@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
@@ -74,6 +75,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testCircular1() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").element
     assertNull(ref.type)
   }
@@ -84,11 +86,13 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testClosure1() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").element
     assertTrue(ref.type.equalsToText("java.lang.Integer"))
   }
 
   void testClosure2() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
     assertTrue(ref.type.equalsToText("int"))
   }
@@ -114,7 +118,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testGenericWildcard() {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").element
-    assertEquals("A<Base>", ref.type.canonicalText)
+    assertEquals("X<Base>", ref.type.canonicalText)
   }
 
   void testArrayLikeAccessWithIntSequence() {
@@ -621,6 +625,32 @@ def foo(a) {
 ''', JAVA_LANG_STRING
   }
 
+  void 'test instanceof or null on field'() {
+    doTest '''\
+class C {
+  Object f 
+  def foo() {
+      if (null == f || f instanceof String) {
+          <caret>f
+      }
+  }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null on field 2'() {
+    doTest '''\
+class C {
+  Object f 
+  def foo() {
+      if (null == this.f || this.f instanceof String) {
+          <caret>f
+      }
+  }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test null or instanceof else'() {
     doTest '''\
 def foo(a) {
@@ -835,6 +865,7 @@ class Any {
   }
 
   void testRecursionWithMaps() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     allowNestedContext(2, testRootDisposable)
     doTest('''
 def foo(Map map) {
@@ -962,10 +993,12 @@ def foo() {
   }
 
   void 'test recursive literal types'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
     doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
     doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
-    doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
+    doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()',
+               "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
   }
 
   void 'test range literal type'() {
@@ -1050,16 +1083,6 @@ class W {
 
   void "test don't start inference for method parameter type"() {
     doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
-  }
-
-  void 'test closure param'() {
-    doTest '''\
-interface I { def foo(String s) }
-def bar(I i) {}
-bar { var ->
-  <caret>var
-}
-''', 'java.lang.String'
   }
 
   void 'test assignment in cycle independent on index'() {
@@ -1163,5 +1186,95 @@ def test() {
 
   void 'test spread list of classes'() {
     doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<? extends java.lang.Class>>'
+  }
+
+  void 'test reassigned local CS'() {
+    doTest '''
+def aa = "1"
+a<caret>a.toUpperCase()
+if (false) {
+    aa = new Object()
+    aa
+}
+aa
+''', JAVA_LANG_STRING
+
+    myFixture.getDocument(file).getTextLength()
+    def ref = file.findReferenceAt(myFixture.getDocument(file).getTextLength() - 2) as GrReferenceExpression
+    def actual = ref.type
+    assertType(JAVA_LANG_OBJECT, actual)
+  }
+
+  void 'test field with call constraint'() {
+    doTest '''
+class T {
+    def foo(Object o) {}
+
+    def field = ""
+
+    def m() {
+        foo(field)
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test reassign field'() {
+    doTest '''
+class T {
+    def field = ""
+
+    def m() {
+        field = 1
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test field with call constraint CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+class T {
+    def foo(Object o) {}
+
+    def field = ""
+
+    def m() {
+        foo(field)
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_OBJECT
+  }
+
+  void 'test reassign field CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+class T {
+    def field = ""
+
+    def m() {
+        field = 1
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_OBJECT
+  }
+
+  void 'test spread call expression in chain call '() {
+    doTest '''
+[""]*.trim().las<caret>t()
+''', JAVA_LANG_STRING
+  }
+
+  void 'test spread field expression in chain call '() {
+    doTest '''
+class C {
+  public Integer field
+}
+[new C()]*.field.las<caret>t()
+''', JAVA_LANG_INTEGER
   }
 }

@@ -1,6 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName")
-
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
@@ -19,6 +18,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
@@ -119,29 +119,36 @@ fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): 
 }
 
 @JvmOverloads
-fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
+fun Panel(@Nls(capitalization = Nls.Capitalization.Title) title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
+  return Panel(title, false, layout)
+}
+
+fun Panel(@Nls(capitalization = Nls.Capitalization.Title) title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
-  title?.let { setTitledBorder(it, panel) }
+  title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 
-fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+fun DialogPanel(@Nls(capitalization = Nls.Capitalization.Title) title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
-  title?.let { setTitledBorder(it, panel) }
+  title?.let { setTitledBorder(it, panel, hasSeparator = true) }
   return panel
 }
 
-private fun setTitledBorder(title: String, panel: JPanel) {
-  val border = IdeBorderFactory.createTitledBorder(title, false)
+private fun setTitledBorder(@Nls(capitalization = Nls.Capitalization.Title) title: String, panel: JPanel, hasSeparator: Boolean) {
+  val border = when {
+    hasSeparator -> IdeBorderFactory.createTitledBorder(title, false)
+    else -> IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false)
+  }
   panel.border = border
   border.acceptMinimumSize(panel)
 }
 
 /**
- * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme).
+ * Consider using [UI DSL](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
  */
 @JvmOverloads
-fun dialog(title: String,
+fun dialog(title: @NlsContexts.DialogTitle String,
            panel: JComponent,
            resizable: Boolean = false,
            focusedComponent: JComponent? = null,
@@ -230,7 +237,7 @@ private abstract class MyDialogWrapper(project: Project?,
 fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           component: ComponentWithBrowseButton<T>,
                                                           textField: JTextField,
-                                                          @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
+                                                          @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
@@ -255,7 +262,7 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
 
 @JvmOverloads
 fun textFieldWithHistoryWithBrowseButton(project: Project?,
-                                         browseDialogTitle: String,
+                                         @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          historyProvider: (() -> List<String>)? = null,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
@@ -280,7 +287,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
 
 @JvmOverloads
 fun textFieldWithBrowseButton(project: Project?,
-                              browseDialogTitle: String,
+                              @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String?,
                               fileChooserDescriptor: FileChooserDescriptor,
                               fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton()
@@ -295,6 +302,26 @@ fun textFieldWithBrowseButton(project: Project?,
   )
   return component
 }
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
+                              textField: JTextField,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  val component = TextFieldWithBrowseButton(textField)
+  installFileCompletionAndBrowseDialog(
+    project = project,
+    component = component,
+    textField = component.textField,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+    fileChosen = fileChosen
+  )
+  return component
+}
+
 
 val JPasswordField.chars: CharSequence?
   get() {

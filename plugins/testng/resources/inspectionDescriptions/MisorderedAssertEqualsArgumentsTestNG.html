@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports any calls to TestNG <b>assertEquals()</b> which have
-a non-literal as the expected result argument and a literal as the actual result argument. Such calls
-will behave fine for assertions which pass, but may give confusing error reports if their expected and actual
-arguments differ.
+Reports calls to TestNG <b>assertEquals()</b> which have the actual result argument and the expected argument in the wrong order.
+For TestNG the correct order is <code>(actual, expected)</code>.
+Such calls will behave fine for assertions which pass but may give confusing error reports on failure.
 <!-- tooltip end -->
 </body>
 </html>

@@ -15,14 +15,19 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedCallReturnType() {
     myFixture.configureByText("a.java", "import java.util.List;\n" +
                                         "abstract class Test {\n" +
@@ -84,6 +89,57 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     assertFalse(PsiType.VOID == method.getReturnType());
     myFixture.configureByText("a.java", "class A {{R r = () -> {};}} ");
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  public void testNestedDiamondsInsideAssignmentInMethodsCall() throws IOException {
+    String path = Diamond8HighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
+    
+    PsiFile file = myFixture.configureByFile(path);
+    String text = file.getText();
+
+    PsiNewExpression newB =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("new B<>"), PsiNewExpression.class, false);
+
+    PsiNewExpression newC =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("new C<>"), PsiNewExpression.class, false);
+
+    PsiMethodCallExpression get =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("get()"), PsiMethodCallExpression.class, false);
+
+    PsiLambdaExpression lambda =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("->"), PsiLambdaExpression.class, false);
+
+    assertEquals("B<Double>", newB.getType().getPresentableText());
+    String getType = get.getType().getPresentableText();
+    if (!"Double".equals(getType)) {
+      PsiExpression supplier = get.getMethodExpression().getQualifierExpression();
+      PsiType supplierType = supplier.getType();
+      assertEquals(get.getText() +
+                   " with qualifier resolving to " + ((PsiReferenceExpression)supplier).resolve() +
+                   " of type " + (supplierType == null ? null : supplierType.getCanonicalText()),
+                   "Double", getType);
+    }
+    assertEquals("C<Double>", newC.getType().getPresentableText());
+    assertEquals("Function<Supplier<Double>, Double>", lambda.getFunctionalInterfaceType().getPresentableText());
+
+    checkResolveResultDoesNotDependOnResolveOrder(file);
+  }
+
+  private void checkResolveResultDoesNotDependOnResolveOrder(PsiFile file) {
+    Map<PsiJavaCodeReferenceElement, String> gold = new HashMap<>();
+    for (PsiJavaCodeReferenceElement ref : SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class)) {
+      gold.put(ref, ref.advancedResolve(true).toString());
+    }
+
+    for (PsiJavaCodeReferenceElement ref : gold.keySet()) {
+      getPsiManager().dropPsiCaches();
+      assertEquals("Wrong resolve result for " + ref.getText(), gold.get(ref), ref.advancedResolve(true).toString());
+    }
   }
 
   @NotNull

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class URLUtil {
+public final class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
   public static final String FILE_PROTOCOL = "file";
   public static final String HTTP_PROTOCOL = "http";
@@ -27,6 +28,7 @@ public class URLUtil {
 
   public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
   public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
@@ -249,8 +251,7 @@ public class URLUtil {
    * @param dataUrl data:URL-like string (may be quoted)
    * @return extracted byte array or {@code null} if it cannot be extracted.
    */
-  @Nullable
-  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+  public static byte @Nullable [] getBytesFromDataUri(@NotNull String dataUrl) {
     Matcher matcher = DATA_URI_PATTERN.matcher(StringUtil.unquoteString(dataUrl));
     if (matcher.matches()) {
       try {
@@ -308,8 +309,19 @@ public class URLUtil {
 
   @NotNull
   public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
-    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+    return getJarEntryURL(file.toURI(), pathInJar);
+  }
+
+  @NotNull
+  public static URL getJarEntryURL(@NotNull URI file, @NotNull String pathInJar) throws MalformedURLException {
+    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
     return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+  }
+
+  @NotNull
+  public static URI getJarEntryUri(@NotNull URI file, @NotNull String pathInJar) throws URISyntaxException {
+    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
+    return new URI(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
 
   /**
@@ -333,5 +345,31 @@ public class URLUtil {
     catch (UnsupportedEncodingException e) {
       return s;
     }
+  }
+
+  /**
+   * Finds the first range in text containing URL. This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing
+   * matched set of parentheses.
+   */
+  @Nullable
+  public static TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
+    Matcher m = URL_WITH_PARENS_PATTERN.matcher(text);
+    m.region(startOffset, endOffset);
+    if (!m.find()) return null;
+    int start = m.start();
+    int end = m.end();
+    int unmatchedPos = 0;
+    int unmatchedCount = 0;
+    for (int i = m.end(1); i < end; i++) {
+      char c = text.charAt(i);
+      if (c == '(') {
+        if (unmatchedCount++ == 0) unmatchedPos = i;
+      }
+      else if (c == ')') {
+        if (unmatchedCount-- == 0) return new TextRange(start, i);
+      }
+    }
+    if (unmatchedCount > 0) return new TextRange(start, unmatchedPos);
+    return new TextRange(start, end);
   }
 }

@@ -30,9 +30,8 @@ public abstract class GoToChangePopupAction extends ActionGroup implements DumbA
     setPopup(true);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return AnAction.EMPTY_ARRAY;
   }
 

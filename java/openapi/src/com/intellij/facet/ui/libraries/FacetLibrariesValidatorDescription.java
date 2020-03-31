@@ -21,9 +21,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class FacetLibrariesValidatorDescription {
   private final String myDefaultLibraryName;
 

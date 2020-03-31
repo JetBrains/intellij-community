@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -23,7 +25,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
+import static com.intellij.codeInspection.dataFlow.SpecialField.*;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.LOCAL_OBJECT;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
@@ -38,57 +44,81 @@ class CustomMethodHandlers {
     staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
     staticCall(JAVA_LANG_FLOAT, "toString", "toHexString").parameterTypes("float"),
     staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
-    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short")
+    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short"),
+    staticCall(JAVA_LANG_BOOLEAN, "parseBoolean").parameterTypes("java.lang.String"),
+    exactInstanceCall(JAVA_LANG_INTEGER, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_LONG, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_DOUBLE, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_FLOAT, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_BYTE, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_SHORT, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_CHARACTER, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0)
   );
-  private static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 1024;
+  static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
   interface CustomMethodHandler {
 
-    @Nullable
-    DfaValue getMethodResult(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
+    @NotNull
+    DfType getMethodResult(DfaCallArguments callArguments,
+                           DfaMemoryState memState,
+                           DfaValueFactory factory,
+                           PsiMethod method);
 
     default CustomMethodHandler compose(CustomMethodHandler other) {
       if (other == null) return this;
-      return (args, memState, factory) -> {
-        DfaValue result = this.getMethodResult(args, memState, factory);
-        return result == null ? other.getMethodResult(args, memState, factory) : result;
+      return (args, memState, factory, method) -> {
+        DfType result = this.getMethodResult(args, memState, factory, method);
+        return result == TOP ? other.getMethodResult(args, memState, factory, method) : result;
       };
     }
-
   }
+
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.STRING_LENGTH))
+              (args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, STRING_LENGTH))
     .register(instanceCall(JAVA_UTIL_LIST, "indexOf", "lastIndexOf"),
-              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.COLLECTION_SIZE))
+              (args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, COLLECTION_SIZE))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
-              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
+              (args, memState, factory, method) -> mathAbs(args.myArguments, memState, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
+              (args, memState, factory, method) -> mathAbs(args.myArguments, memState, true))
+    .register(exactInstanceCall(JAVA_LANG_STRING, "substring"),
+              (args, memState, factory, method) -> substring(args, memState, factory, method.getReturnType()))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
-              (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory))
+              (args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]), method.getReturnType()))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              (args, memState, factory) -> calendarGet(args.myArguments, memState, factory))
+              (args, memState, factory, method) -> calendarGet(args.myArguments, memState))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
-              (args, memState, factory) -> skip(args.myArguments, memState, factory))
+              (args, memState, factory, method) -> skip(args.myArguments, memState))
     .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Integer.SIZE))
+              (args, memState, factory, method) -> numberAsString(args, memState, 4, Integer.SIZE))
     .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Integer.SIZE))
+              (args, memState, factory, method) -> numberAsString(args, memState, 3, Integer.SIZE))
     .register(staticCall(JAVA_LANG_INTEGER, "toBinaryString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Integer.SIZE))
+              (args, memState, factory, method) -> numberAsString(args, memState, 1, Integer.SIZE))
     .register(staticCall(JAVA_LANG_LONG, "toHexString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Long.SIZE))
+              (args, memState, factory, method) -> numberAsString(args, memState, 4, Long.SIZE))
     .register(staticCall(JAVA_LANG_LONG, "toOctalString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Long.SIZE))
+              (args, memState, factory, method) -> numberAsString(args, memState, 3, Long.SIZE))
     .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
-              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Long.SIZE));
+              (args, memState, factory, method) -> numberAsString(args, memState, 1, Long.SIZE))
+    .register(instanceCall(JAVA_LANG_ENUM, "name").parameterCount(0),
+              (args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType()))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
+              (args, memState, factory, method) -> getEmptyCollectionConstant(method))
+    .register(anyOf(
+      staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
+      staticCall(JAVA_UTIL_LIST, "of"),
+      staticCall(JAVA_UTIL_SET, "of"),
+      staticCall(JAVA_UTIL_MAP, "of", "ofEntries"),
+      staticCall(JAVA_UTIL_ARRAYS, "asList")), CustomMethodHandlers::collectionFactory);
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
-      handler = (args, memState, factory) -> handleConstantCall(args, memState, factory, method);
+      handler = (arguments, state, factory, m) -> handleConstantCall(arguments, state, m);
     }
     CustomMethodHandler handler2 = CUSTOM_METHOD_HANDLERS.mapFirst(method);
     return handler == null ? handler2 : handler.compose(handler2);
@@ -99,20 +129,18 @@ class CustomMethodHandlers {
     return CONSTANT_CALLS.methodMatches(method);
   }
 
-  @Nullable
-  private static DfaValue handleConstantCall(DfaCallArguments arguments, DfaMemoryState state,
-                                             DfaValueFactory factory, PsiMethod method) {
+  private static @NotNull DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
     PsiType returnType = method.getReturnType();
-    if (returnType == null) return null;
+    if (returnType == null) return TOP;
     List<Object> args = new ArrayList<>();
     Object qualifierValue = null;
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       qualifierValue = getConstantValue(state, arguments.myQualifier);
-      if (qualifierValue == null) return null;
+      if (qualifierValue == null) return TOP;
     }
     for (DfaValue argument : arguments.myArguments) {
       Object argumentValue = getConstantValue(state, argument);
-      if (argumentValue == null) return null;
+      if (argumentValue == null) return TOP;
       if (argumentValue instanceof Long) {
         long longValue = ((Long)argumentValue).longValue();
         if (longValue >= Integer.MIN_VALUE && longValue <= Integer.MAX_VALUE) {
@@ -122,22 +150,21 @@ class CustomMethodHandlers {
       args.add(argumentValue);
     }
     Method jvmMethod = toJvmMethod(method);
-    if (jvmMethod == null) return null;
+    if (jvmMethod == null) return TOP;
     Object result;
     try {
       result = jvmMethod.invoke(qualifierValue, args.toArray());
     }
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-      return null;
+      return TOP;
     }
-    return factory.getConstFactory().createFromValue(result, returnType);
+    return DfTypes.constant(result, returnType);
   }
 
   private static Method toJvmMethod(PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Method>() {
-      @NotNull
       @Override
-      public Result<Method> compute() {
+      public @NotNull Result<Method> compute() {
         Method reflection = getMethod();
         return Result.create(reflection, method);
       }
@@ -173,8 +200,7 @@ class CustomMethodHandlers {
         return null;
       }
 
-      @Nullable
-      private Method getMethod() {
+      private @Nullable Method getMethod() {
         PsiClass aClass = method.getContainingClass();
         Class<?> containingClass;
         if (aClass == null) return null;
@@ -198,40 +224,76 @@ class CustomMethodHandlers {
     });
   }
 
-  private static DfaValue indexOf(DfaValue qualifier,
-                                  DfaMemoryState memState,
-                                  DfaValueFactory factory,
-                                  SpecialField specialField) {
+  private static @NotNull DfType indexOf(DfaValue qualifier,
+                                         DfaMemoryState memState,
+                                         DfaValueFactory factory,
+                                         SpecialField specialField) {
     DfaValue length = specialField.createValue(factory, qualifier);
-    LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
-    long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1));
+    LongRangeSet range = DfIntType.extractRange(memState.getDfType(length));
+    return DfTypes.intRange(LongRangeSet.range(-1, range.max() - 1));
   }
 
-  private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
-    if (state.isNull(argument)) {
-      return DfaOptionalSupport.getOptionalValue(factory, false);
+  private static @NotNull DfType collectionFactory(DfaCallArguments args,
+                                                   DfaMemoryState memState, DfaValueFactory factory,
+                                                   PsiMethod method) {
+    PsiType type = method.getReturnType();
+    if (!(type instanceof PsiClassType)) return TOP;
+    int factor = ((PsiClassType)type).rawType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
+    DfType size;
+    if (method.isVarArgs()) {
+      size = memState.getDfType(ARRAY_LENGTH.createValue(factory, args.myArguments[0]));
     }
-    if (state.isNotNull(argument)) {
-      return DfaOptionalSupport.getOptionalValue(factory, true);
+    else {
+      size = DfTypes.intValue(args.myArguments.length / factor);
     }
-    return null;
+    boolean asList = method.getName().equals("asList");
+    Mutability mutability = asList ? Mutability.MUTABLE : Mutability.UNMODIFIABLE;
+    DfType result = DfTypes.typedObject(type, Nullability.NOT_NULL)
+      .meet(COLLECTION_SIZE.asDfType(size))
+      .meet(mutability.asDfType());
+    return asList ? result.meet(LOCAL_OBJECT) : result;
   }
 
-  private static DfaValue mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
+  private static DfType getEmptyCollectionConstant(PsiMethod method) {
+    String fieldName = "EMPTY_" + method.getName().substring("empty".length()).toUpperCase(Locale.ROOT);
+    PsiClass collectionsClass = method.getContainingClass();
+    if (collectionsClass == null) return TOP;
+    PsiField field = collectionsClass.findFieldByName(fieldName, false);
+    if (field == null) return TOP;
+    return DfTypes.constant(field, field.getType());
+  }
+
+  private static @NotNull DfType substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
+    if (stringType == null || !stringType.equalsToText(JAVA_LANG_STRING)) return TOP;
+    DfaValue qualifier = args.myQualifier;
+    DfaValue[] arguments = args.myArguments;
+    if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return TOP;
+    DfaValue from = arguments[0];
+    DfaValue lenVal = STRING_LENGTH.createValue(factory, qualifier);
+    DfaValue to = arguments.length == 1 ? lenVal : arguments[1];
+    DfaValue resultLenVal = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    DfType resultLen = state.getDfType(resultLenVal);
+    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
+    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.GE, DfTypes.intValue(0));
+    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
+    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.LE, state.getDfType(lenVal));
+    return STRING_LENGTH.asDfType(resultLen, stringType);
+  }
+
+  private static @NotNull DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
-    if (arg == null) return null;
-    LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
-    if (range == null) return null;
-    return factory.getFactValue(DfaFactType.RANGE, range.abs(isLong));
+    if (arg == null) return TOP;
+    DfType type = memState.getDfType(arg);
+    LongRangeSet range = isLong ? DfLongType.extractRange(type) : DfIntType.extractRange(type);
+    return isLong ? DfTypes.longRange(range.abs(true)) : DfTypes.intRange(range.abs(false));
   }
 
-  private static DfaValue calendarGet(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
-    if (arguments.length != 1) return null;
-    DfaConstValue arg = state.getConstantValue(arguments[0]);
-    if (arg == null || !(arg.getValue() instanceof Long)) return null;
+  private static @NotNull DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
+    if (arguments.length != 1) return TOP;
+    Integer val = DfConstantType.getConstantOfType(state.getDfType(arguments[0]), Integer.class);
+    if (val == null) return TOP;
     LongRangeSet range = null;
-    switch (((Long)arg.getValue()).intValue()) {
+    switch (val) {
       case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
       case Calendar.MONTH: range = LongRangeSet.range(0, 12); break;
       case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
@@ -242,45 +304,38 @@ class CustomMethodHandlers {
       case Calendar.SECOND: range = LongRangeSet.range(0, 59); break;
       case Calendar.MILLISECOND: range = LongRangeSet.range(0, 999); break;
     }
-    return range == null ? null : factory.getFactValue(DfaFactType.RANGE, range);
+    return range == null ? TOP : DfTypes.intRange(range);
   }
 
-  private static DfaValue skip(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
-    if (arguments.length != 1) return null;
-    LongRangeSet range = state.getValueFact(arguments[0], DfaFactType.RANGE);
-    if (range == null || range.isEmpty()) return null;
-    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, Math.max(0, range.max())));
+  private static @NotNull DfType skip(DfaValue[] arguments, DfaMemoryState state) {
+    if (arguments.length != 1) return TOP;
+    LongRangeSet range = DfLongType.extractRange(state.getDfType(arguments[0]));
+    return DfTypes.longRange(LongRangeSet.range(0, Math.max(0, range.max())));
   }
 
 
-  private static DfaValue numberAsString(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, int bitsPerChar,
-                                         int maxBits) {
+  private static @NotNull DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
     DfaValue arg = args.myArguments[0];
-    if (arg == null) return null;
-    LongRangeSet range = state.getValueFact(arg, DfaFactType.RANGE);
-    if (range == null || range.isEmpty()) return null;
+    if (arg == null) return TOP;
+    LongRangeSet range = DfLongType.extractRange(state.getDfType(arg));
     int usedBits = range.min() >= 0 ? Long.SIZE - Long.numberOfLeadingZeros(range.max()) : maxBits;
     int max = Math.max(1, (usedBits - 1) / bitsPerChar + 1);
-    DfaValue lengthRange = factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(1, max));
-    DfaFactMap map = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.STRING_LENGTH.withValue(lengthRange));
-    return factory.getFactFactory().createValue(map);
+    return STRING_LENGTH.asDfType(DfTypes.intRange(LongRangeSet.range(1, max)));
+  }
+
+  private static @NotNull DfType enumName(DfaValue qualifier, DfaMemoryState state, PsiType type) {
+    DfType dfType = state.getDfType(qualifier);
+    PsiEnumConstant value = DfConstantType.getConstantOfType(dfType, PsiEnumConstant.class);
+    if (value != null) {
+      return DfTypes.constant(value.getName(), type);
+    }
+    return TOP;
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
-    if (value != null) {
-      LongRangeSet fact = memoryState.getValueFact(value, DfaFactType.RANGE);
-      Long constantValue = fact == null ? null : fact.getConstantValue();
-      if (constantValue != null) {
-        return constantValue;
-      }
-    }
-    DfaConstValue dfaConst = memoryState.getConstantValue(value);
-    if (dfaConst != null) {
-      Object constant = dfaConst.getValue();
-      if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
-      return constant;
-    }
-    return null;
+    DfType type = memoryState.getUnboxedDfType(value);
+    Object constant = DfConstantType.getConstantOfType(type, Object.class);
+    if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
+    return constant;
   }
 }

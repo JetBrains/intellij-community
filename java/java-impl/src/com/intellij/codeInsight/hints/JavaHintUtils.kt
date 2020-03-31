@@ -33,7 +33,7 @@ object JavaInlayHintsProvider {
       var lastIndex = 0
       (if (arguments.isEmpty()) listOf(trailingOffset) else arguments.map { inlayOffset(it) }).forEachIndexed { i, offset ->
         if (i < params.size) {
-          params[i].name?.let {
+          params[i].name.let {
             infos.add(InlayInfo(it, offset, false, params.size == 1, false))
           }
           lastIndex = i
@@ -41,14 +41,14 @@ object JavaInlayHintsProvider {
       }
       if (Registry.`is`("editor.completion.hints.virtual.comma")) {
         for (i in lastIndex + 1 until minOf(params.size, limit)) {
-          params[i].name?.let {
+          params[i].name.let {
             infos.add(createHintWithComma(it, trailingOffset))
           }
           lastIndex = i
         }
       }
       if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
-        params[params.size - 1].name?.let {
+        params[params.size - 1].name.let {
           infos.add(createHintWithComma(it, trailingOffset))
         }
       }
@@ -60,7 +60,7 @@ object JavaInlayHintsProvider {
       return infos.toSet()
     }
     
-    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
+    if (!isParameterHintsEnabledForLanguage(callExpression.language)) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
@@ -117,7 +117,7 @@ object JavaInlayHintsProvider {
 
   private fun isCallInfoToShow(info: CallInfo): Boolean {
     val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
+    if (!hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
       return false
     }
     return true
@@ -139,7 +139,7 @@ object JavaInlayHintsProvider {
 
   private fun CallInfo.allParamsSequential(): Boolean {
     val paramNames = regularArgs
-      .map { it.parameter.name?.decomposeOrderedParams() }
+      .map { it.parameter.name.decomposeOrderedParams() }
       .filterNotNull()
 
     if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
@@ -173,7 +173,7 @@ object JavaInlayHintsProvider {
     return resultSet
   }
 
-  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.get()
+  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.get()
 
   private fun isMethodToShow(method: PsiMethod, callExpression: PsiCall): Boolean {
     val params = method.parameterList.parameters
@@ -181,12 +181,12 @@ object JavaInlayHintsProvider {
     if (params.size == 1) {
       val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
       
-      if (hintsProvider.isDoNotShowForBuilderLikeMethods.get() 
+      if (!hintsProvider.showForBuilderLikeMethods.get()
           && isBuilderLike(callExpression, method)) {
         return false
       }
       
-      if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
+      if (!hintsProvider.showIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) {
         return false
       }
@@ -205,7 +205,7 @@ object JavaInlayHintsProvider {
   }
   
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {
-    val parameterName = parameter.name ?: return false
+    val parameterName = parameter.name
     if (parameterName.length > 1) {
       return method.name.contains(parameterName, ignoreCase = true)
     }
@@ -247,7 +247,7 @@ private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean =
 
 
 private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
-  val paramName = methodParam.name ?: return null
+  val paramName = methodParam.name
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
   val offset = inlayOffset(callArgument)
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)

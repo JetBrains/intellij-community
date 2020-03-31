@@ -3,12 +3,15 @@ package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * Allows to modify current project settings for a specific PSI file. There can be several modifiers applying changes to the same instance
@@ -43,6 +46,7 @@ public interface CodeStyleSettingsModifier {
   /**
    * @return The name of the modifier to be shown in UI.
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
   /**
@@ -55,5 +59,14 @@ public interface CodeStyleSettingsModifier {
    */
   @Nullable
   CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings);
+
+  /**
+   * @return The function which disables the modifier in the given code style settings or by other means. It is purely programmatic and
+   * doesn't perform any UI operations by itself. {@code null} means that programmatic disabling is not available.
+   */
+  @Nullable
+  default Consumer<CodeStyleSettings> getDisablingFunction() {
+    return null;
+  }
 
 }

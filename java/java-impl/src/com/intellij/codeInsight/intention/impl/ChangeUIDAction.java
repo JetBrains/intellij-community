@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +27,7 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("change.uid.action.name");
+    return JavaBundle.message("change.uid.action.name");
   }
 
   @NotNull

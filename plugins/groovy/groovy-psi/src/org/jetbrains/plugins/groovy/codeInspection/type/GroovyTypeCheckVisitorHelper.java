@@ -1,22 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -29,8 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -40,20 +32,9 @@ import java.util.List;
 
 public class GroovyTypeCheckVisitorHelper {
 
-  @SuppressWarnings("unchecked")
-  private static final Function<PsiType, PsiType> id = (Function<PsiType, PsiType>)Function.ID;
-
-  @Nullable
-  @Contract("null -> null")
-  protected static GrListOrMap getTupleInitializer(@Nullable GrExpression initializer) {
-    if (initializer instanceof GrListOrMap &&
-        initializer.getReference() instanceof LiteralConstructorReference &&
-        ((LiteralConstructorReference)initializer.getReference()).getConstructedClassType() != null) {
-      return (GrListOrMap)initializer;
-    }
-    else {
-      return null;
-    }
+  @Contract("null -> false")
+  protected static boolean hasTupleInitializer(@Nullable GrExpression initializer) {
+    return initializer instanceof GrListOrMap && ((GrListOrMap)initializer).getConstructorReference() != null;
   }
 
   @NotNull
@@ -85,55 +66,6 @@ public class GroovyTypeCheckVisitorHelper {
     PsiType rtype = right != null ? right.getType() : null;
 
     return TypesUtil.isNumericType(ltype) && (rtype == null || TypesUtil.isNumericType(rtype));
-  }
-
-  @NotNull
-  public static LocalQuickFix[] genCastFixes(@NotNull GrSignature signature,
-                                             @NotNull PsiType[] argumentTypes,
-                                             @Nullable GrArgumentList argumentList) {
-    if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
-    final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
-    if (args == null) return LocalQuickFix.EMPTY_ARRAY;
-
-    final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
-    final List<GrSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(Collections.singletonList(signature));
-    for (GrSignature closureSignature : signatures) {
-      final GrClosureSignatureUtil.MapResultWithError map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
-        closureSignature, argumentTypes, id, argumentList, 255
-      );
-      if (map != null) {
-        final List<Pair<Integer, PsiType>> errors = map.getErrors();
-        for (Pair<Integer, PsiType> error : errors) {
-          if (!(error.first == 0 && PsiImplUtil.hasNamedArguments(argumentList))) {
-            allErrors.add(error);
-          }
-        }
-      }
-    }
-
-    final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
-    for (Pair<Integer, PsiType> error : allErrors) {
-      if (args.size() > error.first && error.second != null) {
-        PsiType type = PsiImplUtil.normalizeWildcardTypeByPosition(error.second, args.get(error.first));
-        if (type != null) fixes.add(new ParameterCastFix(error.first, type));
-      }
-    }
-    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
-  }
-
-  @NotNull
-  public static String buildArgTypesList(@NotNull PsiType[] argTypes) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("(");
-    for (int i = 0; i < argTypes.length; i++) {
-      if (i > 0) {
-        builder.append(", ");
-      }
-      PsiType argType = argTypes[i];
-      builder.append(argType != null ? argType.getInternalCanonicalText() : "?");
-    }
-    builder.append(")");
-    return builder.toString();
   }
 
   @Nullable

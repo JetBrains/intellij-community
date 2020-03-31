@@ -3,10 +3,10 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler
 
-class EditorConfigRefactoringTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigRefactoringTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/refactoring/"
 

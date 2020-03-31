@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -45,7 +46,7 @@ import java.util.Set;
  */
 @TestOnly
 public class VirtualFilePointerTracker {
-  private static final Set<VirtualFilePointerImpl> storedPointers = ContainerUtil.newIdentityTroveSet();
+  private static final Set<VirtualFilePointer> storedPointers = ContainerUtil.newIdentityTroveSet();
   private static Throwable trace;
   private static boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
 
@@ -60,7 +61,7 @@ public class VirtualFilePointerTracker {
     }
     trace = new Throwable();
     storedPointers.clear();
-    addAllPointersTo(storedPointers);
+    storedPointers.addAll(dumpAllPointers());
     //System.out.println("VFPT.storePointers(" + storedPointers + ")");
     isTracking = true;
   }
@@ -69,32 +70,30 @@ public class VirtualFilePointerTracker {
     if (!isTracking) {
       throw new IllegalStateException("Double call of assertPointersAreDisposed() - see 'Caused by:' for the previous call", trace);
     }
-    List<VirtualFilePointerImpl> pointers = new ArrayList<>();
-    addAllPointersTo(pointers);
-    //System.out.println("VFPT.assertPointersAreDisposed(" +pointers+")");
+    List<VirtualFilePointer> pointers = new ArrayList<>(dumpAllPointers());
     for (int i = pointers.size() - 1; i >= 0; i--) {
-      VirtualFilePointerImpl pointer = pointers.get(i);
+      VirtualFilePointer pointer = pointers.get(i);
       if (storedPointers.remove(pointer)) {
         pointers.remove(i);
       }
     }
     try {
-      Set<VirtualFilePointerImpl> leaked = ContainerUtil.newTroveSet(new TObjectHashingStrategy<VirtualFilePointerImpl>() {
+      Set<VirtualFilePointer> leaked = ContainerUtil.newTroveSet(new TObjectHashingStrategy<VirtualFilePointer>() {
         @Override
-        public int computeHashCode(VirtualFilePointerImpl pointer) {
+        public int computeHashCode(VirtualFilePointer pointer) {
           return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
         }
 
         @Override
-        public boolean equals(VirtualFilePointerImpl o1, VirtualFilePointerImpl o2) {
+        public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
           return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
         }
       }, pointers);
       leaked.removeAll(storedPointers);
 
-      for (VirtualFilePointerImpl pointer : leaked) {
-        pointer.throwDisposalError("Virtual pointer '" + pointer +
-                                   "' hasn't been disposed: " + pointer.getStackTrace());
+      for (VirtualFilePointer pointer : leaked) {
+        ((VirtualFilePointerImpl)pointer).throwDisposalError("Virtual pointer '" + pointer +
+                                                                 "' hasn't been disposed: " + ((VirtualFilePointerImpl)pointer).getStackTrace());
       }
     }
     finally {
@@ -104,7 +103,8 @@ public class VirtualFilePointerTracker {
     }
   }
 
-  private static void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAllPointersTo(pointers);
+  @NotNull
+  private static Collection<VirtualFilePointer> dumpAllPointers() {
+    return ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).dumpAllPointers();
   }
 }

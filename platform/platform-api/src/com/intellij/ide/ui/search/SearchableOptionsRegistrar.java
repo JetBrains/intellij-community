@@ -22,14 +22,14 @@ public abstract class SearchableOptionsRegistrar{
   }
 
   @NotNull
-  public abstract ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public abstract ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                    final DocumentEvent.EventType type,
                                                    @Nullable Set<? extends Configurable> configurables,
                                                    @NotNull String option,
                                                    @Nullable Project project);
 
-  @Nullable
-  public abstract String getInnerPath(SearchableConfigurable configurable, String option);
+  @NotNull
+  public abstract Set<String> getInnerPaths(SearchableConfigurable configurable, String option);
 
   public abstract void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName);
 

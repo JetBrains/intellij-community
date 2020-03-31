@@ -7,9 +7,10 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class SSTemplateBuilderTest extends LightCodeInsightFixtureTestCase {
+public class SSTemplateBuilderTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testClassTemplate() {
     doTest("class foo extends bar, next implements xxx",

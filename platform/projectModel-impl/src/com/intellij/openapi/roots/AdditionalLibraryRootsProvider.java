@@ -18,7 +18,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,10 +29,7 @@ import java.util.Collections;
  * Additional library roots will extend {@link com.intellij.psi.search.GlobalSearchScope#allScope(Project)}
  * (in UI, "Project and Libraries" scope). Also, files contained in the roots will be shown as library files
  * in Project View and will be available in "Navigate | File..." popup.
- *
- * Please note it is an experimental API that is subject to incompatible changes, or even removal, in a future release.
  */
-@ApiStatus.Experimental
 public abstract class AdditionalLibraryRootsProvider {
   public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");
 
@@ -48,12 +44,7 @@ public abstract class AdditionalLibraryRootsProvider {
    */
   @NotNull
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-    //noinspection deprecation
-    Collection<VirtualFile> roots = getAdditionalProjectLibrarySourceRoots(project);
-    if (roots.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(roots));
+    return Collections.emptyList();
   }
 
   /**
@@ -71,16 +62,6 @@ public abstract class AdditionalLibraryRootsProvider {
    */
   @NotNull
   public Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated use {@link #getAdditionalProjectLibraries(Project)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
-  public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
     return Collections.emptyList();
   }
 }

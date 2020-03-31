@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddAssertStatementFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AddAssertStatementFix");
   private final String myText;
 
   public AddAssertStatementFix(@NotNull String text) {
@@ -39,44 +37,33 @@ public class AddAssertStatementFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.assert.quickfix", myText);
+    return JavaBundle.message("inspection.assert.quickfix", myText);
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    PsiElement anchorElement = RefactoringUtil.getParentStatement(element, false);
-    LOG.assertTrue(anchorElement != null);
-    final PsiElement tempParent = anchorElement.getParent();
-    if (tempParent instanceof PsiForStatement && !PsiTreeUtil.isAncestor(((PsiForStatement)tempParent).getBody(), anchorElement, false)) {
-      anchorElement = tempParent;
-    }
+    PsiExpression element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiExpression.class);
+    if (element == null) return;
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
+    if (surrounder == null) return;
+    CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+    element = result.getExpression();
+    PsiElement anchorElement = result.getAnchor();
     PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;
     }
 
-    try {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-      @NonNls String text = "assert " + myText + ";";
-      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, null);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    @NonNls String text = "assert " + myText + ";";
+    PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, element);
 
-      final PsiElement parent = anchorElement.getParent();
-      if (parent instanceof PsiCodeBlock) {
-        parent.addBefore(assertStatement, anchorElement);
-      }
-      else {
-        RefactoringUtil.putStatementInLoopBody(assertStatement, parent, anchorElement);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    anchorElement.getParent().addBefore(assertStatement, anchorElement);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.quickfix.assert.family");
+    return JavaBundle.message("inspection.quickfix.assert.family");
   }
 }

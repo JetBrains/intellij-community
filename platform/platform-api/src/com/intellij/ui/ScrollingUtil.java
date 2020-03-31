@@ -22,6 +22,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
@@ -30,34 +31,34 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class ScrollingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ScrollingUtil");
+  private static final Logger LOG = Logger.getInstance(ScrollingUtil.class);
   @NonNls
-  protected static final String SCROLLUP_ACTION_ID = "scrollUp";
+  private static final String SCROLL_UP_ACTION_ID = "scrollUp";
   @NonNls
-  protected static final String SCROLLDOWN_ACTION_ID = "scrollDown";
+  private static final String SCROLL_DOWN_ACTION_ID = "scrollDown";
   @NonNls
-  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
+  private static final String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
   @NonNls
-  protected static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
+  private static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
   @NonNls
-  protected static final String SELECT_LAST_ROW_ACTION_ID = "selectLastRow";
+  private static final String SELECT_LAST_ROW_ACTION_ID = "selectLastRow";
   @NonNls
-  protected static final String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
+  private static final String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
   @NonNls
-  protected  static final String MOVE_HOME_ID = "MOVE_HOME";
+  private static final String MOVE_HOME_ID = "MOVE_HOME";
   @NonNls
-  protected  static final String MOVE_END_ID = "MOVE_END";
+  private static final String MOVE_END_ID = "MOVE_END";
 
   public static final int ROW_PADDING = 2;
 
-  public static void selectItem(JList list, int index) {
+  public static void selectItem(@NotNull JList<?> list, int index) {
     LOG.assertTrue(index >= 0);
     LOG.assertTrue(index < list.getModel().getSize());
     ensureIndexIsVisible(list, index, 0);
     list.setSelectedIndex(index);
   }
 
-  public static void ensureSelectionExists(JList list) {
+  public static void ensureSelectionExists(@NotNull JList<?> list) {
     int size = list.getModel().getSize();
     if (size == 0) {
       list.clearSelection();
@@ -70,10 +71,10 @@ public class ScrollingUtil {
     selectItem(list, selectedIndex);
   }
 
-  public static boolean selectItem(JList list, @NotNull Object item) {
-    ListModel model = list.getModel();
+  public static <T> boolean selectItem(@NotNull JList<T> list, @NotNull T item) {
+    ListModel<T> model = list.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      Object anItem = model.getElementAt(i);
+      T anItem = model.getElementAt(i);
       if (item.equals(anItem)) {
         selectItem(list, i);
         return true;
@@ -82,7 +83,7 @@ public class ScrollingUtil {
     return false;
   }
 
-  public static void movePageUp(JList list) {
+  public static void movePageUp(JList<?> list) {
     int visible = getVisibleRowCount(list);
     ListSelectionModel selectionModel = list.getSelectionModel();
     if (visible <= 0) {
@@ -111,7 +112,7 @@ public class ScrollingUtil {
     list.ensureIndexIsVisible(index);
   }
 
-  public static void movePageDown(JList list) {
+  public static void movePageDown(@NotNull JList<?> list) {
     int visible = getVisibleRowCount(list);
     if (visible <= 0) {
       moveEnd(list);
@@ -136,26 +137,26 @@ public class ScrollingUtil {
     list.ensureIndexIsVisible(index);
   }
 
-  public static void moveHome(JList list) {
+  public static void moveHome(@NotNull JList<?> list) {
     list.setSelectedIndex(0);
     list.ensureIndexIsVisible(0);
   }
 
-  public static void moveEnd(JList list) {
+  public static void moveEnd(@NotNull JList<?> list) {
     int index = list.getModel().getSize() - 1;
     list.setSelectedIndex(index);
     list.ensureIndexIsVisible(index);
   }
 
-  public static void ensureIndexIsVisible(JList list, int index, int moveDirection) {
+  public static void ensureIndexIsVisible(@NotNull JList<?> list, int index, int moveDirection) {
     _ensureIndexIsVisible(list, index, moveDirection, list.getModel().getSize());
   }
 
-  public static void ensureIndexIsVisible(JTable table, int index, int moveDirection) {
+  public static void ensureIndexIsVisible(@NotNull JTable table, int index, int moveDirection) {
     _ensureIndexIsVisible(table, index, moveDirection, table.getRowCount());
   }
 
-  private static void _ensureIndexIsVisible(JComponent c, int index, int moveDirection, int size) {
+  private static void _ensureIndexIsVisible(@NotNull JComponent c, int index, int moveDirection, int size) {
     int visible = visibleRowCount(c);
     int top;
     int bottom;
@@ -180,7 +181,7 @@ public class ScrollingUtil {
     _ensureRangeIsVisible(c, top, bottom);
   }
 
-  public static void ensureRangeIsVisible(JList list, int top, int bottom) {
+  public static void ensureRangeIsVisible(@NotNull JList<?> list, int top, int bottom) {
     int size = list.getModel().getSize();
     if (top < 0) {
       top = 0;
@@ -194,9 +195,9 @@ public class ScrollingUtil {
       list.scrollRectToVisible(cellBounds);
     }
   }
-  private static void _ensureRangeIsVisible(JComponent c, int top, int bottom) {
+  private static void _ensureRangeIsVisible(@NotNull JComponent c, int top, int bottom) {
     if (c instanceof JList) {
-      ensureRangeIsVisible((JList)c, top, bottom);
+      ensureRangeIsVisible((JList<?>)c, top, bottom);
     }
     else if (c instanceof JTable) {
       JTable table = (JTable)c;
@@ -206,7 +207,7 @@ public class ScrollingUtil {
     }
   }
 
-  public static boolean isIndexFullyVisible(JList list, int index) {
+  public static boolean isIndexFullyVisible(@NotNull JList<?> list, int index) {
     int first = list.getFirstVisibleIndex();
     int last = list.getLastVisibleIndex();
 
@@ -220,15 +221,15 @@ public class ScrollingUtil {
     return list.getVisibleRect().contains(list.getCellBounds(index, index));
   }
 
-  private static int getVisibleRowCount(JList list) {
+  private static int getVisibleRowCount(@NotNull JList<?> list) {
     return list.getLastVisibleIndex() - list.getFirstVisibleIndex() + 1;
   }
 
-  public static void moveDown(JList list, @JdkConstants.InputEventMask final int modifiers) {
+  public static void moveDown(@NotNull JList<?> list, @JdkConstants.InputEventMask final int modifiers) {
     _moveDown(list, list.getSelectionModel(), modifiers, list.getModel().getSize(), UISettings.getInstance().getCycleScrolling());
   }
 
-  private static void selectOrAddSelection(ListSelectionModel selectionModel,
+  private static void selectOrAddSelection(@NotNull ListSelectionModel selectionModel,
                                            int indexToSelect,
                                            @JdkConstants.InputEventMask int modifiers) {
     if (selectionModel.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
@@ -242,14 +243,14 @@ public class ScrollingUtil {
     }
   }
 
-  public static void installActions(final JList list) {
+  public static void installActions(@NotNull JList<?> list) {
     installActions(list, null);
   }
 
-  public static void installActions(final JList list, @Nullable JComponent focusParent) {
+  public static void installActions(final @NotNull JList<?> list, @Nullable JComponent focusParent) {
     ActionMap actionMap = list.getActionMap();
-    actionMap.put(SCROLLUP_ACTION_ID, new MoveAction(SCROLLUP_ACTION_ID, list));
-    actionMap.put(SCROLLDOWN_ACTION_ID, new MoveAction(SCROLLDOWN_ACTION_ID, list));
+    actionMap.put(SCROLL_UP_ACTION_ID, new MoveAction(SCROLL_UP_ACTION_ID, list));
+    actionMap.put(SCROLL_DOWN_ACTION_ID, new MoveAction(SCROLL_DOWN_ACTION_ID, list));
     actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list));
     actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list));
     actionMap.put(SELECT_LAST_ROW_ACTION_ID, new MoveAction(SELECT_LAST_ROW_ACTION_ID, list));
@@ -269,7 +270,27 @@ public class ScrollingUtil {
     }
   }
 
-  public static void installMoveEndAction(final JList list, @Nullable JComponent focusParent) {
+  public static void redirectExpandSelection(@NotNull JList<?> list, @Nullable JComponent focusParent) {
+    if (focusParent != null && focusParent != list) {
+      focusParent.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.isShiftDown()) {
+            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+              list.dispatchEvent(e);
+              e.consume();
+            }
+            if (e.getKeyCode() == KeyEvent.VK_UP) {
+              list.dispatchEvent(e);
+              e.consume();
+            }
+          }
+        }
+      });
+    }
+  }
+
+  public static void installMoveEndAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMoveEnd(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -278,7 +299,7 @@ public class ScrollingUtil {
     };
   }
 
-  public static void installMoveHomeAction(final JList list, @Nullable JComponent focusParent) {
+  public static void installMoveHomeAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMoveHome(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -287,7 +308,7 @@ public class ScrollingUtil {
     };
   }
 
-  public static void installMovePageDownAction(final JList list, @Nullable JComponent focusParent) {
+  public static void installMovePageDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMovePageDown(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -296,7 +317,7 @@ public class ScrollingUtil {
     };
   }
 
-  public static void installMovePageUpAction(final JList list, @Nullable JComponent focusParent) {
+  public static void installMovePageUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMovePageUp(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -305,7 +326,7 @@ public class ScrollingUtil {
     };
   }
 
-  public static void installMoveDownAction(final JList list, @Nullable JComponent focusParent) {
+  public static void installMoveDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMoveDown(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -314,7 +335,7 @@ public class ScrollingUtil {
     };
   }
 
-  public static void installMoveUpAction(final JList list, @Nullable JComponent focusParent) {
+  public static void installMoveUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
     new ListScrollAction(CommonShortcuts.getMoveUp(), focusParent == null ? list : focusParent) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -323,10 +344,10 @@ public class ScrollingUtil {
     };
   }
 
-  static void maybeInstallDefaultShortcuts(JComponent component) {
+  private static void maybeInstallDefaultShortcuts(@NotNull JComponent component) {
     InputMap map = component.getInputMap(JComponent.WHEN_FOCUSED);
-    UIUtil.maybeInstall(map, SCROLLUP_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
-    UIUtil.maybeInstall(map, SCROLLDOWN_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
+    UIUtil.maybeInstall(map, SCROLL_UP_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
+    UIUtil.maybeInstall(map, SCROLL_DOWN_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
     UIUtil.maybeInstall(map, SELECT_PREVIOUS_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
     UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
     UIUtil.maybeInstall(map, SELECT_FIRST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
@@ -340,7 +361,7 @@ public class ScrollingUtil {
   }
 
   public static abstract class ListScrollAction extends MyScrollingAction {
-    protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
+    protected ListScrollAction(@NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
       super(component);
       registerCustomShortcutSet(shortcutSet, component);
     }
@@ -365,31 +386,36 @@ public class ScrollingUtil {
   }
 
   @NotNull
-  private static Rectangle getCellBounds(JTable table, int top, int bottom) {
+  private static Rectangle getCellBounds(@NotNull JTable table, int top, int bottom) {
     return table.getCellRect(top, 0, true).union(table.getCellRect(bottom,0,true));
   }
 
   private static int visibleRowCount(JComponent c) {
-    if (c instanceof JList) return getVisibleRowCount((JList)c);
+    if (c instanceof JList) return getVisibleRowCount((JList<?>)c);
     if (c instanceof JTable) return getVisibleRowCount((JTable)c);
     return -1;
   }
 
-  private static int getVisibleRowCount(JTable table) {
+  private static int getVisibleRowCount(@NotNull JTable table) {
     Rectangle visibleRect = table.getVisibleRect();
     return getTrailingRow(table, visibleRect) - getLeadingRow(table, visibleRect) + 1;
   }
 
-  public static Couple<Integer> getVisibleRows(JTable table) {
+  public static @NotNull Couple<Integer> getVisibleRows(@NotNull JTable table) {
     Rectangle visibleRect = table.getVisibleRect();
-    return Couple.of(getLeadingRow(table, visibleRect) + 1, getTrailingRow(table, visibleRect));
+    return Couple.of(getLeadingRow(table, visibleRect), getTrailingRow(table, visibleRect));
   }
 
-  private static int getLeadingRow(JTable table, Rectangle visibleRect) {
-    return table.rowAtPoint(getLeadingPoint(table, visibleRect));
+  private static int getLeadingRow(@NotNull JTable table, @NotNull Rectangle visibleRect) {
+    int row = table.rowAtPoint(getLeadingPoint(table, visibleRect));
+    if (row >= 0) return row;
+    // return the first row in the table
+    // if there is no any row at the given point
+    return 0 < table.getRowCount() ? 0 : -1;
   }
 
-  private static Point getLeadingPoint(JTable table, Rectangle visibleRect) {
+  @NotNull
+  private static Point getLeadingPoint(@NotNull JTable table, @NotNull Rectangle visibleRect) {
     if (table.getComponentOrientation().isLeftToRight()) {
         return new Point(visibleRect.x, visibleRect.y);
     }
@@ -399,7 +425,7 @@ public class ScrollingUtil {
     }
   }
 
-  public static int getReadableRow(JTable table, int maximumHiddenPart) {
+  public static int getReadableRow(@NotNull JTable table, int maximumHiddenPart) {
     Rectangle visibleRect = table.getVisibleRect();
     Point leadingPoint = getLeadingPoint(table, visibleRect);
     int row = table.rowAtPoint(leadingPoint);
@@ -411,14 +437,14 @@ public class ScrollingUtil {
     }
   }
 
-  public static boolean isVisible(JTable table, int row) {
+  public static boolean isVisible(@NotNull JTable table, int row) {
     Rectangle visibleRect = table.getVisibleRect();
     int start = getLeadingRow(table, visibleRect);
     int end = getTrailingRow(table, visibleRect);
     return row >= start && row <= end;
   }
 
-  private static int getTrailingRow(JTable table, Rectangle visibleRect) {
+  private static int getTrailingRow(@NotNull JTable table, @NotNull Rectangle visibleRect) {
       Point trailingPoint;
 
       if (table.getComponentOrientation().isLeftToRight()) {
@@ -429,27 +455,31 @@ public class ScrollingUtil {
           trailingPoint = new Point(visibleRect.x + visibleRect.width,
                                     visibleRect.y + visibleRect.height - 1);
       }
-      return table.rowAtPoint(trailingPoint);
+    int row = table.rowAtPoint(trailingPoint);
+    if (row >= 0) return row;
+    // return the last row in the table
+    // if there is no any row at the given point
+    return table.getRowCount() - 1;
   }
 
 
-  public static void moveDown(JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+  public static void moveDown(@NotNull JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     _moveDown(table, table.getSelectionModel(), modifiers, table.getRowCount(), cycleScrolling);
   }
 
-  public static void moveUp(JList list, @JdkConstants.InputEventMask int modifiers) {
+  public static void moveUp(@NotNull JList<?> list, @JdkConstants.InputEventMask int modifiers) {
     _moveUp(list, list.getSelectionModel(), list.getModel().getSize(), modifiers, UISettings.getInstance().getCycleScrolling());
   }
 
-  public static void moveUp(JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+  public static void moveUp(@NotNull JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     _moveUp(table, table.getSelectionModel(), table.getModel().getRowCount(), modifiers, cycleScrolling);
   }
 
-  private static void _moveDown(JComponent c, ListSelectionModel selectionModel, @JdkConstants.InputEventMask final int modifiers, int size, boolean cycleScrolling) {
+  private static void _moveDown(@NotNull JComponent c, @NotNull ListSelectionModel selectionModel, @JdkConstants.InputEventMask final int modifiers, int size, boolean cycleScrolling) {
     _move(c, selectionModel, modifiers, size, cycleScrolling, +1);
   }
 
-  private static void _move(JComponent c, ListSelectionModel selectionModel, @JdkConstants.InputEventMask final int modifiers, int size, boolean cycleScrolling, int direction) {
+  private static void _move(@NotNull JComponent c, @NotNull ListSelectionModel selectionModel, @JdkConstants.InputEventMask final int modifiers, int size, boolean cycleScrolling, int direction) {
     if (size == 0) return;
     int index = selectionModel.getLeadSelectionIndex();
     int indexToSelect = index + direction;
@@ -464,22 +494,22 @@ public class ScrollingUtil {
     selectOrAddSelection(selectionModel, indexToSelect, modifiers);
   }
 
-  private static void _moveUp(JComponent c, ListSelectionModel selectionModel, int size, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+  private static void _moveUp(@NotNull JComponent c, @NotNull ListSelectionModel selectionModel, int size, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     _move(c, selectionModel, modifiers, size, cycleScrolling, -1);
   }
 
-  public static void moveHome(JTable table) {
+  public static void moveHome(@NotNull JTable table) {
     table.getSelectionModel().setSelectionInterval(0,0);
     ensureIndexIsVisible(table, 0,0);
   }
 
-  public static void moveEnd(JTable table) {
+  public static void moveEnd(@NotNull JTable table) {
     int index = table.getModel().getRowCount() - 1;
     table.getSelectionModel().setSelectionInterval(index, index);
     ensureIndexIsVisible(table, index, 0);
   }
 
-  public static void movePageUp(JTable table) {
+  public static void movePageUp(@NotNull JTable table) {
     int visible = getVisibleRowCount(table);
     if (visible <= 0) {
       moveHome(table);
@@ -497,7 +527,7 @@ public class ScrollingUtil {
     _scrollAfterPageMove(table, top, bottom, index);
   }
 
-  public static void movePageDown(JTable table) {
+  public static void movePageDown(@NotNull JTable table) {
     int visible = getVisibleRowCount(table);
     if (visible <= 0) {
       moveEnd(table);
@@ -513,7 +543,7 @@ public class ScrollingUtil {
     _scrollAfterPageMove(table, top, bottom, index);
   }
 
-  private static void _scrollAfterPageMove(JTable table, int top, int bottom, int index) {
+  private static void _scrollAfterPageMove(@NotNull JTable table, int top, int bottom, int index) {
     int size = table.getModel().getRowCount();
     if (bottom >= size) {
       bottom = size - 1;
@@ -524,14 +554,14 @@ public class ScrollingUtil {
     ensureIndexIsVisible(table, index, 0);
   }
 
-  public static void installActions(final JTable table) {
+  public static void installActions(@NotNull JTable table) {
     installActions(table, UISettings.getInstance().getCycleScrolling());
   }
 
   private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction {
     private final JComponent myComponent;
 
-    MyScrollingAction(JComponent component) {
+    MyScrollingAction(@NotNull JComponent component) {
       myComponent = component;
     }
 
@@ -547,18 +577,18 @@ public class ScrollingUtil {
 
   public static boolean isEmpty(JComponent component) {
     if (component instanceof JTable) return ((JTable)component).getRowCount() < 1;
-    if (component instanceof JList) return ((JList)component).getModel().getSize() <1;
+    if (component instanceof JList) return ((JList<?>)component).getModel().getSize() <1;
     return false;
   }
 
-  public static void installActions(final JTable table, final boolean cycleScrolling) {
+  public static void installActions(@NotNull JTable table, final boolean cycleScrolling) {
     installActions(table, cycleScrolling, null);
   }
 
-  public static void installActions(final JTable table, final boolean cycleScrolling, JComponent focusParent) {
+  public static void installActions(final @NotNull JTable table, final boolean cycleScrolling, @Nullable JComponent focusParent) {
     ActionMap actionMap = table.getActionMap();
-    actionMap.put(SCROLLUP_ACTION_ID, new MoveAction(SCROLLUP_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SCROLLDOWN_ACTION_ID, new MoveAction(SCROLLDOWN_ACTION_ID, table, cycleScrolling));
+    actionMap.put(SCROLL_UP_ACTION_ID, new MoveAction(SCROLL_UP_ACTION_ID, table, cycleScrolling));
+    actionMap.put(SCROLL_DOWN_ACTION_ID, new MoveAction(SCROLL_DOWN_ACTION_ID, table, cycleScrolling));
     actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, table, cycleScrolling));
     actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, table, cycleScrolling));
     actionMap.put(SELECT_LAST_ROW_ACTION_ID, new MoveAction(SELECT_LAST_ROW_ACTION_ID, table, cycleScrolling));
@@ -629,7 +659,7 @@ public class ScrollingUtil {
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
   }
 
-  private static boolean isMultiline(JComponent component) {
+  private static boolean isMultiline(@NotNull JComponent component) {
     return component instanceof JTextArea && ((JTextArea)component).getText().contains("\n");
   }
 
@@ -638,21 +668,21 @@ public class ScrollingUtil {
     private final JComponent myComponent;
     private final Boolean myCycleScrolling;
 
-    MoveAction(String id, JComponent component, Boolean cycleScrolling) {
+    MoveAction(@NotNull String id, @NotNull JComponent component, @Nullable Boolean cycleScrolling) {
       myId = id;
       myComponent = component;
       myCycleScrolling = cycleScrolling;
     }
 
-    MoveAction(String id, JComponent component) {
+    MoveAction(@NotNull String id, @NotNull JComponent component) {
       this(id, component, null);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       final int modifiers = e.getModifiers();
-        if (SCROLLUP_ACTION_ID.equals(myId)) doPageUp();
-        else if (SCROLLDOWN_ACTION_ID.equals(myId)) doPageDown();
+        if (SCROLL_UP_ACTION_ID.equals(myId)) doPageUp();
+        else if (SCROLL_DOWN_ACTION_ID.equals(myId)) doPageDown();
         else if (SELECT_PREVIOUS_ROW_ACTION_ID.equals(myId)) doMoveUp(modifiers);
         else if (SELECT_NEXT_ROW_ACTION_ID.equals(myId)) doMoveDown(modifiers);
         else if (SELECT_LAST_ROW_ACTION_ID.equals(myId)) doMoveEnd();
@@ -662,37 +692,37 @@ public class ScrollingUtil {
     }
 
     private void doMoveEnd() {
-      if (myComponent instanceof JList) moveEnd((JList)myComponent);
+      if (myComponent instanceof JList) moveEnd((JList<?>)myComponent);
       else if (myComponent instanceof JTable) moveEnd((JTable)myComponent);
       else throw new IllegalArgumentException("MoveEnd is not implemented for " + myComponent.getClass());
     }
 
     private void doMoveHome() {
-      if (myComponent instanceof JList) moveHome((JList)myComponent);
+      if (myComponent instanceof JList) moveHome((JList<?>)myComponent);
       else if (myComponent instanceof JTable) moveHome((JTable)myComponent);
       else throw new IllegalArgumentException("MoveHome is not implemented for " + myComponent.getClass());
     }
 
     private void doMoveUp(@JdkConstants.InputEventMask int modifiers) {
-      if (myComponent instanceof JList) moveUp((JList)myComponent, modifiers);
+      if (myComponent instanceof JList) moveUp((JList<?>)myComponent, modifiers);
       else if (myComponent instanceof JTable) moveUp((JTable)myComponent, modifiers, isCycleScrolling());
       else throw new IllegalArgumentException("MoveUp is not implemented for " + myComponent.getClass());
     }
 
     private void doMoveDown(@JdkConstants.InputEventMask int modifiers) {
-      if (myComponent instanceof JList) moveDown((JList)myComponent, modifiers);
+      if (myComponent instanceof JList) moveDown((JList<?>)myComponent, modifiers);
       else if (myComponent instanceof JTable) moveDown((JTable)myComponent, modifiers, isCycleScrolling());
       else throw new IllegalArgumentException("MoveDown is not implemented for " + myComponent.getClass());
     }
 
     private void doPageUp() {
-      if (myComponent instanceof JList) movePageUp((JList)myComponent);
+      if (myComponent instanceof JList) movePageUp((JList<?>)myComponent);
       else if (myComponent instanceof JTable) movePageUp((JTable)myComponent);
       else throw new IllegalArgumentException("PageUp is not implemented for " + myComponent.getClass());
     }
 
     private void doPageDown() {
-      if (myComponent instanceof JList) movePageDown((JList)myComponent);
+      if (myComponent instanceof JList) movePageDown((JList<?>)myComponent);
       else if (myComponent instanceof JTable) movePageDown((JTable)myComponent);
       else throw new IllegalArgumentException("PageDown is not implemented for " + myComponent.getClass());
     }

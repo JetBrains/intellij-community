@@ -15,3 +15,10 @@ class B {
     System.out.println(i);
   }
 }
+enum X {
+  ;
+  X() {}
+}
+record Y() {
+  public Y() {}
+}

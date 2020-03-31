@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.CommonBundle;
-import com.intellij.Patches;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.FixedFuture;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -18,33 +16,31 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+/**
+ * Utilities for working with {@link File}.
+ */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class FileUtil extends FileUtilRt {
-  static {
-    if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
-  }
-
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
+  public static final TObjectHashingStrategy<CharSequence> PATH_CHAR_SEQUENCE_HASHING_STRATEGY = FilePathHashingStrategy.createForCharSequence();
 
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
@@ -59,10 +55,10 @@ public class FileUtil extends FileUtilRt {
       }
     };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
+  private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
   @NotNull
-  public static String join(@NotNull final String... parts) {
+  public static String join(final String @NotNull ... parts) {
     return StringUtil.join(parts, File.separator);
   }
 
@@ -137,18 +133,19 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive, false));
+    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
+    return startsWith(path, start, caseSensitive, false);
   }
 
-  @NotNull
-  private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean caseSensitive,
-                                       boolean checkImmediateParent) {
-    final int pathLength = path.length();
-    final int prefixLength = prefix.length();
+  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive, boolean strict) {
+    return !ThreeState.NO.equals(startsWith(path, start, strict, caseSensitive, false));
+  }
+
+  private static ThreeState startsWith(String path, String prefix, boolean strict, boolean caseSensitive, boolean checkImmediateParent) {
+    int pathLength = path.length(), prefixLength = prefix.length();
     if (prefixLength == 0) return pathLength == 0 ? ThreeState.YES : ThreeState.UNSURE;
     if (prefixLength > pathLength) return ThreeState.NO;
     if (!path.regionMatches(!caseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
@@ -160,13 +157,12 @@ public class FileUtil extends FileUtilRt {
     if (lastPrefixChar == '/' || lastPrefixChar == File.separatorChar) {
       slashOrSeparatorIdx = prefixLength - 1;
     }
-    char next1 = path.charAt(slashOrSeparatorIdx);
-    if (next1 == '/' || next1 == File.separatorChar) {
+    char next = path.charAt(slashOrSeparatorIdx);
+    if (next == '/' || next == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
-
       if (slashOrSeparatorIdx == pathLength - 1) return ThreeState.YES;
-      int idxNext = path.indexOf(next1, slashOrSeparatorIdx + 1);
-      idxNext = idxNext == -1 ? path.indexOf(next1 == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
+      int idxNext = path.indexOf(next, slashOrSeparatorIdx + 1);
+      idxNext = idxNext == -1 ? path.indexOf(next == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
       return idxNext == -1 ? ThreeState.YES : ThreeState.UNSURE;
     }
     else {
@@ -188,8 +184,7 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.getParentFile(file);
   }
 
-  @NotNull
-  public static byte[] loadFileBytes(@NotNull File file) throws IOException {
+  public static byte @NotNull [] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
     try (InputStream stream = new FileInputStream(file)) {
       final long len = file.length();
@@ -206,8 +201,7 @@ public class FileUtil extends FileUtilRt {
     return bytes;
   }
 
-  @NotNull
-  public static byte[] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
+  public static byte @NotNull [] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
       copy(stream, maxLength, buffer);
@@ -233,8 +227,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  @NotNull
-  public static char[] adaptiveLoadText(@NotNull Reader reader) throws IOException {
+  public static char @NotNull [] adaptiveLoadText(@NotNull Reader reader) throws IOException {
     char[] chars = new char[4096];
     List<char[]> buffers = null;
     int count = 0;
@@ -266,8 +259,7 @@ public class FileUtil extends FileUtilRt {
     return result;
   }
 
-  @NotNull
-  public static byte[] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
+  public static byte @NotNull [] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
     byte[] bytes = getThreadLocalBuffer();
     List<byte[]> buffers = null;
     int count = 0;
@@ -308,21 +300,14 @@ public class FileUtil extends FileUtilRt {
   public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
     List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
-      final File tempFile = renameToTempFileOrDelete(file);
+      File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
         tempFiles.add(tempFile);
       }
     }
-    if (!tempFiles.isEmpty()) {
-      return startDeletionThread(tempFiles.toArray(new File[0]));
-    }
-    return new FixedFuture<>(null);
-  }
-
-  private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
-      final Thread currentThread = Thread.currentThread();
-      final int priority = currentThread.getPriority();
+    return tempFiles.isEmpty() ? CompletableFuture.completedFuture(null) : AppExecutorUtil.getAppExecutorService().submit(() -> {
+      Thread currentThread = Thread.currentThread();
+      int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
       try {
         for (File tempFile : tempFiles) {
@@ -332,20 +317,8 @@ public class FileUtil extends FileUtilRt {
       finally {
         currentThread.setPriority(priority);
       }
-    }, null);
-
-    try {
-      // attempt to execute on pooled thread
-      final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
-      final Method getApplicationMethod = aClass.getMethod("getApplication");
-      final Object application = getApplicationMethod.invoke(null);
-      final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
-      executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
-    }
-    catch (Exception ignored) {
-      new Thread(deleteFilesTask, "File deletion thread").start();
-    }
-    return deleteFilesTask;
+      return null;
+    });
   }
 
   @Nullable
@@ -372,6 +345,7 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
+  @NotNull
   private static File getTempFile(@NotNull String originalFileName, @NotNull String parent) {
     int randomSuffix = (int)(System.currentTimeMillis() % 1000);
     for (int i = randomSuffix; ; i++) {
@@ -382,26 +356,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (NIOReflect.IS_AVAILABLE) {
-      return deleteRecursivelyNIO(file);
-    }
-    return deleteRecursively(file);
+    return FileUtilRt.delete(file);
   }
 
-  private static boolean deleteRecursively(@NotNull File file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(file);
-    if (attributes == null) return true;
-
-    if (attributes.isDirectory() && !attributes.isSymLink()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!deleteRecursively(child)) return false;
-        }
-      }
-    }
-
-    return deleteFile(file);
+  public static void delete(@NotNull Path path) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(path);
   }
 
   public static boolean createParentDirs(@NotNull File file) {
@@ -452,6 +411,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
+  @NotNull
   private static FileOutputStream openOutputStream(@NotNull final File file) throws IOException {
     try {
       return new FileOutputStream(file);
@@ -511,7 +471,7 @@ public class FileUtil extends FileUtilRt {
    * @throws IOException in case of any IO troubles
    */
   public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
-    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
+    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY);
     for (File child : children) {
       copyFileOrDir(child, new File(toDir, child.getName()));
     }
@@ -528,8 +488,8 @@ public class FileUtil extends FileUtilRt {
       return;
     }
     File[] files = fromDir.listFiles();
-    if (files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
-    if (!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
+    if (files == null) throw new IOException(UtilBundle.message("exception.directory.is.invalid", fromDir.getPath()));
+    if (!fromDir.canRead()) throw new IOException(UtilBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
       if (filter != null && !filter.accept(file)) {
         continue;
@@ -545,13 +505,13 @@ public class FileUtil extends FileUtilRt {
 
   public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
-      throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
+      throw new IOException(UtilBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull File file) {
-    return getNameWithoutExtension(file.getName());
+    return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
   @NotNull
@@ -559,8 +519,17 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.getNameWithoutExtension(name);
   }
 
+  @NotNull
   public static String createSequentFileName(@NotNull File aParentFolder, @NotNull String aFilePrefix, @NotNull String aExtension) {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
+  }
+
+  @NotNull
+  public static String createSequentFileName(@NotNull File aParentFolder,
+                                             @NotNull String aFilePrefix,
+                                             @NotNull String aExtension,
+                                             @NotNull Condition<? super File> condition) {
+    return findSequentFile(aParentFolder, aFilePrefix, aExtension, condition).getName();
   }
 
   @NotNull
@@ -629,17 +598,17 @@ public class FileUtil extends FileUtilRt {
    * </pre>
    * 'root/dir1/link_to_dir1/../dir2' should be resolved to 'root/dir2'
    */
-  @Contract("null, _ -> null")
+  @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
     return toCanonicalPath(path, File.separatorChar, true, resolveSymlinksIfNecessary);
   }
 
-  @Contract("null, _ -> null")
+  @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar) {
     return toCanonicalPath(path, separatorChar, true);
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
     return toCanonicalPath(path, '/', false);
   }
@@ -663,7 +632,7 @@ public class FileUtil extends FileUtilRt {
     }
   };
 
-  @Contract("null, _, _, _ -> null")
+  @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   private static String toCanonicalPath(@Nullable String path,
                                         final char separatorChar,
                                         final boolean removeLastSlash,
@@ -827,7 +796,12 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    try {
+      return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
+    }
+    catch (InvalidPathException e) {
+      throw new IOException(e);
+    }
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
@@ -999,7 +973,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
+  public static String sanitizeFileName(@NotNull String name, boolean strict, @NotNull String replacement) {
     StringBuilder result = null;
 
     int last = 0;
@@ -1061,7 +1035,7 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
-  public static void writeToFile(@NotNull File file, @NotNull byte[] text) throws IOException {
+  public static void writeToFile(@NotNull File file, byte @NotNull [] text) throws IOException {
     writeToFile(file, text, false);
   }
 
@@ -1072,15 +1046,15 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
-  public static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len) throws IOException {
+  public static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len) throws IOException {
     writeToFile(file, text, off, len, false);
   }
 
-  public static void writeToFile(@NotNull File file, @NotNull byte[] text, boolean append) throws IOException {
+  public static void writeToFile(@NotNull File file, byte @NotNull [] text, boolean append) throws IOException {
     writeToFile(file, text, 0, text.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len, boolean append) throws IOException {
+  private static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
     try (OutputStream stream = new FileOutputStream(file, append)) {
@@ -1088,20 +1062,22 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  @NotNull
-  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return FILE_TRAVERSER.withRoot(root);
+  private static class Lazy {
+    private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+      (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.empty());
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return Lazy.FILE_TRAVERSER.withRoot(root);
+  }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
   }
 
   /**
-   * @see FileUtil#fileTraverser(File)
+   * @deprecated use  {@link #fileTraverser(File)}
    */
   @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
@@ -1122,7 +1098,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
-  public static File findFirstThatExist(@NotNull String... paths) {
+  public static File findFirstThatExist(String @NotNull ... paths) {
     for (String path : paths) {
       if (!StringUtil.isEmptyOrSpaces(path)) {
         File file = new File(toSystemDependentName(path));
@@ -1209,14 +1185,20 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
+  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isAbsolutePlatformIndependent(@NotNull String path) {
     return isUnixAbsolutePath(path) || isWindowsAbsolutePath(path);
   }
 
+  /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
+  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
     boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
     if (ok && path.length() > 2) {
@@ -1254,13 +1236,11 @@ public class FileUtil extends FileUtilRt {
     return path;
   }
 
-  @NotNull
-  public static File[] notNullize(@Nullable File[] files) {
-    return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);
+  public static File @NotNull [] notNullize(File @Nullable [] files) {
+    return notNullize(files, ArrayUtilRt.EMPTY_FILE_ARRAY);
   }
 
-  @NotNull
-  public static File[] notNullize(@Nullable File[] files, @NotNull File[] defaultFiles) {
+  public static File @NotNull [] notNullize(File @Nullable [] files, File @NotNull [] defaultFiles) {
     return files == null ? defaultFiles : files;
   }
 
@@ -1313,18 +1293,17 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix);
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix, boolean create)
-    throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean create) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create);
   }
 
   @NotNull
-  public static File createTempFile(File dir,
+  public static File createTempFile(@NotNull File dir,
                                     @NotNull String prefix,
                                     @Nullable String suffix,
                                     boolean create,
@@ -1338,7 +1317,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @TestOnly
-  public static void resetCanonicalTempPathCache(final String tempPath) {
+  public static void resetCanonicalTempPathCache(@NotNull String tempPath) {
     FileUtilRt.resetCanonicalTempPathCache(tempPath);
   }
 
@@ -1347,14 +1326,21 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
-  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    FileUtilRt.setExecutableAttribute(path, executableFlag);
+  public static void setExecutable(@NotNull File file) throws IOException {
+    PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
+    if (view != null) {
+      Set<PosixFilePermission> permissions = view.readAttributes().permissions();
+      if (permissions.add(PosixFilePermission.OWNER_EXECUTE)) {
+        view.setPermissions(permissions);
+      }
+    }
   }
 
-  public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
-    if (!file.setLastModified(timeStamp)) {
-      LOG.warn(file.getPath());
-    }
+  /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
+    FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
   @NotNull
@@ -1381,18 +1367,15 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadFile(file, encoding, convertLineSeparators);
   }
 
-  @NotNull
-  public static char[] loadFileText(@NotNull File file) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file) throws IOException {
     return FileUtilRt.loadFileText(file);
   }
 
-  @NotNull
-  public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadFileText(file, encoding);
   }
 
-  @NotNull
-  public static char[] loadText(@NotNull Reader reader, int length) throws IOException {
+  public static char @NotNull [] loadText(@NotNull Reader reader, int length) throws IOException {
     return FileUtilRt.loadText(reader, length);
   }
 
@@ -1421,41 +1404,30 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadLines(reader);
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull InputStream stream) throws IOException {
     return FileUtilRt.loadBytes(stream);
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     return FileUtilRt.loadBytes(stream, length);
   }
 
   @NotNull
   public static List<String> splitPath(@NotNull String path) {
+    return splitPath(path, File.separatorChar);
+  }
+
+  @NotNull
+  public static List<String> splitPath(@NotNull String path, char separatorChar) {
     ArrayList<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
-    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
+    while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
       list.add(path.substring(index, nextSeparator));
       index = nextSeparator + 1;
     }
     list.add(path.substring(index));
     return list;
-  }
-
-  public static boolean isJarOrZip(@NotNull File file) {
-    return isJarOrZip(file, true);
-  }
-
-  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
-    if (isCheckIsDirectory && file.isDirectory()) {
-      return false;
-    }
-
-    // do not use getName to avoid extra String creation (File.getName() calls substring)
-    final String path = file.getPath();
-    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
   }
 
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
@@ -1475,30 +1447,7 @@ public class FileUtil extends FileUtilRt {
     return true;
   }
 
-  /**
-   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
-   */
-  @NotNull
-  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = new LinkedHashMap<>();
-
-    new Properties() {
-      @Override
-      public synchronized Object put(Object key, Object value) {
-        map.put(String.valueOf(key), String.valueOf(value));
-        //noinspection UseOfPropertiesAsHashtable
-        return super.put(key, value);
-      }
-    }.load(reader);
-
-    return map;
-  }
-
-  public static boolean isRootPath(@NotNull String path) {
-    return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
-  }
-
-  public static boolean deleteWithRenaming(File file) {
+  public static boolean deleteWithRenaming(@NotNull File file) {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
     return delete(success ? tempFileNameForDeletion:file);

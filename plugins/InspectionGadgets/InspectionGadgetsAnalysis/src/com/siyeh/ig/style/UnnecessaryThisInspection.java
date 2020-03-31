@@ -44,12 +44,6 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.this.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }
@@ -119,6 +113,10 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
       }
       final PsiElement parent = expression.getParent();
       if (qualifier == null) {
+        if (referenceName.equals(PsiKeyword.YIELD) && parent instanceof PsiMethodCallExpression) {
+          // Qualifier might be required since Java 14, so don't warn
+          return;
+        }
         if (parent instanceof PsiCallExpression) {
           // method calls are always in error
           registerError(qualifierExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

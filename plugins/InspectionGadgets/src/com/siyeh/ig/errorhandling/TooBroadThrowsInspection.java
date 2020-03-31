@@ -54,12 +54,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overly.broad.throws.clause.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final List<SmartTypePointer> typesMasked = (List<SmartTypePointer>)infos[0];
     final PsiType type = typesMasked.get(0).getType();
@@ -101,9 +95,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[2];
     final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {
@@ -136,7 +129,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix 'throws' clause";
+      return InspectionGadgetsBundle.message("add.throws.clause.fix.family.name");
     }
 
     @Override

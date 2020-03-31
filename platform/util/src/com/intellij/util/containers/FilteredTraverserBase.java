@@ -23,10 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -119,7 +116,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public final Self withRoots(@Nullable T... roots) {
+  public final Self withRoots(T @Nullable ... roots) {
     return newInstance(myMeta.withRoots(JBIterable.of(roots)));
   }
 
@@ -195,6 +192,18 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   /**
+   * Configures the traverser to cache its structure.
+   * <p/>
+   * This property is not reset by {@code reset()} call.
+   * @see TreeTraversal#cached()
+   */
+  @NotNull
+  public final Self cached() {
+    IdentityHashMap<Object, Object> cache = new IdentityHashMap<>();
+    return interceptTraversal(traversal -> traversal.cached(cache));
+  }
+
+  /**
    * Configures the traverser to expand and return the nodes within the range only.
    * <p/>
    * This property is not reset by {@code reset()} call.
@@ -257,7 +266,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     Condition<? super T> filter = myMeta.filter.and();
     Meta<S> meta = Meta.<S>create(s -> baseTree.fun(reverse.fun(s)).map(function))
       .withRoots(JBIterable.from(getRoots()).map(function))
-      .filter(filter == Conditions.TRUE ? Conditions.alwaysTrue() : o -> filter.value(reverse.fun(o)));
+      .filter(filter == Conditions.alwaysTrue() ? Conditions.alwaysTrue() : o -> filter.value(reverse.fun(o)));
     //noinspection unchecked
     return (SelfS)newInstance((Meta<T>)meta);
   }
@@ -404,7 +413,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     public Meta<T> interceptTraversal(Function<? super TreeTraversal, ? extends TreeTraversal> interceptor) {
-      if (interceptor == Function.ID) return this;
+      if (interceptor == Functions.<TreeTraversal, TreeTraversal>identity()) return this;
       return new Meta<>(roots, traversal, tree, expand, regard, filter, forceExpand, forceIgnore, forceDisregard,
                         Functions.compose(this.interceptor, interceptor), original);
     }
@@ -446,7 +455,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     private void doPerformChildrenGuidance(TreeTraversal.GuidedIt<T> it, Condition<? super T> expand) {
       if (it.curChild == null) return;
       if (forceIgnore != Cond.FALSE && forceIgnore.valueOr(it.curChild)) return;
-      if (it.curParent == null || expand == Conditions.TRUE || expand.value(it.curChild)) {
+      if (it.curParent == null || expand == Conditions.alwaysTrue() || expand.value(it.curChild)) {
         it.queueNext(it.curChild);
       }
       else {
@@ -462,7 +471,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       Cond<T> c = regard;
       while (c != null) {
         Condition<? super T> impl = JBIterable.Stateful.copy(c.impl);
-        if (impl != (invert ? Condition.TRUE : Condition.FALSE)) {
+        if (impl != (invert ? Conditions.alwaysTrue() : Conditions.alwaysFalse())) {
           copy = new Cond<>(invert ? not(impl) : impl, copy);
           if (impl instanceof EdgeFilter) {
             ((EdgeFilter)impl).edgeSource = parent;
@@ -482,8 +491,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   static class Cond<T> {
-    static final Cond<Object> TRUE = new Cond<>(Conditions.TRUE, null);
-    static final Cond<Object> FALSE = new Cond<>(Conditions.FALSE, null);
+    static final Cond<Object> TRUE = new Cond<>(Conditions.alwaysTrue(), null);
+    static final Cond<Object> FALSE = new Cond<>(Conditions.alwaysFalse(), null);
 
     final Condition<? super T> impl;
     final Cond<T> next;
@@ -494,7 +503,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     Cond<T> append(Condition<? super T> impl) {
-      return new Cond<>(impl, this);
+      Cond<T> result = new Cond<>(impl, null);
+      for (Condition<? super T> o : ContainerUtil.reverse(JBIterable.generate(this, o -> o.next).map(o -> o.impl).toList())) {
+        result = new Cond<>(o, result);
+      }
+      return result;
     }
 
     boolean valueAnd(T t) {
@@ -514,8 +527,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     Condition<? super T> or() {
       Boolean result = false;
       for (Cond<T> c = this; c != null; c = c.next) {
-        if (c.impl == Condition.TRUE) return Conditions.alwaysTrue();
-        result = result != null && c.impl != Condition.FALSE ? null : result;
+        if (c.impl == Conditions.alwaysTrue()) return Conditions.alwaysTrue();
+        result = result != null && c.impl != Conditions.alwaysFalse() ? null : result;
       }
       return result == null ? (Condition<T>)this::valueOr : Conditions.alwaysFalse();
     }
@@ -523,8 +536,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     Condition<? super T> and() {
       Boolean result = true;
       for (Cond<T> c = this; c != null; c = c.next) {
-        if (c.impl == Condition.FALSE) return Conditions.alwaysFalse();
-        result = result != null && c.impl != Condition.TRUE ? null : result;
+        if (c.impl == Conditions.alwaysFalse()) return Conditions.alwaysFalse();
+        result = result != null && c.impl != Conditions.alwaysTrue() ? null : result;
       }
       return result == null ? (Condition<T>)this::valueAnd : Conditions.alwaysTrue();
     }
@@ -573,13 +586,15 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         TreeTraversal adjusted = meta == null ? this : (TreeTraversal)meta.interceptor.fun(original);
 
         tree = new MappedTree(tree, ((MappedTraversal)adjusted).map, meta);
-        roots = JBIterable.from(roots).map(((MappedTree)tree)::map);
+        // Must be a separate variable, otherwise javac 8u201 crashes when compiling this code
+        Function fn = ((MappedTree)tree)::map;
+        roots = JBIterable.from(roots).map(fn);
 
         Function tree0 = tree;
         Condition filter0 = filter;
-        Condition<? super Object> prevFilter = filter == Condition.TRUE ? Condition.TRUE :
+        Condition<? super Object> prevFilter = filter == Conditions.alwaysTrue() ? Conditions.alwaysTrue() :
                                                o -> filter0.value(((MappedTree)tree0).reverse(o));
-        filter = Conditions.and(prevFilter, meta == null ? Condition.TRUE : meta.filter.and());
+        filter = Conditions.and(prevFilter, meta == null ? Conditions.alwaysTrue() : meta.filter.and());
       }
 
       MappedTree mappedTree = (MappedTree)tree;

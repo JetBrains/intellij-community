@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
+public abstract class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
   private final CodeInsightActionHandler myHandler;
 
-  public BaseGenerateAction(CodeInsightActionHandler handler) {
+  protected BaseGenerateAction(CodeInsightActionHandler handler) {
     myHandler = handler;
   }
 
@@ -47,6 +47,11 @@ public class BaseGenerateAction extends CodeInsightAction implements GenerateAct
     if (myHandler instanceof ContextAwareActionHandler && presentation.isEnabled()) {
       presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, file, dataContext));
     }
+  }
+
+  @Override
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    presentation.setEnabledAndVisible(isValidForFile(project, editor, file));
   }
 
   @Override

@@ -12,9 +12,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import kotlin.reflect.KClass
 
-/**
- * @author nik
- */
 class ClassFileBuilderImpl(private val name: String) : ClassFileBuilder() {
   private val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 

@@ -15,13 +15,15 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -52,12 +54,19 @@ public class LightProjectDescriptor {
     WriteAction.run(() -> {
       Module module = createMainModule(project);
       handler.moduleCreated(module);
-      VirtualFile sourceRoot = createSourcesRoot(module);
+      VirtualFile sourceRoot = createDirForSources(module);
       if (sourceRoot != null) {
         handler.sourceRootCreated(sourceRoot);
         createContentEntry(module, sourceRoot);
       }
     });
+  }
+
+  public void registerSdk(Disposable disposable) {
+    Sdk sdk = getSdk();
+    if (sdk != null) {
+      registerJdk(sdk, disposable);
+    }
   }
 
   @NotNull
@@ -72,18 +81,33 @@ public class LightProjectDescriptor {
         //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
         FileUtil.delete(imlFile);
       }
-      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
+      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleTypeId());
     });
   }
 
   @NotNull
-  public ModuleType getModuleType() {
-    return EmptyModuleType.getInstance();
+  public String getModuleTypeId() {
+    return EmptyModuleType.EMPTY_MODULE;
   }
 
+  /**
+   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
+   * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
+   * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
+   * @see #markDirForSourcesAsSourceRoot()
+   */
   @Nullable
-  public VirtualFile createSourcesRoot(@NotNull Module module) {
+  public VirtualFile createDirForSources(@NotNull Module module) {
     return createSourceRoot(module, "src");
+  }
+
+  /**
+   * Configures whether directory created by {@link #createDirForSources(Module)} should be marked as "Source root".
+   * <p></p>
+   * If you wonder about when this can be helpful: RubyMine does this. See this method overrides and according JavaDoc.
+   */
+  protected boolean markDirForSourcesAsSourceRoot() {
+    return true;
   }
 
   protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
@@ -117,7 +141,7 @@ public class LightProjectDescriptor {
 
       @Override
       public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
           @Override
           public boolean visitFile(@NotNull VirtualFile file) {
             iterator.processFile(file);
@@ -138,9 +162,18 @@ public class LightProjectDescriptor {
       }
 
       ContentEntry contentEntry = model.addContentEntry(srcRoot);
-      contentEntry.addSourceFolder(srcRoot, getSourceRootType());
+      if (markDirForSourcesAsSourceRoot()) {
+        contentEntry.addSourceFolder(srcRoot, getSourceRootType());
+      }
 
       configureModule(module, model, contentEntry);
+    });
+  }
+
+  private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
+    WriteAction.run(() -> {
+      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+      ((ProjectJdkTableImpl)jdkTable).addTestJdk(jdk, parentDisposable);
     });
   }
 

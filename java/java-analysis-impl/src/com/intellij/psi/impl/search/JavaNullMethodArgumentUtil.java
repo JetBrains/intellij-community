@@ -32,9 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 public class JavaNullMethodArgumentUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaNullMethodArgumentUtil");
+  private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentUtil.class);
 
   public static boolean hasNullArgument(@NotNull PsiMethod method, final int argumentIdx) {
     final boolean[] result = {false};
@@ -46,7 +47,7 @@ public class JavaNullMethodArgumentUtil {
   }
 
   public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<? super PsiExpression> nullArgumentProcessor) {
-    final PsiParameter parameter = method.getParameterList().getParameters()[argumentIdx];
+    final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(argumentIdx));
     if (parameter.getType() instanceof PsiEllipsisType) {
       return;
     }

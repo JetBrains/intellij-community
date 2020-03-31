@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -7,29 +7,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -75,7 +68,7 @@ public class GitRebaser {
 
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       String oldText = myProgressIndicator.getText();
-      myProgressIndicator.setText("Rebasing...");
+      myProgressIndicator.setText(GitBundle.getString("rebase.progress.indicator.title"));
       GitCommandResult result = myGit.runCommand(rebaseHandler);
       myProgressIndicator.setText(oldText);
       return result.success() ?
@@ -99,9 +92,14 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, "Aborting rebase");
+    GitTask task = new GitTask(myProject, rh, GitBundle.getString("rebase.update.project.abort.task.title"));
     task.setProgressIndicator(myProgressIndicator);
-    task.executeAsync(new GitTaskResultNotificationHandler(myProject, "Rebase aborted", "Abort rebase cancelled", "Error aborting rebase"));
+    task.executeAsync(new GitTaskResultNotificationHandler(
+      myProject,
+      GitBundle.getString("rebase.update.project.notification.abort.success.message"),
+      GitBundle.getString("rebase.update.project.notification.abort.cancel.message"),
+      GitBundle.getString("rebase.update.project.notification.abort.error.message")
+    ));
   }
 
   public boolean continueRebase(@NotNull VirtualFile root) {
@@ -112,7 +110,7 @@ public class GitRebaser {
    * Runs 'git rebase --continue' on several roots consequently.
    * @return true if rebase successfully finished.
    */
-  public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
+  public boolean continueRebase(@NotNull Collection<? extends VirtualFile> rebasingRoots) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {
@@ -154,36 +152,6 @@ public class GitRebaser {
     return rebasingRoots;
   }
 
-  /**
-   * Reorders commits so that the given commits go before others, just after the given parentCommit.
-   * For example, if A->B->C->D are unpushed commits and B and D are supplied to this method, then after rebase the commits will
-   * look like that: B->D->A->C.
-   * NB: If there are merges in the unpushed commits being reordered, a conflict would happen. The calling code should probably
-   * prohibit reordering merge commits.
-   */
-  public boolean reoderCommitsIfNeeded(@NotNull final VirtualFile root, @NotNull String parentCommit, @NotNull List<String> olderCommits) {
-    List<String> allCommits = new ArrayList<>(); //TODO
-    if (olderCommits.isEmpty() || olderCommits.size() == allCommits.size()) {
-      LOG.info("Nothing to reorder. olderCommits: " + olderCommits + " allCommits: " + allCommits);
-      return true;
-    }
-
-    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
-    h.setStdoutSuppressed(false);
-    h.addParameters("-i", "-m", "-v");
-    h.addParameters(parentCommit);
-
-    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-    h.addLineListener(rebaseConflictDetector);
-
-    final PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(root, olderCommits, false);
-    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(h, pushRebaseEditor)) {
-      final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
-      rebaseTask.setProgressIndicator(myProgressIndicator);
-      return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
-    }
-  }
-
   private boolean executeRebaseTaskInBackground(VirtualFile root, GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector, GitTask rebaseTask) {
     final AtomicBoolean result = new AtomicBoolean();
     final AtomicBoolean failure = new AtomicBoolean();
@@ -212,12 +180,15 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
-        @Override protected boolean proceedIfNothingToMerge() {
-          return continueRebase(root, "--continue");
+      return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
+        @Override
+        protected boolean proceedIfNothingToMerge() {
+          notifyUnresolvedRemain();
+          return false;
         }
 
-        @Override protected boolean proceedAfterAllMerged() {
+        @Override
+        protected boolean proceedAfterAllMerged() {
           return continueRebase(root, "--continue");
         }
       }.merge();
@@ -243,14 +214,21 @@ public class GitRebaser {
       }
       catch (VcsException e) {
         LOG.info("Failed to work around 'no changes' error.", e);
-        String message = "Couldn't proceed with rebase. " + e.getMessage();
-        GitUIUtil.notifyImportantError(myProject, "Error rebasing", message);
+        GitUIUtil.notifyImportantError(
+          myProject,
+          GitBundle.getString("rebase.update.project.notification.failed.title"),
+          GitBundle.message("rebase.update.project.notification.failed.message", e.getMessage())
+        );
         return false;
       }
     }
     else {
       LOG.info("handleRebaseFailure error " + h.errors());
-      GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
+      GitUIUtil.notifyImportantError(
+        myProject,
+        GitBundle.getString("rebase.update.project.notification.failed.title"),
+        GitUIUtil.stringifyErrors(h.errors())
+      );
       return false;
     }
   }
@@ -262,16 +240,16 @@ public class GitRebaser {
     myGit.runCommand(handler).throwOnError();
   }
 
-  private GitConflictResolver.Params makeParamsForRebaseConflict() {
-    return new GitConflictResolver.Params(myProject).
-      setReverse(true).
-      setErrorNotificationTitle("Can't continue rebase").
-      setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
-      setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> " +
-                                                "You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+  @NotNull
+  private static GitConflictResolver.Params makeParams(@NotNull Project project) {
+    return new GitConflictResolver.Params(project)
+      .setReverse(true)
+      .setErrorNotificationTitle(GitBundle.getString("rebase.update.project.conflict.error.notification.title"))
+      .setMergeDescription(GitBundle.getString("rebase.update.project.conflict.merge.description.label"))
+      .setErrorNotificationAdditionalDescription(GitBundle.getString("rebase.update.project.conflict.error.notification.description"));
   }
 
-  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{
+  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler {
     public TrivialEditor(@NotNull Project project, @NotNull VirtualFile root) {
       super(project, root);
     }
@@ -301,12 +279,21 @@ public class GitRebaser {
       return GitUpdateResult.ERROR;
     }
     else if (localChangesDetector.wasMessageDetected()) {
-      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(myProject, root, "rebase", localChangesDetector.getRelativeFilePaths());
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(
+        myProject,
+        root,
+        GitBundle.getString("rebase.git.operation.name"),
+        localChangesDetector.getRelativeFilePaths()
+      );
       return GitUpdateResult.ERROR;
     }
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
-      VcsNotifier.getInstance(myProject).notifyError("Rebase error", result.getErrorOutputAsHtmlString());
+      VcsNotifier.getInstance(myProject).notifyError(
+        GitBundle.getString("rebase.update.project.notification.failed.title"),
+        result.getErrorOutputAsHtmlString(),
+        true
+      );
       return GitUpdateResult.ERROR;
     }
   }
@@ -321,15 +308,6 @@ public class GitRebaser {
       myRoot = root;
     }
 
-    private static Params makeParams(Project project) {
-      Params params = new Params(project);
-      params.setReverse(true);
-      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
-      params.setErrorNotificationTitle("Can't continue rebase");
-      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
-      return params;
-    }
-
     @Override protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
     }
@@ -338,71 +316,4 @@ public class GitRebaser {
       return myRebaser.continueRebase(myRoot);
     }
   }
-
-  /**
-   * The rebase editor that just overrides the list of commits
-   */
-  class PushRebaseEditor extends GitInteractiveRebaseEditorHandler {
-    private final Logger LOG = Logger.getInstance(PushRebaseEditor.class);
-    private final List<String> myCommits; // The reordered commits
-    private final boolean myHasMerges; // true means that the root has merges
-
-    /**
-     * The constructor from fields that is expected to be
-     * accessed only from {@link GitRebaseEditorService}.
-     *
-     * @param rebaseEditorService
-     * @param root      the git repository root
-     * @param commits   the reordered commits
-     * @param hasMerges if true, the vcs root has merges
-     */
-    PushRebaseEditor(final VirtualFile root,
-                     List<String> commits,
-                     boolean hasMerges) {
-      super(myProject, root);
-      myCommits = commits;
-      myHasMerges = hasMerges;
-    }
-
-    @Override
-    public int editCommits(@NotNull String path) {
-      if (!myRebaseEditorShown) {
-        myRebaseEditorShown = true;
-        if (myHasMerges) {
-          return 0;
-        }
-        try {
-          TreeMap<String, String> pickLines = new TreeMap<>();
-          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), CharsetToolkit.UTF8)));
-          while (s.hasMoreData()) {
-            if (!s.tryConsume("pick ")) {
-              s.line();
-              continue;
-            }
-            String commit = s.spaceToken();
-            pickLines.put(commit, "pick " + commit + " " + s.line());
-          }
-          try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8))) {
-            for (String commit : myCommits) {
-              String key = pickLines.headMap(commit + "\u0000").lastKey();
-              if (key == null || !commit.startsWith(key)) {
-                continue; // commit from merged branch
-              }
-              w.print(pickLines.get(key) + "\n");
-            }
-          }
-          return 0;
-        }
-        catch (Exception ex) {
-          LOG.error("Editor failed: ", ex);
-          return 1;
-        }
-      }
-      else {
-        return super.editCommits(path);
-      }
-    }
-  }
-
-
 }

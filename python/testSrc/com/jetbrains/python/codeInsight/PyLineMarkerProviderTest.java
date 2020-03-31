@@ -49,10 +49,9 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
     final ASTNode[] functionChildren = functionNode.getChildren(TokenSet.create(PyTokenTypes.IDENTIFIER));
     assert functionChildren.length == 1 : "Wrong number of identifiers: " + functionChildren.length;
     final PsiElement element = functionChildren[0].getPsi();
-    @SuppressWarnings("unchecked")
-    final LineMarkerInfo<PsiElement> lineMarkerInfo = new PyLineMarkerProvider().getLineMarkerInfo(element);
+    LineMarkerInfo<?> lineMarkerInfo = new PyLineMarkerProvider().getLineMarkerInfo(element);
     Assert.assertNotNull("No gutter displayed", lineMarkerInfo);
-    final GutterIconNavigationHandler<PsiElement> handler = lineMarkerInfo.getNavigationHandler();
+    GutterIconNavigationHandler<PsiElement> handler = (GutterIconNavigationHandler<PsiElement>)lineMarkerInfo.getNavigationHandler();
     Assert.assertNotNull("Gutter has no navigation handle", handler);
     handler.navigate(new MouseEvent(new JLabel(), 0, 0, 0, 0, 0, 0, false), element);
     final NavigatablePsiElement[] targets = PyLineMarkerNavigator.getNavigationTargets(element);

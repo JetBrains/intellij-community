@@ -1,25 +1,20 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author traff
- */
 public abstract class PathMappingProvider {
-  public static ExtensionPointName<PathMappingProvider> EP_NAME = ExtensionPointName.create("com.intellij.remote.pathMappingProvider");
+  public static final ExtensionPointName<PathMappingProvider> EP_NAME = ExtensionPointName.create("com.intellij.remote.pathMappingProvider");
 
-  public static List<PathMappingProvider> getSuitableMappingProviders(final RemoteSdkAdditionalData data) {
-    return Lists
-      .newArrayList(Iterables.filter(Arrays.asList(EP_NAME.getExtensions()), provider -> provider.accepts(data)));
+  public static List<PathMappingProvider> getSuitableMappingProviders(@Nullable RemoteSdkAdditionalData data) {
+    return ContainerUtil.filter(EP_NAME.getExtensions(), provider -> provider.accepts(data));
   }
 
   @NotNull

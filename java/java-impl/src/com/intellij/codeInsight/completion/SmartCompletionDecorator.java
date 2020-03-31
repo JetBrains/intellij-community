@@ -6,22 +6,18 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,17 +25,17 @@ import java.util.Set;
 /**
 * @author peter
 */
-public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
+public class SmartCompletionDecorator extends LookupElementDecorator<LookupElement> {
   @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
   private PsiElement myPosition;
 
-  public SmartCompletionDecorator(LookupElement item, @NotNull Collection<? extends ExpectedTypeInfo> expectedTypeInfos) {
+  SmartCompletionDecorator(LookupElement item, @NotNull Collection<? extends ExpectedTypeInfo> expectedTypeInfos) {
     super(item);
     myExpectedTypeInfos = expectedTypeInfos;
   }
 
-  @Override
-  protected TailType computeTailType(InsertionContext context) {
+  @Nullable
+  private TailType computeTailType(InsertionContext context) {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       return TailType.NONE;
     }
@@ -49,7 +45,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     }
 
     LookupElement delegate = getDelegate();
-    LookupItem item = as(LookupItem.CLASS_CONDITION_KEY);
+    LookupItem<?> item = as(LookupItem.CLASS_CONDITION_KEY);
     Object object = delegate.getObject();
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && (object instanceof PsiMethod || object instanceof PsiClass)) {
       return TailType.NONE;
@@ -111,9 +107,13 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
     TailType tailType = computeTailType(context);
 
-    super.handleInsert(context);
+    LookupItem<?> lookupItem = getDelegate().as(LookupItem.CLASS_CONDITION_KEY);
+    if (lookupItem != null && tailType != null) {
+      lookupItem.setTailType(TailType.UNKNOWN);
+    }
+    TailTypeDecorator.withTail(getDelegate(), tailType).handleInsert(context);
 
-    if (tailType == TailType.COMMA) {
+    if (tailType == CommaTailType.INSTANCE) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
   }
@@ -136,9 +136,9 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final Set<PsiTypeParameter> set = new THashSet<>(Arrays.asList(typeParameters));
+    final Set<PsiTypeParameter> set = ContainerUtil.set(typeParameters);
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
-      if (PsiPolyExpressionUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
+      if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }
 
     PsiSubstitutor substitutor = calculateMethodReturnTypeSubstitutor(method, expectedType);

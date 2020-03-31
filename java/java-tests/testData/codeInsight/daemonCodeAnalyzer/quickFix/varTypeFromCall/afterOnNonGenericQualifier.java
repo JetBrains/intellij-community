@@ -1,4 +1,4 @@
-// "Change field 'f' type to 'java.lang.String'" "true"
+// "Change field 'f' type to 'String'" "true"
 class Test {
   String f;
   void foo(A a)  {

@@ -2,7 +2,8 @@
 package git4idea.history
 
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.containers.WeakStringInterner
+import com.intellij.openapi.vfs.newvfs.impl.FilePathInterner
+import com.intellij.util.containers.Interner
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import git4idea.history.GitLogParser.GitLogOption
 
@@ -26,7 +27,8 @@ internal class DefaultGitLogRecordBuilder : GitLogRecordBuilder<GitLogRecord> {
 }
 
 internal open class DefaultGitLogFullRecordBuilder : GitLogRecordBuilder<GitLogFullRecord> {
-  private var statuses: MutableList<VcsFileStatusInfo> = mutableListOf()
+  internal var statuses: MutableList<VcsFileStatusInfo> = mutableListOf()
+    private set
 
   override fun build(options: MutableMap<GitLogOption, String>, supportsRawBody: Boolean): GitLogFullRecord {
     return GitLogFullRecord(options, statuses, supportsRawBody)
@@ -42,10 +44,11 @@ internal open class DefaultGitLogFullRecordBuilder : GitLogRecordBuilder<GitLogF
 }
 
 internal class InternedGitLogRecordBuilder : DefaultGitLogFullRecordBuilder() {
-  private val interner = WeakStringInterner()
+  private val pathInterner: Interner<CharSequence> = FilePathInterner()
 
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
-    super.addPath(type, interner.intern(firstPath), secondPath?.let { interner.intern(it) })
+    val info = VcsFileStatusInfo(type, pathInterner.intern(firstPath), secondPath?.let { pathInterner.intern(it) })
+    statuses.add(info)
   }
 }
 

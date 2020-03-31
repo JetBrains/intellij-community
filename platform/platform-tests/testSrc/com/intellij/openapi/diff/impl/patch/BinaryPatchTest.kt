@@ -18,7 +18,7 @@ package com.intellij.openapi.diff.impl.patch
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.patch.BinaryPatchWriter.writeBinaries
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
@@ -27,7 +27,7 @@ import java.io.StringWriter
 import java.util.*
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/binaryPatch/")
-class BinaryPatchTest : PlatformTestCase() {
+class BinaryPatchTest : HeavyPlatformTestCase() {
 
   var dataFileName = "data.bin"
   var filePatchName = "file.patch"

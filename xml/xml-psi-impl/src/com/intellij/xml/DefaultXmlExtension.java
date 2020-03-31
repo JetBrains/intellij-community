@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class DefaultXmlExtension extends XmlExtension {
   @NotNull
   public List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
-    final Set<String> namespaces = new HashSet<>(Arrays.asList(context.knownNamespaces()));
+    final Set<String> namespaces = ContainerUtil.set(context.knownNamespaces());
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     for (XmlSchemaProvider provider : providers) {
       namespaces.addAll(provider.getAvailableNamespaces(file, null));

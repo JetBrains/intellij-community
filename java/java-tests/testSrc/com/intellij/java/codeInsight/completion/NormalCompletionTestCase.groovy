@@ -29,7 +29,7 @@ abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
-  void doTest() throws Exception {
+  void doTest() {
     configure()
     checkResult()
   }

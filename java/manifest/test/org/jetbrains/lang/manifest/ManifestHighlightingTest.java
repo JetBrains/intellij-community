@@ -15,9 +15,9 @@
  */
 package org.jetbrains.lang.manifest;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ManifestHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   public void testHeaders() {
     doTest(
       "Normal-Header: value\n" +

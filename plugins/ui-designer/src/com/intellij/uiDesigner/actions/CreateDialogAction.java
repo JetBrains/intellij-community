@@ -25,13 +25,12 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   private boolean myRecentGenerateMain;
 
   public CreateDialogAction() {
-    super(UIDesignerBundle.message("action.create.dialog"),
-          UIDesignerBundle.message("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
+    super(UIDesignerBundle.messagePointer("action.create.dialog"),
+          UIDesignerBundle.messagePointer("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(final Project project, final PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final MyContentPane contentPane = new MyContentPane();
@@ -70,11 +69,6 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     dialog.show();
 
     return validator.getCreatedElements();
-  }
-
-  @Override
-  protected String getCommandName() {
-    return UIDesignerBundle.message("command.create.dialog");
   }
 
   @Override
@@ -172,8 +166,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
 
   @Override
-  @NotNull
-  protected PsiElement[] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement @NotNull [] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);

@@ -44,11 +44,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ShowSerializedXmlAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction");
+  private static final Logger LOG = Logger.getInstance(ShowSerializedXmlAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {

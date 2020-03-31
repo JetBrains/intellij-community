@@ -2,10 +2,8 @@ package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -38,6 +36,10 @@ public class JsonSmartEnterTest extends JsonTestCase {
   }
 
   public void testColonInsertedAfterPropertyKey() {
+    doTest();
+  }
+
+  public void testPropertyKeyQuotedAndCommaInserted() {
     doTest();
   }
 }

@@ -26,7 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * @author ven
  */
 public class InternalUsageInfo extends UsageInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.InternalUsageInfo");
+  private static final Logger LOG = Logger.getInstance(InternalUsageInfo.class);
   public InternalUsageInfo(final PsiElement referenceElement) {
     super(referenceElement);
     LOG.assertTrue(referenceElement instanceof PsiReferenceExpression || referenceElement instanceof PsiNewExpression);

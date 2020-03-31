@@ -53,9 +53,9 @@ public class ReferenceData implements Cloneable, Serializable {
       return ourFlavor;
     }
     try {
-      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + ReferenceData.class.getName(), "ReferenceData");
+      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + ReferenceData.class.getName(), "ReferenceData", ReferenceData.class.getClassLoader());
     }
-    catch (NoClassDefFoundError | IllegalArgumentException e) {
+    catch (NoClassDefFoundError | IllegalArgumentException | ClassNotFoundException e) {
       return null;
     }
     return ourFlavor;

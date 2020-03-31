@@ -2,10 +2,8 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
-/**
- * @author nik
- */
 @CompileStatic
 class IdeaCommunityBuilder {
   private final BuildContext buildContext
@@ -41,12 +39,13 @@ class IdeaCommunityBuilder {
     tasks.buildDistributions()
     buildContext.messages.block("Build standalone JPS") {
       String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-      new CommunityStandaloneJpsBuilder(buildContext).layoutJps(jpsArtifactDir, buildContext.fullBuildNumber, {})
+      new CommunityStandaloneJpsBuilder(buildContext).processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(),
+                                                                       true, {})
     }
     tasks.buildUpdaterJar()
   }
 
   void buildUnpackedDistribution(String targetDirectory) {
-    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory)
+    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory, false)
   }
 }

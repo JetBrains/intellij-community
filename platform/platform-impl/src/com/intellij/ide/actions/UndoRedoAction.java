@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -22,7 +23,7 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public abstract class UndoRedoAction extends DumbAwareAction {
+public abstract class UndoRedoAction extends DumbAwareAction implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
   public static final Key<Boolean> IGNORE_SWING_UNDO_MANAGER = new Key<>("IGNORE_SWING_UNDO_MANAGER");
 
@@ -88,7 +89,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     Project project = getProject(editor, dataContext);
-    return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+    return project != null && !project.isDefault() ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
   }
 
   private static Project getProject(FileEditor editor, DataContext dataContext) {

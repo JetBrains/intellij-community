@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -12,36 +12,33 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt
 
-class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String)
+class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
+  internal fun copy(commitMessage: String): ChangeListCommitState =
+    if (this.commitMessage == commitMessage) this else ChangeListCommitState(changeList, changes, commitMessage)
+}
 
-class SingleChangeListCommitter(
+open class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,
-  handlers: List<CheckinHandler>,
-  private val vcsToCommit: AbstractVcs<*>?,
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
-) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, handlers, localHistoryActionName) {
+) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
+
+  @Deprecated("Use constructor without `vcsToCommit: AbstractVcs?` parameter")
+  constructor(
+    project: Project,
+    commitState: ChangeListCommitState,
+    commitContext: CommitContext,
+    @Suppress("UNUSED_PARAMETER") vcsToCommit: AbstractVcs?, // external usages pass `null` here
+    localHistoryActionName: String,
+    isDefaultChangeListFullyIncluded: Boolean
+  ) : this(project, commitState, commitContext, localHistoryActionName, isDefaultChangeListFullyIncluded)
 
   private val changeList get() = commitState.changeList
-
-  private var isSuccess = false
-
-  override fun commit() {
-    if (vcsToCommit != null && changes.isEmpty()) {
-      commit(vcsToCommit, changes)
-    }
-    super.commit()
-  }
-
-  override fun onSuccess() {
-    isSuccess = true
-  }
 
   override fun onFailure() {
     getApplication().invokeLater(Runnable {

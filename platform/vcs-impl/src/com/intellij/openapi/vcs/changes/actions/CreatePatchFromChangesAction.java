@@ -19,7 +19,10 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
@@ -111,10 +114,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
-    CommitSession commitSession = executor.createCommitSession();
-    if (commitSession instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)commitSession).setContext(new CommitContext());
-    }
+    CommitSession commitSession = executor.createCommitSession(new CommitContext());
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,
                                                     commitSession,
@@ -134,11 +134,11 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
         String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, false);
         writeAsPatchToClipboard(project, patches, base, new CommitContext());
-        VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
+        VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
       }
       catch (IOException | VcsException exception) {
-        LOG.error("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
+        LOG.warn("Can't create patch", exception);
+        VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.creation.failed"), exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

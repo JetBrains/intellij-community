@@ -43,7 +43,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * @param psiFile the file for which the structure view model is requested.
    */
   protected TextEditorBasedStructureViewModel(@NotNull PsiFile psiFile) {
-    this(PsiEditorUtil.Service.getInstance().findEditorByPsiElement(psiFile), psiFile);
+    this(PsiEditorUtil.findEditor(psiFile), psiFile);
   }
 
   /**
@@ -163,8 +163,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    *
    * @return the list of classes
    */
-  @NotNull
-  protected Class[] getSuitableClasses() {
+  protected Class @NotNull [] getSuitableClasses() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
@@ -173,20 +172,17 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return Grouper.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return Sorter.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return Filter.EMPTY_ARRAY;
   }
 

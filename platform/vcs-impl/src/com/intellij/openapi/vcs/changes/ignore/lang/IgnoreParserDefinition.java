@@ -45,20 +45,27 @@ import org.jetbrains.annotations.NotNull;
  * Defines the implementation of a parser for a custom language.
  */
 public class IgnoreParserDefinition implements ParserDefinition {
-  /**
-   * Whitespaces.
-   */
-  public static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
+  public static class Lazy {
+    /**
+     * Whitespaces.
+     */
+    public static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
 
-  /**
-   * Regular comment started with #
-   */
-  public static final TokenSet COMMENTS = TokenSet.create(IgnoreTypes.COMMENT);
+    /**
+     * Regular comment started with #
+     */
+    public static final TokenSet COMMENTS = TokenSet.create(IgnoreTypes.COMMENT);
 
-  /**
-   * All values - parts of paths
-   */
-  public static final TokenSet VALUES = TokenSet.create(IgnoreTypes.VALUE);
+    /**
+     * Section comment started with ##
+     */
+    public static final TokenSet SECTIONS = TokenSet.create(IgnoreTypes.SECTION);
+
+    /**
+     * Header comment started with ###
+     */
+    public static final TokenSet HEADERS = TokenSet.create(IgnoreTypes.HEADER);
+  }
 
   /**
    * Element type of the node describing a file in the specified language.
@@ -111,7 +118,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public TokenSet getWhitespaceTokens() {
-    return WHITE_SPACES;
+    return Lazy.WHITE_SPACES;
   }
 
   /**
@@ -124,7 +131,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public TokenSet getCommentTokens() {
-    return COMMENTS;
+    return Lazy.COMMENTS;
   }
 
   /**

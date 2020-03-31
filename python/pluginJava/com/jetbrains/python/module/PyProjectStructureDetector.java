@@ -38,13 +38,13 @@ import java.util.List;
  * @author yole
  */
 public class PyProjectStructureDetector extends ProjectStructureDetector {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.module.PyProjectStructureDetector"); 
+  private static final Logger LOG = Logger.getInstance(PyProjectStructureDetector.class);
   
   
   @NotNull
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir,
-                                               @NotNull File[] children,
+                                               File @NotNull [] children,
                                                @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     LOG.info("Detecting roots under "  + dir);

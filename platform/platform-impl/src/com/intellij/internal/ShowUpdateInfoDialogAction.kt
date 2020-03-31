@@ -2,6 +2,7 @@
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -32,7 +33,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     val dialog = MyDialog(e.project)
     if (dialog.showAndGet()) {
       try {
-        UpdateChecker.testPlatformUpdate(dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
+        UpdateChecker.testPlatformUpdate(AnAction.getEventProject(e), dialog.updateXmlText (), dialog.patchFilePath(), dialog.forceUpdate())
       }
       catch (ex: Exception) {
         Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")

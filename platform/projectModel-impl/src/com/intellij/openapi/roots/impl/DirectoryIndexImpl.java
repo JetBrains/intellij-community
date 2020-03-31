@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -11,12 +12,12 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -27,10 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class DirectoryIndexImpl extends DirectoryIndex {
+public final class DirectoryIndexImpl extends DirectoryIndex implements Disposable {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 
   private final Project myProject;
@@ -41,18 +43,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
-    myConnection = project.getMessageBus().connect(project);
+    myConnection = project.getMessageBus().connect();
     subscribeToFileChanges();
-    Disposer.register(project, () -> {
-      myDisposed = true;
-      myRootIndex = null;
-    });
     LowMemoryWatcher.register(() -> {
       RootIndex index = myRootIndex;
       if (index != null) {
         index.onLowMemory();
       }
-    }, project);
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
+    myRootIndex = null;
   }
 
   private void subscribeToFileChanges() {
@@ -87,9 +91,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      VirtualFile file = event.getFile();
-      if (file == null || file.isDirectory()) {
-        return true;
+      // VFileCreateEvent.getFile() is expensive
+      if (event instanceof VFileCreateEvent) {
+        if (((VFileCreateEvent)event).isDirectory()) return true;
+      }
+      else {
+        VirtualFile file = event.getFile();
+        if (file == null || file.isDirectory()) {
+          return true;
+        }
       }
     }
     return false;
@@ -161,6 +171,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     checkAvailability();
+    if (myProject.isDefault()) return Collections.emptyList();
     return getRootIndex().getOrderEntries(info);
   }
 

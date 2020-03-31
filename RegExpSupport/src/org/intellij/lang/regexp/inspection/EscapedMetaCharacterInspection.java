@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -19,13 +17,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class EscapedMetaCharacterInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Escaped meta character";
-  }
 
   @NotNull
   @Override
@@ -58,7 +49,7 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
       if (node != null && node.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
         return;
       }
-      myHolder.registerProblem(ch, "Escaped meta character <code>" + c + "</code>", new EscapedMetaCharacterFix(c));
+      myHolder.registerProblem(ch, RegExpBundle.message("inspection.warning.escaped.meta.character.0", c), new EscapedMetaCharacterFix(c));
     }
   }
 
@@ -74,14 +65,14 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '[" + myC + "]'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "[" + myC + ']');
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with character inside class";
+      return RegExpBundle.message("inspection.quick.fix.replace.with.character.inside.class");
     }
 
     @Override

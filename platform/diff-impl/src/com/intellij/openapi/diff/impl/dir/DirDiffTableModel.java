@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.google.common.collect.BiMap;
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -35,7 +37,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +58,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private static final Logger LOG = Logger.getInstance(DirDiffTableModel.class);
 
   public static final Key<JBLoadingPanel> DECORATOR_KEY = Key.create("DIFF_TABLE_DECORATOR");
-  public static final String COLUMN_OPERATION = "*";
-  public static final String COLUMN_NAME = "Name";
-  public static final String COLUMN_SIZE = "Size";
-  public static final String COLUMN_DATE = "Date";
+
+  public enum ColumnType {OPERATION, NAME, SIZE, DATE}
+
   public static final String EMPTY_STRING = StringUtil.repeatSymbol(' ', 50);
 
   @Nullable private final Project myProject;
@@ -82,7 +82,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private DirDiffPanel myPanel;
   private volatile boolean myDisposed;
 
-  public DirDiffTableModel(@Nullable Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
+  public DirDiffTableModel(@Nullable Project project, DiffElement<?> source, DiffElement<?> target, DirDiffSettings settings) {
     myProject = project;
     mySettings = settings;
     mySource = source;
@@ -176,12 +176,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void setReplacement(DirDiffElementImpl source, @Nullable DirDiffElementImpl target) {
-    BiMap<String, String> map = mySourceToReplacingTarget.computeIfAbsent(source.getParentNode().getPath(), (p) -> HashBiMap.create());
-    if (target != null) {
-      map.forcePut(source.getSourceName(), target.getTargetName());
+    setReplacement(source.getParentNode().getPath(), source.getSourceName(), target == null ? null : target.getTargetName());
+  }
+
+  public void setReplacement(@NotNull String path, @Nullable String sourceName, @Nullable String targetName) {
+    BiMap<String, String> map = mySourceToReplacingTarget.computeIfAbsent(path, (p) -> HashBiMap.create());
+    if (targetName != null) {
+      map.forcePut(sourceName, targetName);
     }
     else {
-      map.remove(source.getSourceName());
+      map.remove(sourceName);
     }
   }
 
@@ -205,7 +209,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     else {
       right = "..." + text.substring(text.length() - LEN + 2);
     }
-    return "Loading... " + right;
+    return DiffBundle.message("label.dirdiff.loading.file", right);
   }
 
   void fireUpdateStarted() {
@@ -228,7 +232,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void reloadModel(boolean userForcedRefresh) {
     fireUpdateStarted();
     myUpdating.set(true);
-    myTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+    myTable.getEmptyText().setText(StatusText.getDefaultEmptyText());
     JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
 
@@ -241,7 +245,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           if (myDisposed) return;
           myUpdater = new Updater(loadingPanel, 100);
           myUpdater.start();
-          text.set("Loading...");
+          text.set(CommonBundle.getLoadingTreeNodeText());
           myTree = new DTree(null, "", true);
           mySource.refresh(userForcedRefresh);
           myTarget.refresh(userForcedRefresh);
@@ -313,7 +317,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   private JBLoadingPanel getLoadingPanel() {
-    return UIUtil.getClientProperty(myTable, DECORATOR_KEY);
+    return ComponentUtil.getClientProperty(myTable, DECORATOR_KEY);
   }
 
   @Override
@@ -411,12 +415,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void scan(DiffElement element, DTree root, boolean source) throws IOException {
+  private void scan(DiffElement<?> element, DTree root, boolean source) throws IOException {
     if (!myUpdating.get()) return;
     if (element.isContainer()) {
       text.set(prepareText(element.getPath()));
-      final DiffElement[] children = element.getChildren();
-      for (DiffElement child : children) {
+      final DiffElement<?>[] children = element.getChildren();
+      for (DiffElement<?> child : children) {
         if (!myUpdating.get()) return;
         text.set(prepareText(child.getPath()));
         BiMap<String, String> replacing = mySourceToReplacingTarget.get(root.getPath());
@@ -428,7 +432,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
-    if (myDisposed) return "Diff";
+    if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&
         myTarget instanceof VirtualFileDiffElement) {
       VirtualFile srcFile = ((VirtualFileDiffElement)mySource).getValue();
@@ -493,13 +497,15 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         return columnIndex == 0 ? element.getName() : null;
       }
 
-      final String name = getColumnName(columnIndex);
+      final ColumnType columnType = getColumnType(columnIndex);
       boolean isSrc = columnIndex < getColumnCount() / 2;
-      if (name.equals(COLUMN_NAME)) {
+      if (columnType == ColumnType.NAME) {
         return isSrc ? element.getSourcePresentableName() : element.getTargetPresentableName();
-      } else if (name.equals(COLUMN_SIZE)) {
+      }
+      else if (columnType == ColumnType.SIZE) {
         return isSrc ? element.getSourceSize() : element.getTargetSize();
-      } else  if (name.equals(COLUMN_DATE)) {
+      }
+      else if (columnType == ColumnType.DATE) {
         return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
       }
       return "";
@@ -509,7 +515,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       SwingUtilities.invokeLater(() -> {
         myElements.clear();
         fireTableDataChanged();
-        myTable.getEmptyText().setText("Data has been changed externally. Reloading data...");
+        myTable.getEmptyText().setText(DiffBundle.message("data.has.been.changed.externally.reloading.data"));
         reloadModel(true);
         myTable.repaint();
       });
@@ -528,19 +534,40 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return elements;
   }
 
-  @Override
-  public String getColumnName(int column) {
+  @NotNull
+  public ColumnType getColumnType(int column) {
     final int count = (getColumnCount() - 1) / 2;
-    if (column == count) return COLUMN_OPERATION;
+    if (column == count) return ColumnType.OPERATION;
     if (column > count) {
       column = getColumnCount() - 1 - column;
     }
     switch (column) {
-      case 0: return COLUMN_NAME;
-      case 1: return mySettings.showSize ? COLUMN_SIZE : COLUMN_DATE;
-      case 2: return COLUMN_DATE;
+      case 0:
+        return ColumnType.NAME;
+      case 1:
+        return mySettings.showSize ? ColumnType.SIZE : ColumnType.DATE;
+      case 2:
+        return ColumnType.DATE;
+      default:
+        throw new IllegalArgumentException(String.valueOf(column));
     }
-    return "";
+  }
+
+  @Override
+  public String getColumnName(int column) {
+    ColumnType type = getColumnType(column);
+    switch (type) {
+      case OPERATION:
+        return "*"; // NON-NLS
+      case NAME:
+        return DiffBundle.message("column.dirdiff.name");
+      case SIZE:
+        return DiffBundle.message("column.dirdiff.size");
+      case DATE:
+        return DiffBundle.message("column.dirdiff.date");
+      default:
+        return type.name();
+    }
   }
 
   @Nullable
@@ -635,7 +662,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void refreshElementAfterCopyTo(DiffElement newElement, DirDiffElementImpl element) {
+  private void refreshElementAfterCopyTo(DiffElement<?> newElement, DirDiffElementImpl element) {
     if (newElement != null) {
       DTree node = element.getNode();
       node.setType(DiffType.EQUAL);
@@ -675,7 +702,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void refreshElementAfterCopyFrom(DirDiffElementImpl element, DiffElement newElement) {
+  private void refreshElementAfterCopyFrom(DirDiffElementImpl element, DiffElement<?> newElement) {
     if (newElement != null) {
       final DTree node = element.getNode();
       node.setType(DiffType.EQUAL);
@@ -717,20 +744,20 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void performDelete(@NotNull DirDiffElementImpl element) {
-    DiffElement source = element.getSource();
-    DiffElement target = element.getTarget();
+    DiffElement<?> source = element.getSource();
+    DiffElement<?> target = element.getTarget();
     LOG.assertTrue(source == null || target == null);
     if (source instanceof AsyncDiffElement || target instanceof AsyncDiffElement) {
       ((AsyncDiffElement)(source != null ? source : target)).deleteAsync()
         .onError(error -> reportException(error != null ? error.getMessage() : null))
         .onSuccess(result -> {
-          if (!myDisposed && myElements.indexOf(element) != -1) {
+          if (!myDisposed && myElements.contains(element)) {
             removeElement(element, true);
           }
         });
     }
     else {
-      if (myElements.indexOf(element) != -1) {
+      if (myElements.contains(element)) {
         removeElement(element, true);
       }
       WriteAction.run(
@@ -785,7 +812,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   private boolean confirmDeletion(int count) {
-    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
+    return MessageDialogBuilder.yesNo(DiffBundle.message("confirm.delete"),
+                                      DiffBundle.message("delete.0.items", count)).project(myProject)
+             .yesText(CommonBundle.message("button.delete"))
+             .noText(CommonBundle.getCancelButtonText()).doNotAsk(
       new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
@@ -810,7 +840,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         @NotNull
         @Override
         public String getDoNotShowMessage() {
-          return "Do not ask me again";
+          return DiffBundle.message("do.not.ask.me.again");
         }
       }).show() == Messages.YES;
   }
@@ -825,15 +855,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       case COPY_FROM:
         performCopyFrom(element);
         break;
-      case MERGE:
-        break;
-      case EQUAL:
-        break;
-      case NONE:
-        break;
       case DELETE:
         performDelete(element);
         break;
+      case MERGE:
+      case EQUAL:
+      case NONE:
     }
   }
 
@@ -867,12 +894,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void rememberSelection() {
     mySelectionConfig = new TableSelectionConfig();
-  }
-
-  public void clearWithMessage(String message) {
-    myTable.getEmptyText().setText(message);
-    myElements.clear();
-    fireTableDataChanged();
   }
 
   public class TableSelectionConfig {

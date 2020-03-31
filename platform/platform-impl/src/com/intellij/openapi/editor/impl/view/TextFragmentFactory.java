@@ -20,7 +20,7 @@ import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 
 class TextFragmentFactory {
-  public static TextFragment createTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+  public static TextFragment createTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
     if (isRtl || fontInfo.getFont().hasLayoutAttributes() || isComplexText(lineChars, start, end)) {
       return new ComplexTextFragment(lineChars, start, end, isRtl, fontInfo);
     }

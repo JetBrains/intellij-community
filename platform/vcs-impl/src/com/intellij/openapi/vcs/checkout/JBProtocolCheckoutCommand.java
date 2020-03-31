@@ -32,17 +32,14 @@ final class JBProtocolCheckoutCommand extends JBProtocolCommand {
       return;
     }
 
-    for (CheckoutProvider provider : CheckoutProvider.EXTENSION_POINT_NAME.getExtensions()) {
-      if (provider instanceof CheckoutProviderEx) {
-        CheckoutProviderEx providerEx = (CheckoutProviderEx)provider;
-        if (providerEx.getVcsId().equals(vcsId)) {
-          Project project = ProjectManager.getInstance().getDefaultProject();
-          CheckoutProvider.Listener listener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
-          AppIcon.getInstance().requestAttention(null, true);
-          providerEx.doCheckout(project, listener, repository);
-          break;
-        }
-      }
+    CheckoutProviderEx provider = (CheckoutProviderEx)CheckoutProvider.EXTENSION_POINT_NAME.findFirstSafe(it -> {
+      return it instanceof CheckoutProviderEx && ((CheckoutProviderEx)it).getVcsId().equals(vcsId);
+    });
+    if (provider != null) {
+      Project project = ProjectManager.getInstance().getDefaultProject();
+      CheckoutProvider.Listener listener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
+      AppIcon.getInstance().requestAttention(null, true);
+      provider.doCheckout(project, listener, repository);
     }
   }
 }

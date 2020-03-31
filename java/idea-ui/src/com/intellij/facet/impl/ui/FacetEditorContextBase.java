@@ -34,9 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class FacetEditorContextBase extends UserDataHolderBase implements FacetEditorContext {
   private final FacetsProvider myFacetsProvider;
   @Nullable private final FacetEditorContext myParentContext;

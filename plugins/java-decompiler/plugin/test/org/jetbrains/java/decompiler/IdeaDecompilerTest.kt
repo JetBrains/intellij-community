@@ -2,6 +2,8 @@
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
@@ -17,7 +19,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.withValue
 import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
@@ -25,12 +27,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
 
-class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
+class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
@@ -83,24 +85,38 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   private fun offset(line: Int, column: Int): Int = myFixture.editor.document.getLineStartOffset(line - 1) + column - 1
 
   fun testHighlighting() {
+    myFixture.setReadEditorMarkupModel(true)
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
     }
   }
+
+  fun testNameHighlightingInsideCompiledFile() {
+    myFixture.setReadEditorMarkupModel(true)
+    myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+      val infos = myFixture.doHighlighting()
+      assertTrue(infos.toString(), infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY })
+      assertEquals(68, infos.size)
+    }
+  }
+
+  private fun highlightUnderCaret() =
+    myFixture.doHighlighting().filter { info -> info.severity.equals(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) }
 
   fun testLineNumberMapping() {
     Registry.get("decompiler.use.line.mapping").withValue(true) {
@@ -167,22 +183,10 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())
   }
 
-
   private fun getTestFile(name: String): VirtualFile {
     val path = if (FileUtil.isAbsolute(name)) name else "${myFixture.testDataPath}/${name}"
     val fs = if (path.contains(URLUtil.JAR_SEPARATOR)) StandardFileSystems.jar() else StandardFileSystems.local()
     return fs.refreshAndFindFileByPath(path)!!
-  }
-
-  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit) {
-    val currentValue = asBoolean()
-    try {
-      setValue(testValue)
-      block()
-    }
-    finally {
-      setValue(currentValue)
-    }
   }
 
   private class MyFileVisitor(private val psiManager: PsiManager) : VirtualFileVisitor<Any>() {
@@ -199,7 +203,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         decompiled.split("\n").dropLastWhile(String::isEmpty).toTypedArray().forEach { s ->
           val pos = s.indexOf(prefix)
           if (pos == 0 && prefix.length < s.length && Character.isDigit(s[prefix.length])) {
-            fail("Incorrect line mapping in file " + file.path + " line: " + s)
+            fail("Incorrect line mapping in the file " + file.path + " line: " + s)
           }
         }
       }

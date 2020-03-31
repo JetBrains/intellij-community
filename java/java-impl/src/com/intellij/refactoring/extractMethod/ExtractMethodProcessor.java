@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
@@ -10,15 +11,13 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +28,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -55,10 +57,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -71,7 +70,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchType;
 
 public class ExtractMethodProcessor implements MatchProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(ExtractMethodProcessor.class);
   @TestOnly
   public static final Key<Boolean> SIGNATURE_CHANGE_ALLOWED = Key.create("SignatureChangeAllowed");
 
@@ -145,8 +144,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     myProject = project;
     myEditor = editor;
     if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression
-                   ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
+      if (elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression) {
+        PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0]);
+        myElements = expression != null ? new PsiElement[]{expression} : elements;
+      }
+      else {
+        myElements = elements;
+      }
       myEnclosingBlockStatement = null;
     }
     else {
@@ -240,6 +244,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiElement context = codeFragment.getContext();
       LOG.assertTrue(context != null, "code fragment context is null");
       myCodeFragmentMember = ControlFlowUtil.findCodeFragment(context).getParent();
+    }
+
+    if (PsiTreeUtil.getParentOfType(myElements[0].isPhysical() ? myElements[0] : myCodeFragmentMember, PsiAnnotation.class) != null) {
+      throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
     }
 
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
@@ -437,7 +445,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (returnedExpressions.isEmpty()) return true;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner(myProject);
     final StandardInstructionVisitor returnChecker = new StandardInstructionVisitor() {
       @Override
       protected void checkReturnValue(@NotNull DfaValue value,
@@ -465,24 +473,33 @@ public class ExtractMethodProcessor implements MatchProvider {
     for (PsiElement element : myElements) {
       block.add(element);
     }
-    final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + exprText + " == null);", null);
-    block.add(statementFromText);
+    PsiReturnStatement statementFromText = (PsiReturnStatement)myElementFactory.createStatementFromText("return " + exprText + ";", null);
+    statementFromText = (PsiReturnStatement)block.add(statementFromText);
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
-    if (rc == RunnerResult.OK) {
-      final Pair<Set<Instruction>, Set<Instruction>> expressions = dfaRunner.getConstConditionalExpressions();
-      final Set<Instruction> set = expressions.getSecond();
-      for (Instruction instruction : set) {
-        if (instruction instanceof BranchingInstruction) {
-          if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
-            return true;
-          }
+    return inferNullability(block, Objects.requireNonNull(statementFromText.getReturnValue())) == Nullability.NOT_NULL;
+  }
+
+  private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
+    final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
+    
+    class Visitor extends StandardInstructionVisitor {
+      DfaNullability myNullability = DfaNullability.NOT_NULL;
+      boolean myVisited = false;
+      
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        if (expression == expr && range == null) {
+          myVisited = true;
+          myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
       }
     }
-    return false;
+    Visitor visitor = new Visitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
+    return rc == RunnerResult.OK && visitor.myVisited ? DfaNullability.toNullability(visitor.myNullability) : Nullability.UNKNOWN;
   }
 
   protected boolean checkOutputVariablesCount() {
@@ -586,21 +603,12 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean showDialog(final boolean direct) {
     AbstractExtractDialog dialog = createExtractMethodDialog(direct);
-    Ref<Boolean> result = Ref.create(Boolean.FALSE);
-    Runnable showAndApply = () -> {
-      dialog.show();
-      if (dialog.isOK()) {
-        apply(dialog);
-        result.set(Boolean.TRUE);
-      }
-    };
-    if (dialog.showInTransaction()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(showAndApply);
+    dialog.show();
+    if (dialog.isOK()) {
+      apply(dialog);
+      return true;
     }
-    else {
-      showAndApply.run();
-    }
-    return result.get();
+    return false;
   }
 
   protected void apply(final AbstractExtractDialog dialog) {
@@ -756,7 +764,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         return GenerateMembersUtil.suggestGetterName(field);
       }));
       ContainerUtil.addIfNotNull(getters, nameByComment);
-      return ArrayUtil.toStringArray(getters);
+      return ArrayUtilRt.toStringArray(getters);
     }
     return new String[] {myInitialMethodName};
   }
@@ -792,7 +800,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullability = initNullability();
   }
 
-  @TestOnly
   public void testPrepare() {
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
@@ -875,7 +882,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       collectOverloads.run();
       extract.run();
     } else {
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads, "Collect overloads...", true, myProject)) return;
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads,
+                                                                             JavaRefactoringBundle.message("collect.overloads"), true, myProject)) return;
       ApplicationManager.getApplication().runWriteAction(extract);
     }
 
@@ -901,7 +909,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myDuplicates = new ArrayList<>();
   }
 
-  private int estimateDuplicatesCount() {
+  protected int estimateDuplicatesCount() {
     PsiElement[] elements = getFilteredElements();
 
     ReturnValue value;
@@ -928,8 +936,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return 0;
   }
 
-  @NotNull
-  private PsiElement[] getFilteredElements() {
+  private PsiElement @NotNull [] getFilteredElements() {
     return StreamEx.of(myElements)
                    .filter(e -> !(e instanceof PsiWhiteSpace || e instanceof PsiComment || e instanceof PsiEmptyStatement))
                    .toArray(PsiElement.EMPTY_ARRAY);
@@ -1689,8 +1696,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (AnnotationUtil.isAnnotated(variable, nullableAnnotations, CHECK_TYPE) ||
         AnnotationUtil.isAnnotated(variable, notNullAnnotations, CHECK_TYPE) ||
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
-      final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
-      if (isNotNull != null) {
+      final Nullability nullability = inferNullability(variable, myElements[0]);
+      if (nullability != Nullability.UNKNOWN) {
+        boolean isNotNull = nullability == Nullability.NOT_NULL;
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
         final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
         final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
@@ -1700,7 +1708,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void updateAnnotations(PsiModifierListOwner owner, List<String> toRemove, String toAdd, List<String> toKeep) {
-    AddAnnotationPsiFix.removePhysicalAnnotations(owner, ArrayUtil.toStringArray(toRemove));
+    AddAnnotationPsiFix.removePhysicalAnnotations(owner, ArrayUtilRt.toStringArray(toRemove));
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
       PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
@@ -1708,12 +1716,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  @Nullable
-  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  @NotNull
+  private static Nullability inferNullability(@NotNull PsiVariable variable, PsiElement startElement) {
     String variableName = variable.getName();
-    if (variableName == null) return null;
+    if (variableName == null) return Nullability.UNKNOWN;
 
     PsiElement methodOrLambdaBody = null;
+    if (variable instanceof PsiPatternVariable) {
+      return Nullability.NOT_NULL;
+    }
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       final PsiParameterListOwner methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
       if (methodOrLambda != null) {
@@ -1737,7 +1748,6 @@ public class ExtractMethodProcessor implements MatchProvider {
         .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
 
       PsiCodeBlock bodyCopy = findCopy(copy, methodOrLambdaBody, PsiCodeBlock.class);
-      PsiVariable variableCopy = findCopy(copy, variable, PsiVariable.class);
       if (startElement instanceof PsiExpression) {
         startElement = PsiTreeUtil.getParentOfType(startElement, PsiStatement.class);
       }
@@ -1754,20 +1764,16 @@ public class ExtractMethodProcessor implements MatchProvider {
           PsiElement parent = startStatementCopy.getParent();
           declarationStatement = (PsiDeclarationStatement)parent.addBefore(declarationStatement, startStatementCopy);
           PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-          PsiExpression initializer = ((PsiVariable)declaredElements[0]).getInitializer();
+          PsiExpression initializer = Objects.requireNonNull(((PsiVariable)declaredElements[0]).getInitializer());
 
-          Nullability nullability = DfaUtil.tryCheckNullability(variableCopy, initializer, bodyCopy);
-          if (nullability == null) {
-            return null;
-          }
-          return nullability == Nullability.NOT_NULL;
+          return inferNullability(bodyCopy, initializer);
         }
         catch (IncorrectOperationException ignore) {
-          return null;
+          return Nullability.UNKNOWN;
         }
       }
     }
-    return null;
+    return Nullability.UNKNOWN;
   }
 
   private static <T extends PsiElement> T findCopy(@NotNull PsiFile copy, @NotNull PsiElement element, @NotNull Class<T> clazz) {
@@ -1866,7 +1872,10 @@ public class ExtractMethodProcessor implements MatchProvider {
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
                     : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
     if (myTargetClass == null) {
-      LOG.error(myElements[0].getContainingFile());
+      LOG.error("Unable to find target class. Parents are: "+
+                StreamEx.iterate(myCodeFragmentMember, PsiElement::getParent)
+                  .takeWhileInclusive(e -> e != null && !(e instanceof PsiFileSystemItem))
+                  .map(e -> e.getClass().getSimpleName()).joining(","));
     }
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
@@ -1891,7 +1900,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           catch (PrepareFailedException e) {
             if (myShowErrorDialogs) {
               CommonRefactoringUtil
-                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD);
               ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
             }
             return false;
@@ -2035,8 +2044,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final Set<PsiField> fields = new LinkedHashSet<>();
     myCanBeStatic = canBeStatic(myTargetClass, myCodeFragmentMember, myElements, fields);
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
-    myInputVariables.setUsedInstanceFields(fields);
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable(), fields);
 
     if (!checkExitPoints()){
       return false;
@@ -2113,7 +2121,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
       String message = RefactoringBundle
-        .getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
+        .getCannotRefactorMessage(JavaRefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
       CommonRefactoringUtil.showErrorHint(myProject, myEditor, message, myRefactoringName, myHelpId);
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
@@ -2121,7 +2129,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
     if (myShowErrorDialogs) {
-      String message = buildMultipleOutputMessageError(expressionType) + "\nWould you like to Extract Method Object?";
+      String message = buildMultipleOutputMessageError(expressionType) + "\n"
+                       + JavaRefactoringBundle.message("extract.method.object.suggestion");
 
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
@@ -2136,15 +2145,15 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected String buildMultipleOutputMessageError(PsiType expressionType) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
-      RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      JavaRefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
     buffer.append("\n");
     if (myHasExpressionOutput) {
-      buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
+      buffer.append("    ").append(JavaRefactoringBundle.message("expression.result")).append(": ");
       buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
       buffer.append(",\n");
     }
     if (myGenerateConditionalExit) {
-      buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
+      buffer.append("    ").append(JavaRefactoringBundle.message("boolean.method.result"));
       buffer.append(",\n");
     }
     for (int i = 0; i < myOutputVariables.length; i++) {
@@ -2273,10 +2282,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     final String changedSignature = MatchUtil
       .getChangedSignature(match, myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
     if (changedSignature != null) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
     }
     if (needToBeStatic && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return null;
   }
@@ -2308,7 +2317,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Override
   public String getReplaceDuplicatesTitle(int idx, int size) {
-    return RefactoringBundle.message("process.duplicates.title", idx, size);
+    return JavaRefactoringBundle.message("process.duplicates.title", idx, size);
   }
 
   public InputVariables getInputVariables() {

@@ -21,11 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
+@ApiStatus.Internal
 public class RootConfigurationAccessor {
   @Nullable
   public Library getLibrary(final Library library, final String libraryName, final String libraryLevel) {

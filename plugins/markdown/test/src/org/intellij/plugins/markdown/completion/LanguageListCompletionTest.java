@@ -1,18 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.completion;
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider;
-import org.intellij.plugins.markdown.injection.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class LanguageListCompletionTest extends BasePlatformTestCase {
 
   @NotNull
   @Override
@@ -32,9 +31,8 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assert JavascriptLanguage.INSTANCE != null;
     // Because injector handles the code in the fence and gets parser definition for that lang
-    LanguageParserDefinitions.INSTANCE.addExplicitExtension(JavascriptLanguage.INSTANCE, new PlainTextParserDefinition(),
+    LanguageParserDefinitions.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new PlainTextParserDefinition(),
                                                             getTestRootDisposable());
   }
 
@@ -55,14 +53,14 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
   }
 
   public void testExistingFence() {
-    doTest("javas\n");
+    doTest("jso\n");
   }
 
   public void testExistingFenceTab() {
     configure();
     myFixture.completeBasic();
-    assertContainsElements(myFixture.getLookupElementStrings(), "js", "javascript");
-    myFixture.type("s\t");
+    assertContainsElements(myFixture.getLookupElementStrings(), "json");
+    myFixture.type("so\t");
     checkResult();
   }
 
@@ -71,7 +69,7 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
   }
 
   public void testInSixQuotes() {
-    doTest("javas\n");
+    doTest("jso\n");
   }
 
   public void testInSixQuotesNotMiddle() {
@@ -81,41 +79,34 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
   public void testInSixQuotesTab() {
     configure();
     myFixture.completeBasic();
-    assertContainsElements(myFixture.getLookupElementStrings(), "js", "javascript");
-    myFixture.type("s\t");
+    assertContainsElements(myFixture.getLookupElementStrings(), "json");
+    myFixture.type("so\t");
     checkResult();
   }
 
   public void testCustomCompletionProvider() {
-    try {
-      CodeFenceLanguageProvider.EP_NAME.getPoint(null).registerExtension(new CodeFenceLanguageProvider() {
-          @Nullable
-          @Override
-          public Language getLanguageByInfoString(@NotNull String infoString) {
-            return null;
-          }
+    CodeFenceLanguageProvider.EP_NAME.getPoint(null).registerExtension(new CodeFenceLanguageProvider() {
+        @Nullable
+        @Override
+        public Language getLanguageByInfoString(@NotNull String infoString) {
+          return null;
+        }
 
-          @NotNull
-          @Override
-          public List<LookupElement> getCompletionVariantsForInfoString(@NotNull CompletionParameters parameters) {
-            return Collections.singletonList(LookupElementBuilder.create("{js is a great ecma}")
-            .withInsertHandler((context, item) -> {
-              context.getDocument().insertString(context.getEditor().getCaretModel().getOffset(), "Customized insertion");
-              context.getEditor().getCaretModel().moveCaretRelatively("Customized insertion".length(), 0, true, false, true);
-            }));
-          }
-        }, myFixture.getTestRootDisposable());
-
-      LanguageGuesser.INSTANCE.resetCodeFenceLanguageProviders();
-      configure();
-      myFixture.completeBasic();
-      assertContainsElements(myFixture.getLookupElementStrings(), "js", "javascript", "{js is a great ecma}");
-      myFixture.type("ecm\t");
-      checkResult();
-    }
-    finally {
-      LanguageGuesser.INSTANCE.resetCodeFenceLanguageProviders();
-    }
+        @NotNull
+        @Override
+        public List<LookupElement> getCompletionVariantsForInfoString(@NotNull CompletionParameters parameters) {
+          return Collections.singletonList(LookupElementBuilder.create("{json is a great lang}")
+          .withInsertHandler((context, item) -> {
+            context.getDocument().insertString(context.getEditor().getCaretModel().getOffset(), "Customized insertion");
+            context.getEditor().getCaretModel().moveCaretRelatively("Customized insertion".length(), 0, true, false, true);
+          }));
+        }
+      }, myFixture.getTestRootDisposable());
+    configure();
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "json", "{json is a great lang}");
+    myFixture.type("g\t");
+    checkResult();
   }
 
   public static class AutopopupTest extends CompletionAutoPopupTestCase {
@@ -123,9 +114,8 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
     @Override
     protected void setUp() throws Exception {
       super.setUp();
-      assert JavascriptLanguage.INSTANCE != null;
       // Because injector handles the code in the fence and gets parser definition for that lang
-      LanguageParserDefinitions.INSTANCE.addExplicitExtension(JavascriptLanguage.INSTANCE, new PlainTextParserDefinition(),
+      LanguageParserDefinitions.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new PlainTextParserDefinition(),
                                                               getTestRootDisposable());
     }
 
@@ -134,8 +124,7 @@ public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureT
       type("```");
       assertNotNull("Lookup should auto-activate", getLookup());
       myFixture.checkResult("```<caret>```");
-      assertContainsElements(getLookup().getItems().stream().map(LookupElement::getLookupString).collect(Collectors.toList()),
-                             "js", "javascript");
+      assertContainsElements(getLookup().getItems().stream().map(LookupElement::getLookupString).collect(Collectors.toList()), "json");
     }
   }
 

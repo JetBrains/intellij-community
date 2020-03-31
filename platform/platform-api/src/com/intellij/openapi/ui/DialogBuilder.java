@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
  * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
  */
 public class DialogBuilder implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
+  private static final Logger LOG = Logger.getInstance(DialogBuilder.class);
 
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
@@ -93,12 +94,12 @@ public class DialogBuilder implements Disposable {
     return this;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
   @NotNull
-  public DialogBuilder title(@NotNull String title) {
+  public DialogBuilder title(@NotNull @NlsContexts.DialogTitle String title) {
     myTitle = title;
     return this;
   }
@@ -425,8 +426,7 @@ public class DialogBuilder implements Disposable {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       if (myActions == null) return super.createActions();
       ArrayList<Action> actions = new ArrayList<>(myActions.size());
       for (ActionDescriptor actionDescriptor : myActions) {

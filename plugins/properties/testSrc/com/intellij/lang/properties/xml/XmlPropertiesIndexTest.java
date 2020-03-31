@@ -17,31 +17,56 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContentImpl;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlPropertiesIndexTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlPropertiesIndexTest extends BasePlatformTestCase {
 
-  public void testIndex() {
-    final VirtualFile file = myFixture.configureByFile("foo.xml").getVirtualFile();
+  public void testIndex() throws IOException {
+    PsiFile psiFile = myFixture.configureByFile("foo.xml");
+    final VirtualFile file = psiFile.getVirtualFile();
     Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(FileContentImpl.createByFile(file));
 
     assertEquals(3, map.size());
-    assertEquals("bar", map.get(new XmlPropertiesIndex.Key("foo")));
+    XmlPropertiesIndex.Key fooKey = new XmlPropertiesIndex.Key("foo");
+    assertEquals("bar", map.get(fooKey));
     assertEquals("baz", map.get(new XmlPropertiesIndex.Key("fu")));
     assertTrue(map.containsKey(XmlPropertiesIndex.MARKER_KEY));
+
+    assertTrue(XmlPropertiesIndex.isPropertiesFile((XmlFile)psiFile));
+
+    List<String> values = new ArrayList<>();
+    FileBasedIndex.getInstance().processValues(
+      XmlPropertiesIndex.NAME,
+      fooKey,
+      null,
+      (file1, value) -> values.add(value),
+      GlobalSearchScope.allScope(getProject()));
+    assertEquals("bar", assertOneElement(values));
   }
 
-  public void testSystemId() {
-    final VirtualFile file = myFixture.configureByFile("wrong.xml").getVirtualFile();
+  public void testSystemId() throws IOException {
+    PsiFile psiFile = myFixture.configureByFile("wrong.xml");
+    final VirtualFile file = psiFile.getVirtualFile();
     Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(FileContentImpl.createByFile(file));
 
     assertEquals(0, map.size());
+
+    assertFalse(XmlPropertiesIndex.isPropertiesFile((XmlFile)psiFile));
   }
 
   @Override

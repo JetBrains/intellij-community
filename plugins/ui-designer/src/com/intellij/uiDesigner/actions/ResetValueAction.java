@@ -17,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public class ResetValueAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ResetValueAction");
+  private static final Logger LOG = Logger.getInstance(ResetValueAction.class);
 
   @Override
   protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {

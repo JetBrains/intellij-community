@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 @ApiStatus.Experimental
@@ -14,13 +15,11 @@ public interface SourceFolderManager {
     return project.getComponent(SourceFolderManager.class);
   }
 
-  void setSourceFolderPackagePrefix(@NotNull String url, @NotNull String packagePrefix);
+  void setSourceFolderPackagePrefix(@NotNull String url, @Nullable String packagePrefix);
 
-  void addSourceFolder(@NotNull Module module,
-                       @NotNull String url,
-                       @NotNull JpsModuleSourceRootType<?> type,
-                       @NotNull String packagePrefix,
-                       boolean generated);
+  void setSourceFolderGenerated(@NotNull String url, boolean generated);
+
+  void addSourceFolder(@NotNull Module module, @NotNull String url, @NotNull JpsModuleSourceRootType<?> type);
 
   void removeSourceFolders(@NotNull Module module);
 }

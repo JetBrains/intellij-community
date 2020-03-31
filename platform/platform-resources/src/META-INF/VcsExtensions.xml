@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.openapi.vcs.changes.patch.PatchClipboardTracker"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
@@ -9,7 +8,9 @@
     <applicationService serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
-    <applicationService serviceImplementation="com.intellij.lifecycle.PeriodicalTasksCloser"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
@@ -31,6 +32,9 @@
     <projectService serviceImplementation="com.intellij.vcs.commit.message.CommitMessageInspectionProfile"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsCacheManager"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
@@ -38,16 +42,34 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyStartUpActivity"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
+                    headlessImplementation=""/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"/>
+
+    <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
+    <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.message.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
-    <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool"/>
+    <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
+    <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>
@@ -63,26 +85,57 @@
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.impl.DiffRepoWithLocalAction"/>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction" order="last"/>
-    <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction" order="last"/>
+    <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
+        implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction" order="last"/>
+
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
     <search.projectOptionsTopHitProvider implementation="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProvider"/>
-    <projectConfigurable groupId="root" groupWeight="45" dynamic="true" key="version.control.main.configurable.name" bundle="messages.VcsBundle"
-                         provider="com.intellij.openapi.vcs.configurable.VcsManagerConfigurableProvider" id="project.propVCSSupport.Mappings"/>
+    <projectConfigurable groupId="root" groupWeight="45" dynamic="true" key="version.control.main.configurable.name"
+                         bundle="messages.VcsBundle"
+                         provider="com.intellij.openapi.vcs.configurable.VcsManagerConfigurableProvider"
+                         id="project.propVCSSupport.Mappings"/>
     <colorAndFontPanelFactory implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewI"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"
+                    testServiceImplementation="com.intellij.openapi.vcs.changes.DummyChangesView"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewContentI"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"
+                    testServiceImplementation="com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager"/>
+
+    <applicationInitializedListener implementation="com.intellij.vcs.commit.NonModalCommitCustomization"/>
+
+    <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
+                factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
 
-    <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
-                        predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
-    <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
-                        predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
+    <changesViewContent tabName="Repository"
+                        className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager$VisibilityPredicate"
+                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager$DisplayNameSupplier"/>
+    <changesViewContent tabName="Incoming"
+                        className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider$VisibilityPredicate"
+                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider$DisplayNameSupplier"/>
+    <changesViewContent tabName="Local Changes"
+                        className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
+                        preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
+                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"/>
+
+    <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier"/>
 
     <changesGroupingPolicy key="directory" id="directory"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
+
+    <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
@@ -106,9 +159,10 @@
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
     <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
-    <fileTypeFactory implementation="com.intellij.openapi.vcs.impl.VcsFileTypeFactory"/>
+    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" extensions="patch;diff" />
     <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
+    <fileDocumentManagerListener implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.vcs.VcsApplicationSettings"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
@@ -134,11 +188,46 @@
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
 
     <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
+    <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
+    <dateTimeFormatter id="vcs.log" name="VCS Log" />
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
+
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+        id="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
+        implementation="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
+        order="first"/>
+
+    <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
+
+    <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
+    <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
+    Common Version Control Messages"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
+              topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyAppLevelProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier$IncomingChangesListener"
+              topic="com.intellij.openapi.vcs.changes.committed.CommittedChangesListener"/>
+  </projectListeners>
 </idea-plugin>
 

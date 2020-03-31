@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Properties" implementationClass="com.maddyhome.idea.copyright.psi.UpdateAnyFileCopyright$Provider"/>
+  </extensions>
+</idea-plugin>

@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
@@ -32,14 +35,14 @@ val PICKER_TEXT_COLOR = Color(186, 186, 186)
 const val PICKER_PREFERRED_WIDTH = 300
 const val HORIZONTAL_MARGIN_TO_PICKER_BORDER = 14
 
-private val PICKER_BORDER = JBUI.Borders.empty()
+private val PICKER_BORDER = JBUI.Borders.emptyBottom(10)
 
 private const val SEPARATOR_HEIGHT = 5
 
 /**
  * Builder class to help to create customized picker components depends on the requirement.
  */
-class ColorPickerBuilder {
+class ColorPickerBuilder(private val showAlpha: Boolean = false) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
   private val model = ColorPickerModel()
@@ -48,7 +51,7 @@ class ColorPickerBuilder {
   private var focusCycleRoot = false
   private var focusedComponentIndex = -1
   private val actionMap = mutableMapOf<KeyStroke, Action>()
-  private val colorListeners = mutableListOf<ColorListener>()
+  private val colorListeners = mutableListOf<ColorListenerInfo>()
 
   fun setOriginalColor(originalColor: Color?) = apply { this.originalColor = originalColor }
 
@@ -56,10 +59,10 @@ class ColorPickerBuilder {
 
   @JvmOverloads
   fun addColorAdjustPanel(colorPipetteProvider: ColorPipetteProvider = GraphicalColorPipetteProvider()) = apply {
-    componentsToBuild.add(ColorAdjustPanel(model, colorPipetteProvider))
+    componentsToBuild.add(ColorAdjustPanel(model, colorPipetteProvider, showAlpha))
   }
 
-  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model)) }
+  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha)) }
 
   /**
    * If both [okOperation] and [cancelOperation] are null, [IllegalArgumentException] will be raised.
@@ -112,9 +115,13 @@ class ColorPickerBuilder {
 
   fun addKeyAction(keyStroke: KeyStroke, action: Action) = apply { actionMap[keyStroke] = action }
 
-  fun addColorListener(colorListener: ColorListener) = apply { colorListeners.add(colorListener) }
+  fun addColorListener(colorListener: ColorListener) = addColorListener(colorListener, true)
 
-  fun build(): JPanel {
+  fun addColorListener(colorListener: ColorListener, invokeOnEveryColorChange: Boolean) = apply {
+    colorListeners.add(ColorListenerInfo(colorListener, invokeOnEveryColorChange))
+  }
+
+  fun build(): LightCalloutPopup {
     if (componentsToBuild.isEmpty()) {
       throw IllegalStateException("The Color Picker should have at least one picking component.")
     }
@@ -152,18 +159,22 @@ class ColorPickerBuilder {
     panel.isFocusTraversalPolicyProvider = true
     panel.focusTraversalPolicy = MyFocusTraversalPolicy(defaultFocusComponent)
 
-    actionMap.forEach { keyStroke, action ->
-      val key = keyStroke.toString()
-      panel.actionMap.put(key, action)
-      panel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, key)
+    actionMap.forEach { (keyStroke, action) ->
+      DumbAwareAction.create {
+        e: AnActionEvent? -> action.actionPerformed(ActionEvent(e?.inputEvent, 0, ""))
+      }.registerCustomShortcutSet(CustomShortcutSet(keyStroke), panel)
     }
 
-    colorListeners.forEach { model.addListener(it) }
+    colorListeners.forEach { model.addListener(it.colorListener, it.invokeOnEveryColorChange) }
 
-    return panel
+    return LightCalloutPopup(panel,
+                             closedCallback = { model.onClose() },
+                             cancelCallBack = { model.onCancel() })
   }
 }
 
 private class MyFocusTraversalPolicy(val defaultComponent: Component?) : LayoutFocusTraversalPolicy() {
   override fun getDefaultComponent(aContainer: Container?): Component? = defaultComponent
 }
+
+private data class ColorListenerInfo(val colorListener: ColorListener, val invokeOnEveryColorChange: Boolean)

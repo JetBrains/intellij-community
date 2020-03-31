@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Denis Zhdanov
  */
-public class JavaSurroundWithTest extends LightCodeInsightTestCase {
+public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -271,8 +271,8 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
                           "  Sy<caret>stem.out.println();\n" +
                           " }\n" +
                           "}");
-    JavaFoldingTestCase.performInitialFolding(myEditor);
-    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(ourProject, myEditor, myFile, null);
+    JavaFoldingTestCase.performInitialFolding(getEditor());
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile(), null);
     assertSize(2, ContainerUtil.findAll(actions, a -> {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");
@@ -286,9 +286,9 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
                           "  <selection>System.out.println()</selection>;\n" +
                           " }\n" +
                           "}");
-    SelectionModel model = myEditor.getSelectionModel();
+    SelectionModel model = getEditor().getSelectionModel();
     PsiExpression expr =
-      IntroduceVariableBase.getSelectedExpression(myFile.getProject(), myFile, model.getSelectionStart(), model.getSelectionEnd());
+      IntroduceVariableBase.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
     assertNotNull(expr);
     assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
     assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
@@ -302,9 +302,9 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
                           "   <selection>bar();</selection>\n" +
                           " }\n" +
                           "}");
-    SelectionModel model = myEditor.getSelectionModel();
+    SelectionModel model = getEditor().getSelectionModel();
     PsiElement[] elements =
-      new JavaExpressionSurroundDescriptor().getElementsToSurround(myFile, model.getSelectionStart(), model.getSelectionEnd());
+      new JavaExpressionSurroundDescriptor().getElementsToSurround(getFile(), model.getSelectionStart(), model.getSelectionEnd());
     assertEmpty(elements);
   }
 

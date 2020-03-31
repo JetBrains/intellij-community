@@ -1,22 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Ignored
-import com.intellij.openapi.vcs.IgnoredCheckResult
-import com.intellij.openapi.vcs.NotIgnored
-import com.intellij.openapi.vcs.VcsIgnoreChecker
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.actions.VcsContextFactory
+import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
+import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
@@ -28,8 +30,41 @@ private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 
 class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
+  companion object {
+    fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
+  }
+
+  val ignoreRefreshQueue: MergingUpdateQueue
+
   init {
     checkProjectNotDefault(project)
+    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, project, null,
+                                            Alarm.ThreadToUse.POOLED_THREAD)
+  }
+
+  fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
+    val ignoredFileContentProvider = findIgnoredFileContentProvider(vcs) ?: return null
+    return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
+  }
+
+  override fun isDirectoryVcsIgnored(dirPath: String): Boolean {
+    try {
+      val checkForIgnore = { getDirectoryVcsIgnoredStatus(project, dirPath) is Ignored }
+      return ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
+                                                                   VcsBundle.message("checking.vcs.status.progress"),
+                                                                   false, project)
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+    }
+    return false
+  }
+
+  private fun getDirectoryVcsIgnoredStatus(project: Project, dirPathString: String): IgnoredCheckResult {
+    val dirPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dirPathString, true)
+    val vcsRoot = VcsUtil.getVcsRootFor(project, dirPath) ?: return NotIgnored
+    return getCheckerForFile(project, dirPath)?.isFilePatternIgnored(vcsRoot, dirPathString) ?: NotIgnored
   }
 
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {
@@ -60,14 +95,13 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     }
   }
 
-  override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean =
+  override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean = isPotentiallyIgnoredFile(VcsUtil.getFilePath(file))
+
+  override fun isPotentiallyIgnoredFile(filePath: FilePath): Boolean =
     runReadAction {
       if (project.isDisposed) return@runReadAction false
-
-      val filePath = VcsUtil.getFilePath(file)
       return@runReadAction IgnoredFileProvider.IGNORE_FILE.extensions.any { it.isIgnoredFile(project, filePath) }
     }
-
 
   private fun removeConfigurationFromVcsIgnore(project: Project, configurationName: String) {
     val projectFileOrConfigDir =
@@ -85,7 +119,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       return
     }
 
-    val ignoreContentProvider = findIgnoredFileContentProvider(project, vcs)
+    val ignoreContentProvider = findIgnoredFileContentProvider(vcs)
     if (ignoreContentProvider == null) {
       LOG.debug("Cannot get ignore content provider for vcs " + vcs.name)
       return
@@ -119,8 +153,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     }
   }
 
-  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? {
-    val vcs = VcsUtil.getVcsFor(project, file) ?: return null
+  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? = getCheckerForFile(project,
+                                                                                                            VcsUtil.getFilePath(file))
+
+  private fun getCheckerForFile(project: Project, filePath: FilePath): VcsIgnoreChecker? {
+    val vcs = VcsUtil.getVcsFor(project, filePath) ?: return null
     return VcsIgnoreChecker.EXTENSION_POINT_NAME.getExtensionList(project).find { checker -> checker.supportedVcs == vcs.keyInstanceMethod }
   }
 

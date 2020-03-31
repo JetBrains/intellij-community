@@ -1,18 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.channels.Channels
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import kotlin.math.min
 
 fun Path.exists(): Boolean = Files.exists(this)
 
@@ -46,6 +48,11 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
+fun Path.safeOutputStream(): OutputStream {
+  parent?.createDirectories()
+  return SafeFileOutputStream(this)
+}
+
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
@@ -71,24 +78,65 @@ fun Path.createSymbolicLink(target: Path): Path {
 }
 
 @JvmOverloads
-fun Path.delete(deleteRecursively: Boolean = true) {
+fun Path.delete(recursively: Boolean = true) {
+  if (recursively) {
+    doDelete(this)
+  }
+  else {
+    Files.delete(this)
+  }
+}
+
+private fun doDelete(file: Path) {
+  val attributes: BasicFileAttributes
   try {
-    if (!deleteRecursively) {
-      // performance optimisation: try to delete regular file without any checks
-      Files.delete(this)
-      return
+    attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+  }
+  catch (e: NoSuchFileException) {
+    return
+  }
+
+  if (!attributes.isDirectory) {
+    deleteFile(file)
+    return
+  }
+
+  Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
+    @Throws(IOException::class)
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      deleteFile(file)
+      return FileVisitResult.CONTINUE
     }
 
-    val attributes = basicAttributesIfExists() ?: return
-    if (attributes.isDirectory) {
-      deleteRecursively()
+    @Throws(IOException::class)
+    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+      Files.deleteIfExists(dir)
+      return FileVisitResult.CONTINUE
     }
-    else {
-      Files.delete(this)
-    }
+  })
+}
+
+private fun deleteFile(file: Path) {
+  try {
+    Files.deleteIfExists(file)
   }
-  catch (e: Exception) {
-    deleteAsIOFile()
+  catch (e: IOException) {
+    // repeated delete is required for bad OS like Windows
+    FileUtilRt.doIOOperation(FileUtilRt.RepeatableIOOperation<Boolean, IOException> { lastAttempt ->
+      try {
+        Files.deleteIfExists(file)
+      }
+      catch (e: IOException) {
+        return@RepeatableIOOperation if (lastAttempt) {
+          false
+        }
+        else {
+          throw e
+        }
+      }
+
+      true
+    })
   }
 }
 
@@ -121,36 +169,6 @@ fun Path.deleteChildrenStartingWith(prefix: String) {
   directoryStreamIfExists({ it.fileName.toString().startsWith(prefix) }) { it.toList() }?.forEach {
     it.delete()
   }
-}
-
-private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
-  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    try {
-      Files.delete(file)
-    }
-    catch (e: Exception) {
-      deleteAsIOFile()
-    }
-    return FileVisitResult.CONTINUE
-  }
-
-  override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    try {
-      Files.delete(dir)
-    }
-    catch (e: Exception) {
-      deleteAsIOFile()
-    }
-    return FileVisitResult.CONTINUE
-  }
-})
-
-private fun Path.deleteAsIOFile() {
-  try {
-    FileUtil.delete(toFile())
-  }
-  // according to specification #toFile() method may throw UnsupportedOperationException
-  catch (ignored: UnsupportedOperationException) {}
 }
 
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
@@ -191,43 +209,29 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   return this
 }
 
-fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
-  writeSafe {
-    it.write(data, offset, size)
-  }
-  return this
-}
-
-/**
- * Consider using [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream]
- */
-fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
-  val tempFile = parent.resolve("${fileName}.${DigestUtil.randomToken()}.tmp")
-  tempFile.outputStream().use(outConsumer)
-  try {
-    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-  }
-  catch (e: AtomicMoveNotSupportedException) {
-    LOG.warn(e)
-    Files.move(tempFile, this, StandardCopyOption.REPLACE_EXISTING)
-  }
-  return this
-}
-
 @JvmOverloads
 @Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
+  if (data is String) {
+    if (createParentDirs) {
+      parent?.createDirectories()
+    }
+    Files.write(this, data.toByteArray())
+  }
+  else {
+    write(Charsets.UTF_8.encode(CharBuffer.wrap(data)), createParentDirs)
+  }
+  return this
+}
+
+@Throws(IOException::class)
+fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
   if (createParentDirs) {
     parent?.createDirectories()
   }
 
-  if (data is String) {
-    Files.write(this, data.toByteArray())
-  }
-  else {
-    Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
-      it.write(Charsets.UTF_8.encode(CharBuffer.wrap(data)))
-    }
+  Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+    it.write(data)
   }
   return this
 }
@@ -284,9 +288,7 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
-
-private val illegalChars = setOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
+private val illegalChars = ContainerUtil.set('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
 fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boolean = true): String {
@@ -294,7 +296,7 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
   var last = 0
   val length = name.length
   for (i in 0 until length) {
-    val c = name.get(i)
+    val c = name[i]
     if (!illegalChars.contains(c) && !c.isISOControl()) {
       continue
     }
@@ -312,7 +314,7 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
     last = i + 1
   }
 
-  fun String.truncateFileName() = if (isTruncate) substring(0, Math.min(length, 255)) else this
+  fun String.truncateFileName() = if (isTruncate) substring(0, min(length, 255)) else this
 
   if (result == null) {
     return name.truncateFileName()

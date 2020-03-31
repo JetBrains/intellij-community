@@ -3,7 +3,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**

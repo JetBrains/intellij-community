@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +30,9 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
     }
   };
 
-  public CommittedChangesFilterDialog(Project project, ChangesBrowserSettingsEditor panel, ChangeBrowserSettings settings) {
+  public CommittedChangesFilterDialog(Project project,
+                                      @NotNull ChangesBrowserSettingsEditor panel,
+                                      @NotNull ChangeBrowserSettings settings) {
     super(project, false);
     myPanel = panel;
     //noinspection unchecked

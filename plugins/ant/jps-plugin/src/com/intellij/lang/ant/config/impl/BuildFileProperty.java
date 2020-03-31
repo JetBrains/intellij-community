@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Objects;
 
 @Tag("build-property")
 public final class BuildFileProperty implements JDOMExternalizable, Cloneable {
@@ -60,7 +61,7 @@ public final class BuildFileProperty implements JDOMExternalizable, Cloneable {
     if (o == null || getClass() != o.getClass()) return false;
 
     BuildFileProperty that = (BuildFileProperty)o;
-    return Comparing.equal(myPropertyName, that.myPropertyName) && Comparing.equal(myPropertyValue, that.myPropertyValue);
+    return Objects.equals(myPropertyName, that.myPropertyName) && Objects.equals(myPropertyValue, that.myPropertyValue);
   }
 
   @Override

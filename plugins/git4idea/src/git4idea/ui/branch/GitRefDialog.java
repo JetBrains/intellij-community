@@ -1,5 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
+
+import static com.intellij.util.ui.UI.PanelFactory.grid;
+import static com.intellij.util.ui.UI.PanelFactory.panel;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.dvcs.repo.Repository;
@@ -34,16 +37,18 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
-import static com.intellij.util.ui.UI.PanelFactory.grid;
-import static com.intellij.util.ui.UI.PanelFactory.panel;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GitRefDialog extends DialogWrapper {
   private final TextFieldWithCompletion myTextField;
@@ -124,7 +129,7 @@ public class GitRefDialog extends DialogWrapper {
 
 
   @NotNull
-  private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<VcsRef> stream) {
+  private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {
     MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
     stream.forEach(ref -> map.putValue(ref.getRoot(), ref));
 
@@ -134,8 +139,8 @@ public class GitRefDialog extends DialogWrapper {
 
   private static class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
     MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
-                                      @NotNull Collection<VirtualFile> roots,
-                                      @NotNull Comparator<VcsRef> comparator) {
+                                      @NotNull Collection<? extends VirtualFile> roots,
+                                      @NotNull Comparator<? super VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));
     }
 
@@ -153,11 +158,11 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   private static class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
-    @NotNull private final List<GitBranch> myBranches;
-    @NotNull private final FutureResult<Collection<GitTag>> myTagsFuture;
+    @NotNull private final List<? extends GitBranch> myBranches;
+    @NotNull private final FutureResult<? extends Collection<GitTag>> myTagsFuture;
 
-    MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
-                                          @NotNull FutureResult<Collection<GitTag>> tagsFuture) {
+    MySimpleCompletionListProvider(@NotNull List<? extends GitBranch> branches,
+                                          @NotNull FutureResult<? extends Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;
       myTagsFuture = tagsFuture;
@@ -184,9 +189,9 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   private static class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
-    @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
 
-    private VcsRefDescriptor(@NotNull Comparator<VcsRef> comparator) {
+    private VcsRefDescriptor(@NotNull Comparator<? super VcsRef> comparator) {
       myReferenceComparator = comparator;
     }
 
@@ -210,7 +215,7 @@ public class GitRefDialog extends DialogWrapper {
 
     @Override
     public boolean equals(VcsRef o1, VcsRef o2) {
-      return Comparing.equal(o1.getName(), o2.getName()) &&
+      return Objects.equals(o1.getName(), o2.getName()) &&
              Comparing.equal(o1.getType(), o2.getType());
     }
   }

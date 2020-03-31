@@ -47,8 +47,7 @@ public class ChangeBufferingList implements Cloneable {
     }
   }
 
-  @NotNull
-  static int[] calcMinMax(int[] set, int length) {
+  static int @NotNull [] calcMinMax(int[] set, int length) {
     int max = Integer.MIN_VALUE;
     int min = Integer.MAX_VALUE;
     for(int i = 0; i < length; ++i) {
@@ -245,7 +244,8 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public ValueContainer.IntPredicate intPredicate() {
-    return getRandomAccessContainer().intPredicate();
+    RandomAccessIntContainer container = getRandomAccessContainer();
+    return container::contains;
   }
 
   public IntIdsIterator intIterator() {

@@ -25,7 +25,7 @@ public class TestIntegrationUtilsTest extends LightPlatformTestCase {
     doTest("interface Foo extends I {void bar();} interface I {void qux();}", true, "bar():void");
   }
 
-  private static void doTest(@Language("JAVA") String text, boolean inherited, String... expected) {
+  private void doTest(@Language("JAVA") String text, boolean inherited, String... expected) {
     PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("Test.java", JavaFileType.INSTANCE, text);
     PsiClass firstClass = file.getClasses()[0];
     List<MemberInfo> infos = TestIntegrationUtils.extractClassMethods(firstClass, inherited);

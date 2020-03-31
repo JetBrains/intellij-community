@@ -72,7 +72,7 @@ class DeclarationSearcher {
     }
 
     // look self
-    for (PsiElement element : parent.getChildren()) {
+    for (PsiElement element = parent.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element == endPositionElement) {
         break;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
@@ -8,7 +8,10 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.TimerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,64 +23,42 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Denis Fokin
  */
-public class ApplicationActivationStateManager {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ApplicationActivationStateManager");
+public final class ApplicationActivationStateManager {
+  private static final Logger LOG = Logger.getInstance(ApplicationActivationStateManager.class);
 
   private static final AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
 
-  private static final ApplicationActivationStateManager instance = new ApplicationActivationStateManager();
-
-  public static ApplicationActivationStateManager get () {
-    return instance;
-  }
-
   private ApplicationActivationStateManager() {}
-
-  public enum State {
-    ACTIVE,
-    DEACTIVATED,
-    DEACTIVATING;
-
-    public boolean isInactive () {
-      return this != ACTIVE;
-    }
-
-    public boolean isActive() {
-      return this == ACTIVE;
-    }
-  }
 
   private static State state = State.DEACTIVATED;
 
-  public static State getState() {
-    return state;
+  public static boolean isInactive() {
+    return state.isInactive();
   }
 
-  public static boolean updateState (final WindowEvent windowEvent) {
+  public static boolean isActive() {
+    return state.isActive();
+  }
 
-    final Application application = ApplicationManager.getApplication();
-    if (!(application instanceof ApplicationImpl)) return false;
-
-    final Window eventWindow = windowEvent.getWindow();
+  public static boolean updateState(@NotNull WindowEvent windowEvent) {
+    Application app = ApplicationManager.getApplication();
+    if (!(app instanceof ApplicationImpl)) {
+      return false;
+    }
 
     if (windowEvent.getID() == WindowEvent.WINDOW_ACTIVATED || windowEvent.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
-
       if (state.isInactive()) {
-        Window window = windowEvent.getWindow();
-
-        return setActive(application, window);
+        return setActive(app, windowEvent.getWindow());
       }
     }
     else if (windowEvent.getID() == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
       requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
-      // For stuff that cannot wait windowEvent notify about deactivation immediately
-      if (state.isActive()) {
-
+      // for stuff that cannot wait windowEvent notify about deactivation immediately
+      if (state.isActive() && !app.isDisposed()) {
         IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
         if (ideFrame != null) {
-          application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
+          app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
         }
       }
 
@@ -87,21 +68,22 @@ public class ApplicationActivationStateManager {
       state = State.DEACTIVATING;
       LOG.debug("The app is in the deactivating state");
 
-      Timer timer = UIUtil.createNamedTimer("ApplicationDeactivation",Registry.intValue("application.deactivation.timeout"), new ActionListener() {
+      Timer timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500), new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent evt) {
-
           if (state == State.DEACTIVATING) {
-
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
             state = State.DEACTIVATED;
             LOG.debug("The app is in the deactivated state");
 
-            IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
-            if (ideFrame != null) {
-              application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+            if (!app.isDisposed()) {
+              IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
+              // getIdeFrameFromWindow returns something from UI tree, so, if not null, it must be Window
+              if (ideFrame != null) {
+                app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(((Window)ideFrame));
+              }
             }
           }
-
         }
       });
 
@@ -112,31 +94,42 @@ public class ApplicationActivationStateManager {
     return false;
   }
 
-  private static boolean setActive(Application application, Window window) {
-    IdeFrame ideFrame = getIdeFrameFromWindow(window);
-
-    state = State.ACTIVE;
+  private static boolean setActive(@NotNull Application app, @Nullable Window window) { state = State.ACTIVE;
     LOG.debug("The app is in the active state");
 
-    if (ideFrame != null) {
-      application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
-      return true;
+    if (!app.isDisposed()) {
+      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      if (ideFrame != null) {
+        app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
+        return true;
+      }
     }
     return false;
   }
 
-  public static void updateState(Window window) {
-    final Application application = ApplicationManager.getApplication();
-    if (!(application instanceof ApplicationImpl)) return;
-
-    if (state.isInactive() && window != null) {
-      setActive(application, window);
+  public static void updateState(@NotNull ApplicationImpl app, @NotNull Window window) {
+    if (state.isInactive()) {
+      setActive(app, window);
     }
   }
 
-  private static IdeFrame getIdeFrameFromWindow (Window window) {
-    final Component frame = UIUtil.findUltimateParent(window);
-    return (frame instanceof IdeFrame) ? (IdeFrame)frame : null;
+  @Nullable
+  private static IdeFrame getIdeFrameFromWindow(@Nullable Window window) {
+    Component frame = window == null ? null : ComponentUtil.findUltimateParent(window);
+    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
+  }
+}
+
+enum State {
+  ACTIVE,
+  DEACTIVATED,
+  DEACTIVATING;
+
+  public boolean isInactive() {
+    return this != ACTIVE;
   }
 
+  public boolean isActive() {
+    return this == ACTIVE;
+  }
 }

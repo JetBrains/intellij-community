@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -12,10 +13,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -23,13 +25,13 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,41 +44,47 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
+  private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
+
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @Deprecated
-  public EditorFactoryImpl(/* unused for API compatibility reasons */ @SuppressWarnings("unused") EditorActionManager editorActionManager) {
-    this();
-  }
-
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void beforeProjectLoaded(@NotNull final Project project) {
+      public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
         Disposer.register(project, () -> {
-          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-          final boolean isLastProjectClosed = openProjects.length == 0;
-          validateEditorsAreReleased(project, isLastProjectClosed);
+          Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          boolean isLastProjectClosed = openProjects.length == 0;
+          // EditorTextField.releaseEditorLater defer releasing its editor; invokeLater to avoid false positives about such editors.
+          ApplicationManager.getApplication().invokeLater(() -> validateEditorsAreReleased(project, isLastProjectClosed));
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+        refreshAllEditors();
+      }
+    });
 
-    LaterInvocator.addModalityStateListener(entering -> {
-      for (Editor editor : myEditors) {
-        ((EditorImpl)editor).beforeModalityStateChanged();
+    LaterInvocator.addModalityStateListener(new ModalityStateListener() {
+      @Override
+      public void beforeModalityStateChanged(boolean entering) {
+        for (Editor editor : myEditors) {
+          ((EditorImpl)editor).beforeModalityStateChanged();
+        }
       }
     }, ApplicationManager.getApplication());
   }
 
-  public void validateEditorsAreReleased(Project project, boolean isLastProjectClosed) {
-    for (final Editor editor : myEditors) {
-      if (editor.getProject() == project || editor.getProject() == null && isLastProjectClosed) {
+  public void validateEditorsAreReleased(@NotNull Project project, boolean isLastProjectClosed) {
+    for (Editor editor : myEditors) {
+      if (editor.getProject() == project || (editor.getProject() == null && isLastProjectClosed)) {
         try {
           throwNotReleasedError(editor);
         }
@@ -100,7 +108,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   @NotNull
-  public Document createDocument(@NotNull char[] text) {
+  public Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
@@ -193,8 +201,10 @@ public class EditorFactoryImpl extends EditorFactory {
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
-    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
-    TouchBarsManager.registerEditor(editor);
+
+    EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(event);
+    EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -206,7 +216,9 @@ public class EditorFactoryImpl extends EditorFactory {
   @Override
   public void releaseEditor(@NotNull Editor editor) {
     try {
-      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
+      EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);
+      EP.forEachExtensionSafe(it -> it.editorReleased(event));
     }
     finally {
       try {
@@ -219,12 +231,10 @@ public class EditorFactoryImpl extends EditorFactory {
         }
       }
     }
-    TouchBarsManager.releaseEditor(editor);
   }
 
   @Override
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document, Project project) {
+  public Editor @NotNull [] getEditors(@NotNull Document document, Project project) {
     List<Editor> list = null;
     for (Editor editor : myEditors) {
       if (editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject()))) {
@@ -236,8 +246,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Editor[] getAllEditors() {
+  public Editor @NotNull [] getAllEditors() {
     return myEditors.toArray(Editor.EMPTY_ARRAY);
   }
 
@@ -264,9 +273,10 @@ public class EditorFactoryImpl extends EditorFactory {
     return myEditorEventMulticaster;
   }
 
-  public static class MyRawTypedHandler implements TypedActionHandlerEx {
+  public static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
+    @SuppressWarnings("NonDefaultConstructor")
     public MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
@@ -284,7 +294,9 @@ public class EditorFactoryImpl extends EditorFactory {
 
     @Override
     public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-      if (myDelegate instanceof TypedActionHandlerEx) ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+      if (myDelegate instanceof TypedActionHandlerEx) {
+        ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+      }
     }
   }
 }

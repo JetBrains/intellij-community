@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase
 
 class NewifyResolveTest extends GroovyResolveTestCase {
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
 
   @Override
   void setUp() {
@@ -64,6 +64,60 @@ class B {
 }
 """
   }
+
+  void testNewifyByPattern() {
+    checkResolve """
+@Newify(pattern = /Aa/)
+class B {
+  def a = A<caret>a()
+}
+""", PsiMethod, "Aa"
+
+    checkResolve """
+@Newify(pattern = /Cc/)
+class B {
+  def a = C<caret>c()
+}
+""", PsiMethod, "Cc"
+
+    checkResolve"""
+@Newify(pattern = /[A-Z].*/)
+class B {
+  def a = A<caret>a(name :"bar")
+}
+""", PsiMethod, "Aa"
+
+    checkResolve"""
+class B {
+  @Newify(pattern = /[A-Z].*/)
+  def a = A<caret>a(name :"bar")
+}
+""", PsiMethod, "Aa"
+
+    checkResolve """
+class B {
+  @Newify(pattern = /[A-Z].*/)
+  def a (){ return A<caret>a(name :"bar")}
+}
+""", PsiMethod, "Aa"
+
+    checkResolve """
+class B {
+  @Newify(pattern = /[a-z].*/)
+  def a (){ return A<caret>a(name :"bar")}
+}
+"""
+
+    checkResolve """
+@Newify(pattern = /.*/)
+class B {
+  class zz {
+  }
+  
+  def a() { return z<caret>z() }
+}""", PsiMethod, "B.zz"
+  }
+
 
   void testNewifyByClass() {
     checkResolve """

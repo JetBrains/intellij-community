@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
+@ApiStatus.NonExtendable
 public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   /**
    * The empty array of order entries which can be reused to avoid unnecessary allocations.
@@ -44,8 +46,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @return list of virtual files.
    * @see #getUrls(OrderRootType)
    */
-  @NotNull
-  VirtualFile[] getFiles(@NotNull OrderRootType type);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
 
   /**
    * Returns list of roots of given type for this entry. To validate returned roots,
@@ -56,8 +57,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param rootType the type of roots which should be returned.
    * @return the list of roots of the specified type.
    */
-  @NotNull
-  String[] getUrls(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**
    * Returns the user-visible name of this OrderEntry.

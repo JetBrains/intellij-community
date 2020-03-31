@@ -48,13 +48,13 @@ public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsi
    * @return    tuple of {@code (selected text; text over than selected)}.
    */
   @NotNull
-  protected static Pair<String, String> parse() {
-    SelectionModel selectionModel = myEditor.getSelectionModel();
+  protected Pair<String, String> parse() {
+    SelectionModel selectionModel = getEditor().getSelectionModel();
     if (!selectionModel.hasSelection()) {
-      return new Pair<>(null, myEditor.getDocument().getText());
+      return new Pair<>(null, getEditor().getDocument().getText());
     }
     
-    CharSequence text = myEditor.getDocument().getCharsSequence();
+    CharSequence text = getEditor().getDocument().getCharsSequence();
     String selectedText = text.subSequence(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).toString();
     StringBuilder nonSelectedText = new StringBuilder();
     nonSelectedText.append(text.subSequence(0, selectionModel.getSelectionStart()))

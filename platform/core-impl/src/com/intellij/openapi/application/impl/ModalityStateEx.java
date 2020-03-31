@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +26,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ModalityStateEx extends ModalityState {
   private final WeakList<Object> myModalEntities = new WeakList<>();
+  private static final Set<Object> ourTransparentEntities = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap());
 
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  ModalityStateEx(@NotNull Object... modalEntities) {
+  ModalityStateEx(Object @NotNull ... modalEntities) {
     Collections.addAll(myModalEntities, modalEntities);
   }
 
@@ -66,7 +69,7 @@ public class ModalityStateEx extends ModalityState {
 
     List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {
-      if (!otherEntities.contains(entity)) return true; // I have entity which is absent in anotherState
+      if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
     }
     return false;
   }
@@ -80,5 +83,13 @@ public class ModalityStateEx extends ModalityState {
 
   void removeModality(Object modalEntity) {
     myModalEntities.remove(modalEntity);
+  }
+
+  void markTransparent() {
+    ContainerUtil.addIfNotNull(ourTransparentEntities, ContainerUtil.getLastItem(getModalEntities()));
+  }
+
+  static void unmarkTransparent(@NotNull Object modalEntity) {
+    ourTransparentEntities.remove(modalEntity);
   }
 }

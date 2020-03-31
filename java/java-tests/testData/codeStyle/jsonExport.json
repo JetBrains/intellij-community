@@ -17,8 +17,10 @@
       "align_multiline_parameters": true,
       "align_multiline_parameters_in_calls": false,
       "align_multiline_parenthesized_expression": false,
+      "align_multiline_records": true,
       "align_multiline_resources": true,
       "align_multiline_ternary_operation": false,
+      "align_multiline_text_blocks": false,
       "align_multiline_throws_list": false,
       "align_subsequent_simple_methods": false,
       "align_throws_keyword": false,
@@ -118,6 +120,8 @@
       "keep_simple_classes_in_one_line": false,
       "keep_simple_lambdas_in_one_line": false,
       "keep_simple_methods_in_one_line": false,
+      "label_indent_absolute": false,
+      "label_indent_size": 0,
       "lambda_brace_style": "end_of_line",
       "layout_static_imports_separately": true,
       "line_comment_add_space": false,
@@ -130,6 +134,7 @@
       "method_parameters_wrap": "normal",
       "modifier_list_wrap": false,
       "names_count_to_use_import_on_demand": 3,
+      "new_line_after_lparen_in_record_header": false,
       "packages_to_use_import_on_demand": [
         "java.awt.*",
         "javax.swing.*"
@@ -140,6 +145,7 @@
       "place_assignment_sign_on_next_line": false,
       "prefer_longer_names": true,
       "prefer_parameters_wrap": false,
+      "record_components_wrap": "normal",
       "repeat_annotations": [
         "com.jetbrains.First",
         "com.jetbrains.Second"
@@ -151,6 +157,7 @@
       "resource_list_new_line_after_left_paren": false,
       "resource_list_right_paren_on_new_line": false,
       "resource_list_wrap": "off",
+      "rparen_on_new_line_in_record_header": false,
       "smart_tabs": false,
       "space_after_closing_angle_bracket_in_type_argument": false,
       "space_after_colon": true,
@@ -237,6 +244,7 @@
       "throws_list_wrap": "off",
       "use_external_annotations": false,
       "use_fq_class_names": false,
+      "use_relative_indents": false,
       "use_single_class_imports": true,
       "variable_annotation_wrap": "off",
       "visibility": "public",

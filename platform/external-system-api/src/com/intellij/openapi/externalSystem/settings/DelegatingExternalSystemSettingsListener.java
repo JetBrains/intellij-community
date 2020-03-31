@@ -37,6 +37,11 @@ public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectS
   }
 
   @Override
+  public void onProjectsLoaded(@NotNull Collection<S> settings) {
+    myDelegate.onProjectsLoaded(settings);
+  }
+
+  @Override
   public void onProjectsLinked(@NotNull Collection<S> settings) {
     myDelegate.onProjectsLinked(settings); 
   }
@@ -44,11 +49,6 @@ public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectS
   @Override
   public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
     myDelegate.onProjectsUnlinked(linkedProjectPaths); 
-  }
-
-  @Override
-  public void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {
-    myDelegate.onUseAutoImportChange(currentValue, linkedProjectPath); 
   }
 
   @Override

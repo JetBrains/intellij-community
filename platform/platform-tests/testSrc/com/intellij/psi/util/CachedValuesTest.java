@@ -7,7 +7,8 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
@@ -22,7 +23,7 @@ import java.util.function.Supplier;
 /**
  * @author peter
  */
-public class CachedValuesTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CachedValuesTest extends BasePlatformTestCase {
   private final UserDataHolderBase holder = new UserDataHolderBase();
 
   public void testCachedValueCapturingInvalidStuff() {
@@ -108,6 +109,7 @@ public class CachedValuesTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testExternalChangesDoNotLeadToRecomputationOfPsiFileDependentCache() {
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable());
     PsiFile file = myFixture.addFileToProject("a.txt", "");
 
     AtomicInteger recomputations = new AtomicInteger();

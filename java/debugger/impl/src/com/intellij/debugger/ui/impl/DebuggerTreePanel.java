@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -23,12 +23,13 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
-  
+
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
     try {
       final DebuggerContextImpl context = getContext();
@@ -59,8 +60,14 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.addMouseListener(popupHandler);
 
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
+      @Nullable
       @Override
-      public Component getDefaultComponentImpl(Container focusCycleRoot) {
+      protected Project getProject() {
+        return project;
+      }
+
+      @Override
+      public Component getDefaultComponent(Container focusCycleRoot) {
         return myTree;
       }
     });

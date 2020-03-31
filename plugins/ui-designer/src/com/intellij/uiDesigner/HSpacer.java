@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
 
 import java.awt.*;
 
@@ -23,12 +23,12 @@ public final class HSpacer extends DesignSpacer{
     final int y=(getHeight()-handleHeight)/2;
     drawHandle(g,0,y);
     g.setColor(ourColor1);
-    UIUtil.drawLine(g, handleWidth, y + handleHeight / 2, handleWidth + 1, y + handleHeight / 2);
+    LinePainter2D.paint((Graphics2D)g, handleWidth, y + handleHeight / 2, handleWidth + 1, y + handleHeight / 2);
 
     // Paint right handle
     final int x=getWidth()-handleWidth-1;
     drawHandle(g,x,y);
-    UIUtil.drawLine(g, x, y + handleHeight / 2, x - 2, y + handleHeight / 2);
+    LinePainter2D.paint((Graphics2D)g, x, y + handleHeight / 2, x - 2, y + handleHeight / 2);
     g.setColor(ourColor1);
 
     // Draw spring
@@ -51,14 +51,14 @@ public final class HSpacer extends DesignSpacer{
     g.setColor(ourColor1);
 
     g.drawRect(x,y,HANDLE_ATOM_WIDTH-1,HANDLE_ATOM_HEIGHT-1);
-    UIUtil.drawLine(g, x + HANDLE_ATOM_WIDTH / 2, y + HANDLE_ATOM_HEIGHT, x + HANDLE_ATOM_WIDTH / 2,
-                    y + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1);
+    LinePainter2D.paint((Graphics2D)g, x + HANDLE_ATOM_WIDTH / 2, y + HANDLE_ATOM_HEIGHT, x + HANDLE_ATOM_WIDTH / 2,
+                        y + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1);
 
     y+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
     g.drawRect(x,y,HANDLE_ATOM_WIDTH-1,HANDLE_ATOM_HEIGHT-1);
-    UIUtil.drawLine(g, x + HANDLE_ATOM_WIDTH / 2, y + HANDLE_ATOM_HEIGHT, x + HANDLE_ATOM_WIDTH / 2,
-                    y + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1);
+    LinePainter2D.paint((Graphics2D)g, x + HANDLE_ATOM_WIDTH / 2, y + HANDLE_ATOM_HEIGHT, x + HANDLE_ATOM_WIDTH / 2,
+                        y + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1);
 
     y+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
@@ -73,12 +73,12 @@ public final class HSpacer extends DesignSpacer{
 
   private static void drawSpringPeriod(final Graphics g,final int x,final int y){
     g.setColor(ourColor2);
-    UIUtil.drawLine(g, x, y - 1, x, y - 2);
-    UIUtil.drawLine(g, x + 1, y, x + 1, y);
-    UIUtil.drawLine(g, x + 2, y + 1, x + 2, y + 2);
+    LinePainter2D.paint((Graphics2D)g, x, y - 1, x, y - 2);
+    LinePainter2D.paint((Graphics2D)g, x + 1, y, x + 1, y);
+    LinePainter2D.paint((Graphics2D)g, x + 2, y + 1, x + 2, y + 2);
 
     g.setColor(ourColor3);
-    UIUtil.drawLine(g, x + 3, y, x + 3, y);
+    LinePainter2D.paint((Graphics2D)g, x + 3, y, x + 3, y);
   }
 
   @Override

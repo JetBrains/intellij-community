@@ -23,7 +23,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     final XmlTag tag = handler.ensureTagExists();
 
     Set<XmlTag> set = new THashSet<>();

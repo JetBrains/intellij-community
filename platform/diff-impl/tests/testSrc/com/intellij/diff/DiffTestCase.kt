@@ -54,7 +54,7 @@ abstract class DiffTestCase : TestCase() {
   }
 
   override fun tearDown() {
-    DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable"))
+    DiffIterableUtil.setVerifyEnabled(false)
     super.tearDown()
   }
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ReplacePromptDialog;
@@ -327,17 +326,12 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
 
     public void processDuplicates(@NotNull String referenceText) {
       PsiElement[] duplicatedLinks =
-        PsiTreeUtil.collectElements(myFile, new PsiElementFilter() {
-          @Override
-          public boolean isAccepted(@NotNull PsiElement element) {
-            return MarkdownTokenTypeSets.LINKS.contains(PsiUtilCore.getElementType(element))
-                   && myUrl.equals(getUrl(element))
-                   //inside inline links
-                   && PsiTreeUtil.findFirstParent(element, true, element1 -> PsiUtilCore.getElementType(element1) == INLINE_LINK) == null
-                   //generated link
-                   && PsiTreeUtil.findFirstParent(element, element1 -> PsiUtilCore.getElementType(element1) == FULL_REFERENCE_LINK) == null;
-          }
-        });
+        PsiTreeUtil.collectElements(myFile, element -> MarkdownTokenTypeSets.LINKS.contains(PsiUtilCore.getElementType(element))
+                                                   && myUrl.equals(getUrl(element))
+                                                   //inside inline links
+                                                   && PsiTreeUtil.findFirstParent(element, true, element1 -> PsiUtilCore.getElementType(element1) == INLINE_LINK) == null
+                                                   //generated link
+                                                   && PsiTreeUtil.findFirstParent(element, element1 -> PsiUtilCore.getElementType(element1) == FULL_REFERENCE_LINK) == null);
 
       boolean showWarning =
         !Arrays.stream(duplicatedLinks)

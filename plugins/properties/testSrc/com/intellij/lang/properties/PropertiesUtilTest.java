@@ -15,12 +15,12 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PropertiesUtilTest extends BasePlatformTestCase {
 
   public void testBaseNameWithoutLocale() {
     assertBaseNameEquals("property-file.properties", "property-file");

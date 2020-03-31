@@ -15,9 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-/**
- * @author nik
- */
 class BaseLayoutSpec {
   protected final BaseLayout layout
 
@@ -82,6 +79,13 @@ class BaseLayoutSpec {
   }
 
   /**
+   * Exclude the module library from plugin distribution.
+   */
+  void withoutModuleLibrary(String moduleName, String libraryName) {
+    layout.excludedModuleLibraries.put(moduleName, libraryName)
+  }
+
+  /**
    * Exclude the specified files when {@code moduleName} is packed into JAR file.
    * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
    * module JAR it's strongly recommended to move these files outside of the module source roots.</strong>
@@ -99,5 +103,12 @@ class BaseLayoutSpec {
    */
   void withArtifact(String artifactName, String relativeOutputPath) {
     layout.includedArtifacts.put(artifactName, relativeOutputPath)
+  }
+
+  /**
+   * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
+   */
+  void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
+    layout.projectLibrariesToUnpack.put(jarName, libraryName)
   }
 }

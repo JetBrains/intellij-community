@@ -41,14 +41,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
+  private final Map<Key, byte[]> myConstantCache = new HashMap<>();
   private long myCounter;
 
   public ContentRevisionCache() {
@@ -58,7 +57,7 @@ public class ContentRevisionCache {
     myCounter = 0;
   }
 
-  private void put(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type, @Nullable final byte[] bytes) {
+  private void put(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type, final byte @Nullable [] bytes) {
     if (bytes == null) return;
     synchronized (myLock) {
       myCache.put(new Key(path, number, vcsKey, type), new SoftReference<>(bytes));
@@ -115,7 +114,7 @@ public class ContentRevisionCache {
 
   @Nullable
   @Contract("!null, _, _ -> !null")
-  public static String getAsString(@Nullable byte[] bytes, @NotNull FilePath file, @Nullable Charset charset) {
+  public static String getAsString(byte @Nullable [] bytes, @NotNull FilePath file, @Nullable Charset charset) {
     if (bytes == null) return null;
     if (charset == null) {
       return bytesToString(file, bytes);
@@ -125,7 +124,7 @@ public class ContentRevisionCache {
     }
   }
 
-  @Nullable
+  @NotNull
   public static String getOrLoadAsString(@NotNull Project project,
                                          @NotNull FilePath file,
                                          VcsRevisionNumber number,
@@ -135,12 +134,11 @@ public class ContentRevisionCache {
                                          @Nullable Charset charset)
     throws VcsException, IOException {
     final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
-    if (bytes == null) return null;
     return getAsString(bytes, file, charset);
   }
 
 
-  @Nullable
+  @NotNull
   public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
                                          @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
@@ -148,7 +146,7 @@ public class ContentRevisionCache {
   }
 
   @NotNull
-  private static String bytesToString(FilePath path, @NotNull byte[] bytes) {
+  private static String bytesToString(FilePath path, byte @NotNull [] bytes) {
     Charset charset = null;
     if (path.getVirtualFile() != null) {
       charset = path.getVirtualFile().getCharset();
@@ -163,8 +161,7 @@ public class ContentRevisionCache {
     return CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset());
   }
 
-  @Nullable
-  public byte[] getBytes(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
+  public byte @Nullable [] getBytes(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
     synchronized (myLock) {
       final SoftReference<byte[]> reference = myCache.get(new Key(path, number, vcsKey, type));
       return SoftReference.dereference(reference);
@@ -186,11 +183,15 @@ public class ContentRevisionCache {
     }
   }
 
-  public static byte[] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                        @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
+  public static byte @NotNull [] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
+                                                  @NotNull UniqueType type, final Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);
+    if (bytes != null) {
+      return bytes;
+    }
+    bytes = cache.getFromConstantCache(path, number, vcsKey, type);
     if (bytes != null) {
       return bytes;
     }
@@ -235,8 +236,31 @@ public class ContentRevisionCache {
     }
   }
 
+  public void putIntoConstantCache(@NotNull FilePath path,
+                                   @NotNull VcsRevisionNumber revisionNumber,
+                                   @NotNull VcsKey vcsKey,
+                                   byte[] content) {
+    synchronized (myConstantCache) {
+      myConstantCache.put(new Key(path, revisionNumber, vcsKey, UniqueType.REPOSITORY_CONTENT), content);
+    }
+  }
+
+  public byte[] getFromConstantCache(@NotNull FilePath path,
+                                     @NotNull VcsRevisionNumber revisionNumber,
+                                     @NotNull VcsKey vcsKey,
+                                     @NotNull UniqueType type) {
+    synchronized (myConstantCache) {
+      return myConstantCache.get(new Key(path, revisionNumber, vcsKey, type));
+    }
+  }
+
+  public void clearConstantCache() {
+    myConstantCache.clear();
+  }
+
   public static Pair<VcsRevisionNumber, byte[]> getOrLoadCurrentAsBytes(final Project project, FilePath path, @NotNull VcsKey vcsKey,
-      final CurrentRevisionProvider loader) throws VcsException, IOException {
+                                                                        final CurrentRevisionProvider loader)
+    throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
 
     VcsRevisionNumber currentRevision;
@@ -345,6 +369,7 @@ public class ContentRevisionCache {
       ++ myCounter;
       myCurrentRevisionsCache.clear();
       myCache.clear();
+      myConstantCache.clear();
     }
   }
 }

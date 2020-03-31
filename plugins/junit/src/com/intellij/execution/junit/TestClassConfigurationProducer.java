@@ -6,9 +6,13 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-//to be deleted in 2018
+/**
+ * @deprecated use {@link TestInClassConfigurationProducer} instead
+ */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 @Deprecated
 public class TestClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
   public TestClassConfigurationProducer() {

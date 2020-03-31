@@ -22,10 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class GuessContainerElementTypeTest extends LightCodeInsightTestCase {
+public class GuessContainerElementTypeTest extends LightJavaCodeInsightTestCase {
 
   private static final String BASE_PATH = "/codeInsight/guess/containerElement";
 

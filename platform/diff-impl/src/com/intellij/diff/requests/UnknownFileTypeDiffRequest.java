@@ -17,17 +17,13 @@ package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffContextEx;
+import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,18 +46,15 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @NotNull
   @Override
   public JComponent getComponent(@NotNull final DiffContext context) {
-    final SimpleColoredComponent label = new SimpleColoredComponent();
-    label.setTextAlign(SwingConstants.CENTER);
-    label.append("Can't show diff for unknown file type. ",
-                 new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor()));
-    if (myFileName != null) {
-      label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, (Runnable)() -> {
-        FileType type = FileTypeChooser.associateFileType(myFileName);
-        if (type != null) onSuccess(context);
-      });
-      LinkMouseListenerBase.installSingleTagOn(label);
-    }
-    return new DiffUtil.CenteredPanel(label, JBUI.Borders.empty(5));
+    return createComponent(myFileName, context);
+  }
+
+  @NotNull
+  public static JComponent createComponent(@Nullable String fileName, @Nullable DiffContext context) {
+    String message = DiffBundle.message("error.cant.show.diff.for.unknown.file");
+    if (fileName == null) return DiffUtil.createMessagePanel(message);
+    return ErrorDiffTool.createReloadMessagePanel(context, message, DiffBundle.message("button.associate.file.type"),
+                                                  () -> FileTypeChooser.associateFileType(fileName));
   }
 
   @Nullable
@@ -75,7 +68,7 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
     return myTitle;
   }
 
-  protected void onSuccess(@NotNull DiffContext context) {
+  private static void tryReloadRequest(@NotNull DiffContext context) {
     if (context instanceof DiffContextEx) ((DiffContextEx)context).reloadDiffRequest();
   }
 }

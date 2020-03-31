@@ -1,7 +1,6 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskTestUtil;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryType;
 import org.jetbrains.annotations.NotNull;

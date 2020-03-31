@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java19modules;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -38,7 +39,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "<html>Classes exposed with <code>module-info</code></html>";
+    return JavaAnalysisBundle.message("html.classes.exposed.with.code.module.info.code.html");
   }
 
   @Override
@@ -172,11 +173,11 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
       Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
         .map(PsiProvidesStatement::getImplementationList)
         .nonNull()
-        .flatMap(list -> StreamEx.of(list.getReferenceElements()))
-        .append(StreamEx.of(javaModule.getUses().spliterator())
-          .map(PsiUsesStatement::getClassReference)
-          .nonNull())
-        .map(PsiJavaCodeReferenceElement::getQualifiedName)
+        .flatMap(list -> StreamEx.of(list.getReferencedTypes()))
+        .append(StreamEx.of(javaModule.getUses().spliterator()).map(PsiUsesStatement::getClassType).nonNull())
+        .map(PsiClassType::resolve)
+        .nonNull()
+        .map(PsiClass::getQualifiedName)
         .nonNull()
         .toCollection(THashSet::new);
       return CachedValueProvider.Result.create(classes, javaModule);
@@ -199,6 +200,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void writeExternal(Element element) throws WriteExternalException {
     XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
   }

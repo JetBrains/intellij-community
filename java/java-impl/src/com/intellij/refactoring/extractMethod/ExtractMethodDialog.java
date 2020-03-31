@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -28,10 +29,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -54,7 +52,7 @@ import java.util.function.Supplier;
  */
 public class ExtractMethodDialog extends RefactoringDialog implements AbstractExtractDialog {
   static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
-  static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
 
   private final Project myProject;
   private final PsiType myReturnType;
@@ -88,10 +86,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private final Supplier<Integer> myDuplicatesCountSupplier;
 
   public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
-                             PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
-                             boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
-                             String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
-                             @Nullable Supplier<Integer> duplicatesCountSupplier) {
+                                PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
+                                boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
+                                String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
+                                @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
     myTargetClass = targetClass;
@@ -110,11 +108,11 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     setTitle(title);
 
     myNameField = new NameSuggestionsField(suggestMethodNames(), myProject);
-    
+
     myMakeStatic = new NonFocusableCheckBox();
-    myMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
+    myMakeStatic.setText(JavaRefactoringBundle.message("declare.static.checkbox"));
     if (canBeChainedConstructor) {
-      myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
+      myCbChainedConstructor = new NonFocusableCheckBox(JavaRefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
     myDuplicatesCountSupplier = duplicatesCountSupplier;
@@ -124,9 +122,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   protected String[] suggestMethodNames() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
-  
+
   protected boolean areTypesDirected() {
     return true;
   }
@@ -178,7 +176,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ApplicationManager.getApplication().runReadAction(
         () -> checkMethodConflicts(conflicts)
-      ), "Checking Conflicts...", true, myProject)) {
+      ), JavaRefactoringBundle.message("checking.conflicts"), true, myProject)) {
       return;
     }
 
@@ -255,7 +253,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   protected boolean isVoidReturn() {
     return false;
   }
-  
+
   @Nullable
   private JPanel createReturnTypePanel() {
     if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullability == Nullability.NULLABLE) {
@@ -316,7 +314,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
     //optionsPanel.add(new JLabel("Options: "));
 
-    createStaticOptions(optionsPanel, RefactoringBundle.message("declare.static.pass.fields.checkbox"));
+    createStaticOptions(optionsPanel, JavaRefactoringBundle.message("declare.static.pass.fields.checkbox"));
 
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
@@ -343,7 +341,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
 
     if (canBeVarargs) {
-      myMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
+      myMakeVarargs = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.varargs.checkbox"));
       myMakeVarargs.setBorder(emptyBorder);
       updateVarargsEnabled();
       myMakeVarargs.addItemListener(e -> updateSignature());
@@ -353,7 +351,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
     if (myNullability != null && myNullability != Nullability.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
-      myGenerateAnnotations = new JCheckBox(RefactoringBundle.message("declare.generated.annotations"), isSelected);
+      myGenerateAnnotations = new JCheckBox(JavaRefactoringBundle.message("declare.generated.annotations"), isSelected);
       myGenerateAnnotations.addItemListener(e -> updateSignature());
       optionsPanel.add(myGenerateAnnotations);
     }
@@ -409,7 +407,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     final PsiMethod containingMethod = getContainingMethod();
-    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC) 
+    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)
                         ? PropertiesComponent.getInstance(myProject).getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
                         : PsiModifier.PRIVATE);
     panel.addListener(e -> {
@@ -444,7 +442,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   @NotNull
   public String getVisibility() {
-    return myTargetClass.isInterface() || myVisibilityPanel == null 
+    return myTargetClass.isInterface() || myVisibilityPanel == null
            ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 
@@ -472,9 +470,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private JBLabel createDuplicatesCountLabel() {
     JBLabel duplicatesCount = new JBLabel();
     if (myDuplicatesCountSupplier != null) {
-      duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
+      duplicatesCount.setText(JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
       ProgressManager.getInstance().run(
-        new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
+        new Task.Backgroundable(myProject, JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             int count = ReadAction.compute(myDuplicatesCountSupplier::get);
@@ -482,7 +480,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
               () -> {
                 if (count != 0) {
                   showCount(UIUtil.getBalloonInformationIcon(),
-                            " " + RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
+                            " " + JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
                             JBUI.Borders.empty(18, 0));
                 }
                 else {
@@ -689,10 +687,5 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   public PsiType getReturnType() {
     return mySelector != null ? mySelector.getSelectedType() : myReturnType;
-  }
-
-  @Override
-  public boolean showInTransaction() {
-    return true;
   }
 }

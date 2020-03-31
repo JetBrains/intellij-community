@@ -6,11 +6,19 @@ src/constants/B.java
 End of files
 Cleaning output files:
 out/production/MutualConstants/constants/A.class
-out/production/MutualConstants/constants/B.class
-out/production/MutualConstants/constants/PrintConst.class
 End of files
 Compiling files:
 src/constants/A.java
+End of files
+Cleaning output files:
+out/production/MutualConstants/constants/B.class
+End of files
+Compiling files:
 src/constants/B.java
+End of files
+Cleaning output files:
+out/production/MutualConstants/constants/PrintConst.class
+End of files
+Compiling files:
 src/constants/PrintConst.java
 End of files

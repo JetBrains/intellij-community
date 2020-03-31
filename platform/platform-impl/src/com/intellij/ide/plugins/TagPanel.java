@@ -5,9 +5,12 @@ import com.intellij.ide.plugins.newui.HorizontalLayout;
 import com.intellij.ide.plugins.newui.TagComponent;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -18,7 +21,7 @@ public class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
 
   public TagPanel(@NotNull LinkListener<Object> searchListener) {
-    super(new HorizontalLayout(JBUI.scale(6)));
+    super(new HorizontalLayout(JBUIScale.scale(6)));
     mySearchListener = searchListener;
     setBorder(JBUI.Borders.emptyTop(2));
   }
@@ -35,6 +38,7 @@ public class TagPanel extends NonOpaquePanel {
 
     for (int i = 0; i < commonSize; i++) {
       TagComponent component = (TagComponent)getComponent(i);
+      component.setToolTipText(null);
       component.setText(tags.get(i));
       component.setVisible(true);
     }
@@ -42,7 +46,7 @@ public class TagPanel extends NonOpaquePanel {
     if (newSize > oldSize) {
       for (int i = oldSize; i < newSize; i++) {
         TagComponent component = new TagComponent(tags.get(i));
-        add(PluginManagerConfigurableNew.installTiny(component));
+        add(PluginManagerConfigurable.setTinyFont(component));
         //noinspection unchecked
         component.setListener(mySearchListener, component);
       }
@@ -54,6 +58,10 @@ public class TagPanel extends NonOpaquePanel {
     }
 
     setVisible(true);
+  }
+
+  public void setFirstTagTooltip(@Nullable String text) {
+    ((JComponent)getComponent(0)).setToolTipText(text);
   }
 
   @Override

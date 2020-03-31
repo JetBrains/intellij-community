@@ -78,6 +78,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("na ut", "name_util_test");
     assertMatches("na te", "name_util_test");
     assertDoesntMatch("na ti", "name_util_test");
+
+    assertDoesntMatch("alias imple", "alias simple");
+    assertDoesntMatch("alias mple", "alias simple");
+    assertDoesntMatch("alias nother", "alias another");
   }
   
   public void testXMLCompletion() {
@@ -184,6 +188,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("j.js", "jquery.autocomplete.js");
     assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
     assertMatches("oracle.bnf", "oracle-11.2.bnf");
+    assertMatches("*foo.*bar", "foo.b.bar");
   }
 
   public void testNoExtension() {
@@ -609,9 +614,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertTrue(caseInsensitiveMatcher(" EUC-").matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
-  private static void assertPreference(@NonNls String pattern,
-                                       @NonNls String less,
-                                       @NonNls String more) {
+  static void assertPreference(@NonNls String pattern, @NonNls String less, @NonNls String more) {
     assertPreference(pattern, less, more, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
 

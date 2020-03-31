@@ -10,12 +10,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A thread pool for long-running workers needed for handling child processes, to avoid occupying workers in the main application pool
- * and constantly creating new threads there.
+ * A thread pool for long-running workers needed for handling child processes or network requests,
+ * to avoid occupying workers in the main application pool and constantly creating new threads there.
  * @author peter
  */
 public class ProcessIOExecutorService extends ThreadPoolExecutor {
-  public static final String POOLED_THREAD_PREFIX = "Process I/O pool ";
+  public static final String POOLED_THREAD_PREFIX = "I/O pool ";
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
   private ProcessIOExecutorService() {

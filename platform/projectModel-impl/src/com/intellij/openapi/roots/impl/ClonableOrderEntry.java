@@ -16,15 +16,18 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
 @FunctionalInterface
+@ApiStatus.Internal
 public interface ClonableOrderEntry {
   @NotNull
-  OrderEntry cloneEntry(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager, @NotNull VirtualFilePointerManager filePointerManager);
+  OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel, @NotNull ProjectRootManagerImpl projectRootManager, @NotNull VirtualFilePointerManager filePointerManager);
 }

@@ -2,13 +2,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("CastToIncompatibleInterface")
-public class CastToIncompatibleInterfaceInspectionTest extends LightInspectionTestCase {
+public class CastToIncompatibleInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class X { " +

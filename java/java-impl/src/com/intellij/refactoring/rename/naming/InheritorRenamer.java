@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.RefactoringBundle;
@@ -40,11 +41,11 @@ public class InheritorRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogDescription() {
-    return RefactoringBundle.message("rename.inheritors.with.the.following.names.to");
+    return JavaRefactoringBundle.message("rename.inheritors.with.the.following.names.to");
   }
 
   @Override
   public String entityName() {
-    return RefactoringBundle.message("entity.name.inheritor");
+    return JavaRefactoringBundle.message("entity.name.inheritor");
   }
 }

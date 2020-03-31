@@ -21,24 +21,30 @@ if sys.version_info >= (3, 7) and sys.platform != 'win32':
     CLOCK_UPTIME: int  # FreeBSD, OpenBSD
 
 if sys.version_info >= (3, 3) and sys.platform != 'win32':
-    CLOCK_HIGHRES: int = ...  # Solaris only
-    CLOCK_MONOTONIC: int = ...  # Unix only
-    CLOCK_MONOTONIC_RAW: int = ...  # Linux 2.6.28 or later
-    CLOCK_PROCESS_CPUTIME_ID: int = ...  # Unix only
-    CLOCK_REALTIME: int = ...  # Unix only
-    CLOCK_THREAD_CPUTIME_ID: int = ...  # Unix only
+    CLOCK_HIGHRES: int  # Solaris only
+    CLOCK_MONOTONIC: int  # Unix only
+    CLOCK_MONOTONIC_RAW: int  # Linux 2.6.28 or later
+    CLOCK_PROCESS_CPUTIME_ID: int  # Unix only
+    CLOCK_REALTIME: int  # Unix only
+    CLOCK_THREAD_CPUTIME_ID: int  # Unix only
 
+if sys.version_info >= (3, 8) and sys.platform == "darwin":
+    CLOCK_UPTIME_RAW: int
 
 if sys.version_info >= (3, 3):
-    class struct_time(
-        NamedTuple(
-            '_struct_time',
-            [('tm_year', int), ('tm_mon', int), ('tm_mday', int),
-             ('tm_hour', int), ('tm_min', int), ('tm_sec', int),
-             ('tm_wday', int), ('tm_yday', int), ('tm_isdst', int),
-             ('tm_zone', str), ('tm_gmtoff', int)]
-        )
-    ):
+    class _struct_time(NamedTuple):
+        tm_year: int
+        tm_mon: int
+        tm_mday: int
+        tm_hour: int
+        tm_min: int
+        tm_sec: int
+        tm_wday: int
+        tm_yday: int
+        tm_isdst: int
+        tm_zone: str
+        tm_gmtoff: int
+    class struct_time(_struct_time):
         def __init__(
             self,
             o: Union[
@@ -58,19 +64,23 @@ if sys.version_info >= (3, 3):
             _arg: Any = ...,
         ) -> struct_time: ...
 else:
-    class struct_time(
-        NamedTuple(
-            '_struct_time',
-            [('tm_year', int), ('tm_mon', int), ('tm_mday', int),
-             ('tm_hour', int), ('tm_min', int), ('tm_sec', int),
-             ('tm_wday', int), ('tm_yday', int), ('tm_isdst', int)]
-        )
-    ):
+    class _struct_time(NamedTuple):
+        tm_year: int
+        tm_mon: int
+        tm_mday: int
+        tm_hour: int
+        tm_min: int
+        tm_sec: int
+        tm_wday: int
+        tm_yday: int
+        tm_isdst: int
+    class struct_time(_struct_time):
         def __init__(self, o: _TimeTuple, _arg: Any = ...) -> None: ...
         def __new__(cls, o: _TimeTuple, _arg: Any = ...) -> struct_time: ...
 
 def asctime(t: Union[_TimeTuple, struct_time] = ...) -> str: ...
-def clock() -> float: ...
+if sys.version_info < (3, 8):
+    def clock() -> float: ...
 def ctime(secs: Optional[float] = ...) -> str: ...
 def gmtime(secs: Optional[float] = ...) -> struct_time: ...
 def localtime(secs: Optional[float] = ...) -> struct_time: ...

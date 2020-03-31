@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.VfsDependentEnum;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,11 +47,6 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     EnumeratorStringDescriptor.INSTANCE,
     1
   );
-
-  @Override
-  public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-
-  }
 
   @NotNull
   @Override

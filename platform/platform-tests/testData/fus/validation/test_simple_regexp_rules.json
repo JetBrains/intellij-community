@@ -9,7 +9,7 @@
       ],
       "rules": {
         "event_id": [
-          "regexp:(.+)\\s*:\\s*(.*)"
+          "regexp:(.+)\\s*/\\s*(.*)"
           ]}
         },
           {
@@ -21,7 +21,7 @@
             ],
             "rules": {
               "event_id": [
-                "{regexp:(.+)\\s*:\\s*(.*)}"
+                "{regexp:(.+)\\s*/\\s*(.*)}"
               ]
             }
           },
@@ -37,7 +37,7 @@
                 "regexp#regexp_ref"
               ],
               "regexps": {
-                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+                "regexp_ref": "(.+)\\s*/\\s*(.*)"
               }
             }
           },
@@ -53,7 +53,39 @@
                 "{regexp#regexp_ref}"
               ],
               "regexps": {
-                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+                "regexp_ref": "(.+)\\s*/\\s*(.*)"
+              }
+            }
+          },
+          {
+            "id": "my.simple.regexp.with.underscore",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp#regexp_ref}"
+              ],
+              "regexps": {
+                "regexp_ref": "[AB]_(.*)"
+              }
+            }
+          },
+          {
+            "id": "my.simple.regexp.with.number.of.elements",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp#regexp_ref}"
+              ],
+              "regexps": {
+                "regexp_ref": "[0-9]{10}[A-Z]{4}[0-9-]{6}"
               }
             }
           }

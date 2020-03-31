@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
 
 import java.util.Collection;
-import java.util.List;
 
 public class RngDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
@@ -111,7 +108,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
   }
 
   private static StringBuilder getDocumentationFromTag(XmlTag tag, String localName, String kind) {
-    if (tag.getNamespace().equals(ApplicationLoader.RNG_NAMESPACE)) {
+    if (tag.getNamespace().equals(RelaxNgMetaDataContributor.RNG_NAMESPACE)) {
       final StringBuilder sb = new StringBuilder();
       sb.append(kind).append(": <b>").append(localName).append("</b><br>");
       final XmlTag[] docTags = tag.findSubTags("documentation", COMPATIBILITY_ANNOTATIONS_1_0);
@@ -127,29 +124,6 @@ public class RngDocumentationProvider implements DocumentationProvider {
       }
       return sb;
     }
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    return null;
-  }
-
-  @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

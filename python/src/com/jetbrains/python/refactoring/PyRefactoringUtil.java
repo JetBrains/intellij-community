@@ -1,25 +1,37 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
+import com.google.common.collect.Collections2;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.function.BiPredicate;
 
 public class PyRefactoringUtil {
   private PyRefactoringUtil() {
@@ -118,51 +130,6 @@ public class PyRefactoringUtil {
     return null;
   }
 
-  @NotNull
-  public static Collection<String> collectUsedNames(@Nullable final PsiElement scope) {
-    if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
-      return Collections.emptyList();
-    }
-    final Set<String> variables = new HashSet<String>() {
-      @Override
-      public boolean add(String s) {
-        return s != null && super.add(s);
-      }
-    };
-    scope.acceptChildren(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyTargetExpression(@NotNull final PyTargetExpression node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyNamedParameter(@NotNull final PyNamedParameter node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
-        if (!node.isQualified()) {
-          variables.add(node.getReferencedName());
-        }
-        else {
-          super.visitPyReferenceExpression(node);
-        }
-      }
-
-      @Override
-      public void visitPyFunction(@NotNull final PyFunction node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyClass(@NotNull final PyClass node) {
-        variables.add(node.getName());
-      }
-    });
-    return variables;
-  }
-
   @Nullable
   public static PsiElement findExpressionInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
     PsiElement element1 = file.findElementAt(startOffset);
@@ -181,8 +148,7 @@ public class PyRefactoringUtil {
     return getSelectedExpression(file.getProject(), file, element1, element2);
   }
 
-  @NotNull
-  public static PsiElement[] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement @NotNull [] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
     ArrayList<PsiElement> array = new ArrayList<>();
 
     PsiElement element1 = file.findElementAt(startOffset);
@@ -297,25 +263,6 @@ public class PyRefactoringUtil {
     return Comparing.strEqual(firstName, secondName) && firstParams.length == secondParams.length;
   }
 
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
-    final List<UsageInfo> usages = new ArrayList<>();
-    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
-    assert handler != null;
-    final List<PsiElement> elementsToProcess = new ArrayList<>();
-    Collections.addAll(elementsToProcess, handler.getPrimaryElements());
-    Collections.addAll(elementsToProcess, handler.getSecondaryElements());
-    for (PsiElement e : elementsToProcess) {
-      handler.processElementUsages(e, usageInfo -> {
-        if (!usageInfo.isNonCodeUsage) {
-          usages.add(usageInfo);
-        }
-        return true;
-      }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
-    }
-    return usages;
-  }
-
   /**
    * Selects the shortest unique name inside the scope of scopeAnchor generated using {@link NameSuggesterUtil#generateNamesByType(String)}.
    * If none of those names is suitable, unique names is made by appending number suffix.
@@ -326,7 +273,7 @@ public class PyRefactoringUtil {
    */
   @NotNull
   public static String selectUniqueNameFromType(@NotNull String typeName, @NotNull PsiElement scopeAnchor) {
-    return selectUniqueName(typeName, true, scopeAnchor);
+    return selectUniqueName(typeName, true, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
   /**
@@ -339,11 +286,16 @@ public class PyRefactoringUtil {
    */
   @NotNull
   public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor) {
-    return selectUniqueName(templateName, false, scopeAnchor);
+    return selectUniqueName(templateName, false, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
   @NotNull
-  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor) {
+  public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+    return selectUniqueName(templateName, false, scopeAnchor, isValid);
+  }
+
+  @NotNull
+  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
     final Collection<String> suggestions;
     if (templateIsType) {
       suggestions = NameSuggesterUtil.generateNamesByType(templateName);
@@ -352,14 +304,14 @@ public class PyRefactoringUtil {
       suggestions = NameSuggesterUtil.generateNames(templateName);
     }
     for (String name : suggestions) {
-      if (isValidNewName(name, scopeAnchor)) {
+      if (isValid.test(name, scopeAnchor)) {
         return name;
       }
     }
 
     final String shortestName = ContainerUtil.getFirstItem(suggestions);
     //noinspection ConstantConditions
-    return appendNumberUntilValid(shortestName, scopeAnchor);
+    return appendNumberUntilValid(shortestName, scopeAnchor, isValid);
   }
 
   /**
@@ -367,13 +319,14 @@ public class PyRefactoringUtil {
    *
    * @param name        initial name
    * @param scopeAnchor PSI element used to determine correct scope
+   * @param predicate used to test if suggested name is valid
    * @return unique name in the scope probably with number suffix appended
    */
   @NotNull
-  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
     int counter = 1;
     String candidate = name;
-    while (!isValidNewName(candidate, scopeAnchor)) {
+    while (!predicate.test(candidate, scopeAnchor)) {
       candidate = name + counter;
       counter++;
     }
@@ -382,5 +335,90 @@ public class PyRefactoringUtil {
 
   public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
+  }
+
+  @NotNull
+  public static PyFile getOrCreateFile(String path, Project project) {
+    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    final PsiFile psi;
+    if (vfile == null) {
+      final File file = new File(path);
+      try {
+        final VirtualFile baseDir = project.getBaseDir();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+        final Properties properties = fileTemplateManager.getDefaultProperties();
+        properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
+        final String content = (template != null) ? template.getText(properties) : null;
+        psi = PyExtractSuperclassHelper.placeFile(project,
+                                                  StringUtil.notNullize(
+                                                    file.getParent(),
+                                                    baseDir != null ? baseDir
+                                                      .getPath() : "."
+                                                  ),
+                                                  file.getName(),
+                                                  content
+        );
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
+      }
+    }
+    else {
+      psi = PsiManager.getInstance(project).findFile(vfile);
+    }
+    if (!(psi instanceof PyFile)) {
+      throw new IncorrectOperationException(PyBundle.message(
+        "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
+    }
+    return (PyFile)psi;
+  }
+
+  /**
+   * Filters out {@link PyMemberInfo}
+   * that should not be displayed in this refactoring (like object)
+   *
+   * @param pyMemberInfos collection to sort
+   * @return sorted collection
+   */
+  @NotNull
+  public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
+    return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
+  }
+
+  /**
+   * Filters only PyClass object (new class)
+   */
+  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
+    private final boolean myAllowObjects;
+
+    /**
+     * @param allowObjects allows only objects if true. Allows all but objects otherwise.
+     */
+    public ObjectPredicate(final boolean allowObjects) {
+      myAllowObjects = allowObjects;
+    }
+
+    @Override
+    public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
+      return myAllowObjects == isObject(input);
+    }
+
+    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
+      final PyElement element = classMemberInfo.getMember();
+      return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
+    }
+  }
+
+
+  /**
+   * @deprecated TODO: remove in 2021.1
+   */
+  @NotNull
+  @Deprecated
+  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
+                                                     @NotNull PyStatementList statementList,
+                                                     boolean toTheBeginning) {
+    return PyPsiRefactoringUtil.addElementToStatementList(element, statementList, toTheBeginning);
   }
 }

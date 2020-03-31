@@ -1,14 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -21,36 +18,28 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-  private static final ThreadLocalCachedValue<MessageDigest> DIGEST_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
-    @NotNull
-    @Override
-    public MessageDigest create() {
-      return DigestUtil.md5();
-    }
-
-    @Override
-    protected void init(@NotNull MessageDigest value) {
-      value.reset();
-    }
-  };
-
-  public static MessageDigest getMessageDigest() {
-    return DIGEST_CACHE.getValue();
-  }
 
   /**
    * Creates a stable non-negated EKey for given PsiMethod and direction
    * Returns null if conversion is impossible (something is not resolvable).
    */
   @Nullable
-  public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction) {
+  public static EKey psiKey(@NotNull PsiMember psiMethod, @NotNull Direction direction) {
     PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass != null) {
       String className = descriptor(psiClass, 0, false);
-      String methodSig = methodSignature(psiMethod, psiClass);
-      if (className != null && methodSig != null) {
-        String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-        return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+      String name = psiMethod.getName();
+      String sig;
+      if (psiMethod instanceof PsiMethod) {
+        sig = methodSignature((PsiMethod)psiMethod, psiClass);
+        if (((PsiMethod)psiMethod).isConstructor()) {
+          name = "<init>";
+        }
+      } else if (psiMethod instanceof PsiField) {
+        sig = descriptor(((PsiField)psiMethod).getType());
+      } else return null;
+      if (className != null && sig != null && name != null) {
+        return new EKey(new Member(className, name, sig), direction, true, false);
       }
     }
     return null;

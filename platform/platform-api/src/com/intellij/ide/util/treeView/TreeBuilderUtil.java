@@ -28,7 +28,7 @@ import javax.swing.tree.TreePath;
 import java.util.List;
 
 public class TreeBuilderUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.TreeBuilderUtil");
+  private static final Logger LOG = Logger.getInstance(TreeBuilderUtil.class);
 
   public static void storePaths(@NotNull AbstractTreeBuilder treeBuilder, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
     if (!treeBuilder.wasRootNodeInitialized()) return;
@@ -78,7 +78,7 @@ public class TreeBuilderUtil {
       for (Object path : pathsToExpand) {
         tree.expandPath((TreePath)path);
       }
-      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
+      tree.addSelectionPaths(selectionPaths.toArray(TreeUtil.EMPTY_TREE_PATH));
     }
     else{
       for (Object element : pathsToExpand) {

@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     add(panel, BorderLayout.CENTER);
     final String label = getLabelText();
     if (label != null) {
-      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false));
+      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
     }
   }
 
@@ -185,7 +186,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         doEdit();
         return true;
       }

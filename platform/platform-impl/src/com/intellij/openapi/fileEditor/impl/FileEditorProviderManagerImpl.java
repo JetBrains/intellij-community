@@ -1,16 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,11 +36,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
   @Override
-  @NotNull
-  public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorProvider @NotNull [] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
-    boolean doNotShowTextEditor = false;
+    boolean hideDefaultEditor = false;
     for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (ReadAction.compute(() -> {
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
@@ -48,13 +48,17 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
         return provider.accept(project, file);
       })) {
         sharedProviders.add(provider);
-        doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+        hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+        if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
+          String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
+          Logger.getInstance(FileEditorProviderManagerImpl.class).error(PluginException.createByClass(message, null, provider.getClass()));
+        }
       }
     }
 
     // Throw out default editors provider if necessary
-    if (doNotShowTextEditor) {
-      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof TextEditorProvider));
+    if (hideDefaultEditor) {
+      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof DefaultPlatformFileEditorProvider));
     }
 
     // Sort editors according policies
@@ -88,11 +92,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
   void providerSelected(EditorComposite composite) {
-    if (!(composite instanceof EditorWithProviderComposite)) return;
-    FileEditorProvider[] providers = ((EditorWithProviderComposite)composite).getProviders();
+    FileEditorProvider[] providers = composite.getProviders();
     if (providers.length < 2) return;
     mySelectedProviders.put(computeKey(providers),
-                            composite.getSelectedEditorWithProvider().getSecond().getEditorTypeId());
+                            composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
   private static String computeKey(FileEditorProvider[] providers) {

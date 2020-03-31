@@ -26,9 +26,8 @@ public class MagicConstantQuickFixTest extends LightQuickFixParameterizedTestCas
     return "/codeInsight/daemonCodeAnalyzer/quickFix/magicConstant";
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new MagicConstantInspection()};
   }
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -22,6 +22,8 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -29,13 +31,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ClassRenderer extends NodeRendererImpl{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
+  private static final Logger LOG = Logger.getInstance(ClassRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
@@ -119,7 +118,7 @@ public class ClassRenderer extends NodeRendererImpl{
       return "null";
     }
     else {
-      return DebuggerBundle.message("label.undefined");
+      return JavaDebuggerBundle.message("label.undefined");
     }
   }
 
@@ -138,22 +137,40 @@ public class ClassRenderer extends NodeRendererImpl{
       List<Field> fields = refType.allFields();
       if (!fields.isEmpty()) {
         Set<String> names = new HashSet<>();
-        for (Field field : fields) {
-          if (shouldDisplay(evaluationContext, objRef, field)) {
-            FieldDescriptor fieldDescriptor = createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
-            String name = fieldDescriptor.getName();
-            if (names.contains(name)) {
-              fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
+        List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
+        int loaded = 0, total = fieldsToShow.size();
+        Map<Field, Value> cachedValues = null;
+        for (int i = 0; i < total; i++) {
+          Field field = fieldsToShow.get(i);
+          // load values in chunks
+          if (i > loaded || cachedValues == null) {
+            int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
+            try {
+              cachedValues = objRef.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
+            } catch (Exception e) {
+              LOG.error(e);
+              cachedValues = null;
             }
-            else {
-              names.add(name);
-            }
-            children.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
+            loaded += chunkSize;
           }
+
+          FieldDescriptorImpl fieldDescriptor =
+            (FieldDescriptorImpl)createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);
+          if (cachedValues != null) {
+            fieldDescriptor.setValue(cachedValues.get(field));
+          }
+          String name = fieldDescriptor.getName();
+          if (names.contains(name)) {
+            fieldDescriptor.putUserData(FieldDescriptor.SHOW_DECLARING_TYPE, Boolean.TRUE);
+          }
+          else {
+            names.add(name);
+          }
+          children.add(nodeManager.createNode(fieldDescriptor, evaluationContext));
         }
 
         if (children.isEmpty()) {
-          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.class.no.fields.to.display")));
+          children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
         }
         else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
           children.sort(NodeManagerImpl.getNodeComparator());
@@ -230,7 +247,7 @@ public class ClassRenderer extends NodeRendererImpl{
       );
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
     }
   }
 

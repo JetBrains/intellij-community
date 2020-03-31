@@ -64,7 +64,7 @@ public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHa
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     throw new UnsupportedOperationException();
   }
 

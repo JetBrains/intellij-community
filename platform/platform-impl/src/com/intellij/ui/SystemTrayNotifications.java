@@ -1,11 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 /**
  * @author Alexander Lobas
@@ -16,9 +23,15 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
   @Nullable
   static synchronized SystemTrayNotifications getWin10Instance() throws AWTException {
     if (ourWin10Instance == null && SystemTray.isSupported()) {
-      ourWin10Instance = new SystemTrayNotifications(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), TrayIcon.MessageType.INFO);
+      ourWin10Instance = new SystemTrayNotifications(createImage(), TrayIcon.MessageType.INFO);
     }
     return ourWin10Instance;
+  }
+
+  @NotNull
+  private static Image createImage() {
+    Icon icon = AppUIUtil.loadSmallApplicationIcon(ScaleContext.create());
+    return ImageUtil.toBufferedImage(IconUtil.toImage(icon));
   }
 
   private final TrayIcon myTrayIcon;
@@ -26,7 +39,18 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
 
   private SystemTrayNotifications(@NotNull Image image, @NotNull TrayIcon.MessageType type) throws AWTException {
     myType = type;
-    SystemTray.getSystemTray().add(myTrayIcon = new TrayIcon(image));
+
+    String tooltip = ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
+    myTrayIcon = new TrayIcon(image, tooltip);
+    myTrayIcon.setImageAutoSize(true);
+    SystemTray.getSystemTray().add(myTrayIcon);
+
+    myTrayIcon.addActionListener(e -> {
+      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+      if (frame instanceof Window) {
+        UIUtil.toFront((Window)frame);
+      }
+    });
   }
 
   @Override

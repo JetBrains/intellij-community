@@ -12,7 +12,6 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +34,6 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     else {
       return new MakeConstructorPublicFix();
     }
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("externalizable.without.public.no.arg.constructor.display.name");
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
@@ -22,6 +8,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -68,11 +56,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-/**
- * @author nik
- */
 public class ManifestFileUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl");
+  private static final Logger LOG = Logger.getInstance(ManifestFileUtil.class);
   public static final String MANIFEST_PATH = JarFile.MANIFEST_NAME;
   public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);
   public static final String MANIFEST_DIR_NAME = PathUtil.getParentPath(MANIFEST_PATH);
@@ -143,7 +128,7 @@ public class ManifestFileUtil {
 
     if (file != null) {
       for (VirtualFile contentRoot : contentRoots) {
-        if (VfsUtil.isAncestor(contentRoot, file, false)) {
+        if (VfsUtilCore.isAncestor(contentRoot, file, false)) {
           return contentRoot;
         }
       }
@@ -284,7 +269,7 @@ public class ManifestFileUtil {
 
   public static FileChooserDescriptor createDescriptorForManifestDirectory() {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
+    descriptor.setTitle(JavaCompilerBundle.message("select.directory.for.meta.inf.manifest.mf.file"));
     return descriptor;
   }
 

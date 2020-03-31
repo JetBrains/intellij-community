@@ -31,8 +31,8 @@ Other implementations:
 - pyrasite.com:
     GPL
     Windows/linux (in Linux it also uses gdb to connect -- although specifics are different as we use a dll to execute
-    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with 
-    Python 3 if threading is disabled. 
+    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with
+    Python 3 if threading is disabled.
 
 - https://github.com/google/pyringe:
     Apache v2.
@@ -112,77 +112,77 @@ class GenShellCodeHelper(object):
         self._code = []
         if not is_64:
             self._translations = {
-                'push esi': compat.b('\x56'),
-                'push eax': compat.b('\x50'),
-                'push ebp': compat.b('\x55'),
-                'push ebx': compat.b('\x53'),
+                'push esi': b'\x56',
+                'push eax': b'\x50',
+                'push ebp': b'\x55',
+                'push ebx': b'\x53',
 
-                'pop esi': compat.b('\x5E'),
-                'pop eax': compat.b('\x58'),
-                'pop ebp': compat.b('\x5D'),
-                'pop ebx': compat.b('\x5B'),
+                'pop esi': b'\x5E',
+                'pop eax': b'\x58',
+                'pop ebp': b'\x5D',
+                'pop ebx': b'\x5B',
 
-                'mov esi': compat.b('\xBE'),
-                'mov eax': compat.b('\xB8'),
-                'mov ebp': compat.b('\xBD'),
-                'mov ebx': compat.b('\xBB'),
+                'mov esi': b'\xBE',
+                'mov eax': b'\xB8',
+                'mov ebp': b'\xBD',
+                'mov ebx': b'\xBB',
 
-                'call ebp': compat.b('\xFF\xD5'),
-                'call eax': compat.b('\xFF\xD0'),
-                'call ebx': compat.b('\xFF\xD3'),
+                'call ebp': b'\xFF\xD5',
+                'call eax': b'\xFF\xD0',
+                'call ebx': b'\xFF\xD3',
 
-                'mov ebx,eax': compat.b('\x89\xC3'),
-                'mov eax,ebx': compat.b('\x89\xD8'),
-                'mov ebp,esp': compat.b('\x89\xE5'),
-                'mov esp,ebp': compat.b('\x89\xEC'),
-                'push dword': compat.b('\x68'),
+                'mov ebx,eax': b'\x89\xC3',
+                'mov eax,ebx': b'\x89\xD8',
+                'mov ebp,esp': b'\x89\xE5',
+                'mov esp,ebp': b'\x89\xEC',
+                'push dword': b'\x68',
 
-                'mov ebp,eax': compat.b('\x89\xC5'),
-                'mov eax,ebp': compat.b('\x89\xE8'),
+                'mov ebp,eax': b'\x89\xC5',
+                'mov eax,ebp': b'\x89\xE8',
 
-                'ret': compat.b('\xc3'),
+                'ret': b'\xc3',
             }
         else:
             # Translate 64 bits
             self._translations = {
-                'push rsi': compat.b('\x56'),
-                'push rax': compat.b('\x50'),
-                'push rbp': compat.b('\x55'),
-                'push rbx': compat.b('\x53'),
-                'push rsp': compat.b('\x54'),
-                'push rdi': compat.b('\x57'),
+                'push rsi': b'\x56',
+                'push rax': b'\x50',
+                'push rbp': b'\x55',
+                'push rbx': b'\x53',
+                'push rsp': b'\x54',
+                'push rdi': b'\x57',
 
-                'pop rsi': compat.b('\x5E'),
-                'pop rax': compat.b('\x58'),
-                'pop rbp': compat.b('\x5D'),
-                'pop rbx': compat.b('\x5B'),
-                'pop rsp': compat.b('\x5C'),
-                'pop rdi': compat.b('\x5F'),
+                'pop rsi': b'\x5E',
+                'pop rax': b'\x58',
+                'pop rbp': b'\x5D',
+                'pop rbx': b'\x5B',
+                'pop rsp': b'\x5C',
+                'pop rdi': b'\x5F',
 
-                'mov rsi': compat.b('\x48\xBE'),
-                'mov rax': compat.b('\x48\xB8'),
-                'mov rbp': compat.b('\x48\xBD'),
-                'mov rbx': compat.b('\x48\xBB'),
-                'mov rdi': compat.b('\x48\xBF'),
-                'mov rcx': compat.b('\x48\xB9'),
-                'mov rdx': compat.b('\x48\xBA'),
+                'mov rsi': b'\x48\xBE',
+                'mov rax': b'\x48\xB8',
+                'mov rbp': b'\x48\xBD',
+                'mov rbx': b'\x48\xBB',
+                'mov rdi': b'\x48\xBF',
+                'mov rcx': b'\x48\xB9',
+                'mov rdx': b'\x48\xBA',
 
-                'call rbp': compat.b('\xFF\xD5'),
-                'call rax': compat.b('\xFF\xD0'),
-                'call rbx': compat.b('\xFF\xD3'),
+                'call rbp': b'\xFF\xD5',
+                'call rax': b'\xFF\xD0',
+                'call rbx': b'\xFF\xD3',
 
-                'mov rbx,rax': compat.b('\x48\x89\xC3'),
-                'mov rax,rbx': compat.b('\x48\x89\xD8'),
-                'mov rbp,rsp': compat.b('\x48\x89\xE5'),
-                'mov rsp,rbp': compat.b('\x48\x89\xEC'),
-                'mov rcx,rbp': compat.b('\x48\x89\xE9'),
+                'mov rbx,rax': b'\x48\x89\xC3',
+                'mov rax,rbx': b'\x48\x89\xD8',
+                'mov rbp,rsp': b'\x48\x89\xE5',
+                'mov rsp,rbp': b'\x48\x89\xEC',
+                'mov rcx,rbp': b'\x48\x89\xE9',
 
-                'mov rbp,rax': compat.b('\x48\x89\xC5'),
-                'mov rax,rbp': compat.b('\x48\x89\xE8'),
+                'mov rbp,rax': b'\x48\x89\xC5',
+                'mov rax,rbp': b'\x48\x89\xE8',
 
-                'mov rdi,rbp': compat.b('\x48\x89\xEF'),
+                'mov rdi,rbp': b'\x48\x89\xEF',
 
-                'ret': compat.b('\xc3'),
+                'ret': b'\xc3',
             }
 
     def push_addr(self, addr):
@@ -217,8 +217,7 @@ class GenShellCodeHelper(object):
         self._code.append(self.translate('ret'))
 
     def get_code(self):
-        from winappdbg import compat
-        return compat.b('').join(self._code)
+        return b''.join(self._code)
 
     def translate(self, code):
         return self._translations[code]
@@ -259,34 +258,40 @@ class GenShellCodeHelper(object):
         code = ''.join(lines)  # Remove new lines
         return code.decode('hex')
 
+
 def resolve_label(process, label):
-    for i in range(3):
+    max_attempts = 10
+    for i in range(max_attempts):
         try:
             address = process.resolve_label(label)
-            assert address
+            if not address:
+                raise AssertionError('%s not resolved.' % (label,))
             return address
         except:
             try:
                 process.scan_modules()
             except:
                 pass
-            if i == 2:
+            if i == max_attempts - 1:
                 raise
-            time.sleep(2)
+            # At most 4 seconds to resolve it.
+            time.sleep(4. / max_attempts)
+
 
 def is_python_64bit():
     return (struct.calcsize('P') == 8)
+
 
 def is_mac():
     import platform
     return platform.system() == 'Darwin'
 
+
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    from winappdbg import compat
     from winappdbg.process import Process
-    if not isinstance(python_code, compat.bytes):
-        python_code = compat.b(python_code)
+    if not isinstance(python_code, bytes):
+        python_code = python_code.encode('utf-8')
 
     process = Process(pid)
     bits = process.get_bits()
@@ -298,8 +303,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
         "Current Python 64 bits: %s" % (is_64, is_python_64bit()))
 
     debug('Connecting to %s bits target' % (bits,))
-    assert resolve_label(process, compat.b('PyGILState_Ensure'))
-
+    assert resolve_label(process, b'PyGILState_Ensure')
 
     filedir = os.path.dirname(__file__)
     if is_64:
@@ -314,30 +318,58 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
     debug('Dll injected')
 
     process.scan_modules()
-    attach_func = resolve_label(process, compat.b('AttachAndRunPythonCode'))
+    attach_func = resolve_label(process, b'AttachAndRunPythonCode')
     assert attach_func
 
     debug('Allocating code in target process')
+    assert isinstance(python_code, bytes)
     code_address = process.malloc(len(python_code))
     assert code_address
     debug('Writing code in target process')
     process.write(code_address, python_code)
 
     debug('Allocating return value memory in target process')
-    return_code_address = process.malloc(ctypes.sizeof(ctypes.c_int))
-    assert return_code_address
+    attach_info_address = process.malloc(ctypes.sizeof(ctypes.c_int))
+    assert attach_info_address
 
     CONNECT_DEBUGGER = 2
 
-    startup_info = 0
+    attach_info = 0
     if show_debug_info:
         SHOW_DEBUG_INFO = 1
-        startup_info |= SHOW_DEBUG_INFO # Uncomment to show debug info
+        attach_info |= SHOW_DEBUG_INFO  # Uncomment to show debug info
 
     if connect_debugger_tracing:
-        startup_info |= CONNECT_DEBUGGER
+        attach_info |= CONNECT_DEBUGGER
 
-    process.write_int(return_code_address, startup_info)
+    # Note: previously the attach_info address was treated as read/write to have the return
+    # value, but it seems that sometimes when the program wrote back the memory became
+    # unreadable with the stack trace below when trying to read, so, we just write and
+    # no longer inspect the return value.
+    # i.e.:
+    # Traceback (most recent call last):
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\attach_pydevd.py", line 72, in <module>
+    #     main(process_command_line(sys.argv[1:]))
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\attach_pydevd.py", line 68, in main
+    #     setup['pid'], python_code, connect_debugger_tracing=True, show_debug_info=show_debug_info_on_target_process)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\add_code_to_python_process.py", line 392, in run_python_code_windows
+    #     return_code = process.read_int(return_code_address)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\process.py", line 1673, in read_int
+    #     return self.__read_c_type(lpBaseAddress, b'@l', ctypes.c_int)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\process.py", line 1568, in __read_c_type
+    #     packed = self.read(address, size)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\process.py", line 1598, in read
+    #     if not self.is_buffer(lpBaseAddress, nSize):
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\process.py", line 2843, in is_buffer
+    #     mbi = self.mquery(address)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\process.py", line 2533, in mquery
+    #     return win32.VirtualQueryEx(hProcess, lpAddress)
+    #   File "X:\pydev\plugins\org.python.pydev.core\pysrc\pydevd_attach_to_process\winappdbg\win32\kernel32.py", line 3742, in VirtualQueryEx
+    #     raise ctypes.WinError()
+    # PermissionError: [WinError 5] Access is denied.
+    # Process finished with exitValue: 1
+
+    process.write_int(attach_info_address, attach_info)
 
     helper = GenShellCodeHelper(is_64)
     if is_64:
@@ -357,7 +389,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
 
                         with helper.push('rdi'):  # Note: pop is automatic.
                             helper.mov_to_register_addr('rcx', helper.pack_address(code_address))
-                            helper.mov_to_register_addr('rdx', helper.pack_address(return_code_address))
+                            helper.mov_to_register_addr('rdx', helper.pack_address(attach_info_address))
                             helper.mov_to_register_addr('rbx', helper.pack_address(attach_func))
                             helper.call('rbx')
 
@@ -369,7 +401,7 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
                     with helper.preserve_stack():
                         # Put our code as a parameter in the stack (on x86, we push parameters to
                         # the stack)
-                        helper.push_addr(helper.pack_address(return_code_address))
+                        helper.push_addr(helper.pack_address(attach_info_address))
                         helper.push_addr(helper.pack_address(code_address))
                         helper.mov_to_register_addr('ebx', helper.pack_address(attach_func))
                         helper.call('ebx')
@@ -377,7 +409,6 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
     helper.ret()
 
     code = helper.get_code()
-
 
     # Uncomment to see the disassembled version of what we just did...
 #     with open('f.asm', 'wb') as stream:
@@ -398,16 +429,16 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
     debug('Waiting for code to complete')
     thread.wait(timeout)
 
-    return_code = process.read_int(return_code_address)
-    if return_code == 0:
-        print('Attach finished successfully.')
-    else:
-        print('Error when injecting code in target process. Error code: %s (on windows)' % (return_code,))
+    # return_code = process.read_int(attach_info_address)
+    # if return_code == 0:
+    #     print('Attach finished successfully.')
+    # else:
+    #     print('Error when injecting code in target process. Error code: %s (on windows)' % (return_code,))
 
     process.free(thread.pInjectedMemory)
     process.free(code_address)
-    process.free(return_code_address)
-    return return_code
+    process.free(attach_info_address)
+    return 0
 
 
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
@@ -425,16 +456,14 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
         suffix = 'x86'
         arch = 'i386'
 
-    debug('Attaching with arch: %s'% (arch,))
+    debug('Attaching with arch: %s' % (arch,))
 
     target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
     target_dll = os.path.abspath(os.path.normpath(target_dll))
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
-    gdb_threads_settrace_file = find_helper_script(filedir, 'gdb_threads_settrace.py')
-
-    # Note: we currently don't support debug builds 
+    # Note: we currently don't support debug builds
     is_debug = 0
     # Note that the space in the beginning of each line in the multi-line is important!
     cmd = [
@@ -459,13 +488,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
             is_debug, python_code, show_debug_info)
     ])
 
-
-    if connect_debugger_tracing:
-        cmd.extend([
-            "--command='%s'" % (gdb_threads_settrace_file,),
-        ])
-
-    #print ' '.join(cmd)
+    # print ' '.join(cmd)
 
     env = os.environ.copy()
     # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
@@ -488,12 +511,12 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
 
 def find_helper_script(filedir, script_name):
-    lldb_threads_settrace_file = os.path.join(filedir, 'linux', script_name)
-    lldb_threads_settrace_file = os.path.normpath(lldb_threads_settrace_file)
-    if not os.path.exists(lldb_threads_settrace_file):
-        raise RuntimeError('Could not find file to settrace: %s' % lldb_threads_settrace_file)
+    target_filename = os.path.join(filedir, 'linux_and_mac', script_name)
+    target_filename = os.path.normpath(target_filename)
+    if not os.path.exists(target_filename):
+        raise RuntimeError('Could not find helper script: %s' % target_filename)
 
-    return lldb_threads_settrace_file
+    return target_filename
 
 
 def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
@@ -518,7 +541,6 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
-    lldb_threads_settrace_file = find_helper_script(filedir, 'lldb_threads_settrace.py')
     lldb_prepare_file = find_helper_script(filedir, 'lldb_prepare.py')
     # Note: we currently don't support debug builds
 
@@ -536,27 +558,19 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         #         '--batch-silent',
     ]
 
-
     cmd.extend([
-        "-o 'process attach --pid %d'"%pid,
+        "-o 'process attach --pid %d'" % pid,
         "-o 'command script import \"%s\"'" % (lldb_prepare_file,),
         "-o 'load_lib_and_attach \"%s\" %s \"%s\" %s'" % (target_dll,
             is_debug, python_code, show_debug_info),
     ])
-
-
-    if connect_debugger_tracing:
-        cmd.extend([
-            # "-o 'expr (int) SetSysTraceFunc(0, 0);'",
-            "-o 'command script import \"%s\"'" % (lldb_threads_settrace_file,),
-            ])
 
     cmd.extend([
         "-o 'process detach'",
         "-o 'script import os; os._exit(1)'",
     ])
 
-    #print ' '.join(cmd)
+    # print ' '.join(cmd)
 
     env = os.environ.copy()
     # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
@@ -585,6 +599,7 @@ elif is_mac():
 else:
     run_python_code = run_python_code_linux
 
+
 def test():
     print('Running with: %s' % (sys.executable,))
     code = '''
@@ -611,6 +626,7 @@ if __name__ == '__main__':
     finally:
         p.kill()
 
+
 def main(args):
     # Otherwise, assume the first parameter is the pid and anything else is code to be executed
     # in the target process.
@@ -621,6 +637,7 @@ def main(args):
     # Note: on Linux the python code may not have a single quote char: '
     run_python_code(pid, python_code)
 
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     if not args:
@@ -630,5 +647,4 @@ if __name__ == '__main__':
             test()
         else:
             main(args)
-
 

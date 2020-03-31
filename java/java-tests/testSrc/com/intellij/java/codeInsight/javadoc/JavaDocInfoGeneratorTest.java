@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
+public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
   private int myJdkVersion = 7;
@@ -184,6 +184,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private static Sdk removeAnnotationsJar(Sdk sdk) {
     SdkModificator modificator = sdk.getSdkModificator();
     VirtualFile annotationsJar = ContainerUtil.find(modificator.getRoots(OrderRootType.CLASSES), r -> r.getName().contains("annotations"));
+    modificator.setName(modificator.getName() + "-" + annotationsJar.getPath());
     modificator.removeRoot(annotationsJar, OrderRootType.CLASSES);
     modificator.commitChanges();
     return sdk;

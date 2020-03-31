@@ -2,6 +2,7 @@
 package git4idea.push
 
 import com.intellij.openapi.components.BaseState
+import git4idea.i18n.GitBundle
 
 class GitPushTagMode : BaseState {
   var title by string()
@@ -19,10 +20,17 @@ class GitPushTagMode : BaseState {
   companion object {
     @JvmField
     val ALL = GitPushTagMode("All", "--tags")
+
     @JvmField
     val FOLLOW = GitPushTagMode("Current Branch", "--follow-tags")
 
     @JvmStatic
     val values = arrayOf(ALL, FOLLOW)
   }
+}
+
+fun GitPushTagMode.localizedTitle(): String? = when {
+  this == GitPushTagMode.ALL -> GitBundle.message("push.dialog.push.tags.combo.all")
+  this == GitPushTagMode.FOLLOW -> GitBundle.message("push.dialog.push.tags.combo.current.branch")
+  else -> this.title
 }

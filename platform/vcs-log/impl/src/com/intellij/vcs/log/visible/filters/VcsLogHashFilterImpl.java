@@ -4,13 +4,11 @@ package com.intellij.vcs.log.visible.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogHashFilter;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Objects;
 
-@ApiStatus.Internal
 class VcsLogHashFilterImpl implements VcsLogHashFilter {
   @NotNull private final Collection<String> myHashes;
 
@@ -26,13 +24,13 @@ class VcsLogHashFilterImpl implements VcsLogHashFilter {
 
   @NotNull
   @Override
-  public String getPresentation() {
+  public String getDisplayText() {
     return StringUtil.join(getHashes(), it -> VcsLogUtil.getShortHash(it), ", ");
   }
 
   @Override
   public String toString() {
-    return "hashes:" + myHashes;
+    return "hashes:" + myHashes; // NON-NLS
   }
 
   @Override

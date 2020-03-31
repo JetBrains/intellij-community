@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -14,12 +14,11 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,19 +34,19 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
-import static com.intellij.util.containers.UtilKt.stream;
+import static com.intellij.util.containers.UtilKt.*;
+import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
-  @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
@@ -55,19 +54,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     super(project, showCheckboxes, true);
 
     setDragEnabled(true);
-    if (showCheckboxes) {
-      setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
-    }
-  }
-
-  @Override
-  protected void installEnterKeyHandler() {
-    EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  @Override
-  protected void installDoubleClickHandler() {
-    EditSourceOnDoubleClickHandler.install(this);
   }
 
   @NotNull
@@ -82,6 +68,15 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @Override
+  protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    Object subtreeRootObject = subtreeRootObject(node);
+
+    if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    return false;
+  }
+
+  @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
   }
@@ -89,11 +84,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    ChangesBrowserNode oldRoot = getRoot();
+    ChangesBrowserNode<?> oldRoot = getRoot();
     setModel(newModel);
-    ChangesBrowserNode newRoot = getRoot();
+    ChangesBrowserNode<?> newRoot = getRoot();
     state.applyTo(this, newRoot);
-    expandDefaultChangeList(oldRoot, newRoot);
+
+    initTreeStateIfNeeded(oldRoot, newRoot);
   }
 
   @Override
@@ -101,25 +97,30 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     // currently not used in ChangesListView code flow
   }
 
-  private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
-    if (oldRoot.getFileCount() != 0) return;
-    if (TreeUtil.collectExpandedPaths(this).size() != 0) return;
+  private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {
+    ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
+    if (defaultListNode == null) return;
 
+    if (getSelectionCount() == 0) {
+      TreeUtil.selectNode(this, defaultListNode);
+    }
+
+    if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 0) {
+      expandSafe(defaultListNode);
+    }
+  }
+
+  @Nullable
+  private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
     //noinspection unchecked
-    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
-    ChangesBrowserNode defaultListNode = ContainerUtil.find(nodes, node -> {
+    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.<ChangesBrowserNode<?>>iterate(root.children());
+    return ContainerUtil.find(nodes, node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
       }
       return false;
     });
-
-    if (defaultListNode == null) return;
-    if (defaultListNode.getChildCount() == 0) return;
-    if (defaultListNode.getChildCount() > 10000) return; // expanding lots of nodes is a slow operation (and result is not very useful)
-
-    expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
   @Nullable
@@ -143,23 +144,29 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(dataId)) {
       return getSelectedFiles();
     }
+    if (VcsDataKeys.FILE_PATH_STREAM.is(dataId)) {
+      return getSelectedFilePaths();
+    }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
       return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
                                                                        .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
              ? new VirtualFileDeleteProvider()
              : null;
     }
-    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
+    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
-    if (IGNORED_FILES_DATA_KEY.is(dataId)) {
+    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
+      return getExactlySelectedVirtualFiles(this);
+    }
+    if (IGNORED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedIgnoredFiles();
     }
     if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
@@ -187,23 +194,28 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  public Stream<VirtualFile> getUnversionedFiles() {
+  public Stream<FilePath> getUnversionedFiles() {
     //noinspection unchecked
-    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    Enumeration<ChangesBrowserNode<?>> nodes = getRoot().children();
     ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
                                                                          ChangesBrowserUnversionedFilesNode.class);
     if (node == null) return Stream.empty();
-    return node.getFilesUnderStream();
+    return node.getFilePathsUnderStream();
   }
 
   @NotNull
-  public Stream<VirtualFile> getSelectedUnversionedFiles() {
-    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
+  static Stream<FilePath> getSelectedUnversionedFiles(@NotNull JTree tree) {
+    return getSelectedFilePaths(tree, UNVERSIONED_FILES_TAG);
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedIgnoredFiles() {
-    return getSelectedVirtualFiles(IGNORED_FILES_TAG);
+  public Stream<FilePath> getSelectedUnversionedFiles() {
+    return getSelectedUnversionedFiles(this);
+  }
+
+  @NotNull
+  private Stream<FilePath> getSelectedIgnoredFiles() {
+    return getSelectedFilePaths(IGNORED_FILES_TAG);
   }
 
   @NotNull
@@ -213,19 +225,42 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    return getSelectionNodesStream(tag)
+    return getSelectionNodesStream(this, tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
       .distinct();
   }
 
   @NotNull
-  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream() {
-    return getSelectionNodesStream(null);
+  protected Stream<FilePath> getSelectedFilePaths(@Nullable Object tag) {
+    return getSelectedFilePaths(this, tag);
   }
 
   @NotNull
-  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@Nullable Object tag) {
-    return stream(getSelectionPaths())
+  private static Stream<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
+    return getSelectionNodesStream(tree, tag)
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
+      .distinct();
+  }
+
+  @NotNull
+  static Stream<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
+    VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
+
+    return exactlySelected.rawUserObjectsStream().map(object -> {
+      if (object instanceof VirtualFile) return (VirtualFile)object;
+      if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
+      return null;
+    }).filter(Objects::nonNull);
+  }
+
+  @NotNull
+  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream() {
+    return getSelectionNodesStream(this, null);
+  }
+
+  @NotNull
+  private static Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@NotNull JTree tree, @Nullable Object tag) {
+    return stream(tree.getSelectionPaths())
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node));
@@ -237,7 +272,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+  static Stream<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
     return stream(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
@@ -246,18 +281,28 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       .distinct();
   }
 
+  @NotNull
+  static Stream<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
+    return stream(paths)
+      .filter(path -> isUnderTag(path, tag))
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
+      .distinct();
+  }
+
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
     boolean result = true;
 
     if (tag != null) {
-      result = path.getPathCount() > 1 && ((ChangesBrowserNode)path.getPathComponent(1)).getUserObject() == tag;
+      result = path.getPathCount() > 1 && ((ChangesBrowserNode<?>)path.getPathComponent(1)).getUserObject() == tag;
     }
 
     return result;
   }
 
   @NotNull
-  static Stream<Change> getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
+  static Stream<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
     Stream<Change> changes = stream(paths)
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
@@ -283,7 +328,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodesStream(LOCALLY_DELETED_NODE_TAG)
+    return getSelectionNodesStream(this, LOCALLY_DELETED_NODE_TAG)
       .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
       .distinct();
   }
@@ -294,18 +339,29 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
+  private Stream<FilePath> getSelectedFilePaths() {
+    return concat(
+      getSelectedChanges().map(ChangesUtil::getFilePath),
+      getSelectedVirtualFiles(null).map(VcsUtil::getFilePath),
+      getSelectedFilePaths(null)
+    ).distinct();
+  }
+
+  @NotNull
   private Stream<VirtualFile> getSelectedFiles() {
-    return Stream.concat(
+    return concat(
       getAfterRevisionsFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      getSelectedVirtualFiles(null),
+      getFilesFromPaths(getSelectedFilePaths(null))
     ).distinct();
   }
 
   @NotNull
   private Stream<VirtualFile> getNavigatableFiles() {
-    return Stream.concat(
+    return concat(
       getFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      getSelectedVirtualFiles(null),
+      getFilesFromPaths(getSelectedFilePaths(null))
     ).distinct();
   }
 
@@ -391,6 +447,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
     if (userObject instanceof ChangeListChange) {
       return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
     }
@@ -403,8 +462,18 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }
 
+  /**
+   * Expands node only if its child count is small enough.
+   * As expanding node with large child count is a slow operation (and result is not very useful).
+   */
+  public void expandSafe(@NotNull DefaultMutableTreeNode node) {
+    if (node.getChildCount() <= 10000) {
+      expandPath(TreeUtil.getPathFromRoot(node));
+    }
+  }
+
   private static class DistinctChangePredicate implements Predicate<Change> {
-    private final Set<Object> seen = ContainerUtil.newTroveSet(ChangeListChange.HASHING_STRATEGY);
+    private final Set<Object> seen = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
 
     @Override
     public boolean test(Change change) {

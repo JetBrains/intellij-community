@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -21,12 +21,25 @@ public class GlobalInspectionContextUtil {
     return refElement;
   }
 
+  /**
+   * @deprecated use {@link #canRunInspections(Project, boolean, Runnable)}
+   */
+  @Deprecated
   public static boolean canRunInspections(@NotNull Project project, final boolean online) {
+    return canRunInspections(project, online, () -> { });
+  }
+
+  public static boolean canRunInspections(@NotNull Project project,
+                                          final boolean online,
+                                          @NotNull Runnable rerunAction) {
+    if( InspectionExtensionsFactory.EP_NAME.getExtensionList().size() == 0){
+      return true;
+    }
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      if (!factory.isProjectConfiguredToRunInspections(project, online)) {
-        return false;
+      if (factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }

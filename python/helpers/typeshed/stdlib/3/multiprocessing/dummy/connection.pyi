@@ -1,19 +1,19 @@
-from typing import Any, List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional, Tuple, TypeVar
 
 from queue import Queue
 
-families = ...  # type: List[None]
+families: List[None]
 
 _TConnection = TypeVar('_TConnection', bound=Connection)
 _TListener = TypeVar('_TListener', bound=Listener)
 
 class Connection(object):
-    _in = ...  # type: Any
-    _out = ...  # type: Any
-    recv = ...  # type: Any
-    recv_bytes = ...  # type: Any
-    send = ...  # type: Any
-    send_bytes = ...  # type: Any
+    _in: Any
+    _out: Any
+    recv: Any
+    recv_bytes: Any
+    send: Any
+    send_bytes: Any
     def __enter__(self: _TConnection) -> _TConnection: ...
     def __exit__(self, exc_type, exc_value, exc_tb) -> None: ...
     def __init__(self, _in, _out) -> None: ...
@@ -21,9 +21,9 @@ class Connection(object):
     def poll(self, timeout: float = ...) -> bool: ...
 
 class Listener(object):
-    _backlog_queue = ...  # type: Optional[Queue]
+    _backlog_queue: Optional[Queue[Any]]
     @property
-    def address(self) -> Optional[Queue]: ...
+    def address(self) -> Optional[Queue[Any]]: ...
     def __enter__(self: _TListener) -> _TListener: ...
     def __exit__(self, exc_type, exc_value, exc_tb) -> None: ...
     def __init__(self, address=..., family=..., backlog=...) -> None: ...

@@ -10,12 +10,12 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTestCase {
+public class EmbeddedLiveTemplatesTest extends BasePlatformTestCase {
 
   public void testCreateFromTemplateAction() {
 

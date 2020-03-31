@@ -64,12 +64,15 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
   void testInconsistentHierarchyDfa() { doTest() }
+  void testAfterAssertTrueDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
   void testInstanceOfDisjunction() { doTest() }
   void testInstanceOfDisjunction2() { doTest() }
   void testInstanceOfDisjunctionDeep() { doTest() }
   void testInstanceOfDisjunctionCircular() { doTest() }
+  void testAfterGetClass() { doTest() }
+  void testNoCastForCompatibleCapture() { doTest() }
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
@@ -175,7 +178,7 @@ public class Super {
 
   private void doTestSecond() {
     configure()
-    assert myItems?.length == 0
+    assert myItems == null || myItems.length == 0
     myFixture.completeBasic()
     checkResult()
   }

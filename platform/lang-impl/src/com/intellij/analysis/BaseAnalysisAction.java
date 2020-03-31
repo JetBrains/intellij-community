@@ -1,6 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis;
 
+import com.intellij.analysis.dialog.ModelScopeItem;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -8,18 +10,27 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class BaseAnalysisAction extends AnAction {
   private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
 
-  private final String myTitle;
-  private final String myAnalysisNoon;
+  private final Supplier<String> myTitle;
+  private final Supplier<String> myAnalysisNoon;
 
-  protected BaseAnalysisAction(String title, String analysisNoon) {
+  protected BaseAnalysisAction(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                               @Nls(capitalization = Nls.Capitalization.Title) String analysisNoon) {
+    myTitle = () -> title;
+    myAnalysisNoon = () -> analysisNoon;
+  }
+
+  protected BaseAnalysisAction(Supplier<String> title, Supplier<String> analysisNoon) {
     myTitle = title;
     myAnalysisNoon = analysisNoon;
   }
@@ -38,14 +49,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     AnalysisScope scope = getInspectionScope(dataContext, project);
     if (scope == null) return;
 
-    String title = AnalysisScopeBundle.message("specify.analysis.scope", myTitle);
-    String noon = AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon);
+    String title = getDialogTitle();
+    String noon = CodeInsightBundle.message("analysis.scope.title", myAnalysisNoon.get());
     Module module = getModuleFromContext(dataContext);
     boolean rememberScope = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, noon, project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
-                                                                uiOptions, rememberScope) {
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, scope, module, element);
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, noon, project, items, uiOptions, rememberScope) {
       @Override
       protected String getDimensionServiceKey() {
         return DIMENSION_KEY_PREFIX + getClass().getName();
@@ -67,7 +78,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
 
     int oldScopeType = uiOptions.SCOPE_TYPE;
-    scope = dlg.getScope(uiOptions, scope, project, module);
+    scope = dlg.getScope(scope);
     if (!rememberScope) {
       uiOptions.SCOPE_TYPE = oldScopeType;
     }
@@ -75,6 +86,10 @@ public abstract class BaseAnalysisAction extends AnAction {
 
     FileDocumentManager.getInstance().saveAllDocuments();
     analyze(project, scope);
+  }
+
+  protected @NotNull String getDialogTitle() {
+    return CodeInsightBundle.message("specify.analysis.scope", myTitle.get());
   }
 
   protected String getHelpTopic() {

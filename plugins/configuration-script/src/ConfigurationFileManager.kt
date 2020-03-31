@@ -12,21 +12,20 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.inputStreamIfExists
-import org.snakeyaml.engine.v1.api.LoadSettingsBuilder
-import org.snakeyaml.engine.v1.composer.Composer
-import org.snakeyaml.engine.v1.nodes.MappingNode
-import org.snakeyaml.engine.v1.nodes.ScalarNode
-import org.snakeyaml.engine.v1.parser.ParserImpl
-import org.snakeyaml.engine.v1.scanner.StreamReader
+import org.snakeyaml.engine.v2.api.LoadSettings
+import org.snakeyaml.engine.v2.composer.Composer
+import org.snakeyaml.engine.v2.nodes.MappingNode
+import org.snakeyaml.engine.v2.nodes.NodeTuple
+import org.snakeyaml.engine.v2.parser.ParserImpl
+import org.snakeyaml.engine.v2.scanner.StreamReader
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
 internal class ConfigurationFileManager(project: Project) {
-  private val clearableLazyValues = ContainerUtil.createConcurrentList<SynchronizedClearableLazy<*>>()
+  private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
     val file = findConfigurationFile(project) ?: return@SynchronizedClearableLazy null
@@ -49,6 +48,10 @@ internal class ConfigurationFileManager(project: Project) {
   }
 
   fun registerClearableLazyValue(value: SynchronizedClearableLazy<*>) {
+    registerClearableLazyValue { value.drop() }
+  }
+
+  fun registerClearableLazyValue(value: () -> Unit) {
     clearableLazyValues.add(value)
   }
 
@@ -77,7 +80,7 @@ internal class ConfigurationFileManager(project: Project) {
             }
           }
 
-          clearableLazyValues.forEach { it.drop() }
+          clearableLazyValues.forEach { it() }
         }
       }
     })
@@ -85,35 +88,21 @@ internal class ConfigurationFileManager(project: Project) {
 
   fun getConfigurationNode() = yamlData.value
 
-  fun findValueNode(namePath: String): MappingNode? {
-    return findValueNodeByPath(namePath, yamlData.value ?: return null)
+  // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
+  // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
+  fun findValueNode(namePath: String): List<NodeTuple>? {
+    return findValueNodeByPath(namePath, yamlData.value?.value ?: return null)
   }
-}
-
-internal fun findValueNodeByPath(namePath: String, rootNode: MappingNode): MappingNode? {
-  var node = rootNode
-  loop@
-  for (name in namePath.splitToSequence('.')) {
-    for (tuple in node.value) {
-      val keyNode = tuple.keyNode
-      if (keyNode is ScalarNode && keyNode.value == name) {
-        node = tuple.valueNode as? MappingNode ?: continue
-        continue@loop
-      }
-    }
-    return null
-  }
-
-  return if (node === rootNode) null else node
 }
 
 internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
-    val settings = LoadSettingsBuilder()
+    val settings = LoadSettings.builder()
       .setUseMarks(false)
       .setScalarResolver(LightScalarResolver())
       .build()
-    return Composer(ParserImpl(StreamReader(it, settings), settings), settings.scalarResolver).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(StreamReader(it, settings), settings)
+    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
   }
 }
 

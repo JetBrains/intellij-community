@@ -34,13 +34,6 @@ public class MethodOverridesInaccessibleMethodOfSuperInspection extends BaseInsp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.overrides.inaccessible.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(infos[0].equals(PsiModifier.PACKAGE_LOCAL) ?
       "method.overrides.package.local.method.problem.descriptor" :

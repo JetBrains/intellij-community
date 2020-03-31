@@ -16,12 +16,12 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CollectionsMustHaveInitialCapacityInspectionTest extends LightInspectionTestCase {
+public class CollectionsMustHaveInitialCapacityInspectionTest extends LightJavaInspectionTestCase {
   private final CollectionsMustHaveInitialCapacityInspection myInspection = new CollectionsMustHaveInitialCapacityInspection();
 
   @Override

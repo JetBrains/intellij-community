@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -76,10 +77,10 @@ public class JsonPsiImplUtils {
       @Override
       public Icon getIcon(boolean unused) {
         if (property.getValue() instanceof JsonArray) {
-          return AllIcons.Json.Property_brackets;
+          return AllIcons.Json.Array;
         }
         if (property.getValue() instanceof JsonObject) {
-          return AllIcons.Json.Property_braces;
+          return AllIcons.Json.Object;
         }
         return PlatformIcons.PROPERTY_ICON;
       }
@@ -176,7 +177,7 @@ public class JsonPsiImplUtils {
               pos = i;
               break;
             case 'x':
-              Language language = JsonDialectUtil.getLanguage(literal);
+              Language language = JsonDialectUtil.getLanguageOrDefaultJson(literal);
               if (language instanceof JsonLanguage && ((JsonLanguage)language).hasPermissiveStrings()) {
                 int i2 = pos + 2;
                 for (; i2 < pos + 4; i2++) {

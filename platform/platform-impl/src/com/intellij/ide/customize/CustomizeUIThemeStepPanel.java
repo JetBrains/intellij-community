@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.ui.LafManager;
@@ -12,8 +13,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +61,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
   }
 
-  protected static final ThemeInfo AQUA = new ThemeInfo("Aqua", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
   protected static final ThemeInfo INTELLIJ = new ThemeInfo("Light", "IntelliJ", IntelliJLaf.class.getName());
 
@@ -68,7 +70,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());
-    IconLoader.activate();
 
     initThemes(myThemes);
 
@@ -81,6 +82,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
       radioButton.setOpaque(false);
       final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
+        CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.UIThemeChanged);
+
         applyLaf(theme, this);
         theme.apply();
       });
@@ -137,8 +140,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   @NotNull
   private ThemeInfo getDefaultTheme() {
     if (ApplicationManager.getApplication() != null) {
-      if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
-      if (UIUtil.isUnderDarcula()) return DARCULA;
+      if (StartupUiUtil.isUnderDarcula()) return DARCULA;
       return INTELLIJ;
     }
     CloudConfigProvider provider = CloudConfigProvider.getProvider();
@@ -163,28 +165,26 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getTitle() {
-    return "UI Themes";
+    return IdeBundle.message("step.title.ui.themes");
   }
 
   @Override
   public String getHTMLHeader() {
-    return "<html><body><h2>Set UI theme</h2>&nbsp;</body></html>";
+    return IdeBundle.message("label.set.ui.theme");
   }
 
   @Override
   public String getHTMLFooter() {
-    return "You can change the UI theme later in " +
-           CommonBundle.settingsTitle()
-           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
-           + " | " + "Appearance. Additional themes are available in " + CommonBundle.settingsTitle() + " | Plugins.";
+    return IdeBundle.message("label.you.can.change.the.ui.theme.later.in.0.1", CommonBundle.settingsTitle(),
+                             OptionsBundle.message("configurable.group.appearance.settings.display.name"), CommonBundle.settingsTitle());
   }
 
   private void applyLaf(ThemeInfo theme, Component component) {
     UIManager.LookAndFeelInfo info = new UIManager.LookAndFeelInfo(theme.name, theme.laf);
     try {
-      boolean wasUnderDarcula = UIUtil.isUnderDarcula();
+      boolean wasUnderDarcula = StartupUiUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
-      LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+      AppUIUtil.updateForDarcula(StartupUiUtil.isUnderDarcula());
       String className = info.getClassName();
       WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);
@@ -199,7 +199,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         lafManager.setCurrentLookAndFeel(info);
         if (lafManager instanceof LafManagerImpl) {
           ((LafManagerImpl)lafManager).updateWizardLAF(wasUnderDarcula);//Actually updateUI would be called inside EditorColorsManager
-        } else {
+        }
+        else {
           lafManager.updateUI();
         }
       }

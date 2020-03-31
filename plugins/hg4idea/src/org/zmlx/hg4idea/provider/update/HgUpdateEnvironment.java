@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.ui.HgUpdateDialog;
 
 import javax.swing.*;
@@ -48,13 +49,13 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots,
-    UpdatedFiles updatedFiles, ProgressIndicator indicator,
-    @NotNull Ref<SequentialUpdatesContext> context) {
+  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
+                                         UpdatedFiles updatedFiles, ProgressIndicator indicator,
+                                         @NotNull Ref<SequentialUpdatesContext> context) {
 
     List<VcsException> exceptions = new LinkedList<>();
 
-    boolean[] result = {true};
+    boolean result = true;
     for (FilePath contentRoot : contentRoots) {
       if (indicator != null) {
         indicator.checkCanceled();
@@ -64,17 +65,18 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       if (repository == null) {
         continue;
       }
-      ProgressManager.getInstance().executeNonCancelableSection(()->{
-        try {
+      try {
+        result &= ProgressManager.getInstance().computeInNonCancelableSection(() -> {
           HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
-          result[0] &= updater.update(updatedFiles, indicator, exceptions);
-        } catch (VcsException e) {
-          //TODO include module name where exception occurred
-          exceptions.add(e);
-        }
-      });
+          return updater.update(updatedFiles, indicator, exceptions);
+        });
+      }
+      catch (VcsException e) {
+        //TODO include module name where exception occurred
+        exceptions.add(e);
+      }
     }
-    return new UpdateSessionAdapter(exceptions, !result[0]);
+    return new UpdateSessionAdapter(exceptions, !result);
   }
 
   @Override
@@ -95,11 +97,11 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       this.updateConfiguration = updateConfiguration;
     }
 
-    @Override
     @Nls
-    public String getDisplayName() {
-      return "Update";
-    }
+    @Override
+  public String getDisplayName() {
+    return HgBundle.message("configurable.UpdateConfigurable.display.name");
+  }
 
     @Override
     public String getHelpTopic() {

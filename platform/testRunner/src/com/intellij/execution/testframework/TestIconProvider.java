@@ -32,7 +32,7 @@ public class TestIconProvider extends IconProvider {
     for (TestFramework framework : testFrameworks) {
       try {
         if (framework.isTestMethod(element)) {
-          final LayeredIcon mark = new LayeredIcon(PlatformIcons.METHOD_ICON, AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON);
+          LayeredIcon mark = new LayeredIcon(PlatformIcons.METHOD_ICON, AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON);
           mark.setIcon(PlatformIcons.PUBLIC_ICON, 2, PlatformIcons.METHOD_ICON.getIconWidth(), 0);
           return mark;
         }

@@ -15,62 +15,16 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.javadoc.JavadocBundle;
-import com.intellij.openapi.options.ConfigurationException;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.options.ConfigurableBuilder;
 
-import javax.swing.*;
-
-/**
- * @author Denis Zhdanov
- */
-public class JavadocOptionsProvider implements EditorOptionsProvider {
-  
-  private JPanel myWholePanel;
-  private JCheckBox myAutoGenerateClosingTagCheckBox;
-
-  @NotNull
-  @Override
-  public String getId() {
-    return "editor.preferences.javadocOptions";
-  }
-
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return JavadocBundle.message("javadoc.generate.message.title");
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return myWholePanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    CodeInsightSettings settings = getSettings();
-    return myAutoGenerateClosingTagCheckBox.isSelected() ^ settings.JAVADOC_GENERATE_CLOSING_TAG;
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    getSettings().JAVADOC_GENERATE_CLOSING_TAG = myAutoGenerateClosingTagCheckBox.isSelected();
-  }
-
-  @Override
-  public void reset() {
-    myAutoGenerateClosingTagCheckBox.setSelected(getSettings().JAVADOC_GENERATE_CLOSING_TAG);
-  }
-
-  private static CodeInsightSettings getSettings() {
-    return CodeInsightSettings.getInstance();
+public class JavadocOptionsProvider extends ConfigurableBuilder {
+  public JavadocOptionsProvider() {
+    super(JavaBundle.message("javadoc.option.javadoc.title"));
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    checkBox(JavaBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"),
+             () -> settings.JAVADOC_GENERATE_CLOSING_TAG,
+             (value) -> settings.JAVADOC_GENERATE_CLOSING_TAG = value);
   }
 }

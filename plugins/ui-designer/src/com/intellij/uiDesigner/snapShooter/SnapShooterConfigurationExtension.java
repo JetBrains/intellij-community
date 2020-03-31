@@ -16,16 +16,21 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.UIUtilities;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
+import kotlin.TypeCastException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -36,7 +41,7 @@ import java.util.TreeSet;
  */
 public class SnapShooterConfigurationExtension extends RunConfigurationExtension {
   @Override
-  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(@NotNull RunConfigurationBase configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -54,10 +59,12 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     if (swingInspectorEnabled && settings.getLastPort() != -1) {
       params.getProgramParametersList().prepend(appConfiguration.getMainClassName());
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
-      // add +1 because idea_rt.jar will be added as the last entry to the classpath
-      params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
       Set<String> paths = new TreeSet<>();
+      String designerBundle = PathManager.getResourceRoot(getClass(), "/messages/UIDesignerBundle.properties");
       paths.add(PathUtil.getJarPathForClass(SnapShooter.class));               // intellij.java.guiForms.designer
+      if (designerBundle != null) {
+        paths.add(designerBundle);                                            // UIDesignerBundle
+      }
       paths.add(PathUtil.getJarPathForClass(BaseComponent.class));             // intellij.platform.core
       paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));          // intellij.java
       paths.add(PathUtil.getJarPathForClass(DesignerEditorPanelFacade.class)); // intellij.platform.ide.impl
@@ -71,10 +78,19 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       paths.add(PathUtil.getJarPathForClass(Navigatable.class));               // intellij.platform.core
       paths.add(PathUtil.getJarPathForClass(AreaInstance.class));              // intellij.platform.extensions
       paths.add(PathUtil.getJarPathForClass(FormLayout.class));                // jgoodies
+      paths.add(PathUtil.getJarPathForClass(PersistentStateComponent.class));  // intellij.platform.projectModel
+      paths.add(PathUtil.getJarPathForClass(JBColor.class));                   // intellij.platform.util.ui
+      paths.add(PathUtil.getJarPathForClass(ColoredTextContainer.class));      // intellij.platform.core.ui
+      paths.add(PathUtil.getJarPathForClass(UIUtilities.class));               // Java Compatibility library
+      paths.add(PathUtil.getJarPathForClass(TypeCastException.class));         // kotlin
       paths.addAll(PathManager.getUtilClassPath());
       for(String path: paths) {
         params.getClassPath().addFirst(path);
       }
+      // idea_rt.jar/intellij.java.rt will be added as the last entry to the classpath
+      // classpath layout: [internal entry]...[internal entry][user entry]...[user entry][idea_rt.jar/intellij.java.rt]
+      // add internal classpath end to parameters -----------^
+      params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size()));
       params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
     }
   }

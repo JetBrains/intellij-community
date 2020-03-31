@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class LibraryBasedFrameworkType extends FrameworkTypeEx {
   private static final Logger LOG = Logger.getInstance(LibraryBasedFrameworkType.class);
   private final Class<? extends DownloadableLibraryType> myLibraryTypeClass;

@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -14,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEvaluator {
   /**
    * Start evaluating expression.
@@ -90,6 +88,11 @@ public abstract class XDebuggerEvaluator {
   @NotNull
   public String formatTextForEvaluation(@NotNull String text) {
     return text;
+  }
+
+  @NotNull
+  public <T> Promise<T> getWhenDataIsReady(@NotNull Editor editor, @NotNull T data) {
+    return Promises.resolvedPromise(data);
   }
 
   /**

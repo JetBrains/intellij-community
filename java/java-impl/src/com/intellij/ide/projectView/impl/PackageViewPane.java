@@ -20,7 +20,10 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -34,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
+
+import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
 public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
@@ -55,7 +61,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NotNull
   @Override
   public String getTitle() {
-    return IdeBundle.message("title.packages");
+    return JavaBundle.message("title.packages");
   }
 
   @NotNull
@@ -116,9 +122,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
-  @NotNull
   @Override
-  public PsiDirectory[] getSelectedDirectories() {
+  public PsiDirectory @NotNull [] getSelectedDirectories() {
     List<PsiDirectory> directories = new ArrayList<>();
     for (PackageElementNode node : getSelectedNodes(PackageElementNode.class)) {
       PackageElement packageElement = node.getValue();
@@ -146,41 +151,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     return super.getSelectedDirectories();
-  }
-
-  private final class ShowLibraryContentsAction extends ToggleAction {
-    private ShowLibraryContentsAction() {
-      super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"),
-            AllIcons.ObjectBrowser.ShowLibraryContents);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return ProjectView.getInstance(myProject).isShowLibraryContents(getId());
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      projectView.setShowLibraryContents(getId(), flag);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      presentation.setVisible(projectView.getCurrentProjectViewPane() == PackageViewPane.this);
-    }
-  }
-
-  @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
-    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
-    actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
-    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
-    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
   @NotNull
@@ -231,6 +201,10 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return 1;
   }
 
+  private Project getProject() {
+    return myProject;
+  }
+
   private final class PackageViewTreeUpdater extends AbstractTreeUpdater {
     private PackageViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
       super(treeBuilder);
@@ -242,7 +216,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
       if (element instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)element;
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-        if (ProjectView.getInstance(myProject).isShowModules(getId())) {
+        if (ProjectView.getInstance(getProject()).isShowModules(getId())) {
           Module[] modules = getModulesFor(dir);
           boolean rv = false;
           for (Module module : modules) {
@@ -259,7 +233,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     private boolean addPackageElementToUpdate(final PsiPackage aPackage, Module module) {
-      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)myTreeStructure;
+      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)getTreeStructure();
       PsiPackage packageToUpdateFrom = aPackage;
       if (!packageTreeStructure.isFlattenPackages() && packageTreeStructure.isHideEmptyMiddlePackages()) {
         // optimization: this check makes sense only if flattenPackages == false && HideEmptyMiddle == true
@@ -280,7 +254,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     @NotNull
     private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
       if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || "".equals(packageToUpdateFrom.getQualifiedName())) {
-        return module == null ? myTreeStructure.getRootElement() : module;
+        return module == null ? getTreeStructure().getRootElement() : module;
       }
       else {
         return new PackageElement(module, packageToUpdateFrom, false);
@@ -288,7 +262,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     private Module[] getModulesFor(PsiDirectory dir) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       final VirtualFile vFile = dir.getVirtualFile();
       final Set<Module> modules = new HashSet<>();
       final Module module = fileIndex.getModuleForFile(vFile);
@@ -328,7 +302,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
-        DeleteHandler.deletePsiElement(elements, myProject);
+        DeleteHandler.deletePsiElement(elements, getProject());
       }
       finally {
         a.finish();
@@ -339,5 +313,20 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @Override
   protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
     return null;
+  }
+
+  @Override
+  public boolean supportsFlattenModules() {
+    return PlatformUtils.isIntelliJ() && isQualifiedModuleNamesEnabled(myProject) && ProjectView.getInstance(myProject).isShowModules(ID);
+  }
+
+  @Override
+  public boolean supportsShowLibraryContents() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowModules() {
+    return PlatformUtils.isIntelliJ();
   }
 }

@@ -13,9 +13,9 @@ public class GraphLayoutImpl implements GraphLayout {
   @NotNull private final IntList myLayoutIndex;
 
   @NotNull private final List<Integer> myHeadNodeIndex;
-  @NotNull private final int[] myStartLayoutIndexForHead;
+  private final int @NotNull [] myStartLayoutIndexForHead;
 
-  public GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
+  public GraphLayoutImpl(int @NotNull [] layoutIndex, @NotNull List<Integer> headNodeIndex, int @NotNull [] startLayoutIndexForHead) {
     myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = startLayoutIndexForHead;
@@ -43,6 +43,6 @@ public class GraphLayoutImpl implements GraphLayout {
 
   private int getHeadOrder(int layoutIndex) {
     int i = Arrays.binarySearch(myStartLayoutIndexForHead, layoutIndex);
-    return i<0 ? Math.max(0,-i-2) : i;
+    return i < 0 ? Math.max(0, -i - 2) : i;
   }
 }

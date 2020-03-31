@@ -19,28 +19,29 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
-    super("Show Commit Tooltip", "Show tooltip for currently selected commit in the Log", null);
+    super(VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.text"),
+          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"), null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiEx ui = e.getData(VcsLogInternalDataKeys.LOG_UI_EX);
     if (project == null || ui == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setEnabledAndVisible(ui instanceof AbstractVcsLogUi &&
-                                               ((AbstractVcsLogUi)ui).getTable().getSelectedRowCount() == 1);
+      e.getPresentation().setEnabledAndVisible(ui.getTable().getSelectedRowCount() == 1);
     }
   }
 
@@ -48,10 +49,10 @@ public class ShowCommitTooltipAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogGraphTable table = ((AbstractVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getTable();
+    VcsLogGraphTable table = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX).getTable();
     int row = table.getSelectedRow();
     if (ScrollingUtil.isVisible(table, row)) {
-      table.showTooltip(row);
+      table.showTooltip(row, VcsLogColumn.COMMIT);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -101,7 +102,7 @@ class AssociationsEditor {
     myComponent.add(mySplitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, new Insets(0, 0, 0, 0)));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT files:", false, JBUI.emptyInsets()).setShowLine(false));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -116,7 +117,7 @@ class AssociationsEditor {
       .addExtraAction(AnActionButton.fromAction(new AddAssociationActionWrapper()))
       .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
-    UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated Files", false, new Insets(0, 0, 0, 0)));
+    UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated files:", false, JBUI.emptyInsets()).setShowLine(false));
     mySplitter.setSecondComponent(rightPanel);
   }
 
@@ -268,28 +269,13 @@ class AssociationsEditor {
     }
 
     @Override
-    public boolean isShowMembers() {
-      return false;
-    }
-
-    public boolean isShowModules() {
-      return true;
-    }
-
     public boolean isFlattenPackages() {
       return true;
     }
 
-    public boolean isAbbreviatePackageNames() {
-      return false;
-    }
-
+    @Override
     public boolean isHideEmptyMiddlePackages() {
       return true;
-    }
-
-    public boolean isShowLibraryContents() {
-      return false;
     }
   }
 

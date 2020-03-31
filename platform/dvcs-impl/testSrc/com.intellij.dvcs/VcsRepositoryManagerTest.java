@@ -1,23 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryCreator;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
+import com.intellij.testFramework.RunAll;
 import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
@@ -47,27 +51,21 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
     point.registerExtension(mockCreator, getTestRootDisposable());
 
-    myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
+    myGlobalRepositoryManager = new VcsRepositoryManager(myProject);
   }
 
   @NotNull
   private ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
-    return Extensions.getArea(myProject).getExtensionPoint(VcsRepositoryCreator.EXTENSION_POINT_NAME);
+    return VcsRepositoryCreator.EXTENSION_POINT_NAME.getPoint(myProject);
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (myProjectLevelVcsManager != null) {
-        myProjectLevelVcsManager.unregisterVcs(myVcs);
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void tearDown() {
+    new RunAll()
+      .append(() -> myProjectLevelVcsManager.unregisterVcs(myVcs))
+      .append(() -> Disposer.dispose(myGlobalRepositoryManager))
+      .append(() -> super.tearDown())
+      .run();
   }
 
   public void testRepositoryInfoReadingWhileModifying() throws Exception {
@@ -80,21 +78,20 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
       myProjectLevelVcsManager
         .setDirectoryMappings(
           VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
+      myGlobalRepositoryManager.waitForAsyncTaskCompletion();
       return !myGlobalRepositoryManager.getRepositories().isEmpty();
     });
-    Thread modify = new Thread(modifyRepositoryMapping,"vcs modify");
-    modify.start();
+    Future<?> modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping);
 
     //wait until modification starts
     assertTrue(LOCK_ERROR_TEXT, READY_TO_READ.await(1, TimeUnit.SECONDS));
 
-    Thread read = new Thread(readExistingRepo,"vcs read");
-    read.start();
+    Future<?> read = ApplicationManager.getApplication().executeOnPooledThread(readExistingRepo);
     assertNotNull(readExistingRepo.get(1, TimeUnit.SECONDS));
     CONTINUE_MODIFY.countDown();
     assertTrue(modifyRepositoryMapping.get(1, TimeUnit.SECONDS));
-    read.join();
-    modify.join();
+    read.get();
+    modify.get();
   }
 
   @NotNull
@@ -103,7 +100,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     String externalName = "external";
     mkdir(externalName);
     projectRoot.refresh(false, true);
-    final VirtualFile repositoryFile = ObjectUtils.assertNotNull(projectRoot.findChild(externalName));
+    final VirtualFile repositoryFile = Objects.requireNonNull(this.projectRoot.findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
     myGlobalRepositoryManager.addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;
@@ -120,7 +117,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
 
       @Nullable
       @Override
-      public Repository createRepositoryIfValid(@NotNull VirtualFile root) {
+      public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
         READY_TO_READ.countDown();
         try {
           //wait until reading thread gets existing info
@@ -129,7 +126,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
         catch (InterruptedException e) {
           return null;
         }
-        return new MockRepositoryImpl(myProject, root, myProject);
+        return new MockRepositoryImpl(myProject, root, parentDisposable);
       }
     };
   }

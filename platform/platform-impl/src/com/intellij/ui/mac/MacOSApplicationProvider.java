@@ -1,40 +1,49 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
+import com.apple.eawt.AppEvent;
 import com.apple.eawt.Application;
+import com.apple.eawt.OpenURIHandler;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.CommandLineProcessorResult;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.IdeStarter;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
-import org.jetbrains.annotations.NotNull;
+import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author max
- */
-public class MacOSApplicationProvider {
+public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }
@@ -50,40 +59,52 @@ public class MacOSApplicationProvider {
     }
   }
 
-  private static class Worker {
+  private static final class Worker {
     private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
+    @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
     static void initMacApplication() {
       Application application = Application.getApplication();
 
-      application.setAboutHandler(event -> AboutAction.perform(getProject(false)));
+      application.setAboutHandler(event -> {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          AboutAction.perform(getProject(false));
+        }
+      });
 
       application.setPreferencesHandler(event -> {
-        Project project = getProject(true);
-        submit("Preferences", () -> ShowSettingsAction.perform(project));
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          Project project = Objects.requireNonNull(getProject(true));
+          submit("Preferences", () -> ShowSettingsAction.perform(project));
+        }
       });
 
       application.setQuitHandler((event, response) -> {
-        submit("Quit", () -> ApplicationManager.getApplication().exit());
-        response.cancelQuit();
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          submit("Quit", () -> ApplicationManager.getApplication().exit());
+          response.cancelQuit();
+        }
+        else {
+          response.performQuit();
+        }
       });
 
       application.setOpenFileHandler(event -> {
-        Project project = getProject(false);
-        List<File> list = event.getFiles();
-        if (list.isEmpty()) return;
-        submit("OpenFile", () -> {
-          if (ProjectUtil.tryOpenFileList(project, list, "MacMenu")) {
-            IdeaApplication.getInstance().disableProjectLoad();
-          }
-        });
+        List<File> files = event.getFiles();
+        if (files.isEmpty()) return;
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          Project project = getProject(false);
+          submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
+        }
+        else {
+          IdeStarter.openFilesOnLoading(files);
+        }
       });
 
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
+        installProtocolHandler();
       }
-
-      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {
@@ -100,12 +121,13 @@ public class MacOSApplicationProvider {
         public void callback(ID self, String selector) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
-            ActionManager am = ActionManager.getInstance();
-            MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
-            am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
+            ActionManager actionManager = ActionManager.getInstance();
+            MouseEvent mouseEvent = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+            actionManager.tryToExecute(actionManager.getAction("CheckForUpdate"), mouseEvent, null, null, false);
           });
         }
       };
+      UPDATE_CALLBACK_REF = impl;  // prevents the callback from being collected
       Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), impl, "v");
       Foundation.registerObjcClassPair(checkForUpdatesClass);
 
@@ -120,7 +142,7 @@ public class MacOSApplicationProvider {
       Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
-    private static Project getProject(boolean useDefault) {
+    private static @Nullable Project getProject(boolean useDefault) {
       @SuppressWarnings("deprecation") Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       if (project == null) {
         LOG.debug("MacMenu: no project in data context");
@@ -135,7 +157,7 @@ public class MacOSApplicationProvider {
       return project;
     }
 
-    private static void submit(@NotNull String name, @NotNull Runnable task) {
+    private static void submit(String name, Runnable task) {
       LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread(), "; ENABLED = ", ENABLED.get());
       if (!ENABLED.get()) {
         LOG.debug("MacMenu: disabled");
@@ -147,7 +169,7 @@ public class MacOSApplicationProvider {
         }
         else {
           ENABLED.set(false);
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             try {
               LOG.debug("MacMenu: init ", name);
               task.run();
@@ -156,9 +178,56 @@ public class MacOSApplicationProvider {
               LOG.debug("MacMenu: done ", name);
               ENABLED.set(true);
             }
-          });
+          }, ModalityState.NON_MODAL);
         }
       }
+    }
+
+    private static void installProtocolHandler() {
+      ID mainBundle = Foundation.invoke("NSBundle", "mainBundle");
+      ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
+      if (urlTypes.equals(ID.NIL)) {
+        BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
+        if (!(build == null || build.isSnapshot())) {
+          LOG.warn("No URL bundle (CFBundleURLTypes) is defined in the main bundle.\n" +
+                   "To be able to open external links, specify protocols in the app layout section of the build file.\n" +
+                   "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
+        }
+        return;
+      }
+
+      Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+        @Override
+        public void openURI(AppEvent.OpenURIEvent event) {
+          Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+          String file = ContainerUtil.getFirstItem(parameters.get("file"));
+          if (file == null) {
+            return;
+          }
+
+          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+            IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
+            return;
+          }
+
+          String line = ContainerUtil.getFirstItem(parameters.get("line"));
+          String column = ContainerUtil.getFirstItem(parameters.get("column"));
+          List<String> args = new SmartList<>();
+          if (line != null) {
+            args.add("--line");
+            args.add(line);
+          }
+          if (column != null) {
+            args.add("--column");
+            args.add(column);
+          }
+          args.add(file);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
+            result.showErrorIfFailed();
+          }, ModalityState.NON_MODAL);
+        }
+      });
     }
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
 import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,7 +32,7 @@ public class JavacProtoUtil {
                                                                           Collection<? extends File> files,
                                                                           Collection<? extends File> classpath,
                                                                           Collection<? extends File> platformCp,
-                                                                          Collection<? extends File> modulePath,
+                                                                          ModulePath modulePath,
                                                                           Collection<? extends File> upgradeModulePath,
                                                                           Collection<? extends File> sourcePath,
                                                                           Map<File, Set<File>> outs) {
@@ -47,8 +48,13 @@ public class JavacProtoUtil {
     for (File file : platformCp) {
       builder.addPlatformClasspath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
-    for (File file : modulePath) {
-      builder.addModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
+    for (File file : modulePath.getPath()) {
+      final String pathEntry = FileUtilRt.toSystemIndependentName(file.getPath());
+      builder.addModulePath(pathEntry);
+      final String moduleName = modulePath.getModuleName(file);
+      if (moduleName != null) {
+        builder.putModuleNames(pathEntry, moduleName);
+      }
     }
     for (File file : upgradeModulePath) {
       builder.addUpgradeModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
@@ -93,7 +99,10 @@ public class JavacProtoUtil {
     if (srcUri != null) {
       msgBuilder.setSourceUri(srcUri.toString());
     }
-
+    final JavaFileManager.Location location = fileObject.getLocation();
+    if (location != null) {
+      msgBuilder.setLocation(location.getName());
+    }
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.OUTPUT_OBJECT).setOutputObject(msgBuilder.build());
 

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -30,7 +17,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,17 +31,17 @@ import java.nio.charset.CodingErrorAction;
  * @author Bas Leijdekkers
  */
 public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.display.name");
-  }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     final Character c = (Character)infos[0];
+    if (c == '\n') {
+      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.newline.descriptor");
+    }
+    else if (c == '\t') {
+      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.tab.descriptor");
+    }
     return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.descriptor", c);
   }
 
@@ -78,13 +64,19 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '" + c + "'";
+      if (c == '\n') {
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
+      }
+      else if (c == '\t') {
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
+      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", c);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with character";
+      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.family.name");
     }
 
     @Override
@@ -101,7 +93,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
         return;
@@ -144,14 +136,21 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
+          if (d == '\uFFFD') {
+            // this character is used as a replacement when a unicode character can't be displayed: �
+            // replacing the escape with the character may cause confusion, so ignore it.
+            continue;
+          }
           final int type = Character.getType(d);
-          if (type == Character.CONTROL ||
-              type == Character.FORMAT ||
-              type == Character.PRIVATE_USE ||
-              type == Character.SURROGATE ||
-              type == Character.UNASSIGNED ||
-              type == Character.LINE_SEPARATOR ||
-              type == Character.PARAGRAPH_SEPARATOR) {
+          if (type == Character.CONTROL && d != '\n' && d != '\t') {
+            continue;
+          }
+          else if (type == Character.FORMAT ||
+                   type == Character.PRIVATE_USE ||
+                   type == Character.SURROGATE ||
+                   type == Character.UNASSIGNED ||
+                   type == Character.LINE_SEPARATOR ||
+                   type == Character.PARAGRAPH_SEPARATOR) {
             continue;
           }
           if (type == Character.SPACE_SEPARATOR && d != ' ') {

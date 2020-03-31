@@ -29,12 +29,6 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("serializable.class.in.secure.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Boolean serializable = (Boolean)infos[0];
     final Boolean deserializable = (Boolean)infos[1];
@@ -85,16 +79,16 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
     @Override
     public String getName() {
       if (myReadObject) {
-        return myWriteObject ? getFamilyName() : "Add 'readObject()' method which always throws exception";
+        return myWriteObject ? getFamilyName() : InspectionGadgetsBundle.message("add.read.write.object.methods.fix.text2");
       }
-      return "Add 'writeObject()' methods which always throws exception";
+      return InspectionGadgetsBundle.message("add.read.write.object.methods.fix.text");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add 'readObject()' and 'writeObject()' methods which always throw exception";
+      return InspectionGadgetsBundle.message("add.read.write.object.methods.fix.family.name");
     }
 
     @Override

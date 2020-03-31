@@ -174,7 +174,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
   private final static int ourVicinity = 5;
 
-  private static int correctActualLineIfTextEmpty(@NotNull FileAnnotation fileAnnotation, @NotNull String[] contentsLines,
+  private static int correctActualLineIfTextEmpty(@NotNull FileAnnotation fileAnnotation, String @NotNull [] contentsLines,
                                                   final int actualLine) {
     final VcsRevisionNumber revision = fileAnnotation.getLineRevisionNumber(actualLine);
     if (revision == null) return actualLine;
@@ -201,7 +201,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
   private static class ContextLineIterator implements Iterator<String> {
-    @NotNull private final String[] myContentsLines;
+    private final String @NotNull [] myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
     @NotNull private final FileAnnotation myAnnotation;
@@ -209,7 +209,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from
 
-    private ContextLineIterator(@NotNull String[] contentLines, @NotNull FileAnnotation annotation, int stopAtLine) {
+    private ContextLineIterator(String @NotNull [] contentLines, @NotNull FileAnnotation annotation, int stopAtLine) {
       myAnnotation = annotation;
       myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
       myStopAtLine = stopAtLine;

@@ -34,17 +34,9 @@ import org.jetbrains.annotations.*;
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.tostring.call.display.name");
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final String text = (String)infos[0];
-    return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor", text);
+    return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor");
   }
 
   @Override
@@ -55,16 +47,18 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   }
 
   private static class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
+    private final @Nullable String replacementText;
 
-    private final String replacementText;
-
-    private UnnecessaryToStringCallFix(String replacementText) {
+    private UnnecessaryToStringCallFix(@Nullable String replacementText) {
       this.replacementText = replacementText;
     }
 
     @Override
     @NotNull
     public String getName() {
+      if (replacementText == null) {
+        return InspectionGadgetsBundle.message("inspection.redundant.string.remove.fix.name", "toString");
+      }
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
@@ -105,7 +99,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       if (referenceNameElement == null) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
       if (qualifier == null) return;
-      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, qualifier.getText());
+      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, qualifier.isPhysical() ? null : qualifier.getText());
     }
   }
 

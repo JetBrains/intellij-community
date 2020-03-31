@@ -17,7 +17,6 @@ import java.util.List;
  */
 public class HtmlLexer extends BaseHtmlLexer {
   private static final IElementType ourInlineStyleElementType;
-  private static final IElementType ourInlineScriptElementType;
 
   public static final String INLINE_STYLE_NAME = "css-ruleset-block";
 
@@ -31,9 +30,6 @@ public class HtmlLexer extends BaseHtmlLexer {
       }
     }
     ourInlineStyleElementType = inlineStyleElementType;
-    // At the moment only JS.
-    HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(ourDefaultLanguage);
-    ourInlineScriptElementType = provider != null ? provider.getElementType() : null;
   }
 
   private IElementType myTokenType;
@@ -79,9 +75,14 @@ public class HtmlLexer extends BaseHtmlLexer {
           IElementType currentScriptElementType = getCurrentScriptElementType();
           tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
         }
-      } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
-        myTokenEnd = skipToTheEndOfTheEmbeddment();
-        tokenType = ourInlineScriptElementType;
+      } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType)) {
+        // At the moment only JS.
+        HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
+        IElementType inlineScriptElementType = provider != null ? provider.getElementType() : null;
+        if (inlineScriptElementType != null) {
+          myTokenEnd = skipToTheEndOfTheEmbeddment();
+          tokenType = inlineScriptElementType;
+        }
       }
     }
 
@@ -96,6 +97,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
+            tokenType == XmlTokenType.XML_START_TAG_START ||
             tokenType == XmlTokenType.XML_REAL_WHITE_SPACE || tokenType == TokenType.WHITE_SPACE ||
             tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN || tokenType == XmlTokenType.XML_CHAR_ENTITY_REF
     );

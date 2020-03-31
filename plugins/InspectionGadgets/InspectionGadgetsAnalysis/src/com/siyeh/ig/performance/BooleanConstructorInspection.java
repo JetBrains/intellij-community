@@ -40,12 +40,6 @@ public class BooleanConstructorInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("boolean.constructor.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

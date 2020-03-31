@@ -36,7 +36,7 @@ import java.util.List;
  * @author peter
  */
 public class RehighlightAllEditors implements MadTestingAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.RehighlightAllEditors");
+  private static final Logger LOG = Logger.getInstance(RehighlightAllEditors.class);
   private final Project myProject;
 
   public RehighlightAllEditors(Project project) {
@@ -59,7 +59,7 @@ public class RehighlightAllEditors implements MadTestingAction {
   }
 
   @NotNull
-  static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
+  public static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
     FileDocumentManager.getInstance().saveAllDocuments(); // to avoid async document changes on automatic save during highlighting
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -69,7 +69,7 @@ public class RehighlightAllEditors implements MadTestingAction {
     try {
       Ref<List<HighlightInfo>> infos = Ref.create();
       MadTestingUtil.prohibitDocumentChanges(
-        () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false)));
+        () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], true)));
       return infos.get();
     }
     catch (Throwable e) {

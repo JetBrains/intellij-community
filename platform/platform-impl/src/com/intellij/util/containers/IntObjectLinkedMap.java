@@ -15,34 +15,35 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
+public class IntObjectLinkedMap<T> {
   /**
    * The header of the double-linked list, its before = most recently added entry; its after = eldest entry
    */
-  private final MapEntry myHeader;
-  private final MapEntry[] myArray;
+  private final MapEntry<T> myHeader;
+  private final MapEntry<T>[] myArray;
   private final int myCapacity;
   private int mySize;
 
   public IntObjectLinkedMap(int capacity) {
     myCapacity = capacity;
+    //noinspection unchecked
     myArray = new MapEntry[capacity * 8 / 5];
     myHeader = new MapEntry<>(0, null);
     myHeader.before = myHeader.after = myHeader;
   }
 
   @Nullable
-  public Entry getEntry(int key) {
-    MapEntry candidate = myArray[getArrayIndex(key)];
+  public MapEntry<T> getEntry(int key) {
+    MapEntry<T> candidate = myArray[getArrayIndex(key)];
     while (candidate != null) {
       if (candidate.key == key) {
-        //noinspection unchecked
-        return (Entry)candidate;
+        return candidate;
       }
       candidate = candidate.next;
     }
@@ -55,8 +56,8 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
 
   public void removeEntry(int key) {
     int index = getArrayIndex(key);
-    MapEntry candidate = myArray[index];
-    MapEntry prev = null;
+    MapEntry<T> candidate = myArray[index];
+    MapEntry<T> prev = null;
     while (candidate != null) {
       if (candidate.key == key) {
         if (prev == null) {
@@ -77,7 +78,7 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
     }
   }
 
-  public Entry putEntry(Entry entry) {
+  public MapEntry<T> putEntry(@NotNull MapEntry<T> entry) {
     removeEntry(entry.key);
 
     int index = getArrayIndex(entry.key);
@@ -94,8 +95,7 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
       return null;
     }
 
-    //noinspection unchecked
-    Entry eldest = (Entry)myHeader.after;
+    MapEntry<T> eldest = myHeader.after;
     removeEntry(eldest.key);
     return eldest;
   }
@@ -103,8 +103,8 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
   public static class MapEntry<T> {
     public final int key;
     public final T value;
-    MapEntry next; // in the list of entries with the same hash
-    MapEntry before, after; // in the doubly-linked list reflecting the map's history
+    MapEntry<T> next; // in the list of entries with the same hash
+    MapEntry<T> before, after; // in the doubly-linked list reflecting the map's history
 
     public MapEntry(int key, T value) {
       this.key = key;
@@ -116,6 +116,4 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
       return key + "->" + value;
     }
   }
-
-
 }

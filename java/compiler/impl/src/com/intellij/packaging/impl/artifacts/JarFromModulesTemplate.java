@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -42,11 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JarFromModulesTemplate extends ArtifactTemplate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.JarFromModulesTemplate");
+  private static final Logger LOG = Logger.getInstance(JarFromModulesTemplate.class);
 
   private final PackagingElementResolvingContext myContext;
 
@@ -75,16 +73,12 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {
       final VirtualFile directory;
       try {
-        directory = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-          @Override
-          public VirtualFile compute() throws IOException {
-            return VfsUtil.createDirectoryIfMissing(directoryForManifest);
-          }
-        });
+        directory = ApplicationManager.getApplication().runWriteAction(
+          (ThrowableComputable<VirtualFile, IOException>)() -> VfsUtil.createDirectoryIfMissing(directoryForManifest));
       }
       catch (IOException e) {
         LOG.info(e);
-        Messages.showErrorDialog(project, "Cannot create directory '" + directoryForManifest + "': " + e.getMessage(),
+        Messages.showErrorDialog(project, JavaCompilerBundle.message("cannot.create.directory.0.1", directoryForManifest, e.getMessage()),
                                  CommonBundle.getErrorTitle());
         return null;
       }

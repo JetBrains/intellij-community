@@ -17,7 +17,10 @@ package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -25,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +54,11 @@ public final class Annotation implements Segment {
   private TextAttributesKey myEnforcedAttributesKey;
   private TextAttributes myEnforcedAttributes;
 
-  private List<QuickFixInfo> myQuickFixes = null;
-  private Boolean myNeedsUpdateOnTyping = null;
+  private List<QuickFixInfo> myQuickFixes;
+  private Boolean myNeedsUpdateOnTyping;
   private String myTooltip;
-  private boolean myAfterEndOfLine = false;
-  private boolean myIsFileLevelAnnotation = false;
+  private boolean myAfterEndOfLine;
+  private boolean myIsFileLevelAnnotation;
   private GutterIconRenderer myGutterIconRenderer;
   @Nullable
   private ProblemGroup myProblemGroup;
@@ -67,7 +71,7 @@ public final class Annotation implements Segment {
     public final TextRange textRange;
     public final HighlightDisplayKey key;
 
-    public QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
@@ -81,16 +85,15 @@ public final class Annotation implements Segment {
 
   /**
    * Creates an instance of the annotation.
-   *
+   * Do not create Annotation manually, please use {@link AnnotationHolder#newAnnotation(HighlightSeverity, String)} builder methods instead.
    * @param startOffset the start offset of the text range covered by the annotation.
    * @param endOffset   the end offset of the text range covered by the annotation.
    * @param severity    the severity of the problem indicated by the annotation (highlight, warning or error).
    * @param message     the description of the annotation (shown in the status bar or by "View | Error Description" action)
    * @param tooltip     the tooltip for the annotation (shown when hovering the mouse in the gutter bar)
-   * @see AnnotationHolder#createErrorAnnotation
-   * @see AnnotationHolder#createWarningAnnotation
-   * @see AnnotationHolder#createInfoAnnotation
+   * @see AnnotationHolder#newAnnotation
    */
+  @ApiStatus.Internal
   public Annotation(final int startOffset, final int endOffset, @NotNull HighlightSeverity severity, final String message, String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
     assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
@@ -116,9 +119,7 @@ public final class Annotation implements Segment {
 
   public void registerFix(@NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key,
                           @NotNull ProblemDescriptor problemDescriptor) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
+    range = notNullize(range);
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
@@ -133,28 +134,31 @@ public final class Annotation implements Segment {
    * @param range the text range (relative to the document) where the quick fix is available.
    */
   public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
+    range = notNullize(range);
+    List<QuickFixInfo> fixes = myQuickFixes;
+    if (fixes == null) {
+      myQuickFixes = fixes = new ArrayList<>();
     }
-    if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<>();
-    }
-    myQuickFixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(fix, range, key));
+  }
+
+  @NotNull
+  private TextRange notNullize(@Nullable TextRange range) {
+    return range == null ? new TextRange(myStartOffset, myEndOffset) : range;
   }
 
   /**
    * Registers a quickfix which would be available during batch mode only,
    * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run
    */
-  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
+  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
+    range = notNullize(range);
 
-    if (myBatchFixes == null) {
-      myBatchFixes = new ArrayList<>();
+    List<QuickFixInfo> fixes = myBatchFixes;
+    if (fixes == null) {
+      myBatchFixes = fixes = new ArrayList<>();
     }
-    myBatchFixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(fix, range, key));
   }
 
   /**
@@ -174,7 +178,7 @@ public final class Annotation implements Segment {
    * @see #needsUpdateOnTyping()
    */
   public void setNeedsUpdateOnTyping(boolean b) {
-    myNeedsUpdateOnTyping = Boolean.valueOf(b);
+    myNeedsUpdateOnTyping = b;
   }
 
   /**
@@ -227,6 +231,7 @@ public final class Annotation implements Segment {
    *
    * @return the common problem type.
    */
+  @NotNull
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
@@ -242,26 +247,24 @@ public final class Annotation implements Segment {
   public TextAttributesKey getTextAttributes() {
     if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 
-    if (myHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-      if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
-      if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
-      if (mySeverity == HighlightSeverity.WEAK_WARNING) return CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
+    switch (myHighlightType) {
+      case GENERIC_ERROR_OR_WARNING:
+        if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
+        if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
+        if (mySeverity == HighlightSeverity.WEAK_WARNING) return CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
+        return HighlighterColors.NO_HIGHLIGHTING;
+      case GENERIC_ERROR:
+        return CodeInsightColors.ERRORS_ATTRIBUTES;
+      case LIKE_DEPRECATED:
+        return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+      case LIKE_UNUSED_SYMBOL:
+        return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
+      case LIKE_UNKNOWN_SYMBOL:
+      case ERROR:
+        return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
+      default:
+        return HighlighterColors.NO_HIGHLIGHTING;
     }
-
-    if (myHighlightType == ProblemHighlightType.GENERIC_ERROR) {
-      return CodeInsightColors.ERRORS_ATTRIBUTES;
-    }
-
-    if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-      return CodeInsightColors.DEPRECATED_ATTRIBUTES;
-    }
-    if (myHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-      return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
-    }
-    if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL || myHighlightType == ProblemHighlightType.ERROR) {
-      return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
-    }
-    return HighlighterColors.NO_HIGHLIGHTING;
   }
 
   public TextAttributes getEnforcedTextAttributes() {
@@ -326,7 +329,7 @@ public final class Annotation implements Segment {
    *
    * @param highlightType the ID of the problem type.
    */
-  public void setHighlightType(final ProblemHighlightType highlightType) {
+  public void setHighlightType(@NotNull ProblemHighlightType highlightType) {
     myHighlightType = highlightType;
   }
 

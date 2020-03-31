@@ -15,37 +15,37 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-/**
- * @author Maxim.Mossienko on 11/10/2016.
- */
-public class VfsEventsMerger {
-  static final boolean DEBUG = (false);
-  //static final boolean DEBUG = (true);
-  
-  public void recordFileEvent(int fileId, @NotNull VirtualFile file, boolean contentChange) {
-    if (DEBUG) System.out.println("Request build indices for file:" + file.getPath() + ", contentChange:" + contentChange);
-    updateChange(fileId, file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
+class VfsEventsMerger {
+  private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE;
+  private static final Logger LOG = Logger.getInstance(VfsEventsMerger.class);
+
+  void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
+    if (DEBUG) LOG.info("Request build indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChange);
+    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  public void recordBeforeFileEvent(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
-    if (DEBUG) System.out.println("Request invalidate indices for file:" + file.getPath() + ", contentChange:" + contentChanged);
-    updateChange(fileId, file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
+  void recordBeforeFileEvent(@NotNull VirtualFile file, boolean contentChanged) {
+    if (DEBUG) LOG.info("Request invalidate indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChanged);
+    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
-  public void recordTransientStateChangeEvent(int fileId, @NotNull VirtualFile file) {
-    if (DEBUG) System.out.println("Transient state changed for file:" + file.getPath());
-    updateChange(fileId, file, FILE_TRANSIENT_STATE_CHANGED);
+  void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
+    if (DEBUG) LOG.info("Transient state changed for file:" + getFileIdOrPath(file));
+    updateChange(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file), file, FILE_TRANSIENT_STATE_CHANGED);
   }
 
   private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
@@ -55,7 +55,7 @@ public class VfsEventsMerger {
   }
   
   // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
-  private void updateChange(int fileId, @NotNull VirtualFile file, short mask) {
+  private void updateChange(int fileId, @NotNull VirtualFile file, @EventMask short mask) {
     while (true) {
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
@@ -63,6 +63,12 @@ public class VfsEventsMerger {
         myPublishedEventIndex.incrementAndGet();
         break;
       }
+    }
+  }
+
+  void applyMergedEvents(@NotNull VfsEventsMerger merger) {
+    for(ChangeInfo info:merger.myChangeInfos.values()) {
+      updateChange(info.getFileId(), info.file, info.eventMask);
     }
   }
 
@@ -76,7 +82,7 @@ public class VfsEventsMerger {
   // with the processing then set of events will be not empty
   // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
   // (without PCE)
-  public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
+  boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
       int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
       for (int fileId : fileIds) {
@@ -97,7 +103,7 @@ public class VfsEventsMerger {
     return true;
   }
 
-  public boolean hasChanges() {
+  boolean hasChanges() {
     return !myChangeInfos.isEmpty();
   }
 
@@ -105,11 +111,12 @@ public class VfsEventsMerger {
     return myChangeInfos.size();
   }
 
+  @NotNull
   Stream<VirtualFile> getChangedFiles() {
     return myChangeInfos.values().stream().map(ChangeInfo::getFile);
   }
 
-  private final IntObjectMap<VfsEventsMerger.ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
 
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;
@@ -117,18 +124,24 @@ public class VfsEventsMerger {
   private static final short BEFORE_FILE_CONTENT_CHANGED = 8;
   private static final short FILE_TRANSIENT_STATE_CHANGED = 16;
 
-  public static class ChangeInfo {
+  @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, BEFORE_FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
+  @interface EventMask { }
+
+  static class ChangeInfo {
     private final VirtualFile file;
+
+    @EventMask
     private final short eventMask;
 
-    ChangeInfo(@NotNull VirtualFile file, short eventMask, @Nullable ChangeInfo previous) {
+    ChangeInfo(@NotNull VirtualFile file, @EventMask short eventMask, @Nullable ChangeInfo previous) {
       this.file = file;
-      this.eventMask = mergeEventMask(previous != null ? previous.eventMask : 0, eventMask);
+      this.eventMask = mergeEventMask(previous == null ? 0 : previous.eventMask, eventMask);
     }
 
-    private static short mergeEventMask(short existingOperation, short newOperation) {
+    @EventMask
+    private static short mergeEventMask(@EventMask short existingOperation, @EventMask short newOperation) {
       if (newOperation == FILE_REMOVED) {
-        return newOperation;
+        return FILE_REMOVED;
       }
       return (short)(existingOperation | newOperation);
     }
@@ -176,5 +189,9 @@ public class VfsEventsMerger {
       if (fileId < 0) fileId = -fileId;
       return fileId;
     }
+  }
+
+  private static String getFileIdOrPath(@NotNull VirtualFile file) {
+    return file instanceof VirtualFileWithId ? String.valueOf(((VirtualFileWithId)file).getId()) : file.getPath();
   }
 }

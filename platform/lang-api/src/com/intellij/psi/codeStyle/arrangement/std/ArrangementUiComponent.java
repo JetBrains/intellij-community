@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,16 @@ import java.util.Set;
  * Defines a contract for UI component used at standard arrangement settings managing code.
  * <p/>
  * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
- * 
+ *
  * @author Denis Zhdanov
  */
 public interface ArrangementUiComponent {
 
-  @Nullable ArrangementSettingsToken getToken();
+  @Nullable
+  ArrangementSettingsToken getToken();
 
-  @NotNull Set<ArrangementSettingsToken> getAvailableTokens();
+  @NotNull
+  Set<ArrangementSettingsToken> getAvailableTokens();
 
   void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException;
 
@@ -50,9 +52,9 @@ public interface ArrangementUiComponent {
 
   /**
    * We use 'enabled by user' property name here in order to avoid clash
-   * with {@link Component#isEnabled() standard awt 'enabled' property}. 
+   * with {@link Component#isEnabled() standard AWT 'enabled' property}.
    *
-   * @return    {@code true} if current ui token is enabled; {@code false} otherwise
+   * @return {@code true} if current ui token is enabled; {@code false} otherwise
    */
   boolean isEnabled();
 
@@ -69,7 +71,7 @@ public interface ArrangementUiComponent {
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
    *
-   * @param selected  flag that indicates if current component should be drawn as 'selected'
+   * @param selected flag that indicates if current component should be drawn as 'selected'
    */
   void setSelected(boolean selected);
 
@@ -84,8 +86,8 @@ public interface ArrangementUiComponent {
    * mouse events at the {@link #getUiComponent() corresponding UI control} because it's used only as a renderer and is not put
    * to the containers hierarchy, hence, doesn't receive mouse events.
    *
-   * @param event  target mouse move event
-   * @return       bounds to be repainted (in screen coordinates) if any; {@code null} otherwise
+   * @param event target mouse move event
+   * @return bounds to be repainted (in screen coordinates) if any; {@code null} otherwise
    */
   @Nullable
   Rectangle onMouseMove(@NotNull MouseEvent event);
@@ -97,10 +99,10 @@ public interface ArrangementUiComponent {
 
   @Nullable
   Rectangle onMouseEntered(@NotNull MouseEvent e);
-  
+
   /**
-   * @param width   the width to get baseline for
-   * @param height  the height to get baseline for
+   * @param width  the width to get baseline for
+   * @param height the height to get baseline for
    * @return baseline's y coordinate if applicable; negative value otherwise
    */
   int getBaselineToUse(int width, int height);
@@ -109,14 +111,13 @@ public interface ArrangementUiComponent {
 
   /**
    * Method to process second click on the component,
-   * e.g. we can deselect the component or invert it condition
+   * e.g. we can deselect the component or invert it condition.
    */
   void handleMouseClickOnSelected();
 
   /**
-   * For condition that can't be disabled,
-   * e.g. 'not public' can be used with any other rule like 'private' or 'not private'
-   * @return
+   * For a condition that can't be disabled,
+   * e.g. 'not public' can be used with any other rule like 'private' or 'not private'.
    */
   boolean alwaysCanBeActive();
 

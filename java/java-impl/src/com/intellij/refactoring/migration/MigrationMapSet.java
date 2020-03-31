@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
@@ -23,13 +24,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class MigrationMapSet {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
+  private static final Logger LOG = Logger.getInstance(MigrationMapSet.class);
 
   private ArrayList<MigrationMap> myMaps;
   @NonNls private static final String MIGRATION_MAP = "migrationMap";
@@ -95,12 +98,12 @@ public class MigrationMapSet {
   private static boolean isPredefined(String name) {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
-      String fileName = FileUtil.getNameWithoutExtension(new File(migrationMap.getFile()));
+      String fileName = FileUtilRt.getNameWithoutExtension(new File(migrationMap.getFile()).getName());
       if (fileName.equals(name)) return true;
     }
 
     for (String defaultTemplate : DEFAULT_MAPS) {
-      String fileName = FileUtil.getNameWithoutExtension(StringUtil.getShortName(defaultTemplate, '/'));
+      String fileName = FileUtilRt.getNameWithoutExtension(StringUtil.getShortName(defaultTemplate, '/'));
 
       if (fileName.equals(name)) return true;
     }
@@ -118,15 +121,17 @@ public class MigrationMapSet {
     return ret;
   }
 
+  @Nullable
   private static File getMapDirectory() {
-    File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
-
-    if (!dir.exists() && !dir.mkdirs()) {
-      LOG.error("cannot create directory: " + dir.getAbsolutePath());
+    Path dir = PathManager.getConfigDir().resolve("migration");
+    try {
+      Files.createDirectories(dir);
+    }
+    catch (IOException e) {
+      LOG.error("cannot create directory: " + dir, e);
       return null;
     }
-
-    return dir;
+    return dir.toFile();
   }
 
   private void copyPredefinedMaps(File dir) {
@@ -143,7 +148,7 @@ public class MigrationMapSet {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = new File(migrationMap.getFile()).getName();
-      if (myDeletedMaps.contains(FileUtil.getNameWithoutExtension(fileName))) continue;
+      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
       copyMap(dir, migrationMap, fileName);
     }
 
@@ -151,7 +156,7 @@ public class MigrationMapSet {
       URL url = MigrationMapSet.class.getResource(defaultTemplate);
       LOG.assertTrue(url != null);
       String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
-      if (myDeletedMaps.contains(FileUtil.getNameWithoutExtension(fileName))) continue;
+      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
       copyMap(dir, url, fileName);
     }
   }
@@ -192,7 +197,7 @@ public class MigrationMapSet {
       try {
         MigrationMap map = readMap(file);
         if (map != null) {
-          map.setFileName(FileUtil.getNameWithoutExtension(file));
+          map.setFileName(FileUtilRt.getNameWithoutExtension(file.getName()));
           myMaps.add(map);
         }
       }

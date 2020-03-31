@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
@@ -17,6 +19,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -126,24 +129,24 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
           public boolean isFileSelectable(VirtualFile file) {
-            return file.getFileType().equals(StdFileTypes.XML);
+            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
-        descriptor.setDescription("Choose profile file");
+        descriptor.setDescription(AnalysisBundle.message("inspections.settings.profile.file.chooser.description"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
             try {
               InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
               if (profile == null) {
-                Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
+                Messages.showErrorDialog(myProject, AnalysisBundle.message("inspections.settings.invalid.format.warning", file.getName()), CommonBundle.getErrorTitle());
                 return;
               }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
               if (existed != null) {
-                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" + profile.getName() +
-                                                           "\' already exists. Do you want to overwrite it?",
-                                                "Overwrite Warning",
-                                                "Overwrite", "Cancel",
+                if (Messages.showOkCancelDialog(myProject, AnalysisBundle
+                                                  .message("inspections.settings.profile.already.exists.dialog.message", profile.getName()),
+                                                AnalysisBundle.message("inspections.settings.overwrite.warning.title"),
+                                                AnalysisBundle.message("inspections.settings.overwrite.action.text"), CommonBundle.getCancelButtonText(),
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
@@ -305,9 +308,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     levels.removeIf(level -> profileManager.getSeverityRegistrar().getSeverity(level) != null);
     if (!levels.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
-                                              StringUtil.join(levels, ", ") +
-                                              ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+        if (Messages.showYesNoDialog(project, AnalysisBundle
+                                       .message("inspections.settings.undefined.severities.detected.dialog.message", StringUtil.join(levels, ", ")),
+                                     CommonBundle.message("title.warning"), Messages.getWarningIcon()) ==
             Messages.YES) {
           for (String level : levels) {
             final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();

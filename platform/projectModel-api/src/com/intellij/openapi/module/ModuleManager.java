@@ -33,6 +33,7 @@ import java.util.List;
 /**
  * Provides services for working with the modules of a project.
  */
+@ApiStatus.NonExtendable
 public abstract class ModuleManager extends SimpleModificationTracker {
   /**
    * Returns the module manager instance for the current project.
@@ -54,6 +55,21 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    */
   @NotNull
   public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
+
+  /**
+   * Creates a non-persistent module of the specified type and adds it to the project
+   * to which the module manager is related. {@link #commit()} must be called to
+   * bring the changes in effect.
+   *
+   * In contrast with modules created by {@link #newModule(String, String)},
+   * non-persistent modules aren't stored on a filesystem and aren't being written
+   * in a project XML file. When IDE closes, all non-persistent modules vanishes out.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public Module newNonPersistentModule(@NotNull String moduleName, @NotNull String id) {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -80,8 +96,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the array of modules.
    */
-  @NotNull
-  public abstract Module[] getModules();
+  public abstract Module @NotNull [] getModules();
 
   /**
    * Returns the project module with the specified name.
@@ -99,8 +114,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the sorted array of modules.
    */
-  @NotNull
-  public abstract Module[] getSortedModules();
+  public abstract Module @NotNull [] getSortedModules();
 
   /**
    * Returns the module comparator which can be used for sorting modules by dependency
@@ -167,8 +181,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  @Nullable
-  public abstract String[] getModuleGroupPath(@NotNull Module module);
+  public abstract String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   public abstract boolean hasModuleGroups();
 

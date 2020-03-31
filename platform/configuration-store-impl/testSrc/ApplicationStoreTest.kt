@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -9,13 +9,14 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
+import com.intellij.util.pico.DefaultPicoContainer
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
@@ -28,7 +29,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.picocontainer.MutablePicoContainer
-import org.picocontainer.defaults.InstanceComponentAdapter
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -68,11 +68,11 @@ internal class ApplicationStoreTest {
     componentStore.storageManager.removeStreamProvider(MyStreamProvider::class.java)
     componentStore.storageManager.addStreamProvider(streamProvider)
 
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     component.foo = "newValue"
     componentStore.save()
 
-    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -81,13 +81,13 @@ internal class ApplicationStoreTest {
     val streamProvider = MyStreamProvider()
     val map = THashMap<String, String>()
     val fileSpec = "new.xml"
-    map.put(fileSpec, "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
-    streamProvider.data.put(RoamingType.DEFAULT, map)
+    map[fileSpec] = "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>"
+    streamProvider.data[RoamingType.DEFAULT] = map
 
     val storageManager = componentStore.storageManager
     storageManager.removeStreamProvider(MyStreamProvider::class.java)
     storageManager.addStreamProvider(streamProvider)
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.foo).isEqualTo("newValue")
 
     assertThat(Paths.get(storageManager.expandMacros(fileSpec))).doesNotExist()
@@ -116,7 +116,7 @@ internal class ApplicationStoreTest {
 
     testAppConfig.refreshVfs()
 
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.foo).isEqualTo("new")
 
     component.foo = "new2"
@@ -136,7 +136,7 @@ internal class ApplicationStoreTest {
 
     fun test(item: ExportableItem) {
       val file = item.file
-      assertThat(map.get(file)).containsExactly(item)
+      assertThat(map[file]).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
@@ -152,7 +152,7 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = A()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
 
     component.options.foo = "new"
 
@@ -179,7 +179,7 @@ internal class ApplicationStoreTest {
 
     val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
     val componentKey = A::class.java.name
-    picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
+    picoContainer.registerComponent(DefaultPicoContainer.InstanceComponentAdapter(componentKey, component))
     try {
       assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(
         componentPath.to(listOf(ExportableItem(componentPath, ""))), additionalPath.to(listOf(ExportableItem(additionalPath, " (schemes)"))))
@@ -203,7 +203,7 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = SeveralStoragesConfigured()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.foo).isEqualTo("new")
 
     componentStore.save()
@@ -221,7 +221,7 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = A()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.options).isEqualTo(TestState("old"))
 
     componentStore.save()
@@ -247,12 +247,12 @@ internal class ApplicationStoreTest {
     val component = A()
     component.isThrowErrorOnLoadState = true
     assertThatThrownBy {
-      componentStore.initComponent(component, null)
+      componentStore.initComponent(component, null, null)
     }.isInstanceOf(ProcessCanceledException::class.java)
     assertThat(component.options).isEqualTo(TestState())
 
     component.isThrowErrorOnLoadState = false
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.options).isEqualTo(TestState("old"))
   }
 
@@ -266,7 +266,7 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = AWorkspace()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     assertThat(component.options).isEqualTo(TestState("old"))
 
     try {
@@ -289,7 +289,7 @@ internal class ApplicationStoreTest {
     class AOther : A()
 
     val component = AOther()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     component.options.foo = "old"
 
     componentStore.save()
@@ -302,7 +302,7 @@ internal class ApplicationStoreTest {
     val obsoleteStorageBean = ObsoleteStorageBean()
     obsoleteStorageBean.file = "i_do_not_want_to_be_deleted_but.xml"
     obsoleteStorageBean.components.addAll(listOf("loser1", "loser2", "lucky"))
-    PlatformTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
 
     @State(name = "loser1", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
     class AOther : A()
@@ -312,15 +312,15 @@ internal class ApplicationStoreTest {
     class COther : A()
 
     val component = AOther()
-    componentStore.initComponent(component, null)
+    componentStore.initComponent(component, null, null)
     component.options.foo = "old"
 
     val component2 = BOther()
-    componentStore.initComponent(component2, null)
+    componentStore.initComponent(component2, null, null)
     component2.options.foo = "old?"
 
     val component3 = COther()
-    componentStore.initComponent(component3, null)
+    componentStore.initComponent(component3, null, null)
     component3.options.bar = "foo"
 
     componentStore.save()
@@ -361,7 +361,7 @@ internal class ApplicationStoreTest {
     val obsoleteStorageBean = ObsoleteStorageBean()
     obsoleteStorageBean.file = "i_will_be_not_deleted.xml"
     obsoleteStorageBean.components.addAll(listOf("Loser"))
-    PlatformTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
 
     testAppConfig.resolve(obsoleteStorageBean.file).write("""
       <application>
@@ -389,21 +389,19 @@ internal class ApplicationStoreTest {
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, 0, size, Charsets.UTF_8))
+      getMap(roamingType)[fileSpec] = String(content, 0, size, Charsets.UTF_8)
     }
 
-    private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      return data.getOrPut(roamingType) { THashMap<String, String>() }
-    }
+    private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.getOrPut(roamingType) { THashMap() }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      val data = getMap(roamingType).get(fileSpec)
+      val data = getMap(roamingType)[fileSpec]
       data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
       return true
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
       return true
     }
   }

@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.html.structureView;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.LocationPresentation;
@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
+public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
   static final int MAX_TEXT_LENGTH = 50;
 
-  HtmlTagTreeElement(final XmlTag tag) {
+  public HtmlTagTreeElement(final XmlTag tag) {
     super(tag);
   }
 
@@ -48,7 +48,7 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
   public String getPresentableText() {
     final XmlTag tag = getElement();
     if (tag == null) {
-      return IdeBundle.message("node.structureview.invalid");
+      return StructureViewBundle.message("node.structureview.invalid");
     }
     return HtmlUtil.getTagPresentation(tag);
   }

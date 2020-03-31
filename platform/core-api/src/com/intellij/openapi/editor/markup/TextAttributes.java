@@ -32,13 +32,13 @@ import java.util.function.BiConsumer;
  * Defines the visual representation (colors and effects) of text.
  */
 public class TextAttributes implements Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
+  private static final Logger LOG = Logger.getInstance(TextAttributes.class);
   private static final AttributesFlyweight DEFAULT_FLYWEIGHT = AttributesFlyweight
     .create(null, null, Font.PLAIN, null, EffectType.BOXED, Collections.emptyMap(), null);
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
-  @SuppressWarnings("NullableProblems")
+  @SuppressWarnings({"NullableProblems", "NotNullFieldNotInitialized"})
   @NotNull
   private AttributesFlyweight myAttrs;
 
@@ -175,7 +175,7 @@ public class TextAttributes implements Cloneable {
   /**
    * Appends additional effect to paint with specific color
    *
-   * @see TextAttributes#setAdditionalEffects(java.util.Map)
+   * @see TextAttributes#setAdditionalEffects(Map)
    */
   @ApiStatus.Experimental
   public void withAdditionalEffect(@NotNull EffectType effectType, @NotNull Color color) {
@@ -184,7 +184,7 @@ public class TextAttributes implements Cloneable {
 
   /**
    * Appends additional effects to paint with specific colors. New effects may supersede old ones
-   * @see TextAttributes#setAdditionalEffects(java.util.Map)
+   * @see TextAttributes#setAdditionalEffects(Map)
    * @see TextAttributesEffectsBuilder
    */
   @ApiStatus.Experimental
@@ -234,6 +234,7 @@ public class TextAttributes implements Cloneable {
     return new TextAttributes(myAttrs);
   }
 
+  @Override
   public boolean equals(Object obj) {
     if(!(obj instanceof TextAttributes)) {
       return false;
@@ -242,6 +243,7 @@ public class TextAttributes implements Cloneable {
     return myAttrs == ((TextAttributes)obj).myAttrs;
   }
 
+  @Override
   public int hashCode() {
     return myAttrs.hashCode();
   }

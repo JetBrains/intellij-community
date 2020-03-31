@@ -3,13 +3,13 @@ package com.intellij.sh.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
+public class ShKeywordCompletionTest extends BasePlatformTestCase {
   public void testIfCompletion() {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();
@@ -211,7 +211,7 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     final String completionRule = "number not equal";
     myFixture.configureByText("a.sh", "[ <caret> ]");
     completeByRule(completionRule);
-    myFixture.checkResult("[ $a -nq $b ]");
+    myFixture.checkResult("[ $a -ne $b ]");
   }
 
   public void testNumberLess() {
@@ -337,13 +337,13 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoKeywordCompletionInString() {
     myFixture.configureByText("a.sh", "\"<caret> \"");
     myFixture.completeBasic();
-    assertLookupNotContainsTemplateKeywords();
+    assertNull(myFixture.getLookup());
   }
 
   public void testNoKeywordCompletionInRawString() {
     myFixture.configureByText("a.sh", "'<caret> '");
     myFixture.completeBasic();
-    assertLookupNotContainsTemplateKeywords();
+    assertNull(myFixture.getLookup());
   }
 
   public void testNoCompletionInComment() {
@@ -358,8 +358,34 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEmpty(myFixture.completeBasic());
   }
 
+  public void testBashShebang() {
+    final String completionRule = "#!/usr/bin/env bash";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env bash");
+  }
+
+  public void testShShebang() {
+    final String completionRule = "#!/usr/bin/env sh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env sh");
+  }
+
+  public void testZshShebang() {
+    final String completionRule = "#!/usr/bin/env zsh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env zsh");
+  }
+
+  public void testNoShebang() {
+    myFixture.configureByText("a.sh", "\n #!<caret>");
+    assertEmpty(myFixture.completeBasic());
+  }
+
   private void assertLookupNotContainsTemplateKeywords() {
-    List<String> templateKeywords = ContainerUtil.newSmartList("if", "select", "case", "for", "while", "until", "function", "elif");
+    List<String> templateKeywords = new SmartList<>("if", "select", "case", "for", "while", "until", "function", "elif");
     LookupImpl lookup = (LookupImpl) myFixture.getLookup();
     assertNotNull(lookup);
     assertTrue(lookup.getItems().stream().noneMatch(item -> templateKeywords.contains(item.getLookupString())));

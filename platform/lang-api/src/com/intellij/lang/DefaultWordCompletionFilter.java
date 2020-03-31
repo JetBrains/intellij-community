@@ -19,8 +19,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.codeInsight.completion.CompletionProcess;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.psi.tree.IElementType;
 
 public class DefaultWordCompletionFilter implements WordCompletionElementFilter {

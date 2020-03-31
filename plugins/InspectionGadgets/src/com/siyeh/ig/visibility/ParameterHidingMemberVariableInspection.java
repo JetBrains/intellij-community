@@ -17,6 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -57,12 +58,6 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   @Override
   public String getAlternativeID() {
     return "hiding";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("parameter.hides.member.variable.display.name");
   }
 
   @Override
@@ -147,6 +142,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
       while (aClass != null) {
         final PsiField field = aClass.findFieldByName(variableName, true);
         if (field != null &&
+            JavaPsiRecordUtil.getComponentForField(field) == null &&
             (!m_ignoreStaticMethodParametersHidingInstanceFields ||
              field.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.STATIC)) &&
             (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass))) {

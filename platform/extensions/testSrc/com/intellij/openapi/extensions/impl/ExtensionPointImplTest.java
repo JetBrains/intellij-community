@@ -2,15 +2,20 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +25,6 @@ import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.*;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class ExtensionPointImplTest {
   private Disposable disposable = Disposer.newDisposable();
 
@@ -77,12 +81,12 @@ public class ExtensionPointImplTest {
     final boolean[] removed = new boolean[1];
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
       @Override
-      public void extensionAdded(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Integer extension, @NotNull final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
       @Override
-      public void extensionRemoved(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Integer extension, @NotNull final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     }, true, null);
@@ -108,7 +112,7 @@ public class ExtensionPointImplTest {
     assertThat(added[0]).isFalse();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
       @Override
-      public void extensionAdded(@NotNull Integer extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Integer extension, @NotNull PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
     }, true, null);
@@ -118,6 +122,7 @@ public class ExtensionPointImplTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testIncompatibleExtension() {
+    @SuppressWarnings("rawtypes")
     ExtensionPoint extensionPoint = buildExtensionPoint(Integer.class);
 
     try {
@@ -137,7 +142,7 @@ public class ExtensionPointImplTest {
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.addExtensionAdapter(stringAdapter());
+    extensionPoint.addExtensionAdapter(newStringAdapter());
 
     try {
       assertThat(extensionPoint.getExtensionList()).isEmpty();
@@ -190,7 +195,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("first", disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
     extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw ExtensionNotApplicableException.INSTANCE;
@@ -208,7 +213,7 @@ public class ExtensionPointImplTest {
 
   private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @NotNull BiConsumer<ExtensionPointImpl<String>, MyShootingComponentAdapter> test) {
     ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
     assertThat(extensionPoint.getExtensionList()).hasSize(1);
@@ -228,7 +233,7 @@ public class ExtensionPointImplTest {
     final List<String> extensions = new ArrayList<>();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
       @Override
-      public void extensionAdded(@NotNull String extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull String extension, @NotNull PluginDescriptor pluginDescriptor) {
         extensions.add(extension);
       }
     }, true, null);
@@ -238,8 +243,8 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
-    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
+    MyShootingComponentAdapter adapter = newStringAdapter();
+    ((ExtensionPointImpl<?>)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
     });
@@ -249,6 +254,25 @@ public class ExtensionPointImplTest {
     adapter.setFire(null);
     extensionPoint.getExtensionList();
     assertThat(extensions).contains("first", "second", "");
+  }
+
+  @Test
+  public void testClearCacheOnUnregisterExtensions() {
+    ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+
+    List<Integer> sizeList = new ArrayList<>();
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
+      @Override
+      public void extensionRemoved(@NotNull String extension, @NotNull PluginDescriptor pluginDescriptor) {
+        sizeList.add(extensionPoint.getExtensionList().size());
+      }
+    }, true, null);
+
+    //noinspection deprecation
+    extensionPoint.registerExtension("first");
+    assertThat(extensionPoint.getExtensionList().size()).isEqualTo(1);
+    extensionPoint.unregisterExtensions((adapterName, adapter) -> false, false);
+    assertThat(sizeList).contains(0);
   }
 
   @Test
@@ -265,12 +289,38 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensions()).containsExactly(4, 2);
   }
 
-  @NotNull
-  private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPicoContainer());
+  @Test
+  public void keyedExtensionDisposable() {
+    BeanExtensionPoint<KeyedLazyInstance<Integer>> extensionPoint =
+      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), true);
+    extensionPoint.setComponentManager(new MyComponentManager());
+    KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
+      @Override
+      public String getKey() {
+        return "one";
+      }
+
+      @NotNull
+      @Override
+      public Integer getInstance() {
+        return 1;
+      }
+    };
+    extensionPoint.registerExtension(extension);
+    Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
+    extensionPoint.unregisterExtension(extension);
+    assertThat(Disposer.isDisposed(disposable)).isTrue();
+    Disposer.dispose(extensionPoint.getComponentManager());
   }
 
-  private static MyShootingComponentAdapter stringAdapter() {
+  @NotNull
+  private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
+    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPluginDescriptor("test"));
+    point.setComponentManager(new MyComponentManager());
+    return point;
+  }
+
+  private static MyShootingComponentAdapter newStringAdapter() {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 
@@ -287,11 +337,59 @@ public class ExtensionPointImplTest {
 
     @NotNull
     @Override
-    public synchronized Object createInstance(@Nullable PicoContainer container) {
+    public synchronized <T> T createInstance(@NotNull ComponentManager componentManager) {
       if (myFire != null) {
         myFire.run();
       }
-      return super.createInstance(container);
+      return super.createInstance(componentManager);
+    }
+  }
+
+  static class MyComponentManager implements ComponentManager {
+    private final DefaultPicoContainer myContainer = new DefaultPicoContainer();
+
+    @Override
+    public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public PicoContainer getPicoContainer() {
+      return myContainer;
+    }
+
+    @NotNull
+    @Override
+    public MessageBus getMessageBus() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Condition<?> getDisposed() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dispose() {
+
+    }
+
+    @Nullable
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return null;
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+
     }
   }
 }

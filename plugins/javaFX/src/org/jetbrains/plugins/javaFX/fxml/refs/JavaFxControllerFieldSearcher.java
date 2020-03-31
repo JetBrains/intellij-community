@@ -35,7 +35,6 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
           for (final PsiFile file : fxmlWithController) {
             ApplicationManager.getApplication().runReadAction(() -> {
               final String fieldName = field.getName();
-              if (fieldName == null) return;
               final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
               final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
               if (searchScope.contains(virtualFile)) {

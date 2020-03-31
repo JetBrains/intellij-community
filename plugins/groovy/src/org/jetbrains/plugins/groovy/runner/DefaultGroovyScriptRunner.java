@@ -41,7 +41,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
       RuntimeConfigurationException e = new RuntimeConfigurationException("Groovy is not configured for module '" + module.getName() + "'");
-      e.setQuickFix(() -> ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME));
+      e.setQuickFix(() -> ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.getName()));
       throw e;
     }
   }

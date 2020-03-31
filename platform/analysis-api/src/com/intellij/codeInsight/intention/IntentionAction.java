@@ -5,9 +5,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +36,7 @@ public interface IntentionAction extends FileModifier {
    * @return the text to show in the intention popup.
    * @see #isAvailable(Project, Editor, PsiFile)
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsUI.ListItem
   @NotNull
   String getText();
 
@@ -50,7 +50,7 @@ public interface IntentionAction extends FileModifier {
    * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsUI.ListItem
   String getFamilyName();
 
   /**

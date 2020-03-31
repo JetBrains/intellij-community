@@ -2,20 +2,21 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,8 +26,8 @@ import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
-  public RecentFilesSEContributor(@Nullable Project project, @Nullable PsiElement context) {
-    super(project, context);
+  public RecentFilesSEContributor(@NotNull AnActionEvent event) {
+    super(event);
   }
 
   @NotNull
@@ -38,7 +39,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @NotNull
   @Override
   public String getGroupName() {
-    return "Recent Files";
+    return IdeBundle.message("search.everywhere.group.name.recent.files");
   }
 
   @Override
@@ -52,19 +53,24 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public void fetchElements(@NotNull String pattern,
-                            @NotNull ProgressIndicator progressIndicator,
-                            @NotNull Processor<? super Object> consumer) {
+  public void fetchWeightedElements(@NotNull String pattern,
+                                    @NotNull ProgressIndicator progressIndicator,
+                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
     if (myProject == null) {
       return; //nothing to search
     }
 
     String searchString = filterControlSymbols(pattern);
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
+    boolean preferStartMatches = !searchString.startsWith("*");
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
+    if (preferStartMatches) {
+      builder = builder.preferringStartMatches();
+    }
+    MinusculeMatcher matcher = builder.build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
-    List<Object> res = new ArrayList<>();
+    List<FoundItemDescriptor<Object>> res = new ArrayList<>();
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> {
@@ -75,16 +81,15 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         }
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
                      .distinct()
-                     .map(vf -> psiManager.findFile(vf))
+                     .map(vf -> {
+                       PsiFile f = psiManager.findFile(vf);
+                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(vf.getName()));
+                     })
                      .filter(file -> file != null)
                      .collect(Collectors.toList())
         );
 
-        for (Object element : res) {
-          if (!consumer.process(element)) {
-            return;
-          }
-        }
+        ContainerUtil.process(res, consumer);
       }, progressIndicator);
   }
 

@@ -26,10 +26,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -38,7 +35,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * <p>
  * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
  * languages and language-independent settings. Global (default) options which may be overwritten by a specific language can be retrieved
  * using {@code getDefault...()} methods. Use {@link #getCommonSettings(Language)} to retrieve code style options for a language. Some
@@ -87,7 +83,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   public CodeStyleSettings(boolean loadExtensions) {
-    initTypeToName();
     initImportsByDefault();
 
     if (loadExtensions) {
@@ -109,25 +104,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
-  }
-
-  private void initTypeToName() {
-    initGeneralLocalVariable(PARAMETER_TYPE_TO_NAME);
-    initGeneralLocalVariable(LOCAL_VARIABLE_TYPE_TO_NAME);
-    PARAMETER_TYPE_TO_NAME.addPair("*Exception", "e");
-  }
-
-  private static void initGeneralLocalVariable(@NonNls TypeToNameMap map) {
-    map.addPair("int", "i");
-    map.addPair("byte", "b");
-    map.addPair("char", "c");
-    map.addPair("long", "l");
-    map.addPair("short", "i");
-    map.addPair("boolean", "b");
-    map.addPair("double", "v");
-    map.addPair("float", "v");
-    map.addPair("java.lang.Object", "o");
-    map.addPair("java.lang.String", "s");
   }
 
   public void setParentSettings(CodeStyleSettings parent) {
@@ -172,11 +148,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
         addCustomSettings(settings.copyWith(this));
       }
-
-      FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
-      STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
-      PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
-      LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
 
       PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
       IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
@@ -223,7 +194,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public String LINE_SEPARATOR;
 
   /**
-   * @return line separator. If choosen line separator is "System-dependent" method returns default separator for this OS.
+   * @return line separator. If the chosen line separator is "System-dependent", return default separator for this OS.
    */
   public String getLineSeparator() {
     return LINE_SEPARATOR != null ? LINE_SEPARATOR : ourSystemLineSeparator;
@@ -233,59 +204,46 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 // region Java settings (legacy)
 //----------------- NAMING CONVENTIONS --------------------
 
-  /** @deprecated Use JavaCodeStyleSettings.FIELD_NAME_PREFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_PREFIX} */
   @Deprecated
   public String FIELD_NAME_PREFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_NAME_PREFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_PREFIX} */
   @Deprecated
   public String STATIC_FIELD_NAME_PREFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_NAME_PREFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_PREFIX} */
   @Deprecated
   public String PARAMETER_NAME_PREFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABL_NAME_PREFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_PREFIX} */
   @Deprecated
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
 
-  /** @deprecated Use JavaCodeStyleSettings.FIELD_NAME_SUFFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_SUFFIX} */
   @Deprecated
   public String FIELD_NAME_SUFFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_NAME_SUFFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_SUFFIX} */
   @Deprecated
   public String STATIC_FIELD_NAME_SUFFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_NAME_SUFFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_SUFFIX} */
   @Deprecated
   public String PARAMETER_NAME_SUFFIX = "";
-  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABLE_NAME_SUFFIX */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_SUFFIX} */
   @Deprecated
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
 
-  /** @deprecated Use JavaCodeStyleSettings.PREFER_LONGER_NAMES */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PREFER_LONGER_NAMES} */
   @Deprecated
   public boolean PREFER_LONGER_NAMES = true;
 
-  /** @deprecated Use JavaCodeStyleSettings.FILED_TYPE_TO_NAME */
-  @Deprecated
-  public final TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use JavaCodeStyleSettings.STATIC_FIELD_TYPE_TO_NAME */
-  @Deprecated
-  public final TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use JavaCodeStyleSettings.PARAMETER_TYPE_TO_NAME */
-  @Deprecated
-  @NonNls public final TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use JavaCodeStyleSettings.LOCAL_VARIABLE_TYPE_TO_NAME */
-  @Deprecated
-  public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
-
 //----------------- 'final' modifier settings -------
-  /** @deprecated Use JavaCodeStyleSettings.GENERATE_FINAL_LOCALS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_LOCALS} */
   @Deprecated
   public boolean GENERATE_FINAL_LOCALS;
-  /** @deprecated Use JavaCodeStyleSettings.GENERATE_FINAL_PARAMETERS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_PARAMETERS} */
   @Deprecated
   public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
-  /** @deprecated Use JavaCodeStyleSettings.VISIBILITY */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#VISIBILITY} */
   @Deprecated
   public String VISIBILITY = "public";
 
@@ -295,27 +253,27 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
-  /** @deprecated Use JavaCodeStyleSettings.USE_EXTERNAL_ANNOTATIONS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_EXTERNAL_ANNOTATIONS} */
   @Deprecated
   public boolean USE_EXTERNAL_ANNOTATIONS;
-  /** @deprecated Use JavaCodeStyleSettings.INSERT_OVERRIDE_ANNOTATIONS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_OVERRIDE_ANNOTATION} */
   @Deprecated
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
-  /** @deprecated Use JavaCodeStyleSettings.REPEAT_SYNCHRONIZED */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#REPEAT_SYNCHRONIZED} */
   @Deprecated
   public boolean REPEAT_SYNCHRONIZED = true;
 
   private final List<String> myRepeatAnnotations = new ArrayList<>();
 
-  /** @deprecated Use JavaCodeStyleSettings.getRepeatAnnotations() */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getRepeatAnnotations()} */
   @Deprecated
   public List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
-  /** @deprecated Use JavaCodeStyleSettings.setRepeatAnnotations() */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setRepeatAnnotations(List)} */
   @Deprecated
   public void setRepeatAnnotations(List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
@@ -324,123 +282,137 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   //----------------- JAVA IMPORTS (deprecated, moved to JavaCodeStyleSettings) --------------------
 
-  /** @deprecated Use JavaCodeStyleSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LAYOUT_STATIC_IMPORTS_SEPARATELY} */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
-  /** @deprecated Use JavaCodeStyleSettings.USE_FQ_CLASS_NAMES */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_FQ_CLASS_NAMES} */
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES;
 
-  /** @deprecated use com.intellij.psi.codeStyle.JavaCodeStyleSettings.CLASS_NAMES_IN_JAVADOC */
+  /** @deprecated use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_NAMES_IN_JAVADOC} instead */
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
-  /** @deprecated Use JavaCodeStyleSettings.USE_SINGLE_CLASS_IMPORTS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_SINGLE_CLASS_IMPORTS */
   @Deprecated
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
-  /** @deprecated Use JavaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_INNER_CLASS_IMPORTS */
   @Deprecated
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
-  /** @deprecated Use JavaCodeStyleSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
   @Deprecated
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
-  /** @deprecated Use JavaCodeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
   @Deprecated
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
-  /** @deprecated Use JavaCodeStyleSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
 
-  /** @deprecated Use JavaCodeStyleSettings.IMPORT_LAYOUT_TABLE */
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
   @Override
   @Deprecated
   public boolean isLayoutStaticImportsSeparately() {
     return LAYOUT_STATIC_IMPORTS_SEPARATELY;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setLayoutStaticImportsSeparately(boolean)} */
   @Override
   @Deprecated
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getNamesCountToUseImportOnDemand()} */
   @Deprecated
   @Override
   public int getNamesCountToUseImportOnDemand() {
     return NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setNamesCountToUseImportOnDemand(int)}  */
   @Deprecated
   @Override
   public void setNamesCountToUseImportOnDemand(int value) {
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getClassCountToUseImportOnDemand()} */
   @Deprecated
   @Override
   public int getClassCountToUseImportOnDemand() {
     return CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setClassCountToUseImportOnDemand(int)} */
   @Deprecated
   @Override
   public void setClassCountToUseImportOnDemand(int value) {
     CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isInsertInnerClassImports()} */
   @Deprecated
   @Override
   public boolean isInsertInnerClassImports() {
     return INSERT_INNER_CLASS_IMPORTS;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setInsertInnerClassImports(boolean)} */
   @Deprecated
   @Override
   public void setInsertInnerClassImports(boolean value) {
     INSERT_INNER_CLASS_IMPORTS = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isUseSingleClassImports()} */
   @Deprecated
   @Override
   public boolean isUseSingleClassImports() {
     return USE_SINGLE_CLASS_IMPORTS;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setUseSingleClassImports(boolean)} */
   @Deprecated
   @Override
   public void setUseSingleClassImports(boolean value) {
     USE_SINGLE_CLASS_IMPORTS = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isUseFqClassNames()} */
   @Deprecated
   @Override
   public boolean isUseFqClassNames() {
     return USE_FQ_CLASS_NAMES;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setUseFqClassNames(boolean)} */
   @Deprecated
   @Override
   public void setUseFqClassNames(boolean value) {
     USE_FQ_CLASS_NAMES = value;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getImportLayoutTable()} */
   @Deprecated
   @Override
   public PackageEntryTable getImportLayoutTable() {
     return IMPORT_LAYOUT_TABLE;
   }
 
+  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getPackagesToUseImportOnDemand()} */
   @Deprecated
   @Override
   public PackageEntryTable getPackagesToUseImportOnDemand() {
@@ -462,10 +434,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 // endregion
 
 // region WRAPPING
-  /**
-   * @deprecated Use get/setRightMargin() methods instead.
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
+
+  @ApiStatus.Internal
   @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
   /**
@@ -482,13 +452,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 // region Javadoc formatting options
 
   /**
-   * @deprecated  Use JavaCodeStyleSettings.ENABLE_JAVADOC_FORMATTING
+   * @deprecated  Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#ENABLE_JAVADOC_FORMATTING}
    */
   @Deprecated
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**
-   * @deprecated Use JavaCodeStyleSettings.JD_LEADING_ASTERISKS_ARE_ENABLED
+   * @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#JD_LEADING_ASTERISKS_ARE_ENABLED}
    */
   @Deprecated
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
@@ -612,6 +582,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // endregion
 
+  /** @deprecated Use {@link com.intellij.application.options.JspCodeStyleSettings#JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST} */
   @Deprecated
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
@@ -989,104 +960,21 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
   }
 
-  public static class TypeToNameMap implements JDOMExternalizable {
-    private final List<String> myPatterns = new ArrayList<>();
-    private final List<String> myNames = new ArrayList<>();
-
-    public void addPair(String pattern, String name) {
-      myPatterns.add(pattern);
-      myNames.add(name);
-    }
-
-    public String nameByType(String type) {
-      for (int i = 0; i < myPatterns.size(); i++) {
-        String pattern = myPatterns.get(i);
-        if (StringUtil.startsWithChar(pattern, '*')) {
-          if (type.endsWith(pattern.substring(1))) {
-            return myNames.get(i);
-          }
-        }
-        else {
-          if (type.equals(pattern)) {
-            return myNames.get(i);
-          }
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public void readExternal(@NonNls Element element) throws InvalidDataException {
-      myPatterns.clear();
-      myNames.clear();
-      for (final Object o : element.getChildren("pair")) {
-        @NonNls Element e = (Element)o;
-
-        String pattern = e.getAttributeValue("type");
-        String name = e.getAttributeValue("name");
-        if (pattern == null || name == null) {
-          throw new InvalidDataException();
-        }
-        myPatterns.add(pattern);
-        myNames.add(name);
-
-      }
-    }
-
-    @Override
-    public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (int i = 0; i < myPatterns.size(); i++) {
-        String pattern = myPatterns.get(i);
-        String name = myNames.get(i);
-        @NonNls Element element = new Element("pair");
-        parentNode.addContent(element);
-        element.setAttribute("type", pattern);
-        element.setAttribute("name", name);
-      }
-    }
-
-    public void copyFrom(TypeToNameMap from) {
-      assert from != this;
-      myPatterns.clear();
-      myPatterns.addAll(from.myPatterns);
-      myNames.clear();
-      myNames.addAll(from.myNames);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other instanceof TypeToNameMap) {
-        TypeToNameMap otherMap = (TypeToNameMap)other;
-        return myPatterns.equals(otherMap.myPatterns) && myNames.equals(otherMap.myNames);
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      int code = 0;
-      for (String myPattern : myPatterns) {
-        code += myPattern.hashCode();
-      }
-      for (String myName : myNames) {
-        code += myName.hashCode();
-      }
-      return code;
+  void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
+    FileType registered = findRegisteredFileType(fileType);
+    if (registered == null || registered instanceof TempFileType) {
+      myAdditionalIndentOptions.put(fileType, options);
     }
   }
 
-  private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
-    boolean exist = false;
+  @Nullable
+  private FileType findRegisteredFileType(@NotNull FileType provided) {
     for (final FileType existing : myAdditionalIndentOptions.keySet()) {
-      if (Comparing.strEqual(existing.getDefaultExtension(), fileType.getDefaultExtension())) {
-        exist = true;
-        break;
+      if (Comparing.strEqual(existing.getDefaultExtension(), provided.getDefaultExtension())) {
+        return existing;
       }
     }
-
-    if (!exist) {
-      myAdditionalIndentOptions.put(fileType, options);
-    }
+    return null;
   }
 
   private void loadAdditionalIndentOptions() {
@@ -1097,6 +985,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
           registerAdditionalIndentOptions(provider.getFileType(), getFileTypeIndentOptions(provider));
         }
       }
+    }
+  }
+
+  void unregisterAdditionalIndentOptions(@NotNull FileType fileType) {
+    FileType registered = findRegisteredFileType(fileType);
+    if (registered != null && !(registered instanceof TempFileType)) {
+      FileType tempFileType = new TempFileType(fileType.getDefaultExtension());
+      IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
+      myAdditionalIndentOptions.remove(fileType);
+      myAdditionalIndentOptions.put(tempFileType, indentOptions);
     }
   }
 
@@ -1159,7 +1057,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return null;
     }
   }
@@ -1229,12 +1127,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     setDefaultRightMargin(rightMargin);
   }
 
-  @SuppressWarnings("deprecation")
   public int getDefaultRightMargin() {
     return RIGHT_MARGIN;
   }
 
-  @SuppressWarnings("deprecation")
   public void setDefaultRightMargin(int rightMargin) {
     RIGHT_MARGIN = rightMargin;
   }
@@ -1322,7 +1218,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
               .forEach(CustomCodeStyleSettings::afterLoaded);
   }
 
-  @SuppressWarnings("deprecation")
   public void resetDeprecatedFields() {
     CodeStyleSettings defaults = getDefaults();
     ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
@@ -1394,4 +1289,28 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myModificationTracker;
   }
 
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+  }
+
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull CodeStyleSettingsProvider provider) {
+    CustomCodeStyleSettings customSettings = provider.createCustomSettings(this);
+    if (customSettings != null) {
+      synchronized (myCustomSettings) {
+        myCustomSettings.remove(customSettings.getClass());
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull CodeStyleSettingsProvider provider) {
+    addCustomSettings(provider.createCustomSettings(this));
+  }
 }

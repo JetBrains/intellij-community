@@ -28,9 +28,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -101,7 +101,7 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
 
     for (Pair<String, Integer> pair : expectedResults) {
       IntentionAction action = myFixture.findSingleIntention("Make extends '" + pair.getFirst());
-      IntentionAction intentionAction = ((IntentionActionDelegate)action).getDelegate();
+      IntentionAction intentionAction = IntentionActionDelegate.unwrap(action);
       if (intentionAction instanceof QuickFixWrapper) {
         ChangeSuperClassFix changeSuperClassFix = getQuickFixFromWrapper((QuickFixWrapper)intentionAction);
         if (changeSuperClassFix != null) {

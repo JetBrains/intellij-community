@@ -16,13 +16,31 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Allows to modify the painting of changelists in the Changes view. Classes implementing this
- * interface need to be registered as project components.
+ * Allows to modify the painting of changelists in the Changes view.
+ * <p>
+ * Classes implementing this interface can be registered as project components.
  */
 public interface ChangeListDecorator {
-  void decorateChangeList(LocalChangeList changeList, ColoredTreeCellRenderer cellRenderer,
+  ProjectExtensionPointName<ChangeListDecorator> EP_NAME = new ProjectExtensionPointName<>("com.intellij.vcs.changeListDecorator");
+
+  @NotNull
+  static List<ChangeListDecorator> getDecorators(@NotNull Project project) {
+    if (project.isDisposed()) return Collections.emptyList();
+    //noinspection deprecation
+    return ContainerUtil.concat(EP_NAME.getExtensions(project),
+                                project.getComponentInstancesOfType(ChangeListDecorator.class));
+  }
+
+  void decorateChangeList(@NotNull LocalChangeList changeList, @NotNull ColoredTreeCellRenderer cellRenderer,
                           boolean selected, boolean expanded, boolean hasFocus);
 }

@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockDumbService;
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -50,23 +50,23 @@ public class CoreProjectEnvironment {
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
+    myProject.registerService(ResolveCache.class, new ResolveCache(myProject));
 
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
-    registerProjectComponent(PsiManager.class, myPsiManager);
+    myPsiManager = new PsiManagerImpl(myProject);
+    myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
-    registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
-                                                                                  myMessageBus,
-                                                                                  new MockDocumentCommitProcessor()));
+    myProject.registerService(DocumentCommitProcessor.class, new MockDocumentCommitProcessor());
+    myProject.registerService(PsiDocumentManager.class, new CorePsiDocumentManager(myProject));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
-    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
+    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myProject));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
     myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
+    myProject.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
 
   @NotNull
@@ -95,7 +95,7 @@ public class CoreProjectEnvironment {
 
   public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
                                                 @NotNull Class<? extends T> aClass) {
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
+    CoreApplicationEnvironment.registerExtensionPoint(myProject.getExtensionArea(), extensionPointName, aClass);
   }
 
   public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {

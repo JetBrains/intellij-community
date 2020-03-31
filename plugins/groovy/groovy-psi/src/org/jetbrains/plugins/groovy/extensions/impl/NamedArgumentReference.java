@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -71,9 +70,8 @@ public class NamedArgumentReference extends PsiPolyVariantReferenceBase<GrArgume
     return super.handleElementRename(newElementName);
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return new GroovyResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, null, null, mySubstitutor, true, true)};
   }
 }

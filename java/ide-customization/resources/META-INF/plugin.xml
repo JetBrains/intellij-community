@@ -1,0 +1,110 @@
+<idea-plugin>
+  <id>com.intellij.java.ide</id>
+  <name>Java IDE Customization</name>
+  <vendor>JetBrains</vendor>
+  <depends>com.intellij.java</depends>
+  <description>Provides customization for IDEs which main language is Java (e.g. IntelliJ IDEA).</description>
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+
+    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
+
+
+    <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
+
+    <!-- preload because in any case will be requested to reopen last projects -->
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"
+                        overrides="true" preload="notHeadless"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
+
+
+    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"
+                         id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
+                         nonDefaultProject="true"/>
+
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+
+    <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
+
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <!--
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
+    -->
+    <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
+
+    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
+    <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
+
+    <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
+    <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
+
+    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
+
+
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.java.JavaIdeLanguageCustomization"
+                        overrides="true"/>
+
+    <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
+                        overrides="true"/>
+  </extensions>
+
+  <actions>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+
+    <group id="OpenProjectGroup">
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true"/>
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <group>
+      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
+    </group>
+
+    <group id="WelcomeScreen.QuickStart.IDEA">
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
+              icon="AllIcons.Welcome.CreateNewProject"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen" icon="AllIcons.Actions.Menu_open"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+
+    <group>
+      <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
+      <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>
+      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+    </group>
+
+    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
+    </action>
+
+    <action id="ExternalSystem.AttachProject"
+            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
+                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+    </action>
+  </actions>
+
+</idea-plugin>

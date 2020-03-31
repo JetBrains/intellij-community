@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompoundTypeRenderer extends CompoundNodeRenderer {
   public static final @NonNls String UNIQUE_ID = "CompoundTypeRenderer";
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer");
+  protected static final Logger LOG = Logger.getInstance(CompoundReferenceRenderer.class);
   private static final AutoToStringRenderer AUTO_TO_STRING_RENDERER = new AutoToStringRenderer();
 
   public CompoundTypeRenderer(NodeRendererSettings rendererSettings,

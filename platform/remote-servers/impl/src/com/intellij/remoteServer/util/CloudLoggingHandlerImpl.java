@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.agent.util.log.TerminalListener;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
+import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
@@ -29,9 +16,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
-/**
- * @author michael.golubev
- */
 public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   private final HashMap<String, LogListenerImpl> myPipeName2LogListener;
@@ -47,6 +31,12 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
+  public String getProjectHash() {
+    Project project = myLogManager.getProject();
+    return "`" + project.getName() + "`:" + project.getLocationHash();
+  }
+
+  @Override
   public void println(String message) {
     myMainLoggingHandler.print(message + "\n");
   }
@@ -58,46 +48,9 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       return cached;
     }
 
-    LogListenerImpl result = new LogListenerImpl(myLogManager.addAdditionalLog(pipeName), true);
+    LogListenerImpl result = new LogListenerImpl(myLogManager.addAdditionalLog(pipeName));
     myPipeName2LogListener.put(pipeName, result);
     return result;
-  }
-
-  @Override
-  public LogListener getOrCreateEmptyLogListener(String pipeName) {
-    LogListenerImpl result = (LogListenerImpl)getOrCreateLogListener(pipeName);
-    result.clear();
-    return result;
-  }
-
-  @Override
-  public LogListener createConsole(String pipeName, final OutputStream consoleInput) {
-    final LoggingHandler loggingHandler = myLogManager.addAdditionalLog(pipeName);
-    loggingHandler.attachToProcess(new ProcessHandler() {
-
-      @Override
-      protected void destroyProcessImpl() {
-
-      }
-
-      @Override
-      protected void detachProcessImpl() {
-
-      }
-
-      @Override
-      public boolean detachIsDefault() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public OutputStream getProcessInput() {
-        return consoleInput;
-      }
-    });
-
-    return new LogListenerImpl(loggingHandler, false);
   }
 
   @Override
@@ -111,28 +64,35 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
                                          InputStream terminalOutput,
                                          InputStream stderr) {
     final TerminalHandler terminalHandler = myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
+
     return new TerminalListener() {
 
       @Override
       public void close() {
-        terminalHandler.close();
+        if (terminalHandler != null) {
+          terminalHandler.close();
+        }
+      }
+
+      @Override
+      public void setTtyResizeHandler(@Nullable TtyResizeHandler ttyResizeHandler) {
+        if (terminalHandler instanceof TerminalHandlerBase && ttyResizeHandler != null) {
+          ((TerminalHandlerBase)terminalHandler).setResizeHandler(ttyResizeHandler);
+        }
       }
     };
   }
 
   private static class LogListenerImpl implements LogListener {
-
     private final LoggingHandler myLoggingHandler;
-    private final boolean myAppendLineBreak;
 
-    LogListenerImpl(LoggingHandler loggingHandler, boolean appendLineBreak) {
+    LogListenerImpl(LoggingHandler loggingHandler) {
       myLoggingHandler = loggingHandler;
-      myAppendLineBreak = appendLineBreak;
     }
 
     @Override
     public void lineLogged(String line) {
-      myLoggingHandler.print(myAppendLineBreak ? line + "\n" : line);
+      myLoggingHandler.print(line);
     }
 
     @Override

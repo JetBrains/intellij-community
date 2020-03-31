@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -30,22 +32,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 class AsyncFilterRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.FilterRunner");
+  private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
   @NotNull private List<FilterResult> myResults = new ArrayList<>();
 
-  AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
+  AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor) {
     myHyperlinks = hyperlinks;
     myEditor = editor;
   }
 
-  void highlightHyperlinks(final Filter customFilter, final int startLine, final int endLine) {
+  void highlightHyperlinks(@NotNull Project project,
+                           @NotNull Filter customFilter,
+                           final int startLine,
+                           final int endLine) {
     if (endLine < 0) return;
 
-    myQueue.offer(new HighlighterJob(customFilter, startLine, endLine, myEditor.getDocument()));
+    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, myEditor.getDocument()));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
@@ -56,7 +61,8 @@ class AsyncFilterRunner {
 
     if (isQuick(promise)) {
       highlightAvailableResults();
-    } else {
+    }
+    else {
       promise.onSuccess(__ -> {
         if (hasResults()) {
           ApplicationManager.getApplication().invokeLater(this::highlightAvailableResults, ModalityState.any());
@@ -107,8 +113,7 @@ class AsyncFilterRunner {
     }
   }
 
-  @SuppressWarnings("UnusedReturnValue")
-  public boolean waitForPendingFilters(long timeoutMs) {
+  boolean waitForPendingFilters(long timeoutMs) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     
     long started = System.currentTimeMillis();
@@ -132,10 +137,12 @@ class AsyncFilterRunner {
   }
 
   private void runTasks() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myEditor.isDisposed()) return;
 
     while (!myQueue.isEmpty()) {
       HighlighterJob highlighter = myQueue.peek();
+      if (!DumbService.isDumbAware(highlighter.filter) && DumbService.isDumb(highlighter.myProject)) return;
       while (highlighter.hasUnprocessedLines()) {
         ProgressManager.checkCanceled();
         addLineResult(highlighter.analyzeNextLine());
@@ -179,13 +186,21 @@ class AsyncFilterRunner {
   }
 
   private class HighlighterJob {
+    @NotNull private final Project myProject;
     private final AtomicInteger startLine;
     private final int endLine;
     private final DeltaTracker delta;
+    @NotNull
     private final Filter filter;
+    @NotNull
     private final Document snapshot;
 
-    HighlighterJob(Filter filter, int startLine, int endLine, Document document) {
+    HighlighterJob(@NotNull Project project,
+                   @NotNull Filter filter,
+                   int startLine,
+                   int endLine,
+                   @NotNull Document document) {
+      myProject = project;
       this.startLine = new AtomicInteger(startLine);
       this.endLine = endLine;
       this.filter = filter;
@@ -200,14 +215,14 @@ class AsyncFilterRunner {
     }
 
     @Nullable
-    AsyncFilterRunner.FilterResult analyzeNextLine() {
+    private AsyncFilterRunner.FilterResult analyzeNextLine() {
       int line = startLine.get();
       Filter.Result result = analyzeLine(line);
       LOG.assertTrue(line == startLine.getAndIncrement());
       return result == null ? null : new FilterResult(delta, result);
     }
 
-    Filter.Result analyzeLine(int line) {
+    private Filter.Result analyzeLine(int line) {
       int lineStart = snapshot.getLineStartOffset(line);
       if (lineStart + delta.getOffsetDelta() < 0) return null;
 

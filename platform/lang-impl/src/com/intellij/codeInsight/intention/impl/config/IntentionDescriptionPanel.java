@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -19,30 +16,28 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.TitledSeparator;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+// used in Rider
 public class IntentionDescriptionPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel");
+  private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private JPanel myPanel;
 
   private JPanel myAfterPanel;
   private JPanel myBeforePanel;
   private JEditorPane myDescriptionBrowser;
-  private TitledSeparator myBeforeSeparator;
-  private TitledSeparator myAfterSeparator;
   private JPanel myPoweredByPanel;
   private JPanel myDescriptionPanel;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
@@ -51,16 +46,16 @@ public class IntentionDescriptionPanel {
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 
   public IntentionDescriptionPanel() {
-    myDescriptionBrowser.addHyperlinkListener(
-      new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            BrowserUtil.browse(e.getURL());
-          }
-        }
+    myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.before"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myAfterPanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.after"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myPoweredByPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      CodeInsightBundle.message("powered.by"), false, JBUI.insetsTop(8)).setShowLine(false));
+
+    myDescriptionBrowser.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        BrowserUtil.browse(e.getURL());
       }
-    );
+    });
   }
 
   // TODO 134099: see SingleInspectionProfilePanel#readHTML and and PostfixDescriptionPanel#readHtml
@@ -77,7 +72,7 @@ public class IntentionDescriptionPanel {
   // TODO 134099: see SingleInspectionProfilePanel#setHTML and PostfixDescriptionPanel#readHtml
   private String toHTML(String text) {
     final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
-    hintHint.setFont(UIUtil.getLabelFont());
+    hintHint.setFont(StartupUiUtil.getLabelFont());
     return HintUtil.prepareHintText(text, hintHint);
   }
 
@@ -90,8 +85,8 @@ public class IntentionDescriptionPanel {
       readHTML(description);
       setupPoweredByPanel(actionMetaData);
 
-      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
-      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
+      showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
+      showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
 
@@ -104,16 +99,13 @@ public class IntentionDescriptionPanel {
   private void setupPoweredByPanel(final IntentionActionMetaData actionMetaData) {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     myPoweredByPanel.removeAll();
-    IdeaPluginDescriptorImpl pluginDescriptor  = (IdeaPluginDescriptorImpl)PluginManager.getPlugin(pluginId);
+    IdeaPluginDescriptorImpl pluginDescriptor  = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(pluginId);
     boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled();
     if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
-      label.addHyperlinkListener(new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          Project project = ProjectManager.getInstance().getDefaultProject();
-          PluginManagerConfigurableProxy.showPluginConfigurable(null, project, pluginDescriptor);
-        }
+      label.addHyperlinkListener(__ -> {
+        Project project = ProjectManager.getInstance().getDefaultProject();
+        PluginManagerConfigurableProxy.showPluginConfigurable(null, project, pluginDescriptor);
       });
       myPoweredByPanel.add(label, BorderLayout.CENTER);
     }
@@ -126,10 +118,11 @@ public class IntentionDescriptionPanel {
       readHTML(toHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory)));
       setupPoweredByPanel(null);
 
-      URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + BEFORE_TEMPLATE);
-      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(beforeURL)});
-      URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
-      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(afterURL)});
+      String pathForPackage = getClass().getPackage().getName().replace('.', '/');
+      TextDescriptor beforeTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + BEFORE_TEMPLATE);
+      showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
+      TextDescriptor afterTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + AFTER_TEMPLATE);
+      showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
     }
@@ -139,9 +132,8 @@ public class IntentionDescriptionPanel {
   }
 
   private static void showUsages(final JPanel panel,
-                                 final TitledSeparator separator,
                                  final List<IntentionUsagePanel> usagePanels,
-                                 @Nullable final TextDescriptor[] exampleUsages) throws IOException {
+                                 final TextDescriptor @Nullable [] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -181,9 +173,6 @@ public class IntentionDescriptionPanel {
         usagePanel.reset(exampleUsage.getText(), fileType);
 
         if (!reuse) {
-          if (i == exampleUsages.length) {
-            gb.gridwidth = GridBagConstraints.REMAINDER;
-          }
           panel.add(usagePanel, gb);
           gb.gridx++;
         }

@@ -22,6 +22,7 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -29,20 +30,27 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAction<PsiFile> {
 
-  public CreateFileFromTemplateAction(String text, String description, Icon icon) {
+  public CreateFileFromTemplateAction(@NlsActions.ActionText String text,
+                                      @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  public CreateFileFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   protected PsiFile createFileFromTemplate(final String name, final FileTemplate template, final PsiDirectory dir) {
@@ -70,7 +78,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       name = mkdirs.newName;
       dir = mkdirs.directory;
     }
-    
+
     Project project = dir.getProject();
     try {
       PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir)

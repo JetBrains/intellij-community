@@ -51,9 +51,8 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     e.getPresentation().setVisible(visible);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     final AnAction[] actions = new AnAction[MAX_DELAY];
     for (int i = 0; i < MAX_DELAY; i++) {
       actions[i] = new SetAutoTestDelayAction(i + 1);

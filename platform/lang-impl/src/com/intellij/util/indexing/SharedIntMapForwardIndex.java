@@ -35,7 +35,7 @@ public class SharedIntMapForwardIndex implements IntForwardIndex {
     Boolean old = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
     try {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myVerificationIndexHasChunks);
-      myPersistentMap = new PersistentHashMap<Integer, Integer>(myVerificationIndexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
+      myPersistentMap = new PersistentHashMap<Integer, Integer>(myVerificationIndexStorageFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
         protected boolean wantNonNegativeIntegralValues() {
           return true;
@@ -99,14 +99,7 @@ public class SharedIntMapForwardIndex implements IntForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    File baseFile = myPersistentMap.getBaseFile();
-    try {
-      myPersistentMap.close();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    PersistentHashMap.deleteFilesStartingWith(baseFile);
+    PersistentHashMap.deleteMap(myPersistentMap);
     createMap();
   }
 

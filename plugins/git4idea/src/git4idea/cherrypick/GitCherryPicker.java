@@ -2,6 +2,7 @@
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,6 +21,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,17 +34,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcsSettings mySettings;
 
   public GitCherryPicker(@NotNull Project project) {
-    this(project, Git.getInstance());
-  }
-
-  public GitCherryPicker(@NotNull Project project, @NotNull Git git) {
     myProject = project;
-    myGit = git;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     mySettings = GitVcsSettings.getInstance(myProject);
   }
@@ -51,8 +47,8 @@ public class GitCherryPicker extends VcsCherryPicker {
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
-      myGit.cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                       listeners.toArray(new GitLineHandlerListener[0])),
+      Git.getInstance().cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
+                                   listeners.toArray(new GitLineHandlerListener[0])),
       result -> isNothingToCommitMessage(result),
       (repository, commit) -> createCommitMessage(repository, commit),
       true,
@@ -82,7 +78,7 @@ public class GitCherryPicker extends VcsCherryPicker {
    * We control the cherry-pick workflow ourselves + we want to use partial commits ('git commit --only'), which is prohibited during
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
-  private Unit cancelCherryPick(@NotNull GitRepository repository) {
+  private static Unit cancelCherryPick(@NotNull GitRepository repository) {
     if (isAutoCommit()) {
       removeCherryPickHead(repository);
     }
@@ -108,18 +104,20 @@ public class GitCherryPicker extends VcsCherryPicker {
     return GitVcs.getKey();
   }
 
-  @NotNull
+
   @Override
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getActionTitle() {
-    return "Cherry-Pick";
+    return DvcsBundle.message("cherry.pick.action.text");
   }
 
-  private boolean isAutoCommit() {
+  private static boolean isAutoCommit() {
     return GitVcsApplicationSettings.getInstance().isAutoCommitOnCherryPick();
   }
 
   @Override
   public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
+    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRootQuick(r) != null);
   }
 }

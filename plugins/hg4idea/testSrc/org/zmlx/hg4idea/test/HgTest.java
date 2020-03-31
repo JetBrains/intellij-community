@@ -14,35 +14,41 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
+import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.junit.After;
+import org.junit.Before;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
-import java.io.*;
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The ancestor of all intellij.vcs.hg test cases.
  *
  * @deprecated Use {@link HgPlatformTest}.
  */
-public abstract class HgTest extends AbstractVcsTestCase {
-
+public abstract class HgTest extends AbstractJunitVcsTestCase {
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
   public static final String HG_EXECUTABLE = "hg";
 
@@ -57,9 +63,10 @@ public abstract class HgTest extends AbstractVcsTestCase {
   protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
   protected HgTestChangeListManager myChangeListManager;
   private HgTestRepository myMainRepo;
+  private HgVcs myVcs;
 
-  @BeforeMethod
-  protected void setUp(final Method testMethod) throws Exception {
+  @Before
+  public void setUp() throws Exception {
     // setting hg executable
     String exec = System.getenv(HG_EXECUTABLE_PATH);
     if (exec != null) {
@@ -73,11 +80,15 @@ public abstract class HgTest extends AbstractVcsTestCase {
     myMainRepo = initRepositories();
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       try {
-        initProject(myProjectDir, testMethod.getName());
+        initProject(myProjectDir, getTestName());
         activateVCS(HgVcs.VCS_NAME);
-      } catch (Exception e) {
+
+        myVcs = HgVcs.getInstance(myProject);
+        myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+      }
+      catch (Exception e) {
         e.printStackTrace();
       }
     });
@@ -88,16 +99,24 @@ public abstract class HgTest extends AbstractVcsTestCase {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  @AfterMethod
-  protected void tearDown() throws Exception {
-    GuiUtils.runOrInvokeAndWait(() -> {
-      try {
-        tearDownProject();
-        tearDownRepositories();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+  @After
+  public void tearDown() throws Exception {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new RunAll()
+        .append(() -> myVcs.getGlobalSettings().setHgExecutable(null))
+        .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
+        .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
+        .append(() -> tearDownFixture())
+        .append(() -> tearDownRepositories())
+        .run();
     });
+  }
+
+  private void tearDownFixture() throws Exception {
+    if (myProjectFixture != null) {
+      myProjectFixture.tearDown();
+      myProjectFixture = null;
+    }
   }
 
   protected abstract HgTestRepository initRepositories() throws Exception;
@@ -127,13 +146,22 @@ public abstract class HgTest extends AbstractVcsTestCase {
 
   /**
    * Verifies the status of the file calling native 'hg status' command.
+   * Hg status output may contain extra unversioned files a.e. hg-checkexec-XXX
+   * for more details see https://www.mercurial-scm.org/pipermail/mercurial/2014-April/047031.html
    *
    * @param status status as returned by {@link #added(java.lang.String)} and other methods.
    * @throws IOException
    */
   protected void verifyStatus(String... status) throws IOException {
-    verify(runHg(myProjectDir, "status"), status);
-}
+    verifyStatus(myProjectDir, status);
+  }
+
+  protected void verifyStatus(@Nullable File workingDir, String... status) throws IOException {
+    ProcessOutput statusOutput = runHg(workingDir, "status");
+    verify(statusOutput);
+    UsefulTestCase.assertContainsElements(statusOutput.getStdoutLines(), Arrays.asList(status));
+  }
+
   /**
    * Calls "hg add ." to add everything to the index.
    */
@@ -160,11 +188,9 @@ public abstract class HgTest extends AbstractVcsTestCase {
    * Registers HgMockVcsHelper as the AbstractVcsHelper.
    */
   protected HgMockVcsHelper registerMockVcsHelper() {
-    final String key = "com.intellij.openapi.vcs.AbstractVcsHelper";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, HgMockVcsHelper.class);
-    return (HgMockVcsHelper) AbstractVcsHelper.getInstance(myProject);
+    HgMockVcsHelper instance = new HgMockVcsHelper(myProject);
+    ServiceContainerUtil.replaceService(myProject, AbstractVcsHelper.class, instance, myProject);
+    return instance;
   }
 
   protected VirtualFile makeFile(File file) throws IOException {
@@ -176,14 +202,21 @@ public abstract class HgTest extends AbstractVcsTestCase {
 
   /**
    * Executes the given native Mercurial command with parameters in the given working directory.
+   *
    * @param workingDir  working directory where the command will be executed. May be null.
    * @param commandLine command and parameters (e.g. 'status, -m').
    */
   protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
-    return createClientRunner().runClient(HG_EXECUTABLE, null, workingDir, commandLine);
+    ProcessOutput processOutput;
+    int attempt = 0;
+    do {
+      processOutput = createClientRunner().runClient(HG_EXECUTABLE, null, workingDir, commandLine);
+    }
+    while (HgErrorUtil.isWLockError(new HgCommandResult(processOutput)) && attempt++ < 2);
+    return processOutput;
   }
 
-  protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
+  protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws IOException {
     File parentDir = aParentDir;
     for (int i = 0; i < filePath.length - 1; i++) {
       File current = new File(parentDir, filePath[i]);
@@ -193,10 +226,7 @@ public abstract class HgTest extends AbstractVcsTestCase {
       parentDir = current;
     }
     File outputFile = new File(parentDir, filePath[filePath.length - 1]);
-
-    PrintStream printer = new PrintStream(new FileOutputStream(outputFile));
-    printer.print(fileContents);
-    printer.close();
+    FileUtil.writeToFile(outputFile, fileContents);
 
     return outputFile;
   }

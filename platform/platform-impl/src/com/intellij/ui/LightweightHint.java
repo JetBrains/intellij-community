@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import java.util.EventObject;
 
 public class LightweightHint extends UserDataHolderBase implements Hint {
   public static final Key<Boolean> SHOWN_AT_DEBUG = Key.create("shown.at.debug");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
+  private static final Logger LOG = Logger.getInstance(LightweightHint.class);
 
   private final JComponent myComponent;
   private JComponent myFocusBackComponent;
@@ -123,7 +123,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
     myComponent.validate();
 
-    if (!myForceShowAsPopup &&
+    if (!myForceShowAsPopup && !hintHint.isPopupForced() &&
         (myForceLightweightPopup ||
          fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)), hintHint))) {
       beforeShow();
@@ -192,11 +192,17 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     else {
       myIsRealPopup = true;
       Point actualPoint = new Point(x, y);
+      if (hintHint.getPreferredPosition() == Balloon.Position.atLeft) {
+        int width = myComponent.getPreferredSize().width;
+        actualPoint.translate(-width, 0);
+      }
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
       if (isAwtTooltip()) {
-        int inset = BalloonImpl.getNormalInset();
-        actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
+        if (!Registry.is("editor.new.mouse.hover.popups")) {
+          int inset = BalloonImpl.getNormalInset();
+          actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
+        }
         actualComponent.setBackground(hintHint.getTextBackground());
         actualComponent.validate();
       }
@@ -353,14 +359,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           if (layeredPane != null) {
             Rectangle bounds = myComponent.getBounds();
             try {
-              if (myFocusBackComponent != null) {
-                LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
-              }
               layeredPane.remove(myComponent);
             }
-            finally {
-              LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-            }
+            finally {}
 
             layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
           }

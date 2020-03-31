@@ -16,8 +16,43 @@
 
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * A marker interface for the action which could be toggled between "selected" and "not selected" states.
+ */
 public interface Toggleable {
+  /**
+   * A property for the presentation to hold the state of the toggleable action.
+   * Normally you should not use this directly.
+   * Use {@link #isSelected(Presentation)} and {@link #setSelected(Presentation, boolean)} methods instead.
+   */
+  @ApiStatus.Internal
   @NonNls String SELECTED_PROPERTY = "selected";
+
+  /**
+   * Checks whether given presentation is in the "selected" state
+   * @param presentation presentation to check
+   * @return true if "selected", false if "not selected" or the state wasn't set previously.
+   */
+  @Contract(pure = true)
+  static boolean isSelected(@NotNull Presentation presentation) {
+    Object property = presentation.getClientProperty(SELECTED_PROPERTY);
+    if (property != null && !(property instanceof Boolean)) {
+      throw new IllegalStateException("Unexpected value for '" + SELECTED_PROPERTY + "': " + property + "; presentation=" + presentation);
+    }
+    return property != null && (Boolean)property;
+  }
+
+  /**
+   * Sets the selected state for given presentation (assuming it's a presentation of a toggleable action)
+   * @param presentation presentation to update
+   * @param selected whether the state should be "selected" or "not selected".
+   */
+  static void setSelected(@NotNull Presentation presentation, boolean selected) {
+    presentation.putClientProperty(SELECTED_PROPERTY, selected);
+  }
 }

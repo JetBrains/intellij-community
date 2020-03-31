@@ -1,42 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager {
-  private final TypedAction myTypedAction = new TypedAction();
-  private final DefaultRawTypedHandler myDefaultRawTypedHandler;
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
-  private final ActionManager myActionManager;
-
-  public EditorActionManagerImpl(ActionManager actionManager) {
-    myActionManager = actionManager;
-    myDefaultRawTypedHandler = new DefaultRawTypedHandler(myTypedAction);
-    myTypedAction.setupRawHandler(myDefaultRawTypedHandler);
-  }
 
   @Override
   public EditorActionHandler getActionHandler(@NotNull String actionId) {
-    return ((EditorAction) myActionManager.getAction(actionId)).getHandler();
+    return ((EditorAction) ActionManager.getInstance().getAction(actionId)).getHandler();
   }
 
   @Override
   public EditorActionHandler setActionHandler(@NotNull String actionId, @NotNull EditorActionHandler handler) {
-    EditorAction action = (EditorAction)myActionManager.getAction(actionId);
+    EditorAction action = (EditorAction)ActionManager.getInstance().getAction(actionId);
     return action.setupHandler(handler);
   }
 
   @Override
   @NotNull
   public TypedAction getTypedAction() {
-    return myTypedAction;
+    return TypedAction.getInstance();
   }
 
   @Override
@@ -74,10 +65,6 @@ public class EditorActionManagerImpl extends EditorActionManager {
       Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),
                                EditorBundle.message("guarded.block.modification.attempt.error.title"));
     }
-  }
-
-  public DefaultRawTypedHandler getDefaultRawTypedHandler() {
-    return myDefaultRawTypedHandler;
   }
 }
 

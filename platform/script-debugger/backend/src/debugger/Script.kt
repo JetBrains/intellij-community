@@ -31,6 +31,8 @@ interface Script : UserDataHolderEx {
     NORMAL
   }
 
+  val vm: Vm
+
   val type: Type
 
   var sourceMap: SourceMap?
@@ -45,6 +47,4 @@ interface Script : UserDataHolderEx {
   val column: Int
 
   val endLine: Int
-
-  val isWorker: Boolean
 }

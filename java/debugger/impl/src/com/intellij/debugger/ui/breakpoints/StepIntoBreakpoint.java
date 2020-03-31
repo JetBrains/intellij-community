@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
@@ -35,7 +21,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");
+  private static final Logger LOG = Logger.getInstance(StepIntoBreakpoint.class);
   @NotNull private final BreakpointStepMethodFilter myFilter;
   @Nullable private RequestHint myHint;
 
@@ -130,19 +116,17 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   }
 
   @Override
-  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event)
     throws EventProcessingException {
     boolean res = super.processLocatableEvent(action, event);
-    if (res && myHint != null && myHint.isResetIgnoreFilters()) {
-      SuspendContextImpl context = action.getSuspendContext();
-      if (context != null) {
-        DebugProcessImpl process = context.getDebugProcess();
-        process.checkPositionNotFiltered(context.getThread(), f -> process.getSession().resetIgnoreStepFiltersFlag());
-      }
+    SuspendContextImpl context = action.getSuspendContext();
+    if (res && context != null) {
+      context.getDebugProcess().resetIgnoreSteppingFilters(event.location(), myHint);
     }
     return res;
   }
 
+  @Override
   public void setRequestHint(RequestHint hint) {
     myHint = hint;
   }

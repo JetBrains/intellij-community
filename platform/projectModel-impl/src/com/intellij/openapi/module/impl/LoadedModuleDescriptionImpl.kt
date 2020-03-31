@@ -19,9 +19,6 @@ import com.intellij.openapi.module.LoadedModuleDescription
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 
-/**
- * @author nik
- */
 class LoadedModuleDescriptionImpl(private val module: Module): LoadedModuleDescription {
   override fun getModule(): Module = module
 

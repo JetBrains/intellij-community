@@ -75,7 +75,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(@NotNull RunConfigurationBase configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings) {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }

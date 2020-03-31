@@ -25,35 +25,35 @@ import java.util.Map;
  * @author peter
  */
 public class ClassMap<T> {
-  protected final Map<Class, T> myMap;
+  protected final Map<Class<?>, T> myMap;
 
   public ClassMap() {
     this(new THashMap<>());
   }
-  protected ClassMap(@NotNull Map<Class, T> map) {
+  protected ClassMap(@NotNull Map<Class<?>, T> map) {
     myMap = map; 
   }
 
-  public void put(@NotNull Class aClass, T value) {
+  public void put(@NotNull Class<?> aClass, T value) {
     myMap.put(aClass, value);
   }
-  public void remove(@NotNull Class aClass) {
+  public void remove(@NotNull Class<?> aClass) {
     myMap.remove(aClass);
   }
 
-  public T get(@NotNull Class aClass) {
+  public T get(@NotNull Class<?> aClass) {
     T t = myMap.get(aClass);
     if (t != null) {
       return t;
     }
-    for (final Class aClass1 : aClass.getInterfaces()) {
+    for (final Class<?> aClass1 : aClass.getInterfaces()) {
       t = get(aClass1);
       if (t != null) {
         myMap.put(aClass, t);
         return t;
       }
     }
-    final Class superclass = aClass.getSuperclass();
+    final Class<?> superclass = aClass.getSuperclass();
     if (superclass != null) {
       t = get(superclass);
       if (t != null) {

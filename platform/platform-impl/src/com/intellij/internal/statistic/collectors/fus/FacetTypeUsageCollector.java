@@ -4,10 +4,11 @@ package com.intellij.internal.statistic.collectors.fus;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -25,28 +26,30 @@ import java.util.Set;
 public class FacetTypeUsageCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
+  public String getGroupId() {
+    return "module.facets";
+  }
+
+  @Override
+  public int getVersion() {
+    return 4;
+  }
+
+  @NotNull
+  @Override
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
     final Set<String> facets = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
         facets.add(facet.getType().getStringId());
       }
     }
-    return ContainerUtil.map2Set(facets, facet -> new UsageDescriptor(facet, 1));
+    return ContainerUtil.map2Set(
+      facets, facet -> new MetricEvent("module.with.facet", new FeatureUsageData().addData("facet", facet))
+    );
   }
 
-  @Override
-  public int getVersion() {
-    return 2;
-  }
-
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "module.facets";
-  }
-
-  public static class FacetTypeUtilValidator extends CustomUtilsWhiteListRule {
+  public static class FacetTypeUtilValidator extends CustomWhiteListRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -56,16 +59,14 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+      if ("invalid".equals(data) || isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final FacetType facet = findFacetById(data);
       if (facet == null) {
         return ValidationResultType.REJECTED;
       }
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
-      if (StringUtil.equals(data, context.eventId)) {
-        context.setPluginInfo(info);
-      }
+      context.setPluginInfo(info);
       return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
 

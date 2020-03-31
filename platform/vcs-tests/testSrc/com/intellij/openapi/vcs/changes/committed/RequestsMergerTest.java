@@ -16,14 +16,16 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.RequestsMerger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class RequestsMergerTest extends TestCase {
@@ -80,7 +82,7 @@ public class RequestsMergerTest extends TestCase {
     Assert.assertEquals(true, victim.isExecuted()); // 1st finished
     Assert.assertEquals(true, victim.isExecutionSubmitted()); // 2nd submitted
     Assert.assertTrue(victim.isChildExited());
-    victim.myThread.join();
+    victim.myThread.get();
   }
 
   public void testAfterRefreshIsCalled() throws Exception {
@@ -151,15 +153,11 @@ public class RequestsMergerTest extends TestCase {
   }
 
   private static class SimpleExecutor implements Consumer<Runnable> {
-    private final ExecutorService myExecutor;
-
-    private SimpleExecutor() {
-      myExecutor = ConcurrencyUtil.newSingleThreadExecutor("req merge test");
-    }
+    private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Req Merge Test");
 
     @Override
     public void consume(Runnable runnable) {
-      myExecutor.submit(runnable);
+      myExecutor.execute(runnable);
     }
 
     public void dispose() throws InterruptedException {
@@ -224,7 +222,7 @@ public class RequestsMergerTest extends TestCase {
   private static class MyDelayableTestVictim extends MyTestVictim {
     private final Semaphore mySemaphore;
     private volatile boolean myChildExited;
-    private Thread myThread;
+    private Future<?> myThread;
 
     private MyDelayableTestVictim() {
       mySemaphore = new Semaphore();
@@ -235,9 +233,7 @@ public class RequestsMergerTest extends TestCase {
       // another thread
       final Semaphore local = new Semaphore();
       local.down();
-      myThread = new Thread("req merge test") {
-        @Override
-        public void run() {
+      myThread = AppExecutorUtil.getAppExecutorService().submit(() -> {
           try {
             local.up();
             myRunnable.run();
@@ -245,9 +241,7 @@ public class RequestsMergerTest extends TestCase {
           finally {
             myChildExited = true;
           }
-        }
-      };
-      myThread.start();
+        });
       local.waitFor();
       myExecutionSubmitted = false;   // hack: to check further submissions
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -8,21 +8,25 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +40,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
@@ -99,35 +104,52 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static boolean isInspectionsEnabled(final boolean online, @NotNull Project project) {
+  public static boolean isInspectionsEnabled(final boolean online,
+                                             @NotNull Project project,
+                                             @NotNull Runnable rerunAction) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
       if (modules.length == 0) {
-        Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.modules.error.message"),
-                                   CommonBundle.message("title.error"), Messages.getErrorIcon());
+        Messages.showMessageDialog(project, JavaBundle.message("inspection.no.modules.error.message"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
-      while (isBadSdk(project, modules)) {
-        Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
-                                   CommonBundle.message("title.error"), Messages.getErrorIcon());
-        final Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
-        if (projectJdk == null) return false;
-        DumbService.getInstance(project).completeJustSubmittedTasks();
+      if (isBadSdk(project, modules)) {
+        Messages.showMessageDialog(project, JavaBundle.message("inspection.no.jdk.error.message"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+
+        SdkPopupFactory
+          .newBuilder()
+          .withProject(project)
+          .withSdkType(JavaSdk.getInstance())
+          .updateProjectSdkFromSelection()
+          .onSdkSelected(sdk -> {
+            DumbService.getInstance(project).completeJustSubmittedTasks();
+            rerunAction.run();
+          })
+          .buildPopup()
+          .showInFocusCenter();
+
+        return false;
       }
     }
     else {
       if (modules.length == 0) {
-        System.err.println(InspectionsBundle.message("inspection.no.modules.error.message"));
+        System.err.println(JavaBundle.message("inspection.no.modules.error.message"));
         return false;
       }
       if (isBadSdk(project, modules)) {
-        System.err.println(InspectionsBundle.message("inspection.no.jdk.error.message"));
+        System.err.println(JavaBundle.message("inspection.no.jdk.error.message"));
         System.err.println(
-          InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
+          JavaBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
         return false;
       }
+
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        if (ModuleType.get(module) instanceof JavaModuleType && rootManager.getSourceRoots(true).length == 0) {
+          LOG.info(JavaBundle.message("offline.inspections.no.source.roots", module.getName()));
+        }
         final OrderEntry[] entries = rootManager.getOrderEntries();
         for (OrderEntry entry : entries) {
           if (entry instanceof JdkOrderEntry) {
@@ -141,16 +163,17 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
             if (library == null) {
-              System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
+              System.err.println(JavaBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
             }
             else {
               Set<String> detectedUrls =
                 Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
-              HashSet<String> declaredUrls = new HashSet<>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+              Set<String> declaredUrls = ContainerUtil.set(library.getUrls(OrderRootType.CLASSES));
               declaredUrls.removeAll(detectedUrls);
+              declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {
-                System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
+                System.err.println(JavaBundle.message("offline.inspections.library.urls.were.not.resolved",
                                                              StringUtil.join(declaredUrls, ", "),
                                                              libraryOrderEntry.getPresentableName(), module.getName()));
               }
@@ -205,7 +228,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           return true;
         }
         //e.g. xml files were not included in the graph, so usages there should be processed as external
-        boolean inGraph = processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA;
+        boolean inGraph = processedReferences ? refManager.isInGraph(file) : FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.JAVA);
         return !inGraph;
       }
 
@@ -390,7 +413,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           result.add(id);
         }
       }
-      Collections.sort(result, (o1, o2) -> {
+      result.sort((o1, o2) -> {
         PsiFile psiFile1 = o1.getContainingFile();
         LOG.assertTrue(psiFile1 != null);
         PsiFile psiFile2 = o2.getContainingFile();

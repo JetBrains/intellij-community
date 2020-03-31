@@ -19,11 +19,12 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
+public abstract class SLRUCache<K, V> extends SLRUMap<K, V> {
   protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
     super(protectedQueueSize, probationalQueueSize);
   }
@@ -54,4 +55,16 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
     return super.get(key);
   }
 
+  @NotNull
+  public static <K, V> SLRUCache<K, V> create(int protectedQueueSize,
+                                              int probationalQueueSize,
+                                              @NotNull final NotNullFunction<? super K, ? extends V> valueProducer) {
+    return new SLRUCache<K, V>(protectedQueueSize, probationalQueueSize) {
+      @NotNull
+      @Override
+      public V createValue(K key) {
+        return valueProducer.fun(key);
+      }
+    };
+  }
 }

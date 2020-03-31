@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
@@ -112,7 +113,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
 
-    myAllAssigneesCheckBox = new JBCheckBox("Include issues not assigned to me");
+    myAllAssigneesCheckBox = new JBCheckBox(TaskBundle.message("checkbox.include.issues.not.assigned.to.me"));
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myAPIKeyLabel, myAPIKey)
       .addLabeledComponent(myProjectLabel, myProjectCombo)

@@ -19,7 +19,7 @@ import java.util.List;
 
 // todo: move to intellij.platform.lang.impl ?
 public class CompositeAppearance implements ModifiableCellAppearanceEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
+  private static final Logger LOG = Logger.getInstance(CompositeAppearance.class);
 
   private Icon myIcon;
   private final List<TextSection> mySections = new ArrayList<>();

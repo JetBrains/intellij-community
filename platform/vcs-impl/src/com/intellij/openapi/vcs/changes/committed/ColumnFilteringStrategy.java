@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.ChangeListColumn;
@@ -9,7 +9,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +68,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     myProviderClass = providerClass;
   }
 
+  @NotNull
   @Override
   public CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.USER);
@@ -84,18 +85,18 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void setFilterBase(List<CommittedChangeList> changeLists) {
+  public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     myPreferredSelection = null;
     appendFilterBase(changeLists);
   }
 
   @Override
-  public void addChangeListener(final ChangeListener listener) {
+  public void addChangeListener(@NotNull ChangeListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeChangeListener(final ChangeListener listener) {
+  public void removeChangeListener(@NotNull ChangeListener listener) {
     myListeners.remove(listener);
   }
 
@@ -109,7 +110,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void appendFilterBase(List<CommittedChangeList> changeLists) {
+  public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     final Object[] oldSelection = myModel.isEmpty() ? myPreferredSelection : myValueList.getSelectedValues();
 
     myModel.addNext(changeLists, ourConvertorInstance);
@@ -134,10 +135,10 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     final Object[] selection = myValueList.getSelectedValues();
     if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {
-      return changeLists;
+      return new ArrayList<>(changeLists);
     }
     List<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList changeList : changeLists) {
@@ -158,7 +159,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     private volatile String[] myValues;
 
     private MyListModel() {
-      myValues = ArrayUtil.EMPTY_STRING_ARRAY;
+      myValues = ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     public <T> void addNext(final Collection<? extends T> values, final Convertor<? super T, String> convertor) {
@@ -170,7 +171,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
           set.add(converted);
         }
       }
-      myValues = ArrayUtil.toStringArray(set);
+      myValues = ArrayUtilRt.toStringArray(set);
       fireContentsChanged(this, 0, myValues.length);
     }
 
@@ -192,7 +193,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     public void clear() {
-      myValues = ArrayUtil.EMPTY_STRING_ARRAY;
+      myValues = ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
   }
 }

@@ -40,6 +40,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * @author db
@@ -134,6 +135,22 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return new File(workDir, StringUtil.trimEnd(path, suffix));
   }
 
+  public <T> T executeWithSystemProperty(String propName, String propValue, Callable<T> action) throws Exception {
+    final String oldValue = System.getProperty(propName);
+    try {
+      System.setProperty(propName, propValue);
+      return action.call();
+    }
+    finally {
+      if (oldValue != null) {
+        System.setProperty(propName, oldValue);
+      }
+      else {
+        System.clearProperty(propName);
+      }
+    }
+  }
+
   public BuildResult doTest() {
     setupInitialProject();
 
@@ -219,8 +236,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected JpsLibrary addLibrary(final String jarPath) {
-    JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    library.addRoot(new File(getAbsolutePath(jarPath)), JpsOrderRootType.COMPILED);
+    return addLibrary("l", new File(getAbsolutePath(jarPath)));
+  }
+
+  protected JpsLibrary addLibrary(final String libraryName, final File jarFile) {
+    JpsLibrary library = myProject.addLibrary(libraryName, JpsJavaLibraryType.INSTANCE);
+    library.addRoot(jarFile, JpsOrderRootType.COMPILED);
     return library;
   }
 

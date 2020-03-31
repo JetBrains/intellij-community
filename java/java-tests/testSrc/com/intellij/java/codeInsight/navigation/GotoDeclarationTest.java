@@ -21,14 +21,14 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class GotoDeclarationTest extends LightCodeInsightTestCase {
+public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -42,7 +42,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
   public void testBreakLabel() {  doTest(); }
   public void testAnonymous() {  doTest(); }
 
-  private static void performAction() {
+  private void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertEquals(getFile(), element.getContainingFile());
     getEditor().getCaretModel().moveToOffset(element.getTextOffset());
@@ -64,7 +64,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertEquals("java.lang", JavaDirectoryService.getInstance().getPackage(element).getQualifiedName());
   }
 
-  public void testMultipleConstructors() {
+  private void doTestMultipleConstructors() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
@@ -77,6 +77,14 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNotNull(reference);
     final Collection<PsiElement> candidates = elementUtilBase.getTargetCandidates(reference);
     assertEquals(candidates.toString(), 2, candidates.size());
+  }
+
+  public void testMultipleConstructors() {
+    doTestMultipleConstructors();
+  }
+
+  public void testMultipleGenericConstructorsOnIncompleteCall() {
+    doTestMultipleConstructors();
   }
 
   public void testMultipleConstructorsButArrayCreation() {

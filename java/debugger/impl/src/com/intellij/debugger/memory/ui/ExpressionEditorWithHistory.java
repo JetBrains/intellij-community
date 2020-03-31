@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,7 +37,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
     super(project, debuggerEditorsProvider, HISTORY_ID_PREFIX + className, null,
           XExpressionImpl.EMPTY_EXPRESSION, false, true, true);
 
-    new AnAction("InstancesWindow.ShowHistory") {
+    new AnAction(JavaDebuggerBundle.message("instances.window.show.history")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         showHistory();
@@ -48,17 +49,14 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), getComponent(), parentDisposable);
 
-    new SwingWorker<Void, Void>() {
-      @Override
-      protected Void doInBackground() {
-        ApplicationManager.getApplication().runReadAction(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(()->
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (!project.isDisposed()) {
           final PsiClass psiClass = DebuggerUtils.findClass(className,
                                                             project, GlobalSearchScope.allScope(project));
-          ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass));
-        });
-        return null;
-      }
-    }.execute();
+          ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass), project.getDisposed());
+        }
+      }));
   }
 
   private void showHistory() {

@@ -69,6 +69,17 @@ class MapTest {
   }
 
   @Test
+  fun `empty map`() {
+    class TestBean {
+      @JvmField
+      val map: MutableMap<String, Set<String>> = THashMap()
+    }
+
+    val bean = TestBean()
+    test(bean, defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
+  }
+
+  @Test
   fun `bean map`() {
     val bean = TestMapBean()
 

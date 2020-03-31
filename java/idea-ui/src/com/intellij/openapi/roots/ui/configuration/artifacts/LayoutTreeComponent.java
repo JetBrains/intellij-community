@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
@@ -41,11 +28,11 @@ import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBUI;
@@ -54,6 +41,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -61,8 +50,9 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
 public class LayoutTreeComponent implements DnDTarget, Disposable {
   @NonNls private static final String EMPTY_CARD = "<empty>";
@@ -73,10 +63,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
+  private final StructureTreeModel<LayoutTreeStructure> myStructureTreeModel;
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<>(null);
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
-  private final LayoutTreeBuilder myBuilder;
   private boolean mySortElements;
   private final LayoutTreeStructure myTreeStructure;
 
@@ -87,11 +77,11 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myContext = context;
     myOriginalArtifact = originalArtifact;
     mySortElements = sortElements;
-    myTree = new LayoutTree(myArtifactsEditor);
     myTreeStructure = new LayoutTreeStructure();
-    myBuilder = new LayoutTreeBuilder();
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, getComparator(), this);
+    myTree = new LayoutTree(myArtifactsEditor, myStructureTreeModel);
+    myTree.setModel(new AsyncTreeModel(myStructureTreeModel, this));
     Disposer.register(this, myTree);
-    Disposer.register(this, myBuilder);
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -115,7 +105,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void setSortElements(boolean sortElements) {
     mySortElements = sortElements;
-    myBuilder.setNodeDescriptorComparator(getComparator());
+    myStructureTreeModel.setComparator(getComparator());
     myArtifactsEditor.getContext().getParent().getDefaultSettings().setSortElements(sortElements);
   }
 
@@ -161,7 +151,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void rebuildTree() {
-    myBuilder.updateFromRoot(true);
+    myTreeStructure.clearCaches();
+    myStructureTreeModel.invalidate();
     updatePropertiesPanel(true);
     myArtifactsEditor.queueValidation();
   }
@@ -179,7 +170,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
     else {
       parent = getArtifact().getRootElement();
-      parentNode = myTree.getRootPackagingNode();
+      parentNode = getRootNode();
     }
     if (!checkCanAdd(parent, parentNode)) return;
 
@@ -236,13 +227,16 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     if (nodeSources.size() > 1) {
       Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                               "The selected node consist of several elements so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
+                               JavaUiBundle.message(
+                                 "error.message.the.selected.node.consist.of.several.elements.so.it.cannot.be.edited"));
     }
     else {
     final PackagingNodeSource source = ContainerUtil.getFirstItem(nodeSources, null);
       if (source != null) {
         Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                                 "The selected node belongs to '" + source.getPresentableName() + "' element so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
+                                 JavaUiBundle.message(
+                                   "error.message.the.selected.node.belongs.to.0.element.so.it.cannot.be.edited",
+                                   source.getPresentableName()));
       }
     }
     return false;
@@ -279,7 +273,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
-      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, "Remove Elements", null);
+      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, JavaUiBundle.message(
+        "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;
     }
     return true;
@@ -288,42 +283,28 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
     myArtifactsEditor.queueValidation();
     myTreeStructure.clearCaches();
-    myBuilder.queueUpdateFrom(node, true).doWhenDone(() -> {
-      List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
-      myBuilder.select(ArrayUtil.toObjectArray(nodes), null);
-    });
+    List<PackagingElementNode<?>> nodesToSelect = Collections.synchronizedList(new ArrayList<>(toSelect.size()));
+    myStructureTreeModel.invalidate(node, true)
+      .thenAsync(result -> TreeUtil.promiseVisit(myTree, (path) -> {
+        Object nodeObject = TreeUtil.getLastUserObject(path);
+        if (nodeObject instanceof PackagingElementNode && ContainerUtil.intersects(((PackagingElementNode<?>)nodeObject).getPackagingElements(), toSelect)) {
+          nodesToSelect.add((PackagingElementNode)nodeObject);
+        }
+        return TreeVisitor.Action.CONTINUE;
+      }))
+      .thenAsync(result -> Promises.collectResults(ContainerUtil.map(nodesToSelect, nodeToSelect -> myStructureTreeModel.promiseVisitor(nodeToSelect))))
+      .thenAsync(visitors -> TreeUtil.promiseSelect(myTree, visitors.stream()));
   }
 
-  public void selectNode(@NotNull String parentPath, @NotNull PackagingElement<?> element) {
-    final PackagingElementNode<?> parent = myTree.findCompositeNodeByPath(parentPath);
-    if (parent == null) return;
-
-    for (SimpleNode node : parent.getChildren()) {
-      if (node instanceof PackagingElementNode) {
-        final List<? extends PackagingElement<?>> elements = ((PackagingElementNode<?>)node).getPackagingElements();
-        for (PackagingElement<?> packagingElement : elements) {
-          if (packagingElement.isEqualTo(element)) {
-            myBuilder.select(node);
-            return;
-          }
-        }
-      }
-    }
+  public Promise<TreePath> selectNode(@NotNull String parentPath, @NotNull PackagingElement<?> element) {
+    Predicate<PackagingElementNode<?>> filter = node -> node.getPackagingElements().stream().anyMatch(element::isEqualTo);
+    return TreeUtil.promiseSelect(myTree, myTree.createVisitorCompositeNodeChild(parentPath, filter));
   }
 
   @TestOnly
-  public void selectNode(@NotNull String parentPath, @NotNull String nodeName) {
-    final PackagingElementNode<?> parent = myTree.findCompositeNodeByPath(parentPath);
-    if (parent == null) return;
-
-    for (SimpleNode node : parent.getChildren()) {
-      if (node instanceof PackagingElementNode) {
-        if (nodeName.equals(((PackagingElementNode)node).getElementPresentation().getSearchName())) {
-          myBuilder.select(node);
-          return;
-        }
-      }
-    }
+  public Promise<TreePath> selectNode(@NotNull String parentPath, @NotNull String nodeName) {
+    Predicate<PackagingElementNode<?>> filter = node -> node.getElementPresentation().getSearchName().equals(nodeName);
+    return TreeUtil.promiseSelect(myTree, myTree.createVisitorCompositeNodeChild(parentPath, filter));
   }
 
   public void editLayout(Runnable action) {
@@ -340,7 +321,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void removeNodes(final List<? extends PackagingElementNode<?>> nodes) {
-    Set<PackagingElement<?>> parents = new HashSet<>();
+    Set<PackagingElementNode<?>> parents = new HashSet<>();
     for (PackagingElementNode<?> node : nodes) {
       final List<? extends PackagingElement<?>> toDelete = node.getPackagingElements();
       for (PackagingElement<?> element : toDelete) {
@@ -348,22 +329,21 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         if (nodeSources.isEmpty()) {
           final CompositePackagingElement<?> parent = node.getParentElement(element);
           if (parent != null) {
-            parents.add(parent);
+            ContainerUtil.addIfNotNull(parents, node.getParentNode());
             parent.removeChild(element);
           }
         }
         else {
           Collection<PackagingNodeSource> rootSources = getRootNodeSources(nodeSources);
           for (PackagingNodeSource source : rootSources) {
-            parents.add(source.getSourceParentElement());
+            parents.add(source.getSourceParentNode());
             source.getSourceParentElement().removeChild(source.getSourceElement());
           }
         }
       }
     }
-    final List<PackagingElementNode<?>> parentNodes = myTree.findNodes(parents);
-    for (PackagingElementNode<?> parentNode : parentNodes) {
-      myTree.addSubtreeToUpdate(parentNode);
+    for (PackagingElementNode<?> parent : parents) {
+      myTree.addSubtreeToUpdate(parent);
     }
   }
 
@@ -396,7 +376,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         return parent;
       }
     }
-    return myTree.getRootPackagingNode();
+    return getRootNode();
   }
 
   public JPanel getTreePanel() {
@@ -473,14 +453,6 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return null;
   }
 
-  @Override
-  public void cleanUpOnLeave() {
-  }
-
-  @Override
-  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-  }
-
   public void startRenaming(TreePath path) {
     myTree.startEditingAtPath(path);
   }
@@ -492,27 +464,28 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void setRootElement(CompositePackagingElement<?> rootElement) {
     myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setRootElement(rootElement);
     myTreeStructure.updateRootElement();
-    final DefaultMutableTreeNode node = myTree.getRootNode();
-    node.setUserObject(myTreeStructure.getRootElement());
-    myBuilder.updateNode(node);
     rebuildTree();
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
   }
 
+  public PackagingElementNode<?> getRootNode() {
+    return myTreeStructure.getRootNode();
+  }
+
+  @NotNull
   public CompositePackagingElement<?> getRootElement() {
     return myContext.getRootElement(myOriginalArtifact);
   }
 
   public void updateTreeNodesPresentation() {
-    myBuilder.updateFromRoot(false);
+    myStructureTreeModel.invalidate();
   }
 
   public void updateRootNode() {
-    myBuilder.updateNode(myTree.getRootNode());
+    myStructureTreeModel.invalidate(myTreeStructure.getRootElement(), false);
   }
 
   public void initTree() {
-    myBuilder.initRootNode();
     mySelectedElementInfo.showPropertiesPanel();
   }
 
@@ -538,7 +511,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     });
 
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
-    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
+    updateAndSelect(getRootNode(), toSelect);
   }
 
   public void putElements(@NotNull final String path, @NotNull final List<? extends PackagingElement<?>> elements) {
@@ -549,7 +522,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       toSelect.addAll(directory.addOrFindChildren(elements));
     });
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
-    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
+    updateAndSelect(getRootNode(), toSelect);
   }
 
   public void packInto(@NotNull final List<? extends PackagingSourceItem> items, final String pathToJar) {
@@ -565,7 +538,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     });
 
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
-    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
+    updateAndSelect(getRootNode(), toSelect);
   }
 
   public boolean isPropertiesModified() {
@@ -626,26 +599,19 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     @NotNull
     @Override
     public Object getRootElement() {
+      return getRootNode();
+    }
+
+    @NotNull
+    ArtifactRootNode getRootNode() {
       if (myRootNode == null) {
-        myRootNode = PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters, getArtifact().getArtifactType());
+        myRootNode = PackagingTreeNodeFactory.createRootNode(LayoutTreeComponent.this.getRootElement(), myContext, mySubstitutionParameters, getArtifact().getArtifactType());
       }
       return myRootNode;
     }
 
     public void updateRootElement() {
       myRootNode = null;
-    }
-  }
-
-  private class LayoutTreeBuilder extends SimpleTreeBuilder {
-    LayoutTreeBuilder() {
-      super(LayoutTreeComponent.this.myTree, LayoutTreeComponent.this.myTree.getBuilderModel(), LayoutTreeComponent.this.myTreeStructure,
-            LayoutTreeComponent.this.getComparator());
-    }
-
-    @Override
-    public void updateNode(DefaultMutableTreeNode node) {
-      super.updateNode(node);
     }
   }
 }

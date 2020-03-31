@@ -18,14 +18,12 @@ package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
+import gnu.trove.TIntLongHashMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class IntTimestampGetter implements TimestampGetter {
 
-  public static final int DEFAULT_BLOCK_SIZE = 30;
+  private static final int DEFAULT_BLOCK_SIZE = 30;
 
   private static final long MAX_DELTA = Integer.MAX_VALUE - 10;
   private static final int BROKEN_DELTA = Integer.MAX_VALUE;
@@ -45,7 +43,7 @@ public class IntTimestampGetter implements TimestampGetter {
       saveTimestamps[i] = delegateGetter.getTimestamp(blockSize * i);
     }
 
-    Map<Integer, Long> brokenDeltas = new HashMap<>();
+    TIntLongHashMap brokenDeltas = new TIntLongHashMap();
     int[] deltas = new int[delegateGetter.size()];
 
     for (int i = 0; i < delegateGetter.size(); i++) {
@@ -55,7 +53,7 @@ public class IntTimestampGetter implements TimestampGetter {
       deltas[i] = intDelta;
       if (intDelta == BROKEN_DELTA) brokenDeltas.put(i, delta);
     }
-
+    brokenDeltas.compact();
     return new IntTimestampGetter(deltas, blockSize, saveTimestamps, brokenDeltas);
   }
 
@@ -70,14 +68,14 @@ public class IntTimestampGetter implements TimestampGetter {
   // myDeltas[i] = getTimestamp(i + 1) - getTimestamp(i)
   private final IntList myDeltas;
 
-  @NotNull private final Map<Integer, Long> myBrokenDeltas;
+  @NotNull private final TIntLongHashMap myBrokenDeltas;
 
   private final int myBlockSize;
 
   // saved 0, blockSize, 2 * blockSize, etc.
   private final long[] mySaveTimestamps;
 
-  public IntTimestampGetter(final int[] deltas, int blockSize, long[] saveTimestamps, @NotNull Map<Integer, Long> brokenDeltas) {
+  private IntTimestampGetter(final int[] deltas, int blockSize, long[] saveTimestamps, @NotNull TIntLongHashMap brokenDeltas) {
     myDeltas = SmartDeltaCompressor.newInstance(new FullIntList(deltas));
     myBlockSize = blockSize;
     mySaveTimestamps = saveTimestamps;

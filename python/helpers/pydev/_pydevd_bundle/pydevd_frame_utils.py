@@ -1,5 +1,3 @@
-from _pydevd_bundle.pydevd_constants import IS_PY3K
-
 class Frame(object):
     def __init__(
             self,
@@ -39,19 +37,23 @@ FILES_WITH_IMPORT_HOOKS = ['pydev_monkey_qt.py', 'pydev_import_hook.py']
 def just_raised(trace):
     if trace is None:
         return False
-    if trace.tb_next is None:
-        if IS_PY3K:
-            if trace.tb_frame.f_code.co_filename != '<frozen importlib._bootstrap>':
-                # Do not stop on inner exceptions in py3 while importing
-                return True
-        else:
+    return trace.tb_next is None
+
+def ignore_exception_trace(trace):
+    while trace is not None:
+        filename = trace.tb_frame.f_code.co_filename
+        if filename in (
+            '<frozen importlib._bootstrap>', '<frozen importlib._bootstrap_external>'):
+            # Do not stop on inner exceptions in py3 while importing
             return True
-    if trace.tb_next is not None:
-        filename = trace.tb_next.tb_frame.f_code.co_filename
+
         # ImportError should appear in a user's code, not inside debugger
         for file in FILES_WITH_IMPORT_HOOKS:
             if filename.endswith(file):
                 return True
+
+        trace = trace.tb_next
+
     return False
 
 def cached_call(obj, func, *args):
@@ -60,5 +62,3 @@ def cached_call(obj, func, *args):
         setattr(obj, cached_name, func(*args))
 
     return getattr(obj, cached_name)
-
-

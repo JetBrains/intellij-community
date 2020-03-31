@@ -1,0 +1,1 @@
+from foo.ba<caret>r import baz

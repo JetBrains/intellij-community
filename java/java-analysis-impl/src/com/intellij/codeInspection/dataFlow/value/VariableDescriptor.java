@@ -2,6 +2,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +63,12 @@ public interface VariableDescriptor {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
     PsiType type = getType(null);
-    return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
+    LongRangeSet range = LongRangeSet.fromPsiElement(getPsiElement());
+    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, getPsiElement()));
+    if (dfType instanceof DfIntegralType) {
+      dfType = ((DfIntegralType)dfType).meetRange(range);
+    }
+    return factory.fromDfType(dfType);
   }
 
   /**

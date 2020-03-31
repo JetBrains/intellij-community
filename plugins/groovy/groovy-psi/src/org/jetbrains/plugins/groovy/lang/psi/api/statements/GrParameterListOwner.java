@@ -7,8 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 
 public interface GrParameterListOwner extends GrParametersOwner {
 
-  @NotNull
-  GrParameter[] getParameters();
+  GrParameter @NotNull [] getParameters();
 
   @NotNull
   GrParameterList getParameterList();

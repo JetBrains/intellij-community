@@ -20,10 +20,13 @@ import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
+import git4idea.update.GitUpdateInfoAsLog;
+import git4idea.update.HashRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,10 +65,17 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   }
 
   public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
-    GitPushResult result = pushOperation.execute();
-    GitPushResultNotification notification = GitPushResultNotification.create(project, result, pushOperation,
-                                                                              GitUtil.getRepositoryManager(project).moreThanOneRoot());
-    notification.notify(project);
+    GitPushResult pushResult = pushOperation.execute();
+
+    Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
+    GitUpdateInfoAsLog.NotificationData notificationData = !updatedRanges.isEmpty() ?
+                                                           new GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab() :
+                                                           null;
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      boolean multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot();
+      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData).notify(project);
+    });
   }
 
   protected void expireExistingErrorsAndWarnings() {

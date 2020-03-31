@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
@@ -31,18 +29,6 @@ public class TreeUtil {
     }
   }
 
-  public static void ensureParsedRecursively(@NotNull ASTNode node) {
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() { });
-  }
-  public static void ensureParsedRecursivelyCheckingProgress(@NotNull ASTNode node, @NotNull final ProgressIndicator indicator) {
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      public void visitLeaf(LeafElement leaf) {
-        indicator.checkCanceled();
-      }
-    });
-  }
-
   public static boolean isCollapsedChameleon(ASTNode node) {
     return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
   }
@@ -60,33 +46,16 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode skipElements(@Nullable ASTNode element, @NotNull TokenSet types) {
-    while (true) {
-      if (element == null) return null;
-      if (!types.contains(element.getElementType())) break;
-      element = element.getTreeNext();
-    }
-    return element;
+    ASTNode candidate = element;
+    while (candidate != null && types.contains(candidate.getElementType())) candidate = candidate.getTreeNext();
+    return candidate;
   }
 
   @Nullable
   public static ASTNode skipElementsBack(@Nullable ASTNode element, @NotNull TokenSet types) {
-    if (element == null) return null;
-    if (!types.contains(element.getElementType())) return element;
-
-    ASTNode parent = element.getTreeParent();
-    ASTNode prev = element;
-    while (prev instanceof CompositeElement) {
-      if (!types.contains(prev.getElementType())) return prev;
-      prev = prev.getTreePrev();
-    }
-    if (prev == null) return null;
-    ASTNode firstChildNode = parent.getFirstChildNode();
-    ASTNode lastRelevant = null;
-    while (firstChildNode != prev) {
-      if (!types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
-      firstChildNode = firstChildNode.getTreeNext();
-    }
-    return lastRelevant;
+    ASTNode candidate = element;
+    while (candidate != null && types.contains(candidate.getElementType())) candidate = candidate.getTreePrev();
+    return candidate;
   }
 
   @Nullable

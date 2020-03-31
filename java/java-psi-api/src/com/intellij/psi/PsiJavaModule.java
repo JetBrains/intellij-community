@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -15,11 +14,12 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
   String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
   String JAVA_BASE = "java.base";
+  String AUTO_MODULE_NAME = "Automatic-Module-Name";
 
   /* See http://openjdk.java.net/jeps/261#Class-loaders, "Class loaders" */
-  Set<String> UPGRADEABLE = Collections.unmodifiableSet(ContainerUtil.newTroveSet(
+  Set<String> UPGRADEABLE = ContainerUtil.immutableSet(
     "java.activation", "java.compiler", "java.corba", "java.transaction", "java.xml.bind", "java.xml.ws", "java.xml.ws.annotation",
-    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws"));
+    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws");
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();

@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class RootsChangedTest extends ModuleTestCase {
+public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
 
   @Override
@@ -330,21 +330,25 @@ public class RootsChangedTest extends ModuleTestCase {
     assertNoEvents(false);
   }
 
-  private void assertNoEvents(boolean modificationCountMustBeIncremented) {
-    assertEventsCountAndIncrementModificationCount(0, modificationCountMustBeIncremented);
+  private void assertNoEvents(boolean modificationCountMayBeIncremented) {
+    assertEventsCountAndIncrementModificationCount(0, false, modificationCountMayBeIncremented);
   }
 
   private void assertEventsCount(int count) {
-    assertEventsCountAndIncrementModificationCount(count, count != 0);
+    assertEventsCountAndIncrementModificationCount(count, count != 0, false);
   }
 
-  private void assertEventsCountAndIncrementModificationCount(int eventsCount, boolean modificationCountMustBeIncremented) {
+  private void assertEventsCountAndIncrementModificationCount(int eventsCount, boolean modificationCountMustBeIncremented,
+                                                              boolean modificationCountMayBeIncremented) {
     final int beforeCount = myModuleRootListener.beforeCount;
     final int afterCount = myModuleRootListener.afterCount;
     assertEquals("beforeCount = " + beforeCount + ", afterCount = " + afterCount, beforeCount, afterCount);
     assertEquals(eventsCount, beforeCount);
     long currentModificationCount = ProjectRootManager.getInstance(myProject).getModificationCount();
-    if (modificationCountMustBeIncremented) {
+    if (modificationCountMayBeIncremented) {
+      assertTrue(currentModificationCount >= myModuleRootListener.modificationCount);
+    }
+    else if (modificationCountMustBeIncremented) {
       assertTrue(currentModificationCount > myModuleRootListener.modificationCount);
     }
     else {

@@ -15,7 +15,9 @@ public enum ExternalSystemSourceType implements IExternalSystemSourceType {
   SOURCE_GENERATED(false, true, false, false),
   TEST_GENERATED(true, true, false, false),
   RESOURCE(false, false, true, false),
-  TEST_RESOURCE(true, false, true, false);
+  TEST_RESOURCE(true, false, true, false),
+  RESOURCE_GENERATED(false, true, true, false),
+  TEST_RESOURCE_GENERATED(true, true, true, false);
 
   private final boolean isTest;
   private final boolean isGenerated;

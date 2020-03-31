@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" dynamic="true"/>
+    <extensionPoint name="fileBasedIndexInfrastructureExtension" interface="com.intellij.util.indexing.FileBasedIndexInfrastructureExtension" dynamic="true"/>
+    <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>
+    <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>
+    <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

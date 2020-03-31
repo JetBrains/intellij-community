@@ -11,4 +11,7 @@
   <item name='java.lang.Process java.io.OutputStream getOutputStream()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.ThreadLocal java.lang.ThreadLocal&lt;S&gt; withInitial(java.util.function.Supplier&lt;? extends S&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

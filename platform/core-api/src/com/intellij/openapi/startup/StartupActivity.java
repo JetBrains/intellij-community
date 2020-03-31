@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,16 +6,25 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Runs an activity on project open.
- * <p>
- * If the activity implements {@link com.intellij.openapi.project.DumbAware} it will be started in a pooled thread under 'Loading Project' dialog,
- * otherwise it will be started in the dispatch thread after the initialization.
+ * <p>Runs an activity on project open.</p>
  *
- * @author Dmitry Avdeev
+ * <p>If the activity implements {@link com.intellij.openapi.project.DumbAware} interface, e.g. {@link DumbAware}, it will be started in a pooled thread
+ * under 'Loading Project' dialog, otherwise it will be started in the dispatch thread after the initialization.</p>
+ *
+ * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
  */
 public interface StartupActivity {
-
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
 
+  /**
+   * Please see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
+   */
+  ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
+
   void runActivity(@NotNull Project project);
+
+  interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
+  }
+
+  interface Background extends StartupActivity, com.intellij.openapi.project.DumbAware {}
 }

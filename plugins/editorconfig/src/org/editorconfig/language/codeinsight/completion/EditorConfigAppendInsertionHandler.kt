@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.completion
 
 import com.intellij.application.options.CodeStyle
@@ -20,10 +20,6 @@ class EditorConfigAppendInsertionHandler(
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     val document = context.document
     val editor = context.editor
-    val project = editor.project
-
-    val scrollingModel = editor.scrollingModel
-    val selectionModel = editor.selectionModel
 
     val caretModel = editor.caretModel
     val caretOffset = caretModel.offset
@@ -32,12 +28,12 @@ class EditorConfigAppendInsertionHandler(
 
     if (shouldMoveCaret) {
       caretModel.moveToOffset(caretOffset + suffix.length)
-      scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+      editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     }
-    selectionModel.removeSelection()
+    editor.selectionModel.removeSelection()
 
     if (shouldAutopopup) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
+      AutoPopupController.getInstance(editor.project!!).scheduleAutoPopup(editor)
     }
   }
 }

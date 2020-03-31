@@ -26,9 +26,9 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
@@ -36,7 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class XsltSupport {
 
@@ -62,31 +64,29 @@ public class XsltSupport {
     XPATH_ATTR_MAP.put("value", "number");
     XPATH_ATTR_MAP.put("use", "key");
 
-    XPATH_AVT_MAP.put("element", new THashSet<>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("attribute", new THashSet<>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("namespace", new THashSet<>(Collections.singletonList("name")));
-    XPATH_AVT_MAP.put("processing-instruction", new THashSet<>(Collections.singletonList("name")));
+    XPATH_AVT_MAP.put("element", ContainerUtil.set("name", "namespace"));
+    XPATH_AVT_MAP.put("attribute", ContainerUtil.set("name", "namespace"));
+    XPATH_AVT_MAP.put("namespace", ContainerUtil.set("name"));
+    XPATH_AVT_MAP.put("processing-instruction", ContainerUtil.set("name"));
 
-    XPATH_AVT_MAP.put("number", new THashSet<>(
-      Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal")));
-    XPATH_AVT_MAP.put("sort", new THashSet<>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
+    XPATH_AVT_MAP.put("number", ContainerUtil.set("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal"));
+    XPATH_AVT_MAP.put("sort", ContainerUtil.set("lang", "data-type", "order", "case-order", "collation"));
 
-    XPATH_AVT_MAP.put("message", new THashSet<>(Collections.singletonList("terminate")));
-    XPATH_AVT_MAP.put("value-of", new THashSet<>(Collections.singletonList("separator")));
+    XPATH_AVT_MAP.put("message", ContainerUtil.set("terminate"));
+    XPATH_AVT_MAP.put("value-of", ContainerUtil.set("separator"));
 
-    XPATH_AVT_MAP.put("result-document", new THashSet<>(Arrays.asList("format", "href", "method", "byte-order-mark",
-                                                                      "cdata-section-elements", "doctype-public", "doctype-system",
-                                                                      "encoding", "escape-uri-attributes", "include-content-type",
-                                                                      "indent", "media-type", "normalization-form",
-                                                                      "omit-xml-declaration", "standalone", "undeclare-prefixes",
-                                                                      "output-version")));
+    XPATH_AVT_MAP.put("result-document", ContainerUtil.set("format", "href", "method", "byte-order-mark",
+                                                           "cdata-section-elements", "doctype-public", "doctype-system",
+                                                           "encoding", "escape-uri-attributes", "include-content-type",
+                                                           "indent", "media-type", "normalization-form",
+                                                           "omit-xml-declaration", "standalone", "undeclare-prefixes",
+                                                           "output-version"));
   }
 
   private XsltSupport() {
   }
 
-  @NotNull
-  public static PsiFile[] getFiles(XmlAttribute attribute) {
+  public static PsiFile @NotNull [] getFiles(XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
       final List<PsiFile> files = new SmartList<>();

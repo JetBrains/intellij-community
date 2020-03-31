@@ -3,6 +3,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,11 +13,15 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,11 +29,15 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Function;
 
-public class RenameWrongRefFix implements IntentionAction {
+public class RenameWrongRefFix implements IntentionAction, HintAction {
   private final PsiReferenceExpression myRefExpr;
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
@@ -56,27 +67,20 @@ public class RenameWrongRefFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
-    int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
-    TextRange textRange = refName.getTextRange();
-    if (textRange == null || offset < textRange.getStartOffset() ||
-        offset > textRange.getEndOffset()) {
-      return false;
-    }
-
+    
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
-  @NotNull
-  private LookupElement[] collectItems() {
+  private LookupElement @NotNull [] collectItems() {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
       for (PsiVariable var : vars) {
-        items.add(LookupElementBuilder.create(var.getName()));
+        items.add(createLookupElement(var, v-> v.getName()));
       }
     } else {
       class MyScopeProcessor implements PsiScopeProcessor {
@@ -113,16 +117,21 @@ public class RenameWrongRefFix implements IntentionAction {
         }
       }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
+      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(createLookupElement(myRefExpr, r -> r.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();
       for (PsiElement variant : variants) {
-        items.add(LookupElementBuilder.create(((PsiNamedElement)variant).getName()));
+        items.add(createLookupElement((PsiNamedElement)variant, v -> v.getName()));
       }
     }
 
     return items.toArray(LookupElement.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private static <T extends PsiElement> LookupElementBuilder createLookupElement(T variant, Function<T, String> toPresentableElement) {
+    return LookupElementBuilder.create(variant, toPresentableElement.apply(variant));
   }
 
   @Override
@@ -161,5 +170,72 @@ public class RenameWrongRefFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public boolean showHint(@NotNull Editor editor) {
+    if (!Registry.is("editor.show.popup.for.unresolved.references", false)) {
+      return false;
+    }
+    LookupElement[] items = collectItems();
+    if (items.length == 0) return false;
+    String hintText = ShowAutoImportPass.getMessage(items.length > 1, items[0].getLookupString());
+    TextRange textRange = myRefExpr.getTextRange();
+    HintManager.getInstance().showQuestionHint(editor, hintText, textRange.getStartOffset(), textRange.getEndOffset(),
+                                               new RenameWrongRefQuestionAction(items, editor));
+    return true;
+  }
+
+  private class RenameWrongRefQuestionAction implements QuestionAction {
+    private final LookupElement[] myItems;
+    private final Editor myEditor;
+
+    private RenameWrongRefQuestionAction(LookupElement[] items, Editor editor) {
+      myItems = items;
+      myEditor = editor;
+    }
+
+    @Override
+    public boolean execute() {
+      if (myItems.length == 1 && myRefExpr.getTextRange().contains(myEditor.getCaretModel().getOffset())) {
+        doFix(myItems[0]);
+        return true;
+      }
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(Arrays.asList(myItems))
+        .setTitle(QuickFixBundle.message("rename.reference"))
+        .setRenderer(new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(JList<?> list,
+                                                        Object value,
+                                                        int index,
+                                                        boolean isSelected,
+                                                        boolean cellHasFocus) {
+            Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof LookupElement) {
+              setText(((LookupElement)value).getLookupString());
+            }
+            return component;
+          }
+        })
+        .setItemChosenCallback(element -> {
+          doFix(element);
+        })
+        .createPopup()
+        .showInBestPositionFor(myEditor);
+      return true;
+    }
+
+    private void doFix(LookupElement element) {
+      Project project = myRefExpr.getProject();
+      final PsiExpression referenceFromText = JavaPsiFacade.getElementFactory(project)
+          .createExpressionFromText(element.getLookupString(), myRefExpr);
+      final PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
+      WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
+        for (PsiReferenceExpression ref : refs) {
+          ref.replace(referenceFromText);
+        }
+      }, myRefExpr.getContainingFile());
+    }
   }
 }

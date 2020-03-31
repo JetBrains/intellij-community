@@ -160,6 +160,15 @@ public class PullUpTest extends LightRefactoringTestCase {
   public void testTypeParamsConflictingNames() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
+  
+  public void testReferencedStaticMethodFromOuterClass() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
+  }
+  
+  public void testReferencedStaticGenericClassFromOuterClass() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class),
+           new RefactoringTestUtil.MemberDescriptor("D", PsiClass.class));
+  }
 
   public void testConflictOnNewAbstractMethod() {
     doTest(false, "Concrete 'class <b><code>C</code></b>' would inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));

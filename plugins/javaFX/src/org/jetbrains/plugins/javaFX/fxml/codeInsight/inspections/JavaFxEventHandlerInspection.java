@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -21,6 +21,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -55,7 +56,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
         if (eventHandlerMethods.size() != 1) {
-          holder.registerProblem(xmlAttributeValue, "Ambiguous event handler name: more than one matching method found");
+          holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
         }
 
         if (myDetectNonVoidReturnType) {
@@ -63,7 +64,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             .map(PsiMethod::getReturnType)
             .filter(returnType -> !PsiType.VOID.equals(returnType))
             .findAny()
-            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, "Return type of event handler should be void"));
+            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }
 
         final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
@@ -83,14 +84,14 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                   quickFixes.add(parameterTypeFix);
                   collectFieldTypeFixes(attribute, (PsiClassType)actualType, quickFixes);
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible generic parameter of event handler argument: " + actualType.getCanonicalText() +
-                                         " is not assignable from " + declaredType.getCanonicalText(),
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.generic.parameter.problem",
+                                                                   actualType.getCanonicalText(), declaredType.getCanonicalText()),
                                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible event handler argument: " + actualRawType.getCanonicalText() +
-                                         " is not assignable from " + expectedRawType.getCanonicalText(),
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.handler.argument",
+                                                                   actualRawType.getCanonicalText(), expectedRawType.getCanonicalText()),
                                          parameterTypeFix);
                 }
               }
@@ -125,7 +126,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+    return new SingleCheckboxOptionsPanel(JavaFXBundle.message("inspection.javafx.event.handler.create.options.panel"), this, "myDetectNonVoidReturnType");
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -193,7 +194,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Change parameter type of event handler method";
+      return JavaFXBundle.message("inspection.javafx.event.handler.change.parameter.type");
     }
 
     @Override
@@ -219,7 +220,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
       if (declaredType == null) return;
 
-      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, declaredType);
+      final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(0).withName(parameterName).withType(declaredType);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final ChangeSignatureProcessor processor =
           new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),

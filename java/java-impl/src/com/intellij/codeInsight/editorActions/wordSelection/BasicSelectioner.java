@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import org.jetbrains.annotations.NotNull;

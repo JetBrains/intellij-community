@@ -26,7 +26,7 @@
         <properties>
           <labelFor value="2d944"/>
           <nextFocusableComponent value=""/>
-          <text value="&amp;Method name:"/>
+          <text resource-bundle="messages/JavaDebuggerBundle" key="label.add.wildcard.breakpoint.dialog.method.name"/>
         </properties>
       </component>
       <component id="2d944" class="javax.swing.JTextField" binding="myMethodNameField">
@@ -51,7 +51,7 @@
         </constraints>
         <properties>
           <labelFor value="ee438"/>
-          <text value="&amp;Class pattern:"/>
+          <text resource-bundle="messages/JavaDebuggerBundle" key="label.add.wildcard.breakpoint.dialog.class.pattern"/>
         </properties>
       </component>
     </children>

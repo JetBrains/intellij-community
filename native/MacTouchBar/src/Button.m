@@ -377,19 +377,19 @@ void updateButton(
         const char *raster4ByteRGBA, int w, int h,
         execute jaction
 ) {
-    NSCustomTouchBarItem *container = buttObj;
-    NSButtonJAction *button = (container).view;
-
     NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
     NSString *nstext = createStringFromUTF8(text);
 
     if ([NSThread isMainThread]) {
-        nstrace(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
+        NSButtonJAction *button = ((NSCustomTouchBarItem *)buttObj).view;
+        // NSLog(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
         _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
     } else {
-        nstrace(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        // NSLog(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
         dispatch_async(dispatch_get_main_queue(), ^{
+            NSCustomTouchBarItem *container = buttObj;
+            NSButtonJAction *button = (container).view;
             // NOTE: block is copied, img/text objects is automatically retained
             // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
             _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);

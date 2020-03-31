@@ -1,16 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +18,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class RepeatedSpaceInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Consecutive spaces";
-  }
 
   @NotNull
   @Override
@@ -107,14 +98,14 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with ' {" + myCount + "}'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", " {" + myCount + "}");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with space and repeated quantifier";
+      return RegExpBundle.message("inspection.quick.fix.replace.with.space.and.repeated.quantifier");
     }
 
     @Override

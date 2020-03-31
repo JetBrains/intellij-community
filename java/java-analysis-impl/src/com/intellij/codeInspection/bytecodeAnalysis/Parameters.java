@@ -14,6 +14,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -144,8 +145,8 @@ class MakeResult implements PendingAction {
 }
 
 class NonNullInAnalysis extends Analysis<PResult> {
-  final private PendingAction[] pendingActions;
-  private final PResult[] results;
+  final private ExpandableArray<PendingAction> pendingActions;
+  private final ExpandableArray<PResult> results;
   private final NotNullInterpreter interpreter = new NotNullInterpreter();
 
   // Flag saying that at some branch NPE was found. Used later as an evidence that this param is *NOT* @Nullable (optimization).
@@ -154,8 +155,8 @@ class NonNullInAnalysis extends Analysis<PResult> {
   protected NonNullInAnalysis(RichControlFlow richControlFlow,
                               Direction direction,
                               boolean stable,
-                              PendingAction[] pendingActions,
-                              PResult[] results) {
+                              ExpandableArray<PendingAction> pendingActions,
+                              ExpandableArray<PResult> results) {
     super(richControlFlow, direction, stable);
     this.pendingActions = pendingActions;
     this.results = results;
@@ -164,7 +165,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   PResult combineResults(PResult delta, int[] subResults) throws AnalyzerException {
     PResult result = Identity;
     for (int subResult : subResults) {
-      result = join(result, results[subResult]);
+      result = join(result, results.get(subResult));
     }
     return meet(delta, result);
   }
@@ -196,13 +197,13 @@ class NonNullInAnalysis extends Analysis<PResult> {
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
       TooComplexException.check(method, steps);
-      PendingAction action = pendingActions[--pendingTop];
+      PendingAction action = pendingActions.get(--pendingTop);
       if (action instanceof MakeResult) {
         MakeResult makeResult = (MakeResult) action;
         PResult result = combineResults(makeResult.subResult, makeResult.indices);
         State state = makeResult.state;
         int insnIndex = state.conf.insnIndex;
-        results[state.index] = result;
+        results.set(state.index, result);
         addComputed(insnIndex, state);
       }
       else if (action instanceof ProceedState) {
@@ -222,7 +223,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
           }
         }
         if (fold) {
-          results[state.index] = Identity;
+          results.set(state.index, Identity);
           addComputed(insnIndex, state);
         }
         else {
@@ -230,14 +231,14 @@ class NonNullInAnalysis extends Analysis<PResult> {
           List<State> thisComputed = computed[insnIndex];
           if (thisComputed != null) {
             for (State prevState : thisComputed) {
-              if (stateEquiv(state, prevState)) {
+              if (state.equiv(prevState)) {
                 baseState = prevState;
                 break;
               }
             }
           }
           if (baseState != null) {
-            results[state.index] = results[baseState.index];
+            results.set(state.index, results.get(baseState.index));
           } else {
             // the main call
             processState(state);
@@ -246,7 +247,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         }
       }
     }
-    return earlyResult != null ? mkEquation(earlyResult) : mkEquation(results[0]);
+    return earlyResult != null ? mkEquation(earlyResult) : mkEquation(results.get(0));
   }
 
   private void processState(State state) throws AnalyzerException {
@@ -264,7 +265,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     boolean notEmptySubResult = subResult != Identity;
 
     if (subResult == NPE) {
-      results[stateIndex] = NPE;
+      results.set(stateIndex, NPE);
       possibleNPE = true;
       addComputed(insnIndex, state);
       return;
@@ -281,7 +282,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         if (!hasCompanions) {
           earlyResult = Return;
         } else {
-          results[stateIndex] = Return;
+          results.set(stateIndex, Return);
           addComputed(insnIndex, state);
         }
         return;
@@ -290,10 +291,10 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == ATHROW) {
       if (taken) {
-        results[stateIndex] = NPE;
+        results.set(stateIndex, NPE);
         possibleNPE = true;
       } else {
-        results[stateIndex] = Identity;
+        results.set(stateIndex, Identity);
       }
       addComputed(insnIndex, state);
       return;
@@ -354,7 +355,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   private void pendingPush(PendingAction action) {
     TooComplexException.check(method, pendingTop);
-    pendingActions[pendingTop++] = action;
+    pendingActions.set(pendingTop++, action);
   }
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
@@ -375,11 +376,11 @@ class NonNullInAnalysis extends Analysis<PResult> {
 }
 
 class NullableInAnalysis extends Analysis<PResult> {
-  final private State[] pending;
+  final private ExpandableArray<State> pending;
 
   private final NullableInterpreter interpreter = new NullableInterpreter();
 
-  protected NullableInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable, State[] pending) {
+  protected NullableInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable, ExpandableArray<State> pending) {
     super(richControlFlow, direction, stable);
     this.pending = pending;
   }
@@ -413,7 +414,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
       TooComplexException.check(method, steps);
-      State state = pending[--pendingTop];
+      State state = Objects.requireNonNull(pending.get(--pendingTop));
       int insnIndex = state.conf.insnIndex;
       Conf conf = state.conf;
       List<Conf> history = state.history;
@@ -435,7 +436,7 @@ class NullableInAnalysis extends Analysis<PResult> {
         List<State> thisComputed = computed[insnIndex];
         if (thisComputed != null) {
           for (State prevState : thisComputed) {
-            if (stateEquiv(state, prevState)) {
+            if (state.equiv(prevState)) {
               baseState = prevState;
               break;
             }
@@ -532,7 +533,7 @@ class NullableInAnalysis extends Analysis<PResult> {
 
   private void pendingPush(State state) {
     TooComplexException.check(method, pendingTop);
-    pending[pendingTop++] = state;
+    pending.set(pendingTop++, state);
   }
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode, boolean taken) throws AnalyzerException {

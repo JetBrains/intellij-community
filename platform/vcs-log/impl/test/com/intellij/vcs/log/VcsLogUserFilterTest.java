@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -55,7 +55,7 @@ public abstract class VcsLogUserFilterTest {
       names.add(name + "@company.com");
     }
 
-    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtilRt.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
     StringBuilder builder = new StringBuilder();
@@ -93,7 +93,7 @@ public abstract class VcsLogUserFilterTest {
     names.add("User Userovich Userov");
     names.add("UserUserovich@company.com");
 
-    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtilRt.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
     List<String> synonymCommits = new ArrayList<>();
@@ -183,6 +183,24 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
+  /*
+  Test for IDEA-225553
+   */
+  public void testNameAtSurnameEmails() throws Exception {
+    VcsUser petrov = myObjectsFactory.createUser("Ivan Petrov", "ivan@petrov.com");
+    VcsUser sidorov = myObjectsFactory.createUser("Ivan Sidorov", "ivan@sidorov.com");
+    List<VcsUser> users = Arrays.asList(petrov, sidorov);
+
+    MultiMap<VcsUser, String> commits = generateHistory(users);
+    List<VcsCommitMetadata> metadata = generateMetadata(commits);
+    VcsLogUserFilter filter =
+      VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME), singletonMap(myProject.getBaseDir(), petrov), new HashSet<>(users));
+
+    StringBuilder builder = new StringBuilder();
+    checkFilter(filter, "me", commits.get(petrov), metadata, builder);
+    assertFilteredCorrectly(builder);
+  }
+
   private void checkFilterForUser(@NotNull VcsUser user,
                                   @NotNull Set<? extends VcsUser> allUsers,
                                   @NotNull Collection<String> expectedHashes,
@@ -195,7 +213,8 @@ public abstract class VcsLogUserFilterTest {
   private void checkFilter(VcsLogUserFilter userFilter,
                            String filterDescription,
                            @NotNull Collection<String> expectedHashes,
-                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
+    throws VcsException {
     // filter by vcs
     List<String> actualHashes = getFilteredHashes(userFilter);
 

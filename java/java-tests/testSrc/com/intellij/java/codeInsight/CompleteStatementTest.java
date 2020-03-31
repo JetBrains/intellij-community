@@ -1,33 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompleteStatementTest extends EditorActionTestCase {
   private CodeStyleSettings mySettings;
@@ -49,6 +33,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
     super.setUp();
     mySettings = CodeStyle.getSettings(getProject());
     myJavaSettings = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 
   public void testAddMissingSemicolon() { doTest(); }
@@ -157,6 +146,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV40479() { doTest(); }
   public void testMultilineReturn() { doTest(); }
   public void testMultilineCall() { doTest(); }
+  public void testVarargCall() { doTest(); }
+  public void testOverloadedCall() { doTest(); }
   public void testIDEADEV13019() { doTestBracesNextLineStyle(); }
   public void testIDEA25139() { doTestBracesNextLineStyle(); }
   public void testClassBracesNextLine() { doTestBracesNextLineStyle(); }
@@ -187,6 +178,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testModuleInfo() { doTest(); }
   public void testDoubleFieldDeclaration() { doTest(); }
   public void testAddTernaryColon() { doTest(); }
+  public void testRecord() { doTest(); }
+  public void testRecordWithComponent() { doTest(); }
+  public void testRecordWithComponentNoBody() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

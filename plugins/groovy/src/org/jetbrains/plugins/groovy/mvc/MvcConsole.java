@@ -49,10 +49,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class MvcConsole implements Disposable {
-
+public final class MvcConsole implements Disposable {
   private static final Key<Boolean> UPDATING_BY_CONSOLE_PROCESS = Key.create("UPDATING_BY_CONSOLE_PROCESS");
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcConsole");
+  private static final Logger LOG = Logger.getInstance(MvcConsole.class);
   @NonNls private static final String CONSOLE_ID = "Groovy MVC Console";
 
   @NonNls public static final String TOOL_WINDOW_ID = "Console";
@@ -68,9 +67,9 @@ public class MvcConsole implements Disposable {
   private boolean myExecuting = false;
   private final Content myContent;
 
-  public MvcConsole(Project project, TextConsoleBuilderFactory consoleBuilderFactory) {
+  public MvcConsole(Project project) {
     myProject = project;
-    myConsole = (ConsoleViewImpl)consoleBuilderFactory.createBuilder(myProject).getConsole();
+    myConsole = (ConsoleViewImpl)TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
     Disposer.register(this, myConsole);
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.BOTTOM, this, true);

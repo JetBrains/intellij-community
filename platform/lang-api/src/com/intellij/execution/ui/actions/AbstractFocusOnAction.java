@@ -35,7 +35,7 @@ public class AbstractFocusOnAction extends BaseViewAction implements Toggleable 
     final boolean visible = content.length == 1;
     e.getPresentation().setVisible(visible);
     if (visible) {
-      e.getPresentation().putClientProperty(SELECTED_PROPERTY, isToFocus(context, content));
+      Toggleable.setSelected(e.getPresentation(), isToFocus(context, content));
     }
   }
 

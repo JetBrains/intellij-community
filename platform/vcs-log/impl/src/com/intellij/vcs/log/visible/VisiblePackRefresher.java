@@ -21,6 +21,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ *
  */
 public interface VisiblePackRefresher extends Disposable {
 

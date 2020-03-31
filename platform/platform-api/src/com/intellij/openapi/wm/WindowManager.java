@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +13,9 @@ import java.awt.*;
  * Provides access to IDE's frames and status bar.
  */
 public abstract class WindowManager {
+  public static WindowManager getInstance() {
+    return ApplicationManager.getApplication().getService(WindowManager.class);
+  }
 
   /**
    * @return {@code true} if current OS supports alpha mode for windows and all native libraries were successfully loaded.
@@ -60,10 +49,6 @@ public abstract class WindowManager {
    */
   public abstract void setAlphaModeEnabled(Window window, boolean state);
 
-  public static WindowManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(WindowManager.class);
-  }
-
   public abstract void doNotSuggestAsParent(Window window);
 
   /**
@@ -78,17 +63,16 @@ public abstract class WindowManager {
   /**
    * Get the status bar for the project's main frame.
    */
-  public abstract StatusBar getStatusBar(Project project);
+  public abstract StatusBar getStatusBar(@NotNull Project project);
 
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     return null;
   }
 
-  /**
-   * @return Frame, could be {@code null} in test environment.
-   */
+  @Nullable
   public abstract JFrame getFrame(@Nullable Project project);
 
+  @Nullable
   public abstract IdeFrame getIdeFrame(@Nullable Project project);
 
   /**
@@ -100,18 +84,18 @@ public abstract class WindowManager {
    */
   public abstract boolean isInsideScreenBounds(int x, int y, int width);
 
-  @NotNull
-  public abstract IdeFrame[] getAllProjectFrames();
+  public abstract IdeFrame @NotNull [] getAllProjectFrames();
 
   public abstract JFrame findVisibleFrame();
 
-  public abstract void addListener(WindowManagerListener listener);
+  public abstract void addListener(@NotNull WindowManagerListener listener);
 
   public abstract void removeListener(WindowManagerListener listener);
 
   /**
    * @return {@code true} if full screen mode is supported in current OS.
    */
+  @SuppressWarnings("unused")
   public abstract boolean isFullScreenSupportedInCurrentOS();
 
   public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);

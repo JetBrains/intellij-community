@@ -34,9 +34,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 
-/**
- * @author nik
- */
 public class JpsAntExtensionService {
   public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
   private static final Logger LOG = Logger.getInstance(JpsAntExtensionService.class);

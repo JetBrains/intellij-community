@@ -3,8 +3,6 @@ package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -21,9 +19,9 @@ class CompareRevisionsFromLogAction : DumbAwareAction() {
     }
 
     val commits = log.selectedCommits
-    
+
     e.presentation.isVisible = commits.size == 2
-    e.presentation.isEnabled = commits.first().root == commits.last().root
+    e.presentation.isEnabled = commits.size == 2 && commits.first().root == commits.last().root
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -30,9 +30,12 @@ public abstract class ActionButtonLook {
   public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
     private ActionButtonLook delegate;
 
-    { updateUI(); }
+    {
+      updateUI();
+    }
 
-    @Override public void updateUI() {
+    @Override
+    public void updateUI() {
       delegate = UIUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
     }
 
@@ -68,8 +71,11 @@ public abstract class ActionButtonLook {
   };
 
   public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
-    @Override public void paintBackground(Graphics g, JComponent component, int state) {}
-    @Override public void paintBorder(Graphics g, JComponent component, int state) {}
+    @Override
+    public void paintBackground(Graphics g, JComponent component, int state) {}
+
+    @Override
+    public void paintBorder(Graphics g, JComponent component, int state) {}
 
     @Override
     public void paintBackground(Graphics g, JComponent component, Color color) {}
@@ -87,14 +93,13 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state != ActionButtonComponent.NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      Color color = state == ActionButtonComponent.PUSHED ?
-                    JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBackground();
-      paintLookBackground(g, rect, color);
-    }
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    Color color = state == ActionButtonComponent.NORMAL ? component.getBackground() :
+                  state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
+                  JBUI.CurrentTheme.ActionButton.hoverBackground();
+    paintLookBackground(g, rect, color);
   }
 
   public void paintBackground(Graphics g, JComponent component, Color color) {
@@ -104,14 +109,12 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state != ActionButtonComponent.NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      Color color = state == ActionButtonComponent.PUSHED ?
-                    JBUI.CurrentTheme.ActionButton.pressedBorder() : JBUI.CurrentTheme.ActionButton.hoverBorder();
-      paintLookBorder(g, rect, color);
-    }
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    Color color = state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBorder() :
+                  JBUI.CurrentTheme.ActionButton.hoverBorder();
+    paintLookBorder(g, rect, color);
   }
 
   public void paintBorder(Graphics g, JComponent component, Color color) {
@@ -137,9 +140,17 @@ public abstract class ActionButtonLook {
     int height = icon.getIconHeight();
     int x = (actionButton.getWidth() - width) / 2;
     int y = (actionButton.getHeight() - height) / 2;
-    paintIconAt(g, icon, x, y);
+    paintIcon(g, actionButton, icon, x, y);
   }
 
+  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+    icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
+  }
+
+  /**
+   * @deprecated Use {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon, int, int)}
+   */
+  @Deprecated
   public void paintIconAt(Graphics g, Icon icon, int x, int y) {
     icon.paintIcon(null, g, x, y);
   }

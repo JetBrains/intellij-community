@@ -39,7 +39,7 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
       e.getPresentation().setIcon(null);
     }
     if (ActionPlaces.UNKNOWN.equals(e.getPlace())) {
-      e.getPresentation().setText(ActionsBundle.message("action.EditorGutterToggleLocalSoftWraps.gutterText"));
+      e.getPresentation().setText(ActionsBundle.messagePointer("action.EditorGutterToggleLocalSoftWraps.gutterText"));
     }
     e.getPresentation().setEnabled(getEditor(e) != null);
   }

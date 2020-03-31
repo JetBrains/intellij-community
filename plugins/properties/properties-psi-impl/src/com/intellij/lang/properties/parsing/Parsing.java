@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * @author Alexey
  */
 public class Parsing {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.parsing.Parsing");
+  private static final Logger LOG = Logger.getInstance(Parsing.class);
 
   public static void parseProperty(PsiBuilder builder) {
     if (builder.getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS) {

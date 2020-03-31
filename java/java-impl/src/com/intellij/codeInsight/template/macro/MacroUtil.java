@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MacroUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
+  private static final Logger LOG = Logger.getInstance(MacroUtil.class);
 
   @Nullable public static PsiType resultToPsiType(Result result, ExpressionContext context){
     if (result instanceof PsiTypeResult) {
@@ -80,7 +80,7 @@ public class MacroUtil {
     }
   }
 
-  @NotNull private static PsiExpression[] getStandardExpressions(PsiElement place) {
+  private static PsiExpression @NotNull [] getStandardExpressions(PsiElement place) {
     ArrayList<PsiExpression> array = new ArrayList<>();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     try {
@@ -115,7 +115,7 @@ public class MacroUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
+  public static PsiExpression @NotNull [] getStandardExpressionsOfType(PsiElement place, PsiType type) {
     List<PsiExpression> array = new ArrayList<>();
     PsiExpression[] expressions = getStandardExpressions(place);
     for (PsiExpression expr : expressions) {
@@ -127,7 +127,7 @@ public class MacroUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  @NotNull public static PsiVariable[] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
+  public static PsiVariable @NotNull [] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
     if (place == null) {
       return new PsiVariable[0];
     }

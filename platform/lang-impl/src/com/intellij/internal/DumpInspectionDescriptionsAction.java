@@ -4,6 +4,7 @@ package com.intellij.internal;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -15,25 +16,25 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author stathik
  */
 public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpInspectionDescriptionsAction");
+  private static final Logger LOG = Logger.getInstance(DumpInspectionDescriptionsAction.class);
 
   public DumpInspectionDescriptionsAction() {
-    super("Dump inspection descriptions");
+    super(ActionsBundle.messagePointer("action.DumpInspectionDescriptionsAction.text"));
   }
 
   @Override
@@ -41,7 +42,7 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
     final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
     final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
 
-    final Collection<String> classes = ContainerUtil.newTreeSet();
+    final Collection<String> classes = new TreeSet<>();
     final Map<String, Collection<String>> groups = new TreeMap<>();
 
     final String tempDirectory = FileUtil.getTempDirectory();
@@ -56,14 +57,14 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
 
       final String group = getGroupName(toolWrapper);
       Collection<String> names = groups.get(group);
-      if (names == null) groups.put(group, (names = ContainerUtil.newTreeSet()));
+      if (names == null) groups.put(group, (names = new TreeSet<>()));
       names.add(toolWrapper.getShortName());
 
-      final URL url = getDescriptionUrl(toolWrapper);
-      if (url != null) {
+      final InputStream stream = getDescriptionStream(toolWrapper);
+      if (stream != null) {
         doDump(new File(descDirectory, toolWrapper.getShortName() + ".html"), new Processor() {
           @Override public void process(BufferedWriter writer) throws Exception {
-            writer.write(ResourceUtil.loadText(url));
+            writer.write(ResourceUtil.loadText(stream));
           }
         });
       }
@@ -112,9 +113,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
     return StringUtil.isEmptyOrSpaces(name) ? "General" : name;
   }
 
-  private static URL getDescriptionUrl(final InspectionToolWrapper toolWrapper) {
+  private static InputStream getDescriptionStream(final InspectionToolWrapper toolWrapper) {
     final Class aClass = getInspectionClass(toolWrapper);
-    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", toolWrapper.getShortName() + ".html");
+    return ResourceUtil.getResourceAsStream(aClass, "/inspectionDescriptions", toolWrapper.getShortName() + ".html");
   }
 
   private interface Processor {

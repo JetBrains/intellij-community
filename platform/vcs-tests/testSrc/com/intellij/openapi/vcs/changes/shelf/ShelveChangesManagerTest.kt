@@ -4,12 +4,12 @@ package com.intellij.openapi.vcs.changes.shelf
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Path
 
-class ShelveChangesManagerTest : PlatformTestCase() {
+class ShelveChangesManagerTest : HeavyPlatformTestCase() {
   private lateinit var myShelvedChangesManager: ShelveChangesManager
 
   override fun doCreateProject(projectFile: Path): Project {
@@ -89,8 +89,9 @@ class ShelveChangesManagerTest : PlatformTestCase() {
                              removeFilesFromShelf: Boolean = true) {
     myShelvedChangesManager.isRemoveFilesFromShelf = removeFilesFromShelf
     val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
+    shelvedChangeList.loadChangesIfNeeded(project)
     val originalDate = shelvedChangeList.DATE
-    val changes = if (changesNum == 0) null else shelvedChangeList.getChanges(myProject).subList(0, changesNum)
+    val changes = if (changesNum == 0) null else shelvedChangeList.changes!!.subList(0, changesNum)
     val binaries = if (changesNum == 0) null else shelvedChangeList.binaryFiles.subList(0, binariesNum)
 
     myShelvedChangesManager.unshelveChangeList(shelvedChangeList, changes, binaries, null, false)
@@ -108,7 +109,8 @@ class ShelveChangesManagerTest : PlatformTestCase() {
                            expectedDeletedNum: Int,
                            undoDeletion: Boolean = false) {
     val originalDate = shelvedChangeList.DATE
-    val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.getChanges(myProject).subList(0, changesNum)
+    shelvedChangeList.loadChangesIfNeeded(project)
+    val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.changes!!.subList(0, changesNum)
     val binaries = if (changesNum == 0) emptyList<ShelvedBinaryFile>() else shelvedChangeList.binaryFiles.subList(0, binariesNum)
 
     val shouldDeleteEntireList = changesNum == 0 && binariesNum == 0

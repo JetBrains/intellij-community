@@ -21,14 +21,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 
-/**
- * @author nik
- */
-class ExplicitModuleGroupTest : PlatformTestCase() {
+class ExplicitModuleGroupTest : HeavyPlatformTestCase() {
   @Test
   fun `test single module`() {
     val module = createModuleInGroup("module", "a", "b")

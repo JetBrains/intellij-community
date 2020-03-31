@@ -43,6 +43,7 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
         final double fraction = progressAnalyzer.analyzeProgress(line);
         if (fraction >= 0) {
           indicator.setFraction(fraction);
+          indicator.setText2(line);
         }
       }
     };

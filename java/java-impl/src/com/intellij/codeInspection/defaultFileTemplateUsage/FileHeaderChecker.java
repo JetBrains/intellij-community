@@ -15,11 +15,15 @@
  */
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
@@ -40,7 +44,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class FileHeaderChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
+  private static final Logger LOG = Logger.getInstance(FileHeaderChecker.class);
 
   static ProblemDescriptor checkFileHeader(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<>();
@@ -57,7 +61,7 @@ public class FileHeaderChecker {
     }
 
     LocalQuickFix[] fixes = createQuickFix(matcher, offsetToProperty, file.getProject(), onTheFly);
-    String description = InspectionsBundle.message("default.file.template.description");
+    String description = JavaBundle.message("default.file.template.description");
     return manager.createProblemDescriptor(element, description, onTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 

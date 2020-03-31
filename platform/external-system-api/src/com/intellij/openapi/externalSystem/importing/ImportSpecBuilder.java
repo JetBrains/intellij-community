@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -23,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +22,13 @@ public class ImportSpecBuilder {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean myForceWhenUptodate;
-  private boolean myWhenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isReportRefreshError = true;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
-  private boolean myUseDefaultCallback;
   private boolean myCreateDirectoriesForEmptyContentRoots;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -55,8 +41,12 @@ public class ImportSpecBuilder {
     apply(importSpec);
   }
 
+  /**
+   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public ImportSpecBuilder whenAutoImportEnabled() {
-    myWhenAutoImportEnabled = true;
     return this;
   }
 
@@ -104,41 +94,47 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  @ApiStatus.Experimental
+  public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
+    myProjectResolverPolicy = projectResolverPolicy;
+    return this;
+  }
+
+  /**
+   * @deprecated no need to call the method, default callback is used by default
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public ImportSpecBuilder useDefaultCallback() {
-    myUseDefaultCallback = true;
+    callback(null);
     return this;
   }
 
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
-    mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
-    if (myUseDefaultCallback) {
-      mySpec.setCallback(new ExternalProjectRefreshCallback() {
-        @Override
-        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-          if (externalProject == null) {
-            return;
-          }
-          final boolean synchronous = mySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
-          ServiceManager.getService(ProjectDataManager.class).importData(externalProject, mySpec.getProject(), synchronous);
-        }
-      });
-    }
-    else {
-      mySpec.setCallback(myCallback);
-    }
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
+    mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
+    ExternalProjectRefreshCallback callback;
+    if (myCallback != null) {
+      callback = myCallback;
+    }
+    else if (myProjectResolverPolicy == null || !myProjectResolverPolicy.isPartialDataResolveAllowed()) {
+      callback = new DefaultProjectRefreshCallback(mySpec);
+    }
+    else {
+      callback = null;
+    }
+    mySpec.setCallback(callback);
     return mySpec;
   }
 
   private void apply(ImportSpec spec) {
-    myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
     myProgressExecutionMode = spec.getProgressExecutionMode();
     myForceWhenUptodate = spec.isForceWhenUptodate();
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
@@ -147,5 +143,25 @@ public class ImportSpecBuilder {
     isReportRefreshError = spec.isReportRefreshError();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
+  }
+
+  @ApiStatus.Internal
+  public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
+    private final Project myProject;
+    private final ProgressExecutionMode myExecutionMode;
+
+    public DefaultProjectRefreshCallback(ImportSpec spec) {
+      myProject = spec.getProject();
+      myExecutionMode = spec.getProgressExecutionMode();
+    }
+
+    @Override
+    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      if (externalProject == null) {
+        return;
+      }
+      final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
+      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, synchronous);
+    }
   }
 }

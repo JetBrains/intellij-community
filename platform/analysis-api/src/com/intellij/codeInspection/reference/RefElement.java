@@ -45,6 +45,9 @@ public interface RefElement extends RefEntity {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @deprecated use {@link #getPsiElement()}
+   */
   @Deprecated
   default PsiElement getElement() {
     return getPsiElement();

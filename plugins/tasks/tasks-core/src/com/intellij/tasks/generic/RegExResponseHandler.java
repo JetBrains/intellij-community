@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  */
 @Tag("RegExResponseHandler")
 public final class RegExResponseHandler extends ResponseHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.generic.RegExResponseHandler");
+  private static final Logger LOG = Logger.getInstance(RegExResponseHandler.class);
   private static final String ID_PLACEHOLDER = "{id}";
   private static final String SUMMARY_PLACEHOLDER = "{summary}";
 
@@ -80,9 +80,8 @@ public final class RegExResponseHandler extends ResponseHandler {
     return builder.getPanel();
   }
 
-  @NotNull
   @Override
-  public Task[] parseIssues(@NotNull String response, int max) throws Exception {
+  public Task @NotNull [] parseIssues(@NotNull String response, int max) throws Exception {
     final List<String> placeholders = getPlaceholders(myTaskRegex);
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");

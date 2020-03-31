@@ -15,25 +15,25 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
-import git4idea.util.GitFileUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
-import static git4idea.repo.GitRepository.GIT_REPO_CHANGE;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
@@ -76,37 +76,48 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     boolean rebaseFileChanged = false;
     boolean mergeFileChanged = false;
     boolean tagChanged = false;
+    Set<VirtualFile> toReloadVfs = new THashSet<>();
     for (VFileEvent event : events) {
-      String filePath = GitFileUtils.stripFileProtocolPrefix(event.getPath());
+      String filePath = event.getPath();
       if (myRepositoryFiles.isConfigFile(filePath)) {
         configChanged = true;
-      } else if (myRepositoryFiles.isHeadFile(filePath)) {
+      }
+      else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
-      } else if (myRepositoryFiles.isBranchFile(filePath)) {
+      }
+      else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
-          branchFileChanged = true;
-        ensureAllChildrenInVfs(myHeadsDir);
-      } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
+        branchFileChanged = true;
+        ContainerUtil.addIfNotNull(toReloadVfs, myHeadsDir);
+      }
+      else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        ensureAllChildrenInVfs(myRemotesDir);
-      } else if (myRepositoryFiles.isPackedRefs(filePath)) {
+        ContainerUtil.addIfNotNull(toReloadVfs, myRemotesDir);
+      }
+      else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
-      } else if (myRepositoryFiles.isRebaseFile(filePath)) {
+      }
+      else if (myRepositoryFiles.isRebaseFile(filePath)) {
         rebaseFileChanged = true;
-      } else if (myRepositoryFiles.isMergeFile(filePath)) {
+      }
+      else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
-      } else if (myRepositoryFiles.isTagFile(filePath)) {
-        ensureAllChildrenInVfs(myTagsDir);
+      }
+      else if (myRepositoryFiles.isTagFile(filePath)) {
+        ContainerUtil.addIfNotNull(toReloadVfs, myTagsDir);
         tagChanged = true;
       }
+    }
+    for (VirtualFile dir : toReloadVfs) {
+      VfsUtilCore.processFilesRecursively(dir, CommonProcessors.alwaysTrue());
     }
 
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
       myRepository.update();
     }
     if (tagChanged || packedRefsChanged) {
-      BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GIT_REPO_CHANGE).repositoryChanged(myRepository);
+      BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }
 
@@ -115,7 +126,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
       rootDir.getChildren();
     }
     for (String path : myRepositoryFiles.getDirsToWatch()) {
-      ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+      DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }
   }
 }

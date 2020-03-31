@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
@@ -40,7 +41,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   private final Project myProject;
 
   MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
-    super(method, project, "Select Methods To Propagate Static", null, consumer);
+    super(method, project, JavaRefactoringBundle.message("make.static.methods.to.propagate.dialog.title"), null, consumer);
     myProject = project;
   }
 

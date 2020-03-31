@@ -19,41 +19,47 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
-@ApiStatus.Experimental
-public class UpdateData<Key, Value> {
+public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<? extends IOException> myForwardIndexUpdate;
 
-  public UpdateData(@NotNull Map<Key, Value> newData,
+  public UpdateData(int inputId,
+                    @NotNull Map<Key, Value> newData,
                     @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
                     @NotNull IndexId<Key, Value> indexId,
                     @Nullable ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
+    super(inputId);
     myNewData = newData;
     myCurrentDataEvaluator = currentDataEvaluator;
     myIndexId = indexId;
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
-  boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
-                      @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
-                      @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+  @Override
+  protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                                @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                                @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     final InputDataDiffBuilder<Key, Value> currentData;
     try {
       currentData = getCurrentDataEvaluator().compute();
     }
     catch (IOException e) {
-      throw new StorageException(e);
+      throw new StorageException("Error while applying " + this, e);
     }
     return currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
+  }
+
+  @Override
+  public boolean newDataIsEmpty() {
+    return myNewData.isEmpty();
   }
 
   @NotNull
@@ -61,17 +67,8 @@ public class UpdateData<Key, Value> {
     return myCurrentDataEvaluator;
   }
 
-  @NotNull
-  public Map<Key, Value> getNewData() {
-    return myNewData;
-  }
-
-  @NotNull
-  public IndexId<Key, Value> getIndexId() {
-    return myIndexId;
-  }
-
-  void updateForwardIndex() throws IOException {
+  @Override
+  protected void updateForwardIndex() throws IOException {
     if (myForwardIndexUpdate != null) {
       myForwardIndexUpdate.run();
     }
@@ -79,6 +76,6 @@ public class UpdateData<Key, Value> {
 
   @Override
   public String toString() {
-    return myIndexId + "," + getClass().getName();
+    return "update data for " + getInputId() + " of " + myIndexId;
   }
 }

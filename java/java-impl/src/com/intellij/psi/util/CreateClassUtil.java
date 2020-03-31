@@ -19,7 +19,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -41,7 +40,7 @@ import java.util.Properties;
  * author: lesya
  */
 public class CreateClassUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.CreateClassUtil");
+  private static final Logger LOG = Logger.getInstance(CreateClassUtil.class);
 
   @NonNls public static final String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
   @NonNls private static final String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";
@@ -177,9 +176,7 @@ public class CreateClassUtil {
       return null;
     }
     try {
-      final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
-                                    new Properties() :
-                                    FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
+      final Properties properties =                                  FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {

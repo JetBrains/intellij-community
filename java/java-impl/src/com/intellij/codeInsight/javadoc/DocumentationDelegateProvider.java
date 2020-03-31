@@ -18,6 +18,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMember;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ public abstract class DocumentationDelegateProvider {
    * @return delegate PsiDocCommentOwner instance.
    */
   @Nullable
+  @Contract(pure = true)
   public abstract PsiDocCommentOwner computeDocumentationDelegate(@NotNull PsiMember member);
 
   @Nullable

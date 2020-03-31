@@ -25,6 +25,8 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,14 +44,14 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
         if (!(parent instanceof XmlAttribute)) {
           return;
         }
-        if (parent.getParent() instanceof HtmlTag) return;
+        if (parent.getParent() instanceof HtmlTag || HtmlUtil.isHtmlFile(parent.getParent())) return;
         XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor == null || descriptor.isRequired()) {
           return;
         }
         String defaultValue = descriptor.getDefaultValue();
         if (defaultValue != null && defaultValue.equals(value.getValue()) && !value.getTextRange().isEmpty()) {
-          holder.registerProblem(value, "Redundant default attribute value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          holder.registerProblem(value, XmlAnalysisBundle.message("redundant.default.attribute.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new RemoveAttributeIntentionFix(((XmlAttribute)parent).getLocalName()));
         }
       }

@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface ProjectFromSourcesBuilder {
   @NotNull
   Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector);

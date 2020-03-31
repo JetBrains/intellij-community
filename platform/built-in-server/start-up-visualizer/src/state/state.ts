@@ -6,6 +6,7 @@ import VuexPersistence from "vuex-persist"
 import {InputData} from "./data"
 import {AppState, defaultIdePort, mainModuleName, StateStorageManager} from "@/state/StateStorageManager"
 import {DataManager} from "@/state/DataManager"
+import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 
 const stateStorageManager = new StateStorageManager()
 
@@ -15,6 +16,8 @@ export class AppStateModule extends VuexModule implements AppState {
   data: DataManager | null = null
   recentlyUsedIdePort: number = defaultIdePort
 
+  chartSettings = new ChartSettings()
+
   @Mutation
   updateData(data: InputData | null) {
     this.data = stateStorageManager.createDataManager(data)
@@ -23,6 +26,11 @@ export class AppStateModule extends VuexModule implements AppState {
   @Mutation
   updateRecentlyUsedIdePort(value: number) {
     this.recentlyUsedIdePort = value
+  }
+
+  @Mutation
+  updateChartSettings(chartSettings: ChartSettings) {
+    this.chartSettings = chartSettings
   }
 }
 
@@ -39,7 +47,6 @@ const vuexLocal = new VuexPersistence({
 })
 
 export const store = new Vuex.Store({
-  // strict: process.env.NODE_ENV !== "production",
   plugins: [vuexLocal.plugin],
   mutations: {
     RESTORE_MUTATION: vuexLocal.RESTORE_MUTATION,

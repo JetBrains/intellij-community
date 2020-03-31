@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -18,6 +18,7 @@ import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,6 +37,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   private final ObjectReference myObject;
   private Boolean myIsPrimitive = null;
   private final boolean myIsStatic;
+  private Ref<Value> myPresetValue;
 
   public FieldDescriptorImpl(Project project, ObjectReference objRef, @NotNull Field field) {
     super(project);
@@ -80,9 +82,16 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     return myIsPrimitive.booleanValue();
   }
 
+  public void setValue(Value value) {
+    myPresetValue = Ref.create(value);
+  }
+
   @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myPresetValue != null) {
+      return myPresetValue.get();
+    }
     try {
       if (myObject != null) {
         Value fieldValue = myObject.getValue(myField);
@@ -177,7 +186,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return elementFactory.createExpressionFromText(fieldName, null);
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", getName()), e);
     }
   }
 

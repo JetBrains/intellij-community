@@ -11,14 +11,14 @@ import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
+public class BatchModeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEnsureReferencesAreRemoved() {
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();

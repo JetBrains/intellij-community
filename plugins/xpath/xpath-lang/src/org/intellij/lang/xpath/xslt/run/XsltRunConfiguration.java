@@ -210,8 +210,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     // return modules to compile before run. Null or empty list to build project
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
 
@@ -268,14 +267,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     @Nullable
     private static FileType getFileType(String value) {
         if (value == null) return null;
-
-        final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-        for (FileType fileType : fileTypes) {
-            if (fileType.getName().equals(value)) {
-                return fileType;
-            }
-        }
-        return null;
+        return FileTypeManager.getInstance().findFileTypeByName(value);
     }
 
     @Override
@@ -449,9 +441,6 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     @Nullable
     public Sdk getEffectiveJDK() {
-        if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
-            return getDefaultSdk();
-        }
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }

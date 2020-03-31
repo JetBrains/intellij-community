@@ -17,17 +17,14 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
-/**
- * @author nik
- */
-public class AnalysisScopeTest extends ModuleTestCase {
+public class AnalysisScopeTest extends JavaModuleTestCase {
   public void testGeneratedSourceRoot() throws Exception {
     VirtualFile genRoot = getVirtualFile(createTempDir("genSrcRoot"));
     VirtualFile srcRoot = getVirtualFile(createTempDir("srcRoot"));

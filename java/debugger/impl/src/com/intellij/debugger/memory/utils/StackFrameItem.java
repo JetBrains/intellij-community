@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -45,9 +45,9 @@ import java.util.Map;
 public class StackFrameItem {
   private static final Logger LOG = Logger.getInstance(StackFrameItem.class);
   private static final List<XNamedValue> VARS_CAPTURE_DISABLED = Collections.singletonList(
-    JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null));
+    JavaStackFrame.createMessageNode(JavaDebuggerBundle.message("message.node.local.variables.capture.disabled"), null));
   private static final List<XNamedValue> VARS_NOT_CAPTURED = Collections.singletonList(
-    JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
+    JavaStackFrame.createMessageNode(JavaDebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
 
   public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
@@ -215,13 +215,18 @@ public class StackFrameItem {
     }
   }
 
-  public CapturedStackFrame createFrame(DebugProcessImpl debugProcess) {
+  public XStackFrame createFrame(DebugProcessImpl debugProcess) {
     return new CapturedStackFrame(debugProcess, this);
+  }
+
+  public static void setWithSeparator(XStackFrame frame, boolean withSeparator) {
+    if (frame instanceof CapturedStackFrame) {
+      ((CapturedStackFrame)frame).setWithSeparator(withSeparator);
+    }
   }
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
                                                                         XDebuggerFramesList.ItemWithSeparatorAbove {
-    private static final String ASYNC_STACKTRACE_MESSAGE = DebuggerBundle.message("frame.panel.async.stacktrace");
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
@@ -282,7 +287,7 @@ public class StackFrameItem {
     public void computeChildren(@NotNull XCompositeNode node) {
       XValueChildrenList children = XValueChildrenList.EMPTY;
       if (myVariables == VARS_CAPTURE_DISABLED) {
-        node.setMessage(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null,
+        node.setMessage(JavaDebuggerBundle.message("message.node.local.variables.capture.disabled"), null,
                         SimpleTextAttributes.REGULAR_ATTRIBUTES, CAPTURE_SETTINGS_OPENER);
       }
       else if (myVariables != null) {
@@ -301,7 +306,7 @@ public class StackFrameItem {
 
     @Override
     public String getCaptionAboveOf() {
-      return ASYNC_STACKTRACE_MESSAGE;
+      return getAsyncStacktraceMessage();
     }
 
     @Override
@@ -319,6 +324,10 @@ public class StackFrameItem {
         return mySourcePosition.getFile().getName() + ":" + (mySourcePosition.getLine() + 1);
       }
       return "<position unknown>";
+    }
+
+    private static String getAsyncStacktraceMessage() {
+      return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
     }
   }
 }

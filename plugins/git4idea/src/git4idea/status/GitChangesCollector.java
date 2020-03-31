@@ -1,39 +1,25 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.status;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
+import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
@@ -44,28 +30,26 @@ import java.util.*;
 
 /**
  * <p>
- *   Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
- *   by calling {@code 'git status --porcelain -z'} on it.
- *   Works only on Git 1.7.0 and later.
+ * Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
+ * by calling {@code 'git status --porcelain -z'} on it.
+ * Works only on Git 1.7.0 and later.
  * </p>
  * <p>
- *   The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
+ * The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
  * </p>
  *
  * @author Kirill Likhodedov
  */
 class GitChangesCollector {
+  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
+
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final VcsDirtyScope myDirtyScope;
   @NotNull private final GitRepository myRepository;
   @NotNull private final VirtualFile myVcsRoot;
 
   private final Collection<Change> myChanges = new HashSet<>();
-  private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
+  private final Set<FilePath> myUnversionedFiles = new HashSet<>();
   private final Collection<GitConflict> myConflicts = new HashSet<>();
 
   /**
@@ -75,16 +59,13 @@ class GitChangesCollector {
   @NotNull
   static GitChangesCollector collect(@NotNull Project project,
                                      @NotNull Git git,
-                                     @NotNull ChangeListManager changeListManager,
-                                     @NotNull ProjectLevelVcsManager vcsManager,
-                                     @NotNull AbstractVcs vcs,
-                                     @NotNull VcsDirtyScope dirtyScope,
-                                     @NotNull GitRepository repository) throws VcsException {
-    return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, repository);
+                                     @NotNull GitRepository repository,
+                                     @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
+    return new GitChangesCollector(project, git, repository, dirtyPaths);
   }
 
   @NotNull
-  Collection<VirtualFile> getUnversionedFiles() {
+  Collection<FilePath> getUnversionedFilePaths() {
     return myUnversionedFiles;
   }
 
@@ -99,21 +80,13 @@ class GitChangesCollector {
 
   private GitChangesCollector(@NotNull Project project,
                               @NotNull Git git,
-                              @NotNull ChangeListManager changeListManager,
-                              @NotNull ProjectLevelVcsManager vcsManager,
-                              @NotNull AbstractVcs vcs,
-                              @NotNull VcsDirtyScope dirtyScope,
-                              @NotNull GitRepository repository) throws VcsException {
+                              @NotNull GitRepository repository,
+                              @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
     myProject = project;
     myGit = git;
-    myChangeListManager = changeListManager;
-    myVcsManager = vcsManager;
-    myVcs = vcs;
-    myDirtyScope = dirtyScope;
     myRepository = repository;
     myVcsRoot = repository.getRoot();
 
-    Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
       collectChanges(dirtyPaths);
       collectUnversionedFiles();
@@ -123,30 +96,35 @@ class GitChangesCollector {
   /**
    * Collect dirty file paths, previous changes are included in collection.
    *
-   * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
+   * @return the set of dirty paths to check, grouped by root
+   * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
-  private Collection<FilePath> dirtyPaths() {
-    final List<String> allPaths = new ArrayList<>();
+  @NotNull
+  static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull AbstractVcs vcs,
+                                                            @NotNull VcsDirtyScope dirtyScope,
+                                                            @NotNull ChangeListManager changeListManager,
+                                                            @NotNull ProjectLevelVcsManager vcsManager) {
+    Map<VirtualFile, List<FilePath>> result = new HashMap<>();
 
-    for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(p, allPaths);
+    for (FilePath p : dirtyScope.getRecursivelyDirtyDirectories()) {
+      addToPaths(p, result, vcs, vcsManager);
     }
-    for (FilePath p : myDirtyScope.getDirtyFilesNoExpand()) {
-      addToPaths(p, allPaths);
+    for (FilePath p : dirtyScope.getDirtyFilesNoExpand()) {
+      addToPaths(p, result, vcs, vcsManager);
     }
 
-    for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
+    for (Change c : changeListManager.getAllChanges()) {
       switch (c.getType()) {
         case NEW:
         case DELETED:
         case MOVED:
-          ContentRevision afterRevision = c.getAfterRevision();
-          if (afterRevision != null) {
-            addToPaths(afterRevision.getFile(), allPaths);
+          FilePath afterPath = ChangesUtil.getAfterPath(c);
+          if (afterPath != null) {
+            addToPaths(afterPath, result, vcs, vcsManager);
           }
-          ContentRevision beforeRevision = c.getBeforeRevision();
-          if (beforeRevision != null) {
-            addToPaths(beforeRevision.getFile(), allPaths);
+          FilePath beforePath = ChangesUtil.getBeforePath(c);
+          if (beforePath != null) {
+            addToPaths(beforePath, result, vcs, vcsManager);
           }
         case MODIFICATION:
         default:
@@ -154,26 +132,35 @@ class GitChangesCollector {
       }
     }
 
-    removeCommonParents(allPaths);
+    for (VirtualFile root : result.keySet()) {
+      List<FilePath> paths = result.get(root);
+      removeCommonParents(paths);
+    }
 
-    return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
+    return result;
   }
 
-  private void addToPaths(FilePath pathToAdd, List<String> paths) {
-    VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
-    if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
-      paths.add(pathToAdd.getPath());
+  private static void addToPaths(@NotNull FilePath filePath,
+                                 @NotNull Map<VirtualFile, List<FilePath>> result,
+                                 @NotNull AbstractVcs vcs,
+                                 @NotNull ProjectLevelVcsManager vcsManager) {
+    VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(filePath);
+    if (vcsRoot != null && vcs.equals(vcsRoot.getVcs())) {
+      VirtualFile root = vcsRoot.getPath();
+      List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
+      paths.add(filePath);
     }
   }
 
-  private static void removeCommonParents(List<String> allPaths) {
-    Collections.sort(allPaths);
+  private static void removeCommonParents(List<FilePath> paths) {
+    paths.sort(Comparator.comparing(FilePath::getPath));
 
-    String prevPath = null;
-    Iterator<String> it = allPaths.iterator();
+    FilePath prevPath = null;
+    Iterator<FilePath> it = paths.iterator();
     while (it.hasNext()) {
-      String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
+      FilePath path = it.next();
+      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) {
         it.remove();
       }
       else {
@@ -183,29 +170,25 @@ class GitChangesCollector {
   }
 
   // calls 'git status' and parses the output, feeding myChanges.
-  private void collectChanges(Collection<FilePath> dirtyPaths) throws VcsException {
-    GitLineHandler handler = statusHandler(dirtyPaths);
+  private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
+    VcsRevisionNumber head = getHead();
+
+    GitLineHandler handler = GitUtil.createHandlerWithPaths(dirtyPaths, () -> statusHandler());
     String output = myGit.runCommand(handler).getOutputOrThrow();
-    parseOutput(output, handler);
+    List<FilePath> bothModifiedPaths = parseOutput(output, head, handler);
+
+    collectStagedUnstagedModifications(bothModifiedPaths, head);
   }
 
   private void collectUnversionedFiles() throws VcsException {
     GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
-    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
+    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFilePaths());
   }
 
-  private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
+  private GitLineHandler statusHandler() {
     GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
-    handler.endOptions();
-    handler.addRelativePaths(dirtyPaths);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
-      handler.addParameters(params);
-      handler.endOptions();
-    }
     handler.setSilent(true);
     return handler;
   }
@@ -213,10 +196,13 @@ class GitChangesCollector {
   /**
    * Parses the output of the 'git status --porcelain -z' command filling myChanges and myUnversionedFiles.
    * See <a href=http://www.kernel.org/pub/software/scm/git/docs/git-status.html#_output">Git man</a> for details.
+   *
+   * @param handler used for debugging purposes in case of parse error
+   * @return list of MM paths, that should be checked explicitly (in case if staged and unstaged modifications cancel each other)
    */
-  // handler is here for debugging purposes in the case of parse error
-  private void parseOutput(@NotNull String output, @NotNull GitHandler handler) throws VcsException {
-    VcsRevisionNumber head = getHead();
+  @NotNull
+  private List<FilePath> parseOutput(@NotNull String output, @NotNull VcsRevisionNumber head, @NotNull GitHandler handler) {
+    List<FilePath> bothModifiedPaths = new ArrayList<>();
 
     final String[] split = output.split("\u0000");
 
@@ -237,46 +223,73 @@ class GitChangesCollector {
 
       final FilePath filepath = GitContentRevision.createPath(myVcsRoot, path);
 
+      FilePath oldFilepath;
+      if (xStatus == 'R' || xStatus == 'C' ||
+          yStatus == 'R' || yStatus == 'C') {
+        // We treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
+        //noinspection AssignmentToForLoopParameter
+        pos += 1;  // read the "from" filepath which is separated also by NUL character.
+        oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
+      }
+      else {
+        oldFilepath = null;
+      }
+
       switch (xStatus) {
         case ' ':
           if (yStatus == 'M') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'A') {
+          }
+          else if (yStatus == 'A' || yStatus == 'C') {
             reportAdded(filepath);
-          } else if (yStatus == 'T') {
+          }
+          else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'U') {
+          }
+          else if (yStatus == 'U') {
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          } else {
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'M':
-          if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
+          if (yStatus == 'M') {
+            bothModifiedPaths.add(filepath); // schedule 'git diff HEAD' command to detect staged changes, that were reverted
+          }
+          else if (yStatus == ' ' || yStatus == 'T') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'C':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          // NB: no "break" here!
-          // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
         case 'A':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
-          } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          }  else {
+          }
+          else if (yStatus == 'U') { // AU - unmerged, added by us
+            reportConflict(filepath, head, Status.ADDED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // AA - unmerged, both added
+            reportConflict(filepath, head, Status.ADDED, Status.ADDED);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -284,18 +297,34 @@ class GitChangesCollector {
         case 'D':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'U') { // DU - unmerged, deleted by us
+          }
+          else if (yStatus == 'U') { // DU - unmerged, deleted by us
             reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
-          } else if (yStatus == 'D') { // DD - unmerged, both deleted
+          }
+          else if (yStatus == 'D') { // DD - unmerged, both deleted
             reportConflict(filepath, head, Status.DELETED, Status.DELETED);
-          } else {
+          }
+          else if (yStatus == 'C') {
+            reportModified(filepath, head);
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
+          }
+          else if (yStatus == 'A') {
+            // [DA] status is not documented, but might be reported by git
+            reportModified(filepath, head);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'T') { // UU - unmerged, both modified; UA - unmerged, added by them
+          if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // UA - unmerged, added by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.ADDED);
           }
           else if (yStatus == 'D') { // UD - unmerged, deleted by them
             reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);
@@ -306,15 +335,13 @@ class GitChangesCollector {
           break;
 
         case 'R':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          FilePath oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
-
           if (yStatus == 'D') {
             reportDeleted(oldFilepath, head);
-          } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
+          }
+          else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportRename(filepath, oldFilepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -322,9 +349,11 @@ class GitChangesCollector {
         case 'T'://TODO
           if (yStatus == ' ' || yStatus == 'M') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -338,7 +367,25 @@ class GitChangesCollector {
 
         default:
           throwGFE("Unexpected symbol as xStatus.", handler, output, line, xStatus, yStatus);
+      }
+    }
 
+    return bothModifiedPaths;
+  }
+
+  private void collectStagedUnstagedModifications(@NotNull List<FilePath> bothModifiedPaths,
+                                                  @NotNull VcsRevisionNumber head) throws VcsException {
+    if (bothModifiedPaths.isEmpty()) return;
+
+    Collection<GitDiffChange> changes = GitChangeUtils.getWorkingTreeChanges(myProject, myVcsRoot, bothModifiedPaths, false);
+
+    // no directories expected here, hierarchical comparator is not necessary
+    Set<FilePath> expectedPaths = new HashSet<>(bothModifiedPaths);
+
+    for (GitDiffChange change : changes) {
+      FilePath filePath = change.getFilePath();
+      if (expectedPaths.contains(filePath)) {
+        reportModified(filePath, head);
       }
     }
   }
@@ -404,6 +451,18 @@ class GitChangesCollector {
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
-    myChanges.add(new Change(before, after, status));
+    Change change = new Change(before, after, status);
+
+    FilePath filePath = ChangesUtil.getFilePath(change);
+    VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
+    boolean isUnderOurRoot = myVcsRoot.equals(root) ||
+                             before instanceof GitSubmoduleContentRevision ||
+                             after instanceof GitSubmoduleContentRevision;
+    if (!isUnderOurRoot) {
+      LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", change, myVcsRoot, root));
+      return;
+    }
+
+    myChanges.add(change);
   }
 }

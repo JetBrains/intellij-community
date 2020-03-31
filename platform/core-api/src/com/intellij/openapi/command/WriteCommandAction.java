@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -20,6 +6,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Command;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -27,16 +14,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
+  private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
   private static final String DEFAULT_COMMAND_NAME = "Undefined";
   private static final String DEFAULT_GROUP_ID = null;
@@ -44,7 +27,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public interface Builder {
     @Contract(pure = true)
     @NotNull
-    Builder withName(@Nullable String name);
+    Builder withName(@Nullable @Command String name);
 
     @Contract(pure = true)
     @NotNull
@@ -76,7 +59,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, @NotNull PsiFile... files) {
+    private BuilderImpl(Project project, PsiFile @NotNull ... files) {
       myProject = project;
       myFiles = files;
     }
@@ -168,13 +151,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
+  public static Builder writeCommandAction(@NotNull PsiFile first, PsiFile @NotNull ... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
   }
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(Project project, @NotNull PsiFile... files) {
+  public static Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
     return new BuilderImpl(project, files);
   }
 
@@ -187,7 +170,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, PsiFile @NotNull ... files) {
     this(project, DEFAULT_COMMAND_NAME, files);
   }
 
@@ -195,7 +178,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, PsiFile @NotNull ... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
@@ -206,7 +189,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable String commandName,
                                @Nullable String groupID,
-                               @NotNull PsiFile... files) {
+                               PsiFile @NotNull ... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
@@ -246,7 +229,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
     else {
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
+        ApplicationManager.getApplication().invokeAndWait(() -> performWriteCommandAction(result));
       }
       catch (ProcessCanceledException ignored) {
       }
@@ -255,15 +238,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(@NotNull RunResult<T> result) {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
+    if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) {
+      return;
+    }
 
     // this is needed to prevent memory leak, since the command is put into undo queue
-    final RunResult[] results = {result};
-
-    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      results[0].run();
-      results[0] = null;
-    }));
+    Ref<RunResult<?>> resultRef = new Ref<>(result);
+    doExecuteCommand(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        resultRef.get().run();
+        resultRef.set(null);
+      });
+    });
   }
 
   /**
@@ -355,17 +341,16 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    *
    * Please use {@link #runWriteCommandAction(Project, String, String, Runnable, PsiFile...)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
+  @TestOnly
   public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
     runWriteCommandAction(project, DEFAULT_COMMAND_NAME, DEFAULT_GROUP_ID, runnable);
   }
 
   public static void runWriteCommandAction(Project project,
-                                           @Nullable final String commandName,
+                                           @Nls(capitalization = Nls.Capitalization.Title) @Nullable final String commandName,
                                            @Nullable final String groupID,
                                            @NotNull final Runnable runnable,
-                                           @NotNull PsiFile... files) {
+                                           PsiFile @NotNull ... files) {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 
@@ -378,13 +363,5 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable)
     throws E {
     return writeCommandAction(project).compute(computable);
-  }
-
-  /**
-   * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
-   */
-  @Deprecated
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiFile> psiFiles) {
-    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
 }

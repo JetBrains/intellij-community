@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * @author cdr
  */
-public class ThreadTracker {
+public final class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
@@ -45,7 +44,7 @@ public class ThreadTracker {
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
-  private static final Method getThreads = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
+  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
 
   @NotNull
   public static Map<String, Thread> getThreads() {
@@ -68,15 +67,19 @@ public class ThreadTracker {
     "AWT-Shutdown",
     "AWT-Windows",
     "Batik CleanerThread",
+    "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
     "CompilerThread0",
+    "dockerjava-netty",
     "External compiler",
     "Finalizer",
     FlushingDaemon.NAME,
     "IDEA Test Case Thread",
     "Image Fetcher ",
+    "InnocuousThreadGroup",
     "Java2D Disposer",
     "JobScheduler FJ pool ",
     "JPS thread pool",
+    "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
     "Keep-Alive-Timer",
     "main",
     "Monitor Ctrl-Break",
@@ -97,12 +100,12 @@ public class ThreadTracker {
     List<String> sorted = offenders.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
     if (!offenders.equals(sorted)) {
       String proper = StringUtil.join(ContainerUtil.map(sorted, s -> '"' + s + '"'), ",\n").replaceAll('"'+FlushingDaemon.NAME+'"', "FlushingDaemon.NAME");
-      throw new AssertionError("Thread names must be sorted (for ease of maintainance). Something like this will do:\n" + proper);
+      throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
     }
     wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
-    if (!application.isDisposed()) {
+    if (application != null && !application.isDisposed()) {
       longRunningThreadCreated(application,
                                "Periodic tasks thread",
                                "ApplicationImpl pooled thread ",
@@ -119,7 +122,7 @@ public class ThreadTracker {
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
-  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, @NotNull final String... threadNamePrefixes) {
+  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, final String @NotNull ... threadNamePrefixes) {
     wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
     Disposer.register(parentDisposable, () -> wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes)));
   }
@@ -190,19 +193,20 @@ public class ThreadTracker {
     }
   }
 
-  private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
+  private static @NotNull CharSequence dumpThreadsToString(@NotNull Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
     after.forEach((name, thread) -> {
-      f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      f.append("\"").append(name).append("\" (").append(thread.isAlive() ? "alive" : "dead").append(") ").append(thread.getState());
+      f.append("\n");
       for (StackTraceElement element : stackTraces.get(thread)) {
-        f.append("\tat " + element + "\n");
+        f.append("\tat ").append(element).append("\n");
       }
       f.append("\n");
     });
-    return f.toString();
+    return f;
   }
 
-  private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!thread.isAlive()) return true;
     if (isWellKnownOffender(thread.getName())) return true;
 
@@ -212,6 +216,7 @@ public class ThreadTracker {
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
+           || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
@@ -220,23 +225,23 @@ public class ThreadTracker {
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(@NotNull StackTraceElement[] stackTrace) {
+  private static boolean isIdleApplicationPoolThread(StackTraceElement @NotNull [] stackTrace) {
     //noinspection UnnecessaryLocalVariable
-    boolean insideTPEGetTask = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("getTask")
-                           && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
+    boolean insideTPEGetTask = ContainerUtil.exists(stackTrace,
+       element -> element.getMethodName().equals("getTask")
+                  && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
 
     return insideTPEGetTask;
   }
 
-  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
     //noinspection UnnecessaryLocalVariable
-    boolean insideAwaitWork = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("awaitWork")
-                           && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
+    boolean insideAwaitWork = ContainerUtil.exists(stackTrace,
+          element -> element.getMethodName().equals("awaitWork")
+                     && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
   }
 
@@ -256,7 +261,7 @@ public class ThreadTracker {
   //	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
   //	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
   //	at java.lang.Thread.run(Thread.java:748)
-  private static boolean isFutureTaskAboutToFinish(@NotNull StackTraceElement[] stackTrace) {
+  private static boolean isFutureTaskAboutToFinish(StackTraceElement @NotNull [] stackTrace) {
     if (stackTrace.length < 5) {
       return false;
     }
@@ -267,14 +272,31 @@ public class ThreadTracker {
       && stackTrace[2].getMethodName().equals("finishCompletion");
   }
 
-  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  /**
+   * at sun.misc.Unsafe.park(Native Method)
+   * at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+   * at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:83)
+   * at java.lang.Thread.run(Thread.java:748)
+   */
+  private static boolean isIdleDefaultCoroutineExecutorThread(@NotNull Thread thread, @NotNull StackTraceElement @NotNull [] stackTrace) {
+    if (stackTrace.length != 4) {
+      return false;
+    }
+    return "kotlinx.coroutines.DefaultExecutor".equals(thread.getName())
+           && (stackTrace[0].getClassName().equals("sun.misc.Unsafe") || stackTrace[0].getClassName().equals("jdk.internal.misc.Unsafe"))
+           && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[2].getClassName().equals("kotlinx.coroutines.DefaultExecutor")
+           && stackTrace[2].getMethodName().equals("run");
+  }
+
+  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker".equals(thread.getClass().getName())) {
       return false;
     }
     //noinspection UnnecessaryLocalVariable
-    boolean insideCpuWorkerIdle = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("cpuWorkerIdle")
-                           && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
+    boolean insideCpuWorkerIdle = ContainerUtil.exists(stackTrace,
+          element -> element.getMethodName().equals("park")
+                     && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
     return insideCpuWorkerIdle;
   }
 

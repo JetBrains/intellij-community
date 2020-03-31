@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,11 +18,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,9 +47,11 @@ import java.util.List;
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(16)));
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(16)));
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
+  @Nullable private Key<?> myProviderKey;
+  private Project myProject;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
     this();
@@ -86,15 +77,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     setBorder(JBUI.Borders.empty(0, 10));
   }
 
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
+  public void setProviderKey(@Nullable Key<?> key) {
+    myProviderKey = key;
+  }
+
   public static Color getToolbarBackground() {
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(String text) {
+  public void setText(@Nls String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull String text) {
+  public EditorNotificationPanel text(@NotNull @Nls String text) {
     myLabel.setText(text);
     return this;
   }
@@ -116,23 +115,61 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
-    return createActionLabel(text, () -> executeAction(actionId));
+  @NotNull
+  public HyperlinkLabel createActionLabel(@Nls String text, @NonNls final String actionId) {
+    return createActionLabel(text, actionId, true);
   }
 
-  public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
-    HyperlinkLabel label = new HyperlinkLabel(text, getBackground());
-    label.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        action.run();
-      }
-    });
+  @NotNull
+  public HyperlinkLabel createActionLabel(@Nls String text,
+                                          @NonNls final String actionId,
+                                          boolean showInIntentionMenu) {
+    return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
+  }
+
+  @NotNull
+  public HyperlinkLabel createActionLabel(@Nls String text, @NotNull Runnable action) {
+    return createActionLabel(text, action, true);
+  }
+
+  public interface ActionHandler {
+    /**
+     * Invoked when an action-link click from the notification panel
+     */
+    void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
+                                @NotNull HyperlinkEvent event);
+
+    /**
+     * Invoked when an action is executed as
+     * an editor <i>intention action</i> from the related editor
+     */
+    void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile);
+  }
+
+  @NotNull
+  public HyperlinkLabel createActionLabel(@Nls String text,
+                                          @NotNull final Runnable action,
+                                          boolean showInIntentionMenu) {
+    return createActionLabelImpl(text, withLogNotifications(action), showInIntentionMenu);
+  }
+
+  @NotNull
+  public HyperlinkLabel createActionLabel(@Nls String text,
+                                          final ActionHandler handler,
+                                          boolean showInIntentionMenu) {
+    return createActionLabelImpl(text, withNotifications(handler), showInIntentionMenu);
+  }
+
+  @NotNull
+  private HyperlinkLabel createActionLabelImpl(@Nls String text,
+                                               final ActionHandler handler,
+                                               boolean showInIntentionMenu) {
+    ActionHyperlinkLabel label = new ActionHyperlinkLabel(this, text, getBackground(), showInIntentionMenu, handler);
     myLinksPanel.add(label);
     return label;
   }
 
-  protected void executeAction(final String actionId) {
+  protected void executeAction(@NonNls String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
                                                                  DataManager.getInstance().getDataContext(this));
@@ -164,18 +201,117 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
-  private class MyIntentionAction extends AbstractEmptyIntentionAction implements IntentionActionWithOptions, Iconable {
+  @Nullable
+  protected String getIntentionActionText() {
+    return null;
+  }
+
+  @NotNull
+  protected PriorityAction.Priority getIntentionActionPriority() {
+    return PriorityAction.Priority.NORMAL;
+  }
+
+  @NotNull
+  @Nls
+  protected String getIntentionActionFamilyName() {
+    return IdeBundle.message("intention.family.editor.notification");
+  }
+
+  private void logNotificationActionInvocation(@NotNull Object handlerClass) {
+    if (myProject != null) {
+      EditorNotifications.getInstance(myProject).logNotificationActionInvocation(myProviderKey, handlerClass.getClass());
+    }
+  }
+
+  @NotNull
+  private EditorNotificationPanel.ActionHandler withLogNotifications(@NotNull Runnable action) {
+    return new ActionHandler() {
+      @Override
+      public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
+                                         @NotNull HyperlinkEvent e) {
+        logNotificationActionInvocation(action);
+        action.run();
+      }
+
+      @Override
+      public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile file) {
+        logNotificationActionInvocation(action);
+        action.run();
+      }
+    };
+  }
+
+  @NotNull
+  private EditorNotificationPanel.ActionHandler withNotifications(@NotNull EditorNotificationPanel.ActionHandler handler) {
+    return new ActionHandler() {
+      @Override
+      public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
+                                         @NotNull HyperlinkEvent e) {
+        logNotificationActionInvocation(handler);
+        handler.handlePanelActionClick(panel, e);
+      }
+
+      @Override
+      public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile file) {
+        logNotificationActionInvocation(handler);
+        handler.handleQuickFixClick(editor, file);
+      }
+    };
+  }
+
+  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+    private final boolean myShowInIntentionMenu;
+    private final ActionHandler myHandler;
+
+    private ActionHyperlinkLabel(@NotNull EditorNotificationPanel notificationPanel,
+                                 String text,
+                                 Color background,
+                                 boolean showInIntentionMenu,
+                                 @NotNull EditorNotificationPanel.ActionHandler handler) {
+      super(text, background);
+      myShowInIntentionMenu = showInIntentionMenu;
+      myHandler = handler;
+
+      addHyperlinkListener(new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          if (e == null) return;
+          myHandler.handlePanelActionClick(notificationPanel, e);
+        }
+      });
+    }
+
+    void handleIntentionActionClick(Editor editor, PsiFile file) {
+      if (editor == null || file == null) return;
+      myHandler.handleQuickFixClick(editor, file);
+    }
+  }
+
+  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
       for (Component component : myLinksPanel.getComponents()) {
         if (component instanceof HyperlinkLabel) {
+          if (component instanceof ActionHyperlinkLabel && !((ActionHyperlinkLabel)component).myShowInIntentionMenu) {
+            continue;
+          }
           myOptions.add(new MyLinkOption(((HyperlinkLabel)component)));
         }
       }
       if (myGearLabel.getIcon() != null) {
         myOptions.add(new MySettingsOption(myGearLabel));
       }
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myOptions.get(0).invoke(project, editor, file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return myOptions.get(0).startInWriteAction();
     }
 
     @NotNull
@@ -188,6 +324,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getText() {
+      String textOverride = getIntentionActionText();
+      if (textOverride != null) {
+        return textOverride;
+      }
+
       if (!myOptions.isEmpty()) {
         return myOptions.get(0).getText();
       }
@@ -196,11 +337,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                                       : StringUtil.shortenTextWithEllipsis(text, 50, 0);
     }
 
+    @NotNull
+    @Override
+    public Priority getPriority() {
+      return getIntentionActionPriority();
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification";
+      return getIntentionActionFamilyName();
     }
 
     @Override
@@ -213,10 +360,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return AllIcons.Actions.IntentionBulb;
     }
   }
-  
+
   private static class MyLinkOption implements IntentionAction {
     private final HyperlinkLabel myLabel;
-    
+
     private MyLinkOption(HyperlinkLabel label) {
       myLabel = label;
     }
@@ -232,7 +379,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification option";
+      return IdeBundle.message("intention.family.editor.notification.option");
     }
 
     @Override
@@ -242,7 +389,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myLabel.doClick();
+      if (myLabel instanceof ActionHyperlinkLabel) {
+        ((ActionHyperlinkLabel)myLabel).handleIntentionActionClick(editor, file);
+      } else {
+        myLabel.doClick();
+      }
     }
 
     @Override
@@ -250,7 +401,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return false;
     }
   }
-  
+
   private static class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
     private final JLabel myLabel;
 
@@ -269,7 +420,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification settings";
+      return IdeBundle.message("intention.family.editor.notification.settings");
     }
 
     @Override

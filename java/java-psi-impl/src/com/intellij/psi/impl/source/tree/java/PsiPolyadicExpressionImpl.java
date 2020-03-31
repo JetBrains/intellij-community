@@ -22,6 +22,10 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -32,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements PsiPolyadicExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPolyadicExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiPolyadicExpressionImpl.class);
 
   public PsiPolyadicExpressionImpl() {
     super(JavaElementType.POLYADIC_EXPRESSION);
@@ -114,14 +118,37 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getOperands() {
+  public PsiExpression @NotNull [] getOperands() {
     PsiExpression[] operands = cachedOperands;
     if (operands == null) {
       cachedOperands = operands = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     }
     return operands;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return processDeclarations(this, processor, state, lastParent, place);
+  }
+
+  static boolean processDeclarations(@NotNull PsiPolyadicExpression expression,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    IElementType tokenType = expression.getOperationTokenType();
+    boolean and = tokenType.equals(JavaTokenType.ANDAND);
+    boolean or = tokenType.equals(JavaTokenType.OROR);
+    if (!and && !or) return true;
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    PatternResolveState wantedHint = PatternResolveState.fromBoolean(and);
+    if (state.get(PatternResolveState.KEY) == wantedHint.invert()) return true;
+    return PsiScopesUtil.walkChildrenScopes(expression, processor, wantedHint.putInto(state), lastParent, place);
   }
 
   private volatile PsiExpression[] cachedOperands;

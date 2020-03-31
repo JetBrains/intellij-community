@@ -2,9 +2,6 @@ package com.intellij.dupLocator.treeHash;
 
 import com.intellij.dupLocator.util.PsiFragment;
 
-/**
-* @author oleg
-*/
 public class TreeHashResult {
   int myHash;
   int myCost;

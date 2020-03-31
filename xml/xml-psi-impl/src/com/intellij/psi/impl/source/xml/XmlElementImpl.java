@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -48,26 +47,8 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return XmlPsiUtil.processXmlElements(this, processor, false);
   }
 
-  public boolean processChildren(PsiElementProcessor processor){
-    return XmlPsiUtil.processXmlElementChildren(this, processor, false);
-  }
-
   public XmlElement findElementByTokenType(final IElementType type){
-    final XmlElement[] result = new XmlElement[1];
-    result[0] = null;
-
-    processElements(new PsiElementProcessor(){
-      @Override
-      public boolean execute(@NotNull PsiElement element){
-        if(element instanceof TreeElement && ((ASTNode)element).getElementType() == type){
-          result[0] = (XmlElement)element;
-          return false;
-        }
-        return true;
-      }
-    }, this);
-
-    return result[0];
+    return XmlPsiUtil.findElement(this, elementType -> elementType == type);
   }
 
   @Override
@@ -98,7 +79,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
   }
 
   @Override
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return getContext();
   }
 
@@ -155,14 +136,18 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   @Override
   public boolean skipValidation() {
-    Boolean doNotValidate = DO_NOT_VALIDATE.get(this);
+    return skipValidation(this);
+  }
+
+  public static boolean skipValidation(@NotNull XmlElement holder) {
+    Boolean doNotValidate = DO_NOT_VALIDATE.get(holder);
     if (doNotValidate != null) return doNotValidate;
 
-    OuterLanguageElement element = PsiTreeUtil.getChildOfType(this, OuterLanguageElement.class);
+    OuterLanguageElement element = PsiTreeUtil.getChildOfType(holder, OuterLanguageElement.class);
 
     if (element == null) {
       // JspOuterLanguageElement is located under XmlText
-      for (PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()) {
+      for (PsiElement child = holder.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof XmlText) {
           element = PsiTreeUtil.getChildOfType(child, OuterLanguageElement.class);
           if (element != null) {
@@ -174,10 +159,10 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     if (element == null) {
       doNotValidate = false;
     } else {
-      PsiFile containingFile = this.getContainingFile();
+      PsiFile containingFile = holder.getContainingFile();
       doNotValidate = containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
     }
-    putUserData(DO_NOT_VALIDATE, doNotValidate);
+    holder.putUserData(DO_NOT_VALIDATE, doNotValidate);
     return doNotValidate;
   }
 

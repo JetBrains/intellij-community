@@ -21,24 +21,24 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OT
  * @author Mikhail Golubev
  */
 public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
-                                                      .map(alignment -> alignment.getDescription())
-                                                      .toArray(value -> new String[value]);
+  private static class Holder {
+    private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
+      .map(alignment -> alignment.getDescription())
+      .toArray(value -> new String[value]);
 
-  private static final int[] ALIGN_VALUES =
-    ArrayUtil.toIntArray(
-      ContainerUtil.map(JsonCodeStyleSettings.PropertyAlignment.values(), alignment -> alignment.getId()));
+    private static final int[] ALIGN_VALUES =
+      ArrayUtil.toIntArray(
+        ContainerUtil.map(JsonCodeStyleSettings.PropertyAlignment.values(), alignment -> alignment.getId()));
 
-  private static final String SAMPLE = "{\n" +
-                                       "    \"json literals are\": {\n" +
-                                       "        \"strings\": [\"foo\", \"bar\", \"\\u0062\\u0061\\u0072\"],\n" +
-                                       "        \"numbers\": [42, 6.62606975e-34],\n" +
-                                       "        \"boolean values\": [true, false,],\n" +
-                                       "        \"objects\": {\"null\": null,\"another\": null,}\n" +
-                                       "    }\n" +
-                                       "}";
-
-
+    private static final String SAMPLE = "{\n" +
+                                         "    \"json literals are\": {\n" +
+                                         "        \"strings\": [\"foo\", \"bar\", \"\\u0062\\u0061\\u0072\"],\n" +
+                                         "        \"numbers\": [42, 6.62606975e-34],\n" +
+                                         "        \"boolean values\": [true, false,],\n" +
+                                         "        \"objects\": {\"null\": null,\"another\": null,}\n" +
+                                         "    }\n" +
+                                         "}";
+  }
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
@@ -82,8 +82,8 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "PROPERTY_ALIGNMENT",
                                 JsonBundle.message("formatter.align.properties.caption"),
                                 "Objects",
-                                ALIGN_OPTIONS,
-                                ALIGN_VALUES);
+                                Holder.ALIGN_OPTIONS,
+                                Holder.ALIGN_VALUES);
 
     }
   }
@@ -102,7 +102,7 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return SAMPLE;
+    return Holder.SAMPLE;
   }
 
   @Override

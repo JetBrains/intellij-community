@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +30,18 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   private JythonSdkFlavor() {
   }
 
-  public static JythonSdkFlavor INSTANCE = new JythonSdkFlavor();
+  public static JythonSdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(JythonSdkFlavor.class);
+  }
+
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
+  }
 
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtil.getNameWithoutExtension(file)).startsWith("jython");
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("jython");
   }
 
   @Nullable
@@ -63,10 +71,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
     if (passParentEnvs) {
-      path = appendSystemEnvPaths(path, JYTHONPATH);
+      path = PythonEnvUtil.appendSystemEnvPaths(path, JYTHONPATH);
     }
     final String jythonPath = StringUtil.join(path, File.pathSeparator);
-    addToEnv(JYTHONPATH, jythonPath, env);
+    PythonEnvUtil.addToEnv(JYTHONPATH, jythonPath, env);
   }
 
   @NotNull
@@ -76,7 +84,7 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
-    return PYTHON_PATH_PREFIX + StringUtil.join(appendSystemEnvPaths(path, JYTHONPATH), File.pathSeparator);
+    return PYTHON_PATH_PREFIX + StringUtil.join(PythonEnvUtil.appendSystemEnvPaths(path, JYTHONPATH), File.pathSeparator);
   }
 
   @Override

@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
-class MarkdownCodeFenceErrorHighlightingTest : LightPlatformCodeInsightFixtureTestCase() {
+class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
   private var oldHideErrorsSetting = false
 
   override fun setUp() {

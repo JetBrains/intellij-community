@@ -14,6 +14,7 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -21,9 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;
@@ -49,8 +47,8 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out) {
-    super.writeConfiguration(out);
+  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
+    super.writeConfiguration(out, relativizer);
     myCopyingHandler.writeConfiguration(out);
   }
 

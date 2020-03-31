@@ -28,12 +28,6 @@ public class OverlyLongLambdaInspection extends MethodMetricInspection {
   private static final int DEFAULT_LIMIT = 3;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overly.long.lambda.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return DEFAULT_LIMIT;
   }

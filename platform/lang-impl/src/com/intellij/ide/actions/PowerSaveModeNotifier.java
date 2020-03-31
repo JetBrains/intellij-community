@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -32,10 +19,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class PowerSaveModeNotifier implements StartupActivity {
+public final class PowerSaveModeNotifier implements StartupActivity.DumbAware {
   private static final NotificationGroup POWER_SAVE_MODE = NotificationGroup.balloonGroup("Power Save Mode");
   private static final String IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode";
 
@@ -54,14 +38,14 @@ public class PowerSaveModeNotifier implements StartupActivity {
     Notification notification = POWER_SAVE_MODE
       .createNotification("Power save mode is on", "Code insight and background tasks are disabled.", NotificationType.WARNING, null);
 
-    notification.addAction(new NotificationAction("Do Not Show Again") {
+    notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true);
         notification.expire();
       }
     });
-    notification.addAction(new NotificationAction("Disable Power Save Mode") {
+    notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.disable.power.save.mode")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         PowerSaveMode.setEnabled(false);
@@ -75,8 +59,8 @@ public class PowerSaveModeNotifier implements StartupActivity {
     if (balloon != null) {
       MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
       MessageBusConnection connection = bus.connect();
-      connection.subscribe(PowerSaveMode.TOPIC, () -> notification.expire());
       Disposer.register(balloon, connection);
+      connection.subscribe(PowerSaveMode.TOPIC, () -> notification.expire());
     }
   }
 }

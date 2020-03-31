@@ -36,12 +36,6 @@ public class ForeachStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("extended.for.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("extended.for.statement.problem.descriptor");
   }

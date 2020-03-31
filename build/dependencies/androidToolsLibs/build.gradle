@@ -1,0 +1,97 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+plugins {
+  id 'org.jetbrains.kotlin.jvm' version '1.3.31'
+  id "com.jfrog.bintray" version "1.8.4"
+}
+
+allprojects {
+  repositories {
+    maven { url 'https://cache-redirector.jetbrains.com/maven-central' }
+    maven { url 'https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2' }
+    maven { url 'https://cache-redirector.jetbrains.com/intellij-third-party-dependencies' }
+  }
+}
+
+project.ext.tools = new File("../../../android/tools-base").canonicalPath
+project.ext.libs = new File('../../../android/android/lib').canonicalPath
+
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'kotlin'
+  apply plugin: 'maven-publish'
+  apply plugin: 'com.jfrog.bintray'
+
+  project.buildDir = 'out'
+  compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+  }
+
+  sourceSets {
+    main.java.srcDir "$tools/$project.name/src/main/java"
+    if (project.name == 'usb-devices') {
+      main.kotlin.srcDirs += "$tools/$project.name/src"
+    }
+//  test.java.srcDir "$tools/$project.name/src/test/java"
+  }
+
+  task sourceJar(type: Jar) {
+    from sourceSets.main.java
+    from sourceSets.main.kotlin
+  }
+
+  publishing {
+    publications {
+      MyPublication(MavenPublication) {
+        from components.java
+        groupId 'org.jetbrains.intellij.deps.android.tools'
+        artifactId "$project.name"
+        version rootProject.ext.projectVersion
+        artifact sourceJar {
+          classifier 'sources'
+        }
+        pom.withXml {
+          asNode().children().last() + {
+            resolveStrategy = DELEGATE_FIRST
+            name "$project.name"
+            url 'https://developer.android.com/studio'
+            scm {
+              url 'https://android.googlesource.com/platform/tools/base'
+              connection 'git://android.googlesource.com/platform/tools/base.git'
+            }
+            licenses {
+              license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+              }
+            }
+            developers {
+              developer {
+                name 'The Android Open Source Project'
+              }
+            }
+          }
+        }
+      }
+    }
+    bintray {
+      user = System.getenv('BINTRAY_USER')
+      key = System.getenv('BINTRAY_KEY')
+
+      publish = true
+
+      pkg {
+        repo = 'intellij-third-party-dependencies'
+        name = "android-tools-base-$project.name"
+        userOrg = 'jetbrains'
+
+        version {
+          name = rootProject.ext.projectVersion
+        }
+      }
+
+      publications = ['MyPublication']
+    }
+  }
+}
+

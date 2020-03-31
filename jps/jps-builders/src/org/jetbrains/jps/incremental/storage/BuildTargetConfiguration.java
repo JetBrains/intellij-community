@@ -20,11 +20,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
@@ -33,14 +37,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class BuildTargetConfiguration {
   public static final Key<Set<JpsModule>> MODULES_WITH_TARGET_CONFIG_CHANGED_KEY = GlobalContextKey.create("_modules_with_target_config_changed_");
 
   private static final Logger LOG = Logger.getInstance(BuildTargetConfiguration.class);
   private static final GlobalContextKey<Set<File>> ALL_DELETED_ROOTS_KEY = GlobalContextKey.create("_all_deleted_output_roots_");
+  private static final String DIRTY_MARK = "$dirty_mark$";
 
   private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
@@ -66,36 +68,47 @@ public class BuildTargetConfiguration {
     return "";
   }
 
-  public boolean isTargetDirty(CompileContext context) {
-    final String currentState = getCurrentState(context);
-    if (!currentState.equals(myConfiguration)) {
-      LOG.debug(myTarget + " configuration was changed:");
-      LOG.debug("Old:");
-      LOG.debug(myConfiguration);
-      LOG.debug("New:");
-      LOG.debug(currentState);
-      LOG.debug(myTarget + " will be recompiled");
-      if (myTarget instanceof ModuleBuildTarget) {
-        final JpsModule module = ((ModuleBuildTarget)myTarget).getModule();
-        synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
-          Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
-          if (modules == null) {
-            MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new THashSet<>());
+  public boolean isTargetDirty(final ProjectDescriptor pd) {
+    return DIRTY_MARK.equals(myConfiguration) || !getCurrentState(pd).equals(myConfiguration);
+  }
+
+  public void logDiagnostics(CompileContext context) {
+    if (DIRTY_MARK.equals(myConfiguration)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(myTarget + " has been marked dirty in the previous compilation session");
+      }
+    }
+    else {
+      final String currentState = getCurrentState(context.getProjectDescriptor());
+      if (!currentState.equals(myConfiguration)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(myTarget + " configuration was changed:");
+          LOG.debug("Old:");
+          LOG.debug(myConfiguration);
+          LOG.debug("New:");
+          LOG.debug(currentState);
+          LOG.debug(myTarget + " will be recompiled");
+        }
+        if (myTarget instanceof ModuleBuildTarget) {
+          final JpsModule module = ((ModuleBuildTarget)myTarget).getModule();
+          synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
+            Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
+            if (modules == null) {
+              MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new THashSet<>());
+            }
+            modules.add(module);
           }
-          modules.add(module);
         }
       }
-      return true;
     }
-    return false;
   }
 
   public void save(CompileContext context) {
-    persist(getCurrentState(context));
+    persist(getCurrentState(context.getProjectDescriptor()));
   }
 
   public void invalidate() {
-    persist("$dirty_mark$");
+    persist(DIRTY_MARK);
   }
 
   private void persist(final String data) {
@@ -120,26 +133,28 @@ public class BuildTargetConfiguration {
     return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "nonexistent-outputs.dat");
   }
 
-  private String getCurrentState(CompileContext context) {
+  @NotNull
+  private String getCurrentState(final ProjectDescriptor pd) {
     String state = myCurrentState;
     if (state == null) {
-      myCurrentState = state = saveToString(context);
+      myCurrentState = state = saveToString(pd);
     }
     return state;
   }
 
-  private String saveToString(CompileContext context) {
+  private String saveToString(final ProjectDescriptor pd) {
     StringWriter out = new StringWriter();
-    myTarget.writeConfiguration(context.getProjectDescriptor(), new PrintWriter(out));
+    myTarget.writeConfiguration(pd, new PrintWriter(out));
     return out.toString();
   }
 
   public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
+    PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
     Collection<File> outputRoots = myTarget.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new SmartList<>();
     for (File root : outputRoots) {
       if (!root.exists()) {
-        nonexistentOutputRoots.add(root.getAbsolutePath());
+        nonexistentOutputRoots.add(relativizer.toRelative(root.getAbsolutePath()));
       }
     }
     File file = getNonexistentOutputsFile();
@@ -185,7 +200,9 @@ public class BuildTargetConfiguration {
       storedNonExistentOutputs = Collections.emptySet();
     }
     else {
-      List<String> lines = StringUtil.split(FileUtil.loadFile(file), "\n");
+      PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
+      List<String> lines = ContainerUtil.map(StringUtil.split(FileUtil.loadFile(file), "\n"),
+                                             s -> relativizer.toFull(s));
       storedNonExistentOutputs = new THashSet<>(lines, FileUtil.PATH_HASHING_STRATEGY);
     }
     return !storedNonExistentOutputs.containsAll(nonexistentOutputRoots);

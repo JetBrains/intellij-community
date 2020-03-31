@@ -25,13 +25,12 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class LookupItemUtil{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
+public class LookupItemUtil {
+  private static final Logger LOG = Logger.getInstance(LookupItemUtil.class);
 
   /**
-   * @deprecated
-   * @see LookupElementBuilder
-  */
+   * @deprecated use {@link LookupElementBuilder}
+   */
   @Deprecated
   @NotNull
   public static LookupElement objectToLookupItem(Object object) {
@@ -46,7 +45,7 @@ public class LookupItemUtil{
       return new VariableLookupItem((PsiVariable)object);
     }
     if (object instanceof PsiExpression) {
-      return new ExpressionLookupItem((PsiExpression) object);
+      return new ExpressionLookupItem((PsiExpression)object);
     }
     if (object instanceof PsiType) {
       return PsiTypeLookupItem.createLookupItem((PsiType)object, null);
@@ -57,7 +56,7 @@ public class LookupItemUtil{
 
     String s = null;
     LookupItem item = new LookupItem(object, "");
-    if (object instanceof PsiElement){
+    if (object instanceof PsiElement) {
       s = PsiUtilCore.getName((PsiElement)object);
     }
     TailType tailType = TailType.NONE;
@@ -67,14 +66,11 @@ public class LookupItemUtil{
     else if (object instanceof String) {
       s = (String)object;
     }
-    else if (object instanceof Template) {
-      s = ((Template) object).getKey();
-    }
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
 
-    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
+    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint)object).isBold()) {
       item.setBold();
     }
 

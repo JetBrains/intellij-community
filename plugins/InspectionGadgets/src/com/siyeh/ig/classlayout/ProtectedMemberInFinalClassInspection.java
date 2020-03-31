@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -47,19 +48,12 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     return new RemoveModifierFix((String)infos[0]);
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[] {
       new RemoveModifierFix((String)infos[0]),
       new MakePrivateFix()
     };
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
   }
 
   @Override
@@ -135,7 +129,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
           assert context != null;
           conflicts.putValue(element1, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                                  RefactoringUIUtil.getDescription(member, false),
-                                                                 PsiBundle.visibilityPresentation(PRIVATE),
+                                                                 JavaPsiBundle.visibilityPresentation(PRIVATE),
                                                                  RefactoringUIUtil.getDescription(context, true)));
         }
         return true;
@@ -159,31 +153,29 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
 
+    private void checkMember(@NotNull PsiMember member) {
+      if (!member.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null || 
+          !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (member instanceof PsiMethod && MethodUtils.hasSuper((PsiMethod)member)) {
+        return;
+      }
+      registerModifierError(PsiModifier.PROTECTED, member, PsiModifier.PROTECTED);
+    }
+
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      if (MethodUtils.hasSuper(method)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, method, PsiModifier.PROTECTED);
+      checkMember(method);
     }
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, field, PsiModifier.PROTECTED);
+      checkMember(field);
     }
   }
 }

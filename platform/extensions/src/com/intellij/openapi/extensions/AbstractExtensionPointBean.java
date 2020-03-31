@@ -10,7 +10,7 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 public abstract class AbstractExtensionPointBean implements PluginAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
+  private static final Logger LOG = Logger.getInstance(AbstractExtensionPointBean.class);
 
   protected PluginDescriptor myPluginDescriptor;
 
@@ -20,7 +20,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   @Override
-  public final void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public final void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 
@@ -29,9 +29,27 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     return myPluginDescriptor == null ? null : myPluginDescriptor.getPluginId();
   }
 
+  /**
+   * @deprecated use {@link #findExtensionClass(String)} instead. It'll throw {@link ExtensionInstantiationException} instead of
+   * {@link ClassNotFoundException}, which contains information about the plugin which registers the problematic extension so error reporters
+   * will be able to report such exception as a plugin problem, not core problem. Also it isn't a checked exception so you won't need to wrap
+   * it to unchecked exception in your code.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   public final <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
     return findClass(className, myPluginDescriptor);
+  }
+
+  @NotNull
+  public final <T> Class<T> findExtensionClass(@NotNull String className) {
+    try {
+      return findClass(className, myPluginDescriptor);
+    }
+    catch (Exception e) {
+      throw new ExtensionInstantiationException(e, myPluginDescriptor);
+    }
   }
 
   @NotNull
@@ -46,8 +64,8 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     try {
       return findClass(className);
     }
-    catch (ClassNotFoundException e) {
-      LOG.error("Problem loading class " + className + " from plugin " + myPluginDescriptor, e);
+    catch (Exception e) {
+      LOG.error(new ExtensionInstantiationException(e, myPluginDescriptor));
       return null;
     }
   }
@@ -57,9 +75,21 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
   }
 
+  /**
+   * @deprecated use {@link #instantiateClass(String, PicoContainer)} instead. It'll throw {@link ExtensionInstantiationException} instead of
+   * {@link ClassNotFoundException}, which contains information about the plugin which registers the problematic extension so error reporters
+   * will be able to report such exception as a plugin problem, not core problem. Also it isn't a checked exception so you won't need to wrap
+   * it to unchecked exception in your code.
+   */
+  @Deprecated
   @NotNull
   public final <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
     return instantiate(findClass(className), container);
+  }
+
+  @NotNull
+  public final <T> T instantiateClass(@NotNull String className, @NotNull PicoContainer container) {
+    return instantiate(findExtensionClass(className), container);
   }
 
   @NotNull

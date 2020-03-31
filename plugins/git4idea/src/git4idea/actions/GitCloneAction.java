@@ -19,8 +19,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import git4idea.GitVcs;
+import com.intellij.util.ui.cloneDialog.VcsCloneDialog;
+import git4idea.checkout.GitCheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class GitCloneAction extends DumbAwareAction {
@@ -33,8 +35,10 @@ public class GitCloneAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    GitVcs.getInstance(project)
-      .getCheckoutProvider()
-      .doCheckout(project, ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener());
+    CheckoutProvider.Listener checkoutListener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
+    VcsCloneDialog dialog = new VcsCloneDialog.Builder(project).forVcs(GitCheckoutProvider.class);
+    if (dialog.showAndGet()) {
+      dialog.doClone(checkoutListener);
+    }
   }
 }

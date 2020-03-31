@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,6 +106,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest();
   }
 
+  public void testAutoCloseable() {
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.setSdk(IdeaTestUtil.getMockJdk14()));
+    addDependencies_37_78();
+    final String name = getTestName(false);
+    for (Module module : new Module[] {myJava7Module, myJava8Module}) {
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
+    }
+    myFixture.configureByFile("java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testWrongSuperInLibrary() {
     addDependencies_37_78();
     final String name = getTestName(false);
@@ -163,6 +175,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   public void testStaticCallOnChildWithNotAccessibleParent() {
     addDependencies_37_78();
+    ModuleRootModificationUtil.updateModel(myJava3Module, m -> m.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5));
     doTest3Modules();
   }
 

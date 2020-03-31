@@ -9,11 +9,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.event.MouseEvent;
 
 public class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
   @Override
@@ -22,28 +19,26 @@ public class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
   }
 
   @Override
-  public boolean handleDoubleClick(@NotNull MouseEvent event, @NotNull RunDashboardRunConfigurationNode node) {
+  @Nullable
+  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     RunConfiguration runConfiguration = node.getConfigurationSettings().getConfiguration();
-    if (!(runConfiguration instanceof JUnitConfiguration)) return false;
+    if (!(runConfiguration instanceof JUnitConfiguration)) return null;
 
     JUnitConfiguration jUnitConfiguration = (JUnitConfiguration)runConfiguration;
 
     String runClassName = jUnitConfiguration.getRunClass();
-    if (runClassName == null) return false;
+    if (runClassName == null) return null;
 
     PsiClass runClass = jUnitConfiguration.getConfigurationModule().findClass(runClassName);
-    if (runClass == null) return false;
+    if (runClass == null) return null;
 
-    PsiElement psiElement = runClass;
     String testMethod = jUnitConfiguration.getPersistentData().getMethodName();
     if (testMethod != null) {
       PsiMethod[] methods = runClass.findMethodsByName(testMethod, false);
       if (methods.length > 0) {
-        psiElement = methods[0];
+        return methods[0];
       }
     }
-
-    PsiNavigateUtil.navigate(psiElement);
-    return true;
+    return runClass;
   }
 }

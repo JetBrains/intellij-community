@@ -1,8 +1,8 @@
 from typing import Any, Optional
 import threading
 
-SUBDEBUG = ...  # type: Any
-SUBWARNING = ...  # type: Any
+SUBDEBUG: Any
+SUBWARNING: Any
 
 def sub_debug(msg, *args): ...
 def debug(msg, *args): ...

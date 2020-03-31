@@ -11,11 +11,9 @@ import com.intellij.openapi.module.Module;
  * &lt;/extensions&gt;
  * <p>
  * A new instance of the specified class will be created each time then the Project Structure dialog is opened
- *
- * @author nik
  */
 public final class ModuleConfigurableEP extends ConfigurableEP<Configurable> {
   public ModuleConfigurableEP(Module module) {
-    super(module.getPicoContainer(), null);
+    super(module);
   }
 }

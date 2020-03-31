@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -16,13 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
-
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
+import java.util.*;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
@@ -31,7 +25,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = notNull(event.getProject());
+    Project project = Objects.requireNonNull(event.getProject());
     GitVcs vcs = GitVcs.getInstance(project);
 
     Set<VirtualFile> conflictedFiles = new TreeSet<>(Comparator.comparing(VirtualFile::getPresentableUrl));
@@ -55,7 +49,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
       }
     }
 
-    AbstractVcsHelper.getInstance(project).showMergeDialog(newArrayList(conflictedFiles), vcs.getMergeProvider());
+    AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<>(conflictedFiles), vcs.getMergeProvider());
   }
 
   private static boolean isEnabled(@NotNull Project project) {

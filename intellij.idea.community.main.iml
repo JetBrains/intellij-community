@@ -3,12 +3,12 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/android/android-uitests" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.ant" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
@@ -43,6 +43,8 @@
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
@@ -58,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
@@ -87,6 +90,7 @@
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties.resource.bundle.editor" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.colorSchemes" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.javaFX.community" scope="RUNTIME" />
@@ -114,14 +118,11 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.remoteServers.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.jps.javacRefScanner8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
@@ -130,6 +131,12 @@
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.filePrediction" scope="RUNTIME" />
   </component>
 </module>

@@ -495,7 +495,13 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.awt.Container.DropTargetEventTargetFilter FILTER'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.awt.Container.DropTargetEventTargetFilter boolean accept(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container.MouseEventTargetFilter FILTER'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Container.MouseEventTargetFilter MouseEventTargetFilter()'>

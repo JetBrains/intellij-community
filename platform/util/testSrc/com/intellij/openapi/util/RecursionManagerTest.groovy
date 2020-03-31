@@ -1,15 +1,33 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util
 
+import com.intellij.openapi.Disposable
+import com.intellij.testFramework.UsefulTestCase
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
 /**
  * @author peter
  */
+@CompileStatic
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
-  
+  private final Disposable myDisposable = Disposer.newDisposable()
+
+  @Override
+  protected void setUp() throws Exception {
+    RecursionManager.assertOnMissedCache(myDisposable)
+    super.setUp()
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myDisposable)
+    super.tearDown()
+  }
+
   def prevent(Object key, boolean memoize = true, Closure c) {
     myGuard.doPreventingRecursion(key, memoize, c as Computable)
   }
@@ -21,6 +39,46 @@ class RecursionManagerTest extends TestCase {
         return "bar-return"
       }
       return "foo-return"
+    }
+  }
+
+  @CompileDynamic
+  void testAssertOnMissedCache() {
+    assert "foo-return" == prevent("foo") {
+      def stamp = RecursionManager.markStack()
+      assert null == prevent("foo") { fail() }
+      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException) { stamp.mayCacheNow() }
+      return "foo-return"
+    }
+  }
+
+  private def 'method which should be present in prevention trace'() {
+    prevent("inner") {
+      assert null == prevent("outer") {
+        fail()
+      }
+      "inner-return"
+    }
+  }
+
+  void testMemoizedValueAccessDoesntClearPreventionTrace() {
+    assert "outer-return" == prevent("outer") {
+      def stamp = RecursionManager.markStack()
+      'method which should be present in prevention trace'()  // prevents caching until exited from 'outer'
+      assert "inner-return" == prevent("inner") {             // memoized value from previous call
+        fail()
+      }
+      try {
+        stamp.mayCacheNow()
+        fail()
+      }
+      catch (RecursionManager.CachingPreventedException e) {
+        def soe = UsefulTestCase.assertInstanceOf(e.cause, StackOverflowPreventedException)
+        assert soe.stackTrace.any { StackTraceElement ste ->
+          ste.methodName == 'method which should be present in prevention trace'
+        }
+      }
+      "outer-return"
     }
   }
 
@@ -57,6 +115,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testMayCache() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     def doo1 = RecursionManager.markStack()
     assert "doo-return" == prevent("doo") {
       def foo1 = RecursionManager.markStack()
@@ -69,7 +128,7 @@ class RecursionManagerTest extends TestCase {
           return "bar-return"
         }
         assert !bar1.mayCacheNow()
-        
+
         def goo1 = RecursionManager.markStack()
         assert "goo-return" == prevent("goo") {
           return "goo-return"
@@ -86,6 +145,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testNoCachingForMemoizedValues() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
         assert null == prevent("foo") { "foo-return" }
@@ -101,6 +161,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testNoCachingForMemoizedValues2() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     assert "1-return" == prevent("1") {
       assert "2-return" == prevent("2") {
         assert "3-return" == prevent("3") {
@@ -158,7 +219,7 @@ class RecursionManagerTest extends TestCase {
     prevent(new RecursiveKey('a')) {
       prevent(new RecursiveKey('b')) {
         prevent(new RecursiveKey('a')) {
-          throw new AssertionError("shouldn't be called")
+          throw new AssertionError((Object)"shouldn't be called")
         }
       }
     }
@@ -212,5 +273,4 @@ class RecursionManagerTest extends TestCase {
       return super.equals(obj)
     }
   }
-
 }

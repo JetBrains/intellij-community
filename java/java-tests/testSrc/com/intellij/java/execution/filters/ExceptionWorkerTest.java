@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
+public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testParsing() {
     myFixture.addClass("package com.sample;\n" +

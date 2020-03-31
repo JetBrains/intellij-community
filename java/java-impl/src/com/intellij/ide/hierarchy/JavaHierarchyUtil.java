@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.util.treeView.AlphaComparator;
@@ -15,7 +15,7 @@ import java.util.Comparator;
 /**
  * @author yole
  */
-public class JavaHierarchyUtil {
+public final class JavaHierarchyUtil {
   private JavaHierarchyUtil() { }
 
   @Nullable
@@ -24,7 +24,7 @@ public class JavaHierarchyUtil {
   }
 
   @NotNull
-  public static Comparator<NodeDescriptor> getComparator(@NotNull Project project) {
+  public static Comparator<NodeDescriptor<?>> getComparator(@NotNull Project project) {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(project).getState();
     return state != null && state.SORT_ALPHABETICALLY ? AlphaComparator.INSTANCE : SourceComparator.INSTANCE;
   }

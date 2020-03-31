@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -34,15 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Proxy;
 import java.util.function.Predicate;
 
-/**
- * @author nik
- */
 public class InlineModuleDependencyAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InlineModuleDependencyAction.class);
   private final ClasspathPanelImpl myClasspathPanel;
 
   public InlineModuleDependencyAction(ClasspathPanelImpl classpathPanel) {
-    super("Inline Module Dependency", "Replace dependency on a module without source roots by the list of its dependencies", null);
+    super(JavaUiBundle.message("action.text.inline.module.dependency"),
+          JavaUiBundle.message("action.description.inline.module.dependency"), null);
     myClasspathPanel = classpathPanel;
   }
 
@@ -65,12 +63,12 @@ public class InlineModuleDependencyAction extends AnAction {
 
     model.removeOrderEntry(entryToInline);
 
-    RootModelImpl modelImpl;
+    ModifiableRootModel modelImpl;
     if (Proxy.isProxyClass(model.getClass())) {
-      modelImpl = (RootModelImpl)((ModuleEditor.ProxyDelegateAccessor)Proxy.getInvocationHandler(model)).getDelegate();
+      modelImpl = (ModifiableRootModel)((ModuleEditor.ProxyDelegateAccessor)Proxy.getInvocationHandler(model)).getDelegate();
     }
     else {
-      modelImpl = (RootModelImpl)model;
+      modelImpl = model;
     }
     int addedCount = 0;
     ModuleRootModel otherModel = classpathPanel.getModuleConfigurationState().getModulesProvider().getRootModel(module);

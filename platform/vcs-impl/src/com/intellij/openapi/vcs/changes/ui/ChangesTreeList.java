@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.*;
 /**
  * @deprecated Use {@link ChangesTree} or {@link ChangesTreeImpl}
  */
+@Deprecated
 public abstract class ChangesTreeList<T> extends ChangesTree {
   @NotNull private final List<T> myRawChanges = new ArrayList<>();
 
@@ -53,6 +55,7 @@ public abstract class ChangesTreeList<T> extends ChangesTree {
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public void setScrollPaneBorder(Border border) {
   }
 

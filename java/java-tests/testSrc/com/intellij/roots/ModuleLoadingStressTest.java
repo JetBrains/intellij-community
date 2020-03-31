@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import kotlin.Unit;
 
@@ -19,7 +19,7 @@ import java.io.File;
 /**
  * @author Dmitry Avdeev
  */
-public class ModuleLoadingStressTest extends PlatformTestCase {
+public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
   public void testContentEntryExchange() throws Exception {
     String path = myProject.getBasePath();
     int count = 100;

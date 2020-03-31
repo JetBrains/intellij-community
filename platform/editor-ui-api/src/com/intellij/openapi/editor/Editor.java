@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
@@ -206,6 +207,10 @@ public interface Editor extends UserDataHolder {
    */
   @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos);
+
+  default int visualPositionToOffset(@NotNull VisualPosition pos) {
+    return logicalPositionToOffset(visualToLogicalPosition(pos));
+  }
 
   /**
    * Maps an offset in the document to a logical position.
@@ -444,4 +449,14 @@ public interface Editor extends UserDataHolder {
 
   @NotNull
   EditorKind getEditorKind();
+
+  /**
+   * Vertical distance, in pixels, between the top of visual line (corresponding coordinate is returned by {@link #visualLineToY(int)},
+   * {@link #visualPositionToXY(VisualPosition)}, etc) and baseline of text in that visual line.
+   */
+  default int getAscent() {
+    // actual implementation in EditorImpl is a bit more complex, but this gives an idea how it's constructed
+    return (int)(getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
+                 getColorsScheme().getLineSpacing());
+  }
 }

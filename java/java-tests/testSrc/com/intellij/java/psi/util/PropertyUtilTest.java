@@ -16,13 +16,12 @@
 package com.intellij.java.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-public class PropertyUtilTest extends LightCodeInsightTestCase {
+public class PropertyUtilTest extends LightJavaCodeInsightTestCase {
   public void testSuggestGetterName() {
     assertEquals("isValid", PropertyUtilBase.suggestGetterName("valid", getType("boolean")));
     assertEquals("getValid", PropertyUtilBase.suggestGetterName("valid", getType("Object")));
@@ -70,15 +69,15 @@ public class PropertyUtilTest extends LightCodeInsightTestCase {
     assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", "int")));
   }
 
-  private static PsiType getType(@NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createTypeFromText(type, null);
+  private PsiType getType(@NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createTypeFromText(type, null);
   }
 
-  private static PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createField(name, getType(type));
+  private PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createField(name, getType(type));
   }
 
-  private static PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createMethod(name, getType(type));
+  private PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createMethod(name, getType(type));
   }
 }

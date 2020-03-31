@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.SmartHashSet;
@@ -16,15 +17,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-/**
- * @author Sergey.Malenkov
- */
 public class AnimatedIcon implements Icon {
   /**
    * This key is used to allow animated icons in lists, tables and trees.
@@ -34,7 +30,7 @@ public class AnimatedIcon implements Icon {
    *
    * @see UIUtil#putClientProperty
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
 
   public interface Frame {
@@ -94,25 +90,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Ide.Macro.Recording_4);
   }
 
-  @Deprecated
-  public static class Grey extends AnimatedIcon {
-    public Grey() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
-    }
-
-    public static final int DELAY = 130;
-    public static final List<Icon> ICONS = immutableList(
-      AllIcons.Process.State.GreyProgr_1,
-      AllIcons.Process.State.GreyProgr_2,
-      AllIcons.Process.State.GreyProgr_3,
-      AllIcons.Process.State.GreyProgr_4,
-      AllIcons.Process.State.GreyProgr_5,
-      AllIcons.Process.State.GreyProgr_6,
-      AllIcons.Process.State.GreyProgr_7,
-      AllIcons.Process.State.GreyProgr_8);
-  }
-
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class FS extends AnimatedIcon {
     public FS() {
       super(DELAY, ICONS.toArray(new Icon[0]));
@@ -140,18 +118,18 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.FS.Step_18);
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Blinking extends AnimatedIcon {
     public Blinking(@NotNull Icon icon) {
       this(1000, icon);
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(delay, icon, notNull(getDisabledIcon(icon), icon));
+      super(delay, icon, IconLoader.getDisabledIcon(icon));
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Fading extends AnimatedIcon {
     public Fading(@NotNull Icon icon) {
       this(1000, icon);
@@ -202,18 +180,18 @@ public class AnimatedIcon implements Icon {
   private long time;
   private int index;
 
-  public AnimatedIcon(int delay, @NotNull Icon... icons) {
+  public AnimatedIcon(int delay, Icon @NotNull ... icons) {
     this(getFrames(delay, icons));
   }
 
-  public AnimatedIcon(@NotNull Frame... frames) {
+  public AnimatedIcon(Frame @NotNull ... frames) {
     this.frames = frames;
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
     time = System.currentTimeMillis();
   }
 
-  private static Frame[] getFrames(int delay, @NotNull Icon... icons) {
+  private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
     int length = icons.length;
     assert length > 0 : "empty array";
     Frame[] frames = new Frame[length];
@@ -277,7 +255,7 @@ public class AnimatedIcon implements Icon {
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
-    CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, c);
+    CellRendererPane pane = ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c);
     requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
     icon.paintIcon(c, g, x, y);
   }

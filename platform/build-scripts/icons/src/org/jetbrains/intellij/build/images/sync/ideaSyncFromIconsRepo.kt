@@ -5,9 +5,9 @@ import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.images.generateIconsClasses
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) System.err.println("If you haven't intended to start full icons sync" +
@@ -18,14 +18,22 @@ fun main(args: Array<String>) {
   checkIcons()
   echo("Generating classes..")
   generateIconsClasses()
+  // TODO: perform compilation
   echo("Running tests..")
-  mapOf(
+  val tests = mapOf(
     "intellij.platform.tests" to listOf("com.intellij.ui.PlatformIconsAPITest"),
     "intellij.idea.ultimate.tests.main" to listOf("com.intellij.openapi.icons.UltimateIconClassesTest",
                                                   "com.intellij.openapi.icons.UltimateImageResourcesSanityTest"),
     "intellij.platform.images.build" to listOf("org.jetbrains.intellij.build.images.CommunityIconClassesTest",
                                                "org.jetbrains.intellij.build.images.CommunityImageResourcesSanityTest")
-  ).also { runTests(tests = it.values.flatten(), modules = it.keys) }
+  )
+  try {
+    runTests(tests = tests.values.flatten(), modules = tests.keys)
+  }
+  finally {
+    // in case of non-daemon threads spawned from tests
+    exitProcess(0)
+  }
 }
 
 private fun echo(msg: String) = println("\n** $msg")
@@ -48,9 +56,8 @@ private fun runTests(tests: Collection<String>, modules: Collection<String>) {
 }
 
 private fun dependencies(projectPath: String, module: String) =
-  JpsSerializationManager.getInstance()
-    .loadModel(projectPath, null)
-    .project.modules.first { it.name == module }
+  jpsProject(projectPath)
+    .modules.first { it.name == module }
     .let(JpsJavaExtensionService::dependencies)
     .recursively().libraries
     .flatMap { it.getRoots(JpsOrderRootType.COMPILED) }

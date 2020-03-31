@@ -27,8 +27,6 @@ import java.util.List;
 /**
  * Represents a stack of executions frames usually corresponding to a thread. It is shown in 'Frames' panel of
  * 'Debug' tool window
- *
- * @author nik
  */
 public abstract class XExecutionStack {
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];

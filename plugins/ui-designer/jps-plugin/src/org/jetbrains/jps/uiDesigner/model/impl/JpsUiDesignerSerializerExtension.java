@@ -8,9 +8,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsUiDesignerSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

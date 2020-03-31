@@ -1,10 +1,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryCallToStringValueOfInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryCallToStringValueOfInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryCallToStringValueOf() {
     doTest();
@@ -14,6 +16,11 @@ public class UnnecessaryCallToStringValueOfInspectionTest extends LightInspectio
   @Override
   protected InspectionProfileEntry getInspection() {
     return new UnnecessaryCallToStringValueOfInspection();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override

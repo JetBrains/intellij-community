@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -23,25 +23,30 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
-  public PsiTodoSearchHelperImpl(PsiManagerEx manager) {
-    myManager = manager;
+  public PsiTodoSearchHelperImpl(@NotNull Project project) {
+    myManager = PsiManagerEx.getInstanceEx(project);
+  }
+
+  /**
+   * @deprecated Use {@link #PsiTodoSearchHelperImpl(Project)}
+   */
+  @Deprecated
+  public PsiTodoSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
+    myManager = psiManager;
   }
 
   @Override
-  @NotNull
-  public PsiFile[] findFilesWithTodoItems() {
+  public PsiFile @NotNull [] findFilesWithTodoItems() {
     return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file) {
+  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file) {
     return findTodoItems(file, 0, file.getTextLength());
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences =
       IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine()).findAll();
     if (occurrences.isEmpty()) {
@@ -51,8 +56,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
-  @NotNull
-  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
+  private static TodoItem @NotNull [] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
@@ -67,15 +71,13 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return items.toArray(new TodoItem[0]);
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
     return findTodoItemsLight(file, 0, file.getTextLength());
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences =
       LightIndexPatternSearch.SEARCH.createQuery(
         new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine())

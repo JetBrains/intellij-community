@@ -15,9 +15,6 @@
  */
 package com.intellij.util.io.socketConnection;
 
-/**
- * @author nik
- */
 public interface ResponseToRequest {
   int getRequestId();
 }

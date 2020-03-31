@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.TouchScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -86,8 +74,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   protected void addImpl(Component component, Object name, int index) {
     Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
     if (key != null) {
-      Component old = UIUtil.getClientProperty(this, key);
-      UIUtil.putClientProperty(this, key, component);
+      Component old = ComponentUtil.getClientProperty(this, key);
+      ComponentUtil.putClientProperty(this, key, component);
       if (old != null) remove(old);
     }
     super.addImpl(component, name, index);
@@ -216,7 +204,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return {@code true} if the specified event is handled and consumed, {@code false} otherwise
    */
   public boolean handleMouseWheelEvent(MouseWheelEvent event) {
-    if (MouseWheelEvent.WHEEL_UNIT_SCROLL != event.getScrollType()) return false;
+    if (!isSupportedScrollType(event)) return false;
     if (event.isShiftDown() == (orientation == VERTICAL)) return false;
     if (!ScrollSettings.isEligibleFor(this)) return false;
 
@@ -224,9 +212,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
-    double minDelta = (double)(getMinimum() - value);
-    double maxDelta = (double)(getMaximum() - getVisibleAmount() - value);
-    double deltaAdjusted = Math.max(minDelta, Math.min(maxDelta, delta));
+    double deltaAdjusted = getDeltaAdjusted(value, delta);
     if (deltaAdjusted != 0.0) {
       boolean isPositiveDelta = deltaAdjusted > 0.0;
       if (wasPositiveDelta != isPositiveDelta) {
@@ -249,6 +235,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     }
     event.consume();
     return true;
+  }
+
+  private static boolean isSupportedScrollType(MouseWheelEvent e) {
+    return e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL || TouchScrollUtil.isUpdate(e);
   }
 
   private JViewport getViewport() {
@@ -274,6 +264,25 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     return Math.max(minDelta, Math.min(maxDelta, delta));
   }
 
+  protected double getDeltaAdjusted(MouseWheelEvent event) {
+    int value = getTargetValue();
+    double delta = getPreciseDelta(event);
+    return getDeltaAdjusted(value, delta);
+  }
+
+  /**
+   * Calculates adjusted delta for the bar.
+   *
+   * @param value the target value for the bar
+   * @param delta the supposed delta
+   * @return the delta itself or an adjusted delta
+   */
+  private double getDeltaAdjusted(int value, double delta) {
+    double minDelta = getMinimum() - value;
+    double maxDelta = getMaximum() - getVisibleAmount() - value;
+    return Math.max(minDelta, Math.min(maxDelta, delta));
+  }
+
   /**
    * Calculates a scrolling delta from the specified event.
    *
@@ -281,6 +290,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a scrolling delta for this scrollbar
    */
   private double getPreciseDelta(MouseWheelEvent event) {
+    if (TouchScrollUtil.isTouchScroll(event)) {
+      return TouchScrollUtil.getDelta(event);
+    }
     double rotation = event.getPreciseWheelRotation();
     if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible
@@ -291,7 +303,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);
-      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
     if (ScrollSettings.isHighPrecisionEnabled()) {

@@ -1,17 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
@@ -47,7 +48,6 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    *
    * @return inspection tool ID.
    */
-  @Pattern(VALID_ID_PATTERN)
   @NonNls
   @NotNull
   public String getID() {
@@ -100,8 +100,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return {@code null} if no problems found or not applicable at file level.
    */
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -138,15 +137,21 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
-            LOG.assertTrue(descriptor != null, LocalInspectionTool.this.getClass().getName());
-            holder.registerProblem(descriptor);
+            if (descriptor != null) {
+              holder.registerProblem(descriptor);
+            }
+            else {
+              Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
+              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element",
+                                                      null, inspectionToolClass));
+            }
           }
         }
       }
@@ -186,12 +191,16 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
                    "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
 
+    if (customVisitor == PsiElementVisitor.EMPTY_VISITOR) {
+      return Collections.emptyList();
+    }
+
     inspectionStarted(session, false);
 
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         element.accept(customVisitor);
         processInjectedFile(element);
 
@@ -205,7 +214,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
             for (Pair<PsiElement, TextRange> pair : files) {
               pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitElement(PsiElement injectedElement) {
+                public void visitElement(@NotNull PsiElement injectedElement) {
                   injectedElement.accept(customVisitor);
                   super.visitElement(injectedElement);
                 }

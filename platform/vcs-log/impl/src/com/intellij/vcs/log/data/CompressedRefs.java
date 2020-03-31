@@ -47,6 +47,10 @@ public class CompressedRefs {
     myStorage.flush();
   }
 
+  boolean contains(int index) {
+    return myBranches.contains(index) || myTags.contains(index);
+  }
+
   @NotNull
   SmartList<VcsRef> refsToCommit(int index) {
     SmartList<VcsRef> result = new SmartList<>();

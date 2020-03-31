@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.tree.TreePopupImpl");
+  private static final Logger LOG = Logger.getInstance(TreePopupImpl.class);
   private MyTree myWizardTree;
 
   private MouseMotionListener myMouseMotionListener;
@@ -65,6 +66,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         return getTreeStep().isSelectable(nodeObject, nodeObject);
       }
     };
+    Disposer.register(this, myBuilder);
 
     myBuilder.updateFromRoot();
 
@@ -221,18 +223,22 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private void expandAll() {
+  public void expandAll() {
     for (int i = 0; i < myWizardTree.getRowCount(); i++) {
       myWizardTree.expandRow(i);
     }
   }
 
-  private void collapseAll() {
+  public void collapseAll() {
     int row = myWizardTree.getRowCount() - 1;
     while (row > 0) {
       myWizardTree.collapseRow(row);
       row--;
     }
+  }
+
+  public void scrollToSelection() {
+    myWizardTree.scrollPathToVisible(myWizardTree.getSelectionPath());
   }
 
   private TreePopupStep getTreeStep() {
@@ -420,7 +426,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
       Rectangle visibleRect = getVisibleRect();
       int rowForLocation = getClosestRowForLocation(0, visibleRect.y);
-      for (int i = rowForLocation; i < rowForLocation + TreeUtil.getVisibleRowCount(this) + 1; i++) {
+      int limit = rowForLocation + TreeUtil.getVisibleRowCount(this) + 1;
+      for (int i = rowForLocation; i < limit; i++) {
         final TreePath eachPath = getPathForRow(i);
         if (eachPath == null) continue;
 
@@ -428,9 +435,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         final boolean hasNextStep = getTreeStep().hasSubstep(extractUserObject(lastPathComponent));
         if (!hasNextStep) continue;
 
-        Icon icon = isPathSelected(eachPath) ?
-                    AllIcons.Icons.Ide.NextStep :
-                    AllIcons.Icons.Ide.NextStepGrayed;
+        Icon icon = AllIcons.Icons.Ide.NextStep;
         final Rectangle rec = getPathBounds(eachPath);
         int x = getSize().width - icon.getIconWidth() - 1;
         int y = rec.y + (rec.height - icon.getIconWidth()) / 2;

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-/**
- * @author nik
- */
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
@@ -55,6 +52,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     if (selectedText == null && editor != null) {
       expressionTextPromise = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
+    } else if (editor != null) {
+      expressionTextPromise = evaluator.getWhenDataIsReady(editor, selectedText);
     }
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);

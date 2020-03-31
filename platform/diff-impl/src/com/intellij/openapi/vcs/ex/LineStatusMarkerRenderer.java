@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
@@ -20,6 +6,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,9 +20,9 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.CalledInAwt;
@@ -354,17 +341,20 @@ public abstract class LineStatusMarkerRenderer {
         }
       }
     }
-    else {
+    else if (line1 != line2) {
       paintRect(g, null, borderColor, x, y, endX, endY);
     }
 
-    for (ChangedLines change: block) {
+    for (ChangedLines change : block) {
       if (change.line1 == change.line2) {
         int start = editorImpl.visualLineToY(change.line1);
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
+        }
+        else if (borderColor != null) {
+          paintTriangle(g, editor, null, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
@@ -377,8 +367,15 @@ public abstract class LineStatusMarkerRenderer {
   public static void paintRange(@NotNull Graphics g,
                                 @NotNull Editor editor,
                                 @NotNull Range range,
-                                int framingBorder) {
-    List<ChangesBlock> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
+                                int framingBorder,
+                                boolean isIgnored) {
+    VisibleRangeMerger merger = new VisibleRangeMerger(editor) {
+      @Override
+      protected boolean isIgnored(@NotNull Range range) {
+        return isIgnored;
+      }
+    };
+    List<ChangesBlock> blocks = merger.run(Collections.singletonList(range), g.getClipBounds());
     for (ChangesBlock block : blocks) {
       paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
@@ -421,11 +418,11 @@ public abstract class LineStatusMarkerRenderer {
     }
     if (borderColor != null) {
       Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(JBUI.scale(1)));
+      g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
-      UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
-      UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
-      UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
+      LinePainter2D.paint((Graphics2D)g, x1, y1, x2 - 1, y1);
+      LinePainter2D.paint((Graphics2D)g, x1, y1, x1, y2 - 1);
+      LinePainter2D.paint((Graphics2D)g, x1, y2 - 1, x2 - 1, y2 - 1);
       g.setStroke(oldStroke);
     }
   }
@@ -433,7 +430,7 @@ public abstract class LineStatusMarkerRenderer {
   private static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                     int x1, int x2, int y) {
     float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
-    int size = (int)JBUI.scale(4 * editorScale);
+    int size = (int)JBUIScale.scale(4 * editorScale);
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
@@ -444,7 +441,7 @@ public abstract class LineStatusMarkerRenderer {
     }
     if (borderColor != null) {
       Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(JBUI.scale(1)));
+      g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
       g.drawPolygon(xPoints, yPoints, xPoints.length);
       g.setStroke(oldStroke);
@@ -487,9 +484,6 @@ public abstract class LineStatusMarkerRenderer {
 
   @Nullable
   private static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
-    Color borderColor = getGutterBorderColor(editor);
-    if (borderColor != null) return borderColor;
-
     final EditorColorsScheme scheme = getColorScheme(editor);
     switch (type) {
       case Range.INSERTED:
@@ -738,7 +732,7 @@ public abstract class LineStatusMarkerRenderer {
     @NotNull
     @Override
     public String getAccessibleName() {
-      return "VCS marker: changed line";
+      return DiffBundle.message("vcs.marker.changed.line");
     }
   }
 }

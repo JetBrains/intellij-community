@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -26,9 +26,9 @@ import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.TreeSet;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
-import static com.intellij.util.containers.ContainerUtil.newTreeSet;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class MarkResolvedAction extends BasicAction {
@@ -62,14 +62,14 @@ public class MarkResolvedAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
     StoreUtil.saveDocumentsAndProjectSettings(vcs.getProject());
     Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {
       Messages.showInfoMessage(vcs.getProject(), message("message.text.no.conflicts.found"), message("message.title.no.conflicts.found"));
       return;
     }
-    String[] pathsArray = ArrayUtil.toStringArray(paths);
+    String[] pathsArray = ArrayUtilRt.toStringArray(paths);
     SelectFilesDialog dialog = new SelectFilesDialog(vcs.getProject(), message("label.select.files.and.directories.to.mark.resolved"),
                                                      message("dialog.title.mark.resolved"), message("action.name.mark.resolved"),
                                                      pathsArray, "vcs.subversion.resolve");
@@ -103,8 +103,8 @@ public class MarkResolvedAction extends BasicAction {
   }
 
   @NotNull
-  private static Collection<String> collectResolvablePaths(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
-    Collection<String> result = newTreeSet();
+  private static Collection<String> collectResolvablePaths(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
+    Collection<String> result = new TreeSet<>();
 
     for (VirtualFile file : files) {
       try {

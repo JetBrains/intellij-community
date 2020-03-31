@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.extension.adapters;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,12 @@ public interface JsonValueAdapter {
   @Nullable JsonObjectValueAdapter getAsObject();
   @Nullable JsonArrayValueAdapter getAsArray();
 
-  default boolean shouldCheckIntegralRequirements() {return true;}
-  default boolean shouldCheckAsValue() {return true;}
+  default boolean shouldCheckIntegralRequirements() { return true; }
+  default boolean shouldCheckAsValue() { return true; }
+
+  /**
+   * For some languages, the same node may represent values of different types depending on the context
+   * This happens, for instance, in YAML, where empty objects and null values are the same thing
+   */
+  default JsonSchemaType getAlternateType(@Nullable JsonSchemaType type) { return type; }
 }

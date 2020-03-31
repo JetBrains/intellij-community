@@ -2,26 +2,23 @@
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FilesProcessorWithNotificationImpl
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.project.getProjectStoreDirectory
-import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.project.stateStore
+import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -31,45 +28,63 @@ import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
-class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable)
+class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
         AsyncVfsEventsPostProcessor.getInstance().addListener(this, parentDisposable)
       }
     }
   }
 
   override fun changeListUpdateDone() {
-    if (!needProcessIgnoredFiles() || ApplicationManager.getApplication().isUnitTestMode) return
+    if (ApplicationManager.getApplication().isUnitTestMode) return
 
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
     if (files.isEmpty()) return
 
-    processFiles(files)
+    val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
+    if (needProcessIgnoredFiles() && restFiles.isNotEmpty()) {
+      processFiles(restFiles)
+    }
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.clear()
     }
   }
 
+  private fun silentlyIgnoreFilesInsideConfigDir(files: List<VirtualFile>): List<VirtualFile> {
+    val configDir = project.stateStore.projectConfigDir ?: return files
+    val configDirFile = LocalFileSystem.getInstance().findFileByPath(configDir) ?: return files
+    val filesInConfigDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
+    val unversionedFilesInConfigDir = doFilterFiles(filesInConfigDir)
+
+    runInEdt {
+      writeIgnores(project, unversionedFilesInConfigDir)
+    }
+
+    return files - filesInConfigDir
+  }
+
   override fun filesChanged(events: List<VFileEvent>) {
-    if (!needProcessIgnoredFiles() || ApplicationManager.getApplication().isUnitTestMode) return
+    if (ApplicationManager.getApplication().isUnitTestMode) return
 
     val potentiallyIgnoredFiles =
       events.asSequence()
-        .mapNotNull(::getAffectedFile)
-        .filter(vcsIgnoreManager::isPotentiallyIgnoredFile)
+        .filter {
+          val filePath = getAffectedFilePath(it)
+          filePath != null && vcsIgnoreManager.isPotentiallyIgnoredFile(filePath)
+        }
+        .mapNotNull { it.file }
         .toList()
 
     if (potentiallyIgnoredFiles.isEmpty()) return
@@ -100,12 +115,12 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
 
     for (potentiallyIgnoredFile in potentiallyIgnoredFiles) {
       VcsUtil.getVcsFor(project, potentiallyIgnoredFile)?.let { vcs ->
-        VcsImplUtil.getIgnoredFileContentProvider(project, vcs)?.let { ignoredContentProvider ->
+        findIgnoredFileContentProvider(vcs)?.let { ignoredContentProvider ->
           findOrCreateIgnoreFileByFile(project, ignoredContentProvider, potentiallyIgnoredFile)?.let { ignoreFile ->
             for ((ignoredFileProvider, descriptors) in providerToDescriptorMap) {
-              for (ignoredFileDescriptor in descriptors.filter { it.matchesFile(potentiallyIgnoredFile) }) {
+              for (ignoredFileDescriptor in descriptors.filter { it.matchesFile(VcsUtil.getFilePath(potentiallyIgnoredFile)) }) {
                 val ignoreFileContent = ignoreFileToContent.computeIfAbsent(ignoreFile) { mutableListOf() }
-                val groupDescription = " ${ignoredFileProvider.ignoredGroupDescription}"
+                val groupDescription = ignoredContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
                 val ignoreFileGroupContent = ignoreFileContent.getOrInitialize(groupDescription)
                 ignoreFileGroupContent.ignoredDescriptors.add(ignoredFileDescriptor)
               }
@@ -135,7 +150,14 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
     val storeDir = findStoreDir(project)
 
     val ignoreFileRoot =
-      if (storeDir != null && file.underProjectStoreDir(storeDir)) storeDir else VcsUtil.getVcsRootFor(project, file) ?: return null
+      if (storeDir != null
+          && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
+          && file.underProjectStoreDir(storeDir)) {
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+          storeDir
+        } else return null
+      }
+      else VcsUtil.getVcsRootFor(project, file) ?: return null
 
     return ignoreFileRoot.findChild(ignoredContentProvider.fileName) ?: runWriteAction {
       ignoreFileRoot.createChildData(this, ignoredContentProvider.fileName)
@@ -154,7 +176,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>) =
-    changeListManager.unversionedFiles.filter { isUnder(files, it) }
+    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles.filter { isUnder(files, it) }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()
@@ -170,8 +192,13 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
   override val forAllProjectsActionText: String? = VcsBundle.getString("ignored.file.manage.all.project")
   override val muteActionText: String = VcsBundle.getString("ignored.file.manage.notmanage")
 
+  override val viewFilesDialogTitle: String? = VcsBundle.getString("ignored.file.manage.view.dialog.title")
+  override val viewFilesDialogOkActionName: String = VcsBundle.message("ignored.file.manage.view.dialog.ignore.action")
+
   override fun notificationTitle() = ""
-  override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message")
+  override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
+                                                                 ApplicationNamesInfo.getInstance().fullProductName,
+                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: "ignore file")
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
@@ -180,17 +207,15 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
     return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
   }
 
-  private fun getAffectedFile(event: VFileEvent): VirtualFile? =
-    runReadAction {
-      when {
-        event is VFileCreateEvent && event.parent.isValid -> event.file
-        event is VFileMoveEvent || event.isRename() -> event.file
-        event is VFileCopyEvent && event.newParent.isValid -> event.newParent.findChild(event.newChildName)
-        else -> null
+  private fun getAffectedFilePath(event: VFileEvent): FilePath? = when {
+    event is VFileCreateEvent -> VcsUtil.getFilePath(event.path, event.isDirectory)
+    event is VFileMoveEvent ||
+    event is VFileCopyEvent ||
+    event is VFilePropertyChangeEvent && event.isRename -> {
+      VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
       }
-    }
+    else -> null
+  }
 
-  private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
-
-  private fun needProcessIgnoredFiles() = ApplicationManager.getApplication().isInternal || Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
 }

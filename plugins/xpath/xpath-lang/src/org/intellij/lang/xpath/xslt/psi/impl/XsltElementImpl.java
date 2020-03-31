@@ -255,8 +255,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getChildren() {
+    public PsiElement @NotNull [] getChildren() {
         return myElement.getChildren(); // TODO: return XSLT objects
     }
 
@@ -273,8 +272,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @NotNull
-    public char[] textToCharArray() {
+    public char @NotNull [] textToCharArray() {
         final XmlAttributeValue nameElement = getNameElement();
         return nameElement != null ? nameElement.textToCharArray() : myElement.textToCharArray();
     }
@@ -292,8 +290,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @NotNull
-    public PsiReference[] getReferences() {
+    public PsiReference @NotNull [] getReferences() {
         final XmlAttributeValue nameElement = getNameElement();
         return nameElement != null ? nameElement.getReferences() : myElement.getReferences();
     }

@@ -15,6 +15,8 @@
  */
 package com.intellij.patterns.compiler;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -42,18 +44,27 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
       return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
     }
   );
-  private final Map<List<Class>, PatternCompiler> myCompilers =
+  private final Map<List<Class<?>>, PatternCompiler> myCompilers =
     ConcurrentFactoryMap.createMap(key -> new PatternCompilerImpl(key));
 
-  @NotNull
+  public PatternCompilerFactoryImpl() {
+    PATTERN_CLASS_EP.addExtensionPointListener(new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        myClasses.clear();
+        myCompilers.clear();
+      }
+    }, ApplicationManager.getApplication());
+  }
+
   @Override
-  public Class[] getPatternClasses(String alias) {
+  public Class @NotNull [] getPatternClasses(String alias) {
     return myClasses.get(alias);
   }
 
   @NotNull
   @Override
-  public <T> PatternCompiler<T> getPatternCompiler(@NotNull Class[] patternClasses) {
+  public <T> PatternCompiler<T> getPatternCompiler(Class @NotNull [] patternClasses) {
     return myCompilers.get(Arrays.asList(patternClasses));
   }
 }

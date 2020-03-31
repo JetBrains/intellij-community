@@ -1,17 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -19,19 +21,23 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import net.n3.nanoxml.StdXMLReader;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import net.n3.nanoxml.StdXMLReader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
-  implements FileBasedIndex.FileTypeSpecificInputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
+  implements DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
 
   public final static Key MARKER_KEY = new Key();
@@ -66,7 +72,12 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return this;
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.getName().endsWith(".xml");
+      }
+    };
   }
 
   @Override
@@ -77,16 +88,6 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @Override
   public int getVersion() {
     return 2;
-  }
-
-  @Override
-  public boolean acceptInput(@NotNull VirtualFile file) {
-    return true;
-  }
-
-  @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
-    fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
   @NotNull
@@ -107,18 +108,14 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   static boolean isPropertiesFile(XmlFile file) {
     Project project = file.getProject();
-    if (DumbService.isDumb(project)) {
-      if (!file.isValid()) {
-        return false;
-      }
+    if (!file.isValid()) return false;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null || DumbService.isDumb(project) || NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       CharSequence contents = file.getViewProvider().getContents();
       return CharArrayUtil.indexOf(contents, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
           isAccepted(contents);
     }
-    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY,
-                                                       file.getVirtualFile(),
-                                                       (file1, value) -> false,
-                                                       GlobalSearchScope.allScope(project));
+    return !FileBasedIndex.getInstance().getFileData(NAME, virtualFile, project).isEmpty();
   }
 
   private static boolean isAccepted(CharSequence bytes) {
@@ -160,7 +157,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @Override
   public boolean isEqual(Key val1, Key val2) {
-    return val1.isMarker == val2.isMarker && Comparing.equal(val1.key, val2.key);
+    return val1.isMarker == val2.isMarker && Objects.equals(val1.key, val2.key);
   }
 
   public static class Key {
@@ -190,7 +187,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
       Key key1 = (Key)o;
 
       if (isMarker != key1.isMarker) return false;
-      if (key != null ? !key.equals(key1.key) : key1.key != null) return false;
+      if (!Objects.equals(key, key1.key)) return false;
 
       return true;
     }

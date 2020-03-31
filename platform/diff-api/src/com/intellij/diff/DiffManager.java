@@ -38,6 +38,14 @@ import java.awt.*;
  * <p>
  * Use {@link DiffExtension} to customize existing diff viewers.
  * Register custom {@link FrameDiffTool} to support custom {@link DiffRequest} or to add new views for default ones.
+ * <p>
+ * <pre>
+ * DiffContent content1 = DiffContentFactory.getInstance().create(project, "Stuff");
+ * DiffContent content2 = DiffContentFactory.getInstance().createClipboardContent(project);
+ * content2.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+ * SimpleDiffRequest request = new SimpleDiffRequest("Stuff vs Clipboard", content1, content2, "Stuff", "Clipboard");
+ * DiffManager.getInstance().showDiff(project, request);
+ * </pre>
  *
  * @see DiffRequestFactory
  * @see DiffContentFactory
@@ -50,16 +58,18 @@ public abstract class DiffManager {
     return ServiceManager.getService(DiffManager.class);
   }
 
-  //
-  // Usage
-  //
-
+  /**
+   * @see com.intellij.diff.requests.SimpleDiffRequest
+   */
   @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request);
 
   @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
+  /**
+   * @see com.intellij.diff.chains.SimpleDiffRequestChain
+   */
   @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 

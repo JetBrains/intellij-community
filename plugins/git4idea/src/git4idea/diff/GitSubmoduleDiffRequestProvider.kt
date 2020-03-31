@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.diff
 
 import com.intellij.diff.DiffContentFactory
@@ -38,12 +38,12 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
     var afterRevision = change.afterRevision
     if (afterRevision is CurrentContentRevision) {
       require(beforeRevision is GitSubmoduleContentRevision)
-      val submodule = (beforeRevision as GitSubmoduleContentRevision).submodule
+      val submodule = beforeRevision.submodule
       afterRevision = GitSubmoduleContentRevision.createCurrentRevision(submodule)
     }
     else if (beforeRevision is CurrentContentRevision) {
       require(afterRevision is GitSubmoduleContentRevision)
-      val submodule = (afterRevision as GitSubmoduleContentRevision).submodule
+      val submodule = afterRevision.submodule
       beforeRevision = GitSubmoduleContentRevision.createCurrentRevision(submodule)
     }
 
@@ -54,7 +54,7 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
     return SimpleDiffRequest("$title (Submodule)",
                              beforeContent,
                              afterContent,
-                             getRevisionTitle(beforeRevision, BASE_VERSION),
-                             getRevisionTitle(afterRevision, YOUR_VERSION))
+                             getRevisionTitle(beforeRevision, getBaseVersion()),
+                             getRevisionTitle(afterRevision, getYourVersion()))
   }
 }

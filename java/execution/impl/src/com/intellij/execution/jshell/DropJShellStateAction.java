@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,11 +15,14 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 class DropJShellStateAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");
-  private static final AnAction ourInstance = new DropJShellStateAction();
+  private static final Logger LOG = Logger.getInstance(ExecuteJShellAction.class);
+  private static class Holder {
+    private static final AnAction ourInstance = new DropJShellStateAction();
+  }
 
   private DropJShellStateAction() {
-    super("Drop All Code Snippets", "Invalidate all code snippets in the associated JShell instance", AllIcons.Actions.GC);
+    super(ExecutionBundle.messagePointer("drop.all.code.snippets"),
+          ExecutionBundle.messagePointer("invalidate.all.code.snippets"), AllIcons.Actions.GC);
   }
 
   @Override
@@ -45,6 +49,6 @@ class DropJShellStateAction extends AnAction{
   }
 
   public static AnAction getSharedInstance() {
-    return ourInstance;
+    return Holder.ourInstance;
   }
 }

@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author mike
- */
-public class ExceptionCheckingTest extends LightCodeInsightTestCase {
+public class ExceptionCheckingTest extends LightJavaCodeInsightTestCase {
   public void testNoExceptions() {
     PsiMethodCallExpression methodCall = createCall("void foo() { System.out.println(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
@@ -120,7 +103,7 @@ public class ExceptionCheckingTest extends LightCodeInsightTestCase {
   }
 
 
-  private static PsiMethodCallExpression createCall(@NonNls final String body) {
+  private PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "void throwsIOException() throws java.io.IOException {}" +
       "void throwsRuntimeException() throws RuntimeException {}" +
@@ -131,7 +114,7 @@ public class ExceptionCheckingTest extends LightCodeInsightTestCase {
     return methodCall;
   }
 
-  private static PsiNewExpression createNewExpression(@NonNls final String body) {
+  private PsiNewExpression createNewExpression(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "class ClassIOException { ClassIOException() throws java.io.IOException {} }" +
       "class ClassError { ClassError() throws Error {} }" +

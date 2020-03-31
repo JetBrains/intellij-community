@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-/**
- * @author nik
- */
 public class NativeLibraryOrderRootType extends PersistentOrderRootType {
   public static OrderRootType getInstance() {
     return getOrderRootType(NativeLibraryOrderRootType.class);

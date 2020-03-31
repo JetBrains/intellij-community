@@ -6,7 +6,6 @@ import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.bugzilla.BugzillaRepository;
 import com.intellij.tasks.bugzilla.BugzillaRepositoryType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,5 +65,4 @@ public class BugzillaIntegrationTest extends TaskManagerTestCase {
     myRepository.setUsername("buildtest");
     myRepository.setPassword("buildtest");
   }
-
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +18,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Dennis.Ushakov
@@ -50,14 +51,14 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     doRefactor(project, elements[0], elements[elements.length - 1], editor, file, dataContext);
   }
 
   private void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext) {
-    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     CommonRefactoringUtil.checkReadOnlyStatus(project, file);
 
@@ -78,7 +79,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
 
 
 
-  protected boolean inClass(PyClass clazz, Project project, Editor editor, String errorMessageId) {
+  protected boolean inClass(PyClass clazz, Project project, Editor editor, @PropertyKey(resourceBundle = PyBundle.BUNDLE) String errorMessageId) {
     if (clazz == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message(errorMessageId), getTitle(), getHelpId());
       return false;

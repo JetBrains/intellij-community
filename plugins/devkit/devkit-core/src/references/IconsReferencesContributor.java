@@ -106,9 +106,8 @@ public class IconsReferencesContributor extends PsiReferenceContributor
 
   private static void registerForIconXmlAttribute(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("icon"), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
         if (!PsiUtil.isPluginXmlPsiElement(element)) {
           return PsiReference.EMPTY_ARRAY;
         }
@@ -205,9 +204,8 @@ public class IconsReferencesContributor extends PsiReferenceContributor
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> findGetIconPattern
       = literalExpression().and(psiExpression().methodCallParameter(0, method));
     registrar.registerReferenceProvider(findGetIconPattern, new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
         if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new FileReferenceSet(element) {
           @Override
@@ -290,7 +288,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
 
           private PsiElement replace(String newElementName, String fqn, String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
-            return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
+            return ElementManipulators.handleContentChange(getElement(), newValue);
           }
         }
       }), PsiReferenceRegistrar.HIGHER_PRIORITY);

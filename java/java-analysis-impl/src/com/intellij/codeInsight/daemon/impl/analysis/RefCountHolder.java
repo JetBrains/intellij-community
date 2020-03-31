@@ -119,7 +119,7 @@ class RefCountHolder {
     if (isDeadCodeEnabled && !inLibrary) {
       return new GlobalUsageHelperBase() {
         final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
-          if (isEntryPoint(member)) return true;
+          if (deadCodeInspection.isEntryPoint(member)) return true;
           if (member instanceof PsiClass) {
             return !JBTreeTraverser
               .<PsiMember>from(m -> m instanceof PsiClass
@@ -136,10 +136,6 @@ class RefCountHolder {
         @Override
         public boolean shouldCheckUsages(@NotNull PsiMember member) {
           return !myEntryPointCache.get(member);
-        }
-
-        private boolean isEntryPoint(@NotNull PsiElement element) {
-          return deadCodeInspection.isEntryPoint(element);
         }
       };
     }
@@ -374,7 +370,7 @@ class RefCountHolder {
     }
   }
 
-  private static void log(@NonNls @NotNull Object... info) {
+  private static void log(@NonNls Object @NotNull ... info) {
     FileStatusMap.log(info);
   }
 

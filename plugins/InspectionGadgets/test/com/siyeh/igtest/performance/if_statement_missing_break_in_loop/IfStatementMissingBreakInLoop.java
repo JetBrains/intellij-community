@@ -1,6 +1,7 @@
+import org.jetbrains.annotations.Contract;
+
 import java.util.Arrays;
 import java.util.List;
-import org.jetbrains.annotations.Contract;
 
 public class IfStatementMissingBreakInLoop {
 
@@ -118,6 +119,17 @@ public class IfStatementMissingBreakInLoop {
       if (i == 0) {
         // found = true;
       }
+    }
+  }
+
+  public void arrayElementChanges(boolean b) {
+    String[] s = {null};
+    for(int i=0; i<10; i++) {
+      if (s[0] == null) {
+        s[0] = "";
+      }
+      String[] arr = new String[10];
+      (b ? arr : s)[i] += i;
     }
   }
 

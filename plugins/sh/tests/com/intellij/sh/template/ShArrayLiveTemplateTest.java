@@ -10,9 +10,9 @@ import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShArrayLiveTemplateTest extends LightCodeInsightFixtureTestCase {
+public class ShArrayLiveTemplateTest extends BasePlatformTestCase {
 
   public void testArrayCreate() {
     doTest("array create<caret>", "myArray=(item1 item2 item3)\n");

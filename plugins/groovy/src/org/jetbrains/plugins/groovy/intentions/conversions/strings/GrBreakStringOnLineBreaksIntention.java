@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.lang.ASTNode;
@@ -65,7 +51,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
     StringBuilder buffer = new StringBuilder();
     if (element instanceof GrString) {
-      processGString(element, quote, value, buffer);
+      processGString(element, quote, buffer);
     }
     else {
       processSimpleString(quote, value, buffer);
@@ -77,7 +63,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
     return result;
   }
 
-  private static void processGString(PsiElement element, String quote, String value, StringBuilder buffer) {
+  private static void processGString(PsiElement element, String quote, StringBuilder buffer) {
     final ASTNode node = element.getNode();
 
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -87,7 +73,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
         buffer.append(child.getText());
       }
       else {
-        value = child.getText();
+        String value = child.getText();
         int prev = 0;
         if (!isInjection(child.getTreePrev())) {
           buffer.append(quote);
@@ -129,9 +115,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
   private static int checkForR(String value, int pos) {
     pos += 2;
-    if (value.length() > pos + 2 && "\r".equals(value.substring(pos, pos + 2))) return pos + 2;
+    if (value.length() > pos + 2 && "\\r".equals(value.substring(pos, pos + 2))) return pos + 2;
     return pos;
   }
-
-
 }

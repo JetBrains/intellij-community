@@ -52,10 +52,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,6 +80,13 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
+      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(this::reloadInjections, null);
+      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(this::reloadInjections, null);
+    }
+
+    private void reloadInjections() {
+      myDefaultInjections.clear();
+      myDefaultInjections.addAll(Configuration.loadDefaultInjections());
     }
 
     @Override
@@ -114,8 +118,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     private final Configuration myParentConfiguration;
 
-    Prj(final Configuration configuration) {
-      myParentConfiguration = configuration;
+    Prj() {
+      myParentConfiguration = Configuration.getInstance();
     }
 
     @Override
@@ -241,8 +245,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     importPlaces(getDefaultInjections());
   }
 
-  @Nullable
-  private static InjectionPlace[] dropKnownInvalidPlaces(InjectionPlace[] places) {
+  private static InjectionPlace @Nullable [] dropKnownInvalidPlaces(InjectionPlace[] places) {
     InjectionPlace[] result = places;
     for (InjectionPlace place : places) {
       if (place.getText().contains("matches(\"[^${}/\\\\]+\")")) {
@@ -321,7 +324,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
           return Comparing.compare(o11.getElementPattern().toString(), o22.getElementPattern().toString());
         });
     };
-    for (String key : ContainerUtil.newTreeSet(myInjections.keySet())) {
+    for (String key : new TreeSet<>(myInjections.keySet())) {
       Set<BaseInjection> injections = new HashSet<>(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
       for (BaseInjection injection : ContainerUtil.sorted(injections, comparator)) {
@@ -481,9 +484,10 @@ public class Configuration extends SimpleModificationTracker implements Persiste
    * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, List, List, List)},
    * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
    * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2019.2
+   * To be removed in IDEA 2020.1
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void replaceInjectionsWithUndo(final Project project,
                                         final List<? extends BaseInjection> newInjections,
                                         final List<? extends BaseInjection> originalInjections,
@@ -508,19 +512,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   protected void replaceInjectionsWithUndoInner(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
     replaceInjections(add, remove, false);
-  }
-
-  /**
-   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, Object, Object, boolean, List, PairProcessor)},
-   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
-   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2019.2
-   */
-  @Deprecated
-  public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
-                                                   final List<? extends PsiElement> psiElementsToRemove,
-                                                   final PairProcessor<T, T> actualProcessor) {
-    replaceInjectionsWithUndo(project, null, add, remove, true, psiElementsToRemove, actualProcessor);
   }
 
   public static <T> void replaceInjectionsWithUndo(final Project project,
@@ -558,7 +549,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     };
     WriteCommandAction.writeCommandAction(project, psiFiles)
-                      .withName("Language Injection Configuration Update")
+                      .withName(IntelliLangBundle.message("command.name.language.injection.configuration.update"))
                       .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
                       .run(() -> {
                         for (PsiElement annotation : psiElementsToRemove) {

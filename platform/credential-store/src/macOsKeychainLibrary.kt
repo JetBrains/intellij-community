@@ -35,6 +35,9 @@ internal class KeyChainCredentialStore : CredentialStore {
       if (errorCode == errSecUserCanceled) {
         return ACCESS_TO_KEY_CHAIN_DENIED
       }
+      if (errorCode == errUserNameNotCorrect) {
+        return CANNOT_UNLOCK_KEYCHAIN
+      }
 
       val pointer = passwordRef.value ?: return null
       val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))

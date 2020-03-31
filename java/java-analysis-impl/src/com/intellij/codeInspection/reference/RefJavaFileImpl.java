@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UastContextKt;
+
+import java.util.Objects;
 
 public class RefJavaFileImpl extends RefFileImpl {
   private volatile RefModule myRefModule;
@@ -69,7 +56,7 @@ public class RefJavaFileImpl extends RefFileImpl {
     PsiFile psiFile = getPsiElement();
     if (psiFile == null) return;
     myRefModule = getRefManager().getRefModule(ModuleUtilCore.findModuleForFile(psiFile));
-    UFile file = ObjectUtils.notNull(UastContextKt.toUElement(psiFile, UFile.class));
+    UFile file = Objects.requireNonNull(UastContextKt.toUElement(psiFile, UFile.class));
     String packageName = file.getPackageName();
     if (!packageName.isEmpty()) {
       ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);

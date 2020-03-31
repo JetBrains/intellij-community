@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -23,11 +22,22 @@ import java.util.List;
 import java.util.Set;
 
 public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectFileIndexImpl.class);
   private final Project myProject;
 
-  public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
-    super(directoryIndex, fileTypeManager);
+  public ProjectFileIndexImpl(@NotNull Project project) {
+    super(DirectoryIndex.getInstance(project));
+
+    myProject = project;
+  }
+
+  /**
+   * @deprecated Do not pass DirectoryIndex explicitly.
+   */
+  @Deprecated
+  public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex index, @NotNull FileTypeRegistry fileTypeManager) {
+    super(index);
+
     myProject = project;
   }
 
@@ -55,16 +65,14 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
         VirtualFile root = iterator.next();
         DirectoryInfo info = getInfoForFileOrDirectory(root);
-        if (!info.isInProject(root) // is excluded or ignored
-            || !module.equals(info.getModule())) { // maybe 2 modules have the same content root?
+        if (!module.equals(info.getModule())) { // maybe 2 modules have the same content root?
           iterator.remove();
           continue;
         }
 
         VirtualFile parent = root.getParent();
         if (parent != null) {
-          DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
-          if (isFileInContent(parent, parentInfo)) {
+          if (isInContent(parent)) {
             iterator.remove();
           }
         }
@@ -94,7 +102,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
+    file = BackedVirtualFile.getOriginFileIfBacked(file);
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getModule();
@@ -215,10 +223,12 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return info.isInModuleSource(fileOrDir) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
+  @Nullable
+  @Override
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }
-  
+
   @Override
   protected boolean isScopeDisposed() {
     return myProject.isDisposed();

@@ -75,7 +75,7 @@ class ListTest {
   }
 
   @Test
-  fun `parametrized type as item`() {
+  fun `parameterized type as item`() {
     class TestBean {
       @JvmField
       val list: MutableList<Set<String>> = SmartList()
@@ -88,6 +88,32 @@ class ListTest {
   }
 
   @Test
+  fun `empty list as empty list on read`() {
+    class TestBean {
+      @JvmField
+      var list: List<String>? = null
+    }
+
+    val bean = TestBean()
+    bean.list = emptyList()
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean.list).isSameAs(emptyList<String>())
+  }
+
+  @Test
+  fun `parameterized array`() {
+    class TestBean<T> {
+      @JvmField
+      var list: Array<T>? = null
+    }
+
+    val bean = TestBean<String>()
+    bean.list = arrayOf("bar")
+    val deserializedBean = test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
+    assertThat(deserializedBean.list!!.first()).isEqualTo("bar")
+  }
+
+  @Test
   fun `versioned file`() {
     val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
     val list = listOf("foo", "bar")
@@ -96,7 +122,7 @@ class ListTest {
     assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
       {
         version:42,
-        formatVersion:1,
+        formatVersion:3,
         data:[
           foo,
           bar

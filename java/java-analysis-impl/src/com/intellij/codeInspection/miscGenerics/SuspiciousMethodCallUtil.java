@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -264,7 +264,7 @@ public class SuspiciousMethodCallUtil {
       substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
       if (substitutor == null) continue;
 
-      if (!method.getSignature(substitutor).equals(calleeMethod.getSignature(PsiSubstitutor.EMPTY))) continue;
+      if (!method.getSignature(substitutor).equals(calleeMethod.getSignature(resolveResult.getSubstitutor()))) continue;
 
       PsiTypeParameter[] typeParameters = patternClass.getTypeParameters();
       if (typeParameters.length <= patternMethod.typeParameterIdx) return null;
@@ -288,7 +288,7 @@ public class SuspiciousMethodCallUtil {
               if (qualifierItemType.isConvertibleFrom(itemType) && !reportConvertibleMethodCalls) {
                 return null;
               }
-              return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+              return JavaAnalysisBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY),
                                                "objects");
@@ -305,7 +305,7 @@ public class SuspiciousMethodCallUtil {
       if (!typeParamMapping.isAssignableFrom(argType)) {
         if (typeParamMapping.isConvertibleFrom(argType)) {
           if (reportConvertibleMethodCalls) {
-            message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
+            message = JavaAnalysisBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
                                                 PsiFormatUtil.formatMethod(calleeMethod, substitutor,
                                                                            PsiFormatUtilBase.SHOW_NAME |
                                                                            PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
@@ -315,7 +315,7 @@ public class SuspiciousMethodCallUtil {
         else {
           PsiType qualifierType = qualifier.getType();
           if (qualifierType != null) {
-            message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+            message = JavaAnalysisBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                 PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
                                                 PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY),
                                                 getPreciseObjectTitle(patternClass, patternMethod.typeParameterIdx));

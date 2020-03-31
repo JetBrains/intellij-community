@@ -28,7 +28,7 @@ public final class NullUtils {
    * @return <tt>true</tt> if all objects are not <tt>null</tt>,
    *         otherwise <tt>false</tt>
    */
-  public static boolean notNull(@NotNull Object... objects) {
+  public static boolean notNull(Object @NotNull ... objects) {
     return !hasNull(objects);
   }
 
@@ -39,7 +39,7 @@ public final class NullUtils {
    * @return <tt>false</tt> if all objects are not <tt>null</tt>,
    *         otherwise <tt>true</tt>
    */
-  public static boolean hasNull(@NotNull Object... objects) {
+  public static boolean hasNull(Object @NotNull ... objects) {
     for (Object object : objects) {
       if (object == null) return true;
     }
@@ -53,7 +53,7 @@ public final class NullUtils {
    * @return <tt>false</tt> if all objects are <tt>null</tt>,
    *         otherwise <tt>true</tt>
    */
-  public static boolean hasNotNull(@NotNull Object... objects) {
+  public static boolean hasNotNull(Object @NotNull ... objects) {
     for (Object object : objects) {
       if (object != null) return true;
     }

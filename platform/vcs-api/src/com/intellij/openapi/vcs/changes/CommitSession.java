@@ -19,6 +19,7 @@ public interface CommitSession {
   /**
    * @deprecated Since version 7.0, {@link #getAdditionalConfigurationUI(Collection, String)} is called instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @Nullable
   default JComponent getAdditionalConfigurationUI() {
@@ -27,7 +28,7 @@ public interface CommitSession {
 
   @Nullable
   default JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
-    return null;
+    return getAdditionalConfigurationUI();
   }
 
   default boolean canExecute(Collection<Change> changes, String commitMessage) {

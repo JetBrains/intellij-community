@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,14 +18,14 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.FindClassUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -34,10 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
-public class FindClassTest extends PsiTestCase {
+public class FindClassTest extends JavaPsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile mySrcDir1;
   private VirtualFile myPackDir;
@@ -127,7 +124,7 @@ public class FindClassTest extends PsiTestCase {
       FileDocumentManager.getInstance().saveAllDocuments();
       PsiClass psiClass = myJavaFacade.findClass("p.A");
       final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-      File ioFile = VfsUtil.virtualToIoFile(vFile);
+      File ioFile = VfsUtilCore.virtualToIoFile(vFile);
       ioFile.setLastModified(5);
 
       LocalFileSystem.getInstance().refresh(false);

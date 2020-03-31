@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractInterface;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -37,7 +38,7 @@ import java.util.List;
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
-    super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
+    super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.getRefactoringName());
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
       if (member instanceof PsiMethod &&
@@ -119,7 +120,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   @Override
   protected String getDocCommentPanelName() {
-    return RefactoringBundle.message("extractSuperInterface.javadoc");
+    return JavaRefactoringBundle.message("extractSuperInterface.javadoc");
   }
 
   @Override

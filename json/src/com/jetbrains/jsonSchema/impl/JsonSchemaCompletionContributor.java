@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.lang.Language;
@@ -55,10 +56,10 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 10/1/2015.
  */
 public class JsonSchemaCompletionContributor extends CompletionContributor {
-  private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
-  private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
-  private static final String USER_USAGE_KEY = "json.schema.user.completion";
-  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
+  private static final String BUILTIN_USAGE_KEY = "builtin";
+  private static final String SCHEMA_USAGE_KEY = "schema";
+  private static final String USER_USAGE_KEY = "user";
+  private static final String REMOTE_USAGE_KEY = "remote";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -186,6 +187,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
           addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties, knownNames);
           addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter, knownNames);
+          addPropertyNameSchemaVariants(schema);
         }
 
         if (isName != ThreeState.YES) {
@@ -195,6 +197,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
+      }
+    }
+
+    private void addPropertyNameSchemaVariants(@NotNull JsonSchemaObject schema) {
+      JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
+      if (propertyNamesSchema == null) return;
+      List<Object> anEnum = propertyNamesSchema.getEnum();
+      if (anEnum == null) return;
+      for (Object o : anEnum) {
+        if (!(o instanceof String)) continue;
+        String key = ((String)o);
+        key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
+        myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(key)));
       }
     }
 
@@ -254,11 +269,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue);
 
       if (schema.getEnum() != null) {
+        Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
         for (Object o : schema.getEnum()) {
           if (myInsideStringLiteral && !(o instanceof String)) continue;
           String variant = o.toString();
           if (!filtered.contains(variant)) {
-            addValueVariant(variant, null);
+            Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
+            String description = valueMetadata == null ? null : valueMetadata.get("description");
+            String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
+            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null);
           }
         }
       }
@@ -291,6 +310,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         else if (name.equals(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION)) {
           addInjectedLanguageVariants();
+        }
+        else if (name.equals("language")) {
+          JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
+          if (parent != null) {
+            JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
+            if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
+              addInjectedLanguageVariants();
+            }
+          }
         }
       }
     }
@@ -393,7 +421,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                  @Nullable final String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
       String unquoted = StringUtil.unquoteString(key);
-      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted) ? unquoted : key);
+      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
       if (altText != null) {
         builder = builder.withPresentableText(altText);
       }
@@ -406,8 +434,11 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myVariants.add(builder);
     }
 
-    private boolean shouldWrapInQuotes(String key) {
-      return myWrapInQuotes && myWalker != null && (myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key, myProject));
+    private boolean shouldWrapInQuotes(String key, boolean isValue) {
+      return myWrapInQuotes && myWalker != null &&
+             (isValue && myWalker.requiresValueQuotes()
+                || !isValue && myWalker.requiresNameQuotes()
+                || !myWalker.isValidIdentifier(key, myProject));
     }
 
     private void addPropertyVariant(@NotNull String key,
@@ -416,7 +447,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                     boolean insertComma) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !shouldWrapInQuotes(key) ? key : StringUtil.wrapWithDoubleQuote(key);
+      key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
@@ -456,7 +487,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
       if (deprecationMessage != null) {
-        builder = builder.withTailText(" (deprecated)", true).withStrikeoutness(true);
+        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true);
       }
 
       myVariants.add(builder);
@@ -652,6 +683,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 break;
               case _string:
               case _integer:
+              case _number:
                 insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
                 break;
               default:

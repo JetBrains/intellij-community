@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Main {
 
-  private void work(int i){};
+  void work(int i){};
 
   public int test(int a, int b) {
       int c;

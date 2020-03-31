@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class HgRepositoryLocation implements RepositoryLocation {
@@ -43,13 +42,5 @@ public class HgRepositoryLocation implements RepositoryLocation {
   @Override
   public String getKey() {
     return myUrl;
-  }
-
-  @Override
-  public void onBeforeBatch() {
-  }
-
-  @Override
-  public void onAfterBatch() {
   }
 }

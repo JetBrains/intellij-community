@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +35,6 @@ public class ProjectDictionary implements EditableDictionary {
 
   public ProjectDictionary(@NotNull Set<EditableDictionary> dictionaries) {
     this.dictionaries = dictionaries;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return false;
   }
 
   @NotNull
@@ -142,26 +136,6 @@ public class ProjectDictionary implements EditableDictionary {
       words.addAll(otherWords);
     }
     return words;
-  }
-
-  @Override
-  public int size(){
-    int result = 0;
-    for (Dictionary dictionary : dictionaries) {
-      result+=dictionary.size();
-    }
-    return result;
-  }
-
-  @Override
-  public void traverse(@NotNull final Consumer<String> consumer) {
-    if (dictionaries == null) {
-      return;
-    }
-
-    for (EditableDictionary dictionary : dictionaries) {
-      dictionary.traverse(consumer);
-    }
   }
 
   @Override

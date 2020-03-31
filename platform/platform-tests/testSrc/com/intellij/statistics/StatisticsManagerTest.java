@@ -59,14 +59,15 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
 
   public void testRecency() {
     int limit = StatisticsManager.RECENCY_OBLIVION_THRESHOLD;
+    StatisticsManager m = StatisticsManager.getInstance();
     for (int i = limit + 1; i >= 0; i--) {
-      new StatisticsInfo("context", "value" + i).incUseCount();
+      m.incUseCount(new StatisticsInfo("context", "value" + i));
     }
     for (int i = 0; i < limit; i++) {
-      assertEquals(i, new StatisticsInfo("context", "value" + i).getLastUseRecency());
+      assertEquals(i, m.getLastUseRecency(new StatisticsInfo("context", "value" + i)));
     }
-    assertEquals(Integer.MAX_VALUE, new StatisticsInfo("context", "value" + limit).getLastUseRecency());
-    assertEquals(Integer.MAX_VALUE, new StatisticsInfo("anotherContext", "value0").getLastUseRecency());
+    assertEquals(Integer.MAX_VALUE, m.getLastUseRecency(new StatisticsInfo("context", "value" + limit)));
+    assertEquals(Integer.MAX_VALUE, m.getLastUseRecency(new StatisticsInfo("anotherContext", "value0")));
   }
 
   public void testBadHashValue() {

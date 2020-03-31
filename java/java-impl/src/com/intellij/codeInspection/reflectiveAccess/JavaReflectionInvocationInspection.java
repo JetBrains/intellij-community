@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -71,11 +71,11 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
           if (actualArguments.varargAsArray) {
             final PsiExpression[] expressions = argumentList.getExpressions();
             final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
-            holder.registerProblem(element, InspectionsBundle.message(
+            holder.registerProblem(element, JavaBundle.message(
               "inspection.reflection.invocation.item.count", requiredTypes.size()));
           }
           else {
-            holder.registerProblem(argumentList, InspectionsBundle.message(
+            holder.registerProblem(argumentList, JavaBundle.message(
               "inspection.reflection.invocation.argument.count", requiredTypes.size() + argumentOffset));
           }
           return;
@@ -85,22 +85,24 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
           final ReflectiveType requiredType = getReflectiveType(requiredTypes.get(i));
           if (requiredType != null) {
             final PsiExpression argument = actualArguments.expressions[i];
-            final PsiType actualType = argument.getType();
-            if (actualType != null && !requiredType.isAssignableFrom(actualType)) {
-              if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
-                // either varargs or in-place arguments array
-                holder.registerProblem(argument, InspectionsBundle.message(actualArguments.varargAsArray
-                                                                           ? "inspection.reflection.invocation.item.not.assignable"
-                                                                           : "inspection.reflection.invocation.argument.not.assignable",
-                                                                           requiredType.getQualifiedName()));
-              }
-              else {
-                // arguments array in a variable
-                final PsiExpression[] expressions = argumentList.getExpressions();
-                final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
-                holder.registerProblem(element, InspectionsBundle.message(
-                  "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
-                break;
+            if (argument != null) {
+              final PsiType actualType = argument.getType();
+              if (actualType != null && !requiredType.isAssignableFrom(actualType)) {
+                if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
+                  // either varargs or in-place arguments array
+                  holder.registerProblem(argument, JavaBundle.message(actualArguments.varargAsArray
+                                                                             ? "inspection.reflection.invocation.item.not.assignable"
+                                                                             : "inspection.reflection.invocation.argument.not.assignable",
+                                                                             requiredType.getQualifiedName()));
+                }
+                else {
+                  // arguments array in a variable
+                  final PsiExpression[] expressions = argumentList.getExpressions();
+                  final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
+                  holder.registerProblem(element, JavaBundle.message(
+                    "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
+                  break;
+                }
               }
             }
           }
@@ -126,9 +128,9 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   @Nullable
   static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean allowVarargAsArray) {
     if (allowVarargAsArray && arguments.length == argumentOffset + 1) {
-      final PsiExpression[] expressions = getVarargAsArray(arguments[argumentOffset]);
+      final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
       if (expressions != null) {
-        return new Arguments(expressions, true);
+        return new Arguments(expressions.toArray(PsiExpression.EMPTY_ARRAY), true);
       }
     }
     if (arguments.length >= argumentOffset) {

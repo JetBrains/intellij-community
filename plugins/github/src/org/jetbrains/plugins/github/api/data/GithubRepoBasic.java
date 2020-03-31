@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GHRepositoryPath;
 
 import java.util.Objects;
 
@@ -70,8 +70,8 @@ public class GithubRepoBasic {
   }
 
   @NotNull
-  public GithubFullPath getFullPath() {
-    return new GithubFullPath(getUserName(), getName());
+  public GHRepositoryPath getFullPath() {
+    return new GHRepositoryPath(getUserName(), getName());
   }
 
   @Override

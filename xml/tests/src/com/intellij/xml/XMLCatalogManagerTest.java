@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.XMLCatalogConfigurable;
 import com.intellij.javaee.XMLCatalogManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.apache.xml.resolver.CatalogManager;
 
 import java.io.File;
@@ -31,7 +31,7 @@ import java.util.Vector;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
-public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XMLCatalogManagerTest extends BasePlatformTestCase {
 
   public void testCatalogManager() throws Exception {
     XMLCatalogManager manager = getManager();
@@ -41,6 +41,18 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     String filePath = (String)files.get(0);
     assertTrue(filePath, filePath.endsWith("catalog.xml"));
     assertTrue(filePath, new File(new URI(filePath)).exists());
+  }
+
+  public void testRelativeCatalogs() {
+    XMLCatalogManager manager = new XMLCatalogManager(getTestDataPath() + "relative.properties");
+    CatalogManager catalogManager = manager.getManager();
+    Vector files = catalogManager.getCatalogFiles();
+    assertEquals(1, files.size());
+    String filePath = (String)files.get(0);
+    assertTrue(filePath, filePath.endsWith("catalog.xml"));
+    String resolve = getManager().resolve("-//W3C//DTD XHTML 1.0 Strict//EN");
+    assertNotNull(resolve);
+    assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
   }
 
   public void testResolvePublic() {
@@ -53,6 +65,12 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     String resolve = getManager().resolve("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd");
     assertNotNull(resolve);
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
+  }
+
+  public void testResolveUri() {
+    String resolve = getManager().resolve("test-node.xsl");
+    assertNotNull(resolve);
+    assertEquals("file:/C:/temp/catalog-test/library/test-node.xsl", resolve);
   }
 
   public void testHighlighting() {

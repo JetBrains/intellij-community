@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;

@@ -19,32 +19,42 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 /**
- * Replacement of RandomAccessFile("rw") with shadow file pointer / size, valid when file manipulations happen in with this class only.
+ * Replacement of read-write random-access file with shadow file pointer / size, valid when file manipulations happen in with this class only.
  * Note that sharing policy is the same as RandomAccessFile
  */
-class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
+class RandomAccessFileWithLengthAndSizeTracking {
   private static final Logger LOG = Logger.getInstance(RandomAccessFileWithLengthAndSizeTracking.class.getName());
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
-  private final String myPath;
+  private final Path myPath;
+  private final FileChannel myChannel;
   private volatile long mySize;
   private volatile long myPointer;
 
-  RandomAccessFileWithLengthAndSizeTracking(String name) throws IOException {
-    super(name, "rw");
-    mySize = super.length();
-    myPath = name;
+  RandomAccessFileWithLengthAndSizeTracking(Path path) throws IOException {
+    Path parent = path.getParent();
+    if (!Files.exists(parent)) {
+      Files.createDirectories(parent);
+    }
+    myChannel = unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
+    mySize = myChannel.size();
+    myPath = path;
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());
     }
   }
 
-  @Override
-  public void seek(long pos) throws IOException {
+  void seek(long pos) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Seek:" + this + "," + Thread.currentThread() + "," + pos + "," + myPointer + "," + mySize);
     }
@@ -54,35 +64,23 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     if (myPointer == pos) {
       return;
     }
-    super.seek(pos);
+    myChannel.position(pos);
     myPointer = pos;
   }
 
-  @Override
-  public long length() throws IOException {
+  long length() throws IOException {
     if (doAssertions) {
       checkSizeAndPointerAssertions();
     }
     return mySize;
   }
 
-  @Override
-  public void write(int b) throws IOException {
-    write(new byte[]{ (byte)(b & 0xFF)});
-  }
-
   private void checkSizeAndPointerAssertions() throws IOException {
-    assert myPointer == super.getFilePointer();
-    assert mySize == super.length();
+    assert myPointer == myChannel.position();
+    assert mySize == myChannel.size();
   }
 
-  @Override
-  public void write(byte[] b) throws IOException {
-    write(b, 0, b.length);
-  }
-
-  @Override
-  public void write(byte[] b, int off, int len) throws IOException {
+  void write(byte[] b, int off, int len) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer + "," + mySize);
     }
@@ -91,10 +89,10 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     }
 
     long pointer = myPointer;
-    super.write(b, off, len);
+    myChannel.write(ByteBuffer.wrap(b, off, len));
 
     if (pointer == 0) { // first write can introduce extra bytes, reload the position to avoid position tracking problem, e.g. IDEA-106306
-      pointer = super.getFilePointer();
+      pointer = myChannel.position();
     } else {
       pointer += len;
     }
@@ -108,27 +106,14 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     }
   }
 
-  @Override
-  public void setLength(long newLength) throws IOException {
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    super.setLength(newLength);
-    mySize = newLength;
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-  }
-
-  @Override
-  public int read(byte[] b, int off, int len) throws IOException {
+  int read(byte[] b, int off, int len) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer );
     }
     if (doAssertions) {
       checkSizeAndPointerAssertions();
     }
-    int read = super.read(b, off, len);
+    int read = myChannel.read(ByteBuffer.wrap(b, off, len));
     if (read != -1) myPointer += read;
     if (doAssertions) {
       checkSizeAndPointerAssertions();
@@ -136,46 +121,12 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     return read;
   }
 
-  @Override
-  public int read(byte[] b) throws IOException {
-    return read(b, 0, b.length);
-  }
-
-  @Override
-  public int read() throws IOException {
-    int read = super.read();
-    ++myPointer;
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    return read;
-  }
-
-  @Override
-  public long getFilePointer() throws IOException {
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-
-    return myPointer;
-  }
-
-  @Override
-  public int skipBytes(int n) throws IOException {
-    int i = super.skipBytes(n);
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    return i;
-  }
-
-  @Override
-  public void close() throws IOException {
+  void close() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
     force();
-    super.close();
+    myChannel.close();
   }
 
   @Override
@@ -183,11 +134,11 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     return myPath + "@" + Integer.toHexString(hashCode());
   }
 
-  public void force() throws IOException {
+  private void force() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
     }
 
-    getFD().sync();
+    myChannel.force(true);
   }
 }

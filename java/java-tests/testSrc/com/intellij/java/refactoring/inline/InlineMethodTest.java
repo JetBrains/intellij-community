@@ -277,6 +277,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testBooleanConstantArgument() {
+    doTest();
+  }
+
+  public void testBooleanConstantArgument2() {
+    doTest();
+  }
+
   private void doTestConflict(final String conflict) {
     try {
       doTest();
@@ -526,6 +534,26 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInvertMethod() {
     doTest();
   }
+  
+  public void testUnusedParameter() {
+    doTest();
+  }
+
+  public void testEnumStaticMethod() {
+    doTest();
+  }
+  
+  public void testTypeParameterMethodRefArgument() {
+    doTest();
+  }
+  
+  public void testIgnoreReturnValue() {
+    doTest();
+  }
+  
+  public void testSingleReturnComplexQualifier() {
+    doTestAssertBadReturn();
+  }
 
   @Override
   protected Sdk getProjectJDK() {
@@ -566,14 +594,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     return fileName;
   }
 
-  private static void performAction(final boolean nonCode) {
+  private void performAction(final boolean nonCode) {
     performAction(new MockInlineMethodOptions(), nonCode, false);
   }
 
-  private static void performAction(final InlineOptions options, final boolean nonCode, final boolean assertBadReturn) {
+  private void performAction(final InlineOptions options, final boolean nonCode, final boolean assertBadReturn) {
     PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
     if (ref instanceof PsiJavaCodeReferenceElement) {
       final PsiElement parent = ((PsiJavaCodeReferenceElement)ref).getParent();
       if (parent instanceof PsiNewExpression) {
@@ -590,7 +618,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
       assertFalse("Bad returns found", condition);
     }
     final InlineMethodProcessor processor =
-      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
+      new InlineMethodProcessor(getProject(), method, refExpr, getEditor(), options.isInlineThisOnly(), nonCode, nonCode,
                                 !options.isKeepTheDeclaration());
     processor.run();
   }

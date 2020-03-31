@@ -16,7 +16,7 @@
 package com.jetbrains.python.structureView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.FileStructureFilter;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -60,7 +60,7 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"),
+    return new ActionPresentationData(StructureViewBundle.message("action.structureview.show.inherited"),
                                       null,
                                       AllIcons.Hierarchy.Supertypes);
   }
@@ -68,12 +68,11 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return IdeBundle.message("file.structure.toggle.show.inherited");
+    return StructureViewBundle.message("file.structure.toggle.show.inherited");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return getActiveKeymapShortcuts("FileStructurePopup").getShortcuts();
   }
 }

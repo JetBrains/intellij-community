@@ -61,22 +61,20 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Nullable
   private static String getAdvertisementText() {
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
-    if  (shortcuts.length > 0) {
-      return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to change type";
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
+    if  (shortcut != null) {
+      return "Press " + KeymapUtil.getShortcutText(shortcut) + " to change type";
     }
     return null;
   }
 
   @Override
   protected String getActionName() {
-    return GrIntroduceVariableHandler.REFACTORING_NAME;
+    return GrIntroduceVariableHandler.getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return GroovyNameSuggestionUtil.suggestVariableNames(getContext().getExpression(), new GroovyVariableValidator(getContext()));
   }
 

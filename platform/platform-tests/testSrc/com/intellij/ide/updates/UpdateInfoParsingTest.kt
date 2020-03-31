@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
@@ -15,7 +15,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 
 class UpdateInfoParsingTest : BareTestFixtureTestCase() {
-  @Test fun liveJetbrainsUpdateFile() {
+  @Test fun liveJetBrainsUpdateFile() {
     try {
       val info = load(URL("https://www.jetbrains.com/updates/updates.xml").readText())
       assertNotNull(info["IC"])

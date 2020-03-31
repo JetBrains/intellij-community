@@ -1,18 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.extensions.Extensions;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
+public class TypeMayBeWeakenedInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     // avoid PSI/document/model changes are not allowed during highlighting
-    Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList();
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
   }
 
   public void testTypeMayBeWeakened() { doTest(); }

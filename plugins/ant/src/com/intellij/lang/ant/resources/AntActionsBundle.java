@@ -15,43 +15,26 @@
  */
 package com.intellij.lang.ant.resources;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-public final class AntActionsBundle {
+public class AntActionsBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.AntActionsBundle";
+  private static final AntActionsBundle INSTANCE = new AntActionsBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  private AntActionsBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "com.intellij.lang.ant.resources.AntActionsBundle";
-
-  private AntActionsBundle() {
-  }
-
-  @SuppressWarnings({"UnresolvedPropertyKey"})
-  public static String actionText(@NonNls String actionId) {
-    return message("action." + actionId + ".text");
-  }
-
-  @SuppressWarnings({"UnresolvedPropertyKey"})
-  public static String actionDescription(@NonNls String actionId) {
-    return message("action." + actionId + ".description");
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

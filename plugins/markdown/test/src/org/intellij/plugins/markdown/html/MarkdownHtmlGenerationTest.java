@@ -1,12 +1,12 @@
 package org.intellij.plugins.markdown.html;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.ui.preview.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownHtmlGenerationTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

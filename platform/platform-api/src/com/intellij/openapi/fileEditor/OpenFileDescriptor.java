@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -33,11 +20,16 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
+/**
+ * Allows opening file in editor, optionally at specific line/column position.
+ */
 public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescriptor> {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor in main IDEA window.
+   * Tells descriptor to navigate in specific editor rather than file editor in main IDE window.
    * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
@@ -142,21 +134,30 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = NAVIGATE_IN_EDITOR.getData(ctx);
     if (e == null) return false;
+    if (e.isDisposed()) {
+      Logger.getInstance(OpenFileDescriptor.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
+      return false;
+    }
     if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), myFile)) return false;
-    
+
     navigateIn(e);
     return true;
   }
 
-  protected boolean navigateInAnyFileEditor(Project project, boolean focusEditor) {
-    List<FileEditor> editors = FileEditorManager.getInstance(project).openEditor(this, focusEditor);
+  protected boolean navigateInAnyFileEditor(@NotNull Project project, boolean focusEditor) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    List<FileEditor> editors = fileEditorManager.openEditor(this, focusEditor);
     for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
         Editor e = ((TextEditor)editor).getEditor();
-        FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
+        fileEditorManager.runWhenLoaded(e, () -> {
           unfoldCurrentLine(e);
           if (focusEditor) {
-            IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent(), true);
+            IdeFocusManager.getInstance(project).requestFocus(e.getContentComponent(), true);
+            Window ancestor = SwingUtilities.getWindowAncestor(e.getContentComponent());
+            if (ancestor != null) {
+              ancestor.toFront();
+            }
           }
         });
       }
@@ -166,8 +167,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
   private boolean navigateInProjectView(boolean requestFocus) {
     SelectInContext context = new FileSelectInContext(myProject, myFile, null);
-    for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
-      if (context.selectIn(target, requestFocus)) return true;
+    for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargetList()) {
+      if (context.selectIn(target, requestFocus)) {
+        return true;
+      }
     }
     return false;
   }

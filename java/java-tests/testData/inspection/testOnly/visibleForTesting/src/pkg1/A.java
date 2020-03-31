@@ -14,7 +14,7 @@ public class A {
   void visibleMethod(int a) {
     relaxedToPackageLevel(a);
   }
-  
+
   @com.google.common.annotations.VisibleForTesting
   void relaxedToPackageLevel(int a) {
 
@@ -33,4 +33,8 @@ public class A {
     A.FooException exception =
       new A.FooException("");
   }
+
+  @org.jetbrains.annotations.TestOnly
+  @com.google.common.annotations.VisibleForTesting
+  void bothAnnotationsAreAnError() {}
 }

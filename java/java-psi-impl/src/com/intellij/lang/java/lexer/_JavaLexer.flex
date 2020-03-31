@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -21,7 +7,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lexer.FlexLexer;
 
-@SuppressWarnings({"ALL"})
+@SuppressWarnings("ALL")
 %%
 
 %{
@@ -46,14 +32,7 @@ import com.intellij.lexer.FlexLexer;
 %function advance
 %type IElementType
 
-WHITE_SPACE_CHAR = [\ \n\r\t\f]
-
 IDENTIFIER = [:jletter:] [:jletterdigit:]*
-
-C_STYLE_COMMENT=("/*"[^"*"]{COMMENT_TAIL})|"/*"
-DOC_COMMENT="/*""*"+("/"|([^"/""*"]{COMMENT_TAIL}))?
-COMMENT_TAIL=([^"*"]*("*"+[^"*""/"])?)*("*"+"/")?
-END_OF_LINE_COMMENT="/""/"[^\r\n]*
 
 DIGIT = [0-9]
 DIGIT_OR_UNDERSCORE = [_0-9]
@@ -74,26 +53,18 @@ HEX_FP_LITERAL = {HEX_SIGNIFICAND} {HEX_EXPONENT}
 HEX_SIGNIFICAND = 0 [Xx] ({HEX_DIGIT_OR_UNDERSCORE}+ "."? | {HEX_DIGIT_OR_UNDERSCORE}* "." {HEX_DIGIT_OR_UNDERSCORE}+)
 HEX_EXPONENT = [Pp] [+-]? {DIGIT_OR_UNDERSCORE}*
 
-ESCAPE_SEQUENCE = \\[^\r\n]
-CHARACTER_LITERAL = "'" ([^\\\'\r\n] | {ESCAPE_SEQUENCE})* ("'"|\\)?
-STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
-
 %%
 
+/*
+ * NOTE: the rule set does not include rules for whitespaces, comments, and text literals -
+ * they are implemented in com.intellij.lang.java.lexer.JavaLexer class.
+ */
+
 <YYINITIAL> {
-
-  {WHITE_SPACE_CHAR}+ { return JavaTokenType.WHITE_SPACE; }
-
-  {C_STYLE_COMMENT} { return JavaTokenType.C_STYLE_COMMENT; }
-  {END_OF_LINE_COMMENT} { return JavaTokenType.END_OF_LINE_COMMENT; }
-  {DOC_COMMENT} { return JavaDocElementType.DOC_COMMENT; }
-
   {LONG_LITERAL} { return JavaTokenType.LONG_LITERAL; }
   {INTEGER_LITERAL} { return JavaTokenType.INTEGER_LITERAL; }
   {FLOAT_LITERAL} { return JavaTokenType.FLOAT_LITERAL; }
   {DOUBLE_LITERAL} { return JavaTokenType.DOUBLE_LITERAL; }
-  {CHARACTER_LITERAL} { return JavaTokenType.CHARACTER_LITERAL; }
-  {STRING_LITERAL} { return JavaTokenType.STRING_LITERAL; }
 
   "true" { return JavaTokenType.TRUE_KEYWORD; }
   "false" { return JavaTokenType.FALSE_KEYWORD; }

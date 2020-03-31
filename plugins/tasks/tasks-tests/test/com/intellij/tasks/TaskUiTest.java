@@ -17,12 +17,18 @@ package com.intellij.tasks;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -46,13 +52,19 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
       }
     }
 
+    List<AnAction> actions =
+      Utils.expandActionGroup(false, group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
+    assertFalse(actions.contains(combo));
+
     TaskManager manager = TaskManager.getManager(getProject());
     LocalTask defaultTask = manager.getActiveTask();
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
+    toolbar.updateActionsImmediately();
     Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
+    assertNull(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY));
 
     try {
       TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
@@ -68,6 +80,13 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
     presentation = doTest(combo, toolbar);
     assertTrue(presentation.isVisible());
+    assertTrue(presentation.isEnabled());
+
+    toolbar.updateActionsImmediately();
+    JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+    assertNotNull(component);
+    assertTrue(component.isVisible());
+    assertTrue(component.isEnabled());
 
     manager.activateTask(defaultTask, false);
     task = manager.getActiveTask();

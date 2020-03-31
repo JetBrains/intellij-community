@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.issue
 
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubIssue
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
@@ -31,7 +31,8 @@ object GithubIssuesLoadingHelper {
 
     return GithubApiPagesLoader.loadAll(executor, indicator,
                                         GithubApiRequests.Search.Issues.pages(server,
-                                                                               GithubFullPath(owner, repo),
-                                                                               if (withClosed) null else "open", assignee, query))
+                                                                              GHRepositoryPath(owner,
+                                                                                               repo),
+                                                                              if (withClosed) null else "open", assignee, query))
   }
 }

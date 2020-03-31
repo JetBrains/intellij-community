@@ -28,7 +28,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +38,6 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
   @Override
   public String getID() {
     return "UnclearExpression";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unclear.binary.expression.display.name");
   }
 
   @NotNull
@@ -179,7 +171,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
       appendText(polyadicExpression, parentheses, out);
     }
     else if (expression instanceof PsiParenthesizedExpression) {
-      for (PsiElement child : expression.getChildren()) {
+      for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiExpression) {
           final PsiExpression unwrappedExpression = (PsiExpression)child;
           createReplacementText(unwrappedExpression, out);
@@ -235,7 +227,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
     if (parentheses) {
       out.append('(');
     }
-    for (PsiElement child : expression.getChildren()) {
+    for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiExpression) {
         createReplacementText((PsiExpression)child, out);
       }

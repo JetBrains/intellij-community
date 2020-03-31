@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XValueTextRendererBase implements XValuePresentation.XValueTextRenderer {
   @Override
   public void renderStringValue(@NotNull String value) {

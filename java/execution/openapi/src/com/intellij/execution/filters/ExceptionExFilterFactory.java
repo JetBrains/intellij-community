@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,7 +65,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
     public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                  final int startOffset,
                                  int startLineNumber,
-                                 @NotNull final Consumer<AdditionalHighlight> consumer) {
+                                 @NotNull final Consumer<? super AdditionalHighlight> consumer) {
       Map<String, ExceptionWorker.ParsedLine> visited = new THashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
@@ -79,7 +80,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         if (info == emptyInfo) continue;
 
         if (info == null) {
-          info = ReadAction.compute(() -> doParse(worker, lineEndOffset, lineText));
+          info = ReadAction.compute(() -> DumbService.isDumb(worker.getProject()) ? null : doParse(worker, lineEndOffset, lineText));
           visited.put(lineText, info == null ? emptyInfo : info);
           if (info == null) {
             continue;

@@ -9,11 +9,10 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Set;
 
 public class JavadocParser {
@@ -32,7 +31,7 @@ public class JavadocParser {
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
-  private static final Set<String> REFERENCE_TAGS = new THashSet<>(Arrays.asList("@throws", "@exception", "@provides", "@uses"));
+  private static final Set<String> REFERENCE_TAGS = ContainerUtil.set("@throws", "@exception", "@provides", "@uses");
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 

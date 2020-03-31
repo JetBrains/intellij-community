@@ -27,7 +27,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,14 +34,6 @@ import javax.swing.*;
 public class ListenerMayUseAdapterInspection extends BaseInspection {
 
   public boolean checkForEmptyMethods = true;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "listener.may.use.adapter.display.name");
-  }
 
   @Override
   @NotNull
@@ -84,7 +75,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with adapter";
+      return InspectionGadgetsBundle.message("listener.may.use.adapter.fix.family.name");
     }
 
     @Override

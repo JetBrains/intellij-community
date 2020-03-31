@@ -11,7 +11,6 @@ import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ public abstract class TaskStateCombo extends JPanel {
     myHintLabel.setIcon(PlatformIcons.UP_DOWN_ARROWS);
     myHintLabel.setToolTipText("Pressing Up or Down arrows while in editor changes the state");
     final JComboBox comboBox = myKindCombo.getComboBox();
-    comboBox.setPreferredSize(new Dimension(300, UIUtil.fixComboBoxHeight(comboBox.getPreferredSize().height)));
+    comboBox.setPreferredSize(new Dimension(300, comboBox.getPreferredSize().height));
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     add(myKindCombo);
     add(myHintLabel);

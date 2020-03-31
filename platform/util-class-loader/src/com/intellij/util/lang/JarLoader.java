@@ -33,8 +33,10 @@ class JarLoader extends Loader {
     pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
     pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
+  @NotNull
   private final String myFilePath;
   private final ClassPath myConfiguration;
+  @NotNull
   private final URL myUrl;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
@@ -42,7 +44,7 @@ class JarLoader extends Loader {
   private volatile String myClassPathManifestAttribute;
   private static final String NULL_STRING = "<null>";
 
-  JarLoader(URL url, int index, ClassPath configuration) throws IOException {
+  JarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
@@ -77,10 +79,12 @@ class JarLoader extends Loader {
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
-  private static String urlToFilePath(URL url) {
+  @NotNull
+  private static String urlToFilePath(@NotNull URL url) {
     try {
       return new File(url.toURI()).getPath();
-    } catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
+    }
+    catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
       return url.getPath();
     }
   }
@@ -124,7 +128,8 @@ class JarLoader extends Loader {
         finally {
           releaseZipFile(zipFile);
         }
-      } catch (IOException io) {
+      }
+      catch (IOException io) {
         throw new RuntimeException(io);
       }
     }
@@ -176,6 +181,7 @@ class JarLoader extends Loader {
   private final AtomicInteger myNumberOfRequests = new AtomicInteger();
   private volatile TIntHashSet myPackageHashesInside;
 
+  @NotNull
   private TIntHashSet buildPackageHashes() {
     try {
       ZipFile zipFile = getZipFile();
@@ -193,7 +199,8 @@ class JarLoader extends Loader {
       finally {
         releaseZipFile(zipFile);
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       error("url: " + myFilePath, e);
       return new TIntHashSet(0);
     }
@@ -201,7 +208,7 @@ class JarLoader extends Loader {
 
   @Override
   @Nullable
-  Resource getResource(String name) {
+  Resource getResource(@NotNull String name) {
     if (myConfiguration.myLazyClassloadingCaches) {
       int numberOfHits = myNumberOfRequests.incrementAndGet();
       TIntHashSet packagesInside = myPackageHashesInside;
@@ -240,7 +247,8 @@ class JarLoader extends Loader {
     return null;
   }
 
-  protected Resource instantiateResource(URL url, ZipEntry entry) throws IOException {
+  @NotNull
+  protected Resource instantiateResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
     return new MyResource(url,entry);
   }
 
@@ -248,21 +256,24 @@ class JarLoader extends Loader {
     protected final URL myUrl;
     protected final ZipEntry myEntry;
 
-    MyResource(URL url, ZipEntry entry) throws IOException {
+    MyResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
       myUrl = new URL(url, entry.getName());
       myEntry = entry;
     }
 
+    @NotNull
     @Override
     public URL getURL() {
       return myUrl;
     }
 
+    @NotNull
     @Override
     public InputStream getInputStream() throws IOException {
       return new ByteArrayInputStream(getBytes());
     }
 
+    @NotNull
     @Override
     public byte[] getBytes() throws IOException {
       ZipFile file = getZipFile();
@@ -270,20 +281,21 @@ class JarLoader extends Loader {
       try {
         stream = file.getInputStream(myEntry);
         return FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
-      } finally {
+      }
+      finally {
         if (stream != null) stream.close();
         releaseZipFile(file);
       }
     }
 
     @Override
-    public String getValue(Attribute key) {
+    public String getValue(@NotNull Attribute key) {
       loadManifestAttributes();
       return myAttributes != null ? myAttributes.get(key) : null;
     }
   }
 
-  protected void error(String message, Throwable t) {
+  protected void error(@NotNull String message, @NotNull Throwable t) {
     if (myConfiguration.myLogErrorOnMissingJar) {
       LoggerRt.getInstance(JarLoader.class).error(message, t);
     }
@@ -312,17 +324,15 @@ class JarLoader extends Loader {
         return zipFile;
       }
     }
-    else {
-      return createZipFile(myFilePath);
-    }
+    return createZipFile(myFilePath);
   }
 
   @NotNull
-  protected ZipFile createZipFile(String path) throws IOException {
+  protected ZipFile createZipFile(@NotNull String path) throws IOException {
     return new ZipFile(path);
   }
 
-  protected void releaseZipFile(ZipFile zipFile) throws IOException {
+  protected void releaseZipFile(@NotNull ZipFile zipFile) throws IOException {
     // Closing of zip file when myConfiguration.myCanLockJars=true happens in ZipFile.finalize
     if (!myConfiguration.myCanLockJars) {
       zipFile.close();

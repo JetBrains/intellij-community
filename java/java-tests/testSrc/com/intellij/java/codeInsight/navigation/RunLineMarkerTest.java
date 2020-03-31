@@ -19,17 +19,28 @@ import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestActionEvent;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 import java.util.List;
@@ -38,17 +49,28 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
+public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n " +
                                                "    public static void main(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n" +
                                                "}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEquals(0, myFixture.findGuttersAtCaret().size());
     List<GutterMark> gutters = myFixture.findAllGutters();
     assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+  }
+
+  public void testNoRunLineMarker() {
+    myFixture.configureByText("MainTest.java", "public class MainTest {}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEmpty(myFixture.findAllGutters());
+    assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
   public void testTestClassWithMain() {
@@ -69,7 +91,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
       TestActionEvent actionEvent = new TestActionEvent();
       action.update(actionEvent);
       String text = actionEvent.getPresentation().getText();
-      return text != null && text.startsWith("Run ") && text.endsWith("'");
+      return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
     assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
@@ -143,28 +165,78 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
   public void testTooltip() {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void m<caret>ain(String[] args) {\n" +
+                                           "      someCode();\n" +
                                            "    }\n" +
                                            "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertEquals("Run 'Main.main()'\n" +
-                 "Debug 'Main.main()'\n" +
-                 "Run 'Main.main()' with Coverage", text);
+    assertTrue(text.startsWith("Run 'Main.main()'\n" +
+                               "Debug 'Main.main()'\n" +
+                               "Run 'Main.main()' with Coverage"));
   }
 
   public void testTooltipWithUnderscores() {
     myFixture.configureByText("Main_class_test.java", "public class Main_class_test {\n" +
                                                       "    public static void m<caret>ain(String[] args) {\n" +
+                                                      "      someCode();\n" +
                                                       "    }\n" +
                                                       "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertEquals("Run 'Main_class_test.main()'\n" +
-                 "Debug 'Main_class_test.main()'\n" +
-                 "Run 'Main_class_test.main()' with Coverage", text);
+    assertTrue(text.startsWith("Run 'Main_class_test.main()'\n" +
+                               "Debug 'Main_class_test.main()'\n" +
+                               "Run 'Main_class_test.main()' with Coverage"));
+  }
+
+  public void testEditConfigurationAction() {
+    myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
+                                               "    public static void ma<caret>in(String[] args) {\n" +
+                                               "      someCode();\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
+    AnAction action = ContainerUtil.find(children, t -> t.getTemplateText() != null && t.getTemplateText().startsWith("Create"));
+    assertNotNull(action);
+    myFixture.testAction(action);
+    TestActionEvent event = new TestActionEvent();
+    action.update(event);
+    assertTrue(event.getPresentation().getText().startsWith("Edit"));
+  }
+
+  public void testActionNameFromPreferredProducer() {
+    myFixture.configureByText("Main.java", "public class Main {\n" +
+                                           "    public static void ma<caret>in(String[] args) {}\n" +
+                                           "}");
+    RunConfigurationProducer.EP_NAME.getPoint(null).registerExtension(new ApplicationConfigurationProducer() {
+      @Override
+      protected boolean setupConfigurationFromContext(@NotNull ApplicationConfiguration configuration,
+                                                      @NotNull ConfigurationContext context,
+                                                      @NotNull Ref<PsiElement> sourceElement) {
+        boolean result = super.setupConfigurationFromContext(configuration, context, sourceElement);
+        if (result) {
+          configuration.setName("Foo");
+          configuration.setMainClassName("FooMain");
+        }
+        return result;
+      }
+
+      @Override
+      public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+        return false;
+      }
+    }, LoadingOrder.FIRST, getTestRootDisposable());
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    String text = mark.getTooltipText();
+    assertTrue(text.startsWith("Run 'Main.main()'\n" +
+                               "Debug 'Main.main()'\n" +
+                               "Run 'Main.main()' with Coverage"));
   }
 }

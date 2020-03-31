@@ -17,13 +17,11 @@ package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.DfaFactMap;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
-import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.MultiMap;
@@ -38,7 +36,7 @@ import java.util.Objects;
  * @author peter
  */
 public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState");
+  private static final Logger LOG = Logger.getInstance(ExpressionTypeMemoryState.class);
   public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
     @Override
     public int computeHashCode(PsiExpression object) {
@@ -80,14 +78,14 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  protected DfaFactMap filterFactsOnAssignment(DfaVariableValue var, @NotNull DfaFactMap facts) {
-    if (myHonorAssignments) return facts;
-    if (ControlFlowAnalyzer.isTempVariable(var) || 
+  protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {
+    if (myHonorAssignments) return dfType;
+    if (ControlFlowAnalyzer.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||    
         var.getPsiVariable() instanceof PsiParameter && var.getPsiVariable().getParent().getParent() instanceof PsiLambdaExpression) {
       // Pass type normally for synthetic lambda parameter assignment
-      return facts;
+      return dfType;
     }
-    return facts.with(DfaFactType.TYPE_CONSTRAINT, null);
+    return ((DfReferenceType)dfType).dropTypeConstraint();
   }
 
   @NotNull
@@ -114,13 +112,23 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  public boolean applyCondition(DfaValue dfaCond) {
-    if (dfaCond instanceof DfaInstanceofValue) {
-      final DfaInstanceofValue value = (DfaInstanceofValue)dfaCond;
-      if (!value.isNegated()) {
-        setExpressionType(value.getExpression(), value.getCastType());
+  public boolean applyCondition(DfaCondition dfaCond) {
+    if (dfaCond instanceof DfaRelation) {
+      DfaRelation rel = (DfaRelation)dfaCond;
+      DfaValue leftOperand = rel.getLeftOperand();
+      DfaValue rightOperand = rel.getRightOperand();
+      RelationType relation = rel.getRelation();
+      if (leftOperand instanceof DfaInstanceofValue && (relation == RelationType.EQ || relation == RelationType.NE)) {
+        DfaInstanceofValue value = (DfaInstanceofValue)leftOperand;
+        Boolean val = DfConstantType.getConstantOfType(rightOperand.getDfType(), Boolean.class);
+        if (val != null) {
+          boolean negated = (relation == RelationType.EQ) != val; 
+          if (!negated) {
+            setExpressionType(value.getExpression(), value.getCastType());
+          }
+          return super.applyCondition(negated ? value.getRelation().negate() : value.getRelation());
+        }
       }
-      return super.applyCondition(((DfaInstanceofValue)dfaCond).getRelation());
     }
 
     return super.applyCondition(dfaCond);

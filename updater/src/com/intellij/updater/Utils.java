@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -44,7 +44,7 @@ public class Utils {
   public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
       myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
-      Runner.logger().info("created working directory: " + myTempDir);
+      Runner.logger().info("created a working directory: " + myTempDir);
     }
 
     File myTempFile;
@@ -59,7 +59,7 @@ public class Utils {
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger().info("deleted working directory: " + myTempDir.getPath());
+    Runner.logger().info("deleted a working directory: " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -82,7 +82,6 @@ public class Utils {
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
   private static void tryDelete(Path path) throws IOException {
     for (int i = 0; i < 10; i++) {
       try {
@@ -171,7 +170,6 @@ public class Utils {
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
   public static void copyDirectory(Path from, Path to) throws IOException {
     Runner.logger().info(from + " -> " + to);
 
@@ -224,7 +222,7 @@ public class Utils {
     int offset = 0;
     while (offset < count) {
       int n = in.read(bytes, offset, count - offset);
-      if (n < 0) throw new IOException("Premature end of stream");
+      if (n < 0) throw new IOException("A premature end of stream");
       offset += n;
     }
     return bytes;
@@ -268,32 +266,33 @@ public class Utils {
     if (entry.isDirectory()) return null;
     // There is a bug in some JVM implementations where for a directory "X/" in a zipfile, if we do
     // "zip.getEntry("X/").isDirectory()" returns true, but if we do "zip.getEntry("X").isDirectory()" is false.
-    // getEntry for "name" falls back to finding "X/", so here we make sure that didn't happen.
+    // getEntry for "name" falls back to finding "X/", so here we make sure this didn't happen.
     if (zipFile.getEntry(entry.getName() + "/") != null) return null;
 
     return new BufferedInputStream(zipFile.getInputStream(entry));
   }
 
-  public static LinkedHashSet<String> collectRelativePaths(File dir) {
+  // always collect files and folders - to avoid cases such as IDEA-152249
+  public static LinkedHashSet<String> collectRelativePaths(Path root) throws IOException {
     LinkedHashSet<String> result = new LinkedHashSet<>();
-    collectRelativePaths(dir, result, null);
+
+    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        if (dir != root) {
+          result.add(root.relativize(dir).toString().replace('\\', '/') + '/');
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+        result.add(root.relativize(file).toString().replace('\\', '/'));
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
     return result;
-  }
-
-  private static void collectRelativePaths(File dir, LinkedHashSet<? super String> result, String parentPath) {
-    File[] children = dir.listFiles();
-    if (children == null) return;
-
-    for (File each : children) {
-      String relativePath = (parentPath == null ? "" : parentPath + '/') + each.getName();
-      if (each.isDirectory()) {
-        result.add(relativePath + '/');  // the trailing slash is used by zip to determine whether it is a directory
-        collectRelativePaths(each, result, relativePath);
-      }
-      else {
-        result.add(relativePath);
-      }
-    }
   }
 
   public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
@@ -310,7 +309,7 @@ public class Utils {
     private NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);
       myEntries = Collections.list(myZip.entries());
-      Collections.sort(myEntries, Comparator.comparing(ZipEntry::getName));
+      myEntries.sort(Comparator.comparing(ZipEntry::getName));
       loadNextEntry();
     }
 

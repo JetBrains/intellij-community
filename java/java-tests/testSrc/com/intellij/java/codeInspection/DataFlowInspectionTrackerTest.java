@@ -11,8 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import one.util.streamex.StreamEx;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -20,10 +19,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Set;
 
-public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCase {
+public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/tracker/";
@@ -177,4 +175,11 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testConstructorDependOnInitializer() { doTest(); }
   public void testBasedOnPreviousRelation() { doTest(); }
   public void testBasedOnPreviousRelationContracts() { doTest(); }
+  public void testFinalFieldInitialized() { doTest(); }
+  public void testFinalFieldInitializedCtor() { doTest(); }
+  public void testEqualsNull() { doTest(); }
+  public void testEnumCompare() { doTest(); }
+  public void testMergeOnAnd() { doTest(); }
+  public void testPassedNotNull() { doTest(); }
+  public void testClassCheckInStream() { doTest(); }
 }

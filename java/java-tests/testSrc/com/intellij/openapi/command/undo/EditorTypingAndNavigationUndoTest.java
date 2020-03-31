@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -155,7 +155,7 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
   public void testStripTrailingSpacesNoCommand() {
     typeInText("    test");
     enter();
-    stripTrailingSpaces(false);
+    stripTrailingSpaces();
     undoFirstEditor();
     checkEditorState("    test", 8, 0, 0);
   }
@@ -210,17 +210,11 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     assertTrue(editor.getScrollingModel().getVisibleAreaOnScrollingFinished().contains(caretXY));
   }
 
-  private void stripTrailingSpaces(boolean startCommand) {
-    final Runnable command =
-      () -> CommandProcessor.getInstance().runUndoTransparentAction(() -> WriteCommandAction.runWriteCommandAction(null, () -> {
+  private void stripTrailingSpaces() {
+    CommandProcessor.getInstance().runUndoTransparentAction(
+      () -> WriteCommandAction.runWriteCommandAction(null, () -> {
         ((DocumentImpl)getFirstEditor().getDocument()).stripTrailingSpaces(getProject());
       }));
-    if (startCommand) {
-      executeCommand(command, "Save");
-    }
-    else {
-      command.run();
-    }
   }
 
   public void testEditingView() {
@@ -246,17 +240,17 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
 
     final int[] bulkStarted = new int[1];
     final int[] bulkFinished = new int[1];
-    getProject().getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void updateStarted(@NotNull final Document doc) {
+      public void bulkUpdateStarting(@NotNull Document document) {
         bulkStarted[0]++;
       }
 
       @Override
-      public void updateFinished(@NotNull Document doc) {
+      public void bulkUpdateFinished(@NotNull Document document) {
         bulkFinished[0]++;
       }
-    });
+    }, getTestRootDisposable());
 
     undoFirstEditor();
     assertEquals(1, bulkStarted[0]);
@@ -299,11 +293,11 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
 
     undoFirstEditor();
     checkEditorText("");
-    assertEquals(CommonBundle.message("undo.command.confirmation.text", ActionsBundle.message("action.undo.description.empty")) + "?",
+    assertEquals(IdeBundle.message("undo.command", ActionsBundle.message("action.undo.description.empty")) + "?",
                  message.get());
     redoFirstEditor();
     checkEditorText(" ");
-    assertEquals(CommonBundle.message("redo.command.confirmation.text", ActionsBundle.message("action.redo.description.empty")) + "?",
+    assertEquals(IdeBundle.message("redo.command", ActionsBundle.message("action.redo.description.empty")) + "?",
                  message.get());
   }
 }

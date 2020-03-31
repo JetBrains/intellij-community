@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.util.text.NameUtilCore
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -38,19 +39,17 @@ class MavenArtifactsBuilder {
     this.buildContext = buildContext
   }
 
-  void generateMavenArtifacts(List<String> ideModuleNames) {
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    Map<JpsModule, MavenArtifactData> modulesToPublish = generateMavenArtifactData((mavenArtifacts.forIdeModules ? ideModuleNames : [])
-                                                                                     + mavenArtifacts.additionalModules)
+  void generateMavenArtifacts(List<String> namesOfModulesToPublish, String outputDir) {
+    Map<JpsModule, MavenArtifactData> modulesToPublish = generateMavenArtifactData(namesOfModulesToPublish)
     buildContext.messages.progress("Generating Maven artifacts for ${modulesToPublish.size()} modules")
     buildContext.messages.debug("Generate artifacts for the following modules:")
     modulesToPublish.each {module, data -> buildContext.messages.debug("  $module.name -> $data.coordinates")}
-    layoutMavenArtifacts(modulesToPublish)
+    layoutMavenArtifacts(modulesToPublish, outputDir)
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  private void layoutMavenArtifacts(Map<JpsModule, MavenArtifactData> modulesToPublish) {
+  private void layoutMavenArtifacts(Map<JpsModule, MavenArtifactData> modulesToPublish, String outputDir) {
     def ant = buildContext.ant
     def publishSourcesFilter = buildContext.productProperties.mavenArtifacts.publishSourcesFilter
     def buildContext = this.buildContext
@@ -60,7 +59,7 @@ class MavenArtifactsBuilder {
       pomXmlFiles[module] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
-    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/maven-artifacts") {
+    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { aModule, artifactData ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[aModule])
@@ -139,7 +138,8 @@ class MavenArtifactsBuilder {
   }
 
   private static List<String> splitByCamelHumpsMergingNumbers(String s) {
-    def words = NameUtil.splitNameIntoWords(s)
+    def words = NameUtilCore.splitNameIntoWords(s)
+
     def result = new ArrayList<String>()
     for (int i = 0; i < words.length; i++) {
       String next
@@ -170,23 +170,10 @@ class MavenArtifactsBuilder {
     return results
   }
 
-  private MavenArtifactData generateMavenArtifactData(JpsModule module, Map<JpsModule, MavenArtifactData> results, Set<JpsModule> nonMavenizableModules,
-                                                      Set<JpsModule> computationInProgress) {
-    if (results.containsKey(module)) return results[module]
-    if (nonMavenizableModules.contains(module)) return null
-    if (!module.name.startsWith("intellij.")) {
-      buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
-      return null
-    }
-    def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
-    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
-      buildContext.messages.debug("  module '$module.name' must be scrambled so it cannot be published")
-      return null
-    }
+  enum DependencyScope { COMPILE, RUNTIME }
 
-    boolean mavenizable = true
-    computationInProgress << module
-    List<MavenArtifactDependency> dependencies = []
+  static Map<JpsDependencyElement, DependencyScope> scopedDependencies(JpsModule module) {
+    Map<JpsDependencyElement, DependencyScope> result = [:]
     module.dependenciesList.dependencies.each { dependency ->
       def extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency)
       if (extension == null) return
@@ -207,7 +194,29 @@ class MavenArtifactsBuilder {
         default:
           return
       }
+      result[dependency] = scope
+    }
+    return result
+  }
 
+  private MavenArtifactData generateMavenArtifactData(JpsModule module, Map<JpsModule, MavenArtifactData> results, Set<JpsModule> nonMavenizableModules,
+                                                      Set<JpsModule> computationInProgress) {
+    if (results.containsKey(module)) return results[module]
+    if (nonMavenizableModules.contains(module)) return null
+    if (!module.name.startsWith("intellij.")) {
+      buildContext.messages.warning("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
+      return null
+    }
+    def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
+    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
+      buildContext.messages.warning("  module '$module.name' must be scrambled so it cannot be published")
+      return null
+    }
+
+    boolean mavenizable = true
+    computationInProgress << module
+    List<MavenArtifactDependency> dependencies = []
+    scopedDependencies(module).each { dependency, scope ->
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
         if (computationInProgress.contains(depModule)) {
@@ -217,12 +226,12 @@ class MavenArtifactsBuilder {
            It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
            generating pom.xml files.
           */
-          buildContext.messages.debug(" module '$module.name': skip recursive dependency on '$depModule.name'")
+          buildContext.messages.warning(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
         else {
           def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
           if (depArtifact == null) {
-            buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+            buildContext.messages.warning(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
             mavenizable = false
             return
           }
@@ -236,10 +245,7 @@ class MavenArtifactsBuilder {
           dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
         }
         else if (!isOptionalDependency(library)) {
-          List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
-          for (n in names) {
-            buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
-          }
+          buildContext.messages.warning(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
           mavenizable = false
         }
       }
@@ -255,9 +261,11 @@ class MavenArtifactsBuilder {
   }
 
   static boolean isOptionalDependency(JpsLibrary library) {
-    //todo: this is a temporary workaround until 'microba' library is published to Maven repository (IDEA-200834)
-    // given that this library contains UI elements which are used in few places it's unlikely that absence of this dependency will cause real problems
-    library.name == "microba"
+    //todo: this is a temporary workaround until these libraries are published to Maven repository;
+    // it's unlikely that code which depend on these libraries will be used when running tests so skipping these dependencies shouldn't cause real problems.
+    //  'microba' contains UI elements which are used in few places (IDEA-200834),
+    //  'precompiled_jshell-frontend' is used by "JShell Console" action only (IDEA-222381).
+    library.name == "microba" || library.name == "precompiled_jshell-frontend"
   }
 
   private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {
@@ -274,8 +282,6 @@ class MavenArtifactsBuilder {
     MavenCoordinates coordinates
     List<MavenArtifactDependency> dependencies
   }
-
-  private enum DependencyScope { COMPILE, RUNTIME }
 
   @Immutable
   private static class MavenArtifactDependency {

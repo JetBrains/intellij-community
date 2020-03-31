@@ -16,8 +16,11 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -47,7 +50,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   @NotNull
-  protected Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
+  protected Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
     map.put("", createRootEntry());
 
@@ -73,16 +76,19 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       entryName = entryName.substring(0, entryName.length() - 1);
       isDirectory = true;
     }
+    if (StringUtil.startsWithChar(entryName, '/')) {
+      entryName = StringUtil.trimStart(entryName, "/");
+    }
 
     EntryInfo info = map.get(entryName);
     if (info != null) return info;
 
-    Pair<String, String> path = splitPath(entryName);
+    Trinity<String, String, String> path = splitPathAndFix(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), getEntryFileStamp(), entryName);
+    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), getEntryFileStamp(), path.third);
     return info;
   }
 
@@ -101,7 +107,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   @NotNull
-  private EntryInfo getOrCreate(@NotNull String entryName, Map<String, EntryInfo> map, @NotNull ZipFile zip) {
+  private EntryInfo getOrCreate(@NotNull String entryName, @NotNull Map<String, EntryInfo> map, @NotNull ZipFile zip) {
     EntryInfo info = map.get(entryName);
 
     if (info == null) {
@@ -110,8 +116,9 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
         return getOrCreate(entry, map, zip);
       }
 
-      Pair<String, String> path = splitPath(entryName);
+      Trinity<String, String, String> path = splitPathAndFix(entryName);
       EntryInfo parentInfo = getOrCreate(path.first, map, zip);
+      entryName = path.third;
       info = store(map, parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, entryName);
     }
 
@@ -123,9 +130,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return info;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
       ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
@@ -201,7 +207,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       return myStream.read(b, off, len);
     }
 

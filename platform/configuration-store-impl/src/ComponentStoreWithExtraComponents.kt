@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -37,7 +38,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     }
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     @Suppress("DEPRECATION")
     if (component is com.intellij.configurationStore.SettingsSavingComponent) {
       asyncSettingsSavingComponents.add(component)
@@ -46,13 +47,14 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       settingsSavingComponents.add(component)
     }
 
-    super.initComponent(component, serviceDescriptor)
+    super.initComponent(component, serviceDescriptor, pluginId)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
+  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean,
+                                                                       saveSessionProducerManager: SaveSessionProducerManager) {
     coroutineScope {
       // expects EDT
-      launch(storeEdtCoroutineContext) {
+      launch(storeEdtCoroutineDispatcher) {
         @Suppress("Duplicates")
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {
@@ -76,7 +78,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
     // so, call sequentially it, not inside coroutineScope
-    return createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
+    commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionProducerManager)
   }
 
   override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {

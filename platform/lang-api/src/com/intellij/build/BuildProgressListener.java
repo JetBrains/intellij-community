@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,22 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildProgressListener {
-  void onEvent(@NotNull BuildEvent event);
+
+  /**
+   * @deprecated do not use it, it's only for compatibility reason
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  Object UNKNOWN_BUILD_ID = new Object();
+
+  /**
+   * @param event
+   * @deprecated use {@link #onEvent(Object, BuildEvent)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  default void onEvent(@NotNull BuildEvent event) { onEvent(UNKNOWN_BUILD_ID, event);}
+
+  void onEvent(@NotNull Object buildId, @NotNull BuildEvent event);
 }

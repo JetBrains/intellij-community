@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.base.Stopwatch;
@@ -45,7 +45,7 @@ public class ChangesCacheFile {
   private final CachingCommittedChangesProvider myChangesProvider;
   private final ProjectLevelVcsManager myVcsManager;
   private final FilePath myRootPath;
-  private final RepositoryLocation myLocation;
+  @NotNull private final RepositoryLocation myLocation;
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist;
@@ -57,14 +57,14 @@ public class ChangesCacheFile {
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 46;
 
-  public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
+  public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, @NotNull RepositoryLocation location) {
     reset();
 
     myProject = project;
     myPath = path;
     myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
     myVcs = vcs;
-    myChangesProvider = (CachingCommittedChangesProvider) vcs.getCommittedChangesProvider();
+    myChangesProvider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRootPath = VcsUtil.getFilePath(root);
     myLocation = location;
@@ -72,7 +72,7 @@ public class ChangesCacheFile {
 
   private void reset() {
     final Calendar date = Calendar.getInstance();
-    date.set(2020, Calendar.FEBRUARY, 2);
+    date.setTime(new Date(Long.MAX_VALUE));
     myFirstCachedDate = date.getTime();
     date.set(1970, Calendar.FEBRUARY, 2);
     myLastCachedDate = date.getTime();
@@ -83,6 +83,7 @@ public class ChangesCacheFile {
     myHeaderLoaded = false;
   }
 
+  @NotNull
   public RepositoryLocation getLocation() {
     return myLocation;
   }
@@ -120,7 +121,7 @@ public class ChangesCacheFile {
 
   public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
-    Collections.sort(changes, CommittedChangeListByDateComparator.ASCENDING);
+    changes.sort(CommittedChangeListByDateComparator.ASCENDING);
     return writeChanges(changes, null);
   }
 
@@ -433,6 +434,7 @@ public class ChangesCacheFile {
     }
   }
 
+  @NotNull
   public List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
     final List<CommittedChangeList> result = new ArrayList<>();
     final ChangeBrowserSettings.Filter filter = settings.createFilter();
@@ -780,7 +782,7 @@ public class ChangesCacheFile {
 
     public boolean invoke() throws VcsException, IOException {
       myChangesCacheFile.myLocation.onBeforeBatch();
-      final Collection<FilePath> incomingFiles = myChangesCacheFile.myChangesProvider.getIncomingFiles(myChangesCacheFile.myLocation);
+      Collection<FilePath> incomingFiles = myChangesCacheFile.myChangesProvider.getIncomingFiles(myChangesCacheFile.myLocation);
 
       myAnyChanges = false;
       myChangesCacheFile.openStreams();
@@ -905,9 +907,9 @@ public class ChangesCacheFile {
       }
     }
 
-    private ProcessingResult processIncomingChange(final Change change,
-                                          final IncomingChangeListData changeListData,
-                                          @Nullable final Collection<FilePath> incomingFiles) {
+    private ProcessingResult processIncomingChange(@NotNull Change change,
+                                                   @NotNull IncomingChangeListData changeListData,
+                                                   @Nullable Collection<FilePath> incomingFiles) {
       final CommittedChangeList changeList = changeListData.changeList;
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {

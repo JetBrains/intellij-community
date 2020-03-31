@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -58,7 +58,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -87,7 +86,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disposable {
   private static final String REFS_CACHE = "References Resolve Cache";
   public static final Color BOX_COLOR = new JBColor(new Color(0xFC6C00), new Color(0xDE6C01));
-  public static final Logger LOG = Logger.getInstance("#com.intellij.internal.psiView.PsiViewerDialog");
+  public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
   private final Project myProject;
 
 
@@ -117,7 +116,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private RangeHighlighter myHighlighter;
 
 
-  private final Set<PsiViewerSourceWrapper> mySourceWrappers = ContainerUtil.newTreeSet();
+  private final Set<PsiViewerSourceWrapper> mySourceWrappers = new TreeSet<>();
   private final EditorEx myEditor;
   private final EditorListener myEditorListener = new EditorListener();
   private String myLastParsedText = null;
@@ -540,9 +539,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (source instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)source).getLanguage();
       items.add(baseLang);
-      Language[] dialects = LanguageUtil.getLanguageDialects(baseLang);
-      Arrays.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
-      items.addAll(Arrays.asList(dialects));
+      List<Language> dialects = new ArrayList<>(baseLang.getDialects());
+      dialects.sort(LanguageUtil.LANGUAGE_COMPARATOR);
+      items.addAll(dialects);
     }
     myDialectComboBox.setModel(new CollectionComboBoxModel<>(items));
 
@@ -563,7 +562,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       List<String> extensions = getAllExtensions((LanguageFileType)source);
       if (extensions.size() > 1) {
         ExtensionComparator comp = new ExtensionComparator(extensions.get(0));
-        Collections.sort(extensions, comp);
+        extensions.sort(comp);
         SortedComboBoxModel<String> model = new SortedComboBoxModel<>(comp);
         model.setAll(extensions);
         myExtensionComboBox.setModel(model);
@@ -615,9 +614,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return null;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     AbstractAction copyPsi = new AbstractAction("Cop&y PSI") {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
@@ -666,7 +664,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @NotNull
   private ViewerTreeStructure getTreeStructure() {
-    return ObjectUtils.notNull((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure());
+    return Objects.requireNonNull((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure());
   }
 
   private PsiElement parseText(String text) {
@@ -947,8 +945,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
           start += textRange.getStartOffset();
           end = start + textRange.getLength();
+          //todo[kb] probably move highlight color to the editor color scheme?
+          TextAttributes highlightReferenceTextRange = new TextAttributes(null, null,
+                                                                          JBColor.namedColor("PsiViewer.referenceHighlightColor", 0xA8C023),
+                                                                          EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
           myListenerHighlighter = myEditor.getMarkupModel()
-            .addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+            .addRangeHighlighter(start, end, HighlighterLayer.LAST,
+                                 highlightReferenceTextRange, HighlighterTargetArea.EXACT_RANGE);
         }
       }
     }

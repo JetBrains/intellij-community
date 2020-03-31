@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -29,12 +30,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, originalElement, true, null);
-  }
-
-  @Nullable
-  @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;
   }
 
   @Nullable
@@ -154,7 +149,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
-    String deprecationComment = deprecated ? " (deprecated)" : "";
+    String deprecationComment = deprecated ? JsonBundle.message("schema.documentation.deprecated.postfix") : "";
     if (preferShort) {
       htmlDescription = "<b>" + name + "</b>" + type + apiInfo + deprecationComment + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
     }
@@ -210,12 +205,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
       return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 

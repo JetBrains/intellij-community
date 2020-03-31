@@ -57,13 +57,13 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
 
   private void perform(String targetClassName) {
-    int offset = myEditor.getCaretModel().getOffset();
-    PsiElement element = myFile.findElementAt(offset);
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiElement element = getFile().findElementAt(offset);
     PsiMethod constructor = null;
     PsiClass aClass = null;
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        assertTrue(false);
+        fail();
         return;
       }
 
@@ -81,7 +81,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     PsiClass targetClass = null;
     if (targetClassName != null) {
       targetClass = JavaPsiFacade.getInstance(getProject()).findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
-      assertTrue(targetClass != null);
+      assertNotNull(targetClass);
     }
 
     final ReplaceConstructorWithFactoryProcessor replaceConstructorWithFactoryProcessor;

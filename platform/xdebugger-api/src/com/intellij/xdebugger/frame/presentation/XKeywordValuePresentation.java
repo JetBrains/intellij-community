@@ -17,9 +17,6 @@ package com.intellij.xdebugger.frame.presentation;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XKeywordValuePresentation extends XValuePresentation {
   private final String myValue;
 

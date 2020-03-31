@@ -56,15 +56,16 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
-    return "CallToSimpleSetterFromWithinClass";
+  public boolean runForWholeFile() {
+    // Changes in another method (making setter more complicated) may affect 
+    // the inspection result at call sites
+    return true;
   }
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
+  public String getID() {
+    return "CallToSimpleSetterFromWithinClass";
   }
 
   @Override

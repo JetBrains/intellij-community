@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection;
@@ -39,28 +40,29 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
     skeleton(new Callback() {
       @Override
       public void registerSchemes() {
-        final String moduleDir = getModuleDir(getProject());
-
         final UserDefinedJsonSchemaConfiguration pattern =
-          new UserDefinedJsonSchemaConfiguration("pattern", JsonSchemaVersion.SCHEMA_4, moduleDir + schemaFile, false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration("pattern", JsonSchemaVersion.SCHEMA_4, getUrlUnderTestRoot(schemaFile), false, Collections.emptyList());
         addSchema(pattern);
         myDoCompletion = false;
       }
 
       @Override
       public void configureFiles() {
-        configureByFiles(null, schemaFile);
+        myFixture.configureByFiles(schemaFile);
       }
 
       @Override
       public void doCheck() {
-        checkHighlighting(new ExpectedHighlightingData(new DocumentImpl(expectedText), true, true, false, myFile));
+        ExpectedHighlightingData data =
+          new ExpectedHighlightingData(new DocumentImpl(expectedText), true, true, false, myFixture.getFile());
+        data.init();
+        ((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
       }
     });
   }
 
   public void testPatterns() throws Exception {
-    enableInspectionTool(new JsonSchemaComplianceInspection());
+    myFixture.enableInspections(new JsonSchemaComplianceInspection());
     doSelfTest("/patternSchema.json", "{\n" +
                                   "  \"properties\": {\n" +
                                   "    \"withPattern\": {\n" +
@@ -78,7 +80,7 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
   }
 
   public void testRefs() throws Exception {
-    enableInspectionTool(new JsonSchemaRefReferenceInspection());
+    myFixture.enableInspections(new JsonSchemaRefReferenceInspection());
     doSelfTest("/refsSchema.json", "{\n" +
                                    "  \"type\": \"object\",\n" +
                                    "  \"properties\": {\n" +

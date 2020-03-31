@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -56,9 +55,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
@@ -146,7 +142,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
+    return JBPopupFactory.getInstance().createActionGroupPopup(XDebuggerBundle.message("debugger.editor.choose.language"), actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
   }
@@ -187,7 +183,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(component.getBackground());
+    panel.setBackground(new JBColor(() -> component.getBackground()));
     panel.addToRight(myLanguageChooser);
     return panel;
   }
@@ -381,10 +377,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       foldingModel.clearFoldRegions();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == '\n') {
-          FoldRegion region = foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
-          if (region != null) {
-            region.setExpanded(false);
-          }
+          foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
         }
       }
     });
@@ -434,7 +427,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
         collapse();
-        Window window = UIUtil.getWindow(getComponent());
+        Window window = ComponentUtil.getWindow(getComponent());
         if (window != null) {
           window.dispatchEvent(
             new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
@@ -516,7 +509,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
 
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           handler.run();
         }
       });

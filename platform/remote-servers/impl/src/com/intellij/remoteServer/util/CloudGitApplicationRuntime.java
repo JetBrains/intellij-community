@@ -4,6 +4,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;
@@ -26,7 +27,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
     super(applicationName);
     myServerRuntime = serverRuntime;
     myLogManager = logManager;
-    myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl() : new CloudLoggingHandlerImpl(logManager);
+    myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl(null) : new CloudLoggingHandlerImpl(logManager);
     myDeployment = serverRuntime.getAgent().createDeployment(applicationName, myLoggingHandler);
   }
 
@@ -90,9 +91,9 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
   private boolean confirmUndeploy() {
     final Ref<Boolean> confirmed = new Ref<>(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      String title = CloudBundle.getText("cloud.undeploy.confirm.title");
+      String title = CloudBundle.message("cloud.undeploy.confirm.title");
       while (true) {
-        String password = Messages.showPasswordDialog(CloudBundle.getText("cloud.undeploy.confirm.message", getApplicationName()), title);
+        String password = Messages.showPasswordDialog(CloudBundle.message("cloud.undeploy.confirm.message", getApplicationName()), title);
         if (password == null) {
           return;
         }
@@ -100,7 +101,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
           confirmed.set(true);
           return;
         }
-        Messages.showErrorDialog(CloudBundle.getText("cloud.undeploy.confirm.password.incorrect"), title);
+        Messages.showErrorDialog(CloudBundle.message("cloud.undeploy.confirm.password.incorrect"), title);
       }
     });
     return confirmed.get();

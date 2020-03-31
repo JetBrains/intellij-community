@@ -60,9 +60,8 @@ public class GrPsiTypeStub extends PsiType {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return EMPTY_ARRAY;
   }
 }

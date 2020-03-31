@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -18,8 +18,8 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.TestScaleHelper
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
@@ -67,7 +67,7 @@ open class RestoreScaleRule : ExternalResource() {
   }
 }
 
-suspend fun changeLafIfNeed(lafName: String) {
+internal suspend fun changeLafIfNeeded(lafName: String) {
   System.setProperty("idea.ui.set.password.echo.char", "true")
 
   if (UIManager.getLookAndFeel().name == lafName) {
@@ -82,7 +82,7 @@ suspend fun changeLafIfNeed(lafName: String) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added and it leads to NPE on set comment text)
-      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
+      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet())
     }
   }
 }
@@ -108,7 +108,7 @@ fun getSnapshotRelativePath(lafName: String): String {
 fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
-    actualSerializedLayout = serializeLayout(component)
+    actualSerializedLayout = serializeLayout(component, isIncludeCellBounds = false, isIncludeComponentBounds = false)
   }
   else {
     val dumperOptions = DumperOptions()

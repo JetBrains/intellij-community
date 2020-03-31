@@ -2,13 +2,13 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassWithoutLoggerInspectionTest extends LightInspectionTestCase {
+public class ClassWithoutLoggerInspectionTest extends LightJavaInspectionTestCase {
 
   public void testClassWithoutLogger() { doTest();}
   public void testClassWithLogger() { doTest();}

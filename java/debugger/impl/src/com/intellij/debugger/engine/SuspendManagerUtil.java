@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SuspendManagerUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManagerUtil");
+  private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
 
   public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {

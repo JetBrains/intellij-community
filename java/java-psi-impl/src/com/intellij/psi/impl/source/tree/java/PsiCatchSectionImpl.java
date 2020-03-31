@@ -29,7 +29,7 @@ import java.util.List;
  * @author ven
  */
 public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatchSection, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiCatchSectionImpl.class);
 
   private final Object myTypesCacheLock = new Object();
   private CachedValue<List<PsiType>> myTypesCache;

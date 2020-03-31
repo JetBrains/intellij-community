@@ -35,13 +35,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DanglingJavadocInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("dangling.javadoc.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -53,9 +46,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[] {
       new DeleteCommentFix(),
       new ConvertCommentFix()
@@ -75,7 +67,7 @@ public class DanglingJavadocInspection extends BaseInspection {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement docComment = element.getParent();
       final StringBuilder newCommentText = new StringBuilder();
-      for (PsiElement child : docComment.getChildren()) {
+      for (PsiElement child = docComment.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiDocToken) {
           final PsiDocToken docToken = (PsiDocToken)child;
           final IElementType tokenType = docToken.getTokenType();

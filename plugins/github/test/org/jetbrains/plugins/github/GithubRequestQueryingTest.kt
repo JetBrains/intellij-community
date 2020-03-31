@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
+import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
 
@@ -34,33 +36,47 @@ class GithubRequestQueryingTest : GithubTest() {
 
   @Throws(Throwable::class)
   fun testLinkPagination() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false, GithubRequestPagination(pageSize = 2)))
+    retry(LOG) {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
+                                                           type = Type.OWNER,
+                                                           pagination = GithubRequestPagination(pageSize = 2)))
 
-    assertContainsElements(result, mainRepos)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertDoesntContain(result, secondaryRepos)
+    }
   }
 
   @Throws(Throwable::class)
   fun testOwnRepos() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
+    retry(LOG) {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
+                                                           type = Type.OWNER))
 
-    assertContainsElements(result, mainRepos)
-    assertDoesntContain(result, orgRepo)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertDoesntContain(result, orgRepo)
+      assertDoesntContain(result, secondaryRepos)
+
+    }
   }
 
   @Throws(Throwable::class)
   fun testAllRepos() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
+    retry(LOG) {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
 
-    assertContainsElements(result, mainRepos)
-    assertContainsElements(result, orgRepo)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertContainsElements(result, orgRepo)
+      assertDoesntContain(result, secondaryRepos)
+    }
+  }
+
+  companion object {
+    private val LOG = logger<GithubRequestQueryingTest>()
   }
 }

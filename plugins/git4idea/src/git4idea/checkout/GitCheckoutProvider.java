@@ -3,6 +3,8 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -12,15 +14,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.actions.BasicAction;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.ui.GitCloneDialogComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +49,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
 
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener, @Nullable String predefinedRepositoryUrl) {
-    BasicAction.saveAll();
+    FileDocumentManager.getInstance().saveAllDocuments();
     GitCloneDialog dialog = new GitCloneDialog(project, predefinedRepositoryUrl);
     if (!dialog.showAndGet()) {
       return;
@@ -111,7 +114,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
                     && !StringUtil.startsWithIgnoreCase(msg, "submodule")).
       map (msg -> GitUtil.cleanupErrorPrefixes(msg)).
       collect(Collectors.joining("<br/>"));
-    VcsNotifier.getInstance(project).notifyError("Clone failed", description);
+    VcsNotifier.getInstance(project).notifyError("Clone failed", StringUtil.capitalize(description), true);
     return false;
   }
 
@@ -125,5 +128,11 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
   public void doCheckout(@NotNull Project project,
                          @Nullable Listener listener) {
     doCheckout(project, listener, null);
+  }
+
+  @NotNull
+  @Override
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
+    return new GitCloneDialogComponent(project, modalityState);
   }
 }

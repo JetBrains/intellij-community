@@ -1,22 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
+import com.intellij.idea.Main;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 final class ActionPreloader extends PreloadingActivity {
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!Main.isLightEdit()) {
       ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
+      TypedHandlerDelegate.EP_NAME.getExtensionList();
     }
-    TypedHandlerDelegate.EP_NAME.getExtensionList();
   }
 }

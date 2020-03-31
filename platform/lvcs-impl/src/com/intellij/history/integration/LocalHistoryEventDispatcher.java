@@ -23,28 +23,30 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.EventDispatcher;
+import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-class LocalHistoryEventDispatcher implements VirtualFileManagerListener, CommandListener,
-                                                    BulkFileListener, VirtualFileListener {
+class LocalHistoryEventDispatcher implements VirtualFileManagerListener, CommandListener, BulkFileListener {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
-  private final EventDispatcher<VirtualFileListener> myVfsEventsDispatcher =  EventDispatcher.create(VirtualFileListener.class);
+  private final DisposableWrapperList<BulkFileListener> myVfsEventListeners = new DisposableWrapperList<>();
 
   LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-    myVfsEventsDispatcher.addListener(this);
   }
 
   @Override
@@ -85,15 +87,15 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     myVcs.endChangeSet(name);
   }
 
-  @Override
-  public void fileCreated(@NotNull VirtualFileEvent e) {
+  private void fileCreated(@Nullable VirtualFile file) {
+    if (file == null) return;
     beginChangeSet();
-    createRecursively(e.getFile());
+    createRecursively(file);
     endChangeSet(null);
   }
 
   private void createRecursively(VirtualFile f) {
-    VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
         if (isVersioned(f)) {
@@ -113,10 +115,9 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     });
   }
 
-  @Override
-  public void beforeContentsChange(@NotNull VirtualFileEvent e) {
-    if (!areContentChangesVersioned(e)) return;
+  private void beforeContentsChange(@NotNull VFileContentChangeEvent e) {
     VirtualFile f = e.getFile();
+    if (!myGateway.areContentChangesVersioned(f)) return;
 
     Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
     if (content != null) {
@@ -124,17 +125,22 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     }
   }
 
-  @Override
-  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent e) {
-    if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
-      VirtualFile f = e.getFile();
+  private void handleBeforeEvent(VFileEvent event) {
+    if (event instanceof VFileContentChangeEvent) {
+      beforeContentsChange((VFileContentChangeEvent)event);
+    }
+    else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).isRename() ||
+             event instanceof VFileMoveEvent) {
+      VirtualFile f = Objects.requireNonNull(event.getFile());
       f.putUserData(WAS_VERSIONED_KEY, myGateway.isVersioned(f));
+    }
+    else if (event instanceof VFileDeleteEvent) {
+      beforeFileDeletion((VFileDeleteEvent)event);
     }
   }
 
-  @Override
-  public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
-    if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
+  private void propertyChanged(@NotNull VFilePropertyChangeEvent e) {
+    if (e.isRename()) {
       VirtualFile f = e.getFile();
 
       boolean isVersioned = myGateway.isVersioned(f);
@@ -156,14 +162,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     }
   }
 
-  @Override
-  public void beforeFileMovement(@NotNull VirtualFileMoveEvent e) {
-    VirtualFile f = e.getFile();
-    f.putUserData(WAS_VERSIONED_KEY, myGateway.isVersioned(f));
-  }
-
-  @Override
-  public void fileMoved(@NotNull VirtualFileMoveEvent e) {
+  private void fileMoved(@NotNull VFileMoveEvent e) {
     VirtualFile f = e.getFile();
 
     boolean isVersioned = myGateway.isVersioned(f);
@@ -176,8 +175,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     myVcs.moved(f.getPath(), e.getOldParent().getPath());
   }
 
-  @Override
-  public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
+  private void beforeFileDeletion(@NotNull VFileDeleteEvent e) {
     VirtualFile f = e.getFile();
     Entry entry = myGateway.createEntryForDeletion(f);
     if (entry != null) {
@@ -189,15 +187,15 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     return myGateway.isVersioned(f);
   }
 
-  private boolean areContentChangesVersioned(VirtualFileEvent e) {
-    return myGateway.areContentChangesVersioned(e.getFile());
-  }
-
   @Override
   public void before(@NotNull List<? extends VFileEvent> events) {
     myGateway.runWithVfsEventsDispatchContext(events, true, () -> {
       for (VFileEvent event : events) {
-        BulkVirtualFileListenerAdapter.fireBefore(myVfsEventsDispatcher.getMulticaster(), event);
+        handleBeforeEvent(event);
+      }
+
+      for (BulkFileListener listener : myVfsEventListeners) {
+        listener.before(events);
       }
     });
   }
@@ -206,12 +204,30 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
   public void after(@NotNull List<? extends VFileEvent> events) {
     myGateway.runWithVfsEventsDispatchContext(events, false, () -> {
       for (VFileEvent event : events) {
-        BulkVirtualFileListenerAdapter.fireAfter(myVfsEventsDispatcher.getMulticaster(), event);
+        handleAfterEvent(event);
+      }
+      for (BulkFileListener listener : myVfsEventListeners) {
+        listener.after(events);
       }
     });
   }
 
-  void addVirtualFileListener(VirtualFileListener virtualFileListener, Disposable disposable) {
-    myVfsEventsDispatcher.addListener(virtualFileListener, disposable);
+  private void handleAfterEvent(VFileEvent event) {
+    if (event instanceof VFileCreateEvent) {
+      fileCreated(event.getFile());
+    }
+    else if (event instanceof VFileCopyEvent) {
+      fileCreated(((VFileCopyEvent)event).findCreatedFile());
+    }
+    else if (event instanceof VFilePropertyChangeEvent) {
+      propertyChanged((VFilePropertyChangeEvent)event);
+    }
+    else if (event instanceof VFileMoveEvent) {
+      fileMoved((VFileMoveEvent)event);
+    }
+  }
+
+  void addVirtualFileListener(BulkFileListener virtualFileListener, Disposable disposable) {
+    myVfsEventListeners.add(virtualFileListener, disposable);
   }
 }

@@ -37,7 +37,7 @@ import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnChangeProviderContext");
+  private static final Logger LOG = Logger.getInstance(SvnChangeProviderContext.class);
 
   @NotNull private final ChangelistBuilder myChangelistBuilder;
   @NotNull private final List<SvnChangedFile> myCopiedFiles = new ArrayList<>();
@@ -66,13 +66,13 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processIgnored(VirtualFile vFile) {
-    myChangelistBuilder.processIgnoredFile(vFile);
+  public void processIgnored(@NotNull FilePath path) {
+    myChangelistBuilder.processIgnoredFile(path);
   }
 
   @Override
-  public void processUnversioned(VirtualFile vFile) {
-    myChangelistBuilder.processUnversionedFile(vFile);
+  public void processUnversioned(@NotNull FilePath path) {
+    myChangelistBuilder.processUnversionedFile(path);
   }
 
   @Override
@@ -193,7 +193,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
       final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
-        myChangelistBuilder.processUnversionedFile(file);
+        myChangelistBuilder.processUnversionedFile(filePath);
       }
     }
     else if (status.is(StatusType.STATUS_ADDED)) {
@@ -220,7 +220,7 @@ class SvnChangeProviderContext implements StatusReceiver {
         LOG.error("No virtual file for ignored file: " + filePath.getPresentableUrl() + ", isNonLocal: " + filePath.isNonLocal());
       }
       else if (!myVcs.isWcRoot(filePath)) {
-        myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
+        myChangelistBuilder.processIgnoredFile(filePath);
       }
     }
     else if (fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) {

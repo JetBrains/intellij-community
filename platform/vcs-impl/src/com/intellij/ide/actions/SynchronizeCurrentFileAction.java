@@ -43,7 +43,6 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     }
     else {
       e.getPresentation().setEnabledAndVisible(true);
-      e.getPresentation().setText(getMessage(project, files));
     }
   }
 

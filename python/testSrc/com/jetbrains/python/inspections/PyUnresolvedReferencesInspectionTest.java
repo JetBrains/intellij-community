@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -540,11 +539,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-20071
-  public void testNonexistentLoggerMethod() {
-    doMultiFileTest();
-  }
-
   // PY-21224
   public void testSixWithMetaclass() {
     doTest();
@@ -640,6 +634,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-7251
+  public void testImportHighlightLevel() {
+    doMultiFileTest();
+  }
+
   // PY-26243
   public void testNotImportedModuleInDunderAll() {
     doMultiFileTest("pkg/__init__.py");
@@ -698,11 +697,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23632
   public void testMockPatchObject() {
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/"+ getTestDirectoryPath() + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      getTestDirectoryPath() + "/lib",
       () -> {
         final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
         configureInspection();
@@ -785,6 +781,67 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-32927
   public void testPrefixExpressionOnClassHavingSkeletons() {
     doMultiFileTest();
+  }
+
+  // PY-35531
+  public void testAttributeDefinedInOverloadedDunderInit() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import overload\n" +
+                         "class Example:\n" +
+                         "    @overload\n" +
+                         "    def __init__(self, **kwargs): ...\n" +
+                         "    def __init__(self, *args, **kwargs):\n" +
+                         "        self.__data = None\n" +
+                         "    def test(self):\n" +
+                         "        return self.__data")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    x: str\n" +
+                         "x = X(x='str')\n" +
+                         "x.clear()\n" +
+                         "x['x'] = 'rts'\n" +
+                         "x.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
+                         "x.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()\n" +
+                         "x1: X = {'x1': 'str'}\n" +
+                         "x1['x1'] = 'rts'\n" +
+                         "x1.clear()\n" +
+                         "x1.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
+                         "x1.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()")
+    );
+  }
+
+  // PY-37755 PY-2700
+  public void testGlobalResolveAttribute() {
+    doTest();
+  }
+
+  // PY-39078
+  public void testNoneAttribute() {
+    doTestByText("a = None\n" +
+                 "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
+  }
+
+  // PY-39682
+  public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
+    runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/python_stubs", () -> {
+        myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
+        final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+        inspection.ignoredIdentifiers.add("pkg.*");
+        myFixture.enableInspections(inspection);
+        myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+        assertSdkRootsNotParsed(myFixture.getFile());
+        assertProjectFilesNotParsed(myFixture.getFile());
+      });
+    });
   }
 
   @NotNull

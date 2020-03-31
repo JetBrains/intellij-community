@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -25,7 +26,6 @@ import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +72,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
           for (PsiParameter parameter : parameters) {
             if (aClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
               final String parameterName = parameter.getName();
-              if (parameterName != null && StringUtil.containsIgnoreCase(parameterName, oldClassName)) {
+              if (StringUtil.containsIgnoreCase(parameterName, oldClassName)) {
                 myElements.add(parameter);
               }
             }
@@ -136,17 +136,17 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogTitle() {
-    return RefactoringBundle.message("rename.variables.title");
+    return JavaRefactoringBundle.message("rename.variables.title");
   }
 
   @Override
   public String getDialogDescription() {
-    return RefactoringBundle.message("rename.variables.with.the.following.names.to");
+    return JavaRefactoringBundle.message("rename.variables.with.the.following.names.to");
   }
 
   @Override
   public String entityName() {
-    return RefactoringBundle.message("entity.name.variable");
+    return JavaRefactoringBundle.message("entity.name.variable");
   }
 
   @Override

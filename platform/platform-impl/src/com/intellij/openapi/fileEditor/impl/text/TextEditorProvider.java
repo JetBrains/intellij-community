@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
@@ -32,12 +33,13 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TextEditorProvider implements FileEditorProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
@@ -55,7 +57,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   @NotNull
   public static TextEditorProvider getInstance() {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtensionOrFail(TextEditorProvider.class);
+    return Objects.requireNonNull(FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider.class));
   }
 
   @Override
@@ -172,8 +174,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return new EditorWrapper(editor);
   }
 
-  @Nullable
-  public static Document[] getDocuments(@NotNull FileEditor editor) {
+  public static Document @Nullable [] getDocuments(@NotNull FileEditor editor) {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
       Document[] documents = documentsEditor.getDocuments();
@@ -240,7 +241,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     }
 
     final FileType ft = file.getFileType();
-    return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    return !ft.isBinary() || BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
   }
 
   private static int getLine(@Nullable LogicalPosition pos) {

@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -19,21 +21,29 @@ import java.util.List;
  */
 public class TextFilter extends FilterAction {
 
-  boolean showHierarchy;
+  boolean myShowHierarchy;
 
   public TextFilter(FilterTable filterTable) {
-    super("Text", filterTable);
+    super(SSRBundle.messagePointer("text.filter.name"), filterTable);
   }
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return false;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     return !StringUtil.isEmpty(constraint.getRegExp()) || constraint.isWithinHierarchy();
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     constraint.setRegExp("");
     constraint.setWholeWordsOnly(false);
     constraint.setWithinHierarchy(false);
@@ -41,14 +51,17 @@ public class TextFilter extends FilterAction {
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+      return false;
+    }
     final StructuralSearchProfile profile = myTable.getProfile();
-    showHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
+    myShowHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
   }
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
     myLabel.append("text=");
     if (constraint.isInvertRegExp()) myLabel.append("!");
     myLabel.append(constraint.getRegExp());
@@ -58,16 +71,14 @@ public class TextFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
-      private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);
-      private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
-      private final JLabel myTextLabel = new JLabel("text=");
+      private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);
+      private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
+      private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
       private final ContextHelpLabel myHelpLabel =
-        ContextHelpLabel.create("<p>Text of the match is checked against the provided pattern." +
-                                "<p>Use \"!\" to invert the pattern." +
-                                "<p>Regular expressions are supported.");
+        ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
 
       @Override
       protected void layoutComponents() {
@@ -112,7 +123,7 @@ public class TextFilter extends FilterAction {
         myTextField.setText((myConstraint.isInvertRegExp() ? "!" : "") + myConstraint.getRegExp());
         myWordsCheckBox.setSelected(myConstraint.isWholeWordsOnly());
         myHierarchyCheckBox.setSelected(myConstraint.isWithinHierarchy());
-        myHierarchyCheckBox.setVisible(showHierarchy);
+        myHierarchyCheckBox.setVisible(myShowHierarchy);
       }
 
       @Override

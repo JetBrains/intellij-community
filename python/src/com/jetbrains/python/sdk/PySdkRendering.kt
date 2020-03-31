@@ -9,13 +9,14 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.LayeredIcon
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import javax.swing.Icon
 
-const val noInterpreterMarker: String = "<No interpreter>"
+val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.interpreter")}>"
 
 fun name(sdk: Sdk, sdkModificator: SdkModificator? = null): Triple<String?, String, String?> = name(sdk, sdkModificator?.name ?: sdk.name)
 
@@ -24,7 +25,7 @@ fun name(sdk: Sdk, sdkModificator: SdkModificator? = null): Triple<String?, Stri
  */
 fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
   val modifier = when {
-    PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) -> "invalid"
+    PythonSdkUtil.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) -> "invalid"
     PythonSdkType.isIncompleteRemote(sdk) -> "incomplete"
     !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) -> "unsupported"
     else -> null
@@ -68,7 +69,7 @@ fun icon(sdk: Sdk): Icon? {
   val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
 
   return when {
-    PythonSdkType.isInvalid(sdk) ||
+    PythonSdkUtil.isInvalid(sdk) ||
     PythonSdkType.isIncompleteRemote(sdk) ||
     PythonSdkType.hasInvalidRemoteCredentials(sdk) ||
     !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) ->
@@ -103,8 +104,8 @@ fun groupModuleSdksByTypes(allSdks: List<Sdk>, module: Module?, invalid: (Sdk) -
     .filter { !it.isAssociatedWithAnotherModule(module) && !invalid(it) }
     .groupBy {
       when {
-        PythonSdkType.isVirtualEnv(it) || PythonSdkType.isCondaVirtualEnv(it) -> PyRenderedSdkType.VIRTUALENV
-        PythonSdkType.isRemote(it) -> PyRenderedSdkType.REMOTE
+        PythonSdkUtil.isVirtualEnv(it) || PythonSdkUtil.isCondaVirtualEnv(it) -> PyRenderedSdkType.VIRTUALENV
+        PythonSdkUtil.isRemote(it) -> PyRenderedSdkType.REMOTE
         else -> PyRenderedSdkType.SYSTEM
       }
     }

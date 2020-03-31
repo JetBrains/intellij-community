@@ -13,7 +13,7 @@ Groovy script
       Annotation arguments
         <empty list>
   PsiElement(.)('.')
-  PsiErrorElement:unmatched input
+  PsiErrorElement:identifier expected
     <empty list>
   PsiElement(new line)('\n')
   Import statement

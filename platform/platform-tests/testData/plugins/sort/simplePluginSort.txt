@@ -1,0 +1,38 @@
++ com.intellij
+  cycle3
+  cycle1
+  cycle2
+  cycle0
+  cycle4
+  cycle5
++ duplicate
++ duplicate0
+  missing1
+  missing2
+  missing3
++ optional_config_cycle1
+  optional_config_cycle0
+  optional_config_cycle2
+  optional_cycle2
+  optional_cycle0
+  optional_cycle1
++ plugin3
++ plugin0
++ plugin1
++ plugin2
+
+Plugin "incompatible0" is incompatible (until build 1.111111 < 202.SNAPSHOT).
+Plugin "incompatible0-alt" is incompatible (until build 1.111 < 202.SNAPSHOT).
+Plugin "incompatible1" is incompatible (since build 2001.0 > 202.SNAPSHOT).
+Plugin "incompatible2" is incompatible (until build 1.111111 < 202.SNAPSHOT).
+Plugin "missing4" is incompatible (supported only in IntelliJ IDEA).
+Module com.intellij.modules.duplicate is declared by plugins:
+  PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)
+  PluginDescriptor(name=duplicate, id=duplicate, path=file:/duplicate1.xml).
+Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
+Plugin "missing2" requires "com.intellij.missing" plugin to be installed.
+Plugin "missing3" requires "missing2" plugin to be enabled.
+Plugin "missing1" requires "com.intellij.modules.missing" plugin to be installed.
+Plugin "cycle0" requires "cycle1" plugin to be enabled.
+<br><a href="disable">Disable not loaded plugins</a>
+<a href="edit">Open plugin manager</a>

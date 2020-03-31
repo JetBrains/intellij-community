@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,52 +93,48 @@ public class WindowsRegistryUtil {
   }
 
   private static StringBuilder doReadBranch(@NotNull String location) {
-    return readRegistry("reg query \"" + location + "\"");
+    return readRegistrySilently("reg query \"" + location + "\"");
   }
 
   @Nullable
-  public static String readRegistryDefault(@NotNull String location) {
-    return trimToValue(readRegistry("reg query \"" + location + "\" /ve"));
+  public static String readRegistryDefault(@NonNls @NotNull String location) {
+    return trimToValue(readRegistrySilently("reg query \"" + location + "\" /ve"));
   }
 
   @Nullable
-  public static String readRegistryValue(@NotNull String location, @NotNull String key) {
-    return trimToValue(readRegistry("reg query \"" + location + "\" /v " + key));
+  public static String readRegistryValue(@NonNls @NotNull String location, @NonNls @NotNull String key) {
+    return trimToValue(readRegistrySilently("reg query \"" + location + "\" /v " + key));
   }
 
   @Nullable
-  private static StringBuilder readRegistry(String command) {
+  private static StringBuilder readRegistrySilently(@NonNls @NotNull String command) {
     try {
-      Process process = Runtime.getRuntime().exec(command);
-      StringBuilder output = null;
-      InputStream is = null;
-      ByteArrayOutputStream os = null;
-      try {
-        byte[] buffer = new byte[128];
-        is = process.getInputStream();
-        os = new ByteArrayOutputStream();
-        for (int length = is.read(buffer); length > 0; length = is.read(buffer)) {
-          os.write(buffer, 0, length);
-        }
-        output = new StringBuilder(new String(os.toByteArray(), StandardCharsets.UTF_8));
-      }
-      catch (IOException ignored) {
-
-      }
-      finally {
-        if (is != null) {
-          is.close();
-        }
-        if (os != null) {
-          os.close();
-        }
-        process.waitFor();
-      }
-
-      return output;
+      String text = readRegistry(command);
+      return new StringBuilder(text);
     }
     catch (Exception e) {
       return null;
+    }
+  }
+
+  @NotNull @ApiStatus.Internal
+  public static String readRegistry(@NonNls @NotNull String command) throws IOException, InterruptedException {
+    Process process = Runtime.getRuntime().exec(command);
+    InputStream is = null;
+    ByteArrayOutputStream os = null;
+    try {
+      byte[] buffer = new byte[128];
+      is = process.getInputStream();
+      os = new ByteArrayOutputStream();
+      for (int length = is.read(buffer); length > 0; length = is.read(buffer)) {
+        os.write(buffer, 0, length);
+      }
+      return new String(os.toByteArray(), StandardCharsets.UTF_8);
+    }
+    finally {
+      if (is != null) is.close();
+      if (os != null) os.close();
+      process.waitFor();
     }
   }
 }

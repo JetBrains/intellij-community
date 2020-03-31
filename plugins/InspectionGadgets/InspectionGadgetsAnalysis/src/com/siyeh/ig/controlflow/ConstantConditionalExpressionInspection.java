@@ -37,13 +37,6 @@ public class ConstantConditionalExpressionInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "constant.conditional.expression.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

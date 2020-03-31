@@ -3,7 +3,8 @@ interface I<T> {
 }
 class B {
     private static <N> void m(N i1) {
-        System.out.println(i1);
+        //c1
+        System.out.println(i1);//c2
         System.out.println(i1);
     }
 

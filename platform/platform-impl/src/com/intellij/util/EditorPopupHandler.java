@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public abstract class EditorPopupHandler implements EditorMouseListener {
   public abstract void invokePopup(EditorMouseEvent event);
 

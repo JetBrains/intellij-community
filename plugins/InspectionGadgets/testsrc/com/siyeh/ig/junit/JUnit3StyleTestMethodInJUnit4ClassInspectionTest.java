@@ -16,13 +16,13 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightInspectionTestCase {
+public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testJUnit3StyleTestMethodInJUnit4Class() { doTest(); }
   public void testBeforeAnnotationUsed() { doTest(); }
@@ -60,7 +60,9 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightInspe
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
-      "public @interface Test {}"
+      "public @interface Test {}",
+      "package org.junit.platform.commons.annotation;" +
+      "public @interface Testable {}"
     };
   }
 }

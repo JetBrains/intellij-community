@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,27 +34,26 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
-public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
+public final class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
-  private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path";
-  private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard";
+  private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
+  private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard"; //NON-NLS
 
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
 
-  public static CreatePatchCommitExecutor getInstance(Project project) {
+  public static CreatePatchCommitExecutor getInstance(@NotNull Project project) {
     return project.getComponent(CreatePatchCommitExecutor.class);
   }
 
-  public CreatePatchCommitExecutor(final Project project, final ChangeListManager changeListManager) {
+  public CreatePatchCommitExecutor(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = changeListManager;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getActionText() {
-    return "Create Patch...";
+    return VcsBundle.message("action.name.create.patch");
   }
 
   @Override
@@ -66,33 +66,23 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     return true;
   }
 
-  @Override
   @NotNull
-  public CommitSession createCommitSession() {
-    return new CreatePatchCommitSession();
+  @Override
+  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+    return new CreatePatchCommitSession(commitContext);
   }
 
   @Override
   public void projectOpened() {
-    myChangeListManager.registerCommitExecutor(this);
+    ChangeListManager.getInstance(myProject).registerCommitExecutor(this);
   }
 
-  private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {
+  private class CreatePatchCommitSession implements CommitSession {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
-    private CommitContext myCommitContext;
+    @NotNull private final CommitContext myCommitContext;
 
-    CreatePatchCommitSession() {
-    }
-
-    @Override
-    public void setContext(CommitContext context) {
-      myCommitContext = context;
-    }
-
-    @Override
-    @Nullable
-    public JComponent getAdditionalConfigurationUI() {
-      return myPanel.getPanel();
+    CreatePatchCommitSession(@NotNull CommitContext commitContext) {
+      myCommitContext = commitContext;
     }
 
     @Override
@@ -129,7 +119,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
           String base = myPanel.getBaseDirName();
           List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch(), true);
           writeAsPatchToClipboard(myProject, patches, base, myCommitContext);
-          VcsNotifier.getInstance(myProject).notifySuccess("Patch copied to clipboard");
+          VcsNotifier.getInstance(myProject).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
         }
         else {
           validateAndWritePatchToFile(changes);
@@ -162,7 +152,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
         if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-          ShowFilePathAction.openFile(file);
+          RevealFileAction.openFile(file);
         }
         else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
           configuration.SHOW_PATCH_IN_EXPLORER = showDialog(file);
@@ -175,16 +165,22 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     public ValidationInfo validateFields() {
       return myPanel.validateFields();
     }
+
+    @Nullable
+    @Override
+    public String getHelpId() {
+      return "reference.dialogs.PatchFileSettings"; //NON-NLS
+    }
   }
 
   private boolean checkIsFileValid(@NotNull File file) {
     if (file.exists()) {
       final int[] result = new int[1];
       WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
-        () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
-                                                              " already exists.\nDo you want to overwrite it?",
-                                                   "Save Patch File",
-                                                   "Overwrite", "Cancel",
+        () -> result[0] = Messages.showYesNoDialog(myProject, VcsBundle
+                                                     .message("patch.apply.already.exists.overwrite.prompt", file.getName(), file.getParent()),
+                                                   VcsBundle.message("patch.creation.save.patch.file.title"),
+                                                   CommonBundle.message("button.overwrite"), CommonBundle.message("button.cancel"),
                                                    Messages.getWarningIcon()));
       if (Messages.NO == result[0]) return false;
     }
@@ -192,8 +188,8 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
                                                             Messages.showErrorDialog(myProject, VcsBundle
                                                               .message("create.patch.error.title",
-                                                                       "Can not write patch to specified file: " +
-                                                                       file.getPath()), CommonBundle.getErrorTitle()),
+                                                                       VcsBundle
+                                                                         .message("patch.creation.can.not.write.patch.error", file.getPath())), CommonBundle.getErrorTitle()),
                                                           ModalityState.NON_MODAL, myProject);
       return false;
     }
@@ -237,11 +233,11 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
     };
 
-    ShowFilePathAction.showDialog(myProject, message, title, file, option);
+    RevealFileAction.showDialog(myProject, message, title, file, option);
 
     return ref[0];
   }

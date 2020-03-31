@@ -3,10 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection;
 
-public class UnsafeReturnStatementVisitorTest extends LightCodeInsightFixtureTestCase {
+public class UnsafeReturnStatementVisitorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   public void setUp() throws Exception {

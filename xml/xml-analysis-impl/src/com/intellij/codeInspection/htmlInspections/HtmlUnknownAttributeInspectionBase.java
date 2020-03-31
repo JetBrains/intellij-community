@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,8 +29,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.EditDistance;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -43,7 +42,7 @@ import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
+  private static final Logger LOG = Logger.getInstance(HtmlUnknownAttributeInspectionBase.class);
 
   public HtmlUnknownAttributeInspectionBase() {
     this("");
@@ -51,13 +50,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
 
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.attribute");
   }
 
   @Override
@@ -69,13 +61,13 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
 
   @Override
   protected String getCheckboxTitle() {
-    return XmlBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
+    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
   }
 
   @NotNull
   @Override
   protected String getPanelTitle() {
-    return XmlBundle.message("html.inspections.unknown.tag.attribute.title");
+    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.title");
   }
 
   @Override
@@ -102,14 +94,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
           ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
           quickfixes
-            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name)));
+            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("add.custom.html.attribute", name)));
           quickfixes.add(new RemoveAttributeIntentionFix(name));
           if (maySwitchToHtml5) {
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
-          registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.allowed.here", attribute.getName()), holder,
+          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
@@ -140,14 +132,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Rename attribute";
+      return XmlAnalysisBundle.message("rename.attribute");
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return "Rename attribute to " + name;
+      return XmlAnalysisBundle.message("rename.attribute.to.0", name);
     }
 
     @Override

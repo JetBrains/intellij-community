@@ -16,13 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BoxingBoxedValueInspectionTest extends LightInspectionTestCase {
+public class BoxingBoxedValueInspectionTest extends LightJavaInspectionTestCase {
 
   public void testBoxingBoxedValue() {
     doTest();

@@ -185,7 +185,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
                           @NotNull ReferenceType ref,
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
-    LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
       return;
     }
@@ -355,7 +355,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   private class MyDoubleClickListener extends DoubleClickListener {
     @Override
-    protected boolean onDoubleClick(MouseEvent event) {
+    protected boolean onDoubleClick(@NotNull MouseEvent event) {
       if (!isShowNewInstancesEvent(event)) {
         handleClassSelection(getTable().getSelectedClass());
         return true;

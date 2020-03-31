@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -17,20 +14,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-abstract class FilterModel<Filter> {
+public abstract class FilterModel<Filter> {
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = new ArrayList<>();
 
   @Nullable protected Filter myFilter;
 
-  FilterModel(@NotNull Computable<? extends VcsLogDataPack> provider,
-              @NotNull MainVcsLogUiProperties uiProperties) {
+  FilterModel(@NotNull MainVcsLogUiProperties uiProperties) {
     myUiProperties = uiProperties;
-    myDataPackProvider = provider;
   }
 
-  void setFilter(@Nullable Filter filter) {
+  public void setFilter(@Nullable Filter filter) {
     myFilter = filter;
     saveFilterToProperties(filter);
     notifyFiltersChanged();
@@ -55,38 +49,39 @@ abstract class FilterModel<Filter> {
   @Nullable
   protected abstract Filter getFilterFromProperties();
 
-  @NotNull
-  VcsLogDataPack getDataPack() {
-    return myDataPackProvider.compute();
-  }
-
   void addSetFilterListener(@NotNull Runnable runnable) {
     mySetFilterListeners.add(runnable);
   }
 
   protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false);
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.FILTER_SET, false,
+                                             data -> data.addData("filter_name", name));
   }
 
   protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
                                                            @NotNull Function<FilterObject, F> getter,
-                                                           @Nullable FilterObject currentFilter,
                                                            @NotNull String name) {
-    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
     F newFilter = filter == null ? null : getter.apply(filter);
-    if (!ObjectUtils.equals(oldFilter, newFilter) && newFilter != null) {
+    if (newFilter != null) {
       triggerFilterSet(name);
     }
+  }
+
+  protected static <FilterObject, F> boolean filterDiffers(@Nullable FilterObject filter,
+                                                           @NotNull Function<FilterObject, F> getter,
+                                                           @Nullable FilterObject currentFilter) {
+    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
+    F newFilter = filter == null ? null : getter.apply(filter);
+    return !ObjectUtils.equals(oldFilter, newFilter);
   }
 
   public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
     @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
 
     SingleFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter> filterKey,
-                      @NotNull Computable<? extends VcsLogDataPack> provider,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @Nullable VcsLogFilterCollection filters) {
-      super(provider, uiProperties);
+      super(uiProperties);
       myFilterKey = filterKey;
 
       if (filters != null) {
@@ -95,8 +90,12 @@ abstract class FilterModel<Filter> {
     }
 
     @Override
-    void setFilter(@Nullable Filter filter) {
-      if (!ObjectUtils.equals(myFilter, filter) && filter != null) triggerFilterSet(myFilterKey.getName());
+    public void setFilter(@Nullable Filter filter) {
+      if (ObjectUtils.equals(myFilter, filter)) return;
+
+      if (filter != null) {
+        triggerFilterSet(myFilterKey.getName());
+      }
 
       super.setFilter(filter);
     }
@@ -130,10 +129,9 @@ abstract class FilterModel<Filter> {
 
     PairFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> filterKey1,
                     @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> filterKey2,
-                    @NotNull Computable<? extends VcsLogDataPack> provider,
                     @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(provider, uiProperties);
+      super(uiProperties);
       myFilterKey1 = filterKey1;
       myFilterKey2 = filterKey2;
 
@@ -146,11 +144,26 @@ abstract class FilterModel<Filter> {
     }
 
     @Override
-    void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
-      triggerFilterSet(filter, FilterPair::getFilter1, myFilter, myFilterKey1.getName());
-      triggerFilterSet(filter, FilterPair::getFilter2, myFilter, myFilterKey2.getName());
+    public void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
+      if (filter != null && filter.isEmpty()) filter = null;
 
-      super.setFilter(filter);
+      boolean anyFiltersDiffers = false;
+      if (filterDiffers(filter, FilterPair::getFilter1, myFilter)) {
+        triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());
+        anyFiltersDiffers = true;
+      }
+      if (filterDiffers(filter, FilterPair::getFilter2, myFilter)) {
+        triggerFilterSet(filter, FilterPair::getFilter2, myFilterKey2.getName());
+        anyFiltersDiffers = true;
+      }
+
+      if (anyFiltersDiffers) {
+        super.setFilter(filter);
+      }
+    }
+
+    public void updateFilterFromProperties() {
+      setFilter(getFilterFromProperties());
     }
 
     @Override

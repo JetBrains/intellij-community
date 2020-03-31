@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.replaceInProject;
 
@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -222,10 +221,10 @@ public class ReplaceInProjectManager {
         @Override
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
-            TransactionGuard.submitTransaction(myProject, () -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
               replaceUsagesUnderCommand(context[0], usageView.getUsages());
               context[0].invalidateExcludedSetCache();
-            });
+            }, myProject.getDisposed());
           }
         }
       });
@@ -238,7 +237,7 @@ public class ReplaceInProjectManager {
                          StringUtil.escapeXmlEntities(stringToReplace)))
                                                .yesText(FindBundle.message("find.replace.command"))
                                                .project(myProject)
-                                               .noText(Messages.CANCEL_BUTTON).show();
+                                               .noText(Messages.getCancelButton()).show();
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
@@ -523,7 +522,7 @@ public class ReplaceInProjectManager {
     }
 
     final List<Usage> usages = new ArrayList<>(usagesSet);
-    Collections.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
+    usages.sort(UsageViewImpl.USAGE_COMPARATOR);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
 
@@ -571,7 +570,7 @@ public class ReplaceInProjectManager {
       return true;
     }
     if (!success) {
-      NOTIFICATION_GROUP.createNotification("One or more malformed replacement strings", MessageType.ERROR).notify(myProject);
+      NOTIFICATION_GROUP.createNotification(FindBundle.message("notification.content.one.or.more.malformed.replacement.strings"), MessageType.ERROR).notify(myProject);
     }
     return false;
   }

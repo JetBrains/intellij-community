@@ -3,22 +3,27 @@ import {Component, Vue, Watch} from "vue-property-decorator"
 import {AppState, mainModuleName} from "@/state/StateStorageManager"
 import {DataManager} from "@/state/DataManager"
 import {ChartManager} from "@/charts/ChartManager"
+import {Notification} from "element-ui"
 
 // @ts-ignore
 @Component
 export abstract class BaseChartComponent<T extends ChartManager> extends Vue {
-  protected chartManager: T | null = null
+  protected chartManager!: T | null
 
   /** @final */
   get measurementData(): DataManager | null {
     return (this.$store.state[mainModuleName] as AppState).data
   }
 
+  created() {
+    this.chartManager = null
+  }
+
   mounted() {
     this.renderDataIfAvailable()
   }
 
-  protected abstract createChartManager(): T
+  protected abstract createChartManager(): Promise<T>
 
   @Watch("measurementData")
   /** @final */
@@ -31,10 +36,19 @@ export abstract class BaseChartComponent<T extends ChartManager> extends Vue {
 
     let chartManager = this.chartManager
     if (chartManager == null) {
-      chartManager = this.createChartManager()
-      this.chartManager = chartManager
+      this.createChartManager()
+        .then(chartManager => {
+          this.chartManager = chartManager
+          chartManager.render(data)
+        })
+        .catch(e => {
+          console.log(e)
+          Notification.error(e)
+        })
     }
-    chartManager.render(data)
+    else {
+      chartManager.render(data)
+    }
   }
 
   beforeDestroy() {

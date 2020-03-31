@@ -88,6 +88,11 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
   }
 
   @Override
+  public void addVisibleAreaListener(@NotNull VisibleAreaListener listener, @NotNull Disposable parent) {
+
+  }
+
+  @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
   }
 

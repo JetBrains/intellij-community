@@ -56,9 +56,7 @@ public class TestLoggerFactory implements Logger.Factory {
   public static boolean reconfigure() {
     try {
       File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
-      if (!logXmlFile.exists()) {
-        logXmlFile = new File(PathManager.getBinPath(), "log.xml");
-      }
+
       if (!logXmlFile.exists()) {
         return false;
       }
@@ -137,7 +135,7 @@ public class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static void enableDebugLogging(@NotNull Disposable parentDisposable, @NotNull String... categories) {
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
     for (String category : categories) {
       final Logger logger = Logger.getInstance(category);
       logger.setLevel(Level.DEBUG);

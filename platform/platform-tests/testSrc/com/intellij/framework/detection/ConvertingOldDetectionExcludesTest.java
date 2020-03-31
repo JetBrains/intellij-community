@@ -8,15 +8,12 @@ import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionBy
 import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInfo;
 import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
-public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
+public class ConvertingOldDetectionExcludesTest extends HeavyPlatformTestCase {
   public static final String FRAMEWORK_ID = "my-framework";
 
   public void testUseOldConfiguration() {

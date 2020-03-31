@@ -17,12 +17,9 @@ package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.TestModuleProperties;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 
-/**
- * @author nik
- */
-public class ModuleTestPropertiesTest extends ModuleTestCase {
+public class ModuleTestPropertiesTest extends JavaModuleTestCase {
   public void testSetAndGet() {
     Module tests = createModule("tests");
     TestModuleProperties moduleProperties = TestModuleProperties.getInstance(tests);

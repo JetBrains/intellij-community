@@ -84,15 +84,17 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
       if (extension == null) continue;
 
-      String outputUrl = extension.getCompilerOutputUrl();
-      if (!StringUtil.isEmpty(outputUrl)) {
-        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
+      if (!extension.isCompilerOutputPathInherited()) {
+        String outputUrl = extension.getCompilerOutputUrl();
+        if (!StringUtil.isEmpty(outputUrl)) {
+          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
+        }
+        String testOutputUrl = extension.getCompilerOutputUrlForTests();
+        if (!StringUtil.isEmpty(testOutputUrl)) {
+          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
+        }
       }
-
-      String testOutputUrl = extension.getCompilerOutputUrlForTests();
-      if (!StringUtil.isEmpty(testOutputUrl)) {
-        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
-      }
+      // otherwise the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
     }
 
     CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);

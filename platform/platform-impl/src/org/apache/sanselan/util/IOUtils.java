@@ -20,11 +20,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 
 /**
- * For plugin compatibility only, DO NOT USE.
  * todo check external usages & DELETE ASAP.
  * <p>
  * Required due to sanselan-0.98 -> commons-imaging migration.
  * e791557ca1489b02d178aa68960d645ab501e674
+ *
+ * @deprecated For plugin compatibility only, DO NOT USE.
  */
 @Deprecated
 public class IOUtils {

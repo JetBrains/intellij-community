@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.options.ModuleOptionsTableModel;
 import com.intellij.compiler.options.ModuleTableCellRenderer;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +32,15 @@ public class CompilerModuleOptionsComponent extends JPanel {
     myProject = project;
 
     myTable = new JBTable(new ModuleOptionsTableModel());
-    myTable.setRowHeight(JBUI.scale(22));
-    myTable.getEmptyText().setText("Additional compilation options will be the same for all modules");
+    myTable.setRowHeight(JBUIScale.scale(22));
+    myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.additional.compilation.options"));
 
     TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);
-    moduleColumn.setHeaderValue("Module");
+    moduleColumn.setHeaderValue(JavaCompilerBundle.message("settings.override.module.column"));
     moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
     TableColumn optionsColumn = myTable.getColumnModel().getColumn(1);
-    String columnTitle = "Compilation options";
+    String columnTitle = JavaCompilerBundle.message("settings.override.compilation.options.column");
     optionsColumn.setHeaderValue(columnTitle);
     int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
     optionsColumn.setPreferredWidth(width);
@@ -55,7 +57,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
       .setRemoveAction(b -> removeSelectedModules())
       .createPanel();
     table.setPreferredSize(new Dimension(myTable.getWidth(), 150));
-    JLabel header = new JLabel("Override compiler parameters per-module:");
+    JLabel header = new JLabel(JavaCompilerBundle.message("settings.override.compiler.parameters.per.module"));
 
     add(header, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(5, 5, 0, 0), 0, 0));
     add(table, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insets(5, 5, 0, 0), 0, 0));

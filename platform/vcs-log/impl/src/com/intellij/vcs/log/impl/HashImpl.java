@@ -32,8 +32,7 @@ public class HashImpl implements Hash {
 
   private static final int BASE = 16;
 
-  @NotNull
-  private final byte[] myData;
+  private final byte @NotNull [] myData;
   private final int myHashCode;
 
   @NotNull
@@ -57,8 +56,7 @@ public class HashImpl implements Hash {
     out.write(myData);
   }
 
-  @NotNull
-  private static byte[] buildData(@NotNull String inputStr) {
+  private static byte @NotNull [] buildData(@NotNull String inputStr) {
     // if length == 5, need 3 byte + 1 signal byte
     int length = inputStr.length();
     byte even = (byte)(length % 2);
@@ -83,7 +81,7 @@ public class HashImpl implements Hash {
     return k;
   }
 
-  private HashImpl(@NotNull byte[] hash) {
+  private HashImpl(byte @NotNull [] hash) {
     myData = hash;
     myHashCode = Arrays.hashCode(hash);
   }

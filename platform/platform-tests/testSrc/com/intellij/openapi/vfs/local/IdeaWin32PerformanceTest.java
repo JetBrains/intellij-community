@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.junit.Before;
@@ -25,16 +12,17 @@ import org.junit.Test;
 import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class IdeaWin32PerformanceTest {
+  private static final Logger LOG = Logger.getInstance(IdeaWin32PerformanceTest.class);
   private IdeaWin32 myDriver;
   private long myJavaTotal, myIdeaTotal;
 
   @Before
   public void setUp() {
-    assumeTrue("windows only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     myDriver = IdeaWin32.getInstance();
     myIdeaTotal = myJavaTotal = 0;
   }
@@ -52,12 +40,12 @@ public class IdeaWin32PerformanceTest {
       long loss = (myIdeaTotal - myJavaTotal) * 100 / myJavaTotal;
       String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms loss=" + loss + "%";
       assertThat(loss).describedAs(message).isLessThan(10);
-      System.out.println(message);
+      LOG.debug(message);
     }
     else {
       long gain = (myJavaTotal - myIdeaTotal) * 100 / myJavaTotal;
       String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms gain=" + gain + "%";
-      System.out.println(message);
+      LOG.debug(message);
     }
   }
 

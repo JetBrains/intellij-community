@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
+  private static final Logger LOG = Logger.getInstance(LocalVariableEvaluator.class);
 
   private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
@@ -61,7 +61,7 @@ class LocalVariableEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.stackframe"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.stackframe"));
     }
 
     try {
@@ -127,7 +127,8 @@ class LocalVariableEvaluator implements Evaluator {
 
         break;
       }
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.local.variable.missing", myLocalVariableName));
+      throw EvaluateExceptionUtil.createEvaluateException(
+        JavaDebuggerBundle.message("evaluation.error.local.variable.missing", myLocalVariableName));
     }
     catch (EvaluateException e) {
       myEvaluatedVariable = null;
@@ -160,7 +161,7 @@ class LocalVariableEvaluator implements Evaluator {
               frameProxy.setValue(myEvaluatedVariable, value);
             }
             else { // no debug info
-              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable, value);
             }
           }
           catch (EvaluateException e) {

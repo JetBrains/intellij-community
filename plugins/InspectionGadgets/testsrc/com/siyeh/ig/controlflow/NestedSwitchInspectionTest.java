@@ -3,12 +3,11 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NestedSwitchInspectionTest extends LightInspectionTestCase {
+public class NestedSwitchInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNestedSwitch() {
     doTest();
@@ -17,7 +16,7 @@ public class NestedSwitchInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_12;
+    return JAVA_13;
   }
 
   @Nullable

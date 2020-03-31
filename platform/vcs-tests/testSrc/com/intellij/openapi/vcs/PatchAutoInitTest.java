@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.patch.MatchPatchPaths;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +38,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@PlatformTestCase.WrapInCommand
-public class PatchAutoInitTest extends PlatformTestCase {
+@HeavyPlatformTestCase.WrapInCommand
+public class PatchAutoInitTest extends HeavyPlatformTestCase {
   private static final String BINARY_FILENAME = "binary.png";
 
   @NotNull
@@ -313,8 +313,8 @@ public class PatchAutoInitTest extends PlatformTestCase {
         return;
       }
     }
-    assertTrue("Failed for (first base only shown) '" + bases.iterator().next().getPath() + " + " + path + " " + strip +
-               "'; results: " + printPatches(filePatchInProgresses), false);
+    fail("Failed for (first base only shown) '" + bases.iterator().next().getPath() + " + " + path + " " + strip +
+         "'; results: " + printPatches(filePatchInProgresses));
   }
 
   private static String printPatches(final List<AbstractFilePatchInProgress> filePatchInProgresses) {

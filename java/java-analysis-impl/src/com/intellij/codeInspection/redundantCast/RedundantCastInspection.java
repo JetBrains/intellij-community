@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -35,12 +21,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class RedundantCastInspection extends GenericsInspectionToolBase {
   private final LocalQuickFix myQuickFixAction;
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
   public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
@@ -51,8 +33,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());
@@ -81,7 +62,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox("Ignore casts in suspicious collections method calls", "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
     return optionsPanel;
   }
 
@@ -102,7 +83,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       }
     }
 
-    String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
+    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor",
                                                "<code>" + PsiExpressionTrimRenderer.render(operand) + "</code>", "<code>#ref</code> #loc");
     return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
@@ -112,7 +93,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
+      return JavaAnalysisBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
     @Override
@@ -127,14 +108,8 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.VERBOSE_GROUP_NAME;
+    return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override

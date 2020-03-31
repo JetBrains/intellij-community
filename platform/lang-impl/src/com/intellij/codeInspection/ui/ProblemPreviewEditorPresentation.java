@@ -36,8 +36,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProblemPreviewEditorPresentation {
@@ -80,8 +80,8 @@ public class ProblemPreviewEditorPresentation {
         PsiElement element = usage.getElement();
         Segment segment = usage.getSegment();
         assert element != null;
-        assert segment != null;
-        isUpdated |= makeVisible(foldingRegions, injectedLanguageManager.injectedToHost(element, TextRange.create(segment)), doc);
+        isUpdated |= makeVisible(foldingRegions, injectedLanguageManager.injectedToHost(element, segment != null ? TextRange.create(segment)
+                                                                                                                 : element.getTextRange()), doc);
       }
       if (isUpdated) {
         setupFoldings(editor, foldingRegions);
@@ -100,10 +100,13 @@ public class ProblemPreviewEditorPresentation {
         editorContainer.validate();
         UsagePreviewPanel.highlight(validUsages, editor, project, false, HighlighterLayer.SELECTION);
         if (validUsages.size() == 1) {
-          final PsiElement element = validUsages.get(0).getElement();
-          if (element != null) {
-            final TextRange range = injectedLanguageManager.injectedToHost(element, element.getTextRange());
-
+          UsageInfo usage = validUsages.get(0);
+          final PsiElement element = usage.getElement();
+          Segment range = usage.getNavigationRange();
+          if (element != null && range != null) {
+            if (injectedLanguageManager.getInjectionHost(element) != null) {
+              range = injectedLanguageManager.injectedToHost(element, new TextRange(range.getStartOffset(), range.getEndOffset()));
+            }
             final Document document = editor.getDocument();
             final int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,
                                         document.getLineEndOffset(document.getLineNumber(range.getEndOffset())));

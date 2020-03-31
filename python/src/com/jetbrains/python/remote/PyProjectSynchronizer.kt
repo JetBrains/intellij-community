@@ -85,6 +85,7 @@ interface PyProjectSynchronizer {
    */
   fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String?
 }
+
 /**
  * Plugin registers [PyProjectSynchronizer] for [CredentialsType]
  */
@@ -92,10 +93,27 @@ interface PyProjectSynchronizerProvider {
   fun getSynchronizer(credsType: CredentialsType<*>, sdk: Sdk): PyProjectSynchronizer?
 
   companion object {
-    private val EP: ExtensionPointName<PyProjectSynchronizerProvider> =
-      ExtensionPointName.create("com.jetbrains.python.remote.projectSynchronizerProvider")
+    val EP_NAME: ExtensionPointName<PyProjectSynchronizerProvider> = ExtensionPointName.create("Pythonid.projectSynchronizerProvider")
 
-    fun find(credsType: CredentialsType<*>, sdk: Sdk) = EP.extensions.mapNotNull { it.getSynchronizer(credsType, sdk) }.firstOrNull()
+    fun find(credsType: CredentialsType<*>, sdk: Sdk) = EP_NAME.extensions.mapNotNull { it.getSynchronizer(credsType, sdk) }.firstOrNull()
+
+    /**
+     * Returns [PyProjectSynchronizer] that is suitable for remote Python
+     * [sdk].
+     *
+     * Returns [PyUnknownProjectSynchronizer.INSTANCE] if [sdk] is remote but
+     * no [PyProjectSynchronizer] is registered for this type of Python SDK.
+     *
+     * Returns `null` if [sdk] is local or it is not Python SDK.
+     */
+    @JvmStatic
+    fun getSynchronizer(sdk: Sdk): PyProjectSynchronizer? {
+      val sdkAdditionalData = sdk.sdkAdditionalData
+      if (sdkAdditionalData is PyRemoteSdkAdditionalDataBase) {
+        return find(sdkAdditionalData.remoteConnectionType, sdk) ?: PyUnknownProjectSynchronizer.INSTANCE
+      }
+      return null
+    }
   }
 }
 

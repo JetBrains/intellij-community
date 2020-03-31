@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.projectView;
 
@@ -20,11 +20,6 @@ public class FormRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     if (forms == null || forms.length != 1) return;
@@ -34,7 +29,7 @@ public class FormRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
 }

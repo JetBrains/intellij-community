@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -28,7 +11,9 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +45,13 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static String getShortcutText(@NotNull @NonNls String actionId) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+    if (shortcut == null) return "<no shortcut>";
+    return getShortcutText(shortcut);
+  }
+
+  @NotNull
   public static String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
@@ -88,20 +80,6 @@ public class KeymapUtil {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
     }
     return s;
-  }
-
-  @NotNull
-  @Deprecated
-  public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
-    if (shortcut instanceof KeyboardShortcut) {
-      return AllIcons.General.KeyboardShortcut;
-    }
-    else if (shortcut instanceof MouseShortcut) {
-      return AllIcons.General.MouseShortcut;
-    }
-    else {
-      throw new IllegalArgumentException("unknown shortcut class: " + shortcut);
-    }
   }
 
   @NotNull
@@ -217,25 +195,40 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
-    Application application = ApplicationManager.getApplication();
-    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 
-  @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
-    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
-    return shortcut == null? "" : getShortcutText(shortcut);
+  /**
+   * @param actionId action to find the shortcut for
+   * @return first keyboard shortcut that activates given action in active keymap; null if not found 
+   */
+  @Nullable
+  public static Shortcut getPrimaryShortcut(@Nullable @NonNls String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null || actionId == null) return null;
+    return ArrayUtil.getFirstElement(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 
-  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
-    for (KeyboardShortcut shortcut : ContainerUtil.findAll(getActiveKeymapShortcuts(actionId).getShortcuts(), KeyboardShortcut.class)) {
-      if (AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == shortcut.getFirstKeyStroke()) return true;
+  @NotNull
+  public static String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        return getShortcutText(shortcut);
+      }
+    }
+    return "";
+  }
+
+  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull @NonNls String actionId) {
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {
+        return true;
+      }
     }
     return false;
   }
@@ -253,14 +246,14 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String getPreferredShortcutText(@NotNull Shortcut[] shortcuts) {
+  public static String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut != null ? getShortcutText(shortcut) :
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
   }
 
   @NotNull
-  public static String getShortcutsText(@NotNull Shortcut[] shortcuts) {
+  public static String getShortcutsText(Shortcut @NotNull [] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -389,7 +382,7 @@ public class KeymapUtil {
   public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
     if (ourTooltipKeysProperty == null) {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
-      ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
+      ourTooltipKeysProperty.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
@@ -460,7 +453,27 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+  public static Collection<KeyStroke> getKeyStrokes(@NotNull ShortcutSet shortcutSet) {
+    Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    if (shortcuts.length == 0) {
+      return Collections.emptySet();
+    }
+    Set<KeyStroke> result = new SmartHashSet<>();
+    for (Shortcut shortcut : shortcuts) {
+      if (!(shortcut instanceof KeyboardShortcut)) {
+        continue;
+      }
+      KeyboardShortcut kbShortcut = (KeyboardShortcut)shortcut;
+      if (kbShortcut.getSecondKeyStroke() != null) {
+        continue;
+      }
+      result.add(kbShortcut.getFirstKeyStroke());
+    }
+    return result.isEmpty() ? Collections.emptySet() : result;
+  }
+
+  @NotNull
+  public static String createTooltipText(@NotNull String name, @NotNull @NonNls String actionId) {
     String text = getFirstKeyboardShortcutText(actionId);
     return text.isEmpty() ? name : name + " (" + text + ")";
   }
@@ -483,7 +496,7 @@ public class KeymapUtil {
    */
   public static boolean matchActionMouseShortcutsModifiers(@NotNull Keymap activeKeymap,
                                                            @JdkConstants.InputEventMask int modifiers,
-                                                           @NotNull String actionId) {
+                                                           @NotNull @NonNls String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if (shortcut instanceof MouseShortcut) {
@@ -602,8 +615,11 @@ public class KeymapUtil {
    * and if so return string presentation for this shortcut
    * @param event called event
    * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
+   * @deprecated unused method that is not needed anymore
    */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
     if (event.getInputEvent() instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event.getInputEvent();

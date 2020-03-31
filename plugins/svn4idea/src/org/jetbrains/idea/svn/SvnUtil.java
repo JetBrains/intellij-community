@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -75,14 +75,14 @@ public class SvnUtil {
 
   public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
     () -> SystemInfo.isWindows
-          ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
+          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
           : Paths.get(getUserHome(), ".subversion"));
   public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
     () -> SystemInfo.isWindows
-          ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
+          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
+  private static final Logger LOG = Logger.getInstance(SvnUtil.class);
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
@@ -161,17 +161,14 @@ public class SvnUtil {
   }
 
   private static void checkCanceled(@Nullable ProgressIndicator progress) {
-    if (progress != null && progress.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
+    ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
   }
 
-  @NotNull
-  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+  public static File @NotNull [] toIoFiles(VirtualFile @NotNull [] files) {
     return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
-  public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
+  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File @NotNull [] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
     // TODO[yole]: check for shift pressed
@@ -229,7 +226,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
-      String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
+      String[] failedFiles = ArrayUtilRt.toStringArray(failedLocks);
       List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
@@ -292,7 +289,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
-      String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
+      String[] failedFiles = ArrayUtilRt.toStringArray(failedUnlocks);
       List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {
@@ -617,7 +614,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static String join(@NotNull final String... parts) {
+  public static String join(final String @NotNull ... parts) {
     return StringUtil.join(parts, "/");
   }
 

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -28,6 +13,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +25,15 @@ import java.util.*;
 
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
-import static com.jetbrains.python.formatter.PythonFormattingModelBuilder.STATEMENT_OR_DECLARATION;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
  */
 public class PyBlock implements ASTBlock {
+  private static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
+
+
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -84,7 +74,6 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.CALL_EXPRESSION,
                                                                          PyElementTypes.FROM_IMPORT_STATEMENT);
 
-  public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
   private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 
   private final PyBlock myParent;
@@ -446,7 +435,7 @@ public class PyBlock implements ASTBlock {
     if (TreeUtil.findParent(child, PyElementTypes.FSTRING_FRAGMENT) != null) {
       childWrap = Wrap.createWrap(WrapType.NONE, false);
     }
-    
+
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
@@ -829,6 +818,10 @@ public class PyBlock implements ASTBlock {
       final IElementType childType2 = psi2.getNode().getElementType();
       child2 = getSubBlockByNode(node2);
 
+      if (isInsideFStringFragmentWithEqualsSign(myNode)) {
+        return Spacing.getReadOnlySpacing();
+      }
+
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
         if (namedParameter != null && namedParameter.getAnnotation() != null) {
@@ -838,10 +831,10 @@ public class PyBlock implements ASTBlock {
 
       if (psi1 instanceof PyImportStatementBase) {
         if (psi2 instanceof PyImportStatementBase) {
-          final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(IMPORT_GROUP_BEGIN);
-          final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(IMPORT_GROUP_BEGIN);
+          final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
+          final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
           // Cleanup user data, it's no longer needed
-          psi1.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
+          psi1.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, null);
           // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise:
           // it might be needed on the next iteration.
           //psi2.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
@@ -868,6 +861,11 @@ public class PyBlock implements ASTBlock {
             return getBlankLinesForOption(pySettings.BLANK_LINES_AFTER_LOCAL_IMPORTS);
           }
         }
+      }
+
+      if (psi2 instanceof PyImportStatementBase && AddImportHelper.isAssignmentToModuleLevelDunderName(psi1)) {
+        // blank line between module-level dunder name and import statement
+        return Spacing.createSpacing(0, 0, 2, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
 
       if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
@@ -1170,5 +1168,17 @@ public class PyBlock implements ASTBlock {
   @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
+  }
+
+  private static final TokenSet stopAtTokens = TokenSet.orSet(TokenSet.create(PyElementTypes.FSTRING_NODE),
+                                                              PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens());
+
+  private static boolean isInsideFStringFragmentWithEqualsSign(@NotNull ASTNode node) {
+    final ASTNode fStringFragmentParent = node.getElementType() == PyElementTypes.FSTRING_FRAGMENT
+                                    ? node
+                                    : TreeUtil.findParent(node, TokenSet.create(PyElementTypes.FSTRING_FRAGMENT),
+                                                          stopAtTokens);
+    if (fStringFragmentParent == null) return false;
+    return fStringFragmentParent.findChildByType(PyTokenTypes.EQ) != null;
   }
 }

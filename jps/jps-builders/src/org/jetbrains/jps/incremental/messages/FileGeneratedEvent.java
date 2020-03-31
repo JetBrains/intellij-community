@@ -29,7 +29,7 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  */
 public class FileGeneratedEvent extends BuildMessage {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.messages.FileGeneratedEvent");
+  private static final Logger LOG = Logger.getInstance(FileGeneratedEvent.class);
 
   private final Collection<Pair<String, String>> myPaths = new ArrayList<>();
   private final BuildTarget<?> mySourceTarget;
@@ -53,6 +53,11 @@ public class FileGeneratedEvent extends BuildMessage {
     }
   }
 
+  /**
+   * Returns pairs of ({@code outputRoot}, {@code relativePath}) where {@code outputRoot} is an absolute path to the output root directory
+   * (one of {@link BuildTarget#getOutputRoots}) and {@code relativePath} is a relative path from the output root to the file created or
+   * modified by the build process.
+   */
   @NotNull
   public Collection<Pair<String, String>> getPaths() {
     return Collections.unmodifiableCollection(myPaths);

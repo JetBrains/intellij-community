@@ -28,12 +28,6 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("reflection.for.unavailable.annotation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("reflection.for.unavailable.annotation.problem.descriptor");
   }

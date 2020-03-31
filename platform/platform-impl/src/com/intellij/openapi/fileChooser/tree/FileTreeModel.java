@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -34,9 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.io.File;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.nio.file.FileSystems;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
@@ -47,11 +40,8 @@ import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FileTreeModel extends AbstractTreeModel implements Identifiable, InvokerSupplier {
-  private final Invoker invoker = new Invoker.BackgroundThread(this);
+  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;
   private volatile List<Root> roots;
 
@@ -65,13 +55,13 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        invoker.runOrInvokeLater(() -> process(events));
+        invoker.invoke(() -> process(events));
       }
     });
   }
 
   public void invalidate() {
-    invoker.runOrInvokeLater(() -> {
+    invoker.invoke(() -> {
       if (roots != null) {
         for (Root root : roots) {
           root.tree.invalidate();
@@ -140,7 +130,8 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
 
   @Override
   public final boolean isLeaf(Object object) {
-    if (object != state && object instanceof Node) {
+    if (object instanceof Node) {
+      assert object != state;
       Entry<Node> entry = getEntry((Node)object, false);
       if (entry != null) return entry.isLeaf();
     }
@@ -160,10 +151,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       if (entry != null) return entry.getIndexOf((Node)child);
     }
     return -1;
-  }
-
-  @Override
-  public void valueForPathChanged(TreePath path, Object newValue) {
   }
 
   private boolean hasEntry(VirtualFile file) {
@@ -325,12 +312,8 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     }
 
     private static List<VirtualFile> getSystemRoots() {
-      File[] roots = File.listRoots();
-      return roots == null || roots.length == 0
-             ? emptyList()
-             : Arrays
-               .stream(roots)
-               .map(root -> findFile(root.getAbsolutePath()))
+      return StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false)
+               .map(root -> findFile(root.toAbsolutePath().toString()))
                .filter(State::isValid)
                .collect(toList());
     }

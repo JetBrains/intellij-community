@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +78,7 @@ public class VcsFreezingProcess {
 
   private void freeze() {
     BackgroundTaskUtil.syncPublisher(myProject, Listener.TOPIC).onFreeze();
-    myChangeListManager.freeze("Local changes are not available until " + myOperationTitle + " is finished.");
+    myChangeListManager.freeze(VcsBundle.message("local.changes.freeze.message", myOperationTitle));
   }
 
   private void unfreeze() {

@@ -24,12 +24,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
+public class JavaIntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testIntroduceBasedOnLiterals() throws Exception {
     doTest("getA(\"simple\")", "simple");
     doTest("getA(\"SimpleName\")", "simpleName", "name");
@@ -44,7 +44,7 @@ public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
     doTest("get(getB().getA(\"SimpleName\").getC())", "simpleName", "name");
   }
 
-  protected static void doTest(String expression, VariableKind kind, PsiType type, String...results) throws Exception {
+  protected void doTest(String expression, VariableKind kind, PsiType type, String... results) throws Exception {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     final PsiExpression expr = factory.createExpressionFromText(expression, null);
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
@@ -61,11 +61,11 @@ public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
     return s + ". Expected at first positions: [" + StringUtil.join(results, ",") + "] Found: [" + StringUtil.join(names, ",") + "]";
   }
 
-  protected static void doTest(String expression, String...results) throws Exception {
+  protected void doTest(String expression, String... results) throws Exception {
     doTest(expression, VariableKind.LOCAL_VARIABLE, results);
   }
 
-  protected static void doTest(String expression, VariableKind kind, String...results) throws Exception {
+  protected void doTest(String expression, VariableKind kind, String... results) throws Exception {
     doTest(expression, kind, PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject())), results);
   }
 }

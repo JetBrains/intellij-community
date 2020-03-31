@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +31,11 @@ public interface ProjectTemplate {
   ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
 
   @NotNull
+  @NlsUI.ListItem
   String getName();
 
   @Nullable
+  @NlsUI.Text
   String getDescription();
 
   Icon getIcon();
@@ -42,6 +45,7 @@ public interface ProjectTemplate {
 
   /**
    * @return null if ok, error message otherwise
+   * @deprecated unused API
    */
   @Deprecated
   @Nullable

@@ -31,4 +31,10 @@ public class AssignmentTooltipLinkHandler extends TooltipLinkHandler {
   public String getDescription(@NotNull String refSuffix, @NotNull Editor editor) {
     return StringUtil.unescapeXmlEntities(refSuffix);
   }
+
+  @NotNull
+  @Override
+  public String getDescriptionTitle(@NotNull String refSuffix, @NotNull Editor editor) {
+    return "Full description";
+  }
 }

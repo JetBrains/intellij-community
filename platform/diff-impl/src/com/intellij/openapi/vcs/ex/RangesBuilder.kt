@@ -29,6 +29,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
 import java.util.*
+import kotlin.math.max
 
 fun createRanges(current: List<String>,
                  vcs: List<String>,
@@ -63,9 +64,16 @@ fun compareLines(text1: CharSequence,
                  text2: CharSequence,
                  lineOffsets1: LineOffsets,
                  lineOffsets2: LineOffsets): FairDiffIterable {
-  val lines1 = DiffUtil.getLines(text1, lineOffsets1)
-  val lines2 = DiffUtil.getLines(text2, lineOffsets2)
-  return compareLines(lines1, lines2)
+  val range = expand(text1, text2, 0, 0, text1.length, text2.length)
+  if (range.isEmpty) return fair(DiffIterableUtil.create(emptyList(), lineOffsets1.lineCount, lineOffsets2.lineCount));
+
+  val contextLines = 5
+  val start = max(lineOffsets1.getLineNumber(range.start1) - contextLines, 0)
+  val tail = max(lineOffsets1.lineCount - lineOffsets1.getLineNumber(range.end1) - 1 - contextLines, 0)
+  val lineRange = Range(start, lineOffsets1.lineCount - tail, start, lineOffsets2.lineCount - tail)
+
+  val iterable = compareLines(lineRange, text1, text2, lineOffsets1, lineOffsets2)
+  return fair(DiffIterableUtil.expandedIterable(iterable, start, start, lineOffsets1.lineCount, lineOffsets2.lineCount))
 }
 
 fun compareLines(lineRange: Range,

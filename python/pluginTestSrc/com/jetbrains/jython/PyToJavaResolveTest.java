@@ -18,8 +18,8 @@ package com.jetbrains.jython;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -32,7 +32,7 @@ import java.util.List;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/../testData/resolve/pyToJava/")
-public class PyToJavaResolveTest extends ResolveTestCase {
+public class PyToJavaResolveTest extends JavaResolveTestCase {
   private PsiElement resolve() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
     return ref.resolve();

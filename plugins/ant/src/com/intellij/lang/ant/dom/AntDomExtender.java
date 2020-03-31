@@ -43,7 +43,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomExtender");
+  private static final Logger LOG = Logger.getInstance(AntDomExtender.class);
 
   private static final Key<Class> ELEMENT_IMPL_CLASS_KEY = Key.create("_element_impl_class_");
   private static final Key<Boolean> IS_TASK_CONTAINER = Key.create("_task_container_");

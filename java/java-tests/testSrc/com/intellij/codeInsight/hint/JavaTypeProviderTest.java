@@ -8,11 +8,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("HtmlDeprecatedAttribute")
-public class JavaTypeProviderTest extends LightCodeInsightTestCase {
+public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   public void testRangeHint() {
     doTest("  void test(int x) {\n" +
            "    x = Math.abs(x);\n" +
@@ -113,8 +113,6 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Value (one of):</td><td>\"bar\", \"foo\"</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>3</td></tr>" +
            "</table>");
   }
   
@@ -144,7 +142,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "</table>");
   }
 
-  private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
+  private void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
                              @Language("HTML") String expectedHint,
                              @Language("HTML") String expectedAdvancedHint) {
     EditorInfo info = new EditorInfo("class X{" + method + "}");

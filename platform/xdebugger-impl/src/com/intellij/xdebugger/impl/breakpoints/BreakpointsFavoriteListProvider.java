@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.icons.AllIcons;
@@ -98,12 +98,12 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
   }
 
-  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<? super AbstractTreeNode<Object>> destinationChildren) {
-    final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
+  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode<?> destination, List<? super AbstractTreeNode<Object>> destinationChildren) {
+    List<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
     AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
       @NotNull
       @Override
-      public Collection<? extends AbstractTreeNode> getChildren() {
+      public Collection<? extends AbstractTreeNode<?>> getChildren() {
         return copyChildren;
       }
 

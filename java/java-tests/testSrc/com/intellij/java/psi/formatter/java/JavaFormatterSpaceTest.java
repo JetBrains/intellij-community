@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
@@ -743,16 +743,45 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   public void testBreakStatementSpacing() {
     getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
     doMethodTest("String s = switch (i) {\n" +
-                 "    case 0: break(foo) ;\n" +
-                 "    case 1: break\n        42 ;\n" +
+                 "    case 1: break\n        label ;\n" +
                  "    case 3: break  label ;\n" +
                  "    case 4: break  ;\n" +
                  "}",
                  "String s = switch (i) {\n" +
-                 "    case 0: break (foo);\n" +
-                 "    case 1: break 42;\n" +
+                 "    case 1: break label;\n" +
                  "    case 3: break label;\n" +
                  "    case 4: break;\n" +
+                 "}");
+  }
+
+  public void testYieldStatementSpacing() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest("String s = switch (i) {\n" +
+                 "    case 0: yield(foo) ;\n" +
+                 "    case 1: yield\n        42 ;\n" +
+                 "    case 3: yield  label ;\n" +
+                 "    case 4: yield  ;\n" +
+                 "}",
+                 "String s = switch (i) {\n" +
+                 "    case 0: yield (foo);\n" +
+                 "    case 1: yield 42;\n" +
+                 "    case 3: yield label;\n" +
+                 "    case 4: yield ;\n" +
+                 "}");
+  }
+
+  public void testSpaceAfterCommaInRecordHeader() {
+    getSettings().SPACE_AFTER_COMMA = true;
+    doMethodTest("record R(String s,int i){}",
+                 "record R(String s, int i) {\n" +
+                 "}");
+  }
+
+  public void testSpaceBeforeCommaInRecordHeader() {
+    getSettings().SPACE_AFTER_COMMA = false;
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doMethodTest("record R(String s,int i){}",
+                 "record R(String s ,int i) {\n" +
                  "}");
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,28 +29,20 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class UnnecessaryInterfaceModifierInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   private static final Set<String> INTERFACE_REDUNDANT_MODIFIERS =
-    new HashSet<>(Arrays.asList(PsiModifier.ABSTRACT, PsiModifier.STATIC));
+    ContainerUtil.set(PsiModifier.ABSTRACT, PsiModifier.STATIC);
   private static final Set<String> INNER_CLASS_REDUNDANT_MODIFIERS =
-    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC));
+    ContainerUtil.set(PsiModifier.PUBLIC, PsiModifier.STATIC);
   private static final Set<String> INNER_INTERFACE_REDUNDANT_MODIFIERS =
-    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.STATIC));
+    ContainerUtil.set(PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.STATIC);
   private static final Set<String> FIELD_REDUNDANT_MODIFIERS =
-    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL));
+    ContainerUtil.set(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL);
   private static final Set<String> METHOD_REDUNDANT_MODIFIERS =
-    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT));
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.interface.modifier.display.name");
-  }
+    ContainerUtil.set(PsiModifier.PUBLIC, PsiModifier.ABSTRACT);
 
   @Override
   public boolean isEnabledByDefault() {
@@ -111,7 +104,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove unnecessary modifiers";
+      return InspectionGadgetsBundle.message("unnecessary.interface.modifiers.fix.family.name");
     }
 
     @Override

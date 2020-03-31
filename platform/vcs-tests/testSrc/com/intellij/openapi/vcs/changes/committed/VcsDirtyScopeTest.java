@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,13 +7,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeModifier;
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.vcs.FileBasedTest;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.junit.After;
@@ -23,7 +21,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author irengrig
@@ -41,6 +42,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myVcsManager.registerVcs(myVcs);
     myVcsManager.setDirectoryMapping(myProjectFixture.getProject().getBasePath(), myVcs.getName());
+    myVcsManager.waitForInitialized();
   }
 
   @Override
@@ -80,52 +82,28 @@ public class VcsDirtyScopeTest extends FileBasedTest {
   }
 
   @Test
-  public void testAddRemove() throws Exception {
-    final Data data = createData();
-
-    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject), myProject);
-    scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir1));
-    scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir3));
-    scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir4));
-    for (VirtualFile file : data.files) {
-      scope.addDirtyFile(VcsUtil.getFilePath(file));
-    }
-
-    final Set<VirtualFile> set = new HashSet<>();
-    set.add(data.dir1);
-    set.add(data.dir3);
-    set.add(data.dir4);
-    set.add(data.files.get(1));
-    set.add(data.files.get(5));
-
-    final HashSet<VirtualFile> removed = new HashSet<>(set);
-    removeMarked(set, scope, virtualFile -> removed.remove(virtualFile));
-
-    Assert.assertTrue(scope.isEmpty());
-    Assert.assertTrue(removed.isEmpty());
-  }
-
-  @Test
   public void testRecursivelyDirtyDirectoriesUnderNonRecursively() throws Exception {
     final Data data = createData();
 
-    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject), myProject);
+    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject));
 
-    scope.addDirtyData(Arrays.asList(VcsUtil.getFilePath(data.dir1), VcsUtil.getFilePath(data.dir2)),
-                       Collections.singletonList(VcsUtil.getFilePath(data.baseDir)));
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.dir1), true);
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.dir2), true);
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.baseDir), false);
+    scope.pack();
     final Set<FilePath> dirtyDirs = scope.getRecursivelyDirtyDirectories();
     final Set<FilePath> dirtyFiles = scope.getDirtyFilesNoExpand();
 
     Assert.assertNotNull(dirtyDirs);
     Assert.assertNotNull(dirtyFiles);
-    Assert.assertTrue(dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
+    Assert.assertTrue(dirtyFiles.toString(), dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
   }
 
   private Data createData() throws IOException {
     final Data data = new Data();
-    data.baseDir = myProjectFixture.getProject().getBaseDir();
+    data.baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProjectFixture.getProject());
     final IOException[] exc = new IOException[1];
     final File ioFile = new File(data.baseDir.getPath());
     final File[] files = ioFile.listFiles();
@@ -172,31 +150,5 @@ public class VcsDirtyScopeTest extends FileBasedTest {
       throw exc[0];
     }
     return data;
-  }
-
-
-  private static void removeMarked(final Set<VirtualFile> ignored,
-                                   final VcsModifiableDirtyScope scope,
-                                   final Consumer<VirtualFile> listener) {
-    final VcsDirtyScopeModifier modifier = scope.getModifier();
-    if (modifier != null) {
-      final Iterator<FilePath> filesIterator = modifier.getDirtyFilesIterator();
-      while (filesIterator.hasNext()) {
-        final FilePath dirtyFile = filesIterator.next();
-        if ((dirtyFile.getVirtualFile() != null) && ignored.contains(dirtyFile.getVirtualFile())) {
-          filesIterator.remove();
-          listener.consume(dirtyFile.getVirtualFile());
-        }
-      }
-      final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator();
-      while (dirIterator.hasNext()) {
-        final FilePath dir = dirIterator.next();
-        if ((dir.getVirtualFile() != null) && ignored.contains(dir.getVirtualFile())) {
-          dirIterator.remove();
-          listener.consume(dir.getVirtualFile());
-        }
-      }
-      modifier.recheckDirtyKeys();
-    }
   }
 }

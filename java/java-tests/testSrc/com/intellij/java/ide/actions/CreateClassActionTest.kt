@@ -18,9 +18,9 @@ package com.intellij.java.ide.actions
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class CreateClassActionTest: LightCodeInsightFixtureTestCase() {
+class CreateClassActionTest: LightJavaCodeInsightFixtureTestCase() {
 
   fun testLiveTemplate() {
     val dir = myFixture.tempDirFixture.findOrCreateDir("foo")

@@ -192,6 +192,33 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
     ));
   }
 
+  public void testReset() {
+    check(true, ContainerUtil.newArrayList(
+      new ColoredText("Hello \u001B[33m Colored \u001B[0m Normal", ProcessOutputTypes.STDOUT)
+        .addExpected("Hello ", STDOUT_KEY)
+        .addExpected(" Colored ", "38;5;3m")
+        .addExpected(" Normal", STDOUT_KEY)
+    ));
+    check(true, ContainerUtil.newArrayList(
+      new ColoredText("Hello \u001B[33;41m Colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+        .addExpected("Hello ", STDOUT_KEY)
+        .addExpected(" Colored ", "48;5;1;38;5;3m")
+        .addExpected(" Normal", STDOUT_KEY)
+    ));
+    check(true, ContainerUtil.newArrayList(
+      new ColoredText("Hello \u001B[33;41;m Not colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+        .addExpected("Hello ", STDOUT_KEY)
+        .addExpected(" Not colored ", STDOUT_KEY)
+        .addExpected(" Normal", STDOUT_KEY)
+    ));
+    check(true, ContainerUtil.newArrayList(
+      new ColoredText("Hello \u001B[33;41m Colored \u001B[;m Normal", ProcessOutputTypes.STDOUT)
+        .addExpected("Hello ", STDOUT_KEY)
+        .addExpected(" Colored ", "48;5;1;38;5;3m")
+        .addExpected(" Normal", STDOUT_KEY)
+    ));
+  }
+
   private static void check(@NotNull ColoredText text) {
     check(true, Collections.singletonList(text));
   }

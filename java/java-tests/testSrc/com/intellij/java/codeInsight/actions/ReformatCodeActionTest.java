@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author Lepenkin Y.A.
  */
-public class ReformatCodeActionTest extends PsiTestCase {
+public class ReformatCodeActionTest extends JavaPsiTestCase {
   private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
   private static final String[] IMPORTS_LIST = new String[]{"import java.util.List;", "import java.util.Set;", "import java.util.Map"};
   private static final String TEST_SOURCE = "%s" +
@@ -141,7 +141,7 @@ public class ReformatCodeActionTest extends PsiTestCase {
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, @NotNull String[] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, String @NotNull [] fileNames) throws IOException {
     String[] fileText = createTestJavaClassesWithAdditionalImports(fileNames);
     List<PsiFile> files = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
@@ -152,7 +152,7 @@ public class ReformatCodeActionTest extends PsiTestCase {
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, @NotNull String[] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, String @NotNull [] fileNames) throws IOException {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
@@ -166,7 +166,7 @@ public class ReformatCodeActionTest extends PsiTestCase {
     action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
   }
 
-  protected void checkFormationAndImportsOptimizationFor(@NotNull List<PsiFile>... fileCollection) {
+  protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {
     for (List<PsiFile> files : fileCollection) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -175,7 +175,7 @@ public class ReformatCodeActionTest extends PsiTestCase {
     }
   }
 
-  protected void checkNoProcessingWasPerformedOn(@NotNull List<PsiFile>... fileCollections) {
+  protected void checkNoProcessingWasPerformedOn(List<PsiFile> @NotNull ... fileCollections) {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
@@ -213,8 +213,7 @@ public class ReformatCodeActionTest extends PsiTestCase {
     return file.getName().split("\\.")[0];
   }
 
-  @NotNull
-  protected String[] createTestJavaClassesWithAdditionalImports(String[] classNames) {
+  protected String @NotNull [] createTestJavaClassesWithAdditionalImports(String[] classNames) {
     String[] classes = new String[classNames.length];
     for (int i = 0; i < classNames.length; i++) {
       classes[i] = getUntouchedJavaSourceForTotalProcessing(classNames[i]);

@@ -26,6 +26,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Set;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
@@ -34,25 +35,25 @@ public interface MavenServerIndexer extends Remote {
                   @NotNull String repositoryId,
                   @Nullable File file,
                   @Nullable String url,
-                  @NotNull File indexDir) throws RemoteException, MavenServerIndexerException;
+                  @NotNull File indexDir, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  void releaseIndex(int id) throws RemoteException, MavenServerIndexerException;
+  void releaseIndex(int id, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  int getIndexCount() throws RemoteException;
+  int getIndexCount(MavenToken token) throws RemoteException;
 
-  void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator) throws RemoteException,
+  void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator, MavenToken token) throws RemoteException,
                                                                                                         MavenServerIndexerException,
                                                                                                         MavenServerProcessCanceledException;
 
-  void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws RemoteException, MavenServerIndexerException;
+  void processArtifacts(int indexId, MavenServerIndicesProcessor processor, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  IndexedMavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException;
+  IndexedMavenId addArtifact(int indexId, File artifactFile, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws RemoteException, MavenServerIndexerException;
+  Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  Collection<MavenArchetype> getArchetypes() throws RemoteException;
+  Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
 
-  void release() throws RemoteException;
+  void release(MavenToken token) throws RemoteException;
 
-  boolean indexExists(File dir) throws RemoteException;
+  boolean indexExists(File dir, MavenToken token) throws RemoteException;
 }

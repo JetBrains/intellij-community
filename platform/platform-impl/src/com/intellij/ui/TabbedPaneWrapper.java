@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -20,10 +6,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,10 +70,6 @@ public class TabbedPaneWrapper  {
     assertIsDispatchThread();
   }
 
-  public boolean isDisposed() {
-    return myTabbedPane != null && myTabbedPane.isDisposed();
-  }
-
   private void assertIsDispatchThread() {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null){
@@ -115,15 +99,15 @@ public class TabbedPaneWrapper  {
   /**
    * @see JTabbedPane#addTab(String, Icon, Component, String)
    */
-  public final synchronized void addTab(final String title, final Icon icon, final JComponent component, final String tip) {
+  public final synchronized void addTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final Icon icon, final JComponent component, final String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
   }
 
-  public final synchronized void addTab(final String title, final JComponent component) {
+  public final synchronized void addTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final JComponent component) {
     insertTab(title, null, component, null, myTabbedPane.getTabCount());
   }
 
-  public synchronized void insertTab(final String title, final Icon icon, final JComponent component, final String tip, final int index) {
+  public synchronized void insertTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final Icon icon, final JComponent component, final String tip, final int index) {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 
@@ -243,7 +227,7 @@ public class TabbedPaneWrapper  {
     myTabbedPane.setTitleAt(index, title);
   }
 
-  public final void setToolTipTextAt(final int index, final String toolTipText) {
+  public final void setToolTipTextAt(final int index, @NlsUI.Tooltip String toolTipText) {
     assertIsDispatchThread();
     myTabbedPane.setToolTipTextAt(index, toolTipText);
   }
@@ -409,12 +393,7 @@ public class TabbedPaneWrapper  {
 
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
     @Override
-    public boolean isNoDefaultComponent() {
-      return false;
-    }
-
-    @Override
-    public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
+    public final Component getDefaultComponent(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
       return component == null ? null : IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }

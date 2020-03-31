@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -33,7 +31,7 @@ class CompatibilityWithJdkChecker {
     this.context = context
     this.patchedDependencies = patchedDependencies
     tempDir = "$context.paths.temp/compatibility-with-jdk-check"
-    mavenCentralUrl = System.getProperty("intellij.build.maven.central.url", "http://repo1.maven.org/maven2")
+    mavenCentralUrl = System.getProperty("intellij.build.maven.central.url", "https://repo1.maven.org/maven2")
     FileUtil.createDirectory(new File(tempDir))
   }
 
@@ -48,7 +46,7 @@ class CompatibilityWithJdkChecker {
       context.messages.error("Failed to check compatibility with JDK $targetJavaVersion: $jdkHome does not exist")
     }
 
-    context.messages.block("Checking compatibility with JDK $targetJavaVersion.complianceOption") {
+    context.messages.block("Checking compatibility with JDK ${targetJavaVersion.toJavaVersion()}") {
       downloadProguard()
       modulesToCheck.each {
         runProguard(it, jdkHome, targetJavaVersion)
@@ -59,12 +57,13 @@ class CompatibilityWithJdkChecker {
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
   void runProguard(JpsModule module, String jdkHome, LanguageLevel targetJavaVersion) {
-    context.messages.progress("Checking compatibility with JDK $targetJavaVersion.complianceOption for '$module.name' module")
+    context.messages.progress("Checking compatibility with JDK ${targetJavaVersion.toJavaVersion()} for '$module.name' module")
     def classpath = JpsJavaExtensionService.dependencies(module).withoutSdk().recursivelyExportedOnly().productionOnly().classes().withoutSelfModuleOutput().roots
     def moduleOutput = context.getModuleOutputPath(module)
     def includeInModule = (patchedDependencies[module.name] ?: []) as Set<String>
-    context.ant.proguard(target: targetJavaVersion.complianceOption, shrink: false, optimize: false, obfuscate: false, skipnonpubliclibraryclasses: false,
-                         skipnonpubliclibraryclassmembers: false) {
+    context.ant.proguard(target: JpsJavaSdkType.complianceOption(targetJavaVersion.toJavaVersion()),
+                         shrink: false, optimize: false, obfuscate: false,
+                         skipnonpubliclibraryclasses: false, skipnonpubliclibraryclassmembers: false) {
       dontnote(filter: '**')
 
       //todo[nik]
@@ -74,7 +73,9 @@ class CompatibilityWithJdkChecker {
 
       injar(path: moduleOutput)
       classpath.findAll { includeInModule.contains(it.name) }.each { injar(path: it.path) }
-      classpath.findAll { !includeInModule.contains(it.name) }.each {libraryjar(path: it.path)}
+      classpath.findAll { !includeInModule.contains(it.name) }.each {
+        libraryjar(path: it.path, filter: "!module-info.class")
+      }
       libraryjar(path: "$jdkHome/jre/lib/rt.jar")
     }
   }

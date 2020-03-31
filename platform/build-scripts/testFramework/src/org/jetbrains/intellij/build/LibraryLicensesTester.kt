@@ -15,7 +15,10 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
   fun reportMissingLicenses(collector: ErrorCollector) {
     val nonPublicModules = setOf("intellij.idea.ultimate.build", "intellij.idea.community.build", "buildSrc", "intellij.platform.testGuiFramework")
     val libraries = HashMap<JpsLibrary, JpsModule>()
-    project.modules.filter { it.name !in nonPublicModules && !it.name.contains("guiTests") && !it.name.contains("integrationTests", ignoreCase = true)}.forEach { module ->
+    project.modules.filter { it.name !in nonPublicModules 
+                             && !it.name.contains("guiTests") 
+                             && !it.name.startsWith("fleet") 
+                             && !it.name.contains("integrationTests", ignoreCase = true)}.forEach { module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.forEach {
         libraries[it] = module
       }
@@ -24,15 +27,14 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
 
     for ((jpsLibrary, jpsModule) in libraries) {
-      for (libName in LibraryLicensesListGenerator.getLibraryNames(jpsLibrary)) {
-        if (libName !in librariesWithLicenses) {
-          collector.addError(AssertionFailedError("""
-                  |License isn't specified for '$libName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
+      val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)
+      if (libraryName !in librariesWithLicenses) {
+        collector.addError(AssertionFailedError("""
+                  |License isn't specified for '$libraryName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
                   |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files
                   |If a library is used in tests only change its scope to 'Test'
                   |If a library is used for compilation only change its scope to 'Provided'
         """.trimMargin()))
-        }
       }
     }
   }

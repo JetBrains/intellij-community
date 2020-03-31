@@ -82,7 +82,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     final FontMetrics italicMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.ITALIC));
     if (myDateWidth <= 0 || (fontMetrics.getFont().getSize() != myFontSize)) {
       myDateWidth = Math.max(fontMetrics.stringWidth(", Yesterday 00:00 PM "), fontMetrics.stringWidth(", 00/00/00 00:00 PM "));
-      myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(new Date(2000, 11, 31))));
+      myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(DateFormatUtil.getSampleDateTime())));
       myFontSize = fontMetrics.getFont().getSize();
     }
     int dateCommitterSize = myDateWidth + boldMetrics.stringWidth(changeList.getCommitterName());

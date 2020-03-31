@@ -99,7 +99,7 @@ public class FontFallbackIterator {
     doStart(text, null, characterIterator, start, end);
   }
 
-  public void start(@NotNull char[] text, int start, int end) {
+  public void start(char @NotNull [] text, int start, int end) {
     assert 0 <= start && start <= end && end <= text.length : "Text length: " + text.length + ", start: " + start + ", end: " + end;
     CharacterIterator characterIterator = null;
     for (int i = start; i < end; i++) {

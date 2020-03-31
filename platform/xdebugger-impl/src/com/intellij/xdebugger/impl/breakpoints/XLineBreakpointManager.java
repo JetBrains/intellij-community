@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
@@ -16,11 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,10 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- * @author nik
- */
-public class XLineBreakpointManager {
+public final class XLineBreakpointManager {
   private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
@@ -97,11 +92,29 @@ public class XLineBreakpointManager {
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
+    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
+        List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
+        if (breakpoints != null) {
+          breakpoints.stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+        }
+      }
+    });
   }
 
   void updateBreakpointsUI() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-      (DumbAwareRunnable)() -> breakpoints().forEach(XLineBreakpointImpl::updateUI));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
+      for (XLineBreakpointImpl<?> breakpoint : myBreakpoints.keySet()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          breakpoint.updateUI();
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }
+    });
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {
@@ -134,7 +147,7 @@ public class XLineBreakpointManager {
   private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
 
-    if (breakpoints.isEmpty()) {
+    if (breakpoints.isEmpty() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
@@ -240,7 +253,7 @@ public class XLineBreakpointManager {
       }
 
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
+      final int line = EditorUtil.yToLogicalLineNoBlockInlays(editor, mouseEvent.getY());
       final Document document = editor.getDocument();
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (line >= 0 && line < document.getLineCount() && file != null) {

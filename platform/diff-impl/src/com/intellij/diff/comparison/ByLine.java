@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
@@ -268,11 +267,10 @@ public class ByLine {
     return fair(builder.finish());
   }
 
-  @NotNull
-  private static int[] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
-                                                @NotNull final TIntArrayList subLines2,
-                                                @NotNull final List<? extends Line> lines1,
-                                                @NotNull final List<? extends Line> lines2) {
+  private static int @NotNull [] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
+                                                          @NotNull final TIntArrayList subLines2,
+                                                          @NotNull final List<? extends Line> lines1,
+                                                          @NotNull final List<? extends Line> lines2) {
     assert subLines1.size() < subLines2.size();
     final int size = subLines1.size();
 

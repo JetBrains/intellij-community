@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +46,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default int calcWidthInPixels(@NotNull Editor editor) {
     throw new RuntimeException("Method not implemented");
@@ -73,6 +77,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
     throw new RuntimeException("Method not implemented");
@@ -80,19 +85,46 @@ public interface EditorCustomElementRenderer {
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
-   * If {@code null} is returned, standard editor's context menu will be displayed upon corresponding mouse event.
+   * If {@code null} is returned (and {@link #getContextMenuGroup(Inlay)} also returns {@code null}), standard editor's context menu will be
+   * displayed upon corresponding mouse event.
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
-    //noinspection deprecation
     return getContextMenuGroupId();
+  }
+
+  /**
+   * Returns an action group, which is to be used for the given custom element's context menu. If {@code null} is returned (and
+   * {@link #getContextMenuGroupId(Inlay)} also returns {@code null}), standard editor's context menu will be displayed upon corresponding
+   * mouse event.
+   * <p>
+   * This method takes preference over {@link #getContextMenuGroupId(Inlay)}, i.e. if it returns a non-null value, the latter method won't
+   * be called.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
+    return null;
   }
 
   /**
    * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default String getContextMenuGroupId() {
+    return null;
+  }
+
+  /**
+   * Allows to show an icon in gutter and process corresponding mouse events for block custom elements (other types of custom elements are
+   * not supported at the moment). Icon will only be rendered if its height is not larger than the element's height.<p>
+   * Returned provider should have a meaningful implementation of {@code equals} method - {@link Inlay#update()} will update the inlay's
+   * provider (only) if newly returned instance is not equal to the previously defined one.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
     return null;
   }
 }

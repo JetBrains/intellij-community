@@ -11,9 +11,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.util.regex.Pattern
 
-/**
- * @author nik
- */
 class CrossPlatformDistributionBuilder {
   private final BuildContext buildContext
 
@@ -21,7 +18,7 @@ class CrossPlatformDistributionBuilder {
     this.buildContext = buildContext
   }
 
-  String buildCrossPlatformZip(String winDistPath, String linuxDistPath, String macDistPath, String zipNameSuffix) {
+  String buildCrossPlatformZip(String winDistPath, String linuxDistPath, String macDistPath) {
     buildContext.messages.block("Building cross-platform zip") {
       def executableName = buildContext.productProperties.baseFileName
       def zipDir = "$buildContext.paths.temp/cross-platform-zip"
@@ -63,8 +60,8 @@ class CrossPlatformDistributionBuilder {
         new ProductInfoLaunchData(OsFamily.MACOS.osName, "MacOS/$executableName", null, "bin/mac/${executableName}.vmoptions", null)
       ])
 
-      String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      String targetPath = "$buildContext.paths.artifacts/${baseName}${zipNameSuffix}.zip"
+      def zipFileName = buildContext.productProperties.getCrossPlatformZipFileName(buildContext.applicationInfo, buildContext.buildNumber)
+      String targetPath = "$buildContext.paths.artifacts/$zipFileName"
 
       List<String> extraExecutables = buildContext.linuxDistributionCustomizer.extraExecutables + buildContext.macDistributionCustomizer.extraExecutables
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
@@ -92,6 +89,7 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/${executableName}*.exe")
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
+          exclude(name: "build.txt")
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
           include(name: "fsnotifier*.exe")
@@ -140,10 +138,6 @@ class CrossPlatformDistributionBuilder {
 
           buildContext.macDistributionCustomizer.extraExecutables.each {
             exclude(name: it)
-          }
-
-          if (buildContext.macDistributionCustomizer.helpId) {
-            exclude(name: "Resources/${buildContext.macDistributionCustomizer.helpId}.help/**")
           }
         }
         if (!buildContext.macDistributionCustomizer.extraExecutables.isEmpty()) {

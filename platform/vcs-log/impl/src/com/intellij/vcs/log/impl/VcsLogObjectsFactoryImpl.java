@@ -1,19 +1,19 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
+public final class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
+  @NotNull
+  private final VcsUserRegistry myUserRegistry;
 
-  @NotNull private final VcsUserRegistry myUserRegistry;
-
-  // created as application service
-  @SuppressWarnings("unused")
-  private VcsLogObjectsFactoryImpl(@NotNull VcsUserRegistry userRegistry) {
-    myUserRegistry = userRegistry;
+  private VcsLogObjectsFactoryImpl(@NotNull Project project) {
+    myUserRegistry = project.getService(VcsUserRegistry.class);
   }
 
   @NotNull

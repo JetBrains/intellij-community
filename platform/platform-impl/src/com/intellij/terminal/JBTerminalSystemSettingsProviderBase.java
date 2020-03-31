@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,12 +16,14 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.emulator.ColorPalette;
+import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -45,29 +36,28 @@ import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author traff
- */
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider implements Disposable {
-  protected final MyColorSchemeDelegate myColorScheme;
+  private final MyColorsSchemeDelegate myColorsScheme;
+  private JBTerminalSchemeColorPalette myColorPalette;
 
   public JBTerminalSystemSettingsProviderBase() {
-    myColorScheme = createBoundColorSchemeDelegate(null);
+    myColorsScheme = createBoundColorSchemeDelegate();
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      int oldSize = myColorScheme.getConsoleFontSize();
-      int newSize = consoleFontSize(myColorScheme);
+      int oldSize = myColorsScheme.getConsoleFontSize();
+      int newSize = myColorsScheme.detectConsoleFontSize();
       if (oldSize != newSize) {
-        myColorScheme.setConsoleFontSize(newSize);
+        myColorsScheme.setConsoleFontSize(newSize);
         fireFontChanged();
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        myColorScheme.updateGlobalScheme(scheme);
-        myColorScheme.setConsoleFontSize(consoleFontSize(myColorScheme));
+      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+        myColorsScheme.updateGlobalScheme(scheme);
+        myColorsScheme.setConsoleFontSize(myColorsScheme.detectConsoleFontSize());
+        myColorPalette = null;
         fireFontChanged();
       }
     });
@@ -76,37 +66,106 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   private final Set<TerminalSettingsListener> myListeners = new HashSet<>();
 
   @Override
-  public KeyStroke[] getCopyKeyStrokes() {
-    return getKeyStrokesByActionId("$Copy");
+  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
+    TerminalActionPresentation presentation = super.getNewSessionActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.NewSession.text"),
+                                          presentation.getKeyStrokes());
   }
 
   @Override
-  public KeyStroke[] getPasteKeyStrokes() {
-    return getKeyStrokesByActionId("$Paste");
+  public @NotNull TerminalActionPresentation getOpenUrlActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.OpenAsUrl.text"), Collections.emptyList());
   }
 
   @Override
-  public KeyStroke[] getNextTabKeyStrokes() {
-    return getKeyStrokesByActionId("NextTab");
+  public @NotNull TerminalActionPresentation getCopyActionPresentation() {
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Copy.text")),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_COPY));
   }
 
   @Override
-  public KeyStroke[] getPreviousTabKeyStrokes() {
-    return getKeyStrokesByActionId("PreviousTab");
+  public @NotNull TerminalActionPresentation getPasteActionPresentation() {
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Paste.text")),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_PASTE));
   }
 
   @Override
-  public KeyStroke[] getFindKeyStrokes() {
-    return getKeyStrokesByActionId("Find");
+  public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
+    TerminalActionPresentation presentation = super.getClearBufferActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"),
+                                          presentation.getKeyStrokes());
   }
 
+  @Override
+  public @NotNull TerminalActionPresentation getPageUpActionPresentation() {
+    TerminalActionPresentation presentation = super.getPageUpActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.PageUp.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getPageDownActionPresentation() {
+    TerminalActionPresentation presentation = super.getPageDownActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.PageDown.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getLineUpActionPresentation() {
+    TerminalActionPresentation presentation = super.getLineUpActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.LineUp.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getLineDownActionPresentation() {
+    TerminalActionPresentation presentation = super.getLineDownActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.LineDown.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
+    TerminalActionPresentation presentation = super.getCloseSessionActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getFindActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.Find.text"),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_FIND));
+  }
+
+  @NotNull
   @Override
   public ColorPalette getTerminalColorPalette() {
-    return new JBTerminalSchemeColorPalette(myColorScheme);
+    JBTerminalSchemeColorPalette colorPalette = myColorPalette;
+    if (colorPalette == null) {
+      colorPalette = new JBTerminalSchemeColorPalette(myColorsScheme);
+      myColorPalette = colorPalette;
+    }
+    return colorPalette;
   }
 
-  private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-    java.util.List<KeyStroke> keyStrokes = new ArrayList<>();
+  public static @NotNull String getGotoNextSplitTerminalActionText(boolean forward) {
+    return forward ? ActionsBundle.message("action.NextSplitter.text")
+                   : ActionsBundle.message("action.PrevSplitter.text");
+  }
+
+  public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
+    String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
+    String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
+    return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
+      if (listener != null) {
+        listener.gotoNextSplitTerminal(forward);
+      }
+      return true;
+    });
+  }
+
+  private static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
+    List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
@@ -114,8 +173,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
         keyStrokes.add(ks);
       }
     }
-
-    return keyStrokes.toArray(new KeyStroke[0]);
+    return keyStrokes;
   }
 
   @Override
@@ -137,31 +195,33 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     }
   }
 
-  @NotNull
-  public KeyStroke[] getShowTabsKeyStrokes() {
-    return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
+  @Override
+  public @NotNull TerminalActionPresentation getNextTabActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectNextTab.text"), getKeyStrokesByActionId("NextTab"));
   }
 
-  public KeyStroke[] getMoveTabRightKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight");
+  @Override
+  public @NotNull TerminalActionPresentation getPreviousTabActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectPreviousTab.text"),
+                                          getKeyStrokesByActionId("PreviousTab"));
   }
 
-  public KeyStroke[] getMoveTabLeftKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft");
+  public @NotNull TerminalActionPresentation getMoveTabRightActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.MoveRight.text"),
+                                          getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight"));
   }
 
-  protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
-    int size;
-    if (UISettings.getInstance().getPresentationMode()) {
-      size = UISettings.getInstance().getPresentationModeFontSize();
-    }
-    else {
-      size = colorScheme.getGlobal().getConsoleFontSize();
-    }
-    return size;
+  public @NotNull TerminalActionPresentation getMoveTabLeftActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.MoveLeft.text"),
+                                          getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft"));
   }
 
-  private static class MyColorSchemeDelegate implements EditorColorsScheme {
+  public @NotNull TerminalActionPresentation getShowTabsActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ShowTabs.text"),
+                                          getKeyStrokesByActionId(ShowContentAction.ACTION_ID));
+  }
+
+  static class MyColorsSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
@@ -172,12 +232,13 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
     private int myConsoleFontSize;
 
-    protected MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
-      updateGlobalScheme(globalScheme);
-      myConsoleFontSize = consoleFontSize(this);
+    private MyColorsSchemeDelegate() {
+      updateGlobalScheme(null);
+      myConsoleFontSize = detectConsoleFontSize();
       initFonts();
     }
 
+    @NotNull
     private EditorColorsScheme getGlobal() {
       return myGlobalScheme;
     }
@@ -188,8 +249,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       return getGlobal().getName();
     }
 
-
-    protected void initFonts() {
+    private void initFonts() {
       String consoleFontName = getConsoleFontName();
       int consoleFontSize = getConsoleFontSize();
       myFontPreferences.clear();
@@ -211,6 +271,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     @Override
     public void setName(String name) {
       getGlobal().setName(name);
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGlobal().getDisplayName();
     }
 
     @Override
@@ -271,16 +337,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     }
 
     @Override
-    public FontSize getQuickDocFontSize() {
-      return myGlobalScheme.getQuickDocFontSize();
-    }
-
-    @Override
-    public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-      myGlobalScheme.setQuickDocFontSize(fontSize);
-    }
-
-    @Override
     public String getEditorFontName() {
       return getGlobal().getEditorFontName();
     }
@@ -328,9 +384,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     public void readExternal(Element element) {
     }
 
-    public void updateGlobalScheme(EditorColorsScheme scheme) {
+    private void updateGlobalScheme(@Nullable EditorColorsScheme scheme) {
       myFontsMap = null;
-      myGlobalScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
+      myGlobalScheme = scheme != null ? scheme : EditorColorsManager.getInstance().getGlobalScheme();
     }
 
     @NotNull
@@ -361,14 +417,16 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       initFonts();
     }
 
+    private int detectConsoleFontSize() {
+      if (UISettings.getInstance().getPresentationMode()) {
+        return UISettings.getInstance().getPresentationModeFontSize();
+      }
+      return getGlobal().getConsoleFontSize();
+    }
+
     @Override
     public int getConsoleFontSize() {
-      if (myConsoleFontSize == -1) {
-        return getGlobal().getConsoleFontSize();
-      }
-      else {
-        return myConsoleFontSize;
-      }
+      return myConsoleFontSize;
     }
 
     @Override
@@ -395,58 +453,51 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @NotNull
-  private static MyColorSchemeDelegate createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
-    return new MyColorSchemeDelegate(customGlobalScheme);
+  private static MyColorsSchemeDelegate createBoundColorSchemeDelegate() {
+    return new MyColorsSchemeDelegate();
   }
 
-  public EditorColorsScheme getColorScheme() {
-    return myColorScheme;
+  @NotNull
+  MyColorsSchemeDelegate getColorsScheme() {
+    return myColorsScheme;
   }
 
   @Override
   public float getLineSpace() {
-    return myColorScheme.getConsoleLineSpacing();
+    return myColorsScheme.getConsoleLineSpacing();
   }
 
   @Override
   public TextStyle getSelectionColor() {
-    return new TextStyle(TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
-                         TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
+    return new TextStyle(TerminalColor.awt(myColorsScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
+                         TerminalColor.awt(myColorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   @Override
   public TextStyle getFoundPatternColor() {
-    return new TextStyle(TerminalColor.awt(myColorScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
-                         TerminalColor.awt(myColorScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
+    return new TextStyle(TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
+                         TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getHyperlinkColor() {
-    return new TextStyle(TerminalColor.awt(myColorScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
-                         TerminalColor.awt(myColorScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
+    return new TextStyle(TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
+                         TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getDefaultStyle() {
-    return new TextStyle(TerminalColor.awt(myColorScheme.getDefaultForeground()), TerminalColor.awt(
-      myColorScheme.getDefaultBackground()));
+    return new TextStyle(TerminalColor.index(JBTerminalSchemeColorPalette.getDefaultForegroundIndex()),
+                         TerminalColor.index(JBTerminalSchemeColorPalette.getDefaultBackgroundIndex()));
   }
 
   @Override
   public Font getTerminalFont() {
-    Font normalFont = Font.decode(getFontName());
-
-    if (normalFont == null) {
-      normalFont = super.getTerminalFont();
-    }
-
-    normalFont = normalFont.deriveFont(getTerminalFontSize());
-
-    return normalFont;
+    return new Font(getFontName(), Font.PLAIN, (int)getTerminalFontSize());
   }
 
   public String getFontName() {
-    List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
+    List<String> fonts = myColorsScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
 
     if (fonts.size() > 0) {
       return fonts.get(0);
@@ -457,7 +508,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myColorScheme.getConsoleFontSize();
+    return (float)myColorsScheme.getConsoleFontSize();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Manager of listeners for notifications about activation and deactivation of the
- * IDEA window.
+ * IDE window.
  */
 public abstract class FrameStateManager {
   /**
@@ -18,7 +18,7 @@ public abstract class FrameStateManager {
    * @return the component instance.
    */
   public static FrameStateManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(FrameStateManager.class);
+    return ApplicationManager.getApplication().getService(FrameStateManager.class);
   }
 
   /**
@@ -34,7 +34,7 @@ public abstract class FrameStateManager {
   public abstract void addListener(@NotNull FrameStateListener listener, @Nullable Disposable disposable);
 
   /**
-   * Removes a listener which is called when the IDEA window is activated or deactivated.
+   * Removes a listener which is called when the IDE window is activated or deactivated.
    *
    * @param listener the listener instance.
    */

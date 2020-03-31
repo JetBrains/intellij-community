@@ -16,12 +16,12 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverriddenMethodCallDuringObjectConstructionInspectionTest extends LightInspectionTestCase {
+public class OverriddenMethodCallDuringObjectConstructionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOverriddenMethodCallDuringObjectConstruction() {
     doTest();

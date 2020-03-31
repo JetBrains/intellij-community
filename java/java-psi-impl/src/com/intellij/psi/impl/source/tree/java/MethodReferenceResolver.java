@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,18 +18,17 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  @NotNull
   @Override
-  public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
@@ -49,7 +48,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(functionalInterfaceSubstitutor) : null;
         final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
         if (isConstructor && containingClass.getConstructors().length == 0) {
-          if (interfaceMethod != null) {
+          if (interfaceMethodReturnType != null) {
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
             if (!(session.isProperType(session.substituteWithInferenceVariables(returnType)) && session.isProperType(interfaceMethodReturnType))) {
@@ -95,8 +94,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return includeReturnConstraint ? inferTypeArguments(true) 
-                                                 : ObjectUtils.assertNotNull(MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(reference, false, () -> inferTypeArguments(false)));
+                  return includeReturnConstraint ? inferTypeArguments(true)
+                                                 : Objects.requireNonNull(MethodCandidateInfo.ourOverloadGuard
+                                                                            .doPreventingRecursion(reference, false,
+                                                                                                   () -> inferTypeArguments(false)));
                 }
 
                 private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
@@ -117,8 +118,11 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (includeReturnConstraint && !PsiType.VOID.equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
-                    PsiSubstitutor subst = PsiMethodReferenceCompatibilityConstraint.getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference);
-                    final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, subst) : subst.substitute(method.getReturnType());
+                    final PsiType returnType = method.isConstructor()
+                                               ? composeReturnType(containingClass, substitutor)
+                                               : PsiMethodReferenceCompatibilityConstraint
+                                                 .getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference)
+                                                 .substitute(method.getReturnType());
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType, reference);
                     }
@@ -141,7 +145,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         processor.setIsConstructor(isConstructor);
         processor.setName(isConstructor ? containingClass.getName() : element.getText());
         final PsiExpression expression = reference.getQualifierExpression();
-        if (expression == null || !(expression.getType() instanceof PsiArrayType)) {
+        if (expression == null || !(expression.getType() instanceof PsiArrayType) && !(expression instanceof PsiSuperExpression)) {
           processor.setAccessClass(containingClass);
         }
 
@@ -196,7 +200,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     private MethodReferenceConflictResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                             PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                             @Nullable MethodSignature signature, PsiMethod interfaceMethod) {
-      super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression));
+      super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression), referenceExpression.getContainingFile());
       myReferenceExpression = referenceExpression;
       myQualifierResolveResult = qualifierResolveResult;
       myFunctionalMethodVarArgs =  interfaceMethod != null && interfaceMethod.isVarArgs();
@@ -354,7 +358,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
       }
-      
+
       if (secondApplicability < firstApplicability) {
         return firstCandidates.size() == 1 ? firstCandidates.get(0) : null;
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.designer;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,9 @@ public abstract class ToggleEditorModeAction extends ToggleAction {
   private final ToolWindowAnchor myAnchor;
 
   public ToggleEditorModeAction(LightToolWindowManager manager, Project project, ToolWindowAnchor anchor) {
-    super(anchor != null ? StringUtil.capitalize(anchor.toString()) : "None",
-          anchor != null ? "Pin tool window to " + anchor + " side UI Designer Editor" : "Unpin tool window from Designer Editor", null);
+    super(anchor != null ? StringUtil.capitalize(anchor.toString()) : IdeBundle.message("action.text.editor.mode.none"),
+          anchor != null ? IdeBundle.message("action.description.pin.tool.window.to.0.side.ui.designer.editor", anchor)
+                         : IdeBundle.message("action.description.unpin.tool.window.from.designer.editor"), null);
     myManager = manager;
     myProject = project;
     myAnchor = anchor;

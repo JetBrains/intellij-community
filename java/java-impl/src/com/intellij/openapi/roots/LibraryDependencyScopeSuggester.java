@@ -17,16 +17,15 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class LibraryDependencyScopeSuggester {
   public static final ExtensionPointName<LibraryDependencyScopeSuggester> EP_NAME = ExtensionPointName.create("com.intellij.library.dependencyScopeSuggester");
 
   @Nullable
+  @Contract(pure = true)
   public abstract DependencyScope getDefaultDependencyScope(@NotNull Library library);
 
   @NotNull

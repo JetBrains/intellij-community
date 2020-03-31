@@ -25,7 +25,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AnonymousClassElementBase extends ClassElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnonymousClassElement");
+  private static final Logger LOG = Logger.getInstance(AnonymousClassElement.class);
 
   public AnonymousClassElementBase(IElementType type) {
     super(type);

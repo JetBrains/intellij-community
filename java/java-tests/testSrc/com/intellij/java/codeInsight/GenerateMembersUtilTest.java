@@ -23,14 +23,14 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.psi.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
+public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/generateMembersUtil/";
 
   @NotNull
@@ -66,7 +66,7 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     List<GenerationInfo> list = Collections.singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members =
       WriteAction.compute(() -> GenerateMembersUtil.insertMembersAtOffset(getFile(), offset, list));
-    members.get(0).positionCaret(myEditor, true);
+    members.get(0).positionCaret(getEditor(), true);
     checkResultByFile(null, BASE_PATH + getTestName(false) + "_after.java", true);
   }
 

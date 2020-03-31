@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,21 +23,30 @@ public abstract class RecentProjectsManager {
 
   public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
 
+  public void setLastProjectCreationLocation(@Nullable Path value) {
+    if (value == null) {
+      setLastProjectCreationLocation((String)null);
+    }
+    else {
+      setLastProjectCreationLocation(PathUtil.toSystemIndependentName(value.toString()));
+    }
+  }
+
   public abstract void updateLastProjectPath();
 
-  @SystemIndependent
-  public abstract String getLastProjectPath();
-
-  public abstract void removePath(@Nullable @SystemIndependent String path);
+  public abstract void removePath(@NotNull @SystemIndependent String path);
 
   /**
-   * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
+   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
-  @NotNull
-  public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
+  @Deprecated
+  public abstract AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem);
 
-  @NotNull
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
+  /**
+   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
+   */
+  @Deprecated
+  public AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }
 
@@ -53,4 +64,8 @@ public abstract class RecentProjectsManager {
   public boolean hasPath(@SystemIndependent String path) {
     return false;
   }
+
+  public abstract boolean willReopenProjectOnStart();
+
+  public abstract boolean reopenLastProjectsOnStart();
 }

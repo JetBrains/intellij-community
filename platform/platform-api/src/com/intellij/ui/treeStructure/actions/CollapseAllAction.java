@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -23,12 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class CollapseAllAction extends AnAction implements DumbAware {
 
   protected JTree myTree;
 
   public CollapseAllAction(JTree tree) {
-    super("Collapse All", "", AllIcons.Actions.Collapseall);
+    super(IdeBundle.messagePointer("action.CollapseAllAction.text.collapse.all"), () -> "", AllIcons.Actions.Collapseall);
     myTree = tree;
   }
 

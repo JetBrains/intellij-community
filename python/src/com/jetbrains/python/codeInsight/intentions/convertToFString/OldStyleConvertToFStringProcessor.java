@@ -19,10 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
-import com.jetbrains.python.inspections.PyStringFormatParser;
-import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
-import com.jetbrains.python.inspections.PyStringFormatParser.PercentSubstitutionChunk;
-import com.jetbrains.python.inspections.PyStringFormatParser.SubstitutionChunk;
+import com.jetbrains.python.PyStringFormatParser;
+import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk;
+import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk;
+import com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -85,7 +85,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   }
 
   @Override
-  protected boolean convertSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, @NotNull StringBuilder fStringText) {
+  protected boolean processSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, @NotNull StringBuilder fStringText) {
     final char conversionChar = subsChunk.getConversionType();
 
     String widthAndPrecision = StringUtil.notNullize(subsChunk.getWidth());
@@ -132,5 +132,10 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     }
     fStringText.append("}");
     return true;
+  }
+
+  @Override
+  protected void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText) {
+    fStringText.append(chunk.replace("%%", "%").replace("{", "{{").replace("}", "}}"));
   }
 }

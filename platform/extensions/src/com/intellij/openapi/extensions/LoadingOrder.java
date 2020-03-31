@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Couple;
@@ -26,7 +26,7 @@ import java.util.*;
  *
  * @author Alexander Kireyev
  */
-public class LoadingOrder {
+public final class LoadingOrder {
   @NonNls public static final String FIRST_STR = "first";
   @NonNls public static final String LAST_STR = "last";
   @NonNls public static final String BEFORE_STR = "before ";
@@ -70,10 +70,12 @@ public class LoadingOrder {
     myLast = last;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof LoadingOrder)) return false;
@@ -88,6 +90,7 @@ public class LoadingOrder {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myFirst ? 1 : 0;
     result = 31 * result + (myLast ? 1 : 0);
@@ -104,7 +107,7 @@ public class LoadingOrder {
     return new LoadingOrder(AFTER_STR + id);
   }
 
-  public static void sort(@NotNull Orderable[] orderable) {
+  public static void sort(Orderable @NotNull [] orderable) {
     if (orderable.length > 1) {
       sort(Arrays.asList(orderable));
     }

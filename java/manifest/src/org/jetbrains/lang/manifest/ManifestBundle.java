@@ -15,17 +15,17 @@
  */
 package org.jetbrains.lang.manifest;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class ManifestBundle extends AbstractBundle {
+public class ManifestBundle extends DynamicBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
   }
 
-  public static final String PATH_TO_BUNDLE = "org.jetbrains.lang.manifest.ManifestBundle";
+  public static final String PATH_TO_BUNDLE = "messages.ManifestBundle";
   private static final ManifestBundle BUNDLE = new ManifestBundle();
 
   private ManifestBundle() {

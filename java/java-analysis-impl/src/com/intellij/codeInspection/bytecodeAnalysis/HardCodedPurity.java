@@ -31,6 +31,8 @@ class HardCodedPurity {
     // Declared in final class StringBuilder
     new Member("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
     new Member("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
+    // Often used in generated code since Java 9; to avoid too many equations
+    new Member("java/util/Objects", "requireNonNull", "(Ljava/lang/Object;)Ljava/lang/Object;"),
     // Native
     new Member("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Member("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
@@ -52,7 +54,7 @@ class HardCodedPurity {
   }
 
   static HardCodedPurity getInstance() {
-    return AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
+    return Holder.INSTANCE;
   }
 
   Effects getHardCodedSolution(Member method) {
@@ -129,5 +131,9 @@ class HardCodedPurity {
       }
       return super.isPureMethod(method);
     }
+  }
+  
+  private static class Holder {
+    static final HardCodedPurity INSTANCE = AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
   }
 }

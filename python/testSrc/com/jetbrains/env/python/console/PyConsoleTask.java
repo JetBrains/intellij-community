@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.console;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -9,7 +10,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -39,13 +38,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
+import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.convertToList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author traff
- */
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.env.python.console.PyConsoleTask");
+  private static final Logger LOG = Logger.getInstance(PyConsoleTask.class);
 
   private boolean myProcessCanTerminate;
 
@@ -64,10 +61,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     super(null);
   }
 
+  public PyConsoleTask(String relativeTestDataPath) {
+    super(relativeTestDataPath);
+  }
+
   @Nullable
   @Override
   public Set<String> getTagsToCover() {
-    return Sets.newHashSet("python3.6", "python2.7", "ipython", "ipython200", "jython", "IronPython");
+    return Sets.newHashSet("python3.8", "python2.7", "ipython", "ipython780", "jython", "IronPython");
   }
 
   public PythonConsoleView getConsoleView() {
@@ -403,6 +404,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     return result;
   }
 
+  protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
+    return convertToList(myCommunication.loadFrame());
+  }
+
   protected void input(String text) {
     myConsoleView.executeInConsole(text);
   }
@@ -419,11 +424,16 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommunication.interrupt();
   }
 
-
   public void addTextToEditor(final String text) {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       getConsoleView().setInputText(text);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getTags() {
+    return ImmutableSet.of("-iron"); // PY-36349
   }
 }

@@ -1,12 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -14,25 +17,27 @@ import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.template.GroovyTemplateContextType;
 
+import java.util.List;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
-  public static final String FILE_CONTEXT = "File";
-  public static final String CLASS_CONTEXT = "Class";
+  public static final PatternContext FILE_CONTEXT = new PatternContext("File", "Default");
+  public static final PatternContext CLASS_CONTEXT = new PatternContext("Class", "Class Member");
+  private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(FILE_CONTEXT, CLASS_CONTEXT);
 
-  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
+  private static final TokenSet VARIABLE_DELIMITERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
 
-  @NotNull
   @Override
-  protected String[] getVarPrefixes() {
+  protected String @NotNull [] getVarPrefixes() {
     return new String[]{"_$_____"};
   }
 
   @NotNull
   @Override
-  public String[] getContextNames() {
-    return new String[]{FILE_CONTEXT, CLASS_CONTEXT};
+  public List<PatternContext> getPatternContexts() {
+    return PATTERN_CONTEXTS;
   }
 
   @NotNull
@@ -44,14 +49,12 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   protected TokenSet getVariableDelimiters() {
-    return VARIABLE_DELIMETERS;
+    return VARIABLE_DELIMITERS;
   }
 
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
-    GroovyCodeFragment result = new GroovyCodeFragment(project, text);
-    result.setContext(context);
-    return result;
+  public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
+    return new GroovyCodeFragment(project, text);
   }
 
   @NotNull
@@ -60,9 +63,10 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return GroovyTemplateContextType.class;
   }
 
+  @NotNull
   @Override
-  public String getContext(@NotNull String pattern, @Nullable Language language, String contextName) {
-    return CLASS_CONTEXT.equals(contextName)
+  public String getContext(@NotNull String pattern, @Nullable Language language, String contextId) {
+    return CLASS_CONTEXT.getId().equals(contextId)
            ? "class AAAAA { " + PATTERN_PLACEHOLDER + " }"
            : PATTERN_PLACEHOLDER;
   }

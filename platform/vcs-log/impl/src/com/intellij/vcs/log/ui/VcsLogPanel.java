@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -21,7 +7,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.impl.VcsLogManager;
@@ -32,14 +17,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class VcsLogPanel extends JBPanel implements DataProvider {
   @NotNull private final VcsLogManager myManager;
-  @NotNull private final AbstractVcsLogUi myUi;
+  @NotNull private final VcsLogUiEx myUi;
 
-  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull AbstractVcsLogUi logUi) {
+  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiEx logUi) {
     super(new BorderLayout());
     myManager = manager;
     myUi = logUi;
@@ -47,7 +33,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
   }
 
   @NotNull
-  public AbstractVcsLogUi getUi() {
+  public VcsLogUiEx getUi() {
     return myUi;
   }
 
@@ -69,12 +55,13 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
       List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
       if (hashes.isEmpty()) return null;
-      return VcsLogUtil.convertToRevisionNumber(ObjectUtils.notNull(ContainerUtil.getFirstItem(hashes)).getHash());
+      return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(ContainerUtil.getFirstItem(hashes)).getHash());
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+      return ContainerUtil.map(hashes,
+                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();

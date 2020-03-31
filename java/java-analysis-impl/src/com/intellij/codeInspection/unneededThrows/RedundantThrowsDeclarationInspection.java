@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,36 +29,25 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
+  private static final Logger LOG = Logger.getInstance(RedundantThrowsDeclarationInspection.class);
 
   public boolean IGNORE_ENTRY_POINTS = false;
 
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.throws.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore exceptions thrown by entry points methods", this, "IGNORE_ENTRY_POINTS");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
   }
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
+                                                           @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
       if (refMethod.isSyntheticJSP()) return null;
@@ -95,17 +84,17 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
             RefClass ownerClass = refMethod.getOwnerClass();
             if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
@@ -182,7 +171,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
     @Override

@@ -3,14 +3,12 @@ package com.intellij.build.events;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface MessageEvent extends BuildEvent {
   enum Kind {
     ERROR, WARNING, INFO, STATISTICS, SIMPLE

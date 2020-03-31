@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
 
     List<String> oldPaths = settings.getCustomDictionariesPaths();
     WriteAction.runAndWait(() -> {
-      dictDir = getProject().getBaseDir().createChildDirectory(this, getDictDirName());
+      dictDir = VfsUtil.createDirectoryIfMissing(getProject().getBasePath() + "/" + getDictDirName());
       VfsUtil.copyDirectory(this, myFixture.copyDirectoryToProject(getTestName(true), getDictDirName()), dictDir, null);
     });
 
@@ -190,12 +191,12 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testMoveDict() throws IOException {
     try {
       doBeforeCheck();
-      WriteAction.run(() -> getTestDictionaryFile().move(this, getProject().getBaseDir()));
+      WriteAction.run(() -> getTestDictionaryFile().move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject())));
       doAfterCheck();
     }
     finally {
       WriteAction.run(() -> {
-        final VirtualFile child = getProject().getBaseDir().findChild(TEST_DIC);
+        final VirtualFile child = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).findChild(TEST_DIC);
         if (child.exists()) {
           child.delete(this);
         }
@@ -237,12 +238,12 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testMoveDictDir() throws IOException {
     try {
       doBeforeCheck();
-      WriteAction.run(() -> dictDir.move(this, getProject().getBaseDir().createChildDirectory(this, "new_dir")));
+      WriteAction.run(() -> dictDir.move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "new_dir")));
       doAfterCheck();
     }
     finally {
       WriteAction.run(() -> {
-        final VirtualFile dir = getProject().getBaseDir().findChild("new_dir");
+        final VirtualFile dir = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).findChild("new_dir");
         if (dir.exists()) {
           dir.delete(this);
         }

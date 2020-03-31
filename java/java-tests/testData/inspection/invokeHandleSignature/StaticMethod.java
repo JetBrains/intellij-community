@@ -5,6 +5,7 @@ class Main {
     MethodHandles.Lookup l = MethodHandles.lookup();
 
     l.findStatic(Test.class, "method1", MethodType.methodType(void.class));
+    l.findStatic(Test.class, "method1", MethodType.methodType(Void.TYPE));
     l.findStatic(Test.class, "method2", MethodType.methodType(String.class, String.class));
     l.findStatic(Test.class, "method3", MethodType.methodType(String.class, String.class, String[].class));
 

@@ -58,7 +58,7 @@ class GrClosureParameterImpl implements GrClosureParameter {
     return myContext.isValid() && myParameter.isValid();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getName() {
     return myParameter.getName();

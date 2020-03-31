@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
-* @author egor
-*/
 class ClassObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ClassObjectRenderer.class);
 
@@ -36,12 +33,12 @@ class ClassObjectRenderer extends CompoundReferenceRenderer implements FullValue
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext,
                                                    final ValueDescriptorImpl valueDescriptor) {
-    return new JavaValue.JavaFullValueEvaluator(DebuggerBundle.message("message.node.navigate"), evaluationContext) {
+    return new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"), evaluationContext) {
       @Override
       public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
         Value value = valueDescriptor.getValue();
         ClassType type = ((ClassType)value.type());
-        Method nameMethod = type.concreteMethodByName("getName", "()Ljava/lang/String;");
+        Method nameMethod = DebuggerUtils.findMethod(type, "getName", "()Ljava/lang/String;");
         if (nameMethod != null) {
           try {
             final DebugProcessImpl process = evaluationContext.getDebugProcess();

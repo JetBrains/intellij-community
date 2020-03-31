@@ -56,15 +56,16 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
-    return "CallToSimpleGetterFromWithinClass";
+  public boolean runForWholeFile() {
+    // Changes in another method (making getter more complicated) may affect 
+    // the inspection result at call sites
+    return true;
   }
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.display.name");
+  public String getID() {
+    return "CallToSimpleGetterFromWithinClass";
   }
 
   @Override

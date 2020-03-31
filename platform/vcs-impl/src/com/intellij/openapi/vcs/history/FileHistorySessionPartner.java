@@ -133,7 +133,6 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
                                                          exception.getMessage(), MessageType.ERROR);
   }
 
-  @Override
   public void beforeRefresh() {
     myLimitHistoryCheck.reset();
   }
@@ -143,13 +142,21 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
     ContentManager manager = toolWindow.getContentManager();
     boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myContentPanel, true);
     if (!selectedExistingContent) {
-      String tabName = myPath.getName();
-      if (myStartingRevisionNumber != null) {
-        tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
-      }
-      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History", tabName, true, this);
+      String tabName = getTabName(myPath, myStartingRevisionNumber);
+      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History",
+                                     VcsBundle.messagePointer("file.history.tab.name"), () -> tabName,
+                                     true, this);
     }
     toolWindow.activate(null);
+  }
+
+  @NotNull
+  private static String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
+    String tabName = path.getName();
+    if (revisionNumber != null) {
+      tabName += " (" + VcsUtil.getShortRevisionString(revisionNumber) + ")";
+    }
+    return tabName;
   }
 
   @Override

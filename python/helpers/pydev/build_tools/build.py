@@ -65,12 +65,18 @@ def get_environment_from_batch_command(env_cmd, initial=None):
             raise AssertionError('Error executing %s. View http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/ for details.' % (env_cmd))
         if tag in line:
             break
-    if sys.version_info[0] > 2:
-        # define a way to handle each KEY=VALUE line
-        handle_line = lambda l: l.decode('utf-8').rstrip().split('=', 1)
-    else:
-        # define a way to handle each KEY=VALUE line
-        handle_line = lambda l: l.rstrip().split('=', 1)
+
+    def handle_line(l):
+        try:
+            if sys.version_info[0] > 2:
+                # define a way to handle each KEY=VALUE line
+                return l.decode('utf-8').rstrip().split('=', 1)
+            else:
+                # define a way to handle each KEY=VALUE line
+                return l.rstrip().split('=', 1)
+        except UnicodeDecodeError:
+            print("Bad env variable: ", l)
+
     # parse key/values into pairs
     pairs = map(handle_line, lines)
     # make sure the pairs are valid
@@ -104,13 +110,13 @@ def build():
 
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2, 7), (3, 5), (3, 6), (3, 7)):
+        if sys.version_info[:2] in ((2, 7), (3, 5), (3, 6), (3, 7), (3, 8)):
             import setuptools # We have to import it first for the compiler to be found
             from distutils import msvc9compiler
 
             if sys.version_info[:2] == (2, 7):
                 vcvarsall = msvc9compiler.find_vcvarsall(9.0)
-            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7)):
+            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7), (3, 8)):
                 vcvarsall = msvc9compiler.find_vcvarsall(14.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')
@@ -123,17 +129,6 @@ def build():
                 env.update(get_environment_from_batch_command(
                     [vcvarsall, 'x86'],
                     initial=os.environ.copy()))
-
-        elif sys.version_info[:2] == (3, 4):
-            if is_python_64bit():
-                env.update(get_environment_from_batch_command(
-                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x64'],
-                    initial=os.environ.copy()))
-            else:
-                env.update(get_environment_from_batch_command(
-                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x86'],
-                    initial=os.environ.copy()))
-
         else:
             raise AssertionError('Unable to setup environment for Python: %s' % (sys.version,))
 
@@ -171,4 +166,3 @@ if __name__ == '__main__':
         build()
     else:
         raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
-

@@ -17,9 +17,6 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModulesListOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.*;
 import com.intellij.util.Consumer;
 

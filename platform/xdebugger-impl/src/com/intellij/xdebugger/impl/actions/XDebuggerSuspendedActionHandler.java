@@ -7,9 +7,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerSuspendedActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {

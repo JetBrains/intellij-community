@@ -28,7 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements PsiAssignmentExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssignmentExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiAssignmentExpressionImpl.class);
 
   public PsiAssignmentExpressionImpl() {
     super(JavaElementType.ASSIGNMENT_EXPRESSION);

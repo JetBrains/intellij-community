@@ -16,13 +16,11 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-@Ignore("tests for online search to be ready")
 public class MavenSearcherTest extends MavenIndicesTestCase {
   MavenIndicesTestFixture myIndicesFixture;
 
@@ -47,8 +45,6 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   }
 
   public void testClassSearch() {
-    if(ignore()) return;
-    assertTrue(getClassSearchResults("").isEmpty());
 
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
@@ -130,7 +126,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actualArtifacts = new ArrayList<>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
       StringBuilder s = new StringBuilder(eachResult.getClassName() + "(" + eachResult.getPackageName() + ")");
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults()) {
+      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         if (s.length() > 0) s.append(" ");
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }
@@ -143,7 +139,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actual = new ArrayList<>();
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
       StringBuilder s = new StringBuilder();
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults()) {
+      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         if (s.length() > 0) s.append(" ");
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -25,10 +12,11 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
-import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +50,11 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   public Language getInjectedLanguage(@NotNull PsiElement context) {
     if (context instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
-      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true) != null && isTypingAnnotation(expr.getStringValue())) {
+      if (isTypingLiteralArgument(expr)) {
+        return null;
+      }
+      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true, PyCallExpression.class) != null &&
+          isTypingAnnotation(expr.getStringValue())) {
         return PyDocstringLanguageDialect.getInstance();
       }
     }
@@ -94,6 +86,16 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       }
     }
     return PyInjectionUtil.InjectionResult.EMPTY;
+  }
+
+  private static boolean isTypingLiteralArgument(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PyTupleExpression) parent = parent.getParent();
+    if (!(parent instanceof PySubscriptionExpression)) return false;
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
+    final PyType type = Ref.deref(PyTypingTypeProvider.getType((PySubscriptionExpression)parent, context));
+    return PyTypeUtil.toStream(type).allMatch(PyLiteralType.class::isInstance);
   }
 
   private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {

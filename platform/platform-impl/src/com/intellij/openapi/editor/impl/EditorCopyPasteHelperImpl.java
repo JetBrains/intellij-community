@@ -70,16 +70,14 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return buf.toString();
   }
 
-  @Nullable
   @Override
-  public TextRange[] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException {
+  public TextRange @Nullable [] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException {
     Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(null);
     return transferable == null ? null : pasteTransferable(editor, transferable);
   }
 
-  @Nullable
   @Override
-  public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException {
+  public TextRange @Nullable [] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException {
     String text = EditorModificationUtil.getStringContent(content);
     if (text == null) return null;
 
@@ -109,7 +107,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final int[] index = {0};
       editor.getCaretModel().runForEachCaret(caret -> {
         String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
-        normalizedText = trimTextIfNeed(editor, normalizedText);
+        normalizedText = trimTextIfNeeded(editor, normalizedText);
         int caretOffset = caret.getOffset();
         ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
         EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
@@ -119,13 +117,13 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     else {
       int caretOffset = editor.getCaretModel().getOffset();
       String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
-      normalizedText = trimTextIfNeed(editor, normalizedText);
+      normalizedText = trimTextIfNeeded(editor, normalizedText);
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
   }
 
-  private static String trimTextIfNeed(Editor editor, String text) {
+  private static String trimTextIfNeeded(Editor editor, String text) {
     JComponent contentComponent = editor.getContentComponent();
     if (contentComponent instanceof JTextComponent) {
       Document document = ((JTextComponent)contentComponent).getDocument();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.frameworkSupport;
 
@@ -21,7 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +17,6 @@ import javax.swing.*;
 /**
  * Extend {@link FrameworkSupportProviderBase} for general and {@link com.intellij.facet.ui.FacetBasedFrameworkSupportProvider} for
  * {@link com.intellij.facet.Facet}-based framework support in your plugin.
- *
- * @author nik
  */
 public abstract class FrameworkSupportProvider {
   public static final ExtensionPointName<FrameworkSupportProvider> EXTENSION_POINT = ExtensionPointName.create("com.intellij.frameworkSupport");
@@ -61,7 +45,7 @@ public abstract class FrameworkSupportProvider {
 
   @NonNls
   public String[] getPrecedingFrameworkProviderIds() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   public String getTitle() {
@@ -73,9 +57,8 @@ public abstract class FrameworkSupportProvider {
     return null;
   }
 
-  @NotNull
-  public String[] getProjectCategories() {
-    return getGroupId() == null ? ArrayUtil.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
+  public String @NotNull [] getProjectCategories() {
+    return getGroupId() == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
   }
 
   public FrameworkRole[] getRoles() {

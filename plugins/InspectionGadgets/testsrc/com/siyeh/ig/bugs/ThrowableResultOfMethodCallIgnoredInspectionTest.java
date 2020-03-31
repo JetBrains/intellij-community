@@ -1,9 +1,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightInspectionTestCase {
+public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightJavaInspectionTestCase {
 
   public void testThrowableResultOfMethodCallIgnored() {
     doTest();

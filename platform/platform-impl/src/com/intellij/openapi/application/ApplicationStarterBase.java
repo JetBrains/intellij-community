@@ -1,13 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.CliResult;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,21 +43,24 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     return true;
   }
 
+  @NotNull
   @Override
-  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
-      Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
-      return;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
+      });
+      return CliResult.error(1, getUsageMessage());
     }
     try {
-      processCommand(args, currentDirectory);
+      return processCommand(args, currentDirectory);
     }
     catch (Exception e) {
       String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
-      Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
-    }
-    finally {
-      saveAll();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
+      });
+      return CliResult.error(1, message);
     }
   }
 
@@ -60,16 +69,24 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     ApplicationManager.getApplication().saveSettings();
   }
 
-  private boolean checkArguments(String[] args) {
-    return Arrays.binarySearch(myArgsCount, args.length - 1) != -1 && getCommandName().equals(args[0]);
+  protected static void saveIfNeeded(@Nullable VirtualFile file) {
+    if (file == null) return;
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) FileDocumentManager.getInstance().saveDocument(document);
   }
 
+  private boolean checkArguments(@NotNull List<String> args) {
+    return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
+  }
+
+  @NlsContexts.DialogMessage
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  @NotNull
+  protected abstract Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception;
 
   @Override
-  public void premain(String[] args) {
+  public void premain(@NotNull List<String> args) {
     if (!checkArguments(args)) {
       System.err.println(getUsageMessage());
       System.exit(1);
@@ -77,9 +94,21 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull List<String> args) {
     try {
-      processCommand(args, null);
+      int exitCode;
+      try {
+        Future<CliResult> commandFuture = processCommand(args, null);
+        CliResult result = commandFuture.get();
+        if (result.message != null) {
+          System.out.println(result.message);
+        }
+        exitCode = result.exitCode;
+      }
+      finally {
+        ApplicationManager.getApplication().invokeAndWait(() -> saveAll());
+      }
+      System.exit(exitCode);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -89,10 +118,5 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
       t.printStackTrace();
       System.exit(2);
     }
-    finally {
-      saveAll();
-    }
-
-    System.exit(0);
   }
 }

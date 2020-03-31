@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -26,6 +26,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -49,17 +50,12 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     performInvoke(project, editor, dataContext);
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     performInvoke(project, null, dataContext);
   }
 
@@ -69,7 +65,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", "Cannot rename", null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaFXBundle.message("javafx.property.rename.handler.error.message"),
+                                          JavaFXBundle.message("javafx.property.rename.handler.error.title"), null);
       return;
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
@@ -135,8 +132,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return ContainerUtil.find(references, JavaFxPropertyRenameHandler::isKnown);
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(DataContext dataContext) {
+  private static PsiReference @NotNull [] getReferences(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 

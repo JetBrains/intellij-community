@@ -17,10 +17,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.lang.properties.editor.PropertiesValueHighlighter;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -53,8 +50,8 @@ public class PropertiesAnnotator implements Annotator {
     Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
     if (others.size() != 1) {
-      Annotation annotation = holder.createErrorAnnotation(keyNode, PropertiesBundle.message("duplicate.property.key.error.message"));
-      annotation.registerFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property));
+      holder.newAnnotation(HighlightSeverity.ERROR,PropertiesBundle.message("duplicate.property.key.error.message")).range(keyNode)
+      .withFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property)).create();
     }
 
     highlightTokens(property, keyNode, holder, new PropertiesHighlighter());
@@ -80,20 +77,11 @@ public class PropertiesAnnotator implements Annotator {
           int start = lexer.getTokenStart() + node.getTextRange().getStartOffset();
           int end = lexer.getTokenEnd() + node.getTextRange().getStartOffset();
           TextRange textRange = new TextRange(start, end);
-          final Annotation annotation;
-          if (severity == HighlightSeverity.WARNING) {
-            annotation = holder.createWarningAnnotation(textRange, displayName);
-          }
-          else if (severity == HighlightSeverity.ERROR) {
-            annotation = holder.createErrorAnnotation(textRange, displayName);
-          }
-          else {
-            annotation = holder.createInfoAnnotation(textRange, displayName);
-          }
           TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-          annotation.setEnforcedTextAttributes(attributes);
+          AnnotationBuilder builder = holder.newAnnotation(severity, displayName).range(textRange).enforcedTextAttributes(attributes);
+
           if (key == PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE) {
-            annotation.registerFix(new IntentionAction() {
+            builder = builder.withFix(new IntentionAction() {
               @Override
               @NotNull
               public String getText() {
@@ -111,13 +99,13 @@ public class PropertiesAnnotator implements Annotator {
                 if (!property.isValid() || !property.getManager().isInProject(property)) return false;
 
                 String text = property.getPropertiesFile().getContainingFile().getText();
-                int startOffset = annotation.getStartOffset();
+                int startOffset = textRange.getStartOffset();
                 return text.length() > startOffset && text.charAt(startOffset) == '\\';
               }
 
               @Override
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                int offset = annotation.getStartOffset();
+                int offset = textRange.getStartOffset();
                 if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
                   editor.getDocument().deleteString(offset, offset+1);
                 }
@@ -129,6 +117,7 @@ public class PropertiesAnnotator implements Annotator {
               }
             });
           }
+          builder.create();
         }
       }
       lexer.advance();

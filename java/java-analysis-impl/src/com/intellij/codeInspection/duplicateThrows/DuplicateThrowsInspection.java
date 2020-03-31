@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateThrows;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -21,14 +21,8 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.duplicate.throws.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -41,7 +35,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      InspectionsBundle.message("inspection.duplicate.throws.ignore.subclassing.option"), this, "ignoreSubclassing");
+      JavaAnalysisBundle.message("inspection.duplicate.throws.ignore.subclassing.option"), this, "ignoreSubclassing");
   }
 
   @Override
@@ -60,14 +54,14 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
             String problem = null;
             PsiJavaCodeReferenceElement ref = refs[i];
             if (type.equals(otherType)) {
-              problem = InspectionsBundle.message("inspection.duplicate.throws.problem");
+              problem = JavaAnalysisBundle.message("inspection.duplicate.throws.problem");
             }
             else if (!ignoreSubclassing) {
               if (otherType.isAssignableFrom(type)) {
-                problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", otherType.getCanonicalText());
+                problem = JavaAnalysisBundle.message("inspection.duplicate.throws.more.general.problem", otherType.getCanonicalText());
               }
               else if (type.isAssignableFrom(otherType)) {
-                problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", type.getCanonicalText());
+                problem = JavaAnalysisBundle.message("inspection.duplicate.throws.more.general.problem", type.getCanonicalText());
                 ref = refs[j];
                 type = otherType;
               }

@@ -1,14 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
 package com.intellij.ui.layout
 
-import com.intellij.CommonBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.*
+
+/**
+ * See [ShowcaseUiDslAction]
+ */
 
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
@@ -60,7 +65,7 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 @Suppress("unused")
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
-    row("Button:") { button("label", growX) {} }
+    row("Button:") { button("label") {}.constraints(growX) }
   }
 }
 
@@ -91,7 +96,7 @@ fun visualPaddingsPanel(): JPanel {
       field.isEditable = true
       field(growX)
     }
-    row("Button:") { button("label", growX) {} }
+    row("Button:") { button("label") {}.constraints(growX) }
     row("CheckBox:") { CheckBox("enabled")() }
     row("RadioButton:") { JRadioButton("label")() }
     row("Spinner:") { JBIntSpinner(0, 0, 7)() }
@@ -125,6 +130,20 @@ fun fieldWithGear(): JPanel {
   }
 }
 
+fun fieldWithGearWithIndent(): JPanel {
+  return panel {
+    row {
+      row("Database:") {
+        JTextField()()
+        gearButton()
+      }
+      row("Master Password:") {
+        JBPasswordField()()
+      }
+    }
+  }
+}
+
 fun alignFieldsInTheNestedGrid(): JPanel {
   return panel {
     buttonGroup {
@@ -147,7 +166,7 @@ fun noteRowInTheDialog(): JPanel {
   return panel {
     noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
     row("Sudo password:") { passwordField() }
-    row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
+    row { CheckBox(UIBundle.message("auth.remember.cb"), true)() }
     noteRow("Should be an empty row above as a gap. <a href=''>Click me</a>.") {
       System.out.println("Hello")
     }
@@ -161,7 +180,7 @@ fun jbTextField(): JPanel {
     row("Username:") { JTextField("develar")() }
     row("Password:") { passwordField() }
     row {
-      JBCheckBox(CommonBundle.message("checkbox.remember.password"), true)()
+      JBCheckBox(UIBundle.message("auth.remember.cb"), true)()
     }
   }
 }
@@ -220,12 +239,12 @@ fun withVerticalButtons(): JPanel {
       label("<html>Merging branch <b>foo</b> into <b>bar</b>")
     }
     row {
-      scrollPane(JTextArea(), pushX)
+      scrollPane(JTextArea()).constraints(pushX)
 
       cell(isVerticalFlow = true) {
-        button("Accept Yours", growX) {}
-        button("Accept Theirs", growX) {}
-        button("Merge ...", growX) {}
+        button("Accept Yours") {}.constraints(growX)
+        button("Accept Theirs") {}.constraints(growX)
+        button("Merge ...") {}.constraints(growX)
       }
     }
   }
@@ -235,13 +254,26 @@ fun titledRows(): JPanel {
   return panel {
     titledRow("Async Profiler") {
       row { browserLink("Async profiler README.md", "https://github.com/jvm-profiling-tools/async-profiler") }
-      row("Agent path:") { textFieldWithBrowseButton("", comment = "If field is empty bundled agent will be used") }
-      row("Agent options:") { textFieldWithBrowseButton("", comment = "Don't add output format (collapsed is used) or output file options") }
+      row("Agent path:") { textFieldWithBrowseButton("").comment("If field is empty bundled agent will be used") }
+      row("Agent options:") { textFieldWithBrowseButton("").comment("Don't add output format (collapsed is used) or output file options") }
     }
     titledRow("Java Flight Recorder") {
       row("JRE home:") {
-        textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
+        textFieldWithBrowseButton("").comment("At least OracleJRE 9 or OpenJRE 11 is required to import dump")
       }
+    }
+  }
+}
+
+fun hideableRow(): JPanel {
+  val dummyTextBinding = PropertyBinding({ "" }, {})
+
+  return panel {
+    row("Foo") {
+      textField(dummyTextBinding)
+    }
+    hideableRow("Bar") {
+      textField(dummyTextBinding)
     }
   }
 }
@@ -273,12 +305,89 @@ fun spannedCheckbox(): JPanel {
   }
 }
 
+fun checkboxRowsWithBigComponents(): JPanel {
+  return panel {
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      JBTextField()()
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        JBTextField()()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        comment("commentary")
+      }
+    }
+  }
+}
+
 // titledRows is not enough to test because component align depends on comment components, so, pure titledRow must be tested
 fun titledRow(): JPanel {
   return panel {
     titledRow("Remote settings") {
       row("Default notebook name:") { JTextField("")() }
       row("Spark version:") { JTextField("")() }
+    }
+  }
+}
+
+fun sampleConfigurablePanel(): JPanel {
+  return panel {
+    titledRow("Settings") {
+      row { checkBox("Some test option") }
+      row { checkBox("Another test option") }
+    }
+    titledRow("Options") {
+      row { checkBox("Some test option") }
+      row {
+        buttonGroup("Radio group") {
+          row { radioButton("Option 1") }
+          row { radioButton("Option 2") }
+        }
+      }
+      row {
+        buttonGroup("Radio group") {
+          row { radioButton("Option 1", comment = "Comment for the Option 1") }
+          row { radioButton("Option 2") }
+        }
+      }
+    }
+    titledRow("Test") {
+      row("Header") { JTextField()() }
+      row("Longer Header") { checkBox("Some long description", comment = "Comment for the checkbox with longer header.") }
+      row("Header") { JPasswordField()() }
+      row("Header") { comboBox(DefaultComboBoxModel(arrayOf("Option 1", "Option 2")), { null }, {}) }
     }
   }
 }
@@ -298,5 +407,35 @@ fun checkBoxFollowedBySpinner(): JPanel {
       label("files to start background indexing")
     }
 
+  }
+}
+
+fun separatorAndComment() : JPanel {
+  return panel {
+    row("Label", separated = true) {
+      textField({ "abc" }, {}).comment("comment")
+    }
+  }
+}
+
+fun rowWithIndent(): JPanel {
+  return panel {
+    row("Zero") {
+      subRowIndent = 0
+      row("Bar 0") {
+      }
+    }
+    row("One") {
+      subRowIndent = 1
+
+      row("Bar 1") {
+      }
+    }
+    row("Two") {
+      subRowIndent = 2
+
+      row("Bar 2") {
+      }
+    }
   }
 }

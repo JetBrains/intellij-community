@@ -16,7 +16,6 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.usageView.UsageInfo;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
 
 /**

@@ -33,8 +33,8 @@ B <warning>b</warning> = {print 2}
 interface SAM1 { def foo(String s)}
 interface SAM2 { def bar(Integer i)}
 
-def method(x, SAM1 s1){s1.foo<weak_warning>(x)</weak_warning>}
-def method(x, SAM2 s2){s2.bar<weak_warning>(x)</weak_warning>}
+def method(x, SAM1 s1){s1.foo(x)}
+def method(x, SAM2 s2){s2.bar(x)}
 
 method <warning>(1)</warning>   {it}  // fails because SAM1 and SAM2 are seen as equal
 method <warning>("1")</warning> {it}  // fails because SAM1 and SAM2 are seen as equal

@@ -16,12 +16,12 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LocalMissingPackageInfoInspectionTest extends LightInspectionTestCase {
+public class LocalMissingPackageInfoInspectionTest extends LightJavaInspectionTestCase {
 
   public void testLocalInspection() {
     addEnvironmentClass("package a;" +

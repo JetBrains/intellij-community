@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
@@ -19,13 +20,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class RedundantEscapeInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Redundant character escape";
-  }
 
   @NotNull
   @Override
@@ -51,7 +45,7 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
       if (astNode == null || astNode.getElementType() != RegExpTT.REDUNDANT_ESCAPE) {
         return;
       }
-      myHolder.registerProblem(ch, "Redundant character escape <code>" + ch.getText() + "</code> in RegExp",
+      myHolder.registerProblem(ch, RegExpBundle.message("inspection.warning.redundant.character.escape.0.in.regexp", ch.getText()),
                                new RemoveRedundantEscapeFix());
     }
   }
@@ -62,7 +56,7 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant escape";
+      return RegExpBundle.message("inspection.quick.fix.remove.redundant.escape");
     }
 
     @Override

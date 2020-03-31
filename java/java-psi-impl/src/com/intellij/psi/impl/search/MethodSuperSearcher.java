@@ -17,7 +17,7 @@ import java.util.List;
  * @author ven
  */
 public class MethodSuperSearcher extends QueryExecutorBase<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.MethodSuperSearcher");
+  private static final Logger LOG = Logger.getInstance(MethodSuperSearcher.class);
 
   public MethodSuperSearcher() {
     super(true);

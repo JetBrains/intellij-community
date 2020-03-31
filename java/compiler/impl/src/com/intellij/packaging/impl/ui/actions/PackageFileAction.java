@@ -18,7 +18,7 @@ package com.intellij.packaging.impl.ui.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -43,10 +43,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class PackageFileAction extends AnAction {
-  private static final SyncDateFormat TIME_FORMAT = new SyncDateFormat(new SimpleDateFormat("h:mm:ss a"));
+  private static class Holder {
+    private static final SyncDateFormat TIME_FORMAT = new SyncDateFormat(new SimpleDateFormat("h:mm:ss a"));
+  }
 
   public PackageFileAction() {
-    super(CompilerBundle.message("action.name.package.file"), CompilerBundle.message("action.description.package.file"), null);
+    super(JavaCompilerBundle.messagePointer("action.name.package.file"), JavaCompilerBundle.messagePointer("action.description.package.file"), null);
   }
 
   @Override
@@ -57,7 +59,8 @@ public class PackageFileAction extends AnAction {
       final List<VirtualFile> files = getFilesToPackage(e, project);
       if (!files.isEmpty()) {
         visible = true;
-        e.getPresentation().setText(files.size() == 1 ? CompilerBundle.message("action.name.package.file") : CompilerBundle.message("action.name.package.files"));
+        e.getPresentation().setText(files.size() == 1 ? JavaCompilerBundle.message("action.name.package.file") : JavaCompilerBundle
+          .message("action.name.package.files"));
       }
     }
 
@@ -106,8 +109,8 @@ public class PackageFileAction extends AnAction {
         if (fileNames.length() != 0) fileNames.append(", ");
         fileNames.append("'").append(file.getName()).append("'");
       }
-      String time = TIME_FORMAT.format(Clock.getTime());
-      final String statusText = CompilerBundle.message("status.text.file.has.been.packaged", files.size(), fileNames, time);
+      String time = Holder.TIME_FORMAT.format(Clock.getTime());
+      final String statusText = JavaCompilerBundle.message("status.text.file.has.been.packaged", files.size(), fileNames, time);
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null) {
         statusBar.setInfo(statusText);

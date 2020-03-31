@@ -15,37 +15,47 @@ class BaseScriptTransformationSupportTest extends LightGroovyTestCase {
 
   LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
-  private void doTest(String text) {
-    fixture.addFileToProject 'base.groovy', 'abstract class MyBaseScript extends Script {}'
-    def file = fixture.addFileToProject('Zzz.groovy', """\
-import groovy.transform.BaseScript
-
-$text
-""") as GroovyFileImpl
+  private void doTest(String text, String packageName = null) {
+    fixture.addFileToProject 'script/base.groovy', 'package script; abstract class MyBaseScript extends Script {}'
+    def file = fixture.addFileToProject('Zzz.groovy', text) as GroovyFileImpl
     assert !file.contentsLoaded
 
-    def clazz = fixture.findClass('Zzz')
+    def clazz = fixture.findClass(packageName == null ? 'Zzz' : (String)"${packageName}.Zzz")
     assert clazz instanceof GroovyScriptClass
     assert !file.contentsLoaded
 
-    assert InheritanceUtil.isInheritor(clazz as PsiClass, 'MyBaseScript')
+    assert InheritanceUtil.isInheritor(clazz as PsiClass, 'script.MyBaseScript')
     assert !file.contentsLoaded
   }
 
   void 'test top level'() {
-    doTest '@BaseScript MyBaseScript hello'
+    doTest '@groovy.transform.BaseScript script.MyBaseScript hello'
   }
 
   void 'test script block level'() {
-    doTest 'if (true) @BaseScript MyBaseScript hello'
+    doTest 'if (true) @groovy.transform.BaseScript script.MyBaseScript hello'
   }
 
   void 'test within method'() {
     doTest '''\
 def foo() {
-  @BaseScript MyBaseScript hello  
+  @groovy.transform.BaseScript script.MyBaseScript hello  
 }
 '''
+  }
+
+  void 'test on import'() {
+    doTest '''\
+@BaseScript(script.MyBaseScript)
+import groovy.transform.BaseScript
+'''
+  }
+
+  void 'test on package'() {
+    doTest '''\
+@groovy.transform.BaseScript(script.MyBaseScript)
+package com.foo
+''', 'com.foo'
   }
 
   void 'test no AE when script class has same name as a package'() {

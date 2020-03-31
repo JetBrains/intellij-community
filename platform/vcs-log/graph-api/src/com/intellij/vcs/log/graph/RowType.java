@@ -23,5 +23,4 @@ public enum RowType {
    * Indicates that the commit on this row doesn't match current filters.
    */
   UNMATCHED
-
 }

@@ -1,6 +1,0 @@
-root = true
-
-[*]
-
-indent_size = tab
-tab_width = 3

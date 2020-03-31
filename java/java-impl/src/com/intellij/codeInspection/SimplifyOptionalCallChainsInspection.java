@@ -1,21 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -44,10 +45,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
-  private static final CallMatcher OPTIONAL_OR_ELSE_OR_ELSE_GET = CallMatcher.anyOf(
-    OPTIONAL_OR_ELSE,
-    OPTIONAL_OR_ELSE_GET
-  );
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
@@ -145,7 +142,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(methodRef, true);
       if (lambda != null) {
-        LambdaRefactoringUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
+        LambdaUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
         return lambda;
       }
     }
@@ -471,9 +468,12 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
           !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
         return null;
       }
-      if ("get".equals(call.getMethodExpression().getReferenceName())) {
-        SpecialFieldValue fact = CommonDataflow.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
-        if (DfaFactType.NULLABILITY.fromDfaValue(SpecialField.OPTIONAL_VALUE.extract(fact)) != DfaNullability.NOT_NULL) return null;
+      String name = call.getMethodExpression().getReferenceName();
+      if ("get".equals(name)) {
+        DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(qualifier));
+        if (dfType.isSuperType(DfTypes.NULL)) return null;
+      } else if ("orElse".equals(name)) {
+        if (!ExpressionUtils.isNullLiteral(call.getArgumentList().getExpressions()[0])) return null;
       }
       return new Context(qualifier, parentCall);
     }
@@ -491,7 +491,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (myType == Type.OptionalGet) {
         return OPTIONAL_GET;
       }
-      return OPTIONAL_OR_ELSE_OR_ELSE_GET;
+      return OPTIONAL_OR_ELSE;
     }
 
     private static class Context {
@@ -672,7 +672,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression orElseArgument = getOrElseArgument(call, myType);
       if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-      PsiLocalVariable returnVar = tryCast(call.getParent(), PsiLocalVariable.class);
+      PsiLocalVariable returnVar = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiLocalVariable.class);
       if (returnVar == null) return null;
       PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
       if (statement == null) return null;
@@ -760,13 +760,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.name");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "map()", "flatMap()");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.description");
+      return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.description");
     }
 
     @Nullable
@@ -809,10 +809,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     private static boolean isPresentOptional(PsiExpression optionalExpression) {
-      SpecialFieldValue fact = CommonDataflow.getExpressionFact(optionalExpression, DfaFactType.SPECIAL_FIELD_VALUE);
-      DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
-      if (!(value instanceof DfaFactMapValue)) return false;
-      return DfaNullability.toNullability(DfaFactType.NULLABILITY.fromDfaValue(value)) == Nullability.NOT_NULL;
+      return !SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(optionalExpression)).isSuperType(DfTypes.NULL);
     }
 
     private static class Context {
@@ -832,13 +829,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.name");
+      return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.description");
+      return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.description");
     }
 
     @Nullable
@@ -850,16 +847,17 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiLambdaExpression outerIfPresentArgument = tryCast(call.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
       if (outerIfPresentArgument == null) return null;
       if (outerIfPresentArgument.getParameterList().getParametersCount() != 1) return null;
-      PsiParameter parameter = outerIfPresentArgument.getParameterList().getParameters()[0];
-      if (parameter == null) return null;
-      String outerIfPresentParameterName = parameter.getName();
-      if (outerIfPresentParameterName == null) return null;
+      PsiParameter outerParameter = outerIfPresentArgument.getParameterList().getParameters()[0];
+      if (outerParameter == null) return null;
+      String outerIfPresentParameterName = outerParameter.getName();
       PsiExpression outerIfPresentBodyExpr = LambdaUtil.extractSingleExpressionFromBody(outerIfPresentArgument.getBody());
       PsiMethodCallExpression outerIfPresentBody = tryCast(outerIfPresentBodyExpr, PsiMethodCallExpression.class);
       if (!OPTIONAL_IF_PRESENT.test(outerIfPresentBody)) return null;
+
       PsiExpression innerIfPresentQualifier = outerIfPresentBody.getMethodExpression().getQualifierExpression();
-      PsiExpression nonTrivialQualifier = ExpressionUtils.isReferenceTo(innerIfPresentQualifier, parameter) ? null : innerIfPresentQualifier;
+      PsiExpression nonTrivialQualifier = ExpressionUtils.isReferenceTo(innerIfPresentQualifier, outerParameter) ? null : innerIfPresentQualifier;
       PsiExpression innerIfPresentArgument = outerIfPresentBody.getArgumentList().getExpressions()[0];
+      if (ReferencesSearch.search(outerParameter, new LocalSearchScope(innerIfPresentArgument)).findFirst() != null) return null;
 
       PsiMethodCallExpression mapBefore = null;
       if (OPTIONAL_MAP.test(qualifierCall)) {
@@ -908,7 +906,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_IF_PRESENT;
     }
 
-    class Context {
+    static class Context {
       @Nullable PsiMethodCallExpression myMapBefore;
       @Nullable PsiExpression myMapLambdaBodyAfter;
       @NotNull String myOuterIfPresentVarName;

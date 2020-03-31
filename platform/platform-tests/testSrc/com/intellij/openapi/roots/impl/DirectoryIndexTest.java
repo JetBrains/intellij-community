@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,11 +17,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +26,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class DirectoryIndexTest extends DirectoryIndexTestCase {
   private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
@@ -135,7 +132,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       myModule1OutputDir = createChildDirectory(myOutputDir, "module1");
 
       getCompilerProjectExtension().setCompilerOutputUrl(myOutputDir.getUrl());
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
       // fill roots of module1
       {
@@ -155,8 +151,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
       // fill roots of module2
       {
-        VirtualFile moduleFile = createChildData(myModule2Dir, "module2.iml");
-        myModule2 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
+        myModule2 = createJavaModuleWithContent(getProject(), "module2", myModule2Dir);
 
         PsiTestUtil.addContentRoot(myModule2, myModule2Dir);
         mySrcDir2Folder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
@@ -166,25 +161,23 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
 
-      PlatformTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME,
-                                      Collections.singletonList(new AdditionalLibraryRootsProvider() {
-                                        @NotNull
-                                        @Override
-                                        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-                                          return myProject == project ? Collections.singletonList(
-                                            new JavaSyntheticLibrary(
-                                              ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
-                                              ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
-                                              ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
-                                              null)
-                                          ) : Collections.emptyList();
-                                        }
-                                      }), getTestRootDisposable());
+      ExtensionTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME, Collections.<AdditionalLibraryRootsProvider>singletonList(new AdditionalLibraryRootsProvider() {
+                                          @NotNull
+                                          @Override
+                                          public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+                                            return myProject == project ? Collections.singletonList(
+                                              new JavaSyntheticLibrary(
+                                                ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
+                                                ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
+                                                ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
+                                                null)
+                                            ) : Collections.emptyList();
+                                          }
+                                        }), getTestRootDisposable());
 
       // fill roots of module3
       {
-        VirtualFile moduleFile = createChildData(myModule3Dir, "module3.iml");
-        myModule3 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
+        myModule3 = createJavaModuleWithContent(getProject(), "module3", myModule3Dir);
 
         PsiTestUtil.addContentRoot(myModule3, myModule3Dir);
         ModuleRootModificationUtil.addDependency(myModule3, myModule2);
@@ -743,7 +736,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertIteratedContent(myFileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
 
     // removing file content root
-    PsiTestUtil.removeContentEntry(myModule, ObjectUtils.notNull(contentEntry.getFile()));
+    PsiTestUtil.removeContentEntry(myModule, Objects.requireNonNull(contentEntry.getFile()));
     assertNotInProject(fileRoot);
     assertFalse(myFileIndex.isInContent(fileRoot));
     assertFalse(myFileIndex.isInSource(fileRoot));
@@ -943,7 +936,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testSourceRootFromUnsupportedFileSystem() {
-    VirtualFile httpFile = ObjectUtils.notNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
+    VirtualFile httpFile = Objects.requireNonNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
     PsiTestUtil.addSourceRoot(myModule, httpFile);
     assertNotInProject(httpFile);
   }
@@ -1012,5 +1005,24 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
         delete(xxx);
       }
     }).assertTiming();
+  }
+
+  public void testSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
+    VirtualFile contentDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("module"));
+
+    Module module = createJavaModuleWithContent(getProject(), "module", contentDir);
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      VirtualFile excludedDir = createChildDirectory(contentDir, "excluded");
+      VirtualFile sourcesDir = createChildDirectory(excludedDir, "sources");
+      createChildData(sourcesDir, "A.java");
+
+      PsiTestUtil.addContentRoot(module, contentDir);
+      PsiTestUtil.addExcludedRoot(module, excludedDir);
+      PsiTestUtil.addSourceRoot(module, sourcesDir);
+    });
+
+    VirtualFile aJava = contentDir.findChild("excluded").findChild("sources").findChild("A.java");
+    assertIndexableContent(Collections.singletonList(aJava), Collections.emptyList());
   }
 }

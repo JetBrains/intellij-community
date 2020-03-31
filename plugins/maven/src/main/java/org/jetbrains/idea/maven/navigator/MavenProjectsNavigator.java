@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -13,9 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -44,7 +46,10 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenProjectNavigator", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
   public static final String TOOL_WINDOW_ID = "Maven";
   public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
@@ -156,7 +161,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     MavenProjectsManager.getInstance(myProject).addManagerListener(new MavenProjectsManager.Listener() {
       @Override
       public void activated() {
-        initToolWindow();
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> initToolWindow());
         listenForProjectsChanges();
         scheduleStructureUpdate();
       }
@@ -171,12 +176,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   private void listenForProjectsChanges() {
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MyProjectsListener());
 
-    MavenShortcutsManager.getInstance(myProject).addListener(new MavenShortcutsManager.Listener() {
-      @Override
-      public void shortcutsUpdated() {
-        scheduleStructureRequest(() -> myStructure.updateGoals());
-      }
-    });
+    MavenShortcutsManager.getInstance(myProject).addListener(() -> scheduleStructureRequest(() -> myStructure.updateGoals()));
 
     MavenTasksManager.getInstance(myProject).addListener(new MavenTasksManager.Listener() {
       @Override
@@ -241,7 +241,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean wasVisible = false;
 
       @Override
-      public void stateChanged() {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         if (myToolWindow.isDisposed()) return;
         boolean visible = myToolWindow.isVisible();
         if (!visible || wasVisible) {
@@ -273,7 +273,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         myPane.setOpaque(false);
         String addIconText = "'+'";
         String refreshIconText = "'Reimport'";
-        String message = ProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
+        String message = MavenProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
         int firstEol = message.indexOf("\n");
         int addIconMarkerIndex = message.indexOf(addIconText);
         myPane.replaceSelection(message.substring(0, addIconMarkerIndex));
@@ -344,7 +344,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
 
       if (myToolWindow.isAvailable() != hasMavenProjects) {
-        myToolWindow.setAvailable(hasMavenProjects, null);
+        myToolWindow.setAvailable(hasMavenProjects);
 
         if (hasMavenProjects) {
           myToolWindow.activate(null);

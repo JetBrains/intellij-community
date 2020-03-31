@@ -6,10 +6,7 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
@@ -20,12 +17,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockVcsContextFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +39,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   private ChangeListManager myRealChangeListManager;
   private CodeStyleManager myRealCodeStyleManger;
-  private VcsContextFactory myRealVcsContextFactory;
 
   private final static String COMMITTED =
     "class Test {\n" +
@@ -77,7 +73,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     myMockCodeStyleManager = new MockCodeStyleManager();
     registerCodeStyleManager(myMockCodeStyleManager);
 
-    myRealVcsContextFactory = ServiceManager.getService(VcsContextFactory.class);
     registerVcsContextFactory(new MockVcsContextFactory(getSourceRoot().getFileSystem()));
 
     LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new MockPlainTextFormattingModelBuilder(),
@@ -92,7 +87,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     try {
       registerChangeListManager(myRealChangeListManager);
       registerCodeStyleManager(myRealCodeStyleManger);
-      registerVcsContextFactory(myRealVcsContextFactory);
 
       TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
@@ -102,7 +96,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     finally {
       myRealChangeListManager = null;
       myRealCodeStyleManger = null;
-      myRealVcsContextFactory = null;
       myMockChangeListManager = null;
       myMockCodeStyleManager = null;
       myMockPlainTextImportOptimizer = null;
@@ -309,39 +302,30 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     assertTrue(isImportsOptimized(toModify));
     assertTrue(isImportsOptimized(toModify2));
-    assertTrue(!isImportsOptimized(toKeep));
-    assertTrue(!isImportsOptimized(toKeep2));
+    assertFalse(isImportsOptimized(toKeep));
+    assertFalse(isImportsOptimized(toKeep2));
   }
 
-  private static void registerChangeListManager(@NotNull ChangeListManager manager) {
-    Project project = getProject();
-    assert (project instanceof ComponentManagerImpl);
-    ComponentManagerImpl projectComponentManager = (ComponentManagerImpl)project;
-    projectComponentManager.registerComponentInstance(ChangeListManager.class, manager);
+  private void registerChangeListManager(@NotNull ChangeListManager manager) {
+    ServiceContainerUtil.replaceService(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
   }
 
-  private static void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
-    String componentKey = CodeStyleManager.class.getName();
-    MutablePicoContainer container = (MutablePicoContainer)getProject().getPicoContainer();
-    container.unregisterComponent(componentKey);
-    container.registerComponentInstance(componentKey, manager);
+  private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
+    ServiceContainerUtil.replaceService(getProject(), CodeStyleManager.class, manager, getTestRootDisposable());
   }
 
-  private static void registerVcsContextFactory(@NotNull VcsContextFactory factory) {
-    String key = VcsContextFactory.class.getName();
-    MutablePicoContainer container = (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer();
-    container.unregisterComponent(key);
-    container.registerComponentInstance(key, factory);
+  private void registerVcsContextFactory(@NotNull VcsContextFactory factory) {
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), VcsContextFactory.class, factory, getTestRootDisposable());
   }
 
-  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) {
+  private void doTest(@NotNull String committed, @NotNull String modified, ChangedLines @NotNull ... lines) {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile file = fs.createFile("Test.java", committed, modified);
     reformatDirectory(myWorkingDirectory);
     assertFormattedRangesEqualsTo(file, lines);
   }
 
-  private void assertFormattedLines(@NotNull ChangedLines[] expectedLines, @NotNull PsiFile... files) {
+  private void assertFormattedLines(ChangedLines @NotNull [] expectedLines, PsiFile @NotNull ... files) {
     for (PsiFile file : files)
       assertFormattedRangesEqualsTo(file, expectedLines);
   }
@@ -365,7 +349,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     return "Expected: " + Arrays.toString(expected) + " Actual: " + Arrays.toString(actual);
   }
 
-  private static void reformatDirectory(@NotNull PsiDirectory dir) {
+  private void reformatDirectory(@NotNull PsiDirectory dir) {
     ReformatCodeProcessor processor = new ReformatCodeProcessor(getProject(), dir, true, true);
     processor.run();
   }
@@ -392,13 +376,13 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       return file;
     }
 
-    private void registerCommittedRevision(@NotNull String committedContent, @NotNull PsiFile... files) {
+    private void registerCommittedRevision(@NotNull String committedContent, PsiFile @NotNull ... files) {
       List<Change> changes = createChanges(committedContent, files);
       injectChanges(changes);
     }
 
     @NotNull
-    private List<Change> createChanges(@NotNull String committed, @NotNull PsiFile... files) {
+    private List<Change> createChanges(@NotNull String committed, PsiFile @NotNull ... files) {
       List<Change> changes = new ArrayList<>();
       for (PsiFile file : files) {
         changes.add(createChange(committed, file));

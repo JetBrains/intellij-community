@@ -4,6 +4,7 @@ package com.intellij.lang.java.actions
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
@@ -50,5 +51,9 @@ internal class FieldExpression(
     }
 
     return if (result.size < 2) LookupElement.EMPTY_ARRAY else result.toTypedArray()
+  }
+
+  override fun getLookupFocusDegree(): LookupFocusDegree {
+    return LookupFocusDegree.UNFOCUSED
   }
 }

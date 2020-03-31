@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +21,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author max
- */
 public class FramelessNotificationPopup {
   private final JComponent myContent;
   public static final Dimension myPreferredContentSize = JBUI.size(300, 100);
@@ -60,29 +58,33 @@ public class FramelessNotificationPopup {
     this(owner, content, backgroud, true, null);
   }
 
-  public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize, final ActionListener listener) {
+  FramelessNotificationPopup(final JComponent owner,
+                             final JComponent content,
+                             Color backgroud,
+                             boolean useDefaultPreferredSize,
+                             final ActionListener listener) {
     myBackgroud = backgroud;
     myUseDefaultPreferredSize = useDefaultPreferredSize;
     myContent = new ContentComponent(content);
 
     myActionListener = listener;
 
-    myFadeInTimer = UIUtil.createNamedTimer("Frameless fade in",10, myFadeTracker);
+    myFadeInTimer = TimerUtil.createNamedTimer("Frameless fade in", 10, myFadeTracker);
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
       .setRequestFocus(false)
       .setResizable(false)
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
-      .setAlpha(0.2f).addListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (myFadeInTimer.isRunning()) {
-          myFadeInTimer.stop();
+      .setAlpha(0.2f)
+      .addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          if (myFadeInTimer.isRunning()) {
+            myFadeInTimer.stop();
+          }
+          myFadeInTimer.removeActionListener(myFadeTracker);
         }
-        myFadeInTimer.removeActionListener(myFadeTracker);
-      }
-    })
-      .createPopup();
+      }).createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
 

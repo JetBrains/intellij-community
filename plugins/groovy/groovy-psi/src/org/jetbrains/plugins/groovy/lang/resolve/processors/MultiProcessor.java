@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static java.util.Collections.singletonList;
-import static org.jetbrains.annotations.ApiStatus.Experimental;
 
-@Experimental
+@ApiStatus.Internal
 public interface MultiProcessor extends PsiScopeProcessor {
 
   @NotNull

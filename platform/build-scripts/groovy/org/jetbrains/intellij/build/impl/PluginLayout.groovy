@@ -1,42 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.PluginPublishingSpec
 import org.jetbrains.intellij.build.ResourcesGenerator
 
-import java.util.function.Function
+import java.util.function.BiFunction
+
 /**
  * Describes layout of a plugin in the product distribution
- *
- * @author nik
  */
 class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
-  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
   boolean directoryNameSetExplicitly
-  PluginPublishingSpec defaultPublishingSpec
   PluginBundlingRestrictions bundlingRestrictions
+  Collection<String> pathsToScramble = []
+  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true} as BiFunction<BuildContext, File>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -50,6 +34,10 @@ class PluginLayout extends BaseLayout {
    * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
    * specify the plugin module in {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundledPluginModules/pluginModulesToPublish} list.
    *
+   * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
+   * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
+   * a library is used aren't bundled with IDEs so we don't want to increase size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
+   * to include such a library to the plugin distribution.</p>
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
   static PluginLayout plugin(String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
@@ -58,9 +46,6 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
-    if (spec.version != null) {
-      layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
-    }
     spec.withModule(mainModuleName, spec.mainJarName)
     if (spec.mainJarNameSetExplicitly) {
       layout.explicitlySetJarPaths.add(spec.mainJarName)
@@ -76,7 +61,11 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
-  /**
+  @Override
+  String toString() {
+    return "Plugin '$mainModule'"
+  }
+/**
    * @return map from a JAR name to list of modules
    */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
@@ -100,9 +89,6 @@ class PluginLayout extends BaseLayout {
     private boolean directoryNameSetExplicitly
     private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
 
-    /**
-     * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
-     */
     String version
 
     PluginLayoutSpec(PluginLayout layout) {
@@ -209,14 +195,6 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
-     * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
-     */
-    void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
-      layout.versionEvaluator = versionEvaluator
-    }
-
-    /**
      * Do not create 'resources_en.jar' and pack all resources into corresponding module JARs.
      * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
      */
@@ -233,11 +211,23 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * Specifies {@link PluginPublishingSpec} which should be used by default in all IDEs which include this plugin.
-     * {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec} can be used to override this for a particular product.
+     * Specifies a relative path to a plugin jar that should be scrambled.
+     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * If scramble tool is not defined, scrambling will not be performed
+     * Multiple invications of this method will add corresponding paths to a list of paths to be scrambled
+     *
+     * @param relativePath - a path to a jar file relative to plugin root directory
      */
-    void setDefaultPublishingSpec(PluginPublishingSpec publishingSpec) {
-      layout.defaultPublishingSpec = publishingSpec
+    void scramble(String relativePath) {
+      layout.pathsToScramble.add(relativePath)
+    }
+
+    /**
+     * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
+     * By default all platform jars are added to the 'scramble classpath'
+     */
+    void filterScrambleClasspath(BiFunction<BuildContext, File, Boolean> filter) {
+      layout.scrambleClasspathFilter = filter
     }
   }
 }

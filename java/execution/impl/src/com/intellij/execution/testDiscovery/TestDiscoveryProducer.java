@@ -11,7 +11,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Experimental
 public interface TestDiscoveryProducer {
   ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
 
@@ -67,16 +65,16 @@ public interface TestDiscoveryProducer {
   }
 
   @NotNull
-  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) throws IOException;
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId);
 
   @NotNull
-  List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassNames, byte frameworkId) throws IOException;
+  List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassNames, byte frameworkId);
 
   @NotNull
   List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException;
 
   // testFqn - (className, methodName)
-  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
     for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
         pathsConsumer.consume(path);
@@ -84,7 +82,7 @@ public interface TestDiscoveryProducer {
     }
   }
 
-  static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
     for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePathsByClassName(project, testClassName, frameworkId)) {
         pathsConsumer.consume(path);

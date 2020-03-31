@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,32 +60,20 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
 
-  public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
+  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @NlsContexts.DialogTitle String title);
 
-  public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title);
+  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @NlsContexts.DialogTitle String title);
 
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
+  public abstract void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                                   @NotNull RepositoryLocation location,
+                                                   @Nullable @NlsContexts.DialogTitle String title,
+                                                   @Nullable Component parent);
 
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
-
-  public abstract void showChangesBrowser(CommittedChangesProvider provider,
-                                          final RepositoryLocation location,
-                                          @Nls String title,
-                                          @Nullable final Component parent);
-
-  public abstract void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
-
-  public abstract void openCommittedChangesTab(AbstractVcs vcs,
-                                               VirtualFile root,
-                                               ChangeBrowserSettings settings,
+  public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                               @NotNull RepositoryLocation location,
+                                               @NotNull ChangeBrowserSettings settings,
                                                int maxCount,
-                                               final String title);
-
-  public abstract void openCommittedChangesTab(CommittedChangesProvider provider,
-                                               RepositoryLocation location,
-                                               ChangeBrowserSettings settings,
-                                               int maxCount,
-                                               final String title);
+                                               @Nullable @NlsContexts.DialogTitle String title);
 
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
@@ -132,16 +120,9 @@ public abstract class AbstractVcsHelper {
                                        @NotNull FilePath path,
                                        @NotNull AbstractVcs vcs);
 
-  /**
-   * Shows the "Rollback Changes" dialog with the specified list of changes.
-   *
-   * @param changes the changes to show in the dialog.
-   */
-  public abstract void showRollbackChangesDialog(List<? extends Change> changes);
-
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                               String title,
+                                                               @NlsContexts.DialogTitle String title,
                                                                @Nullable String prompt,
                                                                @Nullable String singleFileTitle,
                                                                @Nullable String singleFilePromptTemplate,
@@ -149,7 +130,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                String title,
+                                                                @NlsContexts.DialogTitle String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
@@ -157,7 +138,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                String title,
+                                                                @NlsContexts.DialogTitle String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,

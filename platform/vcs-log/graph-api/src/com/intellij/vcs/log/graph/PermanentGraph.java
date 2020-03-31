@@ -25,7 +25,6 @@ import java.util.Set;
 
 /**
  * PermanentGraph is created once per repository, and forever until the log is refreshed. <br/>
- * An instance can be created by {@link PermanentGraphBuilder}. <br/>
  * This graph contains all commits in the log and may occupy a lot of memory.
  *
  * @see VisibleGraph
@@ -61,9 +60,9 @@ public interface PermanentGraph<Id> {
   Condition<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
 
   enum SortType {
-    Normal("Off", "Sort commits topologically and by date"),
-    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"),
-    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased");
+    Normal("Off", "Sort commits topologically and by date"), // NON-NLS
+    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"), // NON-NLS
+    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased"); // NON-NLS
 
     @NotNull private final String myPresentation;
     @NotNull private final String myDescription;

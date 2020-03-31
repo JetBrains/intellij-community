@@ -17,27 +17,54 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class GlobalInspectionContextTest extends CodeInsightTestCase {
+public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    InspectionProfileImpl.INIT_INSPECTIONS = false;
+    super.tearDown();
+  }
+
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/globalContext/";
+  }
+
   public void testProblemDuplication() throws Exception {
     String shortName = new VisibilityInspection().getShortName();
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
@@ -97,21 +124,156 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     assertEquals(deserialized, fooMethod);
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    InspectionProfileImpl.INIT_INSPECTIONS = true;
+  // GlobalInspections don't interrupted on write action yet because it's hard to come up with the way to restart em
+  @Bombed(year = 2020, month = Calendar.APRIL, day = 1, user="cdr")
+  public void testGlobalInspectionGetsInterruptedOnWriteActionStart() {
+    AtomicBoolean inspectionStarted = new AtomicBoolean();
+    AtomicBoolean doRunInspection = new AtomicBoolean(true);
+    GlobalJavaBatchInspectionTool myTool = new GlobalJavaBatchInspectionTool() {
+      @Override
+      public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                    @NotNull AnalysisScope scope,
+                                                    @NotNull InspectionManager manager,
+                                                    @NotNull GlobalInspectionContext globalContext,
+                                                    @NotNull ProblemDescriptionsProcessor processor) {
+        if (refEntity instanceof RefFile) {
+          inspectionStarted.set(true);
+          while (doRunInspection.get()) {
+            ProgressManager.checkCanceled();
+          }
+          return new CommonProblemDescriptor[]{ manager.createProblemDescriptor("Finished: "+getShortName()) };
+        }
+        return CommonProblemDescriptor.EMPTY_ARRAY;
+      }
+
+      @NotNull
+      @Override
+      public String getShortName() {
+        return "myTool";
+      }
+
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "A"+getShortName();
+      }
+    };
+    String shortName = myTool.getShortName();
+    InspectionProfileImpl profile = new InspectionProfileImpl("myTestProfile:"+getTestName(false));
+    InspectionsKt.disableAllTools(profile);
+    profile.addTool(getProject(), new GlobalInspectionToolWrapper(myTool), null);
+    profile.enableTool(shortName, getProject());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+    context.setExternalProfile(profile);
+    @Language("JAVA")
+    String text = "class Foo {}";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    AnalysisScope scope = new AnalysisScope(getFile());
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!inspectionStarted.get()) {
+          SwingUtilities.invokeLater(this);
+          return;
+        }
+
+        inspectionStarted.set(false);
+        WriteAction.run(() -> { });
+
+        // have to restart
+        while (!inspectionStarted.get()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+
+        doRunInspection.set(false);
+      }
+    });
+
+    context.doInspections(scope);
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    Tools tools = context.getTools().get(shortName);
+    GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    CommonProblemDescriptor descriptor = assertOneElement(presentation.getProblemDescriptors());
+    assertEquals("Finished: "+shortName, descriptor.getDescriptionTemplate());
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    InspectionProfileImpl.INIT_INSPECTIONS = false;
-    super.tearDown();
-  }
+  public void testGlobalSimpleInspectionGetsInterruptedOnWriteActionStart() {
+    AtomicBoolean inspectionStarted = new AtomicBoolean();
+    AtomicBoolean doRunInspection = new AtomicBoolean(true);
+    GlobalSimpleInspectionTool myTool = new GlobalSimpleInspectionTool() {
+      @Override
+      public void checkFile(@NotNull PsiFile file,
+                            @NotNull InspectionManager manager,
+                            @NotNull ProblemsHolder problemsHolder,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+        inspectionStarted.set(true);
+        while (doRunInspection.get()) {
+          ProgressManager.checkCanceled();
+        }
+        problemsHolder.registerProblem(manager.createProblemDescriptor(file, "Finished: "+getShortName(), (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+      }
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/globalContext/";
+      @NotNull
+      @Override
+      public String getShortName() {
+        return "myTool";
+      }
+
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "A"+getShortName();
+      }
+    };
+    String shortName = myTool.getShortName();
+    InspectionProfileImpl profile = new InspectionProfileImpl("myTestProfile:"+getTestName(false));
+    InspectionsKt.disableAllTools(profile);
+    profile.addTool(getProject(), new GlobalInspectionToolWrapper(myTool), null);
+    profile.enableTool(shortName, getProject());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+    context.setExternalProfile(profile);
+    @Language("JAVA")
+    String text = "class Foo {}";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    AnalysisScope scope = new AnalysisScope(getFile());
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!inspectionStarted.get()) {
+          SwingUtilities.invokeLater(this);
+          return;
+        }
+
+        inspectionStarted.set(false);
+        WriteAction.run(() -> { });
+
+        // have to restart
+        while (!inspectionStarted.get()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+
+        doRunInspection.set(false);
+      }
+    });
+
+    context.doInspections(scope);
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    Tools tools = context.getTools().get(shortName);
+    GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    CommonProblemDescriptor descriptor = assertOneElement(presentation.getProblemDescriptors());
+    assertEquals("Finished: "+shortName, descriptor.getDescriptionTemplate());
   }
 }

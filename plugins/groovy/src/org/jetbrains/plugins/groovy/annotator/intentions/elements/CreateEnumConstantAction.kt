@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
-import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedTypes
@@ -14,6 +14,7 @@ import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -26,7 +27,7 @@ internal class CreateEnumConstantAction(
 
   override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
-  override fun getText(): String = QuickFixBundle.message("create.enum.constant.from.usage.text", request.fieldName)
+  override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), request.fieldName)
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val name = request.fieldName
@@ -63,7 +64,7 @@ internal fun renderParameters(targetClass: GrTypeDefinition): String {
   val constructor = targetClass.constructors.firstOrNull() ?: return ""
   val parameters = constructor.parameterList.parameters
 
-  return parameters.joinToString(",") { it.name ?: "" }
+  return parameters.joinToString(",") { it.name }
 }
 
 internal fun canCreateEnumConstant(targetClass: GrTypeDefinition, request: CreateFieldRequest): Boolean {

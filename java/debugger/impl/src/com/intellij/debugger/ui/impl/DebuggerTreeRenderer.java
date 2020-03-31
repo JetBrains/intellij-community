@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -149,18 +149,14 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (nodeIcon != null && valueIcon != null) {
-      nodeIcon = new RowIcon(nodeIcon, valueIcon);
+      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
     }
     return nodeIcon;
   }
 
   private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
     if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
-      try {
-        return ((LocalVariableDescriptorImpl)valueDescriptor).getLocalVariable().getVariable().isArgument();
-      }
-      catch (EvaluateException ignored) {
-      }
+      return ((LocalVariableDescriptorImpl)valueDescriptor).isParameter();
     }
     else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
       return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();
@@ -202,8 +198,8 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeName = descriptor.getName();
     }
 
-    if(text.equals(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE)) {
-      descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+    if(text.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+      descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
       return descriptorText;
     }
 
@@ -272,18 +268,19 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           final EvaluateException exception = descriptor.getEvaluateException();
           if(exception != null) {
             final String errorMessage = exception.getMessage();
-            if(valueLabel.endsWith(errorMessage)) {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs, colorScheme);
-              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
+            final String valueText;
+            if (valueLabel.endsWith(errorMessage)) {
+              valueText = valueLabel.substring(0, valueLabel.length() - errorMessage.length());
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
-              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
+              valueText = valueLabel;
             }
+            appendValueTextWithEscapesRendering(descriptorText, valueText, valueLabelAttribs, colorScheme);
+            descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
           }
           else {
-            if(valueLabel.equals(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE)) {
-              descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+            if(valueLabel.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+              descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
               appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);

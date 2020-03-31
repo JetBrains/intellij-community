@@ -27,12 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnqualifiedFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unqualified.field.access.display.name");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnqualifiedFieldAccessVisitor();
   }

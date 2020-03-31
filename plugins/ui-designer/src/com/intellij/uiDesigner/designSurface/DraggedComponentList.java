@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.util.Collections;
  * @author yole
  */
 public class DraggedComponentList implements Transferable, ComponentDragObject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.DraggedComponentList");
+  private static final Logger LOG = Logger.getInstance(DraggedComponentList.class);
 
   private static DataFlavor ourDataFlavor;
 
@@ -56,7 +56,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     mySelection = FormEditingUtil.getSelectedComponents(editor);
 
     // sort selection in correct grid order
-    Collections.sort(mySelection, (o1, o2) -> {
+    mySelection.sort((o1, o2) -> {
       if (o1.getParent() == o2.getParent()) {
         int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
         if (result == 0) {

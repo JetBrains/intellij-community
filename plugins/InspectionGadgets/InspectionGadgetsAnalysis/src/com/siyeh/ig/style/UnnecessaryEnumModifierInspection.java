@@ -32,12 +32,6 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.enum.modifier.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiElement parent = (PsiElement)infos[1];
     if (parent instanceof PsiMethod) {
@@ -80,7 +74,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove unnecessary modifiers";
+      return InspectionGadgetsBundle.message("unnecessary.interface.modifiers.fix.family.name");
     }
 
     @Override

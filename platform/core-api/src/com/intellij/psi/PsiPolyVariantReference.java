@@ -26,8 +26,7 @@ public interface PsiPolyVariantReference extends PsiReference {
    *
    * @return the array of results for resolving the reference.
    */
-  @NotNull
-  ResolveResult[] multiResolve(boolean incompleteCode);
+  ResolveResult @NotNull [] multiResolve(boolean incompleteCode);
 
   @NotNull
   @Override

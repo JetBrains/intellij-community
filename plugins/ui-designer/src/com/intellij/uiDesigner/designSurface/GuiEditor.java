@@ -8,6 +8,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -87,7 +88,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiEditor");
+  private static final Logger LOG = Logger.getInstance(GuiEditor.class);
 
   private final Project myProject;
   @NotNull private final UIFormEditor myEditor;
@@ -172,7 +173,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private boolean myInsideChange;
   private final DocumentListener myDocumentListener;
   private final CardLayout myCardLayout = new CardLayout();
-  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
+  private final Disposable myContentSplitterDisposable = Disposer.newDisposable();
+  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter(myContentSplitterDisposable);
   private final JPanel myCardPanel = new JPanel(myCardLayout);
 
   @NonNls private static final String CARD_VALID = "valid";
@@ -284,7 +286,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
         if (!myInsideChange) {
           UndoManager undoManager = UndoManager.getInstance(getProject());
           alarm.cancelAllRequests();
-          alarm.addRequest(new MySynchronizeRequest(undoManager.isUndoInProgress() || undoManager.isRedoInProgress()),
+          alarm.addRequest(new MySynchronizeRequest(undoManager.isUndoOrRedoInProgress()),
                            100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
         }
       }
@@ -397,7 +399,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     myPsiTreeChangeListener.dispose();
 
-    Disposer.dispose(myContentSplitter);
+    Disposer.dispose(myContentSplitterDisposable);
   }
 
   @NotNull
@@ -991,8 +993,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   public boolean isUndoRedoInProgress() {
-    UndoManager undoManager = UndoManager.getInstance(getProject());
-    return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
+    return UndoManager.getInstance(getProject()).isUndoOrRedoInProgress();
   }
 
   void hideIntentionHint() {

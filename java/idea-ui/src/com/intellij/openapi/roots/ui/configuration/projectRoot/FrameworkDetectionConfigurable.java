@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurable;
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -26,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FrameworkDetectionConfigurable extends NamedConfigurable<DetectionExcludesConfiguration> {
   private final DetectionExcludesConfiguration myExcludesConfiguration;
   private final DetectionExcludesConfigurable myConfigurable;
@@ -60,7 +58,7 @@ public class FrameworkDetectionConfigurable extends NamedConfigurable<DetectionE
   @Nls
   @Override
   public String getDisplayName() {
-    return "Detection";
+    return JavaUiBundle.message("configurable.FrameworkDetectionConfigurable.display.name");
   }
 
   @Override

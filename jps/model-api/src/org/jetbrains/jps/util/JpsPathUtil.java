@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.util;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
@@ -9,11 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
+import java.util.stream.Stream;
 
-/**
- * @author nik
- */
 public class JpsPathUtil {
 
   public static boolean isUnder(Set<File> ancestors, File file) {
@@ -62,7 +63,7 @@ public class JpsPathUtil {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx + 2);
 
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         url = prefix + "://" + suffix;
       }
       else {
@@ -83,5 +84,27 @@ public class JpsPathUtil {
 
   public static boolean isJrtUrl(@NotNull String url) {
     return url.startsWith("jrt://");
+  }
+
+  public static @Nullable String readProjectName(@NotNull Path projectDir) {
+    try (Stream<String> stream = Files.lines(projectDir.resolve(".name"))) {
+      return stream.findFirst().map(String::trim).orElse(null);
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
+  public static final String UNNAMED_PROJECT = "<unnamed>";
+
+  public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
+    Path parent = projectDir.getParent();
+    if (parent != null) {
+      Path name = parent.getFileName();  // `null` when parent is a Windows disk root
+      return name != null ? name.toString() : parent.toString();
+    }
+    else {
+      return UNNAMED_PROJECT;
+    }
   }
 }

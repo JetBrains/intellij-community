@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.testframework.TestSearchScope;
@@ -22,11 +8,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathsList;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +67,7 @@ public class TestClassCollector {
               try {
                 Path relativePath = baseDir.relativize(file.getParent());
                 String subpackageName = StringUtil.getQualifiedName(relativePath.toString().replace(pathSeparator, "."),
-                                                                    FileUtil.getNameWithoutExtension(fName));
+                                                                    FileUtilRt.getNameWithoutExtension(fName));
                 String fqName = StringUtil.getQualifiedName(packageName, subpackageName);
                 Class<?> aClass = Class.forName(fqName, false, classLoader);
                 //is potential junit 4
@@ -111,7 +97,7 @@ public class TestClassCollector {
       LOG.error(e);
     }
 
-    return ArrayUtil.toStringArray(classes);
+    return ArrayUtilRt.toStringArray(classes);
   }
 
   public static ClassLoader createUsersClassLoader(JavaTestConfigurationBase configuration) {
@@ -134,8 +120,7 @@ public class TestClassCollector {
     return UrlClassLoader.build().allowLock().useCache().urls(urls).get();
   }
 
-  @Nullable
-  public static VirtualFile[] getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile @Nullable [] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
       return OrderEnumerator.orderEntries(module)
         .withoutSdk()

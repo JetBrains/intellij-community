@@ -16,13 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SetReplaceableByEnumSetInspectionTest extends LightInspectionTestCase {
+public class SetReplaceableByEnumSetInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSetReplaceableByEnumSet() {
     doTest();

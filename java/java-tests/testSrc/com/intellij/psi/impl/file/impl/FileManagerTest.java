@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -33,8 +33,8 @@ import java.util.Collections;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
-public class FileManagerTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerTest");
+public class FileManagerTest extends JavaPsiTestCase {
+  private static final Logger LOG = Logger.getInstance(FileManagerTest.class);
 
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
@@ -371,7 +371,7 @@ public class FileManagerTest extends PsiTestCase {
       try {
         ApplicationManager.getApplication().runWriteAction(() -> {
           CodeStyleManager.getInstance(myProject).reformat(psiFile);
-          getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
           myPsiManager.reloadFromDisk(psiFile);
         });
       }

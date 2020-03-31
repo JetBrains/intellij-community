@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -28,11 +28,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author max
- */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -49,8 +46,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return an array with the root configurable group
    */
-  @NotNull
-  public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
+  public static ConfigurableGroup @NotNull [] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
     ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
     return new ConfigurableGroup[]{group};
   }
@@ -79,9 +75,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... group) {
+  public void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups) {
     try {
-      getDialog(project, Arrays.asList(group), null).show();
+      getDialog(project, Arrays.asList(groups), null).show();
     }
     catch (Exception e) {
       LOG.error(e);
@@ -114,7 +110,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
     Configurable config = new ConfigurableVisitor() {
       @Override
-      protected boolean accept(Configurable configurable) {
+      protected boolean accept(@NotNull Configurable configurable) {
         return predicate.test(configurable);
       }
     }.find(groups);
@@ -153,7 +149,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       group = null;
     }
 
-    Configurable configurableToSelect = idToSelect == null ? null : new ConfigurableVisitor.ByID(idToSelect).find(group);
+    Configurable configurableToSelect = idToSelect == null ? null : ConfigurableVisitor.findById(idToSelect, Collections.singletonList(group));
     SettingsDialogFactory.getInstance().create(getProject(project), Collections.singletonList(group), configurableToSelect, filter).show();
   }
 
@@ -175,12 +171,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Project project, Configurable configurable) {
+  public boolean editConfigurable(Project project, @NotNull Configurable configurable) {
     return editConfigurable(project, createDimensionKey(configurable), configurable);
   }
 
   @Override
-  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
+  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable));
   }
 
@@ -191,18 +187,35 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
+  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
     return editConfigurable(null, project, configurable, dimensionServiceKey, null, showApplyButton);
   }
 
   @Override
-  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
+  public boolean editConfigurable(Project project, @NotNull Configurable configurable, Runnable advancedInitialization) {
     return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
   }
 
   @Override
   public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable) {
     return editConfigurable(parent, configurable, null);
+  }
+
+  @Override
+  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName) {
+    return editConfigurable(parent, displayName, (Runnable)null);
+  }
+
+  @Override
+  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName, @Nullable Runnable advancedInitialization) {
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(null, /* withIdeSettings = */ true);
+    List<ConfigurableGroup> groups = group.getConfigurables().length == 0 ? Collections.emptyList() : Collections.singletonList(group);
+    Configurable configurable = findPreselectedByDisplayName(displayName, groups);
+    if (configurable == null) {
+      LOG.error("Cannot find configurable for name [" + displayName + "]");
+      return false;
+    }
+    return editConfigurable(parent, configurable, advancedInitialization);
   }
 
   @Override
@@ -213,7 +226,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static boolean editConfigurable(@Nullable Component parent,
                                           @Nullable Project project,
                                           @NotNull Configurable configurable,
-                                          String dimensionKey,
+                                          @NotNull String dimensionKey,
                                           @Nullable final Runnable advancedInitialization,
                                           boolean showApplyButton) {
     final DialogWrapper editor;
@@ -224,7 +237,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
+      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
           advancedInitialization.run();
@@ -240,7 +253,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable) {
+  public boolean editConfigurable(Component parent, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable));
   }
 }

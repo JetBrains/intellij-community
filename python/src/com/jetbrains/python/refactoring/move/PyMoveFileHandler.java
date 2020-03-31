@@ -34,6 +34,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
@@ -41,7 +42,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,7 +211,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     if (file != null) {
       file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
-      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(file, false);
+      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);
       for (UsageInfo usage : usages) {
         final PsiElement element = usage.getElement();
         if (element != null) {
@@ -240,7 +241,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
             if (usageFile.getUserData(ORIGINAL_FILE_LOCATION) != null) {
               // Leave relative imports as they are after #updateRelativeImportsInModule
               final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(usageFile.getProject(), usageFile);
-              final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+              final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(typeEvalContext);
               if (ContainerUtil.getFirstItem(PyUtil.multiResolveTopPriority(usageElement, resolveContext)) == movedElement) {
                 continue;
               }
@@ -272,7 +273,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
               replaceWithQualifiedExpression(usageElement, newQualifiedName);
             }
             else {
-              final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(movedElement));
+              final QualifiedName newName = QualifiedName.fromComponents(PyPsiRefactoringUtil.getOriginalName(movedElement));
               replaceWithQualifiedExpression(usageElement, newName);
             }
           }
@@ -292,7 +293,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
 
   @NotNull
   private static PsiElement replaceWithQualifiedExpression(@NotNull PsiElement oldElement, @Nullable QualifiedName newElementName) {
-    if (newElementName != null && PyClassRefactoringUtil.isValidQualifiedName(newElementName)) {
+    if (newElementName != null && PyPsiRefactoringUtil.isValidQualifiedName(newElementName)) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(oldElement.getProject());
       final PsiElement newElement = generator.createExpressionFromText(LanguageLevel.forElement(oldElement), newElementName.toString());
       if (newElement != null) {

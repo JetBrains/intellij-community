@@ -1,14 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
-
-/**
- * @author nik
- */
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties
@@ -27,13 +23,13 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
-    String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
+  void copyFilesForOsDistribution(String unixDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
+    BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -46,7 +42,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     generateVMOptions(unixDistPath)
     generateReadme(unixDistPath)
     customizer.copyAdditionalFiles(buildContext, unixDistPath)
-    return unixDistPath
   }
 
   @Override
@@ -57,18 +52,19 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+
+      if (customizer.includeX86Files) {
+        buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
+      }
+
+      String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
+      buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
+
       if (jreDirectoryPath != null) {
-        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
         buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
-        buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-      }
-      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-      if (secondJreBuild != null) {
-        def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
-        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "")
+        buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
       }
     }
   }
@@ -84,17 +80,21 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
     }
 
+    String linkToX86Jre = (customizer.includeX86Files ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.LINUX) : null) ?: ""
+
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
       filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: name)
+        filter(token: "x86_jre_url", value: linkToX86Jre)
       }
     }
 
@@ -114,10 +114,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                      " -Dawt.useSystemAAFontSettings=lcd" +
-                      " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
-                      " -Dsun.tools.attach.tmp.only=true"
-      new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
+                      ['-Dawt.useSystemAAFontSettings=lcd',
+                       '-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine',
+                       '-Dsun.tools.attach.tmp.only=true']
+      new File(unixDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
     }
   }
 
@@ -132,33 +132,46 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
+  @Override
+  List<String> generateExecutableFilesPatterns(boolean includeJre) {
+    def patterns = [
+      "bin/*.sh",
+      "bin/*.py",
+      "bin/fsnotifier*"
+    ] + customizer.extraExecutables
+    if (includeJre) {
+      patterns += "jbr/bin/*"
+      patterns += "jbr/lib/jexec"
+      patterns += "jbr/lib/jcef_helper"
+      patterns += "jbr/lib/jspawnhelper"
+      patterns += "jbr/lib/chrome-sandbox"
+    }
+    return patterns
+  }
+
   private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
-    def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
 
     String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jre64/bin/*"
-      javaExecutablePath = "jre64/bin/java"
+      javaExecutablePath = "jbr/bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
     paths += productJsonDir
 
+    def executableFilesPatterns = generateExecutableFilesPatterns(jreDirectoryPath != null)
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
       buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
-            exclude(name: "bin/*.sh")
-            exclude(name: "bin/*.py")
-            exclude(name: "bin/fsnotifier*")
-            extraBins.each {
+            executableFilesPatterns.each {
               exclude(name: it)
             }
             type(type: "file")
@@ -167,10 +180,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
         paths.each {
           tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
-            include(name: "bin/*.sh")
-            include(name: "bin/*.py")
-            include(name: "bin/fsnotifier*")
-            extraBins.each {
+            executableFilesPatterns.each {
               include(name: it)
             }
             type(type: "file")
@@ -204,7 +214,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.copy(todir: unixSnapDistPath) {
         fileset(dir: unixDistPath) {
           exclude(name: "bin/fsnotifier")
-          exclude(name: "bin/fsnotifier-arm")
           exclude(name: "bin/libyjpagent-linux.so")
         }
       }
@@ -247,11 +256,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           customizer.extraExecutables.each { include(name: it) }
         }
         fileset(dir: jreDirectoryPath) {
-          include(name: "jre64/bin/*")
+          include(name: "jbr/bin/*")
         }
       }
 
-      generateProductJson(unixSnapDistPath, "jre64/bin/java")
+      generateProductJson(unixSnapDistPath, "jbr/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")

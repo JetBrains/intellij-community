@@ -2,7 +2,7 @@
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -316,7 +316,7 @@ public class JBZipFile implements Closeable {
       return bytes;
     }
     else {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
   }
 

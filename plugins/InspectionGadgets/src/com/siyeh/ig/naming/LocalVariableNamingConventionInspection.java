@@ -36,19 +36,12 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
    */
   public boolean m_ignoreCatchParameters = false;
 
-  @NotNull
   @Override
-  public JComponent[] createExtraOptions() {
+  public JComponent @NotNull [] createExtraOptions() {
     return new JComponent[] {
       new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"), this, "m_ignoreForLoopParameters"),
       new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"), this, "m_ignoreCatchParameters")
     };
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
   }
 
   @Override
@@ -95,9 +88,6 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         }
       }
       final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
       if (isValid(name)) {
         return;
       }
@@ -119,9 +109,6 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         return;
       }
       final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
       if (isValid(name)) {
         return;
       }

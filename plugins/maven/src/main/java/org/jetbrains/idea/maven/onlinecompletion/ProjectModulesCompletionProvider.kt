@@ -2,64 +2,30 @@
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import java.io.IOException
+import org.jetbrains.idea.reposearch.DependencySearchProvider
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import java.util.function.Consumer
 
-class ProjectModulesCompletionProvider(private val myProject: Project) : DependencyCompletionProvider {
+class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  @Throws(IOException::class)
-  override fun findGroupCandidates(template: MavenCoordinate, searchParameters: SearchParameters): List<MavenDependencyCompletionItem> {
-    return doQuery(template) {
-      startWith(it.groupId, template.groupId)
-    }
-  }
-
-
-  private fun doQuery(template: MavenCoordinate, predicate: (MavenCoordinate) -> Boolean): List<MavenDependencyCompletionItem> {
+  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) {
     return MavenProjectsManager.getInstance(myProject).projects.asSequence()
-      .map { it.getMavenId() }
-      .filter(predicate)
-      .map { MavenDependencyCompletionItem(it.groupId, it.artifactId, it.version, PROJECT) }
-      .toList()
+      .map { MavenDependencyCompletionItem(it.mavenId.key) }
+      .filter { it.groupId != null && it.artifactId != null }
+      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
+      .forEach(consumer::accept)
   }
 
-  @Throws(IOException::class)
-  override fun findArtifactCandidates(template: MavenCoordinate, searchParameters: SearchParameters): List<MavenDependencyCompletionItem> {
-    return doQuery(template) {
-      equals(it.groupId, template.groupId) && startWith(it.artifactId, template.artifactId);
-    }
+  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) {
+    return MavenProjectsManager.getInstance(myProject).projects.asSequence()
+      .map { MavenDependencyCompletionItem(it.mavenId.key) }
+      .filter { it.groupId != null && it.artifactId != null }
+      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, listOf(it).toTypedArray()) }
+      .forEach(consumer::accept)
   }
 
-  @Throws(IOException::class)
-  override fun findAllVersions(template: MavenCoordinate, searchParameters: SearchParameters): List<MavenDependencyCompletionItem> {
-    return doQuery(template) {
-      equals(it.groupId, template.groupId) && equals(it.artifactId, template.artifactId);
-    }
-  }
-
-  @Throws(IOException::class)
-  override fun findClassesByString(str: String, searchParameters: SearchParameters): List<MavenDependencyCompletionItemWithClass> {
-    return emptyList();
-  }
-
-  private fun startWith(str: String?, prefix: String?): Boolean {
-    if (str == null) {
-      return false;
-    }
-    if (prefix.isNullOrBlank()) return true;
-
-    return str.startsWith(prefix);
-  }
-
-  private fun equals(str1: String?, str2: String?): Boolean {
-    if (str1 == null || str2 == null) {
-      return false;
-    }
-    return str1 == str2;
-  }
+  override fun isLocal() = true
 }

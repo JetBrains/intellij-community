@@ -2,16 +2,13 @@
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-class RemoveUnnecessaryParenthesesTest extends LightCodeInsightFixtureTestCase {
-
-  private static final String INTENTION_NAME = GroovyIntentionsBundle.message("remove.parentheses.from.method.call.intention.name")
-
+class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "intentions/removeParenth/"
 
   void testRemoveUnnecessaryParenthesis() {
@@ -20,7 +17,7 @@ class RemoveUnnecessaryParenthesesTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(INTENTION_NAME)))
+    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(getINTENTION_NAME())))
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
@@ -79,7 +76,7 @@ class RemoveUnnecessaryParenthesesTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(String before, String after = null) {
     myFixture.configureByText "_.groovy", before
-    def actions = myFixture.filterAvailableIntentions(INTENTION_NAME)
+    def actions = myFixture.filterAvailableIntentions(getINTENTION_NAME())
     if (after == null) {
       assert actions.isEmpty()
     }
@@ -88,5 +85,9 @@ class RemoveUnnecessaryParenthesesTest extends LightCodeInsightFixtureTestCase {
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
       myFixture.checkResult after
     }
+  }
+
+  private static String getINTENTION_NAME() {
+    return GroovyIntentionsBundle.message("remove.parentheses.from.method.call.intention.name")
   }
 }

@@ -56,7 +56,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +185,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     });
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (isOKActionEnabled()) {
           doOKAction();
           return true;
@@ -257,9 +256,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       return myElement;
     }
 
-    @NotNull
     @Override
-    public SimpleNode[] getChildren() {
+    public SimpleNode @NotNull [] getChildren() {
       return NO_CHILDREN;
     }
 
@@ -268,9 +266,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       return 0;
     }
 
-    @NotNull
     @Override
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return new Object[] {myElement};
     }
 
@@ -368,9 +365,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       return ApplicationManager.getApplication();
     }
 
-    @NotNull
     @Override
-    public Object[] getChildElements(@NotNull Object element) {
+    public Object @NotNull [] getChildElements(@NotNull Object element) {
       final List<Object> result = new ArrayList<>();
       collectChildren(element, result);
       final Iterator<Object> it = result.iterator();

@@ -15,7 +15,6 @@
  */
 package com.intellij.util.graph;
 
-import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -40,7 +39,7 @@ public class GraphGeneratorTest {
       @NotNull
       @Override
       public Iterator<TestNode> getIn(TestNode n) {
-        return EmptyIterator.getInstance();
+        return Collections.emptyIterator();
       }
     });
 

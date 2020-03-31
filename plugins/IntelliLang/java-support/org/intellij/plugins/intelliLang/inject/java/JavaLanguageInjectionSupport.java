@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,8 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -47,7 +30,6 @@ import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -71,8 +53,7 @@ import static org.intellij.plugins.intelliLang.inject.config.MethodParameterInje
 /**
  * @author Gregory.Shrago
  */
-public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
-
+public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   @NonNls public static final String JAVA_SUPPORT_ID = "java";
 
   private static boolean isMine(final PsiLanguageInjectionHost psiElement) {
@@ -86,8 +67,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  @NotNull
-  public Class[] getPatternClasses() {
+  public Class<?> @NotNull [] getPatternClasses() {
     return new Class[] { PsiJavaPatterns.class };
   }
 
@@ -169,20 +149,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   private static BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
     final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
-    final DialogBuilder builder = new DialogBuilder(project);
-    builder.setHelpId("reference.settings.injection.language.injection.settings.java.parameter");
-    builder.addOkAction();
-    builder.addCancelAction();
-    builder.setCenterPanel(panel.getComponent());
-    builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(() -> {
-      panel.apply();
-      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-    });
-    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      return new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
-    }
-    return null;
+    String helpID = "reference.settings.injection.language.injection.settings.java.parameter";
+    return showEditInjectionDialog(project, panel, null, helpID)
+           ? new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection)
+           : null;
   }
 
   @Override
@@ -272,7 +242,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           ObjectUtils.chooseNotNull(JVMElementFactories.getFactory(modifierListOwner.getLanguage(), project), javaFacade);
         PsiAnnotation annotation =
           factory.createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
-        PsiModifierList list = ObjectUtils.assertNotNull(modifierListOwner.getModifierList());
+        PsiModifierList list = Objects.requireNonNull(modifierListOwner.getModifierList());
         final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
         if (existingAnnotation != null) {
           existingAnnotation.replace(annotation);
@@ -545,7 +515,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
+      new AnAction(IntelliLangBundle.message("java.parameter"), null, PlatformIcons.PARAMETER_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());

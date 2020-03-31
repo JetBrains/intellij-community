@@ -21,16 +21,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.diagnostic.Logger;
 
-/**
- * @author nik
- */
 public class RemoteRepositoryInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.libraries.RemoteRepositoryInfo");
+  private static final Logger LOG = Logger.getInstance(RemoteRepositoryInfo.class);
   private final String myId;
   private final String myPresentableName;
   private final String[] myMirrors;
 
-  public RemoteRepositoryInfo(@NotNull @NonNls String id, final @NotNull @Nls String presentableName, final @NotNull @NonNls String[] mirrors) {
+  public RemoteRepositoryInfo(@NotNull @NonNls String id, final @NotNull @Nls String presentableName, final @NonNls String @NotNull [] mirrors) {
     myId = id;
     LOG.assertTrue(mirrors.length > 0);
     myPresentableName = presentableName;

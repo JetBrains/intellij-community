@@ -2,28 +2,25 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.text.ParseException;
 import java.util.Collections;
+
+import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
 
 /**
  * Manager for "current git executable".
@@ -36,13 +33,11 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @NotNull private final GitVcsApplicationSettings myApplicationSettings;
-  @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
+  @Nullable private String myDetectedExecutable;
+  @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
-  public GitExecutableManager(@NotNull GitVcsApplicationSettings applicationSettings) {
-    myApplicationSettings = applicationSettings;
-    myDetectedExecutable = AtomicNotNullLazyValue.createValue(new GitExecutableDetector()::detect);
+  public GitExecutableManager() {
     myVersionCache = new CachingFileTester<GitVersion>() {
       @NotNull
       @Override
@@ -72,7 +67,7 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit() {
-    String path = myApplicationSettings.getSavedPathToGit();
+    String path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
     return path == null ? getDetectedExecutable() : path;
   }
 
@@ -84,7 +79,18 @@ public class GitExecutableManager {
 
   @NotNull
   public String getDetectedExecutable() {
-    return myDetectedExecutable.getValue();
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      if (myDetectedExecutable == null) {
+        myDetectedExecutable = new GitExecutableDetector().detect();
+      }
+      return myDetectedExecutable;
+    }
+  }
+
+  public void dropExecutableCache() {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      myDetectedExecutable = null;
+    }
   }
 
   /**
@@ -95,8 +101,18 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    String projectExecutablePath = getPathToGit(project);
-    CachingFileTester<GitVersion>.TestResult result = myVersionCache.getCachedResultForFile(projectExecutablePath);
+    return getVersion(getPathToGit(project));
+  }
+
+  /**
+   * Get version of git executable
+   *
+   * @return actual version or {@link GitVersion#NULL} if version could not be identified or was not identified yet
+   */
+  @CalledInAny
+  @NotNull
+  public GitVersion getVersion(@NotNull String executable) {
+    CachingFileTester<GitVersion>.TestResult result = myVersionCache.getCachedResultForFile(executable);
     if (result == null || result.getResult() == null) {
       return GitVersion.NULL;
     }
@@ -109,44 +125,48 @@ public class GitExecutableManager {
    * Get version of git executable used in project or tell user that it cannot be obtained and cancel the operation
    * Version identification is done under progress because it can hang in rare cases
    * Usually this takes milliseconds because version is cached
-   *
-   * @return git version
    */
-  @CalledInAny
+  @CalledInAwt
   @NotNull
-  public GitVersion getVersionOrCancel(@NotNull Project project) throws ProcessCanceledException {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager
-        .getInstance()
-        .runProcessWithProgressSynchronously(() -> getVersionOrCancel(project),
-                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
-    }
-    String pathToGit = getPathToGit(project);
-    GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
-    if (version == null) {
-      throw new ProcessCanceledException();
-    }
-    return version;
+  public GitVersion getVersionUnderModalProgressOrCancel(@NotNull Project project) throws ProcessCanceledException {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      String pathToGit = getPathToGit(project);
+      GitVersion version;
+      try {
+        version = identifyVersion(pathToGit);
+      }
+      catch (GitVersionIdentificationException e) {
+        throw new ProcessCanceledException();
+      }
+      return version;
+    }, GitBundle.getString("git.executable.version.progress.title"), true, project);
   }
 
   @CalledInAny
   @Nullable
   public GitVersion tryGetVersion(@NotNull Project project) {
+    return runUnderProgressIfNeeded(project, GitBundle.getString("git.executable.version.progress.title"), () -> {
+      try {
+        String pathToGit = getPathToGit(project);
+        return identifyVersion(pathToGit);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
+      }
+      catch (GitVersionIdentificationException e) {
+        return null;
+      }
+    });
+  }
+
+  private static <T> T runUnderProgressIfNeeded(@NotNull Project project,
+                                                @NotNull String title,
+                                                @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager
-        .getInstance()
-        .runProcessWithProgressSynchronously(() -> tryGetVersion(project),
-                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(task, title, true, project);
     }
-    try {
-      String pathToGit = getPathToGit(project);
-      return identifyVersion(pathToGit);
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    catch (GitVersionIdentificationException e) {
-      return null;
+    else {
+      return task.compute();
     }
   }
 
@@ -190,26 +210,19 @@ public class GitExecutableManager {
       return true;
     }
     else {
-      executableProblemsNotifier.notifyUnsupportedVersion(version);
+      showUnsupportedVersionError(project, version, new NotificationErrorNotifier(project));
       return false;
     }
   }
 
+  @CalledInBackground
   @Nullable
-  private GitVersion identifyVersionOrDisplayError(@Nullable Project project, @NotNull String pathToGit) {
+  private GitVersion identifyVersionOrDisplayError(@NotNull Project project, @NotNull String pathToGit) {
     try {
       return identifyVersion(pathToGit);
     }
     catch (GitVersionIdentificationException e) {
-      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      if (project != null
-          && progressIndicator != null
-          && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-        GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
-      }
-      else {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(e, project);
-      }
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       return null;
     }
   }

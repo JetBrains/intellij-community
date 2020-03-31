@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
-import com.intellij.ide.projectView.impl.ProjectViewSharedSettings;
 import com.intellij.ide.scopeView.ScopeTreeViewPanel;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.idea.Bombed;
@@ -27,7 +26,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Calendar;
@@ -35,30 +33,7 @@ import java.util.Calendar;
 public class ScopeViewPaneTest extends TestSourceBasedTestCase {
   private static final int DELAY = 200;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    restoreProjectViewDefaultSettings();
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      restoreProjectViewDefaultSettings();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  private static void restoreProjectViewDefaultSettings() {
-    XmlSerializerUtil.copyBean(new ProjectViewSharedSettings(), ProjectViewSharedSettings.Companion.getInstance());
-  }
-
-  @Bombed(user = "SAM", month = Calendar.JUNE, day = 1)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testStructure() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -204,6 +179,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testInScope() {
     ScopeTreeViewPanel pane = null;
     try {
@@ -218,6 +194,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
 
       final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(getProject());
       changeView(view, ProjectFilesScope.INSTANCE);
+      view.setFlattenPackages(ScopeViewPane.ID, true);
       view.setHideEmptyPackages(ScopeViewPane.ID, true);
 
       pane.refreshScope(namedScope);
@@ -393,7 +370,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
      }
    }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 1)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testCompactEmptyDirectories() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -471,7 +448,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 1)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testFlattenPackages() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);

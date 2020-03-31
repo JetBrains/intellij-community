@@ -21,7 +21,7 @@ import org.jetbrains.idea.svn.info.Info;
 import java.util.*;
 
 public class SvnRevisionsNavigationMediator implements CommittedChangesNavigation {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnRevisionsNavigationMediator");
+  private static final Logger LOG = Logger.getInstance(SvnRevisionsNavigationMediator.class);
 
   public final static int CHUNK_SIZE = 50;
 

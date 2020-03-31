@@ -16,7 +16,7 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    val locations = provider.getLocations(lib, "myGroup", "missing-artifact", "1.0")
+    val locations = provider.getLocations(project, lib, "myGroup", "missing-artifact", "1.0")
 
     assertThat(locations).hasSize(0)
   }
@@ -26,7 +26,7 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    val locations = provider.getLocations(lib, "junit", "junit", "4.12")
+    val locations = provider.getLocations(project, lib, "junit", "junit", "4.12")
 
     assertThat(locations)
       .hasSize(1)
@@ -39,12 +39,12 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "4.1"))
+    assertThat(provider.getLocations(project, lib, "junit", "junit", "4.1"))
       .hasSize(1)
       .usingElementComparatorIgnoringFields("myRepositoryUrls")
       .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "4.9"))
+    assertThat(provider.getLocations(project, lib, "junit", "junit", "4.9"))
       .hasSize(1)
       .usingElementComparatorIgnoringFields("myRepositoryUrls")
       .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
@@ -55,8 +55,8 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    assertThat(provider.getLocations(lib, "junit", "junit", "3.9")).hasSize(0)
-    assertThat(provider.getLocations(lib, "junit", "junit", "5.0")).hasSize(0)
+    assertThat(provider.getLocations(project, lib, "junit", "junit", "3.9")).hasSize(0)
+    assertThat(provider.getLocations(project, lib, "junit", "junit", "5.0")).hasSize(0)
   }
 
 

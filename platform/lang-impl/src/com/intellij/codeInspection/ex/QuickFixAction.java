@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -34,21 +34,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.*;
 
-/**
- * @author max
- */
-public class QuickFixAction extends AnAction implements CustomComponentAction {
+public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
@@ -111,7 +110,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       TreePath[] paths = tree.getSelectionPaths();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        indicator.setText("Checking problem descriptors...");
+        indicator.setText(InspectionsBundle.message("quick.fix.action.checking.problem.progress"));
         descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
@@ -131,7 +130,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   protected void applyFix(@NotNull Project project,
                           @NotNull GlobalInspectionContextImpl context,
-                          @NotNull CommonProblemDescriptor[] descriptors,
+                          CommonProblemDescriptor @NotNull [] descriptors,
                           @NotNull Set<? super PsiElement> ignoredElements) {
   }
 
@@ -185,7 +184,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }, templatePresentationText, null);
   }
 
-  private void doApplyFix(@NotNull final RefEntity[] refElements, @NotNull InspectionResultsView view) {
+  private void doApplyFix(final RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
     final RefManagerImpl refManager = (RefManagerImpl)view.getGlobalInspectionContext().getRefManager();
 
     final boolean initial = refManager.isInProcess();
@@ -212,7 +211,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
-  public static void removeElements(@NotNull RefEntity[] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
+  public static void removeElements(RefEntity @NotNull [] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
     refreshViews(project, refElements, toolWrapper);
     final ArrayList<RefElement> deletedRefs = new ArrayList<>(1);
     for (RefEntity refElement : refElements) {
@@ -221,7 +220,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
-  private static Set<VirtualFile> getReadOnlyFiles(@NotNull RefEntity[] refElements) {
+  private static Set<VirtualFile> getReadOnlyFiles(RefEntity @NotNull [] refElements) {
     Set<VirtualFile> readOnlyFiles = new THashSet<>();
     for (RefEntity refElement : refElements) {
       PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
@@ -231,8 +230,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return readOnlyFiles;
   }
 
-  @NotNull
-  private static RefEntity[] getSelectedElements(InspectionResultsView view) {
+  private static RefEntity @NotNull [] getSelectedElements(InspectionResultsView view) {
     if (view == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
     RefEntity[] selection = view.getTree().getSelectedElements();
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
@@ -251,7 +249,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
-  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, RefEntity @NotNull [] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : resolvedElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getPsiElement() : null;
@@ -265,7 +263,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   /**
    * @return true if immediate UI update needed.
    */
-  protected boolean applyFix(@NotNull RefEntity[] refElements) {
+  protected boolean applyFix(RefEntity @NotNull [] refElements) {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();
@@ -288,7 +286,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        final ActionToolbar toolbar = UIUtil.getParentOfType(ActionToolbar.class, button);
+        final ActionToolbar toolbar = ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
                                                          place,

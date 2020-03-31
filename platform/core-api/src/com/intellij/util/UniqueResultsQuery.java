@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
@@ -11,22 +11,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author max
- */
 public class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
   @NotNull private final Query<? extends T> myOriginal;
   @NotNull private final TObjectHashingStrategy<? super M> myHashingStrategy;
   @NotNull private final Function<? super T, ? extends M> myMapper;
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original) {
-    //noinspection unchecked
-    this(original, ContainerUtil.canonicalStrategy(), Function.ID);
+    this(original, ContainerUtil.canonicalStrategy(), Functions.identity());
   }
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy) {
-    //noinspection unchecked
-    this(original, hashingStrategy, Function.ID);
+    this(original, hashingStrategy, Functions.identity());
   }
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy, @NotNull Function<? super T, ? extends M> mapper) {

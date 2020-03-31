@@ -1,0 +1,27 @@
+fragment pullRequestMergeability on PullRequest {
+    mergeable
+    canBeRebased
+    mergeStateStatus
+
+    commits(last: 1) {
+        nodes {
+            ...nodeInfo
+            commit {
+                ...commitHash
+                status {
+                    contexts {
+                        context
+                        state
+                    }
+                }
+
+                checkSuites(first: 100) {
+                    nodes {
+                        conclusion
+                        status
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 package com.intellij.psi.html;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Calendar;
 
 public class HtmlParseTest extends LightIdeaTestCase {
   private static final String BASE_PATH = "/xml/tests/testData/psi/old/html/";
@@ -494,11 +496,11 @@ public class HtmlParseTest extends LightIdeaTestCase {
     assertResult("Performance.txt", result.get());
   }
 
-  private static String getTreeTextByFile(@NonNls String filename) throws Exception {
+  private String getTreeTextByFile(@NonNls String filename) throws Exception {
     return getTreeTextByText(loadFile(filename));
   }
 
-  private static String getTreeTextByText(@NonNls String text) throws IncorrectOperationException {
+  private String getTreeTextByText(@NonNls String text) throws IncorrectOperationException {
     PsiFile fileFromText = PsiFileFactory.getInstance(getProject()).createFileFromText("test.html", HtmlFileType.INSTANCE, text);
     assertEquals("trees should be equals",text,fileFromText.getText());
     return DebugUtil.psiTreeToString(fileFromText, false).trim();
@@ -586,6 +588,10 @@ public class HtmlParseTest extends LightIdeaTestCase {
   }
 
   public void testDoNotSplitTextOnEntity() throws Throwable {
+    getTreeTextAndAssertResult();
+  }
+
+  public void testCaptionTag() throws Throwable {
     getTreeTextAndAssertResult();
   }
 

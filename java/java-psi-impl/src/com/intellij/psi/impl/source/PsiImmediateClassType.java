@@ -25,9 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *  @author dsl
  */
@@ -38,6 +35,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
+  private String myPresentableTextAnnotated;
   private String myInternalCanonicalText;
 
   private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
@@ -46,9 +44,8 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
       return myClass;
     }
 
-    @NotNull
     @Override
-    public PsiSubstitutor getSubstitutor() {
+    public @NotNull PsiSubstitutor getSubstitutor() {
       return mySubstitutor;
     }
 
@@ -89,7 +86,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
-                               @NotNull PsiAnnotation... annotations) {
+                               PsiAnnotation @NotNull ... annotations) {
     super(level, annotations);
     myClass = aClass;
     myManager = aClass.getManager();
@@ -119,48 +116,65 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public int getParameterCount() {
+    PsiTypeParameterList list = myClass.getTypeParameterList();
+    if (list == null) return 0;
+    PsiTypeParameter[] parameters = list.getTypeParameters();
+    for (PsiTypeParameter parameter : parameters) {
+      if (mySubstitutor.substitute(parameter) == null) return 0;
+    }
+    return parameters.length;
+  }
+
+  @Override
+  public PsiType @NotNull [] getParameters() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     if (parameters.length == 0) {
       return PsiType.EMPTY_ARRAY;
     }
 
-    List<PsiType> lst = new ArrayList<>();
+    PsiType[] result = new PsiType[parameters.length];
+    int pos = 0;
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
       if (substituted == null) {
         return PsiType.EMPTY_ARRAY;
       }
-      lst.add(substituted);
+      result[pos++] = substituted;
     }
-    return lst.toArray(createArray(lst.size()));
+    assert pos == result.length;
+    return result;
   }
 
   @Override
-  @NotNull
-  public ClassResolveResult resolveGenerics() {
+  public @NotNull ClassResolveResult resolveGenerics() {
     return myClassResolveResult;
   }
 
   @Override
-  @NotNull
-  public PsiClassType rawType() {
+  public @NotNull PsiClassType rawType() {
     return JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
-    if (myPresentableText == null) {
-      myPresentableText = getText(TextType.PRESENTABLE, annotated);
+  public @NotNull String getPresentableText(boolean annotated) {
+    String presentableText;
+    if (annotated) {
+      presentableText = myPresentableTextAnnotated;
+      if (presentableText == null) {
+        return myPresentableTextAnnotated = getText(TextType.PRESENTABLE, true);
+      }
+    } else {
+      presentableText = myPresentableText;
+      if (presentableText == null) {
+        return myPresentableText = getText(TextType.PRESENTABLE, false);
+      }
     }
-    return myPresentableText;
+    return presentableText;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     String cached = annotated ? myCanonicalTextAnnotated : myCanonicalText;
     if (cached == null) {
       cached = getText(TextType.CANONICAL, annotated);
@@ -170,13 +184,13 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     return cached;
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
-    if (myInternalCanonicalText == null) {
-      myInternalCanonicalText = getText(TextType.INT_CANONICAL, true);
+  public @NotNull String getInternalCanonicalText() {
+    String canonicalText = myInternalCanonicalText;
+    if (canonicalText == null) {
+      myInternalCanonicalText = canonicalText = getText(TextType.INT_CANONICAL, true);
     }
-    return myInternalCanonicalText;
+    return canonicalText;
   }
 
   private enum TextType { PRESENTABLE, CANONICAL, INT_CANONICAL }
@@ -303,20 +317,17 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myClass.getResolveScope();
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel != null ? myLanguageLevel : PsiUtil.getLanguageLevel(myClass);
   }
 
-  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
     return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider());
   }
 }

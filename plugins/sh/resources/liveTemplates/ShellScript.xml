@@ -1,26 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Shell Script">
-  <template name="bash" value="#!/usr/bin/env bash&#10;" description="Shebang line" toReformat="true"
-            toShortenFQNames="false">
-    <context>
-      <option name="SHELL_SCRIPT" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="sh" value="#!/usr/bin/env sh&#10;" description="Shebang line" toReformat="true"
-            toShortenFQNames="false">
-    <context>
-      <option name="SHELL_SCRIPT" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="zsh" value="#!/usr/bin/env zsh&#10;" description="Shebang line" toReformat="true"
-            toShortenFQNames="false">
-    <context>
-      <option name="SHELL_SCRIPT" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
   <template name="fori" value="for $INDEX$ in $LOOP_ITEMS$ ; do&#10;    $END$$SELECTION$&#10;done"
             description="For loop in list" toReformat="true" toShortenFQNames="false">
     <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
@@ -30,8 +9,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="cmd" value="`$COMMAND$`" description="Command substitution" toReformat="true"
-            toShortenFQNames="false">
+  <template name="cmd" value="`$COMMAND$`" description="Command substitution" toShortenFQNames="false">
     <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
@@ -40,16 +18,13 @@
   </template>
   <template name="cmd success check"
             value="if [[ $? == 0 ]]; then&#10;    echo &quot;Succeed&quot;$END$&#10;else&#10;    echo &quot;Failed&quot;&#10;fi"
-            description="Cmd success check" toReformat="true"
-            toShortenFQNames="false">
+            description="Cmd success check" toReformat="true" toShortenFQNames="false">
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="tar compress" value="tar -czvf $ARCHIVE$.tar.gz $DIRECTORY$"
-            description="tar compress" toReformat="true"
-            toShortenFQNames="false">
+  <template name="tar compress" value="tar -czvf $ARCHIVE$.tar.gz $DIRECTORY$" description="tar compress" toShortenFQNames="false">
     <variable name="ARCHIVE" expression="" defaultValue="&quot;/path/to/archive&quot;" alwaysStopAt="true"/>
     <variable name="DIRECTORY" expression="" defaultValue="&quot;/path/to/directory&quot;" alwaysStopAt="true"/>
     <context>
@@ -57,9 +32,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="tar decompress" value="tar -C $DIRECTORY$ -xzvf $ARCHIVE$.tar.gz"
-            description="tar decompress" toReformat="true"
-            toShortenFQNames="false">
+  <template name="tar decompress" value="tar -C $DIRECTORY$ -xzvf $ARCHIVE$.tar.gz" description="tar decompress" toShortenFQNames="false">
     <variable name="DIRECTORY" expression="" defaultValue="&quot;/extract/to/path&quot;" alwaysStopAt="true"/>
     <variable name="ARCHIVE" expression="" defaultValue="&quot;/path/to/archive&quot;" alwaysStopAt="true"/>
     <context>
@@ -67,36 +40,28 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="mkdir" value="mkdir &quot;$DIRECTORY$&quot;"
-            description="Create directory" toReformat="true"
-            toShortenFQNames="false">
+  <template name="mkdir" value="mkdir &quot;$DIRECTORY$&quot;" description="Create directory" toShortenFQNames="false">
     <variable name="DIRECTORY" expression="" defaultValue="&quot;dirname&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="git branch create" value="git checkout -b $BRANCH$"
-            description="Create branch" toReformat="true"
-            toShortenFQNames="false">
+  <template name="git branch create" value="git checkout -b $BRANCH$" description="Create branch" toShortenFQNames="false">
     <variable name="BRANCH" expression="" defaultValue="&quot;branch_name&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="git push" value="git push origin $BRANCH$"
-            description="Push branch to remote" toReformat="true"
-            toShortenFQNames="false">
+  <template name="git push" value="git push origin $BRANCH$" description="Push branch to remote" toShortenFQNames="false">
     <variable name="BRANCH" expression="" defaultValue="&quot;branch_name&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="git commit" value="git commit -m &quot;$MESSAGE$&quot;"
-            description="Commit changes" toReformat="true"
-            toShortenFQNames="false">
+  <template name="git commit" value="git commit -m &quot;$MESSAGE$&quot;" description="Commit changes" toShortenFQNames="false">
     <variable name="MESSAGE" expression="" defaultValue="&quot;commit_message&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
@@ -104,8 +69,7 @@
     </context>
   </template>
   <template name="curl" value="curl --request $METHOD$ -sL \&#10;     --url '$URL$'\&#10;     --output '$FILE$'"
-            description="Http request" toReformat="true"
-            toShortenFQNames="false">
+            description="Http request" toReformat="true" toShortenFQNames="false">
     <variable name="METHOD" expression="enum(&quot;GET&quot;,&quot;POST&quot;,&quot;PUT&quot;,&quot;DELETE&quot;)"
               defaultValue="" alwaysStopAt="true"/>
     <variable name="URL" expression="" defaultValue="&quot;http://example.com&quot;" alwaysStopAt="true"/>
@@ -115,8 +79,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="rm" value="rm $PARAM$ $PATH$" description="Remove file or dir" toReformat="true"
-            toShortenFQNames="false">
+  <template name="rm" value="rm $PARAM$ $PATH$" description="Remove file or dir" toShortenFQNames="false">
     <variable name="PARAM" expression="enum(&quot;-f&quot;,&quot;-d&quot;)" defaultValue="" alwaysStopAt="true"/>
     <variable name="PATH" expression="" defaultValue="&quot;./path/file&quot;" alwaysStopAt="true"/>
     <context>
@@ -124,8 +87,8 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="find" value="find $PATH$ -type $PARAM$ -name &quot;$NAME$&quot;"
-            description="Find file or directory" toReformat="true" toShortenFQNames="false">
+  <template name="find" value="find $PATH$ -type $PARAM$ -name &quot;$NAME$&quot;" description="Find file or directory"
+            toShortenFQNames="false">
     <variable name="PATH" expression="" defaultValue="&quot;./path&quot;" alwaysStopAt="true"/>
     <variable name="PARAM" expression="enum(&quot;f&quot;,&quot;d&quot;)" defaultValue="" alwaysStopAt="true"/>
     <variable name="NAME" expression="" defaultValue="&quot;file_name&quot;" alwaysStopAt="true"/>
@@ -142,30 +105,26 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="xargs" value=" | xargs $COMMAND$" description="Execute commands from standard input" toReformat="true"
-            toShortenFQNames="false">
+  <template name="xargs" value=" | xargs $COMMAND$" description="Execute commands from standard input" toShortenFQNames="false">
     <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="system info linux" value="lsb_release -a" description="Linux system information" toReformat="true"
-            toShortenFQNames="false">
+  <template name="system info linux" value="lsb_release -a" description="Linux system information" toShortenFQNames="false">
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="system info mac" value="sw_vers" description="Mac OS system information" toReformat="true"
-            toShortenFQNames="false">
+  <template name="system info mac" value="sw_vers" description="Mac OS system information" toShortenFQNames="false">
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="system kernel info" value="uname -a" description="Kernel information" toReformat="true"
-            toShortenFQNames="false">
+  <template name="system kernel info" value="uname -a" description="Kernel information" toShortenFQNames="false">
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>

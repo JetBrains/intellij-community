@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.testFramework.UsefulTestCase;
 
-import static org.junit.Assert.*;
-
 public class MavenLogEntryReaderTest extends UsefulTestCase {
 
   public void testParser() {

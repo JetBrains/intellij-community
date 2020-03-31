@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * A building block of text line layout, that knows how to draw itself, and convert between offset, column and x coordinate within itself.
@@ -38,7 +39,7 @@ interface LineFragment {
   float offsetToX(float startX, int startOffset, int offset);
 
   // offsets are visual
-  void draw(Graphics2D g, float x, float y, int startOffset, int endOffset);
+  Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset);
 
   // offsets are logical
   @NotNull

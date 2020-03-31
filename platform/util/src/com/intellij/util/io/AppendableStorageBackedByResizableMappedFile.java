@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class AppendableStorageBackedByResizableMappedFile extends ResizeableMappedFile {
   private final MyDataIS myReadStream;
@@ -30,15 +32,15 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
   private volatile int myBufferPosition;
   private static final int ourAppendBufferLength = 4096;
 
-  public AppendableStorageBackedByResizableMappedFile(final File file,
+  public AppendableStorageBackedByResizableMappedFile(final Path file,
                                                       int initialSize,
                                                       @Nullable PagedFileStorage.StorageLockContext lockContext,
                                                       int pageSize,
-                                                      boolean valuesAreBufferAligned) throws IOException {
+                                                      boolean valuesAreBufferAligned) {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myReadStream = new MyDataIS(this);
     myFileLength = (int)length();
-    myCompressedAppendableFile = /*CompressedAppendableFile.ENABLED &&*/ false ? new MyCompressedAppendableFile(file) :null;
+    myCompressedAppendableFile = /*CompressedAppendableFile.ENABLED &&*/ null;
   }
 
   private void flushKeyStoreBuffer() {
@@ -75,8 +77,19 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
     }
 
     if (myFileLength <= addr) {
+      // addr points to un-existed data
+      if (myAppendBuffer == null) {
+        throw new NoDataException("requested address points to un-existed data");
+      }
+
+      // addr points to un-existed data
+      int bufferOffset = addr - myFileLength;
+      if (bufferOffset > myBufferPosition) {
+        throw new NoDataException("requested address points to un-existed data");
+      }
+
       Data data =
-        descriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, addr - myFileLength, myBufferPosition)));
+        descriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
       assert tempData == null || descriptor.isEqual(data, tempData);
       return data;
     }
@@ -113,7 +126,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
     if (myFileLength == 0) return true;
 
     try (DataInputStream keysStream = new DataInputStream(
-      new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
+      new BufferedInputStream(new LimitedInputStream(Files.newInputStream(getPagedFileStorage().getFile()),
                                                      myFileLength) {
         @Override
         public int available() {
@@ -299,63 +312,6 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
       this.pos = 0;
       count = 0;
       ((MappedFileInputStream)in).setup(pos, limit);
-    }
-  }
-
-  private class MyCompressedAppendableFile extends CompressedAppendableFile {
-    private final File myFile;
-    private DataOutputStream myChunkLengthTableStream;
-
-    MyCompressedAppendableFile(File file) {
-      super(getPagedFileStorage().getFile());
-      myFile = file;
-    }
-
-    @NotNull
-    @Override
-    protected InputStream getChunkInputStream(File appendFile, long offset, int pageSize) {
-      byte[] buf = new byte[pageSize];
-      get(offset, buf, 0, pageSize);
-
-      return new ByteArrayInputStream(buf);
-    }
-
-    @Override
-    protected void saveChunk(BufferExposingByteArrayOutputStream compressedChunk, long endOfFileOffset) throws IOException {
-      AppendableStorageBackedByResizableMappedFile.super
-        .put(endOfFileOffset, compressedChunk.getInternalBuffer(), 0, compressedChunk.size());
-
-      if (myChunkLengthTableStream == null) {
-        myChunkLengthTableStream =
-          new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunkLengthFile(), true)));
-      }
-
-      DataInputOutputUtil.writeINT(myChunkLengthTableStream, compressedChunk.size());
-    }
-
-    @Override
-    public synchronized void force() {
-      super.force();
-
-      try {
-        if (myChunkLengthTableStream != null) myChunkLengthTableStream.flush();
-      } catch (IOException ignore) {}
-    }
-
-    @Override
-    public synchronized void dispose() {
-      super.dispose();
-      if (myChunkLengthTableStream != null)  {
-        try {
-          myChunkLengthTableStream.close();
-        } catch (IOException ignore) {}
-      }
-    }
-
-    @NotNull
-    @Override
-    protected File getChunksFile() {
-      return myFile;
     }
   }
 }

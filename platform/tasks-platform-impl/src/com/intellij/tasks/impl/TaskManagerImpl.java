@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ReportValue;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -21,46 +26,67 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListAdapter;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.serialization.SerializationException;
-import com.intellij.tasks.*;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskListener;
+import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.context.WorkingContextManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.swing.Timer;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
+@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = true)
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -80,7 +106,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
-        Collections.sort(list, (o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
+        list.sort((o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
             remove(oldest.getKey());
@@ -113,7 +139,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         LocalTask task = getAssociatedTask((LocalChangeList)list);
         if (task != null) {
           for (ChangeListInfo info : task.getChangeLists()) {
-            if (Comparing.equal(info.id, ((LocalChangeList)list).getId())) {
+            if (Objects.equals(info.id, ((LocalChangeList)list).getId())) {
               info.id = "";
             }
           }
@@ -130,7 +156,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     };
 
-      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(@NotNull Project project) {
           if (myProject == project) {
@@ -325,23 +351,28 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (origin.equals(activeTask)) return activeTask;
 
     saveActiveTask();
-
-    WorkingContextManager contextManager = WorkingContextManager.getInstance(myProject);
-    if (clearContext) {
-      contextManager.clearContext();
-    }
-    contextManager.restoreContext(origin);
-
     final LocalTask task = doActivate(origin, true);
+    Runnable restore = () -> {
+      WorkingContextManager contextManager = WorkingContextManager.getInstance(myProject);
+      if (clearContext) {
+        contextManager.clearContext();
+      }
+      contextManager.restoreContext(origin);
+    };
 
-    restoreVcsContext(task, newTask);
+    boolean switched = false;
+    if (isVcsEnabled()) {
+      restoreVcsContext(task, newTask);
+      if (!newTask) {
+        switched = switchBranch(task, restore);
+      }
+    }
+    if (!switched)
+      restore.run();
     return task;
   }
 
   private void restoreVcsContext(LocalTask task, boolean newTask) {
-    if (!isVcsEnabled())
-      return;
-
     List<ChangeListInfo> changeLists = task.getChangeLists();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     if (changeLists.isEmpty()) {
@@ -358,9 +389,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
 
     unshelveChanges(task);
+  }
 
-    if (newTask)
-      return;     // branch created already by VcsOpenTaskPanel
+  private boolean switchBranch(LocalTask task, Runnable invokeAfter) {
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
     MultiMap<String, BranchInfo> multiMap = new MultiMap<>();
@@ -383,10 +414,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     }
-
     VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<>(multiMap.values()));
-
-    switchBranch(info);
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    boolean switched = false;
+    for (VcsTaskHandler handler : handlers) {
+      switched |= handler.switchToTask(info, invokeAfter);
+    }
+    return switched;
   }
 
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
@@ -408,7 +442,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
         if (name.equals(list.DESCRIPTION)) {
-          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
+          manager.unshelveChangeList(list, null, list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
           return;
         }
       }
@@ -421,17 +455,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
       for (VcsTaskHandler.TaskInfo info : tasks) {
-        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), info1 -> Comparing.equal(info1.repository, repo)));
+        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), info1 -> Objects.equals(info1.repository, repo)));
       }
     }
     return infos;
-  }
-
-  private void switchBranch(VcsTaskHandler.TaskInfo info) {
-    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-    for (VcsTaskHandler handler : handlers) {
-      handler.switchToTask(info, null);
-    }
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
@@ -677,7 +704,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.getDefaultName());
     if (defaultList != null && defaultTask != null) {
       ChangeListInfo listInfo = new ChangeListInfo(defaultList);
       if (!defaultTask.getChangeLists().contains(listInfo)) {
@@ -695,7 +722,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     }
 
-    changeListManager.addChangeListListener(myChangeListListener, this);
+    changeListManager.addChangeListListener(myChangeListListener, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
@@ -709,7 +736,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   @Override
   public void initializeComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
+      myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
@@ -732,7 +759,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // search for active task
     LocalTask activeTask = null;
     final List<LocalTask> tasks = getLocalTasks();
-    Collections.sort(tasks, TASK_UPDATE_COMPARATOR);
+    tasks.sort(TASK_UPDATE_COMPARATOR);
     for (LocalTask task : tasks) {
       if (activeTask == null) {
         if (task.isActive()) {
@@ -838,7 +865,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         if (issues == null) issues = new ArrayList<>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
           List<Task> filteredTasks = TaskUtil.filterTasks(request, Arrays.asList(tasks));
-          ContainerUtil.addAll(issues, filteredTasks);
+          issues.addAll(filteredTasks);
         }
         else {
           ContainerUtil.addAll(issues, tasks);
@@ -931,18 +958,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
-  @Override
-  public void decorateChangeList(@NotNull LocalChangeList changeList,
-                                 @NotNull ColoredTreeCellRenderer cellRenderer,
-                                 boolean selected,
-                                 boolean expanded,
-                                 boolean hasFocus) {
-    LocalTask task = getAssociatedTask(changeList);
-    if (task != null && task.isIssue()) {
-      cellRenderer.setIcon(task.getIcon());
-    }
-  }
-
   public void createChangeList(@NotNull LocalTask task, String name) {
     String comment = TaskUtil.getChangeListComment(task);
     createChangeList(task, name, comment);
@@ -973,12 +988,17 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @NotNull
-  public String suggestBranchName(@NotNull Task task) {
+  public String suggestBranchName(@NotNull Task task, String separator) {
     String name = constructDefaultBranchName(task);
-    if (task.isIssue()) return name.replace(' ', '-');
+    if (task.isIssue()) return name.replace(" ", separator);
     List<String> words = StringUtil.getWordsIn(name);
-    String[] strings = ArrayUtil.toStringArray(words);
-    return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
+    String[] strings = ArrayUtilRt.toStringArray(words);
+    return StringUtil.join(strings, 0, Math.min(2, strings.length), separator);
+  }
+
+    @NotNull
+  public String suggestBranchName(@NotNull Task task) {
+    return suggestBranchName(task, "-");
   }
 
   @NotNull
@@ -998,10 +1018,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     public int localTasksCounter = 1;
 
+    @ReportValue
     public int taskHistoryLength = 50;
 
     public boolean updateEnabled = true;
+    @ReportValue
     public int updateInterval = 20;
+    @ReportValue
     public int updateIssuesCount = 100;
 
     // create task options

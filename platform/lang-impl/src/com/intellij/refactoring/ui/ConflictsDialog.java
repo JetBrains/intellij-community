@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.ui;
 
@@ -27,7 +13,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -44,6 +31,8 @@ import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
+  private static final int MAX_CONFLICTS_SHOWN = 20;
+  @NonNls private static final String EXPAND_LINK = "expand";
 
   protected final String[] myConflictDescriptions;
   protected MultiMap<PsiElement, String> myElementConflictDescription;
@@ -73,7 +62,7 @@ public class ConflictsDialog extends DialogWrapper{
     myCanShowConflictsInView = canShowConflictsInView;
 
     final LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
-    myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
+    myConflictDescriptions = ArrayUtilRt.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
@@ -81,6 +70,9 @@ public class ConflictsDialog extends DialogWrapper{
     init();
   }
 
+  /**
+   * @deprecated use other CTORs
+   */
   @Deprecated
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
@@ -93,8 +85,7 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions(){
+  protected Action @NotNull [] createActions(){
     final Action okAction = getOKAction();
     boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
 
@@ -119,10 +110,15 @@ public class ConflictsDialog extends DialogWrapper{
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
     @NonNls StringBuilder buf = new StringBuilder();
-    for (String description : myConflictDescriptions) {
-      buf.append(description);
-      buf.append("<br><br>");
+
+    for (int i = 0; i < Math.min(myConflictDescriptions.length, MAX_CONFLICTS_SHOWN); i++) {
+      buf.append(myConflictDescriptions[i]).append("<br><br>");
     }
+
+    if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
+      buf.append("<a href='" + EXPAND_LINK + "'>Show more...</a>");
+    }
+
     JEditorPane messagePane = new JEditorPane();
     messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     messagePane.setText(buf.toString());
@@ -131,6 +127,12 @@ public class ConflictsDialog extends DialogWrapper{
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
+    messagePane.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && 
+          EXPAND_LINK.equals(e.getDescription())) {
+        messagePane.setText(StringUtil.join(myConflictDescriptions, "<br><br>"));
+      }
+    });
     panel.add(scrollPane, BorderLayout.CENTER);
 
     if (getOKAction().isEnabled()) {
@@ -164,13 +166,13 @@ public class ConflictsDialog extends DialogWrapper{
 
 
     MyShowConflictsInUsageViewAction() {
-      super("Show Conflicts in View");
+      super(RefactoringBundle.message("action.show.conflicts.in.view.text"));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String codeUsagesString = "Conflicts";
+      final String codeUsagesString = RefactoringBundle.message("conflicts.tab.name");
       presentation.setCodeUsagesString(codeUsagesString);
       presentation.setTabName(codeUsagesString);
       presentation.setTabText(codeUsagesString);
@@ -215,7 +217,7 @@ public class ConflictsDialog extends DialogWrapper{
       if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
           doRefactoringRunnable,
-          myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"), 
+          myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"),
           "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);
@@ -242,8 +244,7 @@ public class ConflictsDialog extends DialogWrapper{
       public UsagePresentation getPresentation() {
         return new UsagePresentation() {
           @Override
-          @NotNull
-          public TextChunk[] getText() {
+          public TextChunk @NotNull [] getText() {
             return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
           }
 

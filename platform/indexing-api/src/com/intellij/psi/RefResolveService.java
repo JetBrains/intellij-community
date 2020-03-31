@@ -6,11 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion="2020.2")
 public abstract class RefResolveService {
   /**
    * if true then PsiElement.getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}
@@ -21,8 +24,7 @@ public abstract class RefResolveService {
     return project.getComponent(RefResolveService.class);
   }
 
-  @Nullable("null means the service has not resolved all files and is not ready yet")
-  public abstract int[] getBackwardIds(@NotNull VirtualFileWithId file);
+  public abstract int @Nullable("null means the service has not resolved all files and is not ready yet") [] getBackwardIds(@NotNull VirtualFileWithId file);
 
   /**
    * @return subset of scope containing only files which reference the virtualFile

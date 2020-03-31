@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
@@ -49,7 +49,7 @@ import static org.junit.Assert.*;
 /**
  * @author Maxim.Mossienko
  */
-public class EditorTestUtil {
+public final class EditorTestUtil {
   public static final String CARET_TAG = "<caret>";
   public static final String CARET_TAG_PREFIX = CARET_TAG.substring(0, CARET_TAG.length() - 1);
 
@@ -75,7 +75,7 @@ public class EditorTestUtil {
       executeAction(editor, IdeActions.ACTION_EDITOR_ENTER);
     }
     else {
-      TypedAction action = actionManager.getTypedAction();
+      TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
     }
   }
@@ -181,13 +181,21 @@ public class EditorTestUtil {
     return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
   }
 
-  /**
-   * Configures given editor to wrap at given width, assuming characters are of given width
-   *
-   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
-   */
+  @TestOnly
+  public static boolean configureSoftWrapsAndViewport(Editor editor, int charCountToWrapAt, int visibleLineCount) {
+    int charWidthInPixels = 10;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, visibleLineCount * editor.getLineHeight(),
+                              charWidthInPixels);
+  }
+
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidth, 1000, charWidthInPixels);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
     editor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
@@ -217,14 +225,14 @@ public class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(() -> visibleWidth);
+    applianceManager.setWidthProvider(() -> visibleWidthInPixels);
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
       public int charWidth(int c, int fontType) {
         return charWidthInPixels;
       }
     });
-    setEditorVisibleSizeInPixels(editor, visibleWidth, 1000);
+    setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
   }
@@ -439,29 +447,15 @@ public class EditorTestUtil {
   }
 
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, int widthInPixels) {
-    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return widthInPixels; }
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
-    });
+    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EmptyInlayRenderer(widthInPixels));
   }
 
-  public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
-    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return 0;}
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove, int widthInPixels) {
+    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EmptyInlayRenderer(widthInPixels));
+  }
 
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
-    });
+  public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
+    return editor.getInlayModel().addAfterLineEndElement(offset, false, new EmptyInlayRenderer(widthInPixels));
   }
 
   public static void waitForLoading(Editor editor) {
@@ -573,6 +567,21 @@ public class EditorTestUtil {
     public int getCaretOffset(Document document) {
       return position == null ? -1 : document.getLineStartOffset(position.line) + position.column;
     }
+  }
+
+  private static class EmptyInlayRenderer implements EditorCustomElementRenderer {
+    private final int width;
+
+    private EmptyInlayRenderer(int width) {this.width = width;}
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return width;}
+
+    @Override
+    public void paint(@NotNull Inlay inlay,
+                      @NotNull Graphics g,
+                      @NotNull Rectangle targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 }
 

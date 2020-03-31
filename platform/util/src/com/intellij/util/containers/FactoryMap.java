@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
@@ -28,19 +29,24 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * a Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
- * NOT THREAD SAFE.
- * For thread-safe alternative please use {@link ConcurrentFactoryMap}
+ * Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
+ * This map is NOT THREAD SAFE.
+ * For the thread-safe alternative please use {@link ConcurrentFactoryMap} instead.
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
   /**
-   * Use {@link #create(Function)} instead
+   * @deprecated Use {@link #create(Function)} instead
    */
   @Deprecated
   public FactoryMap() {
+    DeprecatedMethodException.report("Use FactoryMap.create*() instead");
   }
+
+  private FactoryMap(boolean safe) {
+  }
+
 
   @NotNull
   protected Map<K, V> createMap() {
@@ -57,6 +63,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     V value = map.get(k);
     if (value == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      //noinspection unchecked
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);
@@ -81,7 +88,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? FactoryMap.FAKE_NULL() : (T)key;
+    return key == null ? FAKE_NULL() : (T)key;
   }
   @Nullable
   private static <T> T nullize(T value) {
@@ -168,19 +175,14 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }
 
-  /**
-   * Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
-   */
-  @Deprecated
-  @NotNull
-  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue) {
-    return (FactoryMap<K, V>)create(computeValue);
+  @Override
+  public String toString() {
+    return String.valueOf(myMap);
   }
 
   @NotNull
   public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
-    //noinspection deprecation
-    return new FactoryMap<K, V>() {
+    return new FactoryMap<K, V>(true) {
       @Nullable
       @Override
       protected V create(K key) {
@@ -191,8 +193,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
-    //noinspection deprecation
-    return new FactoryMap<K, V>() {
+    return new FactoryMap<K, V>(true) {
       @Nullable
       @Override
       protected V create(K key) {

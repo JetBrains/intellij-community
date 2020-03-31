@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -61,9 +47,10 @@ import java.util.regex.Pattern;
  * Knows which script in bin/ contains paths we want to add.
  * User: dcheryasov
  */
+@Deprecated
 public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
+  private static final Logger LOG = Logger.getInstance(BuildoutFacet.class);
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
   @NonNls public static final String SCRIPT_SUFFIX = "-script";
   private static final String BUILDOUT_LIB_NAME = "Buildout Eggs";
@@ -187,7 +174,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
       List<String> paths = extractFromScript(script);
       if (paths == null) {
         VirtualFile root = script.getParent().getParent();
-        String partName = FileUtil.getNameWithoutExtension(script.getName());
+        String partName = FileUtilRt.getNameWithoutExtension(script.getName());
         if (SystemInfo.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
           partName = partName.substring(0, partName.length() - SCRIPT_SUFFIX.length());
         }
@@ -212,7 +199,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
    */
   @Nullable
   public static List<String> extractFromScript(@NotNull VirtualFile script) throws IOException {
-    String text = VfsUtil.loadText(script);
+    String text = VfsUtilCore.loadText(script);
     Pattern pat = Pattern.compile("(?:^\\s*(['\"])(.*)(\\1),\\s*$)|(\\])", Pattern.MULTILINE);
     final String bait_string = "sys.path[0:0]";
     int pos = text.indexOf(bait_string);
@@ -245,7 +232,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
    */
   public static List<String> extractFromSitePy(VirtualFile vFile) throws IOException {
     List<String> result = new ArrayList<>();
-    String text = VfsUtil.loadText(vFile);
+    String text = VfsUtilCore.loadText(vFile);
     String[] lines = LineTokenizer.tokenize(text, false);
     int index = 0;
     while (index < lines.length && !lines[index].startsWith("def addsitepackages(")) {
@@ -370,7 +357,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     String scriptName = SystemInfo.isWindows ? name + SCRIPT_SUFFIX : name;
     final List<File> scripts = getScripts(buildoutFacet, baseDir);
     for (File script : scripts) {
-      if (FileUtil.getNameWithoutExtension(script.getName()).equals(scriptName)) {
+      if (FileUtilRt.getNameWithoutExtension(script.getName()).equals(scriptName)) {
         return script;
       }
     }

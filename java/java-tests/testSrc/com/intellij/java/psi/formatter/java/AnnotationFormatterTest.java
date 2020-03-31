@@ -304,9 +304,9 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   public void testEnumFormatting() {
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(ourProject).getLanguageLevel();
+    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
     try {
-      LanguageLevelProjectExtension.getInstance(ourProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
       doTextTest("  enum Breed {\n" +
                  "     Dalmatian (  \"spotted\" ),Labrador ( \"black\" ),Dachshund( \"brown\" );\n" +
                  "\n" +
@@ -339,7 +339,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  "enum Command {\n" + "    USED,\n" + "    UNUSED;\n" + "}");
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(ourProject).setLanguageLevel(effectiveLanguageLevel);
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(effectiveLanguageLevel);
     }
   }
 

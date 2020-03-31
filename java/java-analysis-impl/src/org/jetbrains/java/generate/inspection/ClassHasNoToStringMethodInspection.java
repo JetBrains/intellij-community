@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.RegExFormatter;
 import com.intellij.codeInspection.ui.RegExInputVerifier;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -64,12 +65,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
 
   @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Class does not override 'toString()' method";
-    }
-
-    @Override
     @NotNull
     public String getShortName() {
         return "ClassHasNoToStringMethod";
@@ -157,7 +152,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                         return;
                     }
                 }
-                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
+                holder.registerProblem(nameIdentifier,
+                                       JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.description", clazz.getName()),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(holder));
             }
         };
@@ -178,7 +174,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Exclude classes (reg exp):"), constraints);
+        panel.add(new JLabel(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.exclude.classes.reg.exp.option")), constraints);
 
         final JFormattedTextField excludeClassNamesField = new JFormattedTextField(new RegExFormatter());
         excludeClassNamesField.setValue(excludeClassNamesPattern);
@@ -206,30 +202,36 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.fill = GridBagConstraints.NONE;
         panel.add(excludeClassNamesField, constraints);
 
-        final CheckBox excludeExceptionCheckBox = new CheckBox("Ignore exception classes", this, "excludeException");
+        final CheckBox excludeExceptionCheckBox = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.exception.classes.option"), this, "excludeException");
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(excludeExceptionCheckBox, constraints);
 
-        final CheckBox excludeDeprecatedCheckBox = new CheckBox("Ignore deprecated classes", this, "excludeDeprecated");
+        final CheckBox excludeDeprecatedCheckBox = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.deprecated.classes.option"), this, "excludeDeprecated");
         constraints.gridy = 2;
         panel.add(excludeDeprecatedCheckBox, constraints);
 
-        final CheckBox excludeEnumCheckBox = new CheckBox("Ignore enum classes", this, "excludeEnum");
+        final CheckBox excludeEnumCheckBox = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.enum.classes.option"), this, "excludeEnum");
         constraints.gridy = 3;
         panel.add(excludeEnumCheckBox, constraints);
 
-        final CheckBox excludeAbstractCheckBox = new CheckBox("Ignore abstract classes", this, "excludeAbstract");
+        final CheckBox excludeAbstractCheckBox = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.abstract.classes.option"), this, "excludeAbstract");
         constraints.gridy = 4;
         panel.add(excludeAbstractCheckBox, constraints);
 
-        final CheckBox excludeInTestCodeCheckBox = new CheckBox("Ignore test classes", this, "excludeTestCode");
+        final CheckBox excludeInTestCodeCheckBox = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.test.classes.option"), this, "excludeTestCode");
         constraints.gridy = 5;
         panel.add(excludeInTestCodeCheckBox, constraints);
 
-        final CheckBox excludeInnerClasses = new CheckBox("Ignore inner classes", this, "excludeInnerClasses");
+        final CheckBox excludeInnerClasses = new CheckBox(
+          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.inner.classes.option"), this, "excludeInnerClasses");
         constraints.gridy = 6;
         constraints.weighty = 1.0;
         panel.add(excludeInnerClasses, constraints);

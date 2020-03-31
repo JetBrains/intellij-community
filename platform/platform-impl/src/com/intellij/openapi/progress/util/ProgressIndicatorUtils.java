@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
@@ -8,22 +9,25 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Most methods in this class are used to equip long background processes which take read actions with a special listener
@@ -35,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
+  private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
+
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -49,7 +55,7 @@ public class ProgressIndicatorUtils {
   }
 
   public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
-    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
+    scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), task);
   }
 
   @NotNull
@@ -59,7 +65,7 @@ public class ProgressIndicatorUtils {
 
   @NotNull
   public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
-    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), executor, task);
+    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), executor, task);
   }
 
   /**
@@ -70,7 +76,7 @@ public class ProgressIndicatorUtils {
                                                                @Nullable ProgressIndicator progressIndicator) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     runWithWriteActionPriority(() -> result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
-                               progressIndicator == null ? new ProgressIndicatorBase() : progressIndicator);
+                               progressIndicator == null ? new ProgressIndicatorBase(false, false) : progressIndicator);
     return result.get();
   }
 
@@ -87,7 +93,7 @@ public class ProgressIndicatorUtils {
    * write action</li>
    * </ul>
    * If caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
-   * 100% CPU usage.
+   * 100% CPU usage. There is also alternative that implements the re-trying logic {@link com.intellij.openapi.application.NonBlockingReadAction}
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
     return runInReadActionWithWriteActionPriority(action, null);
@@ -98,45 +104,68 @@ public class ProgressIndicatorUtils {
     if (application.isDispatchThread()) {
       throw new IllegalStateException("Must not call from EDT");
     }
+    Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriting(application)) {
-      cancelProcess(progressIndicator);
+      cancellation.run();
+      return false;
+    }
+    return ProgressManager.getInstance().runProcess(() -> {
+      try {
+        // add listener inside runProcess to avoid cancelling indicator before even starting the progress
+        return runActionAndCancelBeforeWrite(application, cancellation, action);
+      }
+      catch (ProcessCanceledException ignore) {
+        return false;
+      }
+    }, progressIndicator);
+  }
+
+  private static final List<Runnable> ourWACancellations = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  static {
+    Application app = ApplicationManager.getApplication();
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void beforeWriteActionStart(@NotNull Object action) {
+        for (Runnable cancellation : ourWACancellations) {
+          cancellation.run();
+        }
+      }
+    }, app);
+  }
+
+  @ApiStatus.Internal
+  public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
+                                                      @NotNull Runnable cancellation,
+                                                      @NotNull Runnable action) {
+    if (isWriting(application)) {
+      cancellation.run();
       return false;
     }
 
-    Disposable listenerDisposable = Disposer.newDisposable();
-    ApplicationListener listener = new ApplicationListener() {
-      @Override
-      public void beforeWriteActionStart(@NotNull Object action) {
-        cancelProcess(progressIndicator);
+    ourWACancellations.add(cancellation);
+    try {
+      if (isWriting(application)) {
+        // the listener might not be notified if write action was requested concurrently with listener addition
+        cancellation.run();
+        return false;
       }
-    };
-
-    Ref<Boolean> wasCancelled = new Ref<>();
-    ProgressManager.getInstance().runProcess(() -> {
-      // add listener inside runProcess to avoid cancelling indicator before even starting the progress
-      application.addApplicationListener(listener, listenerDisposable);
-      try {
-        if (isWriting(application)) {
-          // the listener might not be notified if write action was requested concurrently with listener addition
-          cancelProcess(progressIndicator);
-          wasCancelled.set(Boolean.TRUE);
-          return;
-        }
-
+      else {
         action.run();
+        return true;
       }
-      catch (ProcessCanceledException ignore) {
-        wasCancelled.set(Boolean.TRUE);
-      }
-      finally {
-        Disposer.dispose(listenerDisposable);
-      }
-    }, progressIndicator);
-    return wasCancelled.get() != Boolean.TRUE;
+    }
+    finally {
+      ourWACancellations.remove(cancellation);
+    }
   }
 
-  private static void cancelProcess(ProgressIndicator progressIndicator) {
-    if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+  private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
+    return () -> {
+      if (!progressIndicator.isCanceled()) {
+        progressIndicator.cancel();
+      }
+    };
   }
 
   private static boolean isWriting(ApplicationEx application) {
@@ -251,19 +280,115 @@ public class ProgressIndicatorUtils {
     application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
 
+  /**
+   * Run the given computation with its execution time restricted to the given amount of time in milliseconds.<p></p>
+   *
+   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the the timeout.
+   * The computation should call {@link ProgressManager#checkCanceled()} frequently enough, so that after the timeout has been exceeded
+   * it can stop the execution by throwing {@link ProcessCanceledException}, which will be caught by this {@code withTimeout}.<p></p>
+   *
+   * If a {@link ProcessCanceledException} happens due to any other reason (e.g. a thread's progress indicator got canceled),
+   * it'll be thrown out of this method.
+   * @return the computation result or {@code null} if timeout has been exceeded.
+   */
   @Nullable
-  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computable) {
+  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computation) {
     ProgressManager.checkCanceled();
-    ProgressIndicatorBase progress = new ProgressIndicatorBase();
-    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
+    ProgressIndicator outer = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator inner = outer != null ? new SensitiveProgressWrapper(outer) : new ProgressIndicatorBase(false, false);
+    AtomicBoolean canceledByTimeout = new AtomicBoolean();
+    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      canceledByTimeout.set(true);
+      inner.cancel();
+    }, timeoutMs, TimeUnit.MILLISECONDS);
     try {
-      return ProgressManager.getInstance().runProcess(computable, progress);
+      return ProgressManager.getInstance().runProcess(computation, inner);
     }
     catch (ProcessCanceledException e) {
-      return null;
+      if (canceledByTimeout.get()) {
+        return null;
+      }
+      throw e; // canceled not by timeout
     }
     finally {
       cancelProgress.cancel(false);
+    }
+  }
+
+  public static <T, E extends Throwable> T computeWithLockAndCheckingCanceled(@NotNull Lock lock,
+                                                                              int timeout,
+                                                                              @NotNull TimeUnit timeUnit,
+                                                                              @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
+    awaitWithCheckCanceled(lock, timeout, timeUnit);
+
+    try {
+      return computable.compute();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
+    awaitWithCheckCanceled(() -> waiter.await(10, TimeUnit.MILLISECONDS));
+  }
+
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return awaitWithCheckCanceled(future, indicator);
+  }
+
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
+    while (true) {
+      checkCancelledEvenWithPCEDisabled(indicator);
+      try {
+        return future.get(10, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException | RejectedExecutionException ignore) {
+      }
+      catch (Throwable e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)cause;
+        }
+        if (cause instanceof CancellationException) {
+          throw new ProcessCanceledException(cause);
+        }
+        ExceptionUtil.rethrow(e);
+      }
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    boolean success = false;
+    while (!success) {
+      checkCancelledEvenWithPCEDisabled(indicator);
+      try {
+        success = waiter.compute();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
+    }
+  }
+
+  /** Use when otherwise a deadlock is possible. */
+  public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
+    if (indicator != null && indicator.isCanceled()) {
+      indicator.checkCanceled(); // maybe it'll throw with some useful additional information
+      throw new ProcessCanceledException();
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Semaphore semaphore, @Nullable ProgressIndicator indicator) {
+    while (!semaphore.waitFor(10)) {
+      checkCancelledEvenWithPCEDisabled(indicator);
     }
   }
 }

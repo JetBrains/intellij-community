@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel;
+import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
@@ -25,15 +12,16 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 /**
  * @author peter
@@ -135,7 +125,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public static Builder createDialog(@NotNull final Project project) {
-    if (Experiments.isFeatureEnabled("show.create.new.element.in.popup")) {
+    if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
      return new NonBlockingPopupBuilderImpl(project);
     }
     else {
@@ -154,13 +144,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public Builder setTitle(String title) {
+    public Builder setTitle(@NlsContexts.DialogTitle String title) {
       myDialog.setTitle(title);
       return this;
     }
 
     @Override
-    public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
       if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
         myDialog.setTemplateKindComponentsVisible(true);
@@ -236,13 +226,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
     @Override
-    public Builder setTitle(String title) {
+    public Builder setTitle(@Nls String title) {
       myTitle = title;
       return this;
     }
 
     @Override
-    public Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
       myTemplatesList.add(Trinity.create(kind, icon, templateName));
       return this;
     }
@@ -284,23 +274,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         }
       };
 
-      JBPopup popup = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(contentPanel, contentPanel.getNameField())
-        .setTitle(myTitle)
-        .setResizable(false)
-        .setModalContext(true)
-        .setFocusable(true)
-        .setRequestFocus(true)
-        .setMovable(true)
-        .setBelongsToGlobalPopupStack(true)
-        .setCancelKeyEnabled(true)
-        .setCancelOnWindowDeactivation(false)
-        .setCancelOnClickOutside(true)
-        .addUserData("SIMPLE_WINDOW")
-        .createPopup();
-
+      JBPopup popup = NewItemPopupUtil.createNewItemPopup(myTitle, contentPanel, contentPanel.getNameField());
       contentPanel.setApplyAction(e -> {
         String newElementName = contentPanel.getEnteredName();
+        if (StringUtil.isEmptyOrSpaces(newElementName)) return;
+
         boolean isValid = myInputValidator == null || myInputValidator.canClose(newElementName);
         if (isValid) {
           popup.closeOk(e);
@@ -336,13 +314,18 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public interface Builder {
-    Builder setTitle(String title);
+    Builder setTitle(@DialogTitle String title);
     Builder setValidator(InputValidator validator);
-    Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
+    Builder addKind(@NlsUI.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName);
     @Nullable
-    <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
+    <T extends PsiElement> T show(@DialogTitle @NotNull String errorTitle,
+                                  @NonNls @Nullable String selectedItem,
+                                  @NotNull FileCreator<T> creator);
 
-    <T extends PsiElement> void show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator, Consumer<? super T> elementConsumer);
+    <T extends PsiElement> void show(@DialogTitle @NotNull String errorTitle,
+                                     @NonNls @Nullable String selectedItem,
+                                     @NotNull FileCreator<T> creator,
+                                     Consumer<? super T> elementConsumer);
 
     @Nullable
     Map<String,String> getCustomProperties();
@@ -351,10 +334,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface FileCreator<T> {
 
     @Nullable
-    T createFile(@NotNull String name, @NotNull String templateName);
+    T createFile(@NonNls @NotNull String name, @NonNls @NotNull String templateName);
 
+    @Command
     @NotNull
-    String getActionName(@NotNull String name, @NotNull String templateName);
+    String getActionName(@NonNls @NotNull String name, @NonNls @NotNull String templateName);
 
     boolean startInWriteAction();
   }

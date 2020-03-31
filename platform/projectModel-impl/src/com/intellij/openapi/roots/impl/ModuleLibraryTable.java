@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -27,11 +26,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.util.Condition;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ConvertingIterator;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +39,8 @@ import java.util.Iterator;
 /**
  *  @author dsl
  */
+@ApiStatus.Internal
 public class ModuleLibraryTable implements LibraryTable, LibraryTable.ModifiableModel {
-  private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
-  private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   @NotNull
   private final RootModelImpl myRootModel;
   @NotNull
@@ -52,19 +49,19 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     @NotNull
     @Override
     public String getDisplayName(boolean plural) {
-      return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
+      return ProjectModelBundle.message("module.library.display.name", plural ? 2 : 1);
     }
 
     @NotNull
     @Override
     public String getDescription() {
-      return ProjectBundle.message("libraries.node.text.module");
+      return ProjectModelBundle.message("libraries.node.text.module");
     }
 
     @NotNull
     @Override
     public String getLibraryTableEditorTitle() {
-      return ProjectBundle.message("library.configure.module.title");
+      return ProjectModelBundle.message("library.configure.module.title");
     }
   };
 
@@ -74,8 +71,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   @Override
-  @NotNull
-  public Library[] getLibraries() {
+  public Library @NotNull [] getLibraries() {
     final ArrayList<Library> result = new ArrayList<>();
     final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);
@@ -130,8 +126,10 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     FilteringIterator<OrderEntry, LibraryOrderEntry> filteringIterator =
-      new FilteringIterator<>(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER);
-    return new ConvertingIterator<>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
+      new FilteringIterator<>(myRootModel.getOrderIterator(), entry -> entry instanceof LibraryOrderEntry &&
+                                                                       ((LibraryOrderEntry)entry).isModuleLevel() &&
+                                                                       ((LibraryOrderEntry)entry).getLibrary() != null);
+    return ContainerUtil.mapIterator(filteringIterator, LibraryOrderEntry::getLibrary);
   }
 
   @NotNull
@@ -175,20 +173,6 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   @NotNull
   public Module getModule() {
     return myRootModel.getModule();
-  }
-
-  private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {
-    @Override
-    public boolean value(OrderEntry entry) {
-      return entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel() && ((LibraryOrderEntry)entry).getLibrary() != null;
-    }
-  }
-
-  private static class OrderEntryToLibraryConvertor implements Convertor<LibraryOrderEntry, Library> {
-    @Override
-    public Library convert(LibraryOrderEntry o) {
-      return o.getLibrary();
-    }
   }
 
   @Override

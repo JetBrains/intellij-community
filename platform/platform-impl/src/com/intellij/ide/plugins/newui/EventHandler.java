@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,16 +23,16 @@ public abstract class EventHandler {
   public void connect(@NotNull PluginsGroupComponent container) {
   }
 
-  public void addCell(@NotNull CellPluginComponent component, int index) {
+  public void addCell(@NotNull ListPluginComponent component, int index) {
   }
 
-  public void addCell(@NotNull CellPluginComponent component, @Nullable CellPluginComponent anchor) {
+  public void addCell(@NotNull ListPluginComponent component, @Nullable ListPluginComponent anchor) {
   }
 
-  public void removeCell(@NotNull CellPluginComponent component) {
+  public void removeCell(@NotNull ListPluginComponent component) {
   }
 
-  public int getCellIndex(@NotNull CellPluginComponent component) {
+  public int getCellIndex(@NotNull ListPluginComponent component) {
     return -1;
   }
 
@@ -45,25 +46,25 @@ public abstract class EventHandler {
     }
   }
 
-  public void updateHover(@NotNull CellPluginComponent component) {
+  public void updateHover(@NotNull ListPluginComponent component) {
   }
 
   public void initialSelection(boolean scrollAndFocus) {
   }
 
   @NotNull
-  public List<CellPluginComponent> getSelection() {
+  public List<ListPluginComponent> getSelection() {
     return Collections.emptyList();
   }
 
-  public void setSelection(@NotNull CellPluginComponent component) {
+  public void setSelection(@NotNull ListPluginComponent component) {
     setSelection(component, true);
   }
 
-  public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
+  public void setSelection(@NotNull ListPluginComponent component, boolean scrollAndFocus) {
   }
 
-  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
   }
 
   public void updateSelection() {
@@ -102,9 +103,9 @@ public abstract class EventHandler {
   }
 
   @NotNull
-  protected static CellPluginComponent get(@NotNull ComponentEvent event) {
+  protected static ListPluginComponent get(@NotNull ComponentEvent event) {
     //noinspection ConstantConditions
-    return UIUtil.getParentOfType(CellPluginComponent.class, event.getComponent());
+    return ComponentUtil.getParentOfType((Class<? extends ListPluginComponent>)ListPluginComponent.class, event.getComponent());
   }
 
   @Nullable

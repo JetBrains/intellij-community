@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -20,11 +6,9 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,16 +70,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Nullable
   private String getCondaDirectory() {
-    final VirtualFile condaDirectory = getCondaDirectory(getSdk());
+    final VirtualFile condaDirectory = PythonSdkUtil.getCondaDirectory(getSdk());
     return condaDirectory == null ? null : condaDirectory.getPath();
-  }
-
-  @Nullable
-  public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
-    if (SystemInfo.isWindows) return homeDirectory.getParent();
-    return homeDirectory.getParent().getParent();
   }
 
   @Override
@@ -175,42 +151,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return packages;
   }
 
-  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    return isCondaVirtualEnv(sdk.getHomePath());
-  }
-
-  public static boolean isCondaVirtualEnv(@Nullable String sdkPath) {
-    final VirtualFile condaMeta = findCondaMeta(sdkPath);
-    if (condaMeta == null) {
-      return false;
-    }
-    final VirtualFile envs = condaMeta.getParent().findChild("envs");
-    return envs == null;
-  }
-
-  // Conda virtual environment and system conda
-  public static boolean isConda(@NotNull Sdk sdk) {
-    return isConda(sdk.getHomePath());
-  }
-
-  public static boolean isConda(@Nullable String sdkPath) {
-    return findCondaMeta(sdkPath) != null;
-  }
-
-  @Nullable
-  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
-    if (sdkPath == null) {
-      return null;
-    }
-    final VirtualFile homeDirectory = StandardFileSystems.local().findFileByPath(sdkPath);
-    if (homeDirectory == null) {
-      return null;
-    }
-    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                         : homeDirectory.getParent().getParent();
-    return condaParent.findChild("conda-meta");
-  }
-
   @NotNull
   public static String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
                                         @NotNull String version) throws ExecutionException {
@@ -219,7 +159,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunKt.runConda(condaExecutable, parameters);
-    final String binary = PythonSdkType.getPythonExecutable(destinationDir);
+    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }

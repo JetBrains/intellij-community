@@ -26,9 +26,11 @@ import java.util.List;
 
 class RemoteFrameImpl extends PortableRemoteObject implements RemoteDebugger.Frame {
   private final Frame myFrame;
+  private final String myAccessToken;
 
-  private RemoteFrameImpl(Frame frame) throws RemoteException {
+  private RemoteFrameImpl(Frame frame, String accessToken) throws RemoteException {
     myFrame = frame;
+    myAccessToken = accessToken;
   }
 
   public int getLineNumber() {
@@ -40,18 +42,19 @@ class RemoteFrameImpl extends PortableRemoteObject implements RemoteDebugger.Fra
   }
 
   public RemoteDebugger.Frame getNext() throws RemoteException {
-    return create(myFrame.getNext());
+    return create(myFrame.getNext(), myAccessToken);
   }
 
   public RemoteDebugger.Frame getPrevious() throws RemoteException {
-    return create(myFrame.getPrevious());
+    return create(myFrame.getPrevious(), myAccessToken);
   }
 
   public String getXPath() throws RemoteException {
     return ((Debugger.SourceFrame)myFrame).getXPath();
   }
 
-  public ValueImpl eval(String expr) throws Debugger.EvaluationException {
+  public ValueImpl eval(String expr, String accessToken) throws Debugger.EvaluationException, RemoteException {
+    if (!myAccessToken.equals(accessToken)) throw new RemoteException("Access denied");
     final Value value = ((Debugger.StyleFrame)myFrame).eval(expr);
     return new ValueImpl(value.getValue(), value.getType());
   }
@@ -64,7 +67,7 @@ class RemoteFrameImpl extends PortableRemoteObject implements RemoteDebugger.Fra
     return ((Debugger.StyleFrame)myFrame).getInstruction();
   }
 
-  public static RemoteFrameImpl create(Frame frame) throws RemoteException {
-    return frame != null ? new RemoteFrameImpl(frame) : null;
+  public static RemoteFrameImpl create(Frame frame, String accessToken) throws RemoteException {
+    return frame != null ? new RemoteFrameImpl(frame, accessToken) : null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
@@ -24,14 +24,11 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class JavaParserDefinition implements ParserDefinition {
   public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 
-  @Override
   @NotNull
+  @Override
   public Lexer createLexer(@Nullable Project project) {
     LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
     return createLexer(level);
@@ -52,39 +49,39 @@ public class JavaParserDefinition implements ParserDefinition {
     return JAVA_FILE;
   }
 
-  @Override
   @NotNull
+  @Override
   public TokenSet getWhitespaceTokens() {
     return TokenSet.WHITE_SPACE;
   }
 
-  @Override
   @NotNull
+  @Override
   public TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }
 
-  @Override
   @NotNull
+  @Override
   public TokenSet getStringLiteralElements() {
     return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
-  @Override
   @NotNull
-  public PsiParser createParser(final Project project) {
+  @Override
+  public PsiParser createParser(Project project) {
     throw new UnsupportedOperationException("Should not be called directly");
   }
 
-  @Override
   @NotNull
-  public PsiElement createElement(final ASTNode node) {
-    final IElementType type = node.getElementType();
+  @Override
+  public PsiElement createElement(ASTNode node) {
+    IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
       return ((JavaStubElementType)type).createPsi(node);
     }
 
-    throw new IllegalStateException("Incorrect node for JavaParserDefinition: " + node + " (" + type + ")");
+    throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ", " + type.getLanguage() + ")");
   }
 
   @Override

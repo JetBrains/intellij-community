@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class LibraryEditorBase implements LibraryEditor {
   @Override
   public void removeAllRoots() {

@@ -20,7 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 
-public class BulkMethodInfo {
+import java.util.Objects;
+
+public final class BulkMethodInfo {
   private final String myClassName;
   private final String mySimpleName;
   private final String myBulkName;
@@ -38,7 +40,7 @@ public class BulkMethodInfo {
     PsiMethod method = (PsiMethod)element;
     PsiParameterList parameters = method.getParameterList();
     if (parameters.getParametersCount() != 1) return false;
-    PsiParameter parameter = parameters.getParameters()[0];
+    PsiParameter parameter = Objects.requireNonNull(parameters.getParameter(0));
     PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameter.getType());
     if (parameterClass == null ||
         CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
@@ -86,7 +88,7 @@ public class BulkMethodInfo {
     if (bulkMethod == null) return false;
     PsiParameterList parameters = bulkMethod.getParameterList();
     if (parameters.getParametersCount() != 1) return false;
-    PsiType parameterType = parameters.getParameters()[0].getType();
+    PsiType parameterType = Objects.requireNonNull(parameters.getParameter(0)).getType();
     parameterType = call.resolveMethodGenerics().getSubstitutor().substitute(parameterType);
     PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
     return parameterClass != null &&

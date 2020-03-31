@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -86,7 +86,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private SearchTextField createSearchBox(JPanel root) {
-    final SearchTextFieldWithStoredHistory field = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
+    final SearchTextFieldWithStoredHistory field = new SearchTextFieldWithStoredHistory(getDimensionKey() + ".searchHistory");
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -104,7 +104,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private void initChangesTree(JComponent root) {
     myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
-    myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
+    myChangesTree.setDoubleClickAndEnterKeyHandler(() -> new ShowDifferenceAction().performIfEnabled());
 
     new ShowDifferenceAction().registerCustomShortcutSet(root, null);
 

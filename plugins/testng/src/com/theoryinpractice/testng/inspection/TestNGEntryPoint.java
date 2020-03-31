@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class TestNGEntryPoint extends EntryPoint {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "TestNG test cases";
+    return TestngBundle.message("testng.entry.point.test.cases");
   }
 
   @Override
@@ -74,8 +75,7 @@ public class TestNGEntryPoint extends EntryPoint {
   }
 
   @Override
-  @Nullable
-  public String[] getIgnoreAnnotations() {
+  public String @Nullable [] getIgnoreAnnotations() {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }
 }

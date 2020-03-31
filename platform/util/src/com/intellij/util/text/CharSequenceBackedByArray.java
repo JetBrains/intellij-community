@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CharSequenceBackedByArray extends CharSequence {
   // NOT guaranteed to return the array of the length of the original charSequence.length() - may be more for performance reasons.
-  @NotNull
-  char[] getChars();
+  char @NotNull [] getChars();
 
-  void getChars(@NotNull char[] dst, int dstOffset);
+  void getChars(char @NotNull [] dst, int dstOffset);
 }

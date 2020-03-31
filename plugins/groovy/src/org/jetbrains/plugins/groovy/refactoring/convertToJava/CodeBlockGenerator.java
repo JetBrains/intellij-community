@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
@@ -51,7 +51,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class CodeBlockGenerator extends Generator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.CodeBlockGenerator");
+  private static final Logger LOG = Logger.getInstance(CodeBlockGenerator.class);
 
   private static final boolean IN_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -124,7 +124,7 @@ public class CodeBlockGenerator extends Generator {
     generateCodeBlock(parameters, block, false);
   }
 
-  public void generateCodeBlock(@NotNull GrParameter[] parameters, @Nullable GrCodeBlock block, boolean shouldInsertReturnNull) {
+  public void generateCodeBlock(GrParameter @NotNull [] parameters, @Nullable GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{");
 
     for (GrParameter parameter : parameters) {

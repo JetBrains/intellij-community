@@ -17,11 +17,11 @@ package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
+public class JUnit5MalformedRepeatedTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -31,29 +31,7 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    addEnvironmentClass("package org.junit.platform.commons.annotation;\n" +
-                        "public @interface Testable {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface RepeatedTest {int value(); String name() default \"\";}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface Test {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface AfterEach {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface BeforeAll {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface BeforeEach {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public interface RepetitionInfo {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public interface TestInfo {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public interface TestReporter {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface ParameterizedTest {}");
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
   }
 
   public void testMalformed() { doTest(); }

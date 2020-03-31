@@ -98,7 +98,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
         else s.replace("pick", "reword")
       }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
     }, null))
-    val rebaseParams = GitRebaseParams(null, null, "branch-$onto", true, false)
+    val rebaseParams = GitRebaseParams(vcs.version, null, null, "branch-$onto", true, false)
     git.rebase(repository, rebaseParams)
   }
 

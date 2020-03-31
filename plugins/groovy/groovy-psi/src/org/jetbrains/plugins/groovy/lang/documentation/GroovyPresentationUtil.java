@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,20 +8,17 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.util.ArrayUtil;
-import kotlin.Pair;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamData;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -93,7 +90,7 @@ public class GroovyPresentationUtil {
 
       if (!structural.isEmpty()) {
         builder.append(".");
-        String[] array = ArrayUtil.toStringArray(structural);
+        String[] array = ArrayUtilRt.toStringArray(structural);
         if (array.length > 1) builder.append("[");
         for (int i = 0; i < array.length; i++) {
           if (i > 0) builder.append(", ");
@@ -105,8 +102,8 @@ public class GroovyPresentationUtil {
   }
 
   private static boolean presentNamedParameters(@NotNull StringBuilder buffer, @NotNull GrParameter parameter) {
-    List<Pair<String, PsiType>> pairs = NamedParamsUtil.collectNamedParams(parameter);
-    StringUtil.join(pairs, pair -> pair.getFirst() + ": " + pair.getSecond().getPresentableText(), ", ", buffer);
+    List<NamedParamData> pairs = NamedParamsUtil.collectNamedParams(parameter);
+    StringUtil.join(pairs, namedParam -> namedParam.getName() + ": " + namedParam.getType().getPresentableText(), ", ", buffer);
     return !pairs.isEmpty();
   }
 

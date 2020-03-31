@@ -156,16 +156,29 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Nullable
-    protected Operation createExpandOperation(@NotNull final JsonSchemaObject schema,
+    protected Operation createExpandOperation(@NotNull JsonSchemaObject schema,
                                               @NotNull JsonSchemaService service) {
-      if (conflictingSchema(schema)) {
-        final Operation operation = new AnyOfOperation(schema, service);
-        operation.myState = SchemaResolveState.conflict;
-        return operation;
-      }
+      Operation forConflict = getOperationForConflict(schema, service);
+      if (forConflict != null) return forConflict;
       if (schema.getAnyOf() != null) return new AnyOfOperation(schema, service);
       if (schema.getOneOf() != null) return new OneOfOperation(schema, service);
       if (schema.getAllOf() != null) return new AllOfOperation(schema, service);
+      return null;
+    }
+
+    @Nullable
+    private static Operation getOperationForConflict(@NotNull JsonSchemaObject schema,
+                                                     @NotNull JsonSchemaService service) {
+      // in case of several incompatible operations, choose the most permissive one
+      List<JsonSchemaObject> anyOf = schema.getAnyOf();
+      List<JsonSchemaObject> oneOf = schema.getOneOf();
+      List<JsonSchemaObject> allOf = schema.getAllOf();
+      if (anyOf != null && (oneOf != null || allOf != null)) {
+        return new AnyOfOperation(schema, service) {{myState = SchemaResolveState.conflict;}};
+      }
+      else if (oneOf != null && allOf != null) {
+        return new OneOfOperation(schema, service) {{myState = SchemaResolveState.conflict;}};
+      }
       return null;
     }
 
@@ -347,14 +360,6 @@ public class JsonSchemaVariantsTreeBuilder {
         }
       }
     }
-  }
-
-  private static boolean conflictingSchema(JsonSchemaObject schema) {
-    int cnt = 0;
-    if (schema.getAllOf() != null) ++cnt;
-    if (schema.getAnyOf() != null) ++cnt;
-    if (schema.getOneOf() != null) ++cnt;
-    return cnt > 1;
   }
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {

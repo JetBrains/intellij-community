@@ -16,54 +16,6 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-public abstract class BranchingInstruction extends Instruction {
-  private boolean myIsTrueReachable;
-  private boolean myIsFalseReachable;
-  private final boolean isConstTrue;
-  private final PsiElement myExpression;
-
-  protected BranchingInstruction(@Nullable PsiElement psiAnchor) {
-    myIsTrueReachable = false;
-    myIsFalseReachable = false;
-    myExpression = psiAnchor;
-    isConstTrue = psiAnchor instanceof PsiExpression && isBoolConst(PsiUtil.skipParenthesizedExprDown((PsiExpression)psiAnchor));
-  }
-
-  public boolean isTrueReachable() {
-    return myIsTrueReachable;
-  }
-
-  public boolean isFalseReachable() {
-    return myIsFalseReachable;
-  }
-
-  public PsiElement getPsiAnchor() {
-    return myExpression;
-  }
-
-  public void setTrueReachable() {
-    myIsTrueReachable = true;
-  }
-
-  public void setFalseReachable() {
-    myIsFalseReachable = true;
-  }
-
-  public boolean isConditionConst() {
-    return !isConstTrue && myIsTrueReachable != myIsFalseReachable;
-  }
-
-  public static boolean isBoolConst(PsiElement condition) {
-    if (!(condition instanceof PsiLiteralExpression)) return false;
-    @NonNls String text = condition.getText();
-    return "true".equals(text) || "false".equals(text);
-  }
-
+public interface BranchingInstruction {
+  int getIndex();
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -32,7 +18,7 @@ import java.util.Set;
  * <p/>
  * Custom providers are registered via {@link FileViewProviderFactory}.
  * <p/>
- * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/file_view_providers.html">File View Providers</a>
  * for high-level overview.
  *
  * @see PsiFile#getViewProvider()
@@ -47,22 +33,20 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   PsiManager getManager();
 
   /**
-   * @return the document corresponding to this file. Can be null for binary or files without events enabled.
-   * 
+   * @return the document corresponding to this file. Can be {@code null} for binary or files without events enabled.
    * @see FileType#isBinary()
    * @see PsiBinaryFile
-   * @see #isEventSystemEnabled() 
+   * @see #isEventSystemEnabled()
    */
   @Nullable
   Document getDocument();
 
   /**
-   * @return the contents of this file view provider, which are parsed into PSI trees. May or may not be equal 
+   * @return the contents of this file view provider, which are parsed into PSI trees. May or may not be equal
    * to the contents of the corresponding document. The latter happens for non-committed documents.
    * If the document is modified but not yet committed, the result is equivalent to {@link PsiDocumentManager#getLastCommittedText(Document)}.
-   * 
-   * @see #getDocument() 
-   * @see PsiDocumentManager#isUncommited(Document) 
+   * @see #getDocument()
+   * @see PsiDocumentManager#isUncommited(Document)
    */
   @NotNull
   CharSequence getContents();
@@ -74,8 +58,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   VirtualFile getVirtualFile();
 
   /**
-   * @return the language of the main PSI tree (or the only one in a single-tree view providers). Used when returning a PsiFile from 
-   * {@link PsiManager#findFile(VirtualFile)}, 
+   * @return the language of the main PSI tree (or the only one in a single-tree view providers). Used when returning a PsiFile from
+   * {@link PsiManager#findFile(VirtualFile)},
    * {@link PsiDocumentManager#getPsiFile(Document)} etc.
    */
   @NotNull
@@ -83,7 +67,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
 
   /**
    * @return all languages this file supports, in no particular order.
-   * 
    * @see #getPsi(Language)
    */
   @NotNull
@@ -98,8 +81,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   }
 
   /**
-   * @param target target language
-   * @return PsiFile for given language, or {@code null} if the language not present
+   * @return PsiFile for given language, or {@code null} if the language is not present
    */
   PsiFile getPsi(@NotNull Language target);
 
@@ -112,19 +94,17 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   List<PsiFile> getAllFiles();
 
   /**
-   * @return whether PSI events are fired when changes occur inside PSI in this view provider. True for physical files and for some non-physical as well.
-   * 
+   * @return whether PSI events are fired when changes occur inside PSI in this view provider. {@code true} for physical files and for some non-physical as well.
    * @see PsiTreeChangeListener
    * @see PsiFileFactory#createFileFromText(String, FileType, CharSequence, long, boolean)
-   * @see PsiFile#isPhysical() 
+   * @see PsiFile#isPhysical()
    */
   boolean isEventSystemEnabled();
 
   /**
    * @return whether this file corresponds to a file on a disk. For such files, {@link PsiFile#getVirtualFile()} returns non-null.
    * Not to be confused with {@link PsiFile#isPhysical()} which (for historical reasons) returns {@code getViewProvider().isEventSystemEnabled()}
-   * 
-   * @see #isEventSystemEnabled() 
+   * @see #isEventSystemEnabled()
    * @see PsiFile#isPhysical()
    */
   boolean isPhysical();
@@ -132,22 +112,20 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * @return a number to quickly check if contents of this view provider have diverged from the corresponding {@link VirtualFile} or {@link Document}.
    * If a document is modified but not yet committed, the result is the same as {@link PsiDocumentManager#getLastCommittedStamp(Document)}
-   * 
-   * @see VirtualFile#getModificationStamp() 
-   * @see Document#getModificationStamp() 
+   * @see VirtualFile#getModificationStamp()
+   * @see Document#getModificationStamp()
    */
   long getModificationStamp();
 
   /**
-   * @param rootLanguage one of the root languages
    * @return whether the PSI file with the specified root language supports incremental reparse.
-   * 
-   * @see #getLanguages() 
+   * @see #getLanguages()
    */
   boolean supportsIncrementalReparse(@NotNull Language rootLanguage);
 
   /**
    * Invoked when any PSI change happens in any of the PSI files corresponding to this view provider.
+   *
    * @param psiFile the file where PSI has just been changed.
    */
   void rootChanged(@NotNull PsiFile psiFile);
@@ -160,38 +138,33 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * Invoked after PSI in the corresponding file is synchronized with the corresponding document, which can happen
    * after VFS, document or PSI changes.<p/>
-   * 
+   * <p>
    * Multi-language file view providers may override this method to recalculate template data languages.
-   * 
-   * @see #getLanguages() 
+   *
+   * @see #getLanguages()
    */
   void contentsSynchronized();
 
   /**
    * @return a copy of this view provider, built on a {@link LightVirtualFile}, not physical and with PSI events disabled.
-   * 
-   * @see #isPhysical() 
-   * @see #isEventSystemEnabled() 
-   * @see #createCopy(VirtualFile) 
+   * @see #isPhysical()
+   * @see #isEventSystemEnabled()
+   * @see #createCopy(VirtualFile)
    */
   FileViewProvider clone();
 
   /**
-   * @param offset an offset in the file
    * @return the deepest (leaf) PSI element in the main PSI tree at the specified offset.
-   * 
    * @see #getBaseLanguage()
-   * @see #findElementAt(int, Class) 
+   * @see #findElementAt(int, Class)
    * @see #findElementAt(int, Language)
-   * @see PsiFile#findElementAt(int) 
+   * @see PsiFile#findElementAt(int)
    */
   @Nullable
   PsiElement findElementAt(int offset);
 
   /**
-   * @param offset an offset in the file
    * @return a reference in the main PSI tree at the specified offset.
-   * 
    * @see #getBaseLanguage()
    * @see PsiFile#findReferenceAt(int)
    * @see #findReferenceAt(int, Language)
@@ -200,50 +173,43 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   PsiReference findReferenceAt(int offset);
 
   /**
-   * @param offset an offset in the file
    * @return the deepest (leaf) PSI element in the PSI tree with the specified root language at the specified offset.
-   *
    * @see #getBaseLanguage()
-   * @see #findElementAt(int) 
+   * @see #findElementAt(int)
    */
   @Nullable
   PsiElement findElementAt(int offset, @NotNull Language language);
 
   /**
-   * @param offset an offset in the file
    * @return the deepest (leaf) PSI element in the PSI tree with the specified root language class at the specified offset.
-   *
    * @see #getBaseLanguage()
-   * @see #findElementAt(int) 
+   * @see #findElementAt(int)
    */
   @Nullable
   PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang);
 
   /**
-   * @param offsetInElement an offset in the file
    * @return a reference in the PSI tree with the specified root language at the specified offset.
-   *
    * @see #getBaseLanguage()
    * @see PsiFile#findReferenceAt(int)
    * @see #findReferenceAt(int)
    */
   @Nullable
-  PsiReference findReferenceAt(int offsetInElement, @NotNull Language language);
+  PsiReference findReferenceAt(int offset, @NotNull Language language);
 
   /**
-   * Creates a copy of this view provider linked with the give (typically light) file.
+   * Creates a copy of this view provider linked with the given (typically light) file.
    * The result provider is required to be NOT event-system-enabled.
-   * 
+   *
    * @see LightVirtualFile
-   * @see #isEventSystemEnabled() 
+   * @see #isEventSystemEnabled()
    */
   @NotNull
   FileViewProvider createCopy(@NotNull VirtualFile copy);
 
   /**
    * @return the PSI root for which stubs are to be built if supported. By default it's the main root.
-   * 
-   * @see #getBaseLanguage() 
+   * @see #getBaseLanguage()
    */
   @NotNull
   PsiFile getStubBindingRoot();

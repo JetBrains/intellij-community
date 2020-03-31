@@ -15,7 +15,7 @@ class PyRunAnythingCommandCustomizer : RunAnythingCommandCustomizer() {
                                     dataContext: DataContext,
                                     commandLine: GeneralCommandLine): GeneralCommandLine {
     dataContext.virtualFile?.findPythonSdk(dataContext.project)?.let { sdk ->
-      PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk.homePath, true)
+      PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk)
       commandLine.findExecutableInPath()?.let {
         commandLine.exePath = it
       }

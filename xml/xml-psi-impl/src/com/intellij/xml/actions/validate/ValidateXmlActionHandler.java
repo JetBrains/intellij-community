@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.javaee.UriUtil;
@@ -24,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlResourceResolver;
 import org.apache.xerces.impl.Constants;
@@ -51,11 +37,8 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
 
-/**
- * @author Mike
- */
-public class ValidateXmlActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
+public class ValidateXmlActionHandler implements ValidateXmlHandler {
+  private static final Logger LOG = Logger.getInstance(ValidateXmlActionHandler.class);
 
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
@@ -119,6 +102,12 @@ public class ValidateXmlActionHandler {
     return msg;
   }
 
+  @Override
+  public boolean isAvailable(XmlFile file) {
+    return true;
+  }
+
+  @Override
   public void doValidate(XmlFile file) {
     myProject = file.getProject();
     myFile = file;
@@ -262,7 +251,7 @@ public class ValidateXmlActionHandler {
         if (schemaChecking) {
           parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
           parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
-          
+
           if (Boolean.TRUE.equals(Boolean.getBoolean(XmlResourceResolver.HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY))) {
             parser.getXMLReader().setFeature("http://apache.org/xml/features/honour-all-schemaLocations", true);
           }
@@ -346,8 +335,8 @@ public class ValidateXmlActionHandler {
 
   private static String[] getNamespaces(XmlFile file) {
     XmlTag rootTag = file.getRootTag();
-    if (rootTag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return ContainerUtil.mapNotNull(rootTag.getAttributes(), attribute -> attribute.getValue(), ArrayUtil.EMPTY_STRING_ARRAY);
+    if (rootTag == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return ContainerUtil.mapNotNull(rootTag.getAttributes(), attribute -> attribute.getValue(), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   private static long calculateTimeStamp(final VirtualFile[] files, Project myProject) {

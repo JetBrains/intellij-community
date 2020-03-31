@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="org/zmlx/hg4idea/HgVcsMessages" key="hg4idea.init.dialog.option.create.repository.for.whole.project"/>
+              <text resource-bundle="messages/HgBundle" key="hg4idea.init.dialog.option.create.repository.for.whole.project"/>
             </properties>
           </component>
           <component id="6bbb3" class="javax.swing.JRadioButton" binding="mySelectWhereToCreateRadioButton" default-binding="true">
@@ -30,7 +30,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/zmlx/hg4idea/HgVcsMessages" key="hg4idea.init.dialog.option.select.folder"/>
+              <text resource-bundle="messages/HgBundle" key="hg4idea.init.dialog.option.select.folder"/>
             </properties>
           </component>
           <component id="d4405" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTextFieldBrowser">

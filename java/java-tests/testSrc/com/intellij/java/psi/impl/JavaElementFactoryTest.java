@@ -1,22 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
-
-public class JavaElementFactoryTest extends LightCodeInsightFixtureTestCase {
+public class JavaElementFactoryTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiElementFactory myFactory;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFactory = getJavaFacade().getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
   }
 
   @Override

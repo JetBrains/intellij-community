@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.template.formatter;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -31,6 +30,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.util.text.TextRangeUtil;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,8 @@ public class TemplateFormatUtil {
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
   
   private final static String[] IGNORABLE_ERROR_MESSAGES = {
-    XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"),
-    XmlErrorMessages.message("xml.parsing.closing.tag.name.missing")
+    XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
+    XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
   };
 
   private TemplateFormatUtil() {
@@ -210,7 +211,7 @@ public class TemplateFormatUtil {
         lastOffset = block.getTextRange().getEndOffset();
         currRange = new TextRange(lastOffset, endOffset);
       }
-      else if (currRange.intersects(block.getTextRange()) && intersectsOneOf(block.getTextRange(), originalRanges)) {
+      else if (currRange.intersects(block.getTextRange()) && TextRangeUtil.intersectsOneOf(block.getTextRange(), originalRanges)) {
         List<Block> subBlocks = block.getSubBlocks();
         if (block instanceof TemplateLanguageBlock && ((TemplateLanguageBlock)block).containsErrorElements()) {
           throw new FragmentedTemplateException();
@@ -222,22 +223,6 @@ public class TemplateFormatUtil {
     return lastOffset;
   }
 
-  public static boolean intersectsOneOf(TextRange blockRange, List<? extends TextRange> originalRanges) {
-    return
-      rangesContain(originalRanges, 0, originalRanges.size() - 1, blockRange.getStartOffset()) ||
-      rangesContain(originalRanges, 0, originalRanges.size() - 1, blockRange.getEndOffset());
-  }
-
-  static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
-    if (endIndex < startIndex || ranges.size() <= startIndex || ranges.size() <= endIndex) return false;
-    int startOffset = ranges.get(startIndex).getStartOffset();
-    int endOffset = ranges.get(endIndex).getEndOffset();
-    if (offset < startOffset || offset > endOffset) return false;
-    if (startIndex == endIndex) return true;
-    int midIndex = (endIndex + startIndex) / 2;
-    return rangesContain(ranges, startIndex, midIndex, offset)  || rangesContain(ranges, midIndex  + 1, endIndex, offset);
-  }
-
   private static Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range) {
     return getBlockContaining(blockList, originalRanges, range, 0);
   }
@@ -246,7 +231,7 @@ public class TemplateFormatUtil {
   private static Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range, int depth) {
     for (Block block : blockList) {
       if (block.getTextRange().contains(range)) {
-        if (intersectsOneOf(block.getTextRange(), originalRanges)) {
+        if (TextRangeUtil.intersectsOneOf(block.getTextRange(), originalRanges)) {
           Block containingBlock = getBlockContaining(block.getSubBlocks(), originalRanges, range, depth + 1);
           if (containingBlock != null) return containingBlock;
         }

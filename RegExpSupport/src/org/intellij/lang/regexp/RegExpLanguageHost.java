@@ -53,6 +53,7 @@ public interface RegExpLanguageHost {
   default boolean supportsBoundary(RegExpBoundary boundary) {
     switch (boundary.getType()) {
       case UNICODE_EXTENDED_GRAPHEME:
+      case RESET_MATCH:
         return false;
       case LINE_START:
       case LINE_END:
@@ -77,16 +78,18 @@ public interface RegExpLanguageHost {
 
   boolean isValidCategory(@NotNull String category);
 
+  default boolean isValidPropertyName(@NotNull String name) {
+    return true;
+  }
+
   default boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value){
     return true;
   }
 
-  @NotNull
-  String[][] getAllKnownProperties();
+  String[] @NotNull [] getAllKnownProperties();
   @Nullable
   String getPropertyDescription(@Nullable final String name);
-  @NotNull
-  String[][] getKnownCharacterClasses();
+  String[] @NotNull [] getKnownCharacterClasses();
 
   /**
    * @param number  the number element to extract the value from
@@ -94,15 +97,14 @@ public interface RegExpLanguageHost {
    */
   @Nullable
   default Number getQuantifierValue(@NotNull RegExpNumber number) {
-    return Double.parseDouble(number.getText());
+    return Double.parseDouble(number.getUnescapedText());
   }
 
   default Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
     return Lookbehind.FULL; // to not break existing implementations, although rarely actually supported.
   }
 
-  @NotNull
-  default String[][] getAllPropertyValues(@NotNull String propertyName){
+  default String[] @NotNull [] getAllPropertyValues(@NotNull String propertyName){
     return EMPTY_COMPLETION_ITEMS_ARRAY; 
   }
 

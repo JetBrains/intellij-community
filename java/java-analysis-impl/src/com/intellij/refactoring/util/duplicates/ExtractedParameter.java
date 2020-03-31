@@ -72,7 +72,7 @@ public class ExtractedParameter {
   }
 
   public static List<Match> getCompatibleMatches(@NotNull List<Match> matches,
-                                                 @NotNull PsiElement[] pattern,
+                                                 PsiElement @NotNull [] pattern,
                                                  @NotNull List<PsiElement[]> candidates) {
     List<Match> result = new ArrayList<>();
     Set<PsiExpression> firstUsages = null;
@@ -100,7 +100,7 @@ public class ExtractedParameter {
     return result;
   }
 
-  private static boolean containsModifiedField(@NotNull PsiElement[] elements, @NotNull Set<PsiVariable> variables) {
+  private static boolean containsModifiedField(PsiElement @NotNull [] elements, @NotNull Set<PsiVariable> variables) {
     Set<PsiField> fields = StreamEx.of(variables)
       .select(PsiField.class)
       .filter(field -> !field.hasModifierProperty(PsiModifier.FINAL))

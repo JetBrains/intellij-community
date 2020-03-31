@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -31,6 +17,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -48,12 +35,13 @@ import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteSelectionAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -110,10 +98,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
 
       TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
-      executeConsole.withEnterKeyDefaultCodeEnabled(true);
 
-      executeConsole.addMessageFilter(myConfig.getProject(), new PythonTracebackFilter(myConfig.getProject()));
-      executeConsole.addMessageFilter(myConfig.getProject(), new UrlFilter());
+      executeConsole.addMessageFilter(new PythonTracebackFilter(myConfig.getProject()));
+      executeConsole.addMessageFilter(new UrlFilter());
 
       processHandler.startNotify();
 
@@ -173,7 +160,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PySdkUtil.isRemote(getSdk());
+    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
   }
 
   @Override
@@ -240,8 +227,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
     }
 
-    final String scriptOptionsString = myConfig.getScriptParameters();
-    if (scriptOptionsString != null) scriptParameters.addParametersString(scriptOptionsString);
+    scriptParameters.addParameters(getExpandedScriptParameters());
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
@@ -250,6 +236,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
       commandLine.withInput(new File(inputFile));
     }
+  }
+
+  private @NotNull List<String> getExpandedScriptParameters() {
+    final String parameters = myConfig.getScriptParameters();
+    return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
   }
 
   private static String escape(String s) {
@@ -274,21 +265,21 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     String scriptPath = myConfig.getScriptName();
     String workingDir = myConfig.getWorkingDirectory();
-    if (PySdkUtil.isRemote(sdk) && pathMapper != null) {
+    if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
       scriptPath = pathMapper.convertToRemote(scriptPath);
       workingDir = pathMapper.convertToRemote(workingDir);
     }
 
     sb.append("runfile('").append(escape(scriptPath)).append("'");
 
-    final String[] scriptParameters = ParametersList.parse(myConfig.getScriptParameters());
-    if (scriptParameters.length != 0) {
+    final List<String> scriptParameters = getExpandedScriptParameters();
+    if (scriptParameters.size() != 0) {
       sb.append(", args=[");
-      for (int i = 0; i < scriptParameters.length; i++) {
+      for (int i = 0; i < scriptParameters.size(); i++) {
         if (i != 0) {
           sb.append(", ");
         }
-        sb.append("'").append(escape(scriptParameters[i])).append("'");
+        sb.append("'").append(escape(scriptParameters.get(i))).append("'");
       }
       sb.append("]");
     }

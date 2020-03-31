@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,8 +17,8 @@ public class ZipFileObject extends JpsFileObject {
   private final ZipEntry myEntry;
   private final String myEncoding;
 
-  ZipFileObject(File root, ZipFile zip, ZipEntry entry, String encoding) {
-    super(createUri(root, entry.getName()), findKind(entry.getName()));
+  ZipFileObject(File root, ZipFile zip, ZipEntry entry, String encoding, final JavaFileManager.Location location) {
+    super(createUri(root, entry.getName()), findKind(entry.getName()), location);
     myZip = zip;
     myEntry = entry;
     myEncoding = encoding;

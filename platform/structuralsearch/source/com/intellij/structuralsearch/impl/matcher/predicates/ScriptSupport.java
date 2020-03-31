@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -33,18 +34,18 @@ public class ScriptSupport {
    * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
    * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
    */
-  static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
+  public static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
   private final Script script;
   private final ScriptLog myScriptLog;
   private final String myName;
   private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames) {
+  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames, MatchOptions matchOptions) {
     myScriptLog = new ScriptLog(project);
     myName = name;
     myVariableNames = variableNames;
-    final GroovyShell shell = new GroovyShell();
+    final GroovyShell shell = createShell(matchOptions);
     try {
       final File scriptFile = new File(text);
       script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
@@ -53,6 +54,11 @@ public class ScriptSupport {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
     }
+  }
+
+  @NotNull
+  private static GroovyShell createShell(@NotNull MatchOptions options) {
+    return new GroovyShell(options.getDialect().getClass().getClassLoader());
   }
 
   private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
@@ -108,7 +114,7 @@ public class ScriptSupport {
       throw t;
     }
     catch (Throwable t) {
-      Logger.getInstance(ScriptSupport.class).warn("Exception thrown by Structural Search Groovy Script", t);
+      Logger.getInstance(ScriptSupport.class).info("Exception thrown by Structural Search Groovy Script", t);
       throw new StructuralSearchScriptException(t);
     }
     finally {
@@ -116,10 +122,10 @@ public class ScriptSupport {
     }
   }
 
-  public static String checkValidScript(String scriptText) {
+  public static String checkValidScript(@NotNull String scriptText, @NotNull MatchOptions matchOptions) {
     try {
       final File scriptFile = new File(scriptText);
-      final GroovyShell shell = new GroovyShell();
+      final GroovyShell shell = createShell(matchOptions);
       final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
       return null;
     }

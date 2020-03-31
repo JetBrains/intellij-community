@@ -1,26 +1,28 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlScalarType extends YamlMetaType {
 
-  protected YamlScalarType(@NotNull String typeName) {
+  protected YamlScalarType(@NonNls @NotNull String typeName) {
     super(typeName);
   }
 
@@ -32,26 +34,26 @@ public abstract class YamlScalarType extends YamlMetaType {
 
   @NotNull
   @Override
+  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
   public Icon getIcon() {
     return PlatformIcons.PROPERTY_ICON;
   }
 
   @Override
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    YAMLValue value = keyValue.getValue();
-    if (value == null) {
-      return;
-    }
+  public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     if (value instanceof YAMLScalar) {
       validateScalarValue((YAMLScalar)value, problemsHolder);
-    }
-    else if (value instanceof YAMLSequence) {
-      for (YAMLSequenceItem nextItem : ((YAMLSequence)value).getItems()) {
-        YAMLValue nextValue = nextItem.getValue();
-        if (nextValue instanceof YAMLScalar) {
-          validateScalarValue((YAMLScalar)nextValue, problemsHolder);
-        }
-      }
     }
     else if (value instanceof YAMLCompoundValue) {
       problemsHolder.registerProblem(value, YAMLBundle.message("YamlScalarType.error.scalar.value"), ProblemHighlightType.ERROR);
@@ -62,18 +64,13 @@ public abstract class YamlScalarType extends YamlMetaType {
     //
   }
 
-  @NotNull
-  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar context) {
-    return Collections.emptyList();
-  }
-
   @Override
   public void buildInsertionSuffixMarkup(@NotNull YamlInsertionMarkup markup,
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
     switch (relation) {
       case OBJECT_CONTENTS:
-        // weird, but lets ignore and breakthrough to defaults
+        // weird, but let's ignore and breakthrough to defaults
       case SCALAR_VALUE: {
         markup.append(": ");
         if (iteration.isEndOfPathReached()) {
@@ -96,7 +93,7 @@ public abstract class YamlScalarType extends YamlMetaType {
         break;
       }
       default:
-        throw new IllegalStateException("Unknown relation: " + relation);
+        throw new IllegalStateException("Unknown relation: " + relation); //NON-NLS
     }
   }
 }

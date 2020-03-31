@@ -33,25 +33,30 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    }\n" +
            "  },\n" +
            "  \"required\": [\"a\", \"b\"]\n" +
-           "}", "<warning>{\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
+           "}", "<warning>{<caret>\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
                                                                                     "  \"a\": \"q\",\n" +
                                                                                     "  \"b\":\n" +
                                                                                     "}");
   }
 
-  // todo fix working with live template in test; test-only problem
-  /*public void testAddMissingStringProperty() throws Exception {
+  public void testAddMissingNonStringProperties() throws Exception {
     doTest("{\n" +
+           "  \"required\": [\"x\", \"y\"],\n" +
            "  \"properties\": {\n" +
-           "    \"a\": {\n" +
-           "      \"type\": \"string\"" +
+           "    \"x\": {\n" +
+           "      \"type\": \"boolean\",\n" +
+           "      \"default\": true\n" +
+           "    },\n" +
+           "    \"y\": {\n" +
+           "      \"type\": \"number\",\n" +
+           "      \"default\": 1\n" +
            "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"a\"]\n" +
-           "}", "<warning>{\"c\": 5}</warning>", "Add missing property 'a'", "{\"c\": 5,\n" +
-                                                                             "  \"a\": \"<caret>\"" +
-                                                                             "\n}");
-  }*/
+           "  }\n" +
+           "}", "<warning>{<caret>}</warning>", "Add missing properties 'x', 'y'", "{\n" +
+                                                                            "  \"x\": true,\n" +
+                                                                            "  \"y\": 1\n" +
+                                                                            "}");
+  }
 
   public void testRemoveProhibitedProperty() throws Exception {
     doTest("{\n" +
@@ -60,7 +65,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    \"c\": {}\n" +
            "  },\n" +
            "  \"additionalProperties\": false\n" +
-           "}", "{\"a\": 5, <warning>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
+           "}", "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
                                                                                                        "  \"c\": 7}");
   }
 }

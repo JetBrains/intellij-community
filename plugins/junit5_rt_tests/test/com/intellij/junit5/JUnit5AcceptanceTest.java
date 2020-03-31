@@ -112,7 +112,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + frameworks.toString(),
-                () -> assertTrue(frameworks.contains("Add 'JUnit5.3' to classpath")));
+                () -> assertTrue(frameworks.contains("Add 'JUnit5.4' to classpath")));
 
       myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
       myFixture.testHighlighting(false, false, false);
@@ -121,7 +121,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
-                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5.3' to classpath")));
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5.4' to classpath")));
 
     });
   }
@@ -148,20 +148,6 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void customEngineOnly() {
     doTest(() -> {
-      myFixture.addClass("package org.junit.platform.commons.annotation;\n" +
-                         "import java.lang.annotation.Documented;\n" +
-                         "import java.lang.annotation.ElementType;\n" +
-                         "import java.lang.annotation.Inherited;\n" +
-                         "import java.lang.annotation.Retention;\n" +
-                         "import java.lang.annotation.RetentionPolicy;\n" +
-                         "import java.lang.annotation.Target;\n" +
-                         "\n" +
-                         "@Target({ElementType.TYPE, ElementType.METHOD})\n" +
-                         "@Retention(RetentionPolicy.RUNTIME)\n" +
-                         "@Inherited\n" +
-                         "@Documented\n" +
-                         "public @interface Testable {\n" +
-                         "}\n");
       PsiClass customEngineTest = myFixture.addClass("import org.junit.platform.commons.annotation.Testable;" +
                                            " /** @noinspection ALL*/ " +
                                            "@Testable\n" +

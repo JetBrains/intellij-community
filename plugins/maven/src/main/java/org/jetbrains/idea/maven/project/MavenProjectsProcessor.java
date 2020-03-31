@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
@@ -70,23 +72,21 @@ public class MavenProjectsProcessor {
     if (isStopped) return;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      synchronized (myQueue) {
-        while (!myQueue.isEmpty()) {
-          startProcessing(myQueue.poll());
+      while (true) {
+        MavenProjectsProcessorTask task;
+        synchronized (myQueue) {
+          task = myQueue.poll();
+          if(task == null){
+            return;
+          }
+        }
+        startProcessing(task);
         }
       }
-      return;
-    }
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    scheduleTask(new MavenProjectsProcessorTask() {
-      @Override
-      public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-        throws MavenProcessCanceledException {
-        semaphore.up();
-      }
-    });
+    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
     while (true) {
       if (isStopped || semaphore.waitFor(1000)) return;
@@ -131,6 +131,11 @@ public class MavenProjectsProcessor {
         }
         indicator.setFraction(counter / (double)(counter + remained));
 
+        MavenProjectsProcessorTask finalTask = task;
+        IdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, data -> {
+          data.addData("task_class", finalTask.getClass().getName());
+        });
+
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
           task.perform(myProject, myEmbeddersManager,
@@ -142,6 +147,9 @@ public class MavenProjectsProcessor {
         }
         catch (Throwable e) {
           logImportErrorIfNotControlFlow(e);
+        }
+        finally {
+          activity.finished();
         }
 
         synchronized (myQueue) {
@@ -155,7 +163,13 @@ public class MavenProjectsProcessor {
     }
     catch (MavenProcessCanceledException e) {
       synchronized (myQueue) {
-        myQueue.clear();
+
+        while (!myQueue.isEmpty()) {
+          MavenProjectsProcessorTask removedTask = myQueue.remove();
+          if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
+            ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
+          }
+        }
         isProcessing = false;
       }
       throw e;
@@ -168,9 +182,21 @@ public class MavenProjectsProcessor {
     }
     MavenLog.LOG.error(e);
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                     "Unable to import Maven project",
-                     "See logs for details",
+                     MavenProjectBundle.message("maven.notification.unable.to.import"),
+                     MavenProjectBundle.message("maven.notification.see.logs.for.details"),
                      NotificationType.ERROR
     ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);
+  }
+
+  private static class MavenProjectsProcessorWaitForCompletionTask implements MavenProjectsProcessorTask {
+    private final Semaphore mySemaphore;
+
+    MavenProjectsProcessorWaitForCompletionTask(Semaphore semaphore) {mySemaphore = semaphore;}
+
+    @Override
+    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
+      throws MavenProcessCanceledException {
+      mySemaphore.up();
+    }
   }
 }

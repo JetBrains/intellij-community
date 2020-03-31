@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.lang.Language;
@@ -6,6 +6,7 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -13,18 +14,27 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.zip.CRC32;
 
 /**
- * @author Vladislav.Soroka
+ * @deprecated use {@link com.intellij.openapi.externalSystem.util.CrcUtils} instead
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public class ConfigurationFileCrcFactory {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport");
+
   private final VirtualFile myFile;
 
-  @Deprecated // left for plugin compatibility
+  /**
+   * @deprecated left for plugin compatibility
+   */
+  @Deprecated
   public ConfigurationFileCrcFactory(@NotNull Project project, @NotNull VirtualFile file) {
     this(file);
   }
@@ -34,10 +44,16 @@ public class ConfigurationFileCrcFactory {
   }
 
   public long create() {
-    if (myFile.isDirectory()) return myFile.getModificationStamp();
+    if (myFile.isDirectory()) {
+      debug("Cannot calculate CRC for directory '" + myFile.getPath() + "'");
+      return myFile.getModificationStamp();
+    }
 
     WordsScanner wordsScanner = getScanner(myFile);
-    if (wordsScanner == null) return myFile.getModificationStamp();
+    if (wordsScanner == null) {
+      debug("WordsScanner not found for file '" + myFile.getPath() + "'");
+      return myFile.getModificationStamp();
+    }
 
     CRC32 crc32 = new CRC32();
     Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
@@ -67,5 +83,11 @@ public class ConfigurationFileCrcFactory {
       return LanguageFindUsages.getWordsScanner(lang);
     }
     return null;
+  }
+
+  private static void debug(@NotNull String message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message);
+    }
   }
 }

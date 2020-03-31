@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -10,8 +11,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
+import com.intellij.openapi.vcs.VcsActions
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
@@ -57,7 +60,7 @@ fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localR
 
 private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
   val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
-  ContentManagerWatcher(toolWindow, toolWindow.contentManager)
+  ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
   return toolWindow
 }
 
@@ -67,7 +70,7 @@ class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
   val localRoot: VirtualFile
-) : JPanel(BorderLayout()), DataProvider {
+) : JPanel(BorderLayout()), DataProvider, Disposable {
   private val fileSystemTree: FileSystemTreeImpl
 
   init {
@@ -94,7 +97,7 @@ class RepositoryBrowserPanel(
 
     val actionGroup = DefaultActionGroup()
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
-    actionGroup.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"))
+    actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
     fileSystemTree.registerMouseListener(actionGroup)
 
     val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree)
@@ -113,6 +116,10 @@ class RepositoryBrowserPanel(
       REPOSITORY_BROWSER_DATA_KEY.`is`(dataId) -> this
       else -> null
     }
+  }
+
+  override fun dispose() {
+    Disposer.dispose(fileSystemTree)
   }
 
   fun hasSelectedFiles() = fileSystemTree.selectedFiles.any { it is VcsVirtualFile }

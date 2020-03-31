@@ -2,8 +2,8 @@
 package com.intellij.java.codeInsight.template.postfix.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
-public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
+public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

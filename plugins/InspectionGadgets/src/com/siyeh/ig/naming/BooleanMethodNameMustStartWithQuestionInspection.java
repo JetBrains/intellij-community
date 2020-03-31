@@ -99,12 +99,6 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspec
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
   }

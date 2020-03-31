@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
@@ -32,7 +33,13 @@ public interface ActionInfo {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.update.scope", scopeName), envToConfMap) {
         @Override
         protected String getActionNameForDimensions() {
-          return "update";
+          return "update-v2";
+        }
+
+        @NotNull
+        @Override
+        protected String getDoNotShowMessage() {
+          return "Don't show again";
         }
 
         @Override

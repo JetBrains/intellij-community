@@ -4,14 +4,12 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.FoldExpressionIntoStreamInspection;
-import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection;
 import org.jetbrains.annotations.NotNull;
 
 
 public class FoldExpressionIntoStreamInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new FoldExpressionIntoStreamInspection()};
   }
 

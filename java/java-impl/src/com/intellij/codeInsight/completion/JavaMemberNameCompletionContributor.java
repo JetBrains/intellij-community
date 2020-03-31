@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -16,13 +17,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -105,7 +108,13 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    final PsiType type = var.getType();
+    PsiType type = var.getType();
+    if (type instanceof PsiClassType &&
+        ((PsiClassType)type).resolve() == null &&
+        seemsMistypedKeyword(((PsiClassType)type).getClassName())) {
+      return;
+    }
+    
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     final String[] suggestedNames = suggestedNameInfo.names;
@@ -127,6 +136,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false, matcher));
     if (var instanceof PsiParameter && parent instanceof PsiMethod) {
       addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);
+      PsiDocComment docComment = ((PsiMethod)parent).getDocComment();
+      if (docComment != null) {
+        addLookupItems(set, null, matcher, project, ArrayUtil.toStringArray(getUnresolvedMethodParamNamesFromJavadoc(docComment)));
+      }
     }
 
     PsiExpression initializer = var.getInitializer();
@@ -134,6 +147,28 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       SuggestedNameInfo initializerSuggestions = IntroduceVariableBase.getSuggestedName(type, initializer);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
+  }
+
+  @NotNull
+  private static List<String> getUnresolvedMethodParamNamesFromJavadoc(@NotNull PsiDocComment docComment) {
+    List<String> result = new ArrayList<>();
+    for (PsiDocTag tag : docComment.getTags()) {
+      if ("param".equals(tag.getName())) {
+        PsiDocTagValue value = tag.getValueElement();
+        if (value instanceof PsiDocParamRef && !((PsiDocParamRef)value).isTypeParamRef()) {
+          ASTNode token = ((PsiDocParamRef)value).getValueToken();
+          PsiReference psiReference = value.getReference();
+          if (psiReference != null && psiReference.resolve() == null && token != null) {
+            result.add(token.getText());
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static boolean seemsMistypedKeyword(String className) {
+    return className != null && !StringUtil.isCapitalized(className);
   }
 
   private static boolean hasStartMatches(PrefixMatcher matcher, Set<String> set) {
@@ -165,7 +200,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     for (PsiField field : psiClass.getFields()) {
       String name = field.getName();
-      if (field.getType().isAssignableFrom(var.getType()) && name != null) {
+      if (field.getType().isAssignableFrom(var.getType())) {
         String prop = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
         addLookupItems(set, null, matcher, project, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
       }
@@ -207,7 +242,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         newSuggestions.add(suggestion);
       }
     }
-    return ArrayUtil.toStringArray(newSuggestions);
+    return ArrayUtilRt.toStringArray(newSuggestions);
   }
 
   private static int getOverlap(final String propertyName, final String prefix) {
@@ -223,7 +258,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
   }
 
   private static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod, PrefixMatcher matcher) {
-    if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     final Set<String> unresolvedRefs = new LinkedHashSet<>();
 
     if (parentOfType != null) {
@@ -239,7 +274,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         }
       });
     }
-    return ArrayUtil.toStringArray(unresolvedRefs);
+    return ArrayUtilRt.toStringArray(unresolvedRefs);
   }
 
   private static void completeFieldName(Set<LookupElement> set, PsiField var, final PrefixMatcher matcher, boolean includeOverlapped) {
@@ -322,7 +357,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
 
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, final PrefixMatcher matcher){
@@ -384,7 +419,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtilBase.suggestGetterName(field);
+        final String getterName = JavaPsiRecordUtil.getComponentForField(field) != null ? 
+                                  field.getName() : PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
@@ -400,7 +436,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    return ArrayUtil.toStringArray(propertyHandlers);
+    return ArrayUtilRt.toStringArray(propertyHandlers);
   }
 
   private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, Project project, String... strings) {

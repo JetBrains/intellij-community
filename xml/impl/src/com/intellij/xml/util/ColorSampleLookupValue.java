@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,8 +78,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return true;
   }
 
-  @NotNull
-  public static ColorSampleLookupValue[] getColors() {
+  public static ColorSampleLookupValue @NotNull [] getColors() {
     if (ourColors == null) {
       synchronized (ColorSampleLookupValue.class) {
         if (ourColors == null) {

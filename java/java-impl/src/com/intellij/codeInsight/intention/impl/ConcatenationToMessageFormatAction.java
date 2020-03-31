@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiConcatenationUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -33,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -42,13 +32,13 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
   @Override
@@ -56,15 +46,25 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     final PsiElement element = findElementAtCaret(editor, file);
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
-    StringBuilder formatString = new StringBuilder();
     List<PsiExpression> args = new ArrayList<>();
-    PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
+    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
       factory.createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
-    PsiExpression formatArgument = factory.createExpressionFromText("\"" + formatString.toString() + "\"", null);
+    boolean textBlocks = Arrays.stream(concatenation.getOperands())
+      .anyMatch(operand -> operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).isTextBlock());
+    final String expressionText;
+    if (textBlocks) {
+      expressionText = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n", "\"\"\"\n", "\"\"\""));
+    }
+    else {
+      expressionText = "\"" + StringUtil.escapeStringCharacters(formatString) + "\"";
+    }
+    PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);
     if (PsiUtil.isLanguageLevel5OrHigher(file)) {
       for (PsiExpression arg : args) {

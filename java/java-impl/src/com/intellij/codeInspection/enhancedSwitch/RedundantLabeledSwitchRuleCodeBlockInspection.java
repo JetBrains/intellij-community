@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.enhancedSwitch;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.InspectionsBundle.message;
+import static com.intellij.java.JavaBundle.message;
 
 /**
  * @author Pavel.Dolgov
@@ -21,7 +20,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(holder.getFile())) {
+    if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -34,11 +33,9 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
-          if (bodyStatement instanceof PsiBreakStatement) {
-            PsiBreakStatement breakStatement = (PsiBreakStatement)bodyStatement;
-            if (breakStatement.getValueExpression() != null) {
-              PsiKeyword breakKeyword = ObjectUtils.tryCast(breakStatement.getFirstChild(), PsiKeyword.class);
-              registerProblem(breakKeyword);
+          if (bodyStatement instanceof PsiYieldStatement) {
+            if (((PsiYieldStatement)bodyStatement).getExpression() != null) {
+              registerProblem(bodyStatement.getFirstChild());
             }
           }
           else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
@@ -81,8 +78,8 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
       if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiStatement bodyStatement = getSingleStatement(body.getCodeBlock());
-        if (bodyStatement instanceof PsiBreakStatement) {
-          unwrapBreakValue(body, (PsiBreakStatement)bodyStatement);
+        if (bodyStatement instanceof PsiYieldStatement) {
+          unwrapYieldValue(body, (PsiYieldStatement)bodyStatement);
         }
         else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
           unwrap(body, bodyStatement);
@@ -90,15 +87,15 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       }
     }
 
-    private static void unwrapBreakValue(PsiStatement body, PsiBreakStatement breakStatement) {
-      PsiExpression valueExpression = breakStatement.getValueExpression();
+    private static void unwrapYieldValue(PsiStatement body, PsiYieldStatement yieldStatement) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
       if (valueExpression != null) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(body.getProject());
         PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("x=1;", body);
         statement.getExpression().replace(valueExpression);
 
         CommentTracker tracker = new CommentTracker();
-        // replaceAndRestoreComments() will work with a copy of the expression so it won't see the original comments
+        // replaceAndRestoreComments() will work with a copy of the expression, so it won't see the original comments
         tracker.markUnchanged(valueExpression);
         tracker.replaceAndRestoreComments(body, statement);
       }

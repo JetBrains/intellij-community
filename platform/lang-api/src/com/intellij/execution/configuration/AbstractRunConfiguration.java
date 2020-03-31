@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -11,14 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author traff
- */
 public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element> {
   private final Map<String, String> myEnvs = new LinkedHashMap<>();
   private boolean myPassParentEnvs = true;
 
-  public AbstractRunConfiguration(String name, RunConfigurationModule configurationModule, ConfigurationFactory factory) {
+  public AbstractRunConfiguration(String name, @NotNull RunConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(name, configurationModule, factory);
   }
 

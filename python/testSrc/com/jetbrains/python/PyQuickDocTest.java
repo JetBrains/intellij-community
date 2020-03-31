@@ -10,6 +10,9 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -326,14 +329,27 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-22685
   public void testBuiltinLen() {
-    checkHTMLOnly();
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+
+    runWithAdditionalFileInLibDir(
+      PyBuiltinCache.getBuiltinsFileName(languageLevel),
+      "def len(p_object): # real signature unknown; restored from __doc__\n" +
+      "    \"\"\"\n" +
+      "    len(object) -> integer\n" +
+      "    \n" +
+      "    Return the number of items of a sequence or collection.\n" +
+      "    \"\"\"\n" +
+      "    return 0",
+      (__) -> checkHTMLOnly()
+    );
   }
 
   public void testArgumentList() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     checkByHTML(myProvider.generateDoc(element, originalElement));
   }
 
@@ -341,7 +357,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     assertNull(element);
   }
 
@@ -349,12 +366,22 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
 
-    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement,
+                                                                        myFixture.getEditor().getCaretModel().getOffset());
     checkByHTML(myProvider.generateDoc(element, originalElement));
   }
 
   public void testReferenceToMethodQualifiedWithInstance() {
-    checkHTMLOnly();
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+
+    runWithAdditionalFileInLibDir(
+      PyBuiltinCache.getBuiltinsFileName(languageLevel),
+      "class list(object):\n" +
+      "    def count(self, value): # real signature unknown; restored from __doc__\n" +
+      "        \"\"\" L.count(value) -> integer -- return number of occurrences of value \"\"\"\n" +
+      "        return 0",
+      (__) -> checkHTMLOnly()
+    );
   }
 
   public void testOneDecoratorFunction() {
@@ -601,6 +628,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   // PY-31862
   public void testEscapedSummaryOfConstructorDocstringInQuickNavigationInfo() {
     checkHover();
+  }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHover);
   }
   
   @Override

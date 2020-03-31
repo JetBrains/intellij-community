@@ -17,14 +17,16 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,13 +74,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   @Override
   public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    if (!(progress instanceof DaemonProgressIndicator)) {
-      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: " + progress);
-    }
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
       myHighlightingSession =
-        HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)progress, getColorsScheme());
+        HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)ProgressWrapper.unwrapAll(progress), getColorsScheme());
     }
     try {
       collectInformationWithProgress(progress);
@@ -126,6 +126,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   @Nullable("null means do not show progress")
+  @Nls
   protected String getPresentableName() {
     return myPresentableName;
   }

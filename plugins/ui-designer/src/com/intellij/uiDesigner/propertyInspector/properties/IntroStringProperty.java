@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.IProperty;
@@ -23,13 +22,14 @@ import javax.swing.*;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class IntroStringProperty extends IntrospectedProperty<StringDescriptor> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.IntroStringProperty");
+  private static final Logger LOG = Logger.getInstance(IntroStringProperty.class);
 
   /**
    * value: HashMap<String, StringDescriptor>
@@ -261,7 +261,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     descriptor.setResolvedValue(null);
     try {
       setValueImpl(component, descriptor);
-      return !Comparing.equal(oldResolvedValue, descriptor.getResolvedValue());
+      return !Objects.equals(oldResolvedValue, descriptor.getResolvedValue());
     }
     catch (Exception e) {
       LOG.error(e);

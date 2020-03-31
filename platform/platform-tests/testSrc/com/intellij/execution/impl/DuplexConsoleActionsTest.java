@@ -58,8 +58,8 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
 
   public void testMergeSameConsoles() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
-    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
+    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole(false, getProject());
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
 
@@ -72,7 +72,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
 
   public void testMergeReversedConsoles() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
     final ConsoleViewImpl console2 = createConsoleWithReversedActions();
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
@@ -86,8 +86,8 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
   
   public void testMergedClear() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
-    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
+    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole(false, getProject());
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
     final AnAction clearAction = findAction(duplexConsoleView.createConsoleActions(), "Clear");
@@ -113,20 +113,19 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
   
   @Nullable
-  private static AnAction findAction(@NotNull AnAction[] actions, @NotNull String name) {
+  private static AnAction findAction(AnAction @NotNull [] actions, @NotNull String name) {
     return ContainerUtil.find(actions, action -> action.getTemplatePresentation().toString().contains(name));
   }
 
   @NotNull
-  private static ConsoleViewImpl createConsoleWithReversedActions() {
+  private ConsoleViewImpl createConsoleWithReversedActions() {
     Project project = getProject();
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
                                                   false,
                                                   false) {
-      @NotNull
       @Override
-      public AnAction[] createConsoleActions() {
+      public AnAction @NotNull [] createConsoleActions() {
         return ContainerUtil.reverse(Arrays.asList(super.createConsoleActions())).toArray(AnAction.EMPTY_ARRAY);
       }
     };

@@ -7,17 +7,17 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DeprecationStripePanel extends JPanel {
-  public DeprecationStripePanel(@NotNull String mainText) {
+  public DeprecationStripePanel(@NotNull String mainText, @Nullable Icon icon) {
     super(new FlowLayout(FlowLayout.CENTER));
     setBorder(new BottomLineBorder());
     setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND));
-    add(new JLabel(mainText));
-
+    add(new JLabel(mainText, icon, SwingConstants.LEADING));
   }
 
   public DeprecationStripePanel withAlternativeAction(@NotNull String linkText, @NotNull AnAction action) {

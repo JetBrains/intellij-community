@@ -9,16 +9,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.Collections;
@@ -27,17 +30,17 @@ import java.util.List;
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
   extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain> {
 
-  @Nullable private final Object myDefaultSelection;
-
-  public ChangeGoToChangePopupAction(@NotNull Chain chain, @Nullable Object defaultSelection) {
+  public ChangeGoToChangePopupAction(@NotNull Chain chain) {
     super(chain);
-    myDefaultSelection = defaultSelection;
   }
 
   @NotNull
   protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping);
 
-  protected abstract void onSelected(@Nullable Object object);
+  protected abstract void onSelected(@Nullable ChangesBrowserNode object);
+
+  @Nullable
+  protected abstract Condition<? super DefaultMutableTreeNode> initialSelection();
 
   @NotNull
   @Override
@@ -80,9 +83,15 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
 
       myViewer.rebuildTree();
 
-      UiNotifyConnector.doWhenFirstShown(this, () -> {
-        if (myDefaultSelection != null) selectEntries(Collections.singletonList(myDefaultSelection));
-      });
+      Condition<? super DefaultMutableTreeNode> selectionCondition = initialSelection();
+      if (selectionCondition != null) {
+        UiNotifyConnector.doWhenFirstShown(this, () -> {
+          DefaultMutableTreeNode node = TreeUtil.findNode(myViewer.getRoot(), selectionCondition);
+          if (node != null) {
+            TreeUtil.selectNode(myViewer, node);
+          }
+        });
+      }
     }
 
     @NotNull
@@ -107,7 +116,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      Object selection = ContainerUtil.getFirstItem(VcsTreeModelData.selected(myViewer).userObjects());
+      ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }

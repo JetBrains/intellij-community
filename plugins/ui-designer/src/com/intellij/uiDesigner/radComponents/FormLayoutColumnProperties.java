@@ -4,9 +4,10 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -15,7 +16,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -62,7 +66,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private boolean mySaving = false;
 
   public FormLayoutColumnProperties() {
-    String[] unitNames = ArrayUtil.toStringArray(UNITS_MAP.keySet());
+    String[] unitNames = ArrayUtilRt.toStringArray(UNITS_MAP.keySet());
     myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel<>(unitNames));
     myConstantSizeUnitsCombo.setRenderer(new UnitListCellRenderer());
     myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel<>(unitNames));
@@ -137,7 +141,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
         myRightRadioButton.setText(row ? UIDesignerBundle.message("alignment.bottom") : UIDesignerBundle.message("alignment.right"));
         mySizePanel.setBorder(IdeBorderFactory.createTitledBorder(myIsRow
                                                                   ? UIDesignerBundle.message("title.height")
-                                                                  : UIDesignerBundle.message("title.width"), true));
+                                                                  : UIDesignerBundle.message("title.width")));
 
         FormSpec formSpec = row ? myLayout.getRowSpec(myIndex) : myLayout.getColumnSpec(myIndex);
         showAlignment(formSpec.getDefaultAlignment());
@@ -351,7 +355,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
 
   private static class UnitListCellRenderer extends SimpleListCellRenderer<String> {
     @Override
-    public void customize(JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
       setText(UNITS_MAP.getOrDefault(value, ""));
     }
   }

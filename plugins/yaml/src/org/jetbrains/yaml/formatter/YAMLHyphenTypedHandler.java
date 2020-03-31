@@ -5,9 +5,9 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.impl.DefaultRawTypedHandler;
-import com.intellij.openapi.editor.impl.EditorActionManagerImpl;
+import com.intellij.openapi.editor.impl.TypedActionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -78,11 +78,7 @@ public class YAMLHyphenTypedHandler extends TypedHandlerDelegate {
       return;
     }
 
-    EditorActionManager editorActionManager = EditorActionManager.getInstance();
-    if (!(editorActionManager instanceof EditorActionManagerImpl)) {
-      return;
-    }
-    DefaultRawTypedHandler handler = ((EditorActionManagerImpl)editorActionManager).getDefaultRawTypedHandler();
+    DefaultRawTypedHandler handler = ((TypedActionImpl)TypedAction.getInstance()).getDefaultRawTypedHandler();
     handler.beginUndoablePostProcessing();
 
     ApplicationManager.getApplication().runWriteAction(() -> {

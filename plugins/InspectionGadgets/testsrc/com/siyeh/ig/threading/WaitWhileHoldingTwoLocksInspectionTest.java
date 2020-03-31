@@ -16,14 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class WaitWhileHoldingTwoLocksInspectionTest extends LightInspectionTestCase {
+public class WaitWhileHoldingTwoLocksInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWaitWhileHoldingTwoLocks() {
     doTest();

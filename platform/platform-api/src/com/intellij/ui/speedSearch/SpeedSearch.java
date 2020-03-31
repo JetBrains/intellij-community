@@ -32,7 +32,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
-  public static final String PUNCTUATION_MARKS = "*_-\"'/.#$>: ,;?!@%^&";
+  public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final boolean myMatchAllOccurrences;
@@ -94,7 +94,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
       // for example: key-char on ctrl-J PRESSED is \n
       // see https://en.wikipedia.org/wiki/Control_character
       char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || PUNCTUATION_MARKS.indexOf(ch) != -1) {
+      if (Character.isLetterOrDigit(ch) || !startedWithWhitespace(ch) && PUNCTUATION_MARKS.indexOf(ch) != -1) {
         type(Character.toString(ch));
         e.consume();
       }
@@ -103,6 +103,10 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     if (!old.equalsIgnoreCase(myString)) {
       update();
     }
+  }
+
+  private boolean startedWithWhitespace(char ch) {
+    return !isHoldingFilter() && Character.isWhitespace(ch);
   }
 
   public void update() {

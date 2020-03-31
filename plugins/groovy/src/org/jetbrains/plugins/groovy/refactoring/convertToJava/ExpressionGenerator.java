@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil
  * @author Maxim.Medvedev
  */
 public class ExpressionGenerator extends Generator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ExpressionGenerator");
+  private static final Logger LOG = Logger.getInstance(ExpressionGenerator.class);
 
   private final StringBuilder builder;
   private final GroovyPsiElementFactory factory;
@@ -287,7 +288,7 @@ public class ExpressionGenerator extends Generator {
     StringBuilder builder = new StringBuilder();
     final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(resolved, fieldName, false, true);
     if (setter != null) {
-      final GrVariableDeclaration var = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, varName);
+      final GrVariableDeclaration var = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", type, varName);
       final GrReferenceExpression caller = factory.createReferenceExpressionFromText(varName, var);
       invokeMethodOn(setter, caller, new GrExpression[]{expression}, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, substitutor,
                      expression);
@@ -541,9 +542,9 @@ public class ExpressionGenerator extends Generator {
 
   private void writeAssignmentWithSetter(@Nullable GrExpression qualifier,
                                          @NotNull PsiMethod method,
-                                         @NotNull GrExpression[] exprs,
-                                         @NotNull GrNamedArgument[] namedArgs,
-                                         @NotNull GrClosableBlock[] closures,
+                                         GrExpression @NotNull [] exprs,
+                                         GrNamedArgument @NotNull [] namedArgs,
+                                         GrClosableBlock @NotNull [] closures,
                                          @NotNull PsiSubstitutor substitutor,
                                          @NotNull GrAssignmentExpression assignment) {
     if (PsiUtil.isExpressionUsed(assignment)) {
@@ -977,9 +978,8 @@ public class ExpressionGenerator extends Generator {
     }
 
 
-    if (resolveResult.isInvokedOnProperty()) {
+    if (resolveResult.isInvokedOnProperty() && resolved instanceof PsiMethod) {
       //property-style access to accessor (e.g. qual.prop should be translated to qual.getProp())
-      LOG.assertTrue(resolved instanceof PsiMethod);
       LOG.assertTrue(GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved));
       invokeMethodOn(
         ((PsiMethod)resolved),
@@ -1300,9 +1300,9 @@ public class ExpressionGenerator extends Generator {
 
   public void invokeMethodOn(@NotNull PsiMethod method,
                              @Nullable GrExpression caller,
-                             @NotNull GrExpression[] exprs,
-                             @NotNull GrNamedArgument[] namedArgs,
-                             @NotNull GrClosableBlock[] closures,
+                             GrExpression @NotNull [] exprs,
+                             GrNamedArgument @NotNull [] namedArgs,
+                             GrClosableBlock @NotNull [] closures,
                              @NotNull PsiSubstitutor substitutor,
                              @NotNull GroovyPsiElement context) {
     if (method instanceof GrGdkMethod) {

@@ -19,9 +19,6 @@ import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class JpsEncodingConfigurationServiceTest extends JpsSerializationTestCase {
   public void test() {
     loadProject("/jps/model-serialization/testData/fileEncoding/fileEncoding.ipr");

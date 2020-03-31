@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
@@ -15,11 +15,12 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
                                                                                                              threadToUse = ThreadToUse.SWING_THREAD,
                                                                                                              modalityState = modalityState)
 
-  constructor(task: Runnable, delay: Int, threadToUse: Alarm.ThreadToUse, parentDisposable: Disposable) : this(task,
-                                                                                                               delay = delay,
-                                                                                                               parentDisposable = parentDisposable,
-                                                                                                               threadToUse = threadToUse,
-                                                                                                               modalityState = computeDefaultModality(threadToUse))
+  constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable) : this(task,
+                                                                                                         delay = delay,
+                                                                                                         parentDisposable = parentDisposable,
+                                                                                                         threadToUse = threadToUse,
+                                                                                                         modalityState = computeDefaultModality(
+                                                                                                           threadToUse))
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
@@ -31,6 +32,12 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
   fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
     if (isEmpty) {
       _addRequest(task, if (forceRun) 0 else delay.toLong(), modalityState)
+    }
+  }
+
+  fun request(modalityState: ModalityState) {
+    if (isEmpty) {
+      _addRequest(task, delay.toLong(), modalityState)
     }
   }
 

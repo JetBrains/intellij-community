@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.openapi.util.Ref;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.subtract;
@@ -40,7 +39,7 @@ public class SelectionManager {
     if (TreeNodeState.HAVE_SELECTED_ABOVE.equals(state)) return;
     if (TreeNodeState.CLEAR.equals(state) && (! myState.canAddSelection())) return;
 
-    final HashSet<VirtualFile> old = new HashSet<>(myState.getSelected());
+    final Set<VirtualFile> old = myState.getSelected();
 
     final TreeNodeState futureState =
       myState.putAndPass(vf, TreeNodeState.SELECTED.equals(state) ? TreeNodeState.CLEAR : TreeNodeState.SELECTED);

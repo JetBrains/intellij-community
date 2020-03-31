@@ -41,6 +41,7 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
+  @NotNull
   public String getName() {
     return myField.getName();
   }

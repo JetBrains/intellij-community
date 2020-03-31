@@ -5,6 +5,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -45,8 +46,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found comments.
    */
-  @NotNull
-  PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
+  PsiElement @NotNull [] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Processes the specified scope and hands comments containing the specified identifier over to the processor.
@@ -58,14 +58,23 @@ public interface PsiSearchHelper {
   boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
 
   /**
+   * Given a text, scope and other search flags, runs the processor on all indexed files that contain all words from the text.
+   * Note that this doesn't mean the files contain the text itself.
+   */
+  boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
+                                       short searchContext,
+                                       boolean caseSensitively,
+                                       @NotNull String text,
+                                       @NotNull Processor<? super VirtualFile> processor);
+
+  /**
    * Returns the list of files which contain the specified word in "plain text"
    * context (for example, plain text files or attribute values in XML files).
    *
    * @param word the word to search.
    * @return the list of files containing the word.
    */
-  @NotNull
-  PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
+  PsiFile @NotNull [] findFilesWithPlainTextWords(@NotNull String word);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context
@@ -108,50 +117,46 @@ public interface PsiSearchHelper {
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_CODE code}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
   boolean processAllFilesWithWord(@NotNull String word,
                                   @NotNull GlobalSearchScope scope,
-                                  @NotNull Processor<PsiFile> processor,
+                                  @NotNull Processor<? super PsiFile> processor,
                                   final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT plain text}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
   boolean processAllFilesWithWordInText(@NotNull String word,
                                         @NotNull GlobalSearchScope scope,
-                                        @NotNull Processor<PsiFile> processor,
+                                        @NotNull Processor<? super PsiFile> processor,
                                         final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  boolean processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<? super PsiFile> processor);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_STRINGS string literal}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<? super PsiFile> processor);
 
   boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 

@@ -44,13 +44,6 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "array.allocation.zero.length.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "array.allocation.zero.length.problem.descriptor");

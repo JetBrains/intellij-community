@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HexRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "HexRenderer";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.HexRenderer");
+  private static final Logger LOG = Logger.getInstance(HexRenderer.class);
 
   public HexRenderer() {
     super(DEFAULT_NAME, false);

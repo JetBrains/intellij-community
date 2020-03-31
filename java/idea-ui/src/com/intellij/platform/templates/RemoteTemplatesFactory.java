@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -59,16 +59,14 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     return MultiMap.emptyInstance();
   });
 
-  @NotNull
   @Override
-  public String[] getGroups() {
+  public String @NotNull [] getGroups() {
     myTemplates.drop();
-    return ArrayUtil.toStringArray(myTemplates.getValue().keySet());
+    return ArrayUtilRt.toStringArray(myTemplates.getValue().keySet());
   }
 
-  @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
+  public ProjectTemplate @NotNull [] createTemplates(@Nullable String group, WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
     return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(ProjectTemplate.EMPTY_ARRAY);
   }
@@ -107,7 +105,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static boolean checkRequiredPlugins(Element element) {
     for (Element plugin : element.getChildren("requiredPlugin")) {
-      if (!PluginManager.isPluginInstalled(PluginId.getId(plugin.getTextTrim()))) {
+      if (!PluginManagerCore.isPluginInstalled(PluginId.getId(plugin.getTextTrim()))) {
         return false;
       }
     }

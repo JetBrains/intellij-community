@@ -38,7 +38,9 @@ public class SimpleMethodInliner implements CallInliner {
     if (!isSimple(returnValue)) return false;
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(method);
     boolean nonNull = info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred();
-    builder.pushExpression(returnValue, nonNull ? NullabilityProblemKind.assumeNotNull : NullabilityProblemKind.noProblem).resultOf(call);
+    builder.pushExpression(returnValue, nonNull ? NullabilityProblemKind.assumeNotNull : NullabilityProblemKind.noProblem)
+      .boxUnbox(returnValue, call.getType())
+      .resultOf(call);
     return true;
   }
 

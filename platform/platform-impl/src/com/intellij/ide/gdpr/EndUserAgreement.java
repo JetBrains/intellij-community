@@ -20,16 +20,19 @@ import java.nio.charset.StandardCharsets;
  *         Date: 09-Mar-16
  */
 public final class EndUserAgreement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
+  private static final Logger LOG = Logger.getInstance(EndUserAgreement.class);
   private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
 
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";
+  private static final String PRIVACY_POLICY_EAP_DOCUMENT_NAME = PRIVACY_POLICY_DOCUMENT_NAME + "Eap";
   private static final String EULA_DOCUMENT_NAME = "eua";
+  private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
 
   private static final String DEFAULT_DOC_NAME = EULA_DOCUMENT_NAME;
-  private static final String DEFAULT_DOC_EAP_NAME = DEFAULT_DOC_NAME + "Eap";
+  private static final String DEFAULT_DOC_EAP_NAME = EULA_EAP_DOCUMENT_NAME;
+
   private static final String ACTIVE_DOC_FILE_NAME = "documentName";
   private static final String ACTIVE_DOC_EAP_FILE_NAME = "documentName.eap";
 
@@ -50,7 +53,11 @@ public final class EndUserAgreement {
 
   @NotNull
   private static File getDocumentNameFile() {
-    return new File(getDataRoot(), ApplicationInfoImpl.getShadowInstance().isEAP() ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+    return new File(getDataRoot(), isEAP() ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+  }
+
+  private static boolean isEAP() {
+    return ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   private static File getDataRoot() {
@@ -99,6 +106,36 @@ public final class EndUserAgreement {
     return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
   }
 
+  public static boolean updateCachedContentToLatestBundledVersion() {
+    try {
+      final String docName = getDocumentName();
+      final File cacheFile = getDocumentContentFile(docName);
+      if (cacheFile.exists()) {
+        final Document cached = loadContent(docName, new FileInputStream(cacheFile));
+        if (!cached.getVersion().isUnknown()) {
+          final Document bundled = loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+          if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
+            try {
+              // update content only and not the active document name
+              // active document name can be changed by JBA only
+              FileUtil.writeToFile(getDocumentContentFile(docName), bundled.getText());
+            }
+            catch (FileNotFoundException e) {
+              LOG.info(e.getMessage());
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+            return true;
+          }
+        }
+      }
+    }
+    catch (Throwable ignored) {
+    }
+    return false;
+  }
+
   public static void update(String docName, String text) {
     try {
       FileUtil.writeToFile(getDocumentContentFile(docName), text);
@@ -129,7 +166,7 @@ public final class EndUserAgreement {
   @NotNull
   private static String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
+      return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
     try {
       final String docName = new String(FileUtilRt.loadFileText(getDocumentNameFile(), StandardCharsets.UTF_8));
@@ -139,16 +176,20 @@ public final class EndUserAgreement {
     }
     catch (IOException ignored) {
     }
-    //noinspection ConstantConditions
-    if (DEFAULT_DOC_NAME.equals(PRIVACY_POLICY_DOCUMENT_NAME)) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
-    }
-    return ApplicationInfoImpl.getShadowInstance().isEAP() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+    return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
   @NotNull
   private static String getAcceptedVersionKey(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "JetBrains.privacy_policy.accepted_version" : "JetBrains.privacy_policy." + docName + "_accepted_version";
+    if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
+      return "JetBrains.privacy_policy.accepted_version";
+    }
+    String keyName = docName;
+    if (EULA_EAP_DOCUMENT_NAME.equals(docName)) {
+      // for commercial EAP releases accepted version attribute should be separate from the one Resharper uses (IDEA-212020)
+      keyName = "ij_" + keyName;
+    }
+    return "JetBrains.privacy_policy." + keyName + "_accepted_version";
   }
 
   public static final class Document {
@@ -163,7 +204,7 @@ public final class EndUserAgreement {
     }
 
     public boolean isPrivacyPolicy() {
-      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName);
+      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName) || PRIVACY_POLICY_EAP_DOCUMENT_NAME.equals(myName);
     }
 
     public boolean isAccepted() {

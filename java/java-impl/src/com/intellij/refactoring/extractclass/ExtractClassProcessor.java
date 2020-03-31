@@ -62,7 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
-  private static final Logger logger = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractClassProcessor");
+  private static final Logger LOG = Logger.getInstance(ExtractClassProcessor.class);
+
   @NonNls public static final String REFACTORING_NAME = "Extract Delegate";
 
   private final PsiClass sourceClass;
@@ -260,12 +261,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new ExtractClassUsageViewDescriptor(sourceClass);
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
     final PsiClass psiClass = buildClass(true);
     if (psiClass == null) return;
     if (delegationRequired) {
@@ -443,7 +444,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       codeStyleManager.reformat(JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newField));
     }
     catch (IncorrectOperationException e) {
-      logger.error(e);
+      LOG.error(e);
     }
   }
 
@@ -837,7 +838,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     private boolean isStaticFinal(PsiField field) {
       final PsiModifierList modifierList = field.getModifierList();
-      logger.assertTrue(modifierList != null);
+      LOG.assertTrue(modifierList != null);
       return modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL);
     }
 

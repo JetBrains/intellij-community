@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.actions.NonTrivialActionGroup;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
@@ -29,7 +14,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -52,8 +36,6 @@ import java.util.function.Consumer;
  * @see SchemesModel
  */
 public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
-  public static final ExtensionPointName<SchemePanelCustomizer> EP_NAME =
-    ExtensionPointName.create("com.intellij.schemesPanelCustomizer");
 
   private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
@@ -72,35 +54,25 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   // endregion
 
   AbstractSchemesPanel() {
-    this(DEFAULT_VGAP, null);
+    this(DEFAULT_VGAP);
   }
 
   AbstractSchemesPanel(int vGap) {
-    this(vGap, null);
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    createUIComponents(vGap);
   }
 
-  AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
-    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    createUIComponents(vGap, rightCustomComponent);
-  }
-  
-  private void createUIComponents(int vGap, @Nullable JComponent rightCustomComponent) {
-    final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
+  private void createUIComponents(int vGap) {
     JPanel controlsPanel = createControlsPanel();
-    verticalContainer.add(controlsPanel);
-    for (SchemePanelCustomizer extension : EP_NAME.getExtensions()) {
-      JPanel customBanner = extension.getBannerToInsert(this);
-      if(customBanner != null)
-        verticalContainer.add(customBanner);
+    add(controlsPanel);
+
+    JComponent topComponent = createTopComponent();
+    if (topComponent != null) {
+      add(topComponent);
     }
-    verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
-    if (rightCustomComponent != null) {
-      JPanel horizontalContainer = new JPanel();
-      horizontalContainer.setLayout(new BoxLayout(horizontalContainer, BoxLayout.X_AXIS));
-      horizontalContainer.add(verticalContainer);
-      horizontalContainer.add(Box.createHorizontalGlue());
-      horizontalContainer.add(rightCustomComponent);
-      add(horizontalContainer);
+    JComponent bottomComponent = createBottomComponent();
+    if (bottomComponent != null) {
+      add(bottomComponent);
     }
     mySettingsPanelSeparator = new JSeparator();
     add(mySettingsPanelSeparator);
@@ -114,11 +86,13 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySettingsPanelSeparator.setVisible(visible);
   }
 
-  @NotNull
-  private static JPanel createVerticalContainer() {
-    JPanel container = new JPanel();
-    container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-    return container;
+  protected JComponent createTopComponent() {
+    return null;
+  }
+
+  @Nullable
+  protected JComponent createBottomComponent() {
+    return null;
   }
 
   @NotNull
@@ -151,7 +125,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   @NotNull
   private JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new ShowSchemesActionsListAction(myActions.getActions()));
+    group.add(new ShowSchemesActionsListAction(myActions));
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -301,13 +275,15 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
-    ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
+  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+    private final AbstractSchemeActions<?> mySchemeActions;
+
+    ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
       setPopup(true);
+      mySchemeActions = schemeActions;
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-      getTemplatePresentation().setText("Show Scheme Actions");
-      getTemplatePresentation().setDescription("Show Scheme Actions");
-      addAll(actions);
+      getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.text"));
+      getTemplatePresentation().setDescription(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.description"));
     }
 
     @Override
@@ -322,8 +298,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();

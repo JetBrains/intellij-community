@@ -10,7 +10,7 @@ import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,10 +22,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ import java.util.*;
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
+  private static final Logger LOG = Logger.getInstance(CompilerUIConfigurable.class);
 
   private static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
     Setting.EXTERNAL_BUILD, Setting.AUTO_MAKE, Setting.PARALLEL_COMPILATION, Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE,
@@ -81,10 +80,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                    "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
                                    "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name"
     ));
-    myWarningLabel.setText("<html>WARNING!<br>" +
-                                              /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
-                                              "If option 'Clear output directory on rebuild' is enabled, " +
-                                              "the entire contents of directories where generated sources are stored WILL BE CLEARED on rebuild.</html>");
+
+    /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
+    myWarningLabel.setText(JavaCompilerBundle.message("settings.warning"));
     myWarningLabel.setFont(myWarningLabel.getFont().deriveFont(Font.BOLD));
 
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
@@ -130,16 +128,16 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     }
 
     Map<Setting, Collection<JComponent>> controls = new HashMap<>();
-    controls.put(Setting.RESOURCE_PATTERNS, ContainerUtilRt.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
+    controls.put(Setting.RESOURCE_PATTERNS, ContainerUtil.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
     controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError));
     controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
-    controls.put(Setting.AUTO_MAKE, ContainerUtilRt.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
-    controls.put(Setting.PARALLEL_COMPILATION, ContainerUtilRt.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
-    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtilRt.newArrayList(myCbRebuildOnDependencyChange));
-    controls.put(Setting.HEAP_SIZE, ContainerUtilRt.newArrayList(myHeapSizeLabel, myHeapSizeField));
-    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
+    controls.put(Setting.AUTO_MAKE, ContainerUtil.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
+    controls.put(Setting.PARALLEL_COMPILATION, ContainerUtil.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
+    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtil.newArrayList(myCbRebuildOnDependencyChange));
+    controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(myHeapSizeLabel, myHeapSizeField));
+    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtil.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
 
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);
@@ -174,11 +172,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myResourcePatternsField.setText(patternsToString(configuration.getResourceFilePatterns()));
 
     if (PowerSaveMode.isEnabled()) {
-      myEnableAutomakeLegendLabel.setText("(disabled in Power Save mode)");
+      myEnableAutomakeLegendLabel.setText(JavaCompilerBundle.message("disabled.in.power.save.mode"));
       myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.BOLD));
     }
     else {
-      myEnableAutomakeLegendLabel.setText("(only works while not running / debugging)");
+      myEnableAutomakeLegendLabel.setText(JavaCompilerBundle.message("only.works.while.not.running.debugging"));
       myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.PLAIN));
     }
   }
@@ -270,7 +268,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
 
       throw new ConfigurationException(
-        CompilerBundle.message("error.compiler.configurable.malformed.patterns", pattersnsWithErrors.toString()), CompilerBundle.message("bad.resource.patterns.dialog.title")
+        JavaCompilerBundle.message("error.compiler.configurable.malformed.patterns", pattersnsWithErrors.toString()), JavaCompilerBundle
+        .message("bad.resource.patterns.dialog.title")
       );
     }
   }
@@ -308,7 +307,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public String getDisplayName() {
-    return "General";
+    return JavaCompilerBundle.message("configurable.CompilerUIConfigurable.display.name");
   }
 
   @Override
@@ -331,6 +330,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myResourcePatternsField = new RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myResourcePatternsField.setDialogCaption("Resource patterns");
     myHeapSizeField = new JTextField();
-    myHeapSizeField.setPreferredSize(new Dimension(JBUI.scale(50), myHeapSizeField.getPreferredSize().height));
+    myHeapSizeField.setPreferredSize(new Dimension(JBUIScale.scale(50), myHeapSizeField.getPreferredSize().height));
   }
 }

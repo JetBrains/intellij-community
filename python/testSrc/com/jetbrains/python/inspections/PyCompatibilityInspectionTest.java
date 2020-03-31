@@ -215,8 +215,46 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  // PY-36009
+  public void testEqualitySignInFStrings() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   public void testInputFromSixLib() {
     doTest(LanguageLevel.PYTHON27);
+  }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText(
+        "def f(pos1, <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
+        "    pass"
+      )
+    );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
+  // PY-36003
+  public void testContinueInFinallyBlock() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText("while True:\n" +
+                         "  try:\n" +
+                         "    print(\"a\")\n" +
+                         "  finally:\n" +
+                         "    <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
+    );
+  }
+
+  // PY-35961
+  public void testUnpackingInNonParenthesizedTuplesInReturnAndYield() {
+    doTest(LanguageLevel.PYTHON38);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

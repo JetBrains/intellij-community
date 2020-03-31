@@ -1,5 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
+
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
@@ -29,8 +32,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
@@ -39,16 +51,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
-import static com.intellij.util.ObjectUtils.tryCast;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
@@ -56,10 +65,17 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
+  /**
+   * Use {@link #getYourVersion()} instead
+   */
+  @Deprecated
   public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
-  public static final String SERVER_VERSION = DiffBundle.message("merge.version.title.their");
+
+  /**
+   * Use {@link #getBaseVersion()} instead
+   */
+  @Deprecated
   public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
-  public static final String MERGED_VERSION = DiffBundle.message("merge.version.title.merged");
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
@@ -131,7 +147,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       assert change1 instanceof ChangeListChange && change2 instanceof ChangeListChange;
       String changelistId1 = ((ChangeListChange)change1).getChangeListId();
       String changelistId2 = ((ChangeListChange)change2).getChangeListId();
-      if (!Comparing.equal(changelistId1, changelistId2)) return false;
+      if (!Objects.equals(changelistId1, changelistId2)) return false;
     }
 
     return true;
@@ -299,11 +315,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();
-      String beforeRevisionTitle = getRevisionTitle(bRev, YOUR_VERSION);
-      String afterRevisionTitle = getRevisionTitle(aRev, SERVER_VERSION);
+      String beforeRevisionTitle = getRevisionTitle(bRev, getYourVersion());
+      String afterRevisionTitle = getRevisionTitle(aRev, getServerVersion());
 
       String title = DiffRequestFactory.getInstance().getTitle(file);
-      List<String> titles = Arrays.asList(beforeRevisionTitle, BASE_VERSION, afterRevisionTitle);
+      List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
       List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
@@ -343,9 +359,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     DiffContent content2 = createContent(project, aRev, context, indicator);
 
     final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
-    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, BASE_VERSION);
+    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, getBaseVersion());
     final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
-    String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, YOUR_VERSION);
+    String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, getYourVersion());
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
 
@@ -456,5 +472,21 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   @Override
   public int hashCode() {
     return hashCode(myChange);
+  }
+
+  public static String getYourVersion() {
+    return DiffBundle.message("merge.version.title.our");
+  }
+
+  public static String getServerVersion() {
+    return DiffBundle.message("merge.version.title.their");
+  }
+
+  public static String getBaseVersion() {
+    return DiffBundle.message("merge.version.title.base");
+  }
+
+  public static String getMergedVersion() {
+    return DiffBundle.message("merge.version.title.merged");
   }
 }

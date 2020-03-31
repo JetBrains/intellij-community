@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -23,6 +26,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -63,7 +67,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
-  private ExternalSystemProjectsWatcherImpl myWatcher;
+  private final ExternalSystemProjectsWatcherImpl myWatcher;
 
   public ExternalProjectsManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -75,8 +79,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
-    ExternalProjectsManager service = ServiceManager.getService(project, ExternalProjectsManager.class);
-    return (ExternalProjectsManagerImpl)service;
+    return (ExternalProjectsManagerImpl)project.getService(ExternalProjectsManager.class);
   }
 
   @Nullable
@@ -88,7 +91,11 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   public void setStoreExternally(boolean value) {
-    ExternalStorageConfigurationManager.getInstance(myProject).setEnabled(value);
+    ExternalStorageConfigurationManager externalStorageConfigurationManager =
+      ExternalStorageConfigurationManager.getInstance(myProject);
+    if (externalStorageConfigurationManager.isEnabled() == value) return;
+    externalStorageConfigurationManager.setEnabled(value);
+
     // force re-save
     try {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -142,8 +149,11 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   public void init() {
-    if (isInitializationStarted.getAndSet(true)) return;
-    myWatcher.start();
+    ProgressManager.checkCanceled();
+
+    if (isInitializationStarted.getAndSet(true)) {
+      return;
+    }
 
     // load external projects data
     ExternalProjectsDataStorage.getInstance(myProject).load();
@@ -151,13 +161,13 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
     // init shortcuts manager
     myShortcutsManager.init();
-    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
-      final Collection<ExternalProjectInfo> externalProjects =
-        ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
+    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemManager.EP_NAME.getIterable()) {
+      Collection<ExternalProjectInfo> externalProjects = ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
       for (ExternalProjectInfo externalProject : externalProjects) {
-        if (externalProject.getExternalProjectStructure() == null) continue;
-        Collection<DataNode<TaskData>> taskData =
-          ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
+        if (externalProject.getExternalProjectStructure() == null) {
+          continue;
+        }
+        Collection<DataNode<TaskData>> taskData = ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
         myShortcutsManager.scheduleKeymapUpdate(taskData);
       }
 
@@ -224,7 +234,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   @NotNull
   @Override
   public ExternalProjectsState getState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
         final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
@@ -306,10 +316,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     myPostInitializationActivities.clear();
     myProjectsViews.clear();
     myRunManagerListener.detach();
-    if (myWatcher != null) {
-      myWatcher.stop();
-    }
-    myWatcher = null;
   }
 
   public interface ExternalProjectsStateProvider {

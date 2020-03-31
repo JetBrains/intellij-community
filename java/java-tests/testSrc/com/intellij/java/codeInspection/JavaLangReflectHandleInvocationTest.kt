@@ -20,14 +20,14 @@ import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatur
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
 
 class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_7,
-                                                                                    LightCodeInsightFixtureTestCase.JAVA_8) {
+                                                                                    LightJavaCodeInsightFixtureTestCase.JAVA_8) {
   fun testVirtual() = doTest()
   fun testStatic() = doTest()
   fun testConstructor() = doTest()
@@ -40,14 +40,14 @@ class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestB
 }
 
 class Java9LangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_9,
-                                                                                     LightCodeInsightFixtureTestCase.JAVA_9) {
+                                                                                     LightJavaCodeInsightFixtureTestCase.JAVA_9) {
   fun testVarHandle() = doTest()
   fun testStaticVarHandle() = doTest()
   fun testArrayVarHandle() = doTest()
 }
 
 abstract class JavaLangReflectHandleInvocationTestBase(val languageLevel: LanguageLevel,
-                                                       val descriptor: LightProjectDescriptor) : LightCodeInsightFixtureTestCase() {
+                                                       val descriptor: LightProjectDescriptor) : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel

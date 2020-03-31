@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.util.Function;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 
@@ -108,7 +108,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, "ExtractManagedDependenciesAction");
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.ExtractManagedDependenciesAction);
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
 
@@ -227,7 +227,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     }
   }
 

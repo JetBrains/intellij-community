@@ -44,29 +44,25 @@ public abstract class ElementPresentationManager {
     return ServiceManager.getService(ElementPresentationManager.class);
   }
 
-  @NotNull
-  public <T> Object[] createVariants(Collection<T> elements) {
+  public <T> Object @NotNull [] createVariants(Collection<T> elements) {
     return createVariants(elements, DEFAULT_NAMER);
   }
 
-  @NotNull
-  public <T> Object[] createVariants(Collection<T> elements, int iconFlags) {
+  public <T> Object @NotNull [] createVariants(Collection<T> elements, int iconFlags) {
     return createVariants(elements, DEFAULT_NAMER, iconFlags);
   }
 
-  @NotNull
-  public <T> Object[] createVariants(Collection<? extends T> elements, Function<? super T, String> namer) {
+  public <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer) {
     return createVariants(elements, namer, 0);
   }
 
   /**
-   * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
+   * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
    */
   @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
-  @NotNull
-  public abstract <T> Object[] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
+  public abstract <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
 
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
@@ -79,15 +75,13 @@ public abstract class ElementPresentationManager {
   }
 
   /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#provider()
+   * @deprecated use {@link com.intellij.ide.presentation.Presentation#provider()}
    */
   @Deprecated
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
   /**
-   * @deprecated
-   * @see Documentation
+   * @deprecated use {@link Documentation}
    */
   @Deprecated
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
@@ -208,7 +202,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  private static <T> T getFirst(@Nullable final T[] array) {
+  private static <T> T getFirst(final T @Nullable [] array) {
     return array == null || array.length == 0 ? null : array[0];
   }
 
@@ -218,8 +212,7 @@ public abstract class ElementPresentationManager {
     return getFirst(getIconsForClass(clazz, null));
   }
 
-  @Nullable
-  private static Icon[] getIconsForClass(final Class clazz, @Nullable Object o) {
+  private static Icon @Nullable [] getIconsForClass(final Class clazz, @Nullable Object o) {
     TypePresentationService service = TypePresentationService.getService();
     final Icon icon = o == null ? service.getTypeIcon(clazz) : service.getIcon(o);
     if (icon != null) {

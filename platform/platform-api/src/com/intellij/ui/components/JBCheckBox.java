@@ -1,7 +1,11 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.AnchorableComponent;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +24,11 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
     this(null);
   }
 
-  public JBCheckBox(@Nullable String text) {
+  public JBCheckBox(@Nullable @NlsUI.Checkbox String text) {
     this(text, false);
   }
 
-  public JBCheckBox(@Nullable String text, boolean selected) {
+  public JBCheckBox(@Nullable @NlsUI.Checkbox String text, boolean selected) {
     super(text, null, selected);
   }
 
@@ -66,7 +70,7 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
    * @return true in case of success and false otherwise
    */
   public boolean setTextIcon(@NotNull Icon icon) {
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return false;
     }
     ButtonUI ui = getUI();

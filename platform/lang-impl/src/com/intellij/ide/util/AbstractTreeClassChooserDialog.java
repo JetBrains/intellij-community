@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -27,9 +27,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,15 +64,15 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private ChooseByNamePanel myGotoByNamePanel;
   private T myInitialClass;
 
-  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass) {
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title, Project project, final Class<T> elementClass) {
     this(title, project, elementClass, null);
   }
 
-  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass, @Nullable T initialClass) {
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title, Project project, final Class<T> elementClass, @Nullable T initialClass) {
     this(title, project, GlobalSearchScope.projectScope(project), elementClass, null, initialClass);
   }
 
-  public AbstractTreeClassChooserDialog(String title,
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
@@ -79,7 +81,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     this(title, project, scope, elementClass, classFilter, null, initialClass, false, true);
   }
 
-  public AbstractTreeClassChooserDialog(String title,
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
@@ -117,11 +119,6 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
       @Override
-      public boolean isFlattenPackages() {
-        return false;
-      }
-
-      @Override
       public boolean isShowMembers() {
         return myIsShowMembers;
       }
@@ -129,11 +126,6 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       @Override
       public boolean isHideEmptyMiddlePackages() {
         return true;
-      }
-
-      @Override
-      public boolean isAbbreviatePackageNames() {
-        return false;
       }
 
       @Override
@@ -169,7 +161,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
         if (path != null && myTree.isPathSelected(path)) {
           doOKAction();
@@ -428,16 +420,15 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       return myTreeClassChooserDialog;
     }
 
-    @NotNull
     @Override
-    public Object[] getElementsByName(@NotNull String name, @NotNull FindSymbolParameters parameters, @NotNull ProgressIndicator canceled) {
+    public Object @NotNull [] getElementsByName(@NotNull String name, @NotNull FindSymbolParameters parameters, @NotNull ProgressIndicator canceled) {
       String patternName = parameters.getLocalPatternName();
       List<T> classes = myTreeClassChooserDialog.getClassesByName(
         name, parameters.isSearchInLibraries(), patternName, myTreeClassChooserDialog.getScope()
       );
-      if (classes.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      if (classes.isEmpty()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       if (classes.size() == 1) {
-        return isAccepted(classes.get(0)) ? ArrayUtil.toObjectArray(classes) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return isAccepted(classes.get(0)) ? ArrayUtil.toObjectArray(classes) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
       Set<String> qNames = new HashSet<>();
       List<T> list = new ArrayList<>(classes.size());

@@ -20,32 +20,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.PATTERN_VALIDATION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Non-annotated Method overrides @Pattern Method";
-  }
 
   @Override
   @NotNull
@@ -66,7 +49,8 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
           if (annotationFromHierarchy.length > 0) {
             final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
             final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
-            holder.registerProblem(psiIdentifier, "Non-annotated Method overrides @Pattern Method",
+            holder.registerProblem(psiIdentifier,
+                                   IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
                                    new AnnotateFix(annotationClassname, argList));
           }
         }
@@ -74,10 +58,4 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
     };
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "PatternOverriddenByNonAnnotatedMethod";
-  }
 }

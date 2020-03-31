@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
   String getSearchProviderId();
 
   @NotNull
+  @Nls
   String getGroupName();
 
   @NotNull
@@ -40,6 +42,12 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
     return false;
   }
 
+  /**
+   * @deprecated method is left for backward compatibility only. If you want to consider elements weight in your search contributor
+   * please use {@link WeightedSearchEverywhereContributor#fetchWeightedElements(String, ProgressIndicator, Processor)} method for fetching
+   * this elements
+   */
+  @Deprecated
   default int getElementPriority(@NotNull Item element, @NotNull String searchPattern) {
     return 0;
   }

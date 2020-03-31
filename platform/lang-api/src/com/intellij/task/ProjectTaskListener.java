@@ -2,6 +2,7 @@
 package com.intellij.task;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProjectTaskListener {
@@ -13,8 +14,18 @@ public interface ProjectTaskListener {
   default void started(@NotNull ProjectTaskContext context) {}
 
   /**
+   * @param result provides aggregated information about the {@link ProjectTask} execution
+   */
+  default void finished(@NotNull ProjectTaskManager.Result result) {
+    finished(result.getContext(), new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0));
+  }
+
+  /**
    * @param context         tasks execution context
    * @param executionResult provides aggregated information about the {@link ProjectTask} execution
+   * @deprecated use {@link #finished(ProjectTaskManager.Result)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
   default void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {}
 }

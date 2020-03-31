@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.Interpolable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScrollingModelImpl implements ScrollingModelEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
+  private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
   private final EditorImpl myEditor;
   private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -56,25 +57,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     }
   };
 
-  private final ChangeListener myViewportChangeListener = new ChangeListener() {
-    private Rectangle myLastViewRect;
-
-    @Override
-    public void stateChanged(ChangeEvent event) {
-      Rectangle viewRect = getVisibleArea();
-      VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(myEditor, myLastViewRect, viewRect);
-      if (!myViewportPositioned && viewRect.height > 0) {
-        myViewportPositioned = true;
-        if (adjustVerticalOffsetIfNecessary()) {
-          return;
-        }
-      }
-      myLastViewRect = viewRect;
-      for (VisibleAreaListener listener : myVisibleAreaListeners) {
-        listener.visibleAreaChanged(visibleAreaEvent);
-      }
-    }
-  };
+  private final ChangeListener myViewportChangeListener = new MyChangeListener();
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -129,7 +112,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       LOG.trace(new Throwable());
     }
     assertIsDispatchThread();
-    myEditor.validateSize();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
   }
 
@@ -307,7 +289,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private void _scrollVertically(int scrollOffset) {
     assertIsDispatchThread();
 
-    myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
 
     scrollbar.setValue(scrollOffset);
@@ -321,7 +302,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private void _scrollHorizontally(int scrollOffset) {
     assertIsDispatchThread();
 
-    myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
     scrollbar.setValue(scrollOffset);
   }
@@ -582,5 +562,27 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private static class NoAnimationRequiredException extends Exception {
+  }
+
+  @DirtyUI
+  private class MyChangeListener implements ChangeListener {
+    private Rectangle myLastViewRect;
+
+    @DirtyUI
+    @Override
+    public void stateChanged(ChangeEvent event) {
+      Rectangle viewRect = getVisibleArea();
+      VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(myEditor, myLastViewRect, viewRect);
+      if (!myViewportPositioned && viewRect.height > 0) {
+        myViewportPositioned = true;
+        if (adjustVerticalOffsetIfNecessary()) {
+          return;
+        }
+      }
+      myLastViewRect = viewRect;
+      for (VisibleAreaListener listener : myVisibleAreaListeners) {
+        listener.visibleAreaChanged(visibleAreaEvent);
+      }
+    }
   }
 }

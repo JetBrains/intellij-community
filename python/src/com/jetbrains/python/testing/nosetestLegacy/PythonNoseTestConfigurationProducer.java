@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +40,12 @@ public final class PythonNoseTestConfigurationProducer extends PythonTestLegacyC
       if (modules.length == 0) return false;
       module = modules[0];
     }
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     return ( PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST).equals(TestRunnerService.getInstance(module).getProjectConfiguration()) && sdk != null);
   }
 
   @Override
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestFunction(pyFunction, ThreeState.NO, null);
+    return PythonUnitTestDetectorsBasedOnSettings.isTestFunction(pyFunction, ThreeState.NO, null);
   }
 }

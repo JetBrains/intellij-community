@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
     }
 
     myReplaceVariableName = replacement.getName();
-    setText(CodeInsightBundle.message("intention.replace.cast.with.var.text", typeCastExpression.getText(), myReplaceVariableName));
+    setText(JavaBundle.message("intention.replace.cast.with.var.text", typeCastExpression.getText(), myReplaceVariableName));
 
     return true;
   }
@@ -106,7 +106,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
       final PsiCodeBlock methodBody = method.getBody();
       if (variable != null && methodBody != null &&
-          variable.getName() != null && resolveHelper.resolveReferencedVariable(variable.getName(), expression) == variable &&
+          resolveHelper.resolveReferencedVariable(variable.getName(), expression) == variable &&
           !isChangedBetween(castedVar, methodBody, occurrence, expression) &&
           !isChangedBetween(variable, methodBody, occurrence, expression)) {
         return variable;
@@ -132,7 +132,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
         private boolean inScope;
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element == start) {
             inScope = true;
           }
@@ -185,6 +185,6 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.replace.cast.with.var.family");
+    return JavaBundle.message("intention.replace.cast.with.var.family");
   }
 }

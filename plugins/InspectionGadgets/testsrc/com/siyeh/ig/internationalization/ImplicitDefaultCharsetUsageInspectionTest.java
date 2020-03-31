@@ -17,14 +17,14 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
 /**
  * @author Bas Leijdekkers
  */
-public class ImplicitDefaultCharsetUsageInspectionTest extends LightInspectionTestCase {
+public class ImplicitDefaultCharsetUsageInspectionTest extends LightJavaInspectionTestCase {
 
   @NotNull
   @Override

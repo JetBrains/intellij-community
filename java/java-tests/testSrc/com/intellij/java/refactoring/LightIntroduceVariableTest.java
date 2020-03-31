@@ -3,21 +3,34 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class LightIntroduceVariableTest extends LightCodeInsightFixtureTestCase {
+public class LightIntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
   public void testExpressionsUnderCaret() {
     PsiFile file = myFixture.configureByText(StdFileTypes.JAVA, "package a; class A {{new Double(0.<caret>)}}");
     List<PsiExpression> expressions =
       IntroduceVariableBase.collectExpressions(file, myFixture.getEditor(), myFixture.getCaretOffset(), false);
     assertSize(2, expressions);
   }
+  
+  public void testPreferVarargsToBoxing() {
+    PsiFile file = myFixture.configureByText(StdFileTypes.JAVA, "class A { void m(int... is) {} {m(nu<caret>ll);}}");
+    PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiExpression.class);
+    assertNotNull(expression);
+    PsiType type = RefactoringUtil.getTypeByExpression(expression);
+    assertTrue(type instanceof PsiArrayType);
+  }
+  
   @NotNull
   @Override
   protected String getTestDataPath() {

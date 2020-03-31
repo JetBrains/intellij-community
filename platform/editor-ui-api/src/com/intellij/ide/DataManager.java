@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -15,14 +16,20 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @see com.intellij.ide.impl.dataRules.GetDataRule
+ * Provides access to {@link DataContext}.
+ * <p/>
+ * Use {@link AnActionEvent#getData(DataKey)} in {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
  */
 public abstract class DataManager {
   public static DataManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(DataManager.class);
+    return ApplicationManager.getApplication().getService(DataManager.class);
   }
 
-  @NonNls public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
+  public static DataManager getInstanceIfCreated() {
+    return ApplicationManager.getApplication().getServiceIfCreated(DataManager.class);
+  }
+
+  public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the currently focused component

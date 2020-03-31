@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
@@ -20,7 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<GenericDebuggerRunnerSettings> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.GenericDebuggerParametersRunnerConfigurable");
+  private static final Logger LOG = Logger.getInstance(GenericDebuggerParametersRunnerConfigurable.class);
   private JPanel myPanel;
   private JTextField myAddressField;
   private JPanel myShMemPanel;
@@ -135,7 +135,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private void checkPort() throws ConfigurationException {
     if (isSocket() && parsePort() == 0) {
-      throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port"));
+      throw new ConfigurationException(JavaDebuggerBundle.message("error.text.invalid.port"));
     }
   }
   private int parsePort() {

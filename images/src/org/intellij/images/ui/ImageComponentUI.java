@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.ui;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.images.editor.ImageDocument;
 
 import javax.swing.*;
@@ -49,7 +37,7 @@ public class ImageComponentUI extends ComponentUI {
             ImageDocument document = ic.getDocument();
             BufferedImage image = document.getValue(ic.getZoomFactor());
             if (image != null) {
-                if (ic.isFileSizeVisible()) paintBorder(g, ic);
+                if (ic.isFileSizeVisible() && ic.isBorderVisible()) paintBorder(g, ic);
 
                 Dimension size = ic.getCanvasSize();
                 Graphics igc = g.create(ImageComponent.IMAGE_INSETS, ImageComponent.IMAGE_INSETS, size.width, size.height);
@@ -84,7 +72,7 @@ public class ImageComponentUI extends ComponentUI {
         int patternSize = 2 * cellSize;
 
         if (pattern == null) {
-            pattern = UIUtil.createImage(g, patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
+          pattern = ImageUtil.createImage(g, patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
             Graphics imageGraphics = pattern.getGraphics();
             imageGraphics.setColor(ic.getTransparencyChessboardWhiteColor());
             imageGraphics.fillRect(0, 0, patternSize, patternSize);
@@ -115,7 +103,7 @@ public class ImageComponentUI extends ComponentUI {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         }
-        UIUtil.drawImage(g, image, new Rectangle(0, 0, size.width, size.height), ic);
+      StartupUiUtil.drawImage(g, image, new Rectangle(0, 0, size.width, size.height), ic);
 
         g2d.setRenderingHints(oldHints);
     }
@@ -132,10 +120,10 @@ public class ImageComponentUI extends ComponentUI {
             g.setColor(ic.getGridLineColor());
             int ls = ic.getGridLineSpan();
             for (int dx = ls; dx < imageWidth; dx += ls) {
-              UIUtil.drawLine(g, (int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
+              LinePainter2D.paint((Graphics2D)g, (int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
             }
             for (int dy = ls; dy < imageHeight; dy += ls) {
-              UIUtil.drawLine(g, 0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
+              LinePainter2D.paint((Graphics2D)g, 0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
             }
         }
     }

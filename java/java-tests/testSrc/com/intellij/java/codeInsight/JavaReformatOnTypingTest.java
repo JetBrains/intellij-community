@@ -8,9 +8,9 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class JavaReformatOnTypingTest extends BasePlatformTestCase {
 
   @Override
   public void setUp() throws Exception {

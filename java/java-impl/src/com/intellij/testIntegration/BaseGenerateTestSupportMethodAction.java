@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,6 +10,7 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -67,14 +54,14 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
       final TestIntegrationUtils.MethodKind methodKind = ((MyHandler)getHandler()).myMethodKind;
       if (!frameworks.isEmpty()) {
-        return new AnAction("Edit Template") {
+        return new AnAction(JavaBundle.message("action.text.edit.template")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             chooseAndPerform(editor, frameworks, framework -> {
               final FileTemplateDescriptor descriptor = methodKind.getFileTemplateDescriptor(framework);
               if (descriptor != null) {
                 final String fileName = descriptor.getFileName();
-                AllFileTemplatesConfigurable.editCodeTemplate(FileUtil.getNameWithoutExtension(fileName), project);
+                AllFileTemplatesConfigurable.editCodeTemplate(FileUtilRt.getNameWithoutExtension(fileName), project);
               } else {
                 HintManager.getInstance().showErrorHint(editor, "No template found for " + framework.getName() + ":" + BaseGenerateTestSupportMethodAction.this.getTemplatePresentation().getText());
               }
@@ -129,7 +116,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
 
   protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
-    return true;
+    return ((MyHandler)getHandler()).myMethodKind.getFileTemplateDescriptor(framework) != null;
   }
 
   private static void chooseAndPerform(Editor editor, List<? extends TestFramework> frameworks, final Consumer<? super TestFramework> consumer) {
@@ -155,8 +142,8 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       .createPopupChooserBuilder(frameworks)
       .setRenderer(cellRenderer)
       .setNamerForFiltering(o -> o.getName())
-      .setTitle("Choose Framework")
-      .setItemChosenCallback((selectedValue) -> consumer.consume(selectedValue))
+      .setTitle(JavaBundle.message("popup.title.choose.framework"))
+      .setItemChosenCallback(consumer)
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);
   }

@@ -4,12 +4,12 @@ package com.intellij.refactoring;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThrowableRunnable;
 
 import java.io.File;
 
-public abstract class LightMultiFileTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class LightMultiFileTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest(final ThrowableRunnable<? extends Exception> performAction) {
     doTest(performAction, getTestName(true));
   }

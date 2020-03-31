@@ -43,7 +43,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   private void processQueue() {
     while (true) {
       //noinspection unchecked
-      IntReference<V> ref = (IntReference)myQueue.poll();
+      IntReference<V> ref = (IntReference<V>)myQueue.poll();
       if (ref == null) {
         return;
       }
@@ -119,9 +119,8 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     processQueue();
   }
 
-  @NotNull
   @Override
-  public int[] keys() {
+  public int @NotNull [] keys() {
     return myMap.keys();
   }
 

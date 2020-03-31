@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.Application;
@@ -32,7 +18,6 @@ import java.util.List;
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
  */
-
 public abstract class FileTypeManager extends FileTypeRegistry {
   static {
     FileTypeRegistry.ourInstanceGetter = () -> getInstance();
@@ -52,13 +37,13 @@ public abstract class FileTypeManager extends FileTypeRegistry {
     FileTypeManager instance = ourInstance;
     if (instance == null) {
       Application app = ApplicationManager.getApplication();
-      ourInstance = instance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
+      ourInstance = instance = app != null ? app.getService(FileTypeManager.class) : new MockFileTypeManager();
     }
     return instance;
   }
 
   /**
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations);
@@ -69,10 +54,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param type                        The file type to register.
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
-  public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
+  public final void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
       for (String extension : defaultAssociatedExtensions) {
@@ -83,13 +68,12 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
+   * Checks if the specified file is ignored by the IDE. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
    *
    * @param name The name of the file to check.
-   * @return true if the file is ignored, false otherwise.
+   * @return {@code true} if the file is ignored, {@code false} otherwise.
    */
-
   public abstract boolean isFileIgnored(@NonNls @NotNull String name);
 
   /**
@@ -97,11 +81,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
-   * @deprecated since more generic way of associations by means of wildcards exist not every associations matches extension paradigm
+   * @deprecated since more generic way of associations using wildcards exist, not every association matches extension paradigm
    */
   @Deprecated
-  @NotNull
-  public abstract String[] getAssociatedExtensions(@NotNull FileType type);
+  public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
 
   @NotNull
@@ -114,7 +97,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param listener The listener instance.
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
-
   @Deprecated
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
 
@@ -125,17 +107,16 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param listener The listener instance.
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
-
   @Deprecated
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
-   * If fileName is already associated with any known file type returns it.
+   * If file is already associated with any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    *
+   * @param file file to ask for file type association
+   * @return Known file type or {@code null}. Never returns {@link FileTypes#UNKNOWN}.
    * @deprecated Use {@link #getKnownFileTypeOrAssociate(VirtualFile, Project)} instead
-   * @param file - a file to ask for file type association
-   * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   @Deprecated
@@ -147,7 +128,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   /**
    * Returns the semicolon-delimited list of patterns for files and folders
    * which are excluded from the project structure though they may be present
-   * physically on the HD.
+   * physically on disk.
    *
    * @return Semicolon-delimited list of patterns.
    */

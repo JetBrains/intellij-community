@@ -2,7 +2,7 @@
 package com.intellij.util.containers.hash;
 
 public interface EqualityPolicy<T> {
-  EqualityPolicy<?> IDENTITY = new EqualityPolicy() {
+  EqualityPolicy<?> IDENTITY = new EqualityPolicy<Object>() {
     public int getHashCode(Object value) {
       return System.identityHashCode(value);
     }
@@ -12,7 +12,7 @@ public interface EqualityPolicy<T> {
     }
   };
 
-  EqualityPolicy<?> CANONICAL = new EqualityPolicy() {
+  EqualityPolicy<?> CANONICAL = new EqualityPolicy<Object>() {
     public int getHashCode(Object value) {
       return value != null ? value.hashCode() : 0;
     }

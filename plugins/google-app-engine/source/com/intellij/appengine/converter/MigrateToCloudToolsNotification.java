@@ -20,7 +20,6 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.SystemProperties;
@@ -29,10 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.LocalDate;
 import java.time.Month;
 
-/**
- * @author nik
- */
-public class MigrateToCloudToolsNotification implements StartupActivity, DumbAware {
+public class MigrateToCloudToolsNotification implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);

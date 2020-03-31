@@ -26,6 +26,5 @@ public abstract class FileReferenceCompletion {
     return ServiceManager.getService(FileReferenceCompletion.class);
   }
 
-  @NotNull
-  public abstract Object[] getFileReferenceCompletionVariants(FileReference reference);
+  public abstract Object @NotNull [] getFileReferenceCompletionVariants(FileReference reference);
 }

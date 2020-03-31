@@ -46,7 +46,6 @@
     <string>@@build@@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-    @@bundled_help_attributes@@
 
     <key>NSHighResolutionCapable</key>
     <true/>
@@ -80,8 +79,29 @@
         <string>$APP_PACKAGE/Contents</string>
       </dict>
 
-      <key>WorkingDirectory</key>
-      <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the device's camera.</string>
+
+    <key>NSMicrophoneUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the device's microphone.</string>
+
+    <key>NSLocationUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's location information.</string>
+
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Desktop folder.</string>
+
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Documents folder.</string>
+
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Downloads folder.</string>
+
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to files on a network volume.</string>
+
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to files on a removable volume.</string>
   </dict>
 </plist>

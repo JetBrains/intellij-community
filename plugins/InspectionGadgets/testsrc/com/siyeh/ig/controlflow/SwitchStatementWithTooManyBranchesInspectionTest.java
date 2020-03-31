@@ -3,14 +3,14 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspectionTestCase {
+public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("    public void foo(int x) {\n" +
@@ -62,7 +62,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspe
                  "    }");
   }
 
-  public void testJava12Expression() {
+  public void testJava13Expression() {
     doMemberTest("    public int foo(int x) {\n" +
                  "         return /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
                  "            case 1 -> 0;\n" +
@@ -113,7 +113,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Nullable

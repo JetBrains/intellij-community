@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -30,13 +16,13 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author dsl
@@ -352,13 +338,13 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
-      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
-      new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, DataContext.EMPTY_CONTEXT);
+      enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+      getEditor().getSettings().setVariableInplaceRenameEnabled(false);
+      new IntroduceParameterHandler().invoke(getProject(), getEditor(), getFile(), DataContext.EMPTY_CONTEXT);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
     }
     finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 
@@ -403,8 +389,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
-      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
+      enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+      getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
@@ -417,34 +403,34 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       }
       assertEquals(conflict, e.getMessage());
     } finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 
-  private static boolean perform(boolean replaceAllOccurrences,
-                                 int replaceFieldsWithGetters,
-                                 @NonNls String parameterName,
-                                 boolean searchForSuper,
-                                 boolean declareFinal,
-                                 boolean removeUnusedParameters,
-                                 boolean generateDelegate) {
+  private boolean perform(boolean replaceAllOccurrences,
+                          int replaceFieldsWithGetters,
+                          @NonNls String parameterName,
+                          boolean searchForSuper,
+                          boolean declareFinal,
+                          boolean removeUnusedParameters,
+                          boolean generateDelegate) {
     return perform(
       replaceAllOccurrences, replaceFieldsWithGetters, parameterName, searchForSuper, declareFinal,
       removeUnusedParameters, generateDelegate, 0, false
     );
   }
 
-  private static boolean perform(boolean replaceAllOccurrences,
-                                 int replaceFieldsWithGetters,
-                                 @NonNls String parameterName,
-                                 boolean searchForSuper,
-                                 boolean declareFinal,
-                                 boolean removeUnusedParameters,
-                                 boolean generateDelegate,
-                                 int enclosingLevel,
-                                 final boolean replaceDuplicates) {
+  private boolean perform(boolean replaceAllOccurrences,
+                          int replaceFieldsWithGetters,
+                          @NonNls String parameterName,
+                          boolean searchForSuper,
+                          boolean declareFinal,
+                          boolean removeUnusedParameters,
+                          boolean generateDelegate,
+                          int enclosingLevel,
+                          final boolean replaceDuplicates) {
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
-    ElementToWorkOn.processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
+    ElementToWorkOn.processElementToWorkOn(getEditor(), getFile(), "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
                                            new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
                                              @Override
                                              public boolean accept(ElementToWorkOn el) {
@@ -508,17 +494,17 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     }
     processor.run();
 
-    myEditor.getSelectionModel().removeSelection();
+    getEditor().getSelectionModel().removeSelection();
     return true;
   }
 
-  private static void performForLocal(boolean searchForSuper,
-                                      boolean removeLocalVariable,
-                                      boolean replaceAllOccurrences,
-                                      boolean declareFinal,
-                                      final boolean removeUnusedParameters) {
-    final int offset = myEditor.getCaretModel().getOffset();
-    final PsiElement element = ObjectUtils.assertNotNull(myFile.findElementAt(offset)).getParent();
+  private void performForLocal(boolean searchForSuper,
+                               boolean removeLocalVariable,
+                               boolean replaceAllOccurrences,
+                               boolean declareFinal,
+                               final boolean removeUnusedParameters) {
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement element = Objects.requireNonNull(getFile().findElementAt(offset)).getParent();
     assertTrue(element instanceof PsiLocalVariable);
     PsiMethod method = Util.getContainingMethod(element);
     final PsiMethod methodToSearchFor;

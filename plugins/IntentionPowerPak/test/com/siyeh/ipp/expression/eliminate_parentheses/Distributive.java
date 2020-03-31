@@ -12,11 +12,19 @@ class Test {
     double p = (a <caret>+/*1*/ b) /*2*// cc;
   }
 
-  void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {
+  void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d, int i1, int i2) {
     boolean g = a && (b <caret>|| c);
     boolean i = !a && (b || <caret>!c) && !d;
     boolean j = a && (!b && <caret>c || !d);
     boolean k = d || a && (b || <caret>c);
     boolean l = d ^ a && (<caret>b || c);
+    boolean m = a && (<caret>i1 == 1 || b);
+    boolean n = a && (<caret>i1 != 1 || i2 >= 1);
+    boolean o = a && (<caret>i1 > 1 || i2 <= 1) && a == true;
+    boolean p = a && (<caret>i1 < 1 || b);
+  }
+
+  void formatTest(String foo, String bar) {
+      boolean x = !foo.equals("%s") && <caret>(foo.equals(" %s ") || bar.equals("%s"));
   }
 }

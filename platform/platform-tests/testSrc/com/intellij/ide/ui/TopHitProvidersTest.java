@@ -1,52 +1,89 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.EdtRule;
+import com.intellij.testFramework.ProjectRule;
+import com.intellij.testFramework.RunsInEdt;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class TopHitProvidersTest extends LightPlatformTestCase {
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
+@RunsInEdt
+public class TopHitProvidersTest {
+  @Rule
+  public final ProjectRule projectRule = new ProjectRule();
+  @Rule
+  public final EdtRule edtRule = new EdtRule();
+
+  @Test
   public void testUiSettings() {
-    List<OptionsTopHitProvider> providers = getProvider(AppearanceOptionsTopHitProvider.ID);
-    for (OptionsTopHitProvider provider: providers) {
-      for (OptionDescription option : provider.getOptions(null)) {
-        if (option instanceof BooleanOptionDescription) {
+    List<String> errors = new ArrayList<>();
+
+    List<OptionsSearchTopHitProvider> providers = ContainerUtil.concat(OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList(),
+                                                                       ContainerUtil.mapNotNull(SearchTopHitProvider.EP_NAME.getExtensionList(), provider -> provider instanceof OptionsSearchTopHitProvider ? (OptionsSearchTopHitProvider)provider : null));
+    for (OptionsSearchTopHitProvider provider : providers) {
+      for (OptionDescription option : getOptions(provider)) {
+        if (!(option instanceof BooleanOptionDescription)) {
+          continue;
+        }
+
+        try {
           BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
           boolean enabled = booleanOption.isOptionEnabled();
+
+          // we can't reliably restore original state for non-boolean options
+          if (option instanceof NotABooleanOptionDescription) {
+            continue;
+          }
+
           booleanOption.setOptionState(!enabled);
-          assert enabled != booleanOption.isOptionEnabled() : "Can't set " + booleanOption.getOption();
-          booleanOption.setOptionState(!enabled); //restore
+          if (enabled == booleanOption.isOptionEnabled()) {
+            errors.add("Can't set " + toString(booleanOption));
+          }
+
+          // restore
+          booleanOption.setOptionState(enabled);
+          if (enabled != booleanOption.isOptionEnabled()) {
+            errors.add("Can't restore " + toString(booleanOption));
+          }
+        }
+        catch (Throwable e) {
+          e.printStackTrace();
+          errors.add(e.getMessage());
         }
       }
     }
+
+    assertThat(errors).isEmpty();
   }
 
-  private static List<OptionsTopHitProvider> getProvider(String id) {
-    return Arrays.stream(SearchTopHitProvider.EP_NAME.getExtensions())
-      .filter(p -> p instanceof OptionsTopHitProvider && ((OptionsTopHitProvider)p).getId().equals(id))
-      .map(p -> (OptionsTopHitProvider)p)
-      .collect(Collectors.toList());
+  @NotNull
+  private Collection<OptionDescription> getOptions(@NotNull OptionsSearchTopHitProvider provider) {
+    if (provider instanceof OptionsSearchTopHitProvider.ProjectLevelProvider) {
+      return ((OptionsSearchTopHitProvider.ProjectLevelProvider)provider).getOptions(projectRule.getProject());
+    }
+    else if (provider instanceof OptionsSearchTopHitProvider.ApplicationLevelProvider) {
+      return ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  private static String toString(@NotNull BooleanOptionDescription booleanOption) {
+    return String.format("'%s'; id: %s; %s", booleanOption.getOption(), booleanOption.getConfigurableId(), booleanOption.getClass());
   }
 }

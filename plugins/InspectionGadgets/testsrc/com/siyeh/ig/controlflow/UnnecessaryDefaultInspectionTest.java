@@ -3,14 +3,14 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryDefaultInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryDefault() {
     doTest();
@@ -102,6 +102,6 @@ public class UnnecessaryDefaultInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 }

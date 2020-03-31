@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +14,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -35,17 +22,19 @@ import java.util.Collection;
  *  @author dsl
  */
 public class SingleSourceRootMoveDestination implements MoveDestination {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination");
+  private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
+  @NotNull
   private final PackageWrapper myPackage;
+  @NotNull
   private final PsiDirectory myTargetDirectory;
 
-  public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory targetDirectory) {
+  public SingleSourceRootMoveDestination(@NotNull PackageWrapper aPackage, @NotNull PsiDirectory targetDirectory) {
     LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
     myPackage = aPackage;
     myTargetDirectory = targetDirectory;
   }
 
+  @NotNull
   @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
@@ -57,7 +46,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public PsiDirectory getTargetIfExists(PsiFile source) {
+  public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
     return myTargetDirectory;
   }
 
@@ -82,15 +71,15 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+                                     @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
   }
 
   @Override
-  public boolean isTargetAccessible(Project project, VirtualFile place) {
+  public boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place) {
     final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
-    final Module module = ModuleUtil.findModuleForFile(place, project);
+    final Module module = ModuleUtilCore.findModuleForFile(place, project);
     final VirtualFile targetVirtualFile = myTargetDirectory.getVirtualFile();
     if (module != null &&
         !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetVirtualFile)) {

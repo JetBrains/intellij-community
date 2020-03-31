@@ -1,24 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ColoredItem;
+import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 
+import static com.intellij.openapi.util.SystemInfo.isMac;
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
+
 /**
- * @author Sergey.Malenkov
+ * @noinspection ALL
  */
 public final class WideSelectionListUI extends BasicListUI {
+  private static final Logger LOG = Logger.getInstance(WideSelectionListUI.class);
   private Rectangle myPaintBounds;
 
   @Override
   public void paint(Graphics g, JComponent c) {
     // do not paint a line background if layout orientation is not vertical
-    myPaintBounds = !isVerticalList(c) ? null : g.getClipBounds();
+    myPaintBounds = JList.VERTICAL != list.getLayoutOrientation() ? null : g.getClipBounds();
     super.paint(g, c);
   }
 
@@ -31,21 +40,16 @@ public final class WideSelectionListUI extends BasicListUI {
                            ListSelectionModel selectionModel,
                            int leadSelectionIndex) {
     if (!(0 <= row && row < model.getSize())) return;
+    boolean selected = selectionModel.isSelectedIndex(row);
     Rectangle paintBounds = myPaintBounds;
     if (paintBounds != null) {
-      boolean selected = selectionModel.isSelectedIndex(row);
-      boolean focused = row == leadSelectionIndex && list.hasFocus();
+      boolean focused = row == leadSelectionIndex && (!list.isFocusable() || list.hasFocus());
       Object value = model.getElementAt(row);
-      Color background = null;
-      if (list instanceof ListCellBackgroundSupplier) {
-        //noinspection unchecked
-        background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
-      }
+      Color background = getBackground(list, value, row);
       if (background != null) {
         g.setColor(background);
         g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
       }
-      //noinspection unchecked
       Component component = renderer.getListCellRendererComponent(list, value, row, selected, focused);
       if (component != null) {
         if (rendererPane != component.getParent()) rendererPane.add(component);
@@ -54,7 +58,58 @@ public final class WideSelectionListUI extends BasicListUI {
         g.clipRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
       }
     }
-    super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+    try {
+      super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+    }
+    catch (ArrayIndexOutOfBoundsException exception) {
+      LOG.error("model asynchronously modified: " + model.getClass() + " in " + list, exception);
+    }
+    if (!isMac && g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {
+      int x = rowBounds.x;
+      int width = rowBounds.width;
+      if (JList.VERTICAL == list.getLayoutOrientation()) {
+        x = 0;
+        width = list.getWidth();
+        Container parent = list.getParent();
+        if (parent instanceof JViewport) {
+          x = -list.getX();
+          width = parent.getWidth();
+        }
+      }
+      if (!selected) {
+        g.setColor(UIUtil.getListSelectionBackground(true));
+        g.setClip(x, rowBounds.y, width, rowBounds.height);
+        DRAW.paint((Graphics2D)g, x, rowBounds.y, width, rowBounds.height, 0);
+      }
+      else if (isLeadSelectionNeeded(list, row)) {
+        g.setColor(UIUtil.getListBackground());
+        g.setClip(x, rowBounds.y, width, rowBounds.height);
+        DRAW.paint((Graphics2D)g, x + 1, rowBounds.y + 1, width - 2, rowBounds.height - 2, 0);
+      }
+    }
+  }
+
+  private static boolean isLeadSelectionNeeded(@NotNull JList list, int row) {
+    return list.getMinSelectionIndex() < list.getMaxSelectionIndex() && list.isSelectedIndex(row - 1) && list.isSelectedIndex(row + 1);
+  }
+
+  @Nullable
+  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row) {
+    if (value instanceof ColoredItem) {
+      Color background = ((ColoredItem)value).getColor();
+      if (background != null) return background;
+    }
+    if (value instanceof BackgroundSupplier) {
+      BackgroundSupplier supplier = (BackgroundSupplier)value;
+      Color background = supplier.getElementBackground(row);
+      if (background != null) return background;
+    }
+    if (list instanceof ListCellBackgroundSupplier) {
+      //noinspection unchecked
+      Color background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
+      if (background != null) return background;
+    }
+    return null;
   }
 
   private static void paintRenderer(Graphics g, int x, int y, int width, int height, Component owner, Component renderer) {
@@ -86,18 +141,6 @@ public final class WideSelectionListUI extends BasicListUI {
         g.fillRect(0, y, owner.getWidth(), height);
       }
     }
-  }
-
-  /**
-   * @param component the component being painted
-   * @return {@code true} if the specified component is a list with vertical orientation
-   */
-  private static boolean isVerticalList(Component component) {
-    if (component instanceof JList) {
-      JList list = (JList)component;
-      return JList.VERTICAL == list.getLayoutOrientation();
-    }
-    return false;
   }
 
   @Override
@@ -134,16 +177,18 @@ public final class WideSelectionListUI extends BasicListUI {
       cellHeights = new int[list.getModel().getSize()];
     }
     if ((fixedCellWidth == -1) || (fixedCellHeight == -1)) {
-      ListModel dataModel = list.getModel();
+      ListModel<Object> dataModel = list.getModel();
       int dataModelSize = dataModel.getSize();
-      ListCellRenderer renderer = list.getCellRenderer();
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (renderer != null) {
         for (int index = 0; index < dataModelSize; index++) {
           Object value = dataModel.getElementAt(index);
-          //noinspection unchecked
           Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
-          Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
+          Dimension cellSize = c.getPreferredSize();
+          if (UIUtil.getClientProperty(c, "IgnoreListRowHeight") == null) {
+            cellSize = UIUtil.updateListRowHeight(cellSize);
+          }
           if (fixedCellWidth == -1) {
             cellWidth = Math.max(cellSize.width, cellWidth);
           }

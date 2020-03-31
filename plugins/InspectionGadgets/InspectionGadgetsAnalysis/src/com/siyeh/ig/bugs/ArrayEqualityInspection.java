@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,13 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualityInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "array.comparison.display.name");
-  }
 
   @Override
   @NotNull
@@ -66,20 +60,13 @@ public class ArrayEqualityInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      if (deepEquals) {
-        return InspectionGadgetsBundle.message(
-          "replace.with.arrays.deep.equals");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "replace.with.arrays.equals");
-      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", deepEquals ? "Arrays.deepEquals()" : "Arrays.equals()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.with.arrays.equals");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays.equals()");
     }
 
     @Override

@@ -15,9 +15,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 
-/**
- * @author nik
- */
 public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
@@ -114,8 +111,8 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
-      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(12)));
+           .setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
+      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(13)));
     });
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);

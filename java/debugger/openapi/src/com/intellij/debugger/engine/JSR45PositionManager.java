@@ -3,7 +3,7 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  */
 public abstract class JSR45PositionManager<Scope> implements PositionManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");
+  private static final Logger LOG = Logger.getInstance(JSR45PositionManager.class);
   protected final DebugProcess      myDebugProcess;
   protected final Scope myScope;
   private final String myStratumId;
@@ -43,7 +43,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(acceptedFileTypes)));
+    myFileTypes = ContainerUtil.immutableSet(acceptedFileTypes);
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
     if(generatedClassPattern.length() == 0) {
@@ -160,7 +160,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
         }
         catch (InternalError ignored) {
           myDebugProcess.printToConsole(
-            DebuggerBundle.message("internal.error.locations.of.line", type.name()));
+            JavaDebuggerBundle.message("internal.error.locations.of.line", type.name()));
         }
         return null;
       }

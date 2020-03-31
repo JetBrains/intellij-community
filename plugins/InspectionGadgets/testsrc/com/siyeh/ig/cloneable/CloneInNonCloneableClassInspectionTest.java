@@ -16,12 +16,12 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CloneInNonCloneableClassInspectionTest extends LightInspectionTestCase {
+public class CloneInNonCloneableClassInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new CloneInNonCloneableClassInspection();

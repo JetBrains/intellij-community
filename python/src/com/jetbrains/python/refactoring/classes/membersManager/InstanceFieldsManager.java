@@ -48,7 +48,7 @@ class InstanceFieldsManager extends FieldsManager {
   @Override
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
                                                   @NotNull final Collection<PyAssignmentStatement> statements,
-                                                  @NotNull final PyClass... to) {
+                                                  final PyClass @NotNull ... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
     final List<PyElement> result = new ArrayList<>();

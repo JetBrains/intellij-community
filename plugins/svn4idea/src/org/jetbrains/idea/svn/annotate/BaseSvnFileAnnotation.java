@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import git4idea.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -31,7 +31,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
     @Override
     public String getValue(@NotNull CommitInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getDate());
+      return FileAnnotation.formatDate(info.getDate());
     }
   };
 
@@ -113,18 +113,30 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
+  @Nullable
   @Override
-  public String getToolTip(final int lineNumber) {
+  public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     final CommitInfo info = myInfos.getOrNull(lineNumber);
-    if (info == null) return "";
+    if (info == null) return null;
 
     SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
-    if (revision != null) {
-      String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
+    if (revision == null) return null;
 
-      return prefix + " " + info.getRevisionNumber() + ": " + revision.getCommitMessage();
-    }
-    return "";
+    String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
+    return AnnotationTooltipBuilder.buildSimpleTooltip(getProject(), asHtml, prefix,
+                                                       String.valueOf(info.getRevisionNumber()),
+                                                       revision.getCommitMessage());
   }
 
   @Override
@@ -161,7 +173,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   @Override
   public List<VcsFileRevision> getRevisions() {
     final List<VcsFileRevision> result = new ArrayList<>(myRevisionMap.values());
-    Collections.sort(result, (o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
+    result.sort((o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
     return result;
   }
 

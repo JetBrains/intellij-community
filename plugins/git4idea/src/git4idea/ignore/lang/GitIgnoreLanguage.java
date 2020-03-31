@@ -24,7 +24,6 @@
 
 package git4idea.ignore.lang;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ public class GitIgnoreLanguage extends IgnoreLanguage {
   public static final GitIgnoreLanguage INSTANCE = new GitIgnoreLanguage();
 
   private GitIgnoreLanguage() {
-    super("GitIgnore", "gitignore", AllIcons.Vcs.Ignore_file);
+    super("GitIgnore", "gitignore");
   }
 
   /**

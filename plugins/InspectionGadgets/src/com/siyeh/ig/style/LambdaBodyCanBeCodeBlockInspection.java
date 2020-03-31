@@ -32,12 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.name");
-  }
 
   @NotNull
   @Override

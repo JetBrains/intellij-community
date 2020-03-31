@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 
 /**
- * author: lesya
+ * @author lesya
  */
 class Redo extends UndoRedo {
   Redo(UndoManagerImpl manager, FileEditor editor) {
@@ -26,13 +26,13 @@ class Redo extends UndoRedo {
 
   @Override
   protected String getActionName() {
-    return CommonBundle.message("redo.confirmation.title");
+    return IdeBundle.message("redo.dialog.title");
   }
 
   @Override
   protected String getActionName(String commandName) {
     if (StringUtil.isEmpty(commandName)) commandName = ActionsBundle.message("action.redo.description.empty");
-    return CommonBundle.message("redo.command.confirmation.text", commandName);
+    return IdeBundle.message("redo.command", commandName);
   }
 
   @Override

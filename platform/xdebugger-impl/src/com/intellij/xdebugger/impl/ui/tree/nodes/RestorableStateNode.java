@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 
-/**
- * @author nik
- */
 public interface RestorableStateNode extends XNamedTreeNode {
   @Nullable
   String getRawValue();

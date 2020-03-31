@@ -18,20 +18,21 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.adminPermissionsNeeded
-import com.jetbrains.python.sdk.detectSystemWideSdks
-import com.jetbrains.python.sdk.setup
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.*
 import java.awt.BorderLayout
 
 /**
  * @author vlan
  */
-class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
-  override val panelName: String = "System interpreter"
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(module, existingSdks), null)
+class PyAddSystemWideInterpreterPanel(private val module: Module?,
+                                      private val existingSdks: List<Sdk>,
+                                      private val context: UserDataHolderBase) : PyAddSdkPanel() {
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
+  private val sdkComboBox = PySdkPathChoosingComboBox()
 
   init {
     layout = BorderLayout()
@@ -46,17 +47,21 @@ class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks:
       addChangeListener(this)
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkComboBox)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
       .addComponentToRightColumn(permWarning)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    addInterpretersAsync(sdkComboBox) {
+      detectSystemWideSdks(module, existingSdks, context).takeIf { it.isNotEmpty() || filterSystemWideSdks(existingSdks).isNotEmpty() }
+      ?: getSdksToInstall()
+    }
   }
 
-  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox))
+  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    val sdk = sdkComboBox.selectedSdk
-    return when (sdk) {
+    return when (val sdk = sdkComboBox.selectedSdk) {
+      is PySdkToInstall -> sdk.install(module) { detectSystemWideSdks(module, existingSdks, context) }?.setup(existingSdks)
       is PyDetectedSdk -> sdk.setup(existingSdks)
       else -> sdk
     }

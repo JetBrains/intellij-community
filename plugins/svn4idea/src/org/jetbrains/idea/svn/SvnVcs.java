@@ -1,6 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
@@ -12,7 +10,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +26,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -75,9 +71,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -85,12 +79,13 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-public class SvnVcs extends AbstractVcs<CommittedChangeList> {
+public final class SvnVcs extends AbstractVcs {
+  private static final Logger LOG = wrapLogger(Logger.getInstance(SvnVcs.class));
+
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
   public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
-  private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
   public static final String VCS_DISPLAY_NAME = "Subversion";
 
@@ -99,6 +94,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
+  private SvnFileSystemListener myFileOperationsHandler;
 
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
@@ -130,7 +126,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private final SvnLoadedBranchesStorage myLoadedBranchesStorage;
 
   private final SvnExecutableChecker myChecker;
 
@@ -140,12 +135,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private final boolean myLogExceptions;
 
-  public SvnVcs(@NotNull Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBranchesStorage storage) {
+  public SvnVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myLoadedBranchesStorage = storage;
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
-    myConfiguration = svnConfiguration;
+    myConfiguration = SvnConfiguration.getInstance(project);
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
@@ -161,7 +155,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     else {
       myEntriesFileListener = new SvnEntriesFileListener(project);
-      upgradeIfNeeded(bus);
+      upgradeIfNeeded(project.getMessageBus());
 
       myChangeListListener = new SvnChangelistListener(this);
 
@@ -175,7 +169,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void postStartup() {
-    if (myProject.isDefault()) return;
+    if (myProject.isDefault()) {
+      return;
+    }
+
     myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl)getSvnFileUrlMapping());
     if (!myConfiguration.isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -239,7 +236,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
       if (lists.isEmpty()) return;
       try {
-        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.DEFAULT_NAME, true);
+        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 
         if (!myConfiguration.changeListsSynchronized()) {
           processChangeLists(lists);
@@ -302,7 +299,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public void activate() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+      busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
         @Override
         public void directoryMappingChanged() {
@@ -312,7 +309,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       });
     }
 
-    SvnApplicationSettings.getInstance().svnActivated();
+    myFileOperationsHandler = new SvnFileSystemListener(this);
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
     }
@@ -332,7 +329,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // do one time after project loaded
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
       postStartup();
 
       // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sense...
@@ -354,7 +351,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
     }
 
-    myLoadedBranchesStorage.activate();
+    SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
 
   public static Logger wrapLogger(final Logger logger) {
@@ -380,12 +377,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     }
-    SvnApplicationSettings.getInstance().svnDeactivated();
+    if (myFileOperationsHandler != null) {
+      Disposer.dispose(myFileOperationsHandler);
+      myFileOperationsHandler = null;
+    }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
-    }
-    if (myChangeListListener != null && !myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
     myRootsToWorkingCopies.clear();
 
@@ -394,7 +391,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    myLoadedBranchesStorage.deactivate();
+    SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -713,6 +710,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public RootsConvertor getCustomConvertor() {
     if (myProject.isDefault()) return null;
     return getSvnFileUrlMapping();
+  }
+
+  @Override
+  public boolean needsLegacyDefaultMappings() {
+    return false;
   }
 
   @Override

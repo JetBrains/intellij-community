@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class ValueMarkerPresentationDialog extends ValueMarkerPresentationDialogBase {
   public ValueMarkerPresentationDialog(@Nullable Component parent, @Nullable String defaultText, @NotNull Collection<ValueMarkup> markups) {
     super(parent, defaultText, markups);

@@ -2,7 +2,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerSettingsFactory;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -26,7 +26,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
   @Override
   public String getDisplayName() {
-    return CompilerBundle.message("compiler.configurable.display.name");
+    return JavaCompilerBundle.message("compiler.configurable.display.name");
   }
 
   @Override
@@ -70,9 +70,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     myCompilerUIConfigurable.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myKids == null) {
       final CompilerSettingsFactory[] factories = CompilerSettingsFactory.EP_NAME.getExtensions(myProject);
       myKids = ContainerUtil.mapNotNull(factories,

@@ -35,12 +35,12 @@ public class CompactDataInput implements DataInput {
   }
 
   @Override
-  public void readFully(@NotNull byte[] b) throws IOException {
+  public void readFully(byte @NotNull [] b) throws IOException {
     readFully(b, 0, b.length);
   }
 
   @Override
-  public void readFully(@NotNull byte[] b, int off, int len) throws IOException {
+  public void readFully(byte @NotNull [] b, int off, int len) throws IOException {
     if (len < 0)
         throw new IndexOutOfBoundsException();
     int n = 0;

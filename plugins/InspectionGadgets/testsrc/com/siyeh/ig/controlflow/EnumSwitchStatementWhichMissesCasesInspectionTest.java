@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
-public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInspectionTestCase {
+public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("enum E { A, B, C }" +
@@ -102,7 +102,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInsp
            "class X {\n" +
            "  void m(E e) {\n" +
            "    if(e == E.C) return;\n" +
-           "    switch (e) {\n" +
+           "    switch ((e)) {\n" +
            "      case A:\n" +
            "      case B:\n" +
            "    }\n" +
@@ -151,7 +151,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInsp
            "}");
   }
 
-  public void testJava12Preview() {
+  public void testJava13Preview() {
     doTest("enum E {A, B, C}\n" +
            "\n" +
            "class X {\n" +
@@ -179,7 +179,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInsp
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Nullable

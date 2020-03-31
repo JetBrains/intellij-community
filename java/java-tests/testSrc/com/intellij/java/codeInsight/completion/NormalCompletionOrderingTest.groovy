@@ -270,6 +270,12 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'constx1', 'constx2', 'const1', 'const2'
   }
 
+  void testPreferExpectedEnumConstantsInComparison() {
+    checkPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+    incUseCount(lookup, myFixture.lookupElementStrings.indexOf('String')) // select some unrelated class
+    assertPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+  }
+
   void testPreferElse() {
     checkPreferredItems(0, "else", "element")
   }
@@ -387,8 +393,6 @@ interface TxANotAnno {}
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
     incUseCount(lookup, 2) //Component
-    assertPreferredItems(1, "Component", "FooBean3", "JComponent")
-    incUseCount(lookup, 0) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -402,6 +406,10 @@ interface TxANotAnno {}
 
   void testDispreferReturnInVoidMethodTopLevel() {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
+  void testDispreferReturnAsLoopBody() {
+    checkPreferredItems 0, 'returnMethod', 'return'
   }
 
   void testDispreferReturnInVoidLambda() {
@@ -580,7 +588,7 @@ interface TxANotAnno {}
   }
 
   void testPreferAnnotationsToInterfaceKeyword() {
-    checkPreferredItems 0, 'Deprecated', 'Override'
+    checkPreferredItems 0, 'Override/Implement methods...', 'Override', 'Deprecated'
   }
 
   void testPreferThrownExceptionsInCatch() {
@@ -873,6 +881,10 @@ class Foo {
 
   void testDispreferAlreadyCalledBuilderMethods() {
     checkPreferredItems 0, 'addInt', 'append', 'c', 'd', 'mayCallManyTimes', 'putLong'
+  }
+
+  void testSelectAbstractClassWithNoAbstractMethods() {
+    checkPreferredItems 0, 'AbstractListener', 'Listener'
   }
 
   void testPreferPrintln() {

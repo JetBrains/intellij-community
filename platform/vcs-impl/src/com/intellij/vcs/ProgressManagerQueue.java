@@ -17,7 +17,10 @@ package com.intellij.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.SomeQueue;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,110 +29,75 @@ import java.util.Queue;
 
 @SomeQueue
 public class ProgressManagerQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
+  private static final Logger LOG = Logger.getInstance(ProgressManagerQueue.class);
 
-  private final ProgressManager myProgressManager;
   private final Task.Backgroundable myQueuePollTask;
-  private final Object myLock;
-  private final Queue<Runnable> myQueue;
-  private final Runnable myQueueWorker;
+  private final Object myLock = new Object();
+  private final Queue<Runnable> myQueue = new ArrayDeque<>();
   @NotNull private final Project myProject;
-  private volatile boolean myIsStarted;
+
+  private boolean myIsStarted;
   private boolean myActive;
 
   public ProgressManagerQueue(@NotNull Project project, @NotNull String title) {
     myProject = project;
-    myLock = new Object();
-    myQueue = new ArrayDeque<>();
-    myActive = false;
-    myQueueWorker = new MyWorker();
-    myProgressManager = ProgressManager.getInstance();
     myQueuePollTask = new Task.Backgroundable(project, title) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myQueueWorker.run();
+        pumpQueue();
       }
     };
   }
 
   public void start() {
-    myIsStarted = true;
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      runMe();
+    synchronized (myLock) {
+      myIsStarted = true;
     }
+    startProgressIfNeeded();
   }
 
-  /**
-   * !!! done under lock! (to allow single failures when putting into the execution queue)
-   * Should run {@link #myQueueWorker}
-   */
-  private void runMe() {
-    if (!myIsStarted) return;
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      if (!myProject.isDisposed()) {
-        myProgressManager.run(myQueuePollTask);
-      }
+  private void startProgressIfNeeded() {
+    if (myProject.isDisposed()) return;
+
+    synchronized (myLock) {
+      if (!myIsStarted || myActive || myQueue.isEmpty()) return;
+      myActive = true;
     }
-    else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          myProgressManager.run(myQueuePollTask);
-        }
-      });
-    }
+    myQueuePollTask.queue();
   }
 
   public void run(@NotNull final Runnable stuff) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       stuff.run();
       return;
     }
+
     synchronized (myLock) {
-      try {
-        myQueue.add(stuff);
-        if (!myActive) {
-          runMe();
-        }
-      }
-      catch (Throwable t) {
-        LOG.info(t);
-        throw t instanceof RuntimeException ? ((RuntimeException)t) : new RuntimeException(t);
-      }
-      finally {
-        myActive = true;
-      }
+      myQueue.add(stuff);
     }
+    startProgressIfNeeded();
   }
 
-  private class MyWorker implements Runnable {
-    @Override
-    public void run() {
-      while (true) {
-        try {
-          final Runnable stuff;
-          synchronized (myLock) {
-            stuff = myQueue.poll();
-          }
-          if (stuff != null) {
-            // each task is executed only once, once it has been taken from the queue..
-            try {
-              stuff.run();
-            }
-            catch (ProcessCanceledException ignored) {
-            }
-          }
+  private void pumpQueue() {
+    while (true) {
+      final Runnable stuff;
+      synchronized (myLock) {
+        stuff = myQueue.poll();
+        if (stuff == null) {
+          // queue is empty, stop progress
+          myActive = false;
+          return;
         }
-        catch (Throwable t) {
-          LOG.info(t);
-        }
-        finally {
-          synchronized (myLock) {
-            if (myQueue.isEmpty()) {
-              myActive = false;
-              return;
-            }
-          }
-        }
+      }
+
+      // each task is executed only once, once it has been taken from the queue..
+      try {
+        stuff.run();
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
       }
     }
   }

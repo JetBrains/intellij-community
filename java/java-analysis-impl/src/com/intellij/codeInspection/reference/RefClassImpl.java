@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.jvm.JvmField;
 import com.intellij.lang.jvm.JvmMetaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.util.JvmInheritanceUtil;
@@ -13,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -169,12 +167,16 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
+    if (!isInterface()) {
+      for (int i = 0; i < uFields.length && utilityClass; i++) {
+        if (!uFields[i].isStatic()) {
+          utilityClass = false;
+        }
+      }
+    }
 
     if (!utilityClass) {
       utilityClass = ClassUtils.isSingleton(uClass.getJavaPsi());
-    }
-    if (utilityClass && !isInterface() && uMethods.length == 0 && ContainerUtil.find(uFields, UField::isStatic) == null) {
-      utilityClass = false;
     }
 
     if (varargConstructor != null && getDefaultConstructor() == null) {
@@ -292,7 +294,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         RefJavaUtil.getInstance().addReferencesTo(uClass, this, classInitializer.getUastBody());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
+      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
 
       for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
         UElement uTypeParameter = UastContextKt.toUElement(parameter);

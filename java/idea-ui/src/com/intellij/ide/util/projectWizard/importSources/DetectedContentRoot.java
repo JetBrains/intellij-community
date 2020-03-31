@@ -20,15 +20,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public final class DetectedContentRoot extends DetectedProjectRoot {
   @NotNull private final String myRootTypeName;
   @NotNull private final ModuleType myModuleType;
-  @NotNull private final ModuleType[] myTypesToReplace;
+  private final ModuleType @NotNull [] myTypesToReplace;
 
-  public DetectedContentRoot(@NotNull File directory, @NotNull String rootTypeName, @NotNull ModuleType moduleType, @NotNull ModuleType... typesToReplace) {
+  public DetectedContentRoot(@NotNull File directory, @NotNull String rootTypeName, @NotNull ModuleType moduleType, ModuleType @NotNull ... typesToReplace) {
     super(directory);
     myRootTypeName = rootTypeName;
     myModuleType = moduleType;
@@ -46,8 +43,7 @@ public final class DetectedContentRoot extends DetectedProjectRoot {
     return myModuleType;
   }
 
-  @NotNull
-  public ModuleType[] getTypesToReplace() {
+  public ModuleType @NotNull [] getTypesToReplace() {
     return myTypesToReplace;
   }
 }

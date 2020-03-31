@@ -52,7 +52,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
   private fun getVisibleRows(table: JTable): IntRange? {
     val visibleRows = ScrollingUtil.getVisibleRows(table)
-    val range = IntRange(visibleRows.first - 1, visibleRows.second)
+    val range = IntRange(visibleRows.first, visibleRows.second)
     if (range.isEmpty() || range.first < 0) return null
     return range
   }

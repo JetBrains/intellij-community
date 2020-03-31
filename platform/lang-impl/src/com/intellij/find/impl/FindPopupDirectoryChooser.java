@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -7,6 +7,7 @@ import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -144,14 +145,14 @@ public class FindPopupDirectoryChooser extends JPanel {
   public ValidationInfo validate(@NotNull FindModel model) {
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
     if (directory == null) {
-      return new ValidationInfo(FindBundle.message("find.directory.not.found.error", getDirectory()), myDirectoryComboBox);
+      return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);
     }
     return null;
   }
 
   private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.recursively.hint"), null, AllIcons.Actions.ShowAsTree);
+      super(FindBundle.messagePointer("find.recursively.hint"), Presentation.NULL_STRING, AllIcons.Actions.ShowAsTree);
     }
 
     @Override

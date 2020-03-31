@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -26,10 +11,11 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class InheritanceImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
+  private static final Logger LOG = Logger.getInstance(InheritanceImplUtil.class);
 
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass || baseClass.getManager().areElementsEquivalent(baseClass, candidateClass)) return false;
@@ -125,7 +111,7 @@ public class InheritanceImplUtil {
       if (referenceElements.length != 0) {
         GlobalSearchScope scope = extList.getResolveScope();
         for (PsiJavaCodeReferenceElement ref : referenceElements) {
-          if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName)
+          if (Objects.equals(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName)
               && facade.findClass(baseQName, scope) != null)
             return true;
         }
@@ -154,7 +140,7 @@ public class InheritanceImplUtil {
   }
 
   private static boolean checkInheritor(@NotNull PsiManager manager,
-                                        @NotNull PsiClassType[] supers,
+                                        PsiClassType @NotNull [] supers,
                                         @NotNull PsiClass baseClass,
                                         @NotNull Set<PsiClass> checkedClasses) {
     for (PsiClassType aSuper : supers) {

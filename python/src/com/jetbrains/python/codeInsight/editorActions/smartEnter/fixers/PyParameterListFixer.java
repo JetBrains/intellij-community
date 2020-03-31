@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyFunction;
@@ -48,13 +49,31 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
       if (lBrace == null) {
         final String textToInsert = pyFunction.getNameNode() == null ? " (" : "(";
         document.insertString(parameters.getTextOffset(), textToInsert);
+        insertParametersForMethod(pyFunction, document, parameters.getTextOffset() + textToInsert.length());
       }
       else if (parameters.getParameters().length == 0) {
-        document.insertString(lBrace.getTextRange().getEndOffset(), ")");
+        final int lBraceOffset = lBrace.getTextRange().getEndOffset();
+        final int offsetWithParam = insertParametersForMethod(pyFunction, document, lBraceOffset);
+        document.insertString(offsetWithParam, ")");
       }
       else {
         document.insertString(parameters.getTextRange().getEndOffset(), ")");
       }
     }
+  }
+
+  private static int insertParametersForMethod(@NotNull PyFunction pyFunction, @NotNull Document document, int offset) {
+    if (pyFunction.getContainingClass() != null) {
+      final PyFunction.Modifier modifier = pyFunction.getModifier();
+      String parameterName = null;
+      if (modifier == null) parameterName = PyNames.CANONICAL_SELF;
+      else if (modifier == PyFunction.Modifier.CLASSMETHOD) parameterName = PyNames.CANONICAL_CLS;
+
+      if (parameterName != null) {
+        document.insertString(offset, parameterName);
+        return offset + parameterName.length();
+      }
+    }
+    return offset;
   }
 }

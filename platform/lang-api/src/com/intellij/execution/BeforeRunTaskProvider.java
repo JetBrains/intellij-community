@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -60,7 +60,6 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    * @return {@code true} a promise returning true, if the task was changed
    */
   public Promise<Boolean> configureTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull T task) {
-    //noinspection deprecation
     return Promises.resolvedPromise(configureTask(configuration, task));
   }
 
@@ -68,7 +67,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return true;
   }
 
-  public abstract boolean executeTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task);
+  public abstract boolean executeTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment environment, @NotNull T task);
 
   /**
    * @return {@code true} if at most one task may be configured

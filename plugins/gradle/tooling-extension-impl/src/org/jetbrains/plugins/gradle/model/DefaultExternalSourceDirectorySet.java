@@ -18,28 +18,29 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   private Set<File> srcDirs;
   private File outputDir;
   private final List<File> gradleOutputDirs;
-  private final FilePatternSet patterns;
+  private final FilePatternSetImpl patterns;
   @NotNull
-  private List<ExternalFilter> filters;
+  private List<DefaultExternalFilter> filters;
 
   private boolean inheritedCompilerOutput;
 
   public DefaultExternalSourceDirectorySet() {
-    srcDirs = new HashSet<File>();
-    filters = new ArrayList<ExternalFilter>();
-    gradleOutputDirs = new ArrayList<File>();
-    patterns = new FilePatternSetImpl(new LinkedHashSet<String>(), new LinkedHashSet<String>());
+    srcDirs = new HashSet<File>(0);
+    filters = new ArrayList<DefaultExternalFilter>(0);
+    gradleOutputDirs = new ArrayList<File>(0);
+    patterns = new FilePatternSetImpl();
   }
 
   public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
-    this();
     name = sourceDirectorySet.getName();
     srcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
     outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
+    gradleOutputDirs = new ArrayList<File>(sourceDirectorySet.getGradleOutputDirs());
 
-    patterns.getIncludes().addAll(sourceDirectorySet.getPatterns().getIncludes());
-    patterns.getExcludes().addAll(sourceDirectorySet.getPatterns().getExcludes());
+    patterns = new FilePatternSetImpl(sourceDirectorySet.getIncludes(),
+                                      sourceDirectorySet.getExcludes());
+
+    filters = new ArrayList<DefaultExternalFilter>(sourceDirectorySet.getFilters().size());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
       filters.add(new DefaultExternalFilter(filter));
     }
@@ -78,13 +79,6 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
 
   @NotNull
   @Override
-  public File getGradleOutputDir() {
-    assert gradleOutputDirs.size() > 0;
-    return gradleOutputDirs.get(0);
-  }
-
-  @NotNull
-  @Override
   public Collection<File> getGradleOutputDirs() {
     return gradleOutputDirs;
   }
@@ -105,8 +99,7 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   }
 
   public void setExcludes(Set<String> excludes) {
-    patterns.getExcludes().clear();
-    patterns.getExcludes().addAll(excludes);
+    patterns.setExcludes(excludes);
   }
 
   @NotNull
@@ -116,8 +109,7 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   }
 
   public void setIncludes(Set<String> includes) {
-    patterns.getIncludes().clear();
-    patterns.getIncludes().addAll(includes);
+    patterns.setIncludes(includes);
   }
 
   @NotNull
@@ -132,11 +124,11 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
 
   @NotNull
   @Override
-  public List<ExternalFilter> getFilters() {
+  public List<? extends ExternalFilter> getFilters() {
     return filters;
   }
 
-  public void setFilters(@NotNull List<ExternalFilter> filters) {
+  public void setFilters(@NotNull List<DefaultExternalFilter> filters) {
     this.filters = filters;
   }
 }

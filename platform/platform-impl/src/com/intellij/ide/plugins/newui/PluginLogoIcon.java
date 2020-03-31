@@ -3,17 +3,22 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
+  static final Map<Icon, Icon> DisabledIcons = ContainerUtil.createWeakMap(200);
+
   private final Icon myPluginLogo_40;
   private final Icon myPluginLogoJB_40;
   private final Icon myPluginLogoError_40;
@@ -74,13 +79,34 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   }
 
   @NotNull
-  protected Icon getDisabledIcon(@NotNull Icon icon) {
-    return createDisabledIcon(icon);
+  protected Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
+    return createDisabledIcon(icon, base);
   }
 
   @NotNull
-  protected static Icon createDisabledIcon(@NotNull Icon icon) {
-    return Objects.requireNonNull(IconLoader.getDisabledIcon(icon));
+  protected static Icon createDisabledIcon(@NotNull Icon icon, boolean base) {
+    return calculateDisabledIcon(icon, base);
+  }
+
+  @NotNull
+  private static Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
+    if (icon instanceof IconLoader.LazyIcon) {
+      icon = ((IconLoader.LazyIcon)icon).retrieveIcon();
+    }
+
+    synchronized (DisabledIcons) {
+      Icon disabledIcon = DisabledIcons.get(icon);
+      if (disabledIcon == null) {
+        if (base) {
+          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(), null);
+        }
+        else {
+          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null);
+        }
+        DisabledIcons.put(icon, disabledIcon);
+      }
+      return disabledIcon;
+    }
   }
 
   @NotNull
@@ -111,7 +137,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   protected Icon getDisabledJBLogo() {
-    return getDisabledIcon(AllIcons.Plugins.ModifierJBLogo);
+    return getDisabledIcon(AllIcons.Plugins.ModifierJBLogo, false);
   }
 
   @NotNull
@@ -126,7 +152,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   protected Icon getDisabledJBLogo2x(@NotNull Icon jbLogo2x) {
-    return getDisabledIcon(jbLogo2x);
+    return getDisabledIcon(jbLogo2x, false);
   }
 
   @NotNull

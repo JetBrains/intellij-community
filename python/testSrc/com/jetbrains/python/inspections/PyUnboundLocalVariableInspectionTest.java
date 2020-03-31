@@ -264,7 +264,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
       "    for line in f:\n" +
       "        if a:\n" +
       "            block = True\n" +
-      "        elif <warning descr=\"Name 'block' can be not defined\">block</warning> and b:\n" +
+      "        elif <warning descr=\"Name 'block' can be undefined\">block</warning> and b:\n" +
       "            block = False\n" +
       "        else:\n" +
       "            print(line)\n" +
@@ -277,7 +277,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTestByText("a: int\n" +
-                         "print(<warning descr=\"Name 'a' can be not defined\">a</warning>)")
+                         "print(<warning descr=\"Name 'a' can be undefined\">a</warning>)")
     );
   }
 
@@ -288,6 +288,70 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
                  "\n" +
                  "with undefined as val:\n" +
                  "    print(val)");
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "def foo():\n" +
+        "    if any((comment := line).startswith('#') for line in lines):\n" +
+        "        print(\"First comment:\", comment)\n" +
+        "    else:\n" +
+        "        print(\"There are no comments\")\n" +
+        "\n" +
+        "    if all((nonblank := line).strip() == '' for line in lines):\n" +
+        "        print(\"All lines are blank\")\n" +
+        "    else:\n" +
+        "        print(\"First non-blank line:\", nonblank)\n" +
+        "\n" +
+        "\n" +
+        "def bar():\n" +
+        "    [(comment := line).startswith('#') for line in lines]\n" +
+        "    print(<warning descr=\"Local variable 'comment' might be referenced before assignment\">comment</warning>)\n" +
+        "\n" +
+        "\n" +
+        "def baz():\n" +
+        "    while (line := input()) and any((first_digit := c).isdigit() for c in line):\n" +
+        "        print(line, first_digit)\n" +
+        "\n" +
+        "\n" +
+        "def more():\n" +
+        "    if (x := True) or (y := 'spam'):\n" +
+        "        print(<warning descr=\"Local variable 'y' might be referenced before assignment\">y</warning>)\n"
+      )
+    );
+  }
+
+  // PY-4537
+  public void testReferencedAfterDeletion() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionByIndex() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionBySlice() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionGlobal() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionNonLocal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
+  // PY-4537
+  public void testConditionallyDeleted() {
+    doTest();
   }
 
   @NotNull

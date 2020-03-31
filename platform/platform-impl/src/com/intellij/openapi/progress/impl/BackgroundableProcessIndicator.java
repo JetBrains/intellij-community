@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.progress.impl;
 
@@ -20,12 +6,13 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsProgress;
+import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,21 +23,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private TaskInfo myInfo;
 
   private boolean myDisposed;
-  private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task, task);
-
-    myDumbModeAction = task.getDumbModeAction();
-    if (myDumbModeAction == DumbModeAction.CANCEL) {
-      task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
-        @Override
-        public void enteredDumbMode() {
-          cancel();
-        }
-      });
-    }
   }
 
   public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
@@ -60,7 +35,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myInfo = info;
     setTitle(info.getTitle());
     final Project nonDefaultProject = project == null || project.isDisposed() || project.isDefault() ? null : project;
-    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(nonDefaultProject);
+    IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
     myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
     myBackgrounded = shouldStartInBackground();
     if (myBackgrounded) {
@@ -69,14 +44,15 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   private boolean shouldStartInBackground() {
-    return myOption.shouldStartInBackground() && myStatusBar != null;
+    return (Registry.is("ide.background.tasks") || myOption.shouldStartInBackground()) && myStatusBar != null;
   }
 
-  public BackgroundableProcessIndicator(Project project,
-                                        @Nls final String progressTitle,
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        @NlsProgress.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nls final String cancelButtonText,
-                                        @Nls final String backgroundStopTooltip, final boolean cancellable) {
+                                        @Nullable @NlsUI.Button final String cancelButtonText,
+                                        @NlsUI.Tooltip final String backgroundStopTooltip,
+                                        final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
@@ -100,14 +76,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return cancellable;
       }
     }, option);
-  }
-
-  /**
-   * to remove in IDEA 16
-   */
-  @Deprecated
-  public DumbModeAction getDumbModeAction() {
-    return myDumbModeAction;
   }
 
   @Override

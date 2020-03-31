@@ -18,17 +18,16 @@ public class DarculaLabelUI extends BasicLabelUI {
   @Override
   protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     g.setColor(l.getForeground());
-    paintText(l, g, s, textX, textY);
+    SwingUtilities2.drawStringUnderlineCharAt(l, g, s, getMnemonicIndex(l), textX, textY);
   }
 
   @Override
   protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     g.setColor(UIManager.getColor("Label.disabledForeground"));
-    paintText(l, g, s, textX, textY);
+    SwingUtilities2.drawStringUnderlineCharAt(l, g, s, -1, textX, textY);
   }
 
-  private static void paintText(JLabel l, Graphics g, String s, int textX, int textY) {
-    int mnemIndex = DarculaLaf.isAltPressed() ? l.getDisplayedMnemonicIndex() : -1;
-    SwingUtilities2.drawStringUnderlineCharAt(l, g, s, mnemIndex, textX, textY);
+  protected int getMnemonicIndex(JLabel l) {
+    return DarculaLaf.isAltPressed() ? l.getDisplayedMnemonicIndex() : -1;
   }
 }

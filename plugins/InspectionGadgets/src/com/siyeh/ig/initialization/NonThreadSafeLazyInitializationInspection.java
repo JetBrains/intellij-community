@@ -47,13 +47,6 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.thread.safe.lazy.initialization.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.problem.descriptor");
@@ -135,7 +128,6 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       }
       final PsiField field = (PsiField)resolved;
       final String fieldName = field.getName();
-      assert fieldName != null;
       @NonNls final String holderName = StringUtil.capitalize(fieldName) + "Holder";
       final PsiElement expressionParent = expression.getParent();
       if (!(expressionParent instanceof PsiAssignmentExpression)) {

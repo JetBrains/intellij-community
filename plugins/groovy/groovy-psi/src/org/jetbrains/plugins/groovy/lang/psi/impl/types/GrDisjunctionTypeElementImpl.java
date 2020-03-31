@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrDisjunctionTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -25,9 +27,8 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
     super(node);
   }
 
-  @NotNull
   @Override
-  public GrTypeElement[] getTypeElements() {
+  public GrTypeElement @NotNull [] getTypeElements() {
     return findChildrenByClass(GrTypeElement.class);
   }
 
@@ -86,5 +87,10 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
     }
 
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public GrAnnotation @NotNull [] getAnnotations() {
+    return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

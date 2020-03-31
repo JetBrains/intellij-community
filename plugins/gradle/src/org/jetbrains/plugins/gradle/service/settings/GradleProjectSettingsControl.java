@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
-import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -22,7 +21,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   }
 
   public GradleProjectSettingsControl(@NotNull GradleProjectSettingsControlBuilder builder) {
-    super(null, builder.getInitialSettings(), builder.getExternalSystemSettingsControlCustomizer());
+    super(null, builder.getInitialSettings());
     myBuilder = builder;
   }
 
@@ -83,5 +82,11 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   public void disposeUIResources() {
     super.disposeUIResources();
     myBuilder.disposeUIResources();
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "Import_from_Gradle_Page_1";
   }
 }

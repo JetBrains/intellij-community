@@ -54,7 +54,7 @@ public class PyIterableVariableMacro extends Macro {
 
   @Nullable
   @Override
-  public Result calculateResult(@NotNull Expression[] params, @NotNull ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, @NotNull ExpressionContext context) {
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {
       final List<PsiNamedElement> components = getIterableElements(element);
@@ -65,9 +65,8 @@ public class PyIterableVariableMacro extends Macro {
     return null;
   }
 
-  @Nullable
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement @Nullable [] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     final List<LookupElement> results = new ArrayList<>();
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {

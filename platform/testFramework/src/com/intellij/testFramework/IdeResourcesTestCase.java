@@ -4,15 +4,12 @@ package com.intellij.testFramework;
 import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.TipAndTrickBean;
+import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This test-case should be extended in every IDE.
@@ -26,10 +23,10 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
     Set<String> ids = registry.getFeatureIds();
     assertNotEmpty(ids);
 
-    Collection<String> errors = ContainerUtil.newTreeSet();
+    Collection<String> errors = new TreeSet<>();
     for (String id : ids) {
       FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
-      TipAndTrickBean tip = TipAndTrickBean.findByFileName(descriptor.getTipFileName());
+      TipAndTrickBean tip = TipUIUtil.getTip(descriptor);
       if (tip == null) {
         errors.add("<tipAndTrick file=\"" + descriptor.getTipFileName() + "\" feature-id=\"" + id + "\"/>");
       }
@@ -38,7 +35,7 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
   }
 
   public void testTipFilesPresent() {
-    Collection<String> errors = ContainerUtil.newTreeSet();
+    Collection<String> errors = new TreeSet<>();
     TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
     assertNotEmpty(Arrays.asList(tips));
     for (TipAndTrickBean tip : tips) {
@@ -51,7 +48,7 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
   }
 
   public void testTipFilesDuplicates() {
-    Collection<String> errors = ContainerUtil.newTreeSet();
+    Collection<String> errors = new TreeSet<>();
     TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
     assertNotEmpty(Arrays.asList(tips));
     Set<String> visited = new LinkedHashSet<>();

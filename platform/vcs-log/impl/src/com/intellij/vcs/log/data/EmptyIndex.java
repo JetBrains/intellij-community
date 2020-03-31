@@ -45,10 +45,6 @@ public class EmptyIndex implements VcsLogModifiableIndex {
   public void markForIndexing(int commit, @NotNull VirtualFile root) {
   }
 
-  @Override
-  public void reindexWithRenames(int commit, @NotNull VirtualFile root) {
-  }
-
   @Nullable
   @Override
   public IndexDataGetter getDataGetter() {

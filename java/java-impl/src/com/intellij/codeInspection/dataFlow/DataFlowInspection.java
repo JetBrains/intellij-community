@@ -26,17 +26,15 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInspection.InspectionsBundle.message;
+import static com.intellij.java.JavaBundle.message;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static javax.swing.SwingConstants.TOP;
 
@@ -90,7 +88,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
+  protected LocalQuickFix createIntroduceVariableFix() {
     return new IntroduceVariableFix(true);
   }
 
@@ -135,6 +133,43 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                PsiType realType,
+                                                boolean onTheFly,
+                                                boolean alwaysFails) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    PsiExpression operand = castExpression.getOperand();
+    PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && operand != null) {
+      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand) && CodeBlockSurrounder.canSurround(castExpression)) {
+        String suffix = " instanceof " + typeElement.getText();
+        fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
+        if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
+          fixes.add(new SurroundWithIfFix(operand, suffix));
+        }
+      }
+      if (realType != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null) {
+          PsiType type = typeElement.getType();
+          PsiType[] types = {realType};
+          if (realType instanceof PsiIntersectionType) {
+            types = ((PsiIntersectionType)realType).getConjuncts();
+          }
+          for (PsiType psiType : types) {
+            if (!psiType.isAssignableFrom(operandType)) {
+              psiType = DfaPsiUtil.tryGenerify(operand, psiType);
+              fixes.add(new ReplaceTypeInCastFix(type, psiType));
+            }
+          }
+        }
+      }
+    }
+    return fixes;
+  }
+
+  @Override
+  @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
@@ -145,17 +180,17 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
       ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
-        ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
+        ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix());
       }
       else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
-        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) &&
-            RefactoringUtil.getParentStatement(expression, false) != null) {
-          String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + " != null";
+        String suffix = " != null";
+        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) && CodeBlockSurrounder.canSurround(expression)) {
+          String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
           fixes.add(new AddAssertStatementFix(replacement));
         }
 
         if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
-          fixes.add(new SurroundWithIfFix(qualifier));
+          fixes.add(new SurroundWithIfFix(qualifier, suffix));
         }
 
         if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
@@ -233,6 +268,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         "Report nullable methods that always return a non-null value",
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
+      JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
+        "Report problems that happen only on some code paths",
+        REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(suggestNullables, gc);
@@ -264,6 +303,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(reportNullableMethodsReturningNotNull, gc);
+
+      gc.gridy++;
+      add(reportUnsoundWarnings, gc);
     }
 
     @Override

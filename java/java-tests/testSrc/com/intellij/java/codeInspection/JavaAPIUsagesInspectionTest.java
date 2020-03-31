@@ -21,10 +21,10 @@ import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase {
+public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/usage1.5/";
@@ -66,10 +66,20 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   //generate apiXXX.txt
-  /*
+  //configure jdk and set test project descriptor
+ /* private static final String JDK_HOME = "/Users/anna/Downloads/jdk-12.0.2.jdk/Contents/Home";
+  private static final String VERSION = "12";
+  private static final LightProjectDescriptor API_VERSION_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
+    @Nullable
+    @Override
+    public Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk(VERSION, JDK_HOME + "/", false);
+    }
+  };
+
   //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
-    final String version = "12";
+    VfsRootAccess.allowRootAccess("/");
     final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
@@ -92,7 +102,7 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
                   for (PsiDocTag tag : comment.getTags()) {
                     if (Comparing.strEqual(tag.getName(), "since")) {
                       final PsiDocTagValue value = tag.getValueElement();
-                      if (value != null && value.getText().equals(version)) {
+                      if (value != null && value.getText().equals(VERSION)) {
                         return true;
                       }
                       break;
@@ -107,7 +117,7 @@ public class JavaAPIUsagesInspectionTest extends LightCodeInsightFixtureTestCase
         return true;
       }
     };
-    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/tools/jdk12/lib/src.zip!/");
+    final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath(JDK_HOME + "/lib/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
 

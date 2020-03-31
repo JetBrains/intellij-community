@@ -1,9 +1,8 @@
-from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, AsyncioTaskWrapper, wrap_attr
-
 import pydevd_file_utils
-from _pydevd_bundle import pydevd_xml
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
+from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, IS_PY36_OR_GREATER
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, AsyncioTaskWrapper, wrap_attr
 
 file_system_encoding = getfilesystemencoding()
 
@@ -19,11 +18,15 @@ threadingCurrentThread = threading.currentThread
 DONT_TRACE_THREADING = ['threading.py', 'pydevd.py']
 INNER_METHODS = ['_stop']
 INNER_FILES = ['threading.py']
-THREAD_METHODS = ['start', '_stop', 'join']
+QUEUE_MODULE = 'queue.py'
+# Tread method `start` is removed, because it's being handled in `pydev_monkey` thread creation patching
+THREAD_METHODS = ['_stop', 'join']
 LOCK_METHODS = ['__init__', 'acquire', 'release', '__enter__', '__exit__']
 QUEUE_METHODS = ['put', 'get']
+ALL_METHODS = LOCK_METHODS + QUEUE_METHODS
 
-from _pydevd_bundle.pydevd_comm import GlobalDebuggerHolder, NetCommand
+from _pydevd_bundle.pydevd_comm import NetCommand
+from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
 import traceback
 
 import time
@@ -87,6 +90,8 @@ def get_text_list_for_frame(frame):
 
 def send_message(event_class, time, name, thread_id, type, event, file, line, frame, lock_id=0, parent=None):
     dbg = GlobalDebuggerHolder.global_dbg
+    if dbg is None:
+        return
     cmdTextList = ['<xml>']
 
     cmdTextList.append('<' + event_class)
@@ -111,8 +116,7 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
         dbg.writer.add_command(NetCommand(145, 0, text))
 
 
-def log_new_thread(global_debugger):
-    t = threadingCurrentThread()
+def log_new_thread(global_debugger, t):
     event_time = cur_time() - global_debugger.thread_analyser.start_time
     send_message("threading_event", event_time, t.getName(), get_thread_id(t), "thread",
              "start", "code_name", 0, None, parent=get_thread_id(t))
@@ -173,8 +177,6 @@ class ThreadingLogger:
                             name = t.getName()
                             self_obj._pydev_join_called = True
 
-                        if real_method == "start":
-                            parent = get_thread_id(t)
                         send_message("threading_event", event_time, name, thread_id, "thread",
                         real_method, back.f_code.co_filename, back.f_lineno, back, parent=parent)
                         # print(event_time, self_obj.getName(), thread_id, "thread",
@@ -198,22 +200,27 @@ class ThreadingLogger:
                                     send_message("threading_event", event_time, "Thread", my_thread_id, "thread",
                                                  "stop", my_back.f_code.co_filename, my_back.f_lineno, my_back, parent=None)
 
-                if self_obj.__class__ == ObjectWrapper:
+                if isinstance(self_obj, ObjectWrapper):
                     if back_base in DONT_TRACE_THREADING:
                         # do not trace methods called from threading
                         return
                     back_back_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(back.f_back)[-1]
-                    back = back.f_back
-                    if back_back_base in DONT_TRACE_THREADING:
+                    bbb_base = None
+                    bbb_frame = getattr(back.f_back, "f_back", None)
+                    if bbb_frame is not None:
+                        bbb_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(bbb_frame)[-1]
+                    if back_back_base in DONT_TRACE_THREADING and bbb_base is not None and bbb_base != QUEUE_MODULE:
                         # back_back_base is the file, where the method was called froms
                         return
+                    back = back.f_back
+
                     if method_name == "__init__":
                         send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
                                      method_name, back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(frame.f_locals["self"])))
-                    if "attr" in frame.f_locals and \
-                            (frame.f_locals["attr"] in LOCK_METHODS or
-                            frame.f_locals["attr"] in QUEUE_METHODS):
+                    if "attr" in frame.f_locals:
                         real_method = frame.f_locals["attr"]
+                        if real_method not in ALL_METHODS:
+                            return
                         if method_name == "call_begin":
                             real_method += "_begin"
                         elif method_name == "call_end":
@@ -225,15 +232,6 @@ class ThreadingLogger:
                             return
                         send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
                         real_method, back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(self_obj)))
-
-                        if real_method in ("put_end", "get_end"):
-                            # fake release for queue, cause we don't call it directly
-                            send_message("threading_event", event_time, t.getName(), get_thread_id(t), "lock",
-                                         "release", back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(self_obj)))
-                        # print(event_time, t.getName(), get_thread_id(t), "lock",
-                        #       real_method, back.f_code.co_filename, back.f_lineno)
-
-
         except Exception:
             traceback.print_exc()
 
@@ -284,12 +282,14 @@ class AsyncioLogger:
             if IS_PY36_OR_GREATER:
                 if self_obj.__class__ == AsyncioTaskWrapper:
                     method_name = frame.f_code.co_name
-                    if method_name == "__init__":
+                    if method_name == "__init__" and "obj" in frame.f_locals:
                         original_task = frame.f_locals["obj"]
                         task_id = id(original_task)
                         task_name = self.task_mgr.get(str(task_id))
-                        send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
-                                     frame.f_lineno, frame)
+                        if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_back"):
+                            frame = frame.f_back.f_back
+                            send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
+                                         frame.f_lineno, frame)
                     if method_name == "call_end" and "attr" in frame.f_locals:
                         real_method = frame.f_locals["attr"]
                         if real_method == "done":

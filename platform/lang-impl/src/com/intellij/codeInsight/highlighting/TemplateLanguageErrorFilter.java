@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.Language;
@@ -27,7 +13,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
@@ -54,12 +40,12 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     @NotNull final TokenSet templateExpressionEdgeTokens,
     @NotNull final Class templateFileViewProviderClass)
   {
-    this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionEdgeTokens,
                                         @NotNull final Class templateFileViewProviderClass,
-                                        @NotNull final String... knownSubLanguageNames) {
+                                        final String @NotNull ... knownSubLanguageNames) {
     myTemplateExpressionEdgeTokens = TokenSet.create(templateExpressionEdgeTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 
@@ -90,14 +76,6 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
       PsiFile psiFile = element.getContainingFile();
       TextRange range = element.getTextRange();
-      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
-      if (injectedLanguageManager.isInjectedFragment(psiFile)) {
-        PsiElement host = injectedLanguageManager.getInjectionHost(psiFile);
-        if (host != null) {
-          psiFile = host.getContainingFile();
-          range = injectedLanguageManager.injectedToHost(psiFile, range);
-        }
-      }
 
       //
       // An error can occur after template element or before it. Check both.
@@ -125,16 +103,26 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   protected final boolean isNearTemplateExpressions(@NotNull PsiFile file, int start, int end) {
     FileViewProvider viewProvider = file.getViewProvider();
-    if (!isTemplateViewProvider(viewProvider) || file.getLanguage() == viewProvider.getBaseLanguage()) return false;
-
-    CharSequence fileText = viewProvider.getContents();
-    PsiElement beforeWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftBackward(fileText, start - 1, " \t\n"));
-    PsiElement afterWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftForward(fileText, end, " \t\n"));
-    if (isTemplateEdge(afterWs) || isTemplateEdge(beforeWs)) {
-      return true;
+    if (isTemplateViewProvider(viewProvider) && file.getLanguage() != viewProvider.getBaseLanguage()) {
+      CharSequence fileText = viewProvider.getContents();
+      PsiElement beforeWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftBackward(fileText, start - 1, " \t\n"));
+      PsiElement afterWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftForward(fileText, end, " \t\n"));
+      if (isTemplateEdge(afterWs) || isTemplateEdge(beforeWs) || hasTemplateInside(start, end, viewProvider)) {
+        return true;
+      }
     }
 
-    return hasTemplateInside(start, end, viewProvider);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+    PsiElement host = injectedLanguageManager.getInjectionHost(file);
+    if (host != null) {
+      start = injectedLanguageManager.injectedToHost(file, start);
+      end = injectedLanguageManager.injectedToHost(file, end);
+      if (start <= end) {
+        return isNearTemplateExpressions(host.getContainingFile(), start, end);
+      }
+    }
+
+    return false;
   }
 
   private boolean hasTemplateInside(int start, int end, FileViewProvider viewProvider) {

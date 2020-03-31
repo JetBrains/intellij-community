@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -21,9 +20,6 @@ public class IncrementalCacheUpdateEvent {
   private int myActualEndOffset = -1;
 
   private final int myLengthDiff;
-
-  @NotNull
-  private final LogicalPosition myStartLogicalPosition;
 
   /**
    * Creates new {@code IncrementalCacheUpdateEvent} object on the basis on the given event object that describes
@@ -55,7 +51,6 @@ public class IncrementalCacheUpdateEvent {
     myStartOffset = 0;
     myMandatoryEndOffset = document.getTextLength();
     myLengthDiff = 0;
-    myStartLogicalPosition = new LogicalPosition(0, 0);
   }
 
   private IncrementalCacheUpdateEvent(int startOffset, int oldEndOffset, int newEndOffset, @NotNull EditorImpl editor) {
@@ -64,7 +59,6 @@ public class IncrementalCacheUpdateEvent {
       info = getVisualLineInfo(editor, info.startOffset, true);
     }
     myStartOffset = info.startOffset;
-    myStartLogicalPosition = editor.offsetToLogicalPosition(myStartOffset);
     myMandatoryEndOffset = newEndOffset;
     myLengthDiff = newEndOffset - oldEndOffset;
   }
@@ -105,14 +99,6 @@ public class IncrementalCacheUpdateEvent {
   }
 
   /**
-   * Returns logical position, from which soft wrap recalculation should start
-   */
-  @NotNull
-  LogicalPosition getStartLogicalPosition() {
-    return myStartLogicalPosition;
-  }
-
-  /**
    * Returns offset, till which soft wrap recalculation should proceed
    */
   public int getMandatoryEndOffset() {
@@ -143,7 +129,6 @@ public class IncrementalCacheUpdateEvent {
     return "startOffset=" + myStartOffset +
            ", mandatoryEndOffset=" + myMandatoryEndOffset +
            ", actualEndOffset=" + myActualEndOffset +
-           ", lengthDiff=" + myLengthDiff +
-           ", startLogicalPosition=" + myStartLogicalPosition;
+           ", lengthDiff=" + myLengthDiff;
   }
 }

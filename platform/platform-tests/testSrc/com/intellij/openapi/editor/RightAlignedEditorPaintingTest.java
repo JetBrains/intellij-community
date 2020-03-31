@@ -31,7 +31,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   @Override
   protected void initText(@NotNull String fileText) {
     super.initText(fileText);
-    ((EditorImpl)myEditor).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
+    ((EditorImpl)getEditor()).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
   }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
@@ -68,7 +68,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
-    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
 
@@ -81,7 +81,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    myEditor.getColorsScheme().setAttributes(
+    getEditor().getColorsScheme().setAttributes(
       EditorColors.FOLDED_TEXT_ATTRIBUTES,
       new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
     );
@@ -97,21 +97,21 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testInlayAtEmptyLine() throws Exception {
     initText("\n");
-    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
     checkResult();
   }
 
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
-    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
   }
 
   public void testSelectionInsideLine() throws Exception {
     initText("first line\nsecond line");
-    myEditor.getSelectionModel().setSelection(6, 12);
+    getEditor().getSelectionModel().setSelection(6, 12);
     checkResult();
   }
 

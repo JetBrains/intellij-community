@@ -9,7 +9,6 @@ class MyTest {
   }
 
   {
-    new MyTest("", <error descr="Incompatible types. Required int but 'emptyList' was inferred to List<T>:
-no instance(s) of type variable(s) T exist so that List<T> conforms to Integer">Collections.emptyList()</error>);
+    new MyTest("", <error descr="Incompatible types. Found: 'java.util.List<java.lang.Object>', required: 'int'">Collections.emptyList()</error>);
   }
 }

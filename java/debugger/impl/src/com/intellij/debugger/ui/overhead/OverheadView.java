@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.overhead;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
@@ -31,9 +32,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Function;
 
-/**
- * @author egor
- */
 public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
   @NotNull private final DebugProcessImpl myProcess;
 
@@ -64,7 +62,6 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
-    myUpdateQueue.setPassThrough(false); // disable passthrough in tests
 
     OverheadTimings.addListener(new OverheadTimings.OverheadTimingsListener() {
                                   @Override
@@ -91,7 +88,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                 }
       , process);
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myTable.getSelectedRowCount() == 1);
@@ -106,7 +103,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
         return true;
       }
@@ -119,6 +116,11 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       .select(Breakpoint.class)
       .map(Breakpoint::getXBreakpoint).nonNull()
       .map(XBreakpoint::getNavigatable).nonNull();
+  }
+
+
+  public JComponent getDefaultFocusedComponent() {
+    return myTable;
   }
 
   @Nullable
@@ -162,7 +164,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
   private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     NameColumnInfo() {
-      super("Name");
+      super(CommonBundle.message("title.name"));
     }
 
     @Nullable

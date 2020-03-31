@@ -16,13 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantStringFormatCallInspectionTest extends LightInspectionTestCase {
+public class RedundantStringFormatCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRedundantStringFormatCall() {
     doTest();

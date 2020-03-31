@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -29,7 +15,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +24,10 @@ import java.util.List;
 
 /**
  * Protocol format as follows:
- * 
+ *
  * java:suite://className
  * java:test://className/methodName
- * 
+ *
  * <p/>
  * "/" can't appear as part of package name and thus can be used as a valid separator between fully qualified class name and method name
  */
@@ -67,7 +53,7 @@ public class JavaTestLocator implements SMTestLocator {
       path = StringUtil.trimEnd(path, ".");
       PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), path, null, true, scope);
       if (aClass != null) {
-        results = ContainerUtil.newSmartList();
+        results = new SmartList<>();
         results.add(createClassNavigatable(paramName, aClass));
       }
       else {
@@ -90,7 +76,7 @@ public class JavaTestLocator implements SMTestLocator {
                                     @NotNull GlobalSearchScope scope) {
     List<Location> locations = getLocation(protocol, path, project, scope);
     if (locations.size() > 1 && metainfo != null) {
-      
+
       for (Location location : locations) {
         PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
@@ -139,7 +125,7 @@ public class JavaTestLocator implements SMTestLocator {
     List<Location> results = Collections.emptyList();
     PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
     if (aClass != null) {
-      results = ContainerUtil.newSmartList();
+      results = new SmartList<>();
       if (methodName.trim().equals(aClass.getName())) {
         results.add(createClassNavigatable(paramName, aClass));
       }

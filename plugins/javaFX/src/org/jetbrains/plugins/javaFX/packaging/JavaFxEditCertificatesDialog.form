@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="&amp;Self signed"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.self.signed.radio"/>
         </properties>
       </component>
       <hspacer id="20d2b">
@@ -27,7 +27,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Signed by &amp;key"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.signed.by.key.radio"/>
         </properties>
       </component>
       <grid id="69a6a" binding="myKeysPanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -44,7 +44,7 @@
             </constraints>
             <properties>
               <labelFor value="5411"/>
-              <text value="Ke&amp;ystore:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.keystore"/>
             </properties>
           </component>
           <vspacer id="c35e">
@@ -64,7 +64,7 @@
             </constraints>
             <properties>
               <labelFor value="e86df"/>
-              <text value="&amp;Alias:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.alias"/>
             </properties>
           </component>
           <component id="3b7cc" class="javax.swing.JLabel">
@@ -72,7 +72,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Store&amp;pass:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.signed.storepass"/>
             </properties>
           </component>
           <component id="e22e" class="javax.swing.JLabel">
@@ -80,7 +80,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="K&amp;eypass:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.edit.certificates.dialog.keypass"/>
             </properties>
           </component>
           <component id="e86df" class="javax.swing.JTextField" binding="myAliasTF">

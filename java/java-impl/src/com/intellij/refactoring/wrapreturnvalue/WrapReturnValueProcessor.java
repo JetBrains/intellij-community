@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 
 public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
+  private static final Logger LOG = Logger.getInstance(WrapReturnValueProcessor.class);
 
   private final MoveDestination myMoveDestination;
   private final PsiMethod myMethod;
@@ -118,7 +118,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new WrapReturnValueUsageViewDescriptor(myMethod, usageInfos);
   }
 
@@ -273,7 +273,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
     if (!myUseExistingClass && !buildClass()) return;
     super.performRefactoring(usageInfos);
   }

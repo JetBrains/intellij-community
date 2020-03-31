@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,15 +16,13 @@ public class LineTokenizer {
   private boolean atEnd;
   private final CharSequence myText;
 
-  @NotNull
-  public static String[] tokenize(CharSequence chars, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(CharSequence chars, boolean includeSeparators) {
     return tokenize(chars, includeSeparators, true);
   }
 
-  @NotNull
-  public static String[] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     final List<String> strings = tokenizeIntoList(chars, includeSeparators, skipLastEmptyLine);
-    return strings.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(strings);
+    return strings.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : ArrayUtilRt.toStringArray(strings);
   }
 
   @NotNull
@@ -88,19 +72,16 @@ public class LineTokenizer {
     return lineCount;
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, boolean includeSeparators) {
     return tokenize(chars, includeSeparators, true);
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, boolean includeSeparators, boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, boolean includeSeparators, boolean skipLastEmptyLine) {
     return tokenize(chars, 0, chars.length, includeSeparators, skipLastEmptyLine);
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, int startOffset, int endOffset, boolean includeSeparators,
-                                  boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, int startOffset, int endOffset, boolean includeSeparators,
+                                            boolean skipLastEmptyLine) {
     return tokenize(new CharArrayCharSequence(chars, startOffset, endOffset), includeSeparators, skipLastEmptyLine);
   }
 
@@ -108,8 +89,7 @@ public class LineTokenizer {
     return tokenizer.getLineSeparatorLength() > 0;
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, int startOffset, int endOffset, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, int startOffset, int endOffset, boolean includeSeparators) {
     return tokenize(chars, startOffset, endOffset, includeSeparators, true);
   }
 
@@ -119,7 +99,7 @@ public class LineTokenizer {
     advance();
   }
 
-  public LineTokenizer(@NotNull char[] text, int startOffset, int endOffset) {
+  public LineTokenizer(char @NotNull [] text, int startOffset, int endOffset) {
     this(new CharArrayCharSequence(text, startOffset, endOffset));
   }
 

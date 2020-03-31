@@ -51,7 +51,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     myHolder = createEditorHolder(factory);
 
     JComponent titlePanels = createTitle();
-    myContentPanel = new OnesideContentPanel(myHolder, titlePanels);
+    myContentPanel = OnesideContentPanel.createFromHolder(myHolder);
+    myContentPanel.setTitle(titlePanels);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }

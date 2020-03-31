@@ -27,21 +27,23 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  *  @author dsl
  */
 public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination");
+  private static final Logger LOG = Logger.getInstance(MultipleRootsMoveDestination.class);
 
   public MultipleRootsMoveDestination(PackageWrapper aPackage) {
     super(aPackage);
   }
 
+  @NotNull
   @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
@@ -60,7 +62,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  public PsiDirectory getTargetIfExists(PsiFile source) {
+  public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
     return findTargetDirectoryForSource(source.getVirtualFile());
   }
 
@@ -103,12 +105,12 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+                                     @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
   }
 
   @Override
-  public boolean isTargetAccessible(Project project, VirtualFile place) {
+  public boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place) {
     return true;
   }
 
@@ -126,8 +128,6 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
 
   private PsiDirectory getOrCreateDirectoryForSource(final VirtualFile file)
     throws IncorrectOperationException {
-    final VirtualFile sourceRoot = myFileIndex.getSourceRootForFile(file);
-    LOG.assertTrue(sourceRoot != null, file.getPath());
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
+    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, Objects.requireNonNull(myFileIndex.getSourceRootForFile(file)));
   }
 }

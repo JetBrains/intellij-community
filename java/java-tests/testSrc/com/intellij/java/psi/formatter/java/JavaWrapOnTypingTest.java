@@ -2,9 +2,9 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class JavaWrapOnTypingTest extends LightCodeInsightFixtureTestCase {
+public class JavaWrapOnTypingTest extends LightJavaCodeInsightFixtureTestCase {
   public void testWrapInsideTags() {
     myFixture.configureByText(JavaFileType.INSTANCE,
       "public class Hw {\n"                                                                                                      +

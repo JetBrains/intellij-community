@@ -2,9 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -25,8 +23,6 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 class AppUIExecutorTest : LightPlatformTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun invokeTestRunnable(runnable: Runnable) {
     SwingUtilities.invokeLater(runnable)
     UIUtil.dispatchAllInvocationEvents()
@@ -140,36 +136,40 @@ class AppUIExecutorTest : LightPlatformTestCase() {
   }
 
   private fun createDocument(): Document {
-    val file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "")
+    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "")
     return file.viewProvider.document!!
   }
 
+  @ExperimentalCoroutinesApi
   fun `test withDocumentsCommitted`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inWriteAction()
-      .withDocumentsCommitted(getProject())
+      .withDocumentsCommitted(project)
 
     val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inTransaction(getProject())
-      .inWriteAction()
+      .inTransaction(project)
 
     GlobalScope.async(SwingDispatcher) {
-      val pdm = PsiDocumentManager.getInstance(getProject())
+      val pdm = PsiDocumentManager.getInstance(project)
       val commitChannel = Channel<Unit>()
       val job = launch(executor.coroutineDispatchingContext()) {
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
 
-        val document = createDocument()
-        document.insertString(0, "a")
-        assertTrue(pdm.hasUncommitedDocuments())
+        val document = runWriteAction {
+          createDocument().apply {
+            insertString(0, "a")
+            assertTrue(pdm.hasUncommitedDocuments())
+          }
+        }
 
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
         assertEquals("a", document.text)
 
-        document.insertString(1, "b")
-        assertTrue(pdm.hasUncommitedDocuments())
+        runWriteAction {
+          document.insertString(1, "b")
+          assertTrue(pdm.hasUncommitedDocuments())
+        }
 
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
@@ -177,12 +177,17 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         commitChannel.close()
       }
-      launch(transactionExecutor.coroutineDispatchingContext() + job) {
+      withContext(transactionExecutor.coroutineDispatchingContext() + job) {
         while (true) {
-          pdm.commitAllDocuments()
-          commitChannel.send(Unit)
+          runWriteAction { pdm.commitAllDocuments() }
+          if (!commitChannel.isClosedForSend) {
+            commitChannel.send(Unit)
+          }
+          else {
+            return@withContext
+          }
         }
-      }.join()
+      }
       coroutineContext.cancelChildren()
 
     }.joinNonBlocking()
@@ -522,6 +527,21 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       emit("end")
       assertOrderedEquals(queue, *expectedLog)
 
+    }.joinNonBlocking()
+  }
+
+  fun `test use write-safe context if called from write-unsafe context`() {
+    GlobalScope.async(SwingDispatcher) {
+      launch(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+      }
+      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+      }
+      launch(AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()) {
+        assertFalse("Passing write-unsafe modality should not lead to write-safety checks",
+                    TransactionGuard.getInstance().isWritingAllowed)
+      }
     }.joinNonBlocking()
   }
 }

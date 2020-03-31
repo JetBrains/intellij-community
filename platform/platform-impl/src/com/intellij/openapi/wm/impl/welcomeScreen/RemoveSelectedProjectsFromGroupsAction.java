@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class RemoveSelectedProjectsFromGroupsAction extends RecentProjectsWelcomeScreenActionBase {
   public RemoveSelectedProjectsFromGroupsAction() {
-    getTemplatePresentation().setText("Remove from Groups");
+    getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"));
   }
 
   @Override

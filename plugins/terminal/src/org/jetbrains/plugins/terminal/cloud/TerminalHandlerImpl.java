@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.cloud;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
-import com.jediterm.terminal.ui.TerminalWidget;
+import com.intellij.terminal.JBTerminalWidget;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,17 +13,20 @@ import java.io.OutputStream;
 
 public class TerminalHandlerImpl extends TerminalHandlerBase {
 
-  private final TerminalWidget myTerminalWidget;
+  private final JBTerminalWidget myTerminalWidget;
 
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
                              @NotNull InputStream terminalOutput,
-                             @NotNull OutputStream terminalInput) {
+                             @NotNull OutputStream terminalInput,
+                             boolean deferTerminalSessionUntilFirstShown) {
     super(presentableName);
 
     final CloudTerminalProcess process = new CloudTerminalProcess(terminalInput, terminalOutput);
 
-    CloudTerminalRunner terminalRunner = new CloudTerminalRunner(project, presentableName, process);
+    TtyResizeHandler handlerBoundLater = (w, h) -> getResizeHandler().onTtyResizeRequest(w, h); //right now handler is null
+    CloudTerminalRunner terminalRunner =
+      new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
     myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
   }
@@ -49,5 +39,12 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
   @Override
   public JComponent getPreferredFocusableComponent() {
     return myTerminalWidget.getPreferredFocusableComponent();
+  }
+
+  @Override
+  public void close() {
+    myTerminalWidget.getTerminalDisplay().setCursorVisible(false);
+    myTerminalWidget.stop();
+    super.close();
   }
 }

@@ -1,10 +1,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodMayBeStaticInspectionTest extends LightInspectionTestCase {
+public class MethodMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
 
   public void testA() {
     doTest();

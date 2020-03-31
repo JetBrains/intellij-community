@@ -43,7 +43,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static boolean moduleUsesPythonSdk(@NotNull PyFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file.getVirtualFile(), file.getProject());
     if (module != null) {
-      return PythonSdkType.findPythonSdk(module) != null;
+      return PythonSdkUtil.findPythonSdk(module) != null;
     }
     return false;
   }

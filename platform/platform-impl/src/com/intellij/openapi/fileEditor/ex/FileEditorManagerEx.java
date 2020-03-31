@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.ex;
 
 import com.intellij.openapi.Disposable;
@@ -93,8 +93,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean hasSplitOrUndockedWindows();
 
-  @NotNull
-  public abstract EditorWindow[] getWindows();
+  public abstract EditorWindow @NotNull [] getWindows();
 
   /**
    * @return arrays of all files (including {@code file} itself) that belong
@@ -102,19 +101,15 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  @NotNull
-  public abstract VirtualFile[] getSiblings(@NotNull VirtualFile file);
+  public abstract VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file);
 
   public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
   public abstract void changeSplitterOrientation();
 
-  public abstract void flipTabs();
-  public abstract boolean tabsMode();
-
   public abstract boolean isInSplitter();
 
-  public abstract boolean hasOpenedFile ();
+  public abstract boolean hasOpenedFile();
 
   @Nullable
   public abstract VirtualFile getCurrentFile();
@@ -134,14 +129,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract EditorsSplitters getSplitters();
 
   @Override
-  @NotNull
-  public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
-    return openFileWithProviders(file, focusEditor, false).getFirst ();
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {
+    return openFileWithProviders(file, focusEditor, false).getFirst();
   }
 
-  @NotNull
   @Override
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 

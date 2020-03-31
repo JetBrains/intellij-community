@@ -20,7 +20,6 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,41 +30,34 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementTypeBase;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class LazyParseableElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
+  private static final Logger LOG = Logger.getInstance(LazyParseableElement.class);
   private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
-
-  private static class ChameleonLock {
-    private ChameleonLock() {}
-
-    @NonNls
-    @Override
-    public String toString() {
-      return "chameleon parsing lock";
-    }
-  }
 
   // Lock which protects expanding chameleon for this node.
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
-  private final ChameleonLock lock = new ChameleonLock();
+  private final ReentrantLock myLock = new ReentrantLock();
   /**
    * Cached or non-parsed text of this element. Must be non-null if {@link #myParsed} is false.
-   * Coordinated writes to (myParsed, myText) are guarded by {@link #lock}
+   * Coordinated writes to (myParsed, myText) are guarded by {@link #myLock}
    * */
   @NotNull private volatile Getter<CharSequence> myText;
   private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
-    synchronized (lock) {
+
+    waitForLock(myLock);
+    try {
       if (text == null) {
         myParsed = true;
         myText = NO_TEXT;
@@ -75,18 +67,26 @@ public class LazyParseableElement extends CompositeElement {
         setCachedLength(text.length());
       }
     }
+    finally {
+      myLock.unlock();
+    }
   }
 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    synchronized (lock) {
+
+    waitForLock(myLock);
+    try {
       if (myParsed) {
         myText = NO_TEXT;
       }
       else {
         setCachedLength(myText.get().length());
       }
+    }
+    finally {
+      myLock.unlock();
     }
   }
 
@@ -121,15 +121,6 @@ public class LazyParseableElement extends CompositeElement {
       return text.length();
     }
     return super.getTextLength();
-  }
-
-  @Override
-  public int getNotCachedLength() {
-    CharSequence text = myText();
-    if (text != null) {
-      return text.length();
-    }
-    return super.getNotCachedLength();
   }
 
   @Override
@@ -177,14 +168,9 @@ public class LazyParseableElement extends CompositeElement {
     }
     if (myParsed) return;
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // we don't want to wait under lock on EDT while another thread is parsing the same chameleon
-      // and sleeping in ProgressManagerImpl.sleepIfNeededToGivePriorityToAnotherThread because EDT is occupied
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
-
     CharSequence text;
-    synchronized (lock) {
+    waitForLock(myLock);
+    try {
       if (myParsed) return;
 
       text = myText.get();
@@ -213,8 +199,10 @@ public class LazyParseableElement extends CompositeElement {
         myParsed = true;
         myText = new SoftReference<>(text);
       });
+    } finally {
+      myLock.unlock();
     }
-}
+  }
 
   private void assertTextLengthIntact(CharSequence text, TreeElement child) {
     int length = 0;
@@ -244,7 +232,7 @@ public class LazyParseableElement extends CompositeElement {
   @Override
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
     if (!isParsed()) {
-      LOG.error("Mutating collapsed chameleon");
+      LOG.error("Mutating collapsed chameleon " + this.getClass());
     }
     super.rawAddChildrenWithoutNotifications(first);
   }
@@ -261,7 +249,7 @@ public class LazyParseableElement extends CompositeElement {
     return super.getLastChildNode();
   }
 
-  public int copyTo(@Nullable char[] buffer, int start) {
+  public int copyTo(char @Nullable [] buffer, int start) {
     CharSequence text = myText();
     if (text == null) return -1;
 
@@ -277,5 +265,18 @@ public class LazyParseableElement extends CompositeElement {
   public static void setParsingAllowed(boolean allowed) {
     ourParsingAllowed = allowed;
   }
-  
+
+  private static void waitForLock(@NotNull ReentrantLock ml) {
+    while (true) {
+      try {
+        if (ml.tryLock(10, TimeUnit.MILLISECONDS)) {
+          return;
+        }
+      }
+      catch (InterruptedException ignore) {
+      }
+
+      ProgressManager.checkCanceled();
+    }
+  }
 }

@@ -3,16 +3,17 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
 
   public ShowOnlyAffectedChangesAction() {
-    super("Show Only Affected Changes", "Show only changes that affect files that were selected in the \"Paths\" menu",
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.only.affected.changes"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.only.affected.changes"),
           AllIcons.Nodes.Folder);
   }
 
@@ -23,10 +24,6 @@ public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!VcsLogUtil.isFolderHistoryShownInLog()) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
     Boolean hasAffectedFiles = e.getData(VcsLogChangesBrowser.HAS_AFFECTED_FILES);
     if (hasAffectedFiles == null || !hasAffectedFiles) {
       e.getPresentation().setEnabledAndVisible(false);

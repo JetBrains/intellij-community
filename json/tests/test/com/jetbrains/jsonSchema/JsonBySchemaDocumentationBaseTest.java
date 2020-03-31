@@ -40,23 +40,22 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
       skeleton(new Callback() {
         @Override
         public void registerSchemes() {
-          final String moduleDir = getModuleDir(getProject());
           final ArrayList<UserDefinedJsonSchemaConfiguration.Item> patterns = new ArrayList<>();
           patterns.add(new UserDefinedJsonSchemaConfiguration.Item(getTestName(true) + "*", true, false));
           addSchema(
             new UserDefinedJsonSchemaConfiguration("testDoc", JsonSchemaVersion.SCHEMA_4,
-                                                   moduleDir + "/" + getTestName(true) + "Schema.json", false,
+                                                    getUrlUnderTestRoot(getTestName(true) + "Schema.json"), false,
                                                    patterns));
         }
 
         @Override
         public void configureFiles() {
-          configureByFiles(null, "/" + getTestName(true) + "." + extension, "/" + getTestName(true) + "Schema.json");
+          myFixture.configureByFiles("/" + getTestName(true) + "." + extension, "/" + getTestName(true) + "Schema.json");
         }
 
         @Override
         public void doCheck() {
-          final PsiElement psiElement = PsiUtilBase.getElementAtCaret(myEditor);
+          final PsiElement psiElement = PsiUtilBase.getElementAtCaret(myFixture.getEditor());
           Assert.assertNotNull(psiElement);
           assertDocumentation(psiElement, psiElement, hasDoc);
         }

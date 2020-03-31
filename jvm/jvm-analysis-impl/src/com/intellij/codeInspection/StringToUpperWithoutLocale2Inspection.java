@@ -16,12 +16,6 @@ import org.jetbrains.uast.UastContextKt;
 
 
 public class StringToUpperWithoutLocale2Inspection extends AbstractBaseUastLocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() { //TODO remove once inspection is registered in JvmAnalysisPlugin.xml
-    return "StringToUpperWithoutLocale2Inspection";
-  }
 
   private static final UastCallMatcher MATCHER = UastCallMatcher.anyOf(
     UastCallMatcher.builder()
@@ -39,7 +33,7 @@ public class StringToUpperWithoutLocale2Inspection extends AbstractBaseUastLocal
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
         if (callExpression != null) {
           handleCallExpression(callExpression, holder);

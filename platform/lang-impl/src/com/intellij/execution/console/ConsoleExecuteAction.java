@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
 
@@ -59,7 +61,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
                                @Nullable Condition<LanguageConsoleView> enabledCondition) {
-    super(null, null, AllIcons.Actions.Execute);
+    super(AllIcons.Actions.Execute);
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
@@ -77,7 +79,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       Lookup lookup = LookupManager.getActiveLookup(editor);
       // we should check getCurrentItem() also - fast typing could produce outdated lookup, such lookup reports isCompletion() true
       enabled = lookup == null || !lookup.isCompletion() || lookup.getCurrentItem() == null ||
-                lookup instanceof LookupImpl && ((LookupImpl)lookup).getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED;
+                lookup instanceof LookupImpl && ((LookupImpl)lookup).getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED;
     }
 
     e.getPresentation().setEnabled(enabled);

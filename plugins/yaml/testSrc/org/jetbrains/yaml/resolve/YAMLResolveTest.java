@@ -7,12 +7,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class YAMLResolveTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLResolveTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/resolve/data/";
@@ -69,7 +69,7 @@ public class YAMLResolveTest extends LightPlatformCodeInsightFixtureTestCase {
 
     file.accept(new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         referencesList.addAll(Arrays.asList(element.getReferences()));
         element.acceptChildren(this);
       }

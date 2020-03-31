@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -32,10 +33,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.CollectionUtils;
-import com.siyeh.ig.psiutils.ConstructionUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import one.util.streamex.StreamEx;
@@ -48,6 +46,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
@@ -63,7 +62,7 @@ public class MismatchedCollectionQueryUpdateInspection
     CollectionUtils.DERIVED_COLLECTION,
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "subList"),
     CallMatcher.instanceCall("java.util.SortedMap", "headMap", "tailMap", "subMap"),
-    CallMatcher.instanceCall("java.util.SortedSet", "headSet", "tailSet", "subSet"));
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SORTED_SET, "headSet", "tailSet", "subSet"));
   private static final CallMatcher COLLECTION_SAFE_ARGUMENT_METHODS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll", "removeAll", "containsAll", "remove"),
@@ -78,7 +77,7 @@ public class MismatchedCollectionQueryUpdateInspection
   public final ExternalizableStringSet queryNames =
     new ExternalizableStringSet(
       "contains", "copyInto", "equals", "forEach", "get", "hashCode", "iterator", "parallelStream", "propertyNames",
-      "replaceAll", "save", "size", "store", "stream", "toArray", "toString", "write");
+      "save", "size", "store", "stream", "toArray", "toString", "write");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "insert", "load", "merge", "offer", "poll", "pop", "push", "put", "remove", "replace",
@@ -115,12 +114,6 @@ public class MismatchedCollectionQueryUpdateInspection
   @NotNull
   public String getID() {
     return "MismatchedQueryAndUpdateOfCollection";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("mismatched.update.collection.display.name");
   }
 
   @Override
@@ -261,12 +254,12 @@ public class MismatchedCollectionQueryUpdateInspection
           makeUpdated();
         }
         final PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
-        if (method == null ||
-            PsiType.VOID.equals(method.getReturnType()) ||
-            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
-          return;
+        if (method != null &&
+            (!PsiType.VOID.equals(method.getReturnType()) &&
+             !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
+             Stream.of(method.getParameterList().getParameters()).anyMatch(p -> LambdaUtil.isFunctionalType(p.getType())))) {
+          makeQueried();
         }
-        makeQueried();
       }
 
       private boolean processCollectionMethods(PsiMethodCallExpression call, PsiExpression arg) {
@@ -304,6 +297,17 @@ public class MismatchedCollectionQueryUpdateInspection
           if (!voidContext) {
             makeQueried();
           }
+          else {
+            for (PsiExpression arg : call.getArgumentList().getExpressions()) {
+              PsiParameter parameter = MethodCallUtils.getParameterForArgument(arg);
+              if (parameter != null && LambdaUtil.isFunctionalType(parameter.getType())) {
+                if (ExpressionUtils.nonStructuralChildren(arg).anyMatch(e -> mayHaveSideEffect(e))) {
+                  makeQueried();
+                  break;
+                }
+              }
+            }
+          }
         }
         if (!queryQualifier && !updateQualifier) {
           if (!isQueryMethod(call)) {
@@ -311,6 +315,20 @@ public class MismatchedCollectionQueryUpdateInspection
           }
           makeQueried();
         }
+      }
+
+      private boolean mayHaveSideEffect(PsiExpression fn) {
+        if (fn instanceof PsiLambdaExpression) {
+          PsiElement body = ((PsiLambdaExpression)fn).getBody();
+          if (body != null) {
+            return SideEffectChecker.mayHaveSideEffects(body, x -> false);
+          }
+        }
+        if (fn instanceof PsiMethodReferenceExpression) {
+          PsiElement target = ((PsiMethodReferenceExpression)fn).resolve();
+          return !(target instanceof PsiMethod) || !JavaMethodContractUtil.isPure((PsiMethod)target);
+        }
+        return true;
       }
 
       private PsiExpression findEffectiveReference(PsiExpression expression) {
@@ -362,16 +380,19 @@ public class MismatchedCollectionQueryUpdateInspection
     if (argumentList == null) {
       return false;
     }
+    PsiMethod ctor = newExpression.resolveMethod();
+    if (ctor == null) return true;
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    for (final PsiExpression argument : arguments) {
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) {
+    if (ctor.isVarArgs() && arguments.length >= parameters.length) {
+      return false;
+    }
+    for (PsiParameter parameter : parameters) {
+      PsiType type = parameter.getType();
+      if (CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
-      if (CollectionUtils.isCollectionClassOrInterface(argumentType)) {
-        return false;
-      }
-      if (argumentType instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType && !(type instanceof PsiEllipsisType)) {
         return false;
       }
     }

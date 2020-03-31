@@ -16,10 +16,10 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -60,7 +60,6 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     private JButton myConfigureAnnotationsButton;
     private JCheckBox myIgnoreExternalSuperNotNull;
     private JCheckBox myNNParameterOverridesNA;
-    private JCheckBox myRequireNNFieldsInitialized;
     private JBCheckBox myReportNullLiteralsPassedNotNullParameter;
 
     private OptionsPanel() {
@@ -78,7 +77,6 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myNNParameterOverridesNA.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
       myIgnoreExternalSuperNotNull.addActionListener(actionListener);
-      myRequireNNFieldsInitialized.addActionListener(actionListener);
       myReportNullLiteralsPassedNotNullParameter.addActionListener(actionListener);
       myConfigureAnnotationsButton.addActionListener(NullableNotNullDialog.createActionListener(this));
       reset();
@@ -90,7 +88,6 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
       myIgnoreExternalSuperNotNull.setSelected(IGNORE_EXTERNAL_SUPER_NOTNULL);
       myNNParameterOverridesNA.setSelected(REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED);
-      myRequireNNFieldsInitialized.setSelected(REQUIRE_NOTNULL_FIELDS_INITIALIZED);
       myReportNullLiteralsPassedNotNullParameter.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
 
       myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());
@@ -102,7 +99,6 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
       IGNORE_EXTERNAL_SUPER_NOTNULL = myIgnoreExternalSuperNotNull.isSelected();
       REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = myNNParameterOverridesNA.isSelected();
-      REQUIRE_NOTNULL_FIELDS_INITIALIZED = myRequireNNFieldsInitialized.isSelected();
       REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myReportNullLiteralsPassedNotNullParameter.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
 
@@ -125,7 +121,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.name");
+      return JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.name");
     }
 
     @Override
@@ -137,7 +133,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       if (parameterIdx < 0) return;
 
       UsageViewPresentation presentation = new UsageViewPresentation();
-      String title = InspectionsBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.view.name", p.getName());
+      String title = JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.view.name", p.getName());
       presentation.setUsagesString(title);
       presentation.setTabName(title);
       presentation.setTabText(title);
@@ -145,7 +141,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         new UsageTarget[]{new PsiElement2UsageTargetAdapter(method.getParameterList().getParameters()[parameterIdx])},
         () -> new UsageSearcher() {
           @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<? super Usage> processor) {
             ReadAction.run(() -> JavaNullMethodArgumentUtil.searchNullArgument(method, parameterIdx, (arg) -> processor.process(new UsageInfo2UsageAdapter(new UsageInfo(arg)))));
           }
         }, false, false, presentation, null);

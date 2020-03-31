@@ -22,8 +22,6 @@ package com.intellij.find.ngrams;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -41,15 +39,19 @@ import java.util.Collection;
 import java.util.Map;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>,
-                                                                           DocumentChangesDependentIndex {
-  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", true);
+                                                                           DocumentChangeDependentIndex {
+  /**
+   * @deprecated not used anymore, always enabled
+   */
+  @Deprecated
+  public static final boolean ENABLED = true;
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> isIndexable(file.getFileType());
 
   public static boolean isIndexable(FileType fileType) {
-    return ENABLED && !fileType.isBinary();
+    return !fileType.isBinary();
   }
 
   @NotNull
@@ -92,13 +94,19 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
 
   @Override
   public int getVersion() {
-    return ENABLED ? 3 + (IdIndex.ourSnapshotMappingsEnabled ? 0xFF:0) : 1;
+    return 3;
   }
 
   @Override
   public boolean hasSnapshotMapping() {
     return true;
   }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
 
   @NotNull

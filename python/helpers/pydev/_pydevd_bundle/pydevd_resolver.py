@@ -135,7 +135,7 @@ class DefaultResolver:
         try:
             d = dir(original)
             for name in d:
-                if found.get(name) is not 1:
+                if found.get(name) != 1:
                     ret[name] = getattr(original, name)
         except:
             #sometimes we're unable to do a dir

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -7,9 +7,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class FindSymbolParameters {
   private final String myCompletePattern;
@@ -61,7 +62,7 @@ public class FindSymbolParameters {
 
   @NotNull
   public Project getProject() {
-    return ObjectUtils.notNull(mySearchScope.getProject());
+    return Objects.requireNonNull(mySearchScope.getProject());
   }
 
   public boolean isSearchInLibraries() {
@@ -70,7 +71,7 @@ public class FindSymbolParameters {
 
   public static FindSymbolParameters wrap(@NotNull String pattern, @NotNull Project project, boolean searchInLibraries) {
     return new FindSymbolParameters(pattern, pattern, searchScopeFor(project, searchInLibraries),
-                                    IdFilter.getProjectIdFilter(project, searchInLibraries));
+                                    ((FileBasedIndexImpl) FileBasedIndex.getInstance()).projectIndexableFiles(project));
   }
 
   public static FindSymbolParameters wrap(@NotNull String pattern, @NotNull GlobalSearchScope scope) {
@@ -79,7 +80,7 @@ public class FindSymbolParameters {
 
   public static FindSymbolParameters simple(@NotNull Project project, boolean searchInLibraries) {
     return new FindSymbolParameters("", "", searchScopeFor(project, searchInLibraries),
-                                    IdFilter.getProjectIdFilter(project, searchInLibraries));
+                                    ((FileBasedIndexImpl) FileBasedIndex.getInstance()).projectIndexableFiles(project));
   }
 
   @NotNull

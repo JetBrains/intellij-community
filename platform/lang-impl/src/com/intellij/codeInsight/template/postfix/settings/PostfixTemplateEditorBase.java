@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
@@ -26,7 +27,6 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplateExpressionCondition> implements PostfixTemplateEditor {
 
@@ -64,7 +65,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
   public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider, boolean showExpressionTypes) {
     this(provider, createSimpleEditor(), showExpressionTypes);
   }
-  
+
 
   public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider,
                                    @NotNull Editor templateEditor,
@@ -72,7 +73,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     myProvider = provider;
     myTemplateEditor = templateEditor;
 
-    myApplyToTheTopmostJBCheckBox = new JBCheckBox("Apply to the &topmost expression");
+    myApplyToTheTopmostJBCheckBox = new JBCheckBox(CodeInsightBundle.message("checkbox.apply.to.the.&topmost.expression"));
     DialogUtil.registerMnemonic(myApplyToTheTopmostJBCheckBox, '&');
     myApplyToTheTopmostJBCheckBox.setBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP));
 
@@ -89,14 +90,14 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
         .setMinimumSize(JBUI.size(-1, 300))
         .createPanel();
       grid.add(UI.PanelFactory.panel(expressionTypesPanel)
-                 .withLabel("Applicable expression types:")
+                 .withLabel(CodeInsightBundle.message("label.applicable.expression.types"))
                  .resizeY(true)
                  .moveLabelOnTop());
     }
     grid.add(UI.PanelFactory.panel(myApplyToTheTopmostJBCheckBox));
     grid.add(UI.PanelFactory.panel(myTemplateEditor.getComponent())
                .anchorLabelOn(UI.Anchor.Top)
-               .withComment("Use $EXPR$ variable to refer target expression")
+               .withComment(CodeInsightBundle.message("comment.use.expr.variable.to.refer.target.expression"))
                .resizeY(true));
     myEditTemplateAndConditionsPanel = grid.createPanel();
   }
@@ -117,7 +118,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
                                                                           JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
-    popup.show(ObjectUtils.assertNotNull(button.getPreferredPopupPoint()));
+    popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));
   }
 
   protected abstract void fillConditions(@NotNull DefaultActionGroup group);

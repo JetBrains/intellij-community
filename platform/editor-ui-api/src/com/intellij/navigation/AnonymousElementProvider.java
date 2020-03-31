@@ -25,6 +25,5 @@ import org.jetbrains.annotations.NotNull;
 public interface AnonymousElementProvider {
   ExtensionPointName<AnonymousElementProvider> EP_NAME = ExtensionPointName.create("com.intellij.anonymousElementProvider");
 
-  @NotNull
-  PsiElement[] getAnonymousElements(@NotNull PsiElement parent);
+  PsiElement @NotNull [] getAnonymousElements(@NotNull PsiElement parent);
 }

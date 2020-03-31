@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -19,13 +19,10 @@ import com.intellij.util.Url;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -53,13 +50,17 @@ import java.util.Map;
  * {@code int firstByte = HttpRequests.request("file:///dev/random").connect(request -> request.getInputStream().read())}<br>
  * {@code String firstLine = HttpRequests.request("https://example.com").connect(request -> new BufferedReader(request.getReader()).readLine())}</p>
  *
- * @see HttpStatusException a sublass of IOException which includes an actual URL and HTTP response code
+ * @see HttpStatusException a sublass of IOException, which includes an actual URL and HTTP response code
  * @see URLUtil
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
   public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+
+  public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
+  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
+  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
 
   private static final int[] REDIRECTS = {
     // temporary redirects
@@ -93,8 +94,7 @@ public final class HttpRequests {
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    @NotNull
-    byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
     @NotNull
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
@@ -111,7 +111,7 @@ public final class HttpRequests {
       write(data.getBytes(StandardCharsets.UTF_8));
     }
 
-    default void write(@NotNull byte[] data) throws IOException {
+    default void write(byte @NotNull [] data) throws IOException {
       HttpURLConnection connection = (HttpURLConnection)getConnection();
       connection.setFixedLengthStreamingMode(data.length);
       try (OutputStream stream = connection.getOutputStream()) {
@@ -189,7 +189,7 @@ public final class HttpRequests {
   }
 
   /**
-   * Java does not support "newer" HTTP methods so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
+   * Java does not support "newer" HTTP methods, so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
    * For reasoning see {@link HttpURLConnection#setRequestMethod(String)}
    * <p>
    * TODO: either fiddle with reflection or patch JDK to avoid server reliance
@@ -239,9 +239,9 @@ public final class HttpRequests {
 
   private static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
-    private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
-    private int myTimeout = HttpConfigurable.READ_TIMEOUT;
-    private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
+    private int myConnectTimeout = CONNECTION_TIMEOUT;
+    private int myTimeout = READ_TIMEOUT;
+    private int myRedirectLimit = REDIRECT_LIMIT;
     private boolean myGzip = true;
     private boolean myForceHttps;
     private boolean myUseProxy = true;
@@ -251,8 +251,7 @@ public final class HttpRequests {
     private String myAccept;
     private ConnectionTuner myTuner;
     private final ConnectionTuner myInternalTuner;
-    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
-    public boolean myThrowStatusCodeException = true;
+    private boolean myThrowStatusCodeException = true;
 
     private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
@@ -335,13 +334,6 @@ public final class HttpRequests {
     @Override
     public RequestBuilder tuner(@Nullable ConnectionTuner tuner) {
       myTuner = tuner;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
-      myUntrustedCertificateStrategy = strategy;
       return this;
     }
 
@@ -431,8 +423,7 @@ public final class HttpRequests {
     }
 
     @Override
-    @NotNull
-    public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
+    public byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
       return doReadBytes(indicator).toByteArray();
     }
 
@@ -468,6 +459,9 @@ public final class HttpRequests {
       try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
         deleteFile = false;
+      }
+      catch (HttpStatusException e) {
+        throw e;
       }
       catch (IOException e) {
         throw new IOException(createErrorMessage(e, this, false), e);
@@ -518,15 +512,8 @@ public final class HttpRequests {
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    CertificateManager manager = builder.myUntrustedCertificateStrategy == null || ApplicationManager.getApplication() == null ? null : CertificateManager.getInstance();
     try (RequestImpl request = new RequestImpl(builder)) {
-      T result;
-      if (manager != null) {
-        result = manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
-      }
-      else {
-        result = processor.process(request);
-      }
+      T result = processor.process(request);
 
       if (builder.myThrowStatusCodeException) {
         URLConnection connection = request.myConnection;
@@ -539,6 +526,7 @@ public final class HttpRequests {
           }
         }
       }
+
       return result;
     }
   }
@@ -612,7 +600,13 @@ public final class HttpRequests {
                      "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
-      int responseCode = httpURLConnection.getResponseCode();
+      int responseCode;
+      try {
+        responseCode = httpURLConnection.getResponseCode();
+      }
+      catch (SSLHandshakeException e) {
+        throw !NetUtils.isSniEnabled() ? new SSLException("SSL error probably caused by disabled SNI", e) : e;
+      }
       if (LOG.isDebugEnabled()) LOG.debug("response from " + url + ": " + responseCode);
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -658,7 +652,7 @@ public final class HttpRequests {
     try {
       SSLSocketFactory factory = CertificateManager.getInstance().getSslContext().getSocketFactory();
       if (factory == null) {
-        LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
+        LOG.info("SSLSocketFactory is not defined by the IDE Certificate Manager; Using default SSL configuration to connect to " + url);
       }
       else {
         connection.setSSLSocketFactory(factory);

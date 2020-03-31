@@ -16,13 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends LightInspectionTestCase {
+public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends LightJavaInspectionTestCase {
 
   public void testInterfaceImplementingComparable() { doTest(); }
   public void testSimple() { doTest(); }
@@ -30,6 +30,12 @@ public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends L
   public void testAbstractClass2() { doTest(); }
   public void testAbstractClass3() { doTest(); }
   public void testNote() { doTest(); }
+
+  public void testNoFixForAnonymousClass() {
+    doTest();
+    assertNotNull(myFixture.findSingleIntention(ComparableImplementedButEqualsNotOverriddenInspection.GENERATE_EQUALS_FIX_NAME));
+    assertEmpty(myFixture.filterAvailableIntentions(ComparableImplementedButEqualsNotOverriddenInspection.ADD_NOTE_FIX_NAME));
+  }
 
   @Nullable
   @Override

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -15,6 +13,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -27,9 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;
@@ -55,8 +51,8 @@ public class PyEnvTaskRunner {
    */
   public void runTask(@NotNull final PyTestTask testTask,
                       @NotNull final String testName,
-                      @Nullable final Class<? extends PythonSdkFlavor>[] skipOnFlavors,
-                      @NotNull final String... tagsRequiredByTest) {
+                      final Class<? extends PythonSdkFlavor> @Nullable [] skipOnFlavors,
+                      final String @NotNull ... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
@@ -95,7 +91,7 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = PythonSdkType.getPythonExecutable(root);
+        final String executable = PythonSdkUtil.getPythonExecutable(root);
         assert executable != null : "No executable in " + root;
 
         final Sdk sdk = getSdk(executable, testTask);

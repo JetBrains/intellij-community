@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -55,7 +56,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
           !ExpressionUtils.isNullLiteral(nullBranch) && NullabilityUtil.getExpressionNullability(notNullBranch, true) != Nullability.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
         holder.registerProblem(ternary.getCondition(),
-                               "Can be replaced with Optional.ofNullable()",
+                               JavaBundle.message("inspection.message.can.be.replaced.with.optional.of.nullable"),
                                mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
       }
@@ -83,14 +84,14 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + (myChangesSemantics ? " (may change semantics)" : "");
+      return getFamilyName() + (myChangesSemantics ? JavaBundle.message("quickfix.text.suffix.may.change.semantics") : "");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with Optional.ofNullable() chain";
+      return JavaBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
     }
 
     @Override
@@ -130,7 +131,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       PsiLambdaExpression trueLambda =
         (PsiLambdaExpression)factory.createExpressionFromText("(" + variable.getType().getCanonicalText() + " " +
                                                               inLambdaName + ")->" + ct.text(notNullBranch), ternary);
-      PsiParameter lambdaParameter = trueLambda.getParameterList().getParameters()[0];
+      PsiParameter lambdaParameter = Objects.requireNonNull(trueLambda.getParameterList().getParameter(0));
       PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
       String ofNullableText = CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + (origExpression == null ? name : origExpression) + ")";
       String replacement = OptionalRefactoringUtil.generateOptionalUnwrap(ofNullableText,

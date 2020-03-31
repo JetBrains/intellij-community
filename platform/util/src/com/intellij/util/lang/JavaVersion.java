@@ -94,22 +94,55 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     return hash;
   }
 
+  /**
+   * @return feature version string, e.g. <b>1.8</b> or <b>11</b>
+   */
+  @NotNull
+  public String toFeatureString() {
+    return formatVersionTo( true, true);
+  }
+
+  /**
+   * @return feature, minor and update components of the version string, e.g.
+   * <b>1.8.0_242</b> or <b>11.0.5</b>
+   */
+  @NotNull
+  public String toFeatureMinorUpdateString() {
+    return formatVersionTo(false, true);
+  }
+
   @Override
   public String toString() {
+    return formatVersionTo(false, false);
+  }
+
+  @NotNull
+  @SuppressWarnings("HardCodedStringLiteral")
+  private String formatVersionTo(boolean upToFeature,
+                                 boolean upToUpdate) {
     StringBuilder sb = new StringBuilder();
+
     if (feature > 8) {
       sb.append(feature);
-      if (minor > 0 || update > 0) sb.append('.').append(minor);
-      if (update > 0) sb.append('.').append(update);
-      if (ea) sb.append("-ea");
-      if (build > 0) sb.append('+').append(build);
+      if (!upToFeature) {
+        if (minor > 0 || update > 0) sb.append('.').append(minor);
+        if (update > 0) sb.append('.').append(update);
+        if (!upToUpdate) {
+          if (ea) sb.append("-ea");
+          if (build > 0) sb.append('+').append(build);
+        }
+      }
     }
     else {
       sb.append("1.").append(feature);
-      if (minor > 0 || update > 0 || ea || build > 0) sb.append('.').append(minor);
-      if (update > 0) sb.append('_').append(update);
-      if (ea) sb.append("-ea");
-      if (build > 0) sb.append("-b").append(build);
+      if (!upToFeature) {
+        if (minor > 0 || update > 0 || ea || build > 0) sb.append('.').append(minor);
+        if (update > 0) sb.append('_').append(update);
+        if (!upToUpdate) {
+          if (ea) sb.append("-ea");
+          if (build > 0) sb.append("-b").append(build);
+        }
+      }
     }
     return sb.toString();
   }
@@ -179,7 +212,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
    *
    * <p>Supports various sources, including (but not limited to):<br>
    *   - {@code "java.*version"} system properties (a version number without any decoration)<br>
-   *   - values of Java compiler -source/-target/--release options ("$MAJOR", "1.$MAJOR")</br>
+   *   - values of Java compiler -source/-target/--release options ("$MAJOR", "1.$MAJOR")<br>
    *   - output of "{@code java -version}" (usually "java version \"$VERSION\"")<br>
    *   - a second line of the above command (something like to "Java(TM) SE Runtime Environment (build $VERSION)")<br>
    *   - output of "{@code java --full-version}" ("java $VERSION")<br>

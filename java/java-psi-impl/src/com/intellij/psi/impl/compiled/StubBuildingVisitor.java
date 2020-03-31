@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,9 +14,10 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -33,9 +34,6 @@ import java.util.*;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
 
-/**
- * @author max
- */
 public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Logger LOG = Logger.getInstance(StubBuildingVisitor.class);
 
@@ -97,8 +95,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isInterface = isSet(flags, Opcodes.ACC_INTERFACE);
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
-    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false,
-                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
+    short stubFlags = PsiClassStubImpl.packFlags(
+      isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -122,17 +120,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (info.interfaceNames != null && myResult.isAnnotationType()) {
         info.interfaceNames.remove(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
       }
-      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.toStringArray(info.interfaceNames));
-      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY);
+      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtilRt.toStringArray(info.interfaceNames));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtilRt.EMPTY_STRING_ARRAY);
     }
     else {
       if (info.superName == null || "java/lang/Object".equals(superName) || myResult.isEnum() && "java/lang/Enum".equals(superName)) {
-        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY);
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtilRt.EMPTY_STRING_ARRAY);
       }
       else {
         newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{info.superName});
       }
-      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.toStringArray(info.interfaceNames));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtilRt.toStringArray(info.interfaceNames));
     }
   }
 
@@ -157,7 +155,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     while (iterator.current() != CharacterIterator.DONE) {
       String name = SignatureParsing.parseTopLevelClassRefSignature(iterator, myMapping);
       if (name == null) throw new ClsFormatException();
-      if (result.interfaceNames == null) result.interfaceNames = ContainerUtil.newSmartList();
+      if (result.interfaceNames == null) result.interfaceNames = new SmartList<>();
       result.interfaceNames.add(name);
     }
     return result;
@@ -179,7 +177,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] types) {
+  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] types) {
     new PsiClassReferenceListStubImpl(type, parent, types);
   }
 
@@ -311,22 +309,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    // JLS 13.1 says: Any constructs introduced by the compiler that do not have a corresponding construct in the source code
-    // must be marked as synthetic, except for default constructors and the class initialization method.
-    // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation.
-    // See IDEA-78649
-    if (isSet(access, Opcodes.ACC_SYNTHETIC)) return null;
-    if (name == null) return null;
-    if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
+    if (isSet(access, Opcodes.ACC_SYNTHETIC) || name == null || SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
-    // skip semi-synthetic enum methods
+    boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
+    if (isConstructor && myAnonymousInner) return null;
+
     boolean isEnum = myResult.isEnum();
     if (isEnum) {
       if ("values".equals(name) && desc.startsWith("()")) return null;
       if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
     }
 
-    boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isDeprecated = isSet(access, Opcodes.ACC_DEPRECATED);
     boolean isVarargs = isSet(access, Opcodes.ACC_VARARGS);
     boolean isStatic = isSet(access, Opcodes.ACC_STATIC);
@@ -384,7 +377,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       new PsiModifierListStubImpl(parameterStub, 0);
     }
 
-    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
+    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtilRt.toStringArray(info.throwTypes));
 
     int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     int localVarIgnoreCount = isEnumConstructor ? 3 : isInnerClassConstructor ? 2 : !isStatic ? 1 : 0;
@@ -419,7 +412,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       result.argTypes = ContainerUtil.emptyList();
     }
     else {
-      result.argTypes = ContainerUtil.newSmartList();
+      result.argTypes = new SmartList<>();
       while (iterator.current() != ')' && iterator.current() != CharacterIterator.DONE) {
         result.argTypes.add(SignatureParsing.parseTypeString(iterator, myMapping));
       }
@@ -432,7 +425,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     result.throwTypes = null;
     while (iterator.current() == '^') {
       iterator.next();
-      if (result.throwTypes == null) result.throwTypes = ContainerUtil.newSmartList();
+      if (result.throwTypes == null) result.throwTypes = new SmartList<>();
       result.throwTypes.add(SignatureParsing.parseTypeString(iterator, myMapping));
     }
     if (exceptions != null && (result.throwTypes == null || exceptions.length > result.throwTypes.size())) {

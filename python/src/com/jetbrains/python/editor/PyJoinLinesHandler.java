@@ -20,7 +20,6 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
@@ -53,7 +52,6 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     new StringLiteralJoiner(),
     new StmtJoiner(), // strings before stmts to let doc strings join
     new BinaryExprJoiner(),
-    new CommentJoiner(),
     new StripBackslashJoiner()
   };
 
@@ -325,34 +323,6 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static int getLeftLineStartOffset(@NotNull Request req) {
     int lineNumber = req.document.getLineNumber(req.firstLineEndOffset);
     return req.document.getLineStartOffset(lineNumber);
-  }
-
-  private static class CommentJoiner implements Joiner {
-    @Override
-    public Result join(@NotNull Request req) {
-      if (req.leftElem instanceof PsiComment && req.rightElem instanceof PsiComment) {
-        final CharSequence text = req.document.getCharsSequence();
-        final TextRange rightRange = req.rightElem.getTextRange();
-        final int initialPos = rightRange.getStartOffset() + 1;
-        int pos = initialPos; // cut '#'
-        final int last = rightRange.getEndOffset();
-        while (pos < last && " \t".indexOf(text.charAt(pos)) >= 0) pos += 1;
-        int right = pos - initialPos + 1; // account for the '#'
-        String substring = req.rightElem.getText().substring(right);
-
-        String replacement = " " + findReplacement(substring, getStringToJoinMaxLength(req, 0));
-        right += replacement.length() - 1; // account for the '#'
-        if (!replacement.trim().isEmpty()) {
-          replacement += "\n";
-          req.document.insertString(req.secondLineStartOffset + right, "# ");
-        }
-
-        return new Result(replacement, 0, 0, right);
-      }
-      return null;
-    }
-
-
   }
 
   private static class StripBackslashJoiner implements Joiner {

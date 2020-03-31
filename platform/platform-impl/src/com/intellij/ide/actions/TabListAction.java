@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.tabs.impl.MorePopupAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,25 +14,28 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author yole
  */
-public class TabListAction extends AnAction {
+public class TabListAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    JBTabsEx tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY);
-    if (tabs != null) {
-      tabs.showMorePopup(null);
+    MorePopupAware morePopupAware = e.getData(MorePopupAware.KEY);
+    if (morePopupAware != null) {
+      morePopupAware.showMorePopup();
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(isTabListAvailable(e));
+    e.getPresentation().setIcon(AllIcons.Actions.FindAndShowNextMatches);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    boolean available = isTabListAvailable(e) || e.getPlace() == ActionPlaces.TABS_MORE_TOOLBAR;
+    e.getPresentation().setEnabledAndVisible(available);
   }
 
   private static boolean isTabListAvailable(@NotNull AnActionEvent e) {
-    JBTabsEx tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY);
-    if (tabs == null || !tabs.isEditorTabs()) {
-      return false;
-    }
-    return tabs.canShowMorePopup();
+    MorePopupAware morePopupAware = e.getData(MorePopupAware.KEY);
+    return morePopupAware != null && morePopupAware.canShowMorePopup();
   }
 }

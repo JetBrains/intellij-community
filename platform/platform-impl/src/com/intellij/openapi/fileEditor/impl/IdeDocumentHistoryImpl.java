@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -27,6 +27,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -39,20 +41,28 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.*;
 
-@State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "IdeDocumentHistory", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
 
@@ -62,7 +72,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final Project myProject;
 
   private FileDocumentManager myFileDocumentManager;
-  private FileEditorManagerEx myFileEditorManager;
 
   private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
@@ -81,11 +90,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
+  private final PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
 
-  public IdeDocumentHistoryImpl(@NotNull Project project, @NotNull FileEditorManagerEx fileEditorManager) {
+  private final List<String> myRecentlyChangedFiles = new ArrayList<>();
+
+  public IdeDocumentHistoryImpl(@NotNull Project project) {
     myProject = project;
-    myFileEditorManager = fileEditorManager;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -143,44 +153,102 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         }
       }
     };
-    //busConnection.subscribe(EditorEventListener.TOPIC, listener);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener, this);
     multicaster.addCaretListener(listener, this);
+
+    myRecentFilesTimestampsMap = initRecentFilesTimestampMap(project);
   }
 
-  @TestOnly
-  public void setFileEditorManager(@NotNull FileEditorManagerEx value) {
-    myFileEditorManager = value;
+  protected FileEditorManagerEx getFileEditorManager() {
+    return FileEditorManagerEx.getInstanceEx(myProject);
+  }
+
+  @NotNull
+  private PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
+    Path file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat");
+
+    PersistentHashMap<String, Long> map;
+    try {
+      map = IOUtil.openCleanOrResetBroken(() -> createMap(file), file);
+    }
+    catch (IOException e) {
+      LOG.error("Cannot create PersistentHashMap in " + file, e);
+      throw new RuntimeException(e);
+    }
+
+    Disposer.register(this, () -> {
+      try {
+        map.close();
+      }
+      catch (IOException e) {
+        LOG.info("Cannot close persistent viewed files timestamps hash map", e);
+      }
+    });
+    return map;
+  }
+
+  @NotNull
+  private static PersistentHashMap<String, Long> createMap(Path file) throws IOException {
+    return new PersistentHashMap<>(file,
+                                   EnumeratorStringDescriptor.INSTANCE,
+                                   EnumeratorLongDescriptor.INSTANCE,
+                                   256,
+                                   0,
+                                   new PagedFileStorage.StorageLockContext(true));
+  }
+
+  private void registerViewed(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    try {
+      myRecentFilesTimestampsMap.put(file.getPath(), System.currentTimeMillis());
+    }
+    catch (IOException e) {
+      LOG.info("Cannot put a timestamp from a persistent hash map", e);
+    }
+  }
+
+  public static void appendTimestamp(@NotNull Project project,
+                                     @NotNull SimpleColoredComponent component,
+                                     @NotNull VirtualFile file) {
+    if (!UISettings.getInstance().getShowInplaceComments()) {
+      return;
+    }
+
+    try {
+      Long timestamp = getInstance(project).getRecentFilesTimestamps().get(file.getPath());
+      if (timestamp != null) {
+        component.append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+      }
+    }
+    catch (IOException e) {
+      LOG.info("Cannot get a timestamp from a persistent hash map", e);
+    }
   }
 
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
     @SuppressWarnings("WeakerAccess") public List<String> CHANGED_PATHS = new ArrayList<>();
-
-    public void register(VirtualFile file) {
-      final String path = file.getPath();
-      CHANGED_PATHS.remove(path);
-      CHANGED_PATHS.add(path);
-      trimToSize();
-    }
-
-    private void trimToSize() {
-      final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-      while (CHANGED_PATHS.size() > limit) {
-        CHANGED_PATHS.remove(0);
-      }
-    }
   }
 
   @Override
   public RecentlyChangedFilesState getState() {
-    return myRecentlyChangedFiles;
+    synchronized (myRecentlyChangedFiles) {
+      RecentlyChangedFilesState state = new RecentlyChangedFilesState();
+      state.CHANGED_PATHS.addAll(myRecentlyChangedFiles);
+      return state;
+    }
   }
 
   @Override
   public void loadState(@NotNull RecentlyChangedFilesState state) {
-    myRecentlyChangedFiles = state;
+    synchronized (myRecentlyChangedFiles) {
+      myRecentlyChangedFiles.clear();
+      myRecentlyChangedFiles.addAll(state.CHANGED_PATHS);
+    }
   }
 
   public final void onSelectionChanged() {
@@ -215,7 +283,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
                              fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                              TextEditorProvider.getInstance().getEditorTypeId(),
                              null,
-                             getCaretPosition(fileEditor));
+                             getCaretPosition(fileEditor), System.currentTimeMillis());
       }
     }
     return null;
@@ -230,6 +298,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         if (!myRegisteredBackPlaceInLastGroup) {
           myRegisteredBackPlaceInLastGroup = true;
           putLastOrMerge(myCommandStartPlace, BACK_QUEUE_LIMIT, false);
+          registerViewed(myCommandStartPlace.myFile);
         }
         if (!myForwardInProgress) {
           myForwardPlaces.clear();
@@ -252,6 +321,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  public void setCurrentCommandHasMoves() {
+    myCurrentCommandHasMoves = true;
+  }
+
+  @Override
   public final void includeCurrentPlaceAsChangePlace() {
     setCurrentChangePlace(false);
   }
@@ -271,7 +345,15 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       return;
     }
 
-    myRecentlyChangedFiles.register(placeInfo.getFile());
+    int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
+    synchronized (myRecentlyChangedFiles) {
+      String path = placeInfo.getFile().getPath();
+      myRecentlyChangedFiles.remove(path);
+      myRecentlyChangedFiles.add(path);
+      while (myRecentlyChangedFiles.size() > limit) {
+        myRecentlyChangedFiles.remove(0);
+      }
+    }
 
     putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true);
     myCurrentIndex = myChangePlaces.size();
@@ -281,8 +363,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public VirtualFile[] getChangedFiles() {
     List<VirtualFile> files = new ArrayList<>();
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final List<String> paths = myRecentlyChangedFiles.CHANGED_PATHS;
+    List<String> paths;
+    synchronized (myRecentlyChangedFiles) {
+      paths = new ArrayList<>(myRecentlyChangedFiles);
+    }
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (String path : paths) {
       final VirtualFile file = lfs.findFileByPath(path);
       if (file != null) {
@@ -293,8 +378,15 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  public boolean isRecentlyChanged(@NotNull VirtualFile file) {
-    return myRecentlyChangedFiles.CHANGED_PATHS.contains(file.getPath());
+  @Override
+  public PersistentHashMap<String, Long> getRecentFilesTimestamps() {
+    return myRecentFilesTimestampsMap;
+  }
+
+  boolean isRecentlyChanged(@NotNull VirtualFile file) {
+    synchronized (myRecentlyChangedFiles) {
+      return myRecentlyChangedFiles.contains(file.getPath());
+    }
   }
 
   @Override
@@ -464,9 +556,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public void gotoPlaceInfo(@NotNull PlaceInfo info) {
-    final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+    gotoPlaceInfo(info, ToolWindowManager.getInstance(myProject).isEditorComponentActive());
+  }
+
+  @Override
+  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
     EditorWindow wnd = info.getWindow();
-    FileEditorManagerEx editorManager = myFileEditorManager;
+    FileEditorManagerEx editorManager = getFileEditorManager();
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
                                                                           ? editorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
                                                                           : editorManager.openFileWithProviders(info.getFile(), wasActive, false);
@@ -488,8 +584,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
    */
   @Nullable
   protected FileEditorWithProvider getSelectedEditor() {
-    FileEditorManagerEx editorManager = myFileEditorManager;
-    VirtualFile file = editorManager.getCurrentFile();
+    FileEditorManagerEx editorManager = getFileEditorManager();
+    VirtualFile file = editorManager != null ? editorManager.getCurrentFile() : null;
     return file == null ? null : editorManager.getSelectedEditorWithProvider(file);
   }
 
@@ -498,12 +594,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       return null;
     }
 
-    FileEditorManagerEx editorManager = myFileEditorManager;
+    FileEditorManagerEx editorManager = getFileEditorManager();
     final VirtualFile file = editorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor));
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor),
+                         System.currentTimeMillis());
   }
 
   @Nullable
@@ -551,6 +648,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
     @Nullable private final RangeMarker myCaretPosition;
+    private final long myTimeStamp;
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
@@ -562,6 +660,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       myEditorTypeId = editorTypeId;
       myWindow = new WeakReference<>(window);
       myCaretPosition = caretPosition;
+      myTimeStamp = -1;
+    }
+
+    public PlaceInfo(@NotNull VirtualFile file,
+                     @NotNull FileEditorState navigationState,
+                     @NotNull String editorTypeId,
+                     @Nullable EditorWindow window,
+                     @Nullable RangeMarker caretPosition,
+                     long stamp) {
+      myNavigationState = navigationState;
+      myFile = file;
+      myEditorTypeId = editorTypeId;
+      myWindow = new WeakReference<>(window);
+      myCaretPosition = caretPosition;
+      myTimeStamp = stamp;
     }
 
     public EditorWindow getWindow() {
@@ -591,6 +704,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     @Nullable
     public RangeMarker getCaretPosition() {
       return myCaretPosition;
+    }
+
+    public long getTimeStamp() {
+      return myTimeStamp;
     }
   }
 

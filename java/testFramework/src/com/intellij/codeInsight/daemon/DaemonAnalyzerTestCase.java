@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -18,10 +18,10 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -63,7 +63,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
+public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
 
   @Override
@@ -76,10 +76,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     daemonCodeAnalyzer.prepareForTest();
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
+    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
     startupManager.runStartupActivities();
-    startupManager.startCacheUpdate();
-    startupManager.runPostStartupActivities();
+    startupManager.runPostStartupActivitiesRegisteredDynamically();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {
@@ -88,7 +87,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
       LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE); // pile of annotator classes loads
-      LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);
+      LanguageAnnotators.INSTANCE.allForLanguage(XMLLanguage.INSTANCE);
       ProblemHighlightFilter.EP_NAME.getExtensions();
       ImplicitUsageProvider.EP_NAME.getExtensionList();
       XmlSchemaProvider.EP_NAME.getExtensionList();
@@ -102,7 +101,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-      final Project project = getProject();
+      Project project = getProject();
       if (project != null) {
         ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
@@ -114,14 +113,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     finally {
       super.tearDown();
     }
-    //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
-  protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
+  protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
@@ -179,7 +177,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
+  protected HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -197,12 +195,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     doTest(new VirtualFile[] { vFile }, checkWarnings, checkInfos );
   }
 
-  protected void doTest(@NotNull VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(VirtualFile @NotNull [] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFiles(null, vFile);
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doTest(boolean checkWarnings, boolean checkInfos, @NotNull String ... files) throws Exception {
+  protected void doTest(boolean checkWarnings, boolean checkInfos, String @NotNull ... files) throws Exception {
     configureByFiles(null, files);
     doDoTest(checkWarnings, checkInfos);
   }
@@ -344,13 +342,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      fail(String.format("Could not find action by name %s.\n" +
-                         "Actions: [%s]\n" +
-                         "HighlightInfos: [%s]", intentionActionName,
-                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                         StringUtil.join(infos, ", ")));
+      fail("Could not find action '" + intentionActionName+
+           "'.\nAvailable actions: [" +StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", ")+ "]\n" +
+           "HighlightInfos: [" +StringUtil.join(infos, ", ")+"]");
     }
-    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
   }
 
   @Nullable

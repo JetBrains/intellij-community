@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.lang.StdLanguages;
-import com.intellij.psi.JavaTokenType;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +29,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaStringContextType extends TemplateContextType {
   public JavaStringContextType() {
-    super("JAVA_STRING", "String", JavaCodeContextType.Generic.class);
+    super("JAVA_STRING", JavaPsiBundle.message("context.type.string"), JavaCodeContextType.Generic.class);
   }
 
   @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
+    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       return isStringLiteral(file.findElementAt(offset));
     }
     return false;
   }
 
   static boolean isStringLiteral(PsiElement element) {
-    return PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL);
+    return PsiUtil.isJavaToken(element, ElementType.STRING_LITERALS);
   }
 }

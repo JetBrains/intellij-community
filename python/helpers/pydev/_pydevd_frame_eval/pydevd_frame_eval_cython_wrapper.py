@@ -1,6 +1,8 @@
 try:
-    from _pydevd_frame_eval_ext.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
-        dummy_trace_dispatch
+    try:
+        from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
+    except ImportError:
+        from _pydevd_frame_eval import pydevd_frame_evaluator as mod
 
 except ImportError:
     try:
@@ -27,7 +29,15 @@ except ImportError:
         check_name = '_pydevd_frame_eval.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, dummy_trace_dispatch = \
-            mod.frame_eval_func, mod.stop_frame_eval, mod.enable_cache_frames_without_breaks, mod.dummy_trace_dispatch
     except ImportError:
         raise
+
+frame_eval_func = mod.frame_eval_func
+
+stop_frame_eval = mod.stop_frame_eval
+
+dummy_trace_dispatch = mod.dummy_trace_dispatch
+
+get_thread_info_py = mod.get_thread_info_py
+
+clear_thread_local_info = mod.clear_thread_local_info

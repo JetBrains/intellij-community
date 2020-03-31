@@ -16,22 +16,22 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel<String> {
-  private static final String[] MODIFIERS = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
-
-  private static final String[] PRESENTABLE_NAMES = {
-    VisibilityUtil.toPresentableText(PsiModifier.PRIVATE),
-    VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL),
-    VisibilityUtil.toPresentableText(PsiModifier.PROTECTED),
-    VisibilityUtil.toPresentableText(PsiModifier.PUBLIC)
-  };
+  public JavaComboBoxVisibilityPanel(List<AccessModifier> modifiers) {
+    super(ContainerUtil.map2Array(modifiers, String.class, AccessModifier::toPsiModifier), 
+          ContainerUtil.map2Array(modifiers, String.class, AccessModifier::toString));
+  }
 
   public JavaComboBoxVisibilityPanel() {
-    super(MODIFIERS, PRESENTABLE_NAMES);
+    this(AccessModifier.ALL_MODIFIERS);
   }
 }

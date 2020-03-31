@@ -31,7 +31,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 public class SvnMergeProvider implements MergeProvider {
 
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.SvnMergeProvider");
+  private static final Logger LOG = Logger.getInstance(SvnMergeProvider.class);
 
   public SvnMergeProvider(final Project project) {
     myProject = project;

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -33,7 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
+import static com.intellij.codeInsight.daemon.JavaErrorBundle.BUNDLE;
 
 public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
   public static final ExtensionPointName<ErrorFixExtensionPoint> ERROR_FIX_EXTENSION_POINT =
@@ -47,16 +48,16 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
 
   IntentionAction instantiate(PsiElement context) {
     try {
-      return findClass(implementationClass).asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
+      return findExtensionClass(implementationClass).asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
     }
     catch (InvocationTargetException e) {
       if(e.getCause() instanceof ProcessCanceledException) {
         throw ((ProcessCanceledException)e.getCause());
       }
-      throw new RuntimeException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e.getCause());
+      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e.getCause(), getPluginId());
     }
-    catch (InstantiationException | IllegalAccessException | NoSuchMethodException | ClassNotFoundException e) {
-      throw new RuntimeException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e);
+    catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e, getPluginId());
     }
   }
 

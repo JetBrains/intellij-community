@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
@@ -11,10 +10,19 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
-abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
-  @Throws(ExecutionException::class)
-  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    startRunProfile(environment, state, callback, runProfileStarter { resolvedPromise(doExecute(state, environment)) })
+abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
+  final override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, environment.callback, environment.state ?: return)
+  }
+
+  protected open fun execute(environment: ExecutionEnvironment, state: RunProfileState) {
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+      resolvedPromise(doExecute(state, environment))
+    }
+  }
+
+  protected open fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+    execute(environment, state)
   }
 
   @Throws(ExecutionException::class)
@@ -24,7 +32,6 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
   }
 
   @Deprecated("")
-  @Throws(ExecutionException::class)
   protected open fun doExecute(project: Project,
                                state: RunProfileState,
                                contentToReuse: RunContentDescriptor?,
@@ -33,23 +40,15 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
   }
 }
 
-abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
-  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    startRunProfile(environment, state, callback, runProfileStarter { execute(environment, state) })
+abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
+  @Throws(ExecutionException::class)
+  final override fun execute(environment: ExecutionEnvironment) {
+    val state = environment.state ?: return
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+      execute(environment, state)
+    }
   }
 
   @Throws(ExecutionException::class)
   protected abstract fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?>
-}
-
-internal inline fun runProfileStarter(crossinline starter: () -> Promise<RunContentDescriptor?>) = object : RunProfileStarter() {
-  override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment) = starter()
-}
-
-internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: RunProfileStarter?) {
-  ExecutionManager.getInstance(environment.project).startRunProfile(runProfileStarter {
-    (starter?.executeAsync(state, environment) ?: resolvedPromise())
-      .then { BaseProgramRunner.postProcess(environment, it, callback) }
-      // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
-  }, state, environment)
 }

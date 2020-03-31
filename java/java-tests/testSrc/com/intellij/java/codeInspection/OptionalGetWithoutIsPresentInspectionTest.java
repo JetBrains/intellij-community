@@ -2,19 +2,21 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.java18api.OptionalGetWithoutIsPresentInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class OptionalGetWithoutIsPresentInspectionTest extends LightCodeInsightFixtureTestCase {
+public class OptionalGetWithoutIsPresentInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/optionalGet";
   }
 
+  public void testAbstractEnum() { doTest(); }
+  public void testFinalInheritance() { doTest(); }
   public void testOptionalGet() { doTest(); }
+  public void testOptionalGetInlineLambda() { doTest(); }
 
   @NotNull
   @Override

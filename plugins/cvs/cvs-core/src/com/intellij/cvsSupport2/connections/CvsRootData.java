@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.openapi.util.Comparing;
+import java.util.Objects;
 
 /**
  * author: lesya
@@ -31,9 +32,9 @@ public class CvsRootData implements CvsSettings{
     CvsRootData other = (CvsRootData)object;
 
     return Comparing.equal(METHOD, other.METHOD)
-           && Comparing.equal(HOST, other.HOST)
-           && Comparing.equal(USER, other.USER)
-           && Comparing.equal(REPOSITORY, other.REPOSITORY)
+           && Objects.equals(HOST, other.HOST)
+           && Objects.equals(USER, other.USER)
+           && Objects.equals(REPOSITORY, other.REPOSITORY)
            && PORT == other.PORT;
   }
 

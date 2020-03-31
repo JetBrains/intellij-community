@@ -7,7 +7,9 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.FieldAccessor;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
 
@@ -17,7 +19,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public interface PopupComponent {
-  Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupComponent");
+  Logger LOG = Logger.getInstance(PopupComponent.class);
 
   void hide(boolean dispose);
 
@@ -102,7 +104,7 @@ public interface PopupComponent {
         throw new IllegalArgumentException("Popup owner must be showing, owner " + owner.getClass());
       }
 
-      final Window wnd = UIUtil.getWindow(owner);
+      final Window wnd = ComponentUtil.getWindow(owner);
       if (wnd instanceof Frame) {
         myDialog = new JDialog((Frame)wnd);
       } else if (wnd instanceof Dialog) {
@@ -200,7 +202,7 @@ public interface PopupComponent {
 
     private static void fixFlickering(Window wnd, boolean opaque) {
       try {
-        if (UIUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
+        if (StartupUiUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
           AWTUtilities.setWindowOpaque(wnd, opaque);
         }
       } catch (Exception ignore) {}

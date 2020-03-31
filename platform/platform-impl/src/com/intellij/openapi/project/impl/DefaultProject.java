@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
@@ -15,29 +18,28 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
+
+import java.util.List;
 
 /**
  * @author peter
  */
-final class DefaultProject extends UserDataHolderBase implements ProjectEx, ProjectStoreOwner {
+final class DefaultProject extends UserDataHolderBase implements Project, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
   private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
     @NotNull
     @Override
-    Project compute() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
+    ProjectEx compute() {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       return new ProjectImpl() {
-        @Override
-        protected void bootstrapPicoContainer(@NotNull String name) {
-        }
-
         @Override
         public boolean isDefault() {
           return true;
@@ -48,9 +50,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           return true; // no startup activities, never opened
         }
 
+        @Override
+        protected @NotNull ComponentManager getActualContainerInstance() {
+          return DefaultProject.this;
+        }
+
         @Nullable
         @Override
-        protected String activityNamePrefix() {
+        public String activityNamePrefix() {
           // exclude from measurement because default project initialization is not a sequential activity
           // (so, complicates timeline because not applicable)
           // for now we don't measure default project initialization at all, because it takes only ~10 ms
@@ -63,13 +70,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         }
 
         @Override
-        public void init() {
-          super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
-          MutablePicoContainer picoContainer = getPicoContainer();
+        public void init(@Nullable ProgressIndicator indicator) {
           // do not leak internal delegate, use DefaultProject everywhere instead
-          picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
+          registerServiceInstance(Project.class, DefaultProject.this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
-          init(PluginManagerCore.getLoadedPlugins(null), null, null);
+          //noinspection unchecked
+          registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
+          createComponents(null);
+          Disposer.register(DefaultProject.this, this);
         }
 
         @Override
@@ -88,12 +96,20 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         public int hashCode() {
           return DEFAULT_HASH_CODE;
         }
+
+        @NotNull
+        @Override
+        protected synchronized MessageBusImpl getOrCreateMessageBusUnderLock() {
+          MessageBusImpl messageBus = super.getOrCreateMessageBusUnderLock();
+          messageBus.setIgnoreParentLazyListeners(true);
+          return messageBus;
+        }
       };
     }
 
     @Override
     void init(Project project) {
-      ((ProjectImpl)project).init();
+      ((ProjectImpl)project).init(null);
     }
   };
   private static final int DEFAULT_HASH_CODE = 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
@@ -119,22 +135,12 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @NotNull
-  private Project getDelegate() {
+  private ProjectEx getDelegate() {
     return myDelegate.get();
   }
 
   public boolean isCached() {
     return myDelegate.isCached();
-  }
-
-  @Override
-  public void init() {
-
-  }
-
-  @Override
-  public void setProjectName(@NotNull String name) {
-    throw new IllegalStateException();
   }
 
   // delegates
@@ -202,10 +208,29 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  @Override
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+    return getDelegate().getComponentInstancesOfType(baseClass, createIfNotYet);
+  }
+
+  @Override
+  public <T> T getService(@NotNull Class<T> serviceClass) {
+    return getDelegate().getService(serviceClass);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return getDelegate().getServiceIfCreated(serviceClass);
   }
 
   @Override
@@ -214,26 +239,15 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
-    return getDelegate().getComponent(interfaceClass, defaultImplementationIfAbsent);
-  }
-
-  @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
-    return getDelegate().hasComponent(interfaceClass);
-  }
-
-  @Override
-  @NotNull
-  @Deprecated
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return getDelegate().getComponents(baseClass);
-  }
-
-  @Override
   @NotNull
   public PicoContainer getPicoContainer() {
     return getDelegate().getPicoContainer();
+  }
+
+  @NotNull
+  @Override
+  public ExtensionsArea getExtensionArea() {
+    return getDelegate().getExtensionArea();
   }
 
   @Override
@@ -245,13 +259,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   @Override
   public boolean isDisposed() {
     return ApplicationManager.getApplication().isDisposed();
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getDelegate().getExtensions(extensionPointName);
   }
 
   @Override

@@ -38,7 +38,7 @@ public abstract class AbstractSpellCheckerFixesTest extends SpellcheckerInspecti
   private void doChangeToTest(int toSelect) {
     myFixture.configureByFile(getBeforeFile());
     myFixture.enableInspections(SpellCheckingInspection.class);
-    final IntentionAction intention = myFixture.findSingleIntention(ChangeTo.FIX_NAME);
+    final IntentionAction intention = myFixture.findSingleIntention(ChangeTo.getFixName());
     assertNotNull("cannot find quick fix", intention);
     myFixture.launchAction(intention);
     selectLookupElement(toSelect);

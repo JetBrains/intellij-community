@@ -21,12 +21,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ConsoleDependentFilterProvider implements ConsoleFilterProvider {
-  @NotNull
-  public abstract Filter[] getDefaultFilters(@NotNull ConsoleView consoleView, @NotNull Project project, @NotNull GlobalSearchScope scope);
+  public abstract Filter @NotNull [] getDefaultFilters(@NotNull ConsoleView consoleView, @NotNull Project project, @NotNull GlobalSearchScope scope);
 
-  @NotNull
   @Override
-  public Filter[] getDefaultFilters(@NotNull Project project) {
+  public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
     return Filter.EMPTY_ARRAY;
   }
 }

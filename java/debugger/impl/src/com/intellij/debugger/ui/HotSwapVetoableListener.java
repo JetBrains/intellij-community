@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.debugger.ui;
 
-import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.task.ProjectTaskContext;
-import com.intellij.task.ProjectTaskResult;
+import com.intellij.task.impl.JpsBuildData;
+import com.intellij.task.impl.JpsProjectTaskRunner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,16 +18,22 @@ public interface HotSwapVetoableListener {
 
   /**
    * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
-   * @deprecated use {@link #shouldHotSwap(ProjectTaskContext, ProjectTaskResult)}
+   *
+   * @deprecated use {@link #shouldHotSwap(ProjectTaskContext)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
   default boolean shouldHotSwap(CompileContext finishedCompilationContext) { return true; }
 
   /**
    * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
    */
-  default boolean shouldHotSwap(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult finishedTasksResult) {
-    CompileContext compileContext = context.getUserData(CompileContextImpl.CONTEXT_KEY);
-    return shouldHotSwap(compileContext != null ? compileContext : DummyCompileContext.getInstance());
+  default boolean shouldHotSwap(@NotNull ProjectTaskContext context) {
+    CompileContext compileContext = DummyCompileContext.getInstance();
+    JpsBuildData jpsBuildData = context.getUserData(JpsProjectTaskRunner.JPS_BUILD_DATA_KEY);
+    if (jpsBuildData != null && jpsBuildData.getFinishedBuildsContexts().size() == 1) {
+      compileContext = jpsBuildData.getFinishedBuildsContexts().get(0);
+    }
+    return shouldHotSwap(compileContext);
   }
 }

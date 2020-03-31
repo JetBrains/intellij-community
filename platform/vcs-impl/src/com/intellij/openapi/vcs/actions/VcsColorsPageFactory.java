@@ -31,13 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
-  public static final String VCS_GROUP = ApplicationBundle.message("title.vcs");
-
   @Override
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
-    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, VCS_GROUP);
+    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getVcsGroup());
     final VcsPreviewPanel previewPanel = new VcsPreviewPanel();
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
@@ -48,18 +46,16 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
       }
     });
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, VCS_GROUP, null, null);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, getVcsGroup(), null, null);
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return new AttributesDescriptor[0];
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     List<ColorDescriptor> descriptors = new ArrayList<>();
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.added.lines"), EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
@@ -67,6 +63,9 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.deleted.lines"), EditorColors.DELETED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces.modified.lines"), EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.border.lines"), EditorColors.BORDER_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.added.lines"), EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.modified.lines"), EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.deleted.lines"), EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations"), EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND));
 
@@ -81,17 +80,21 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
   @NotNull
   @Override
   public String getPanelDisplayName() {
-    return VCS_GROUP;
+    return getVcsGroup();
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return VCS_GROUP;
+    return getVcsGroup();
   }
 
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.COMMON_SETTINGS;
+  }
+
+  public static String getVcsGroup() {
+    return ApplicationBundle.message("title.vcs");
   }
 }

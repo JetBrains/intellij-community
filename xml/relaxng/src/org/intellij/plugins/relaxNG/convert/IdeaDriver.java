@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.thaiopensource.relaxng.edit.SchemaCollection;
 import com.thaiopensource.relaxng.input.InputFailedException;
 import com.thaiopensource.relaxng.input.InputFormat;
@@ -40,6 +40,7 @@ import com.thaiopensource.relaxng.output.rng.RngOutputFormat;
 import com.thaiopensource.relaxng.output.xsd.XsdOutputFormat;
 import com.thaiopensource.relaxng.translate.util.InvalidParamsException;
 import com.thaiopensource.util.UriOrFile;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -102,9 +103,9 @@ public class IdeaDriver {
           for (int i = 0; i < inputFiles.length; i++) {
             uris[i] = UriOrFile.toUri(inputFiles[i].getPath());
           }
-          sc = format.load(uris, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
+          sc = format.load(uris, ArrayUtilRt.toStringArray(inputParams), outputType, errorHandler);
         } else {
-          sc = inFormat.load(uri, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
+          sc = inFormat.load(uri, ArrayUtilRt.toStringArray(inputParams), outputType, errorHandler);
         }
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, uri, -1, -1, e));
@@ -128,7 +129,7 @@ public class IdeaDriver {
                 outputFile,
                 "." + outputType,
                 settings.getOutputEncoding(),
-                length > 0 ? length : DEFAULT_LINE_LENGTH, 
+                length > 0 ? length : DEFAULT_LINE_LENGTH,
                 indent > 0 ? indent : DEFAULT_INDENT)
         {
           @Override
@@ -137,7 +138,7 @@ public class IdeaDriver {
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
               final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
-              final int choice = Messages.showYesNoDialog(myProject, msg, "Output File Exists", Messages.getWarningIcon());
+              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message("output.file.exists"), Messages.getWarningIcon());
               if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {
@@ -150,7 +151,7 @@ public class IdeaDriver {
 
         final OutputFormat of = getOutputFormat(settings.getOutputType());
 
-        of.output(sc, od, ArrayUtil.toStringArray(outputParams), StringUtil.toLowerCase(inputType.toString()), errorHandler);
+        of.output(sc, od, ArrayUtilRt.toStringArray(outputParams), StringUtil.toLowerCase(inputType.toString()), errorHandler);
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, UriOrFile.fileToUri(outputFile), -1, -1, e));
       }

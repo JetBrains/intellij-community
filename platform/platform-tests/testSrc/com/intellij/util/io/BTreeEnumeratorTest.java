@@ -1,139 +1,126 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
 import gnu.trove.THashMap;
-import junit.framework.TestCase;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class BTreeEnumeratorTest extends TestCase {
+import static org.junit.Assert.*;
+
+public class BTreeEnumeratorTest {
   private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
+
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
   private static final String UTF_1 = "\ue534";
-  private static final String UTF_2 =
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  private static final String UTF_2 = StringUtil.repeatSymbol('a', 624);
 
   static class TestStringEnumerator extends PersistentBTreeEnumerator<String> {
     TestStringEnumerator(File file) throws IOException {
-      super(file, new EnumeratorStringDescriptor(), 4096);
+      super(file.toPath(), new EnumeratorStringDescriptor(), 4096);
     }
   }
+
+  @Rule public TempDirectory tempDir = new TempDirectory();
+
   private TestStringEnumerator myEnumerator;
   private File myFile;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFile = FileUtil.createTempFile("persistent", "trie");
+  @Before
+  public void setUp() throws IOException {
+    myFile = tempDir.newFile("persistent-trie");
     myEnumerator = new TestStringEnumerator(myFile);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myEnumerator.close();
-      IOUtil.deleteAllFilesStartingWith(myFile);
-      assertTrue(!myFile.exists());
-    }
-    finally {
-      super.tearDown();
-      
-    }
+  @After
+  public void tearDown() throws IOException {
+    myEnumerator.close();
+    IOUtil.deleteAllFilesStartingWith(myFile);
+    assertFalse(myFile.exists());
   }
 
+  @Test
   public void testAddEqualStrings() throws IOException {
-    final int index = myEnumerator.enumerate("IntelliJ IDEA");
+    int index = myEnumerator.enumerate("IntelliJ IDEA");
     myEnumerator.enumerate("Just another string");
     assertEquals(index, myEnumerator.enumerate("IntelliJ IDEA"));
   }
 
+  @Test
   public void testAddEqualStringsAndMuchGarbage() throws IOException {
-    final Map<Integer,String> strings = new THashMap<>(10001);
+    Map<Integer, String> strings = new THashMap<>(10001);
     String s = "IntelliJ IDEA";
-    final int index = myEnumerator.enumerate(s);
+    int index = myEnumerator.enumerate(s);
     strings.put(index, s);
 
     // clear strings and nodes cache
     for (int i = 0; i < 10000; ++i) {
-      final String v = i + "Just another string";
-      final int idx = myEnumerator.enumerate(v);
+      String v = i + "Just another string";
+      int idx = myEnumerator.enumerate(v);
       assertEquals(v, myEnumerator.valueOf(idx));
       strings.put(idx, v);
     }
 
-    for(Map.Entry<Integer, String> e:strings.entrySet()) {
+    for (Map.Entry<Integer, String> e : strings.entrySet()) {
       assertEquals((int)e.getKey(), myEnumerator.enumerate(e.getValue()));
     }
 
-    final Set<String> enumerated = new HashSet<>(myEnumerator.getAllDataObjects(null));
+    Set<String> enumerated = new HashSet<>(myEnumerator.getAllDataObjects(null));
     assertEquals(new HashSet<>(strings.values()), enumerated);
   }
 
-  public void testCollision() throws Exception {
+  @Test
+  public void testCollision() throws IOException {
     int id1 = myEnumerator.enumerate(COLLISION_1);
     int id2 = myEnumerator.enumerate(COLLISION_2);
-    assertFalse(id1 == id2);
+    assertNotEquals(id1, id2);
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2),
+                 new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
-  public void testCollision1() throws Exception {
+  @Test
+  public void testCollision1() throws IOException {
     int id1 = myEnumerator.enumerate(COLLISION_1);
-    
+
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
-    
+
     int id2 = myEnumerator.enumerate(COLLISION_2);
-    assertFalse(id1 == id2);
+    assertNotEquals(id1, id2);
 
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(id2, myEnumerator.tryEnumerate(COLLISION_2));
     assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate("some string"));
-    
+
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
-
-  public void testUTFString() throws Exception {
+  @Test
+  public void testUTFString() throws IOException {
     int id1 = myEnumerator.enumerate(UTF_1);
     int id2 = myEnumerator.enumerate(UTF_2);
-    assertFalse(id1 == id2);
+    assertNotEquals(id1, id2);
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(UTF_1, UTF_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
+  @Test
   public void testOpeningClosing() throws IOException {
     ArrayList<String> strings = new ArrayList<>(2000);
     for (int i = 0; i < 2000; ++i) {
@@ -146,30 +133,55 @@ public class BTreeEnumeratorTest extends TestCase {
     }
     for (int i = 0; i < 2000; ++i) {
       myEnumerator.enumerate(strings.get(i));
-      assertTrue(!myEnumerator.isDirty());
+      assertFalse(myEnumerator.isDirty());
       myEnumerator.close();
       myEnumerator = new TestStringEnumerator(myFile);
     }
     for (int i = 0; i < 2000; ++i) {
-      assertTrue(!myEnumerator.isDirty());
+      assertFalse(myEnumerator.isDirty());
       myEnumerator.close();
       myEnumerator = new TestStringEnumerator(myFile);
     }
-    final HashSet<String> allStringsSet = new HashSet<>(strings);
+    HashSet<String> allStringsSet = new HashSet<>(strings);
     assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
 
-    final String additionalString = createRandomString();
+    String additionalString = createRandomString();
     allStringsSet.add(additionalString);
     myEnumerator.enumerate(additionalString);
     assertTrue(myEnumerator.isDirty());
     assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
+  @Test
+  public void testValueOfForUnExistedData() throws IOException {
+    assertNull(myEnumerator.valueOf(-10));
+    assertNull(myEnumerator.valueOf(0));
+
+    assertNull(myEnumerator.valueOf(1));
+    assertNull(myEnumerator.valueOf(1000));
+
+    String string = createRandomString();
+    int value = myEnumerator.enumerate(string);
+    assertNotEquals(1000, value);
+
+    assertNull(myEnumerator.valueOf(1000));
+    assertTrue(myEnumerator.isCorrupted());
+    assertEquals(string, myEnumerator.valueOf(value));
+
+    myEnumerator.force();
+
+    assertNull(myEnumerator.valueOf(1000));
+    assertEquals(string, myEnumerator.valueOf(value));
+
+    assertTrue(myEnumerator.isCorrupted());
+  }
+
+  @Test
   public void testPerformance() throws IOException {
-    final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    final IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
+    IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
+    IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
       @Override
-      public void objectRemoved(final int key, final Object value) {
+      public void objectRemoved(int key, Object value) {
         try {
           assertEquals(myEnumerator.enumerate((String)value), key);
         }
@@ -182,7 +194,7 @@ public class BTreeEnumeratorTest extends TestCase {
     PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
-        final String string = createRandomString();
+        String string = createRandomString();
         stringCache.cacheObject(myEnumerator.enumerate(string), string);
       }
       stringCache.removeDeletedPairsListener(listener);

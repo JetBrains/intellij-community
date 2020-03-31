@@ -1,24 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -26,12 +20,13 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
-import com.intellij.usages.impl.*;
+import com.intellij.usages.impl.GroupNode;
+import com.intellij.usages.impl.UsageAdapter;
+import com.intellij.usages.impl.UsageNode;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,23 +35,22 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 class ShowUsagesTable extends JBTable implements DataProvider {
-  static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
-  static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
+  final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
+  final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
+  final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
   private static final int MARGIN = 2;
 
-  ShowUsagesTable() {
+  private final ShowUsagesTableCellRenderer myRenderer;
+
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
+    myRenderer = renderer;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -96,13 +90,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  Runnable prepareTable(final Editor editor,
-                        @NotNull RelativePoint popupPosition,
-                        @NotNull FindUsagesHandler handler,
-                        final int maxUsages,
-                        @NotNull final FindUsagesOptions options,
-                        final boolean previewMode,
-                        @NotNull ShowUsagesAction action) {
+  Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable) {
     SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
@@ -117,10 +105,12 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     final AtomicReference<java.util.List<Object>> selectedUsages = new AtomicReference<>();
     final AtomicBoolean moreUsagesSelected = new AtomicBoolean();
     final AtomicBoolean outsideScopeUsagesSelected = new AtomicBoolean();
+    final AtomicReference<ShowUsagesAction.FilteredOutUsagesNode> filteredOutUsagesSelected = new AtomicReference<>();
     getSelectionModel().addListSelectionListener(e -> {
       selectedUsages.set(null);
       outsideScopeUsagesSelected.set(false);
       moreUsagesSelected.set(false);
+      filteredOutUsagesSelected.set(null);
       java.util.List<Object> usages = null;
 
       for (int i : getSelectedRows()) {
@@ -132,30 +122,35 @@ class ShowUsagesTable extends JBTable implements DataProvider {
             usages = null;
             break;
           }
-          else if (usage == MORE_USAGES_SEPARATOR) {
+          if (usage == MORE_USAGES_SEPARATOR) {
             moreUsagesSelected.set(true);
             usages = null;
             break;
           }
-          else {
-            if (usages == null) usages = new ArrayList<>();
-            usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
+          if (usage == USAGES_FILTERED_OUT_SEPARATOR) {
+            filteredOutUsagesSelected.set((ShowUsagesAction.FilteredOutUsagesNode)value);
+            usages = null;
+            break;
           }
+          if (usages == null) usages = new ArrayList<>();
+          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
         }
       }
 
       selectedUsages.set(usages);
     });
 
-    final Runnable itemChosenCallback = () -> {
+    return () -> {
       if (moreUsagesSelected.get()) {
-        action.appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
+        appendMoreUsageRunnable.run();
         return;
       }
-
       if (outsideScopeUsagesSelected.get()) {
-        options.searchScope = GlobalSearchScope.projectScope(handler.getProject());
-        action.showElementUsages(editor, popupPosition, handler, maxUsages, options, action.myWidth);
+        showInMaximalScopeRunnable.run();
+        return;
+      }
+      if (filteredOutUsagesSelected.get() != null) {
+        filteredOutUsagesSelected.get().onSelected();
         return;
       }
 
@@ -171,27 +166,6 @@ class ShowUsagesTable extends JBTable implements DataProvider {
         }
       }
     };
-
-    if (previewMode) {
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-      addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-    }
-
-    return itemChosenCallback;
   }
 
   @Nullable
@@ -214,10 +188,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  MyModel setTableModel(@NotNull UsageViewImpl usageView,
-                        @NotNull final List<UsageNode> data,
-                        @NotNull AtomicInteger outOfScopeUsages,
-                        @NotNull SearchScope searchScope) {
+  MyModel setTableModel(@NotNull final List<UsageNode> data) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final int columnCount = calcColumnCount(data);
     MyModel model = getModel() instanceof MyModel ? (MyModel)getModel() : null;
@@ -225,11 +196,10 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       model = new MyModel(data, columnCount);
       setModel(model);
 
-      ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);
       for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
         TableColumn column = getColumnModel().getColumn(i);
         column.setPreferredWidth(0);
-        column.setCellRenderer(renderer);
+        column.setCellRenderer(myRenderer);
       }
     }
     return model;
@@ -250,9 +220,8 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       return getTable().convertRowIndexToModel(viewIndex);
     }
 
-    @NotNull
     @Override
-    protected Object[] getAllElements() {
+    protected Object @NotNull [] getAllElements() {
       return ((MyModel)getTable().getModel()).getItems().toArray();
     }
 
@@ -262,7 +231,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       UsageNode node = (UsageNode)element;
       if (node instanceof ShowUsagesAction.StringNode) return "";
       Usage usage = node.getUsage();
-      if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
+      if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
       String groupText = group == null ? "" : group.getGroup().getText(null);
       return groupText + usage.getPresentation().getPlainText();
@@ -289,7 +258,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     }
 
     @NotNull
-    private static ColumnInfo[] cols(int cols) {
+    private static ColumnInfo<UsageNode, UsageNode>[] cols(int cols) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
         @Nullable
         @Override
@@ -298,7 +267,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
         }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
-      return list.toArray(ColumnInfo.EMPTY_ARRAY);
+      return list.toArray(ColumnInfo.emptyArray());
     }
 
     @Override

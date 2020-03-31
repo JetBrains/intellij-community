@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.remote;
 
 import com.intellij.openapi.module.Module;
@@ -22,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +38,9 @@ public final class NewFilesProcessor {
   public static String processNewFiles(@NotNull final Module module, @NotNull final String files) {
     final Sdk sdk = ModuleExtKt.getSdk(module);
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
-    final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
+    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
 
-    final String[] fileNames = ArrayUtil.toStringArray(StringUtil.split(files, ","));
+    final String[] fileNames = ArrayUtilRt.toStringArray(StringUtil.split(files, ","));
     if (fileNames.length == 0) {
       return "";
     }
@@ -82,13 +68,13 @@ public final class NewFilesProcessor {
   /**
    * @param localFileNames names of local files to add to VCS
    */
-  private static void addToVcsIfNeeded(@NotNull final Module module, @NotNull final String... localFileNames) {
+  private static void addToVcsIfNeeded(@NotNull final Module module, final String @NotNull ... localFileNames) {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     fs.refresh(false);
     final Project project = module.getProject();
     Arrays.stream(localFileNames).map(o -> fs.findFileByPath(o)).filter(o -> o != null).forEach(file -> {
 
-      final AbstractVcs<?> vcs = VcsUtil.getVcsFor(project, file);
+      final AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs == null) {
         return;
       }

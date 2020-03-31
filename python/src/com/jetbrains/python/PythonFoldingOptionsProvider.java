@@ -20,7 +20,7 @@ import com.intellij.openapi.options.BeanConfigurable;
 
 public class PythonFoldingOptionsProvider extends BeanConfigurable<PythonFoldingSettings> implements CodeFoldingOptionsProvider {
   protected PythonFoldingOptionsProvider(PythonFoldingSettings settings) {
-    super(settings);
+    super(settings, "Python");
     checkBox("Long string literals", settings::isCollapseLongStrings, v->settings.COLLAPSE_LONG_STRINGS=v);
     checkBox("Long collection literals", settings::isCollapseLongCollections, v->settings.COLLAPSE_LONG_COLLECTIONS=v);
     checkBox("Sequential comments", settings::isCollapseSequentialComments, v->settings.COLLAPSE_SEQUENTIAL_COMMENTS=v);

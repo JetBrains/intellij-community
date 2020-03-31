@@ -21,7 +21,7 @@ final class ShPostFormatProcessor implements PostFormatProcessor {
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (!(source instanceof ShFile)) return rangeToReformat;
-    TextRange range = ExternalFormatProcessor.formatRangeInFile(source, rangeToReformat, false);
+    TextRange range = ExternalFormatProcessor.formatRangeInFile(source, rangeToReformat, false, false);
     return range != null ? range : rangeToReformat;
   }
 }

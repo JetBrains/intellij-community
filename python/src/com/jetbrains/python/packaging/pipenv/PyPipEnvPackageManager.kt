@@ -11,10 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModule
 import com.jetbrains.python.sdk.baseDir
@@ -28,6 +25,12 @@ import com.jetbrains.python.sdk.pythonSdk
 class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   @Volatile
   private var packages: List<PyPackage>? = null
+
+  init {
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk) {
+      PythonSdkType.getInstance().setupSdkPaths(sdk)
+    }
+  }
 
   override fun installManagement() {}
 
@@ -83,6 +86,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
 
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
     if (alwaysRefresh || packages == null) {
+      packages = null
       val output = try {
         runPipEnv(sdk, "graph", "--json")
       }

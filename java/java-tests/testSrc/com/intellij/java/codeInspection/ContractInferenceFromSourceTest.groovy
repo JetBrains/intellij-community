@@ -22,7 +22,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull
  * @author peter
  */
 @CompileStatic
-class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
+class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test if null return null"() {
     def c = inferContract("""
@@ -704,6 +704,11 @@ static String test(String a, String b) {
 }
 """)
     assert c == ['_, null -> null', 'null, !null -> null']
+  }
+  
+  void "test primitive cast ignored"() {
+    def c = inferContracts("""static int test(long x) {return (int)x;}""")
+    assert c == []
   }
 
   private String inferContract(String method) {

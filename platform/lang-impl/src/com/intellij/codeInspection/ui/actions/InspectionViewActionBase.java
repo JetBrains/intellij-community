@@ -16,13 +16,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class InspectionViewActionBase extends AnAction {
-  public InspectionViewActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  public InspectionViewActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public InspectionViewActionBase(String name) {
+  public InspectionViewActionBase(@NotNull Supplier<String> name) {
     super(name);
   }
 

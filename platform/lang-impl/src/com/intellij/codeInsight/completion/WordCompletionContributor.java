@@ -42,15 +42,10 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-  @Override
-  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
-    if (context.getCompletionType() == CompletionType.BASIC && isWordCompletionDefinitelyEnabled(context.getFile())) {
-      context.setDummyIdentifier("");
-    }
-  }
 
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
-    return DumbService.isDumb(file.getProject()) || file instanceof PsiPlainTextFile;
+    return DumbService.isDumb(file.getProject()) ||
+           file instanceof PsiPlainTextFile && file.getViewProvider().getLanguages().size() == 1;
   }
 
   @Override
@@ -61,6 +56,10 @@ public class WordCompletionContributor extends CompletionContributor implements 
   }
 
   public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes) {
+    addWordCompletionVariants(result, parameters, excludes, false);
+  }
+
+  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes, boolean allowEmptyPrefix) {
     final Set<String> realExcludes = new HashSet<>(excludes);
     for (String exclude : excludes) {
       String[] words = exclude.split("[ .-]");
@@ -79,7 +78,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
-    });
+    }, allowEmptyPrefix);
 
     addValuesFromOtherStringLiterals(result, parameters, realExcludes, position);
   }
@@ -100,20 +99,23 @@ public class WordCompletionContributor extends CompletionContributor implements 
     if (manipulator == null) {
       return;
     }
-    int offset = manipulator.getRangeInElement(localString).getStartOffset();
+    int valueStart = manipulator.getRangeInElement(localString).getStartOffset() + localString.getTextRange().getStartOffset();
+    if (valueStart > parameters.getOffset()) {
+      return;
+    }
     PsiFile file = position.getContainingFile();
-    String prefix = file.getText().substring(offset + localString.getTextRange().getStartOffset(), parameters.getOffset());
+    String prefix = file.getViewProvider().getContents().subSequence(valueStart, parameters.getOffset()).toString();
     CompletionResultSet fullStringResult = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element == localString) {
           return;
         }
         if (pattern.accepts(element)) {
           element.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
-            public void visitElement(PsiElement each) {
+            public void visitElement(@NotNull PsiElement each) {
               String valueText = ElementManipulators.getValueText(each);
               if (StringUtil.isNotEmpty(valueText) && !realExcludes.contains(valueText)) {
                 final LookupElement item = LookupElementBuilder.create(valueText);
@@ -169,8 +171,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  private static void consumeAllWords(@NotNull PsiElement context, int offset, @NotNull Consumer<? super String> consumer) {
-    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
+  private static void consumeAllWords(@NotNull PsiElement context,
+                                      int offset,
+                                      @NotNull Consumer<? super String> consumer,
+                                      boolean allowEmptyPrefix) {
+    if (!allowEmptyPrefix && StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
     CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
     Set<CharSequence> words = new THashSet<>(chars.length()/8);
     IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {

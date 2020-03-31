@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,12 +51,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.in.loops.display.name");
-  }
 
   @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
   @NotNull
@@ -290,9 +283,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return element instanceof PsiVariable ? (PsiVariable)element : null;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     PsiExpression expression = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), PsiExpression.class);
     PsiVariable var = getAppendedVariable(expression);
     if (var == null) return InspectionGadgetsFix.EMPTY_ARRAY;
@@ -391,39 +383,36 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     PsiElement scope,
                     CommentTracker ct,
                     Predicate<? super PsiReferenceExpression> skip) {
-      Query<PsiReference> query =
-        scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
-      Collection<PsiReference> refs = query.findAll();
+      if (scope == null) {
+        scope = PsiUtil.getVariableCodeBlock(variable, null);
+      }
+      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, scope);
       if (myNullSafe) {
         fillNullables(variable, refs);
       }
-      for(PsiReference ref : refs) {
-        PsiElement target = ref.getElement();
-        if(target instanceof PsiReferenceExpression && target.isValid() && !skip.test((PsiReferenceExpression)target)) {
-          replace(variable, builderVariable, (PsiReferenceExpression)target, ct);
+      for(PsiReferenceExpression target : refs) {
+        if(target.isValid() && !skip.test(target)) {
+          replace(variable, builderVariable, target, ct);
         }
       }
     }
 
-    private void fillNullables(PsiVariable variable, Collection<PsiReference> refs) {
+    private void fillNullables(PsiVariable variable, Collection<PsiReferenceExpression> refs) {
       if (myNullables instanceof HashSet) return; // already filled
       myNullables = new HashSet<>();
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
         myNullables.add(initializer);
       }
-      for (PsiReference ref : refs) {
-        if (ref instanceof PsiExpression) {
-          PsiExpression refExpr = (PsiExpression)ref;
-          if (NullabilityUtil.getExpressionNullability(refExpr, true) != Nullability.NOT_NULL) {
-            myNullables.add(refExpr);
-          }
-          if(PsiUtil.isOnAssignmentLeftHand(refExpr)) {
-            PsiExpression rExpr =
-              ExpressionUtils.getAssignmentTo(PsiTreeUtil.getParentOfType(refExpr, PsiAssignmentExpression.class), variable);
-            if (rExpr != null && NullabilityUtil.getExpressionNullability(rExpr, true) != Nullability.NOT_NULL) {
-              myNullables.add(rExpr);
-            }
+      for (PsiReferenceExpression refExpr : refs) {
+        if (NullabilityUtil.getExpressionNullability(refExpr, true) != Nullability.NOT_NULL) {
+          myNullables.add(refExpr);
+        }
+        if(PsiUtil.isOnAssignmentLeftHand(refExpr)) {
+          PsiExpression rExpr =
+            ExpressionUtils.getAssignmentTo(PsiTreeUtil.getParentOfType(refExpr, PsiAssignmentExpression.class), variable);
+          if (rExpr != null && NullabilityUtil.getExpressionNullability(rExpr, true) != Nullability.NOT_NULL) {
+            myNullables.add(rExpr);
           }
         }
       }

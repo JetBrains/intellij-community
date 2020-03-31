@@ -18,10 +18,10 @@ package com.intellij.xml.util.documentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -29,14 +29,7 @@ import java.util.TreeSet;
  * @author Dennis.Ushakov
  */
 public class MimeTypeDictionary {
-  private static Set<String> ourContentTypes;
-
-  public static Collection<String> getContentTypes() {
-    if (ourContentTypes == null) {
-      ourContentTypes = loadContentTypes();
-    }
-    return ourContentTypes;
-  }
+  public static final String[] HTML_CONTENT_TYPES = ArrayUtilRt.toStringArray(loadContentTypes());
 
   private static Set<String> loadContentTypes() {
     final TreeSet<String> result = new TreeSet<>();

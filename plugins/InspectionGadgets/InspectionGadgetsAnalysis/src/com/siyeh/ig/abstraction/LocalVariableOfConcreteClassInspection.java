@@ -34,13 +34,6 @@ public class LocalVariableOfConcreteClassInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "local.variable.of.concrete.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... arg) {
     final PsiNamedElement variable = (PsiNamedElement)arg[0];
     final String name = variable.getName();

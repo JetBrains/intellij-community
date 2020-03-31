@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLBreadcrumbsTest extends BasePlatformTestCase {
   private final String COPY_ACTION = YAMLBundle.message("YAMLBreadcrumbsInfoProvider.copy.key.to.clipboard");
 
   @Override

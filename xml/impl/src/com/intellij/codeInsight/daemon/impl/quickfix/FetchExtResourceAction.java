@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -44,14 +44,15 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-/**
- * @author mike
- */
 public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
+  private static final Logger LOG = Logger.getInstance(FetchExtResourceAction.class);
   @NonNls private static final String HTML_MIME = "text/html";
   @NonNls private static final String HTTP_PROTOCOL = "http://";
   @NonNls private static final String HTTPS_PROTOCOL = "https://";
@@ -112,11 +113,23 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @Override
   @NotNull
   public Set<String> getRootsToWatch() {
-    final File path = new File(getExternalResourcesPath());
-    if (!path.exists() && !path.mkdirs()) {
-      LOG.warn("Unable to create: " + path);
+    String path = getExternalResourcesPath();
+    Path file = checkExists(path);
+    return Collections.singleton(file.toAbsolutePath().toString());
+  }
+
+  @NotNull
+  private static Path checkExists(String dir) {
+    Path path = Paths.get(dir);
+    if (!path.toFile().isDirectory()) {
+      try {
+        Files.createDirectories(path);
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to create: " + path, e);
+      }
     }
-    return Collections.singleton(path.getAbsolutePath());
+    return path;
   }
 
   static class FetchingResourceIOException extends IOException {
@@ -190,10 +203,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
 
-      VirtualFile virtualFile = findFileByPath(resPath, dtdUrl);
+      VirtualFile virtualFile = findFileByPath(resPath, dtdUrl, project);
 
       Set<String> processedLinks = new HashSet<>();
       Map<String, String> baseUrls = new HashMap<>();
+      Map<String, String> parentRefs = new HashMap<>();
       VirtualFile contextFile = virtualFile;
       Set<String> linksToProcess = new HashSet<>(extractEmbeddedFileReferences(virtualFile, null, psiManager, url));
 
@@ -212,11 +226,24 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           if (baseUrl == null) baseUrl = url;
 
           resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
+          try {
+            URL base = new URL(baseUrl);
+            resourceUrl = new URL(base, s).toString();
+          }
+          catch (MalformedURLException e) {
+            LOG.warn(e);
+          }
         }
 
         String refName = s;
         if (absoluteUrl) {
           refName = Integer.toHexString(s.hashCode()) + "_" + refName.substring(refName.lastIndexOf('/') + 1);
+        }
+        else if (!refName.startsWith("/")) {
+          String parentRef = parentRefs.get(refName);
+          if (parentRef != null && !parentRef.startsWith("/") && parentRef.contains("/")) {
+            refName = new File(new File(parentRef).getParent(), refName).getPath();
+          }
         }
         String resourcePath;
         try {
@@ -229,7 +256,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
         if (resourcePath == null) break;
 
-        virtualFile = findFileByPath(resourcePath, absoluteUrl ? s : null);
+        virtualFile = findFileByPath(resourcePath, absoluteUrl ? s : null, project);
         downloadedResources.add(resourcePath);
 
         if (absoluteUrl) {
@@ -239,6 +266,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         final Set<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager, resourceUrl);
         for (String u : newLinks) {
           baseUrls.put(u, resourceUrl);
+          parentRefs.put(u, refName);
           if (!processedLinks.contains(u)) linksToProcess.add(u);
         }
       }
@@ -252,12 +280,18 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
-  private static VirtualFile findFileByPath(final String resPath, @Nullable final String dtdUrl) {
+  private static VirtualFile findFileByPath(final String resPath,
+                                            @Nullable final String dtdUrl,
+                                            Project project) {
     final Ref<VirtualFile> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
       if (dtdUrl != null) {
         ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
+      }
+      else if (!project.isDisposed()){
+        ExternalResourceManager.getInstance().incModificationCount();
+        PsiManager.getInstance(project).dropPsiCaches();
       }
     }));
     return ref.get();
@@ -318,10 +352,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resPath += refname;
       int refNameSlashIndex = resPath.lastIndexOf('/');
       if (refNameSlashIndex != -1) {
-        final File parent = new File(resPath.substring(0, refNameSlashIndex));
-        if (!parent.mkdirs() || !parent.exists()) {
-          LOG.warn("Unable to create: " + parent);
-        }
+        checkExists(resPath.substring(0, refNameSlashIndex));
       }
     }
     else {

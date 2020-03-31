@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,12 +32,6 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[1]);
   }
@@ -47,13 +42,16 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
     PsiSwitchLabelStatementBase lbl = (PsiSwitchLabelStatementBase)infos[0];
     if (lbl instanceof PsiSwitchLabelStatement) {
       PsiElement lastDefaultStmt = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.getNextSiblingOfType(lbl, PsiSwitchLabelStatementBase.class));
-      if (!(lastDefaultStmt instanceof PsiBreakStatement)) {
+      if (!(lastDefaultStmt instanceof PsiBreakStatement || lastDefaultStmt instanceof PsiYieldStatement)) {
         return null;
       }
 
       PsiSwitchLabelStatementBase prevLbl = PsiTreeUtil.getPrevSiblingOfType(lbl, PsiSwitchLabelStatementBase.class);
-      if (prevLbl != null && !(PsiTreeUtil.skipWhitespacesAndCommentsBackward(lbl) instanceof PsiBreakStatement)) {
-        return null;
+      if (prevLbl != null) {
+        PsiElement prevStat = PsiTreeUtil.skipWhitespacesAndCommentsBackward(lbl);
+        if (!(prevStat instanceof PsiBreakStatement || prevStat instanceof PsiYieldStatement)) {
+          return null;
+        }
       }
     }
     return new InspectionGadgetsFix() {
@@ -78,7 +76,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Make 'default' the last case";
+        return JavaAnalysisBundle.message("make.default.the.last.case.family.name");
       }
     };
   }

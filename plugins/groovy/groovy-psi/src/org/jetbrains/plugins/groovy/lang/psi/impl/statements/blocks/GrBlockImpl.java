@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
@@ -101,7 +101,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
       controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
         try {
           ResolveProfiler.start();
-          final Instruction[] flow = new ControlFlowBuilder(getProject()).buildControlFlow(this);
+          final Instruction[] flow = new ControlFlowBuilder().buildControlFlow(this);
           return CachedValueProvider.Result.create(flow, getContainingFile(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
         finally {
@@ -111,7 +111,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
       }, false);
       controlFlow = putUserDataIfAbsent(CONTROL_FLOW, controlFlow);
     }
-    return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());
+    return controlFlow.getValue();
   }
 
   @Override
@@ -139,8 +139,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   @Override
-  @NotNull
-  public GrStatement[] getStatements() {
+  public GrStatement @NotNull [] getStatements() {
     return  PsiImplUtil.getStatements(this);
   }
 

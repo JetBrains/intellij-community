@@ -7,7 +7,7 @@ import com.intellij.codeInspection.java18api.OptionalGetWithoutIsPresentInspecti
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_8;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
 
 public class OptionalGetWithoutIsPresentInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
@@ -16,9 +16,8 @@ public class OptionalGetWithoutIsPresentInspectionFixTest extends LightQuickFixP
     return JAVA_8;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new OptionalGetWithoutIsPresentInspection()
     };

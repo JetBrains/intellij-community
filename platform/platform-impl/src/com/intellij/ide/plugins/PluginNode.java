@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 /**
  * @author stathik
  */
-public class PluginNode implements IdeaPluginDescriptor {
+public final class PluginNode implements IdeaPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -25,6 +26,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
+  private boolean licenseOptional;
   private String version;
   private String vendor;
   private String description;
@@ -109,6 +111,15 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void setReleaseVersion(int releaseVersion) {
     this.releaseVersion = releaseVersion;
+  }
+
+  @Override
+  public boolean isLicenseOptional() {
+    return licenseOptional;
+  }
+
+  public void setLicenseOptional(boolean optional) {
+    this.licenseOptional = optional;
   }
 
   @Override
@@ -239,7 +250,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
-  public void setDepends(@NotNull List<? extends PluginId> depends, @Nullable PluginId[] optionalDependencies) {
+  public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>(depends);
     myOptionalDependencies = optionalDependencies;
   }
@@ -263,7 +274,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   /**
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
-  @Nullable
   @Override
   public PluginId getPluginId() {
     return id;
@@ -282,14 +292,17 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @NotNull
-  public PluginId[] getDependentPluginIds() {
+  public Path getPluginPath() {
+    return null;
+  }
+
+  @Override
+  public PluginId @NotNull [] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
   }
 
@@ -301,43 +314,8 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getAndClearActionDescriptionElements() {
+  public List<Element> getActionDescriptionElements() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getAppComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getProjectComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getModuleComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public HelpSetPath[] getHelpSets() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @Nullable
-  public String getVendorLogoPath() {
-    return null;
-  }
-
-  @Override
-  public boolean getUseIdeaClassLoader() {
-    return false;
   }
 
   @Override
@@ -350,21 +328,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean isBundled() {
-    return false;
-  }
-
-  @Override
-  public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
-  public boolean isImplementationDetail() {
-    return false;
-  }
-
-  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
@@ -372,6 +335,11 @@ public class PluginNode implements IdeaPluginDescriptor {
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
+  }
+
+  @Override
+  public Disposable getPluginDisposable() {
+    throw new UnsupportedOperationException();
   }
 
   public String getDownloadUrl() {

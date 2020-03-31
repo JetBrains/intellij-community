@@ -154,8 +154,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
            getAliasedFullyQualifiedNames(this, shortName).contains(qualifiedName);
   }
 
-  @NotNull
-  public static TargetType[] getApplicableElementTypeFields(PsiElement owner) {
+  public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
     if (owner instanceof PsiClass) {
       PsiClass aClass = (PsiClass)owner;
       if (aClass.isAnnotationType()) {
@@ -197,11 +196,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     if (owner instanceof GrTypeElement) {
       return new TargetType[]{TargetType.TYPE_USE};
     }
+    if (owner instanceof GrCodeReferenceElement) {
+      return new TargetType[]{TargetType.TYPE_USE};
+    }
+
 
     return TargetType.EMPTY_ARRAY;
   }
 
-  public static boolean isAnnotationApplicableTo(GrAnnotation annotation, @NotNull TargetType... elementTypeFields) {
+  public static boolean isAnnotationApplicableTo(GrAnnotation annotation, TargetType @NotNull ... elementTypeFields) {
     return elementTypeFields.length == 0 || AnnotationTargetUtil.findAnnotationTarget(annotation, elementTypeFields) != null;
   }
 }

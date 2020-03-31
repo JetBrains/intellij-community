@@ -3,7 +3,7 @@ import java.awt.*;
 
 class Foo {
     void foo (){
-        ButtonWithExtension button = new ButtonWithExtension("", "", "", "");
+      ButtonWithExtension button = new ButtonWithExtension("", "", "", "");
     }
   
   private abstract class MyActionButton extends JComponent{

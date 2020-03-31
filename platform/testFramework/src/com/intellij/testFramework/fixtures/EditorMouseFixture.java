@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
@@ -54,7 +52,7 @@ public class EditorMouseFixture {
                                            myX = p.x,
                                            myY = p.y,
                                            clickCount,
-                                           false,
+                                           false, // Windows behaviour
                                            myButton));
     return this;
   }
@@ -72,7 +70,7 @@ public class EditorMouseFixture {
                                                  myX,
                                                  myY,
                                                  clickCount,
-                                                 false,
+                                                 myButton == MouseEvent.BUTTON3, // Windows behaviour
                                                  myButton));
     if (oldLastId == MouseEvent.MOUSE_PRESSED) {
       myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
@@ -82,11 +80,15 @@ public class EditorMouseFixture {
                                                    myX,
                                                    myY,
                                                    clickCount,
-                                                   false,
+                                                   false, // Windows behaviour
                                                    myButton));
     }
     myLastComponent = null;
     return this;
+  }
+
+  public EditorMouseFixture clickAtXY(int x, int y) {
+    return pressAtXY(x, y).release();
   }
 
   public EditorMouseFixture clickAt(int visualLine, int visualColumn) {
@@ -105,7 +107,7 @@ public class EditorMouseFixture {
     Point p = getPoint(visualLine, visualColumn);
     return moveToXY(p.x, p.y);
   }
-  
+
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {
     Point p = getPoint(visualLine, visualColumn);
     return dragToXY(p.x, p.y);

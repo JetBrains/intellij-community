@@ -103,7 +103,9 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testBadReference() { doTest(); }
   public void testMissingReturnDescription() { doTest(); }
   public void testDoubleParenthesesInCode() { doTest(); }
-  public void testDuplicateParam() { doTest(); }
+  public void testDuplicateParam0() { doTest(); }
+  public void testDuplicateParam1() { doTest(); }
+  public void testDuplicateParam2() { doTest(); }
   public void testDuplicateReturn() { doTest(); }
   public void testDuplicateDeprecated() { myInspection.IGNORE_DEPRECATED = false; doTest(); }
   public void testDuplicateSerial() { doTest(); }
@@ -127,7 +129,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       configureByFile(getTestName(false) + ".java");
       List<String> expected = ContainerUtil.newArrayList(
         "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
-      List<WebReference> refs = PlatformTestUtil.collectWebReferences(myFile);
+      List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
       assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
       assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
     }
@@ -143,7 +145,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       "http://docs.oracle.com/javase/7/docs/tech-notes/guides/lang/cl-mt.html",
       "https://youtrack.jetbrains.com/issue/IDEA-131621",
       "mailto:webmaster@jetbrains.com");
-    List<WebReference> refs = PlatformTestUtil.collectWebReferences(myFile);
+    List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
     assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
     assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
   }

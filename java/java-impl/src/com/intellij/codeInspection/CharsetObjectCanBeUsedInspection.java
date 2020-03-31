@@ -4,8 +4,11 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -83,12 +86,13 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitCallExpression(PsiCallExpression call) {
         CharsetMatch match = StreamEx.of(MATCHERS)
-          .map(matcher -> matcher.extractCharsetMatch(call))
+          .map(matcher -> matcher.extractCharsetMatch(languageLevel, call))
           .nonNull()
           .findFirst().orElse(null);
         if (match == null) return;
@@ -108,7 +112,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
         String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
-        holder.registerProblem(place, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
+        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", constantName),
                                new CharsetObjectCanBeUsedFix(constantName));
       }
 
@@ -137,10 +141,10 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
   abstract static class CharsetCallMatcher {
     @NotNull final String myClassName;
-    @NotNull final String[] myParameters;
+    final String @NotNull [] myParameters;
     final int myCharsetParameterIndex;
 
-    CharsetCallMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetCallMatcher(@NotNull String className, String @NotNull ... parameters) {
       myClassName = className;
       myParameters = parameters;
       int index = -1;
@@ -176,7 +180,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Nullable
-    final CharsetMatch createMatch(PsiMethod method, PsiExpressionList arguments) {
+    final CharsetMatch createMatch(LanguageLevel languageLevel, PsiMethod method, PsiExpressionList arguments) {
       PsiExpression argument = arguments.getExpressions()[myCharsetParameterIndex];
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return null;
@@ -184,42 +188,43 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       PsiMethod[] candidates = method.isConstructor() ? aClass.getConstructors() : aClass.findMethodsByName(method.getName(), false);
       PsiMethod charsetMethod = Arrays.stream(candidates)
         .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
+        .filter(psiMethod -> Java15APIUsageInspection.getLastIncompatibleLanguageLevel(psiMethod, languageLevel) == null)
         .findFirst().orElse(null);
       if (charsetMethod == null) return null;
       return new CharsetMatch(argument, method, charsetMethod);
     }
 
     @Nullable
-    abstract CharsetMatch extractCharsetMatch(PsiCallExpression call);
+    abstract CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call);
   }
 
   static class CharsetConstructorMatcher extends CharsetCallMatcher {
-    CharsetConstructorMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetConstructorMatcher(@NotNull String className, String @NotNull ... parameters) {
       super(className, parameters);
     }
 
     @Override
-    CharsetMatch extractCharsetMatch(PsiCallExpression call) {
+    CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call) {
       if (!(call instanceof PsiNewExpression)) return null;
       PsiNewExpression newExpression = (PsiNewExpression)call;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null || argumentList.getExpressionCount() != myParameters.length) return null;
       PsiMethod method = call.resolveMethod();
       if (!checkMethod(method, JAVA_LANG_STRING) || !method.isConstructor()) return null;
-      return createMatch(method, argumentList);
+      return createMatch(languageLevel, method, argumentList);
     }
   }
 
   static class CharsetMethodMatcher extends CharsetCallMatcher {
     @NotNull private final String myMethodName;
 
-    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, @NotNull String... parameters) {
+    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, String @NotNull ... parameters) {
       super(className, parameters);
       myMethodName = methodName;
     }
 
     @Override
-    CharsetMatch extractCharsetMatch(PsiCallExpression call) {
+    CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call) {
       if (!(call instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)call;
       if (!myMethodName.equals(methodCallExpression.getMethodExpression().getReferenceName())) return null;
@@ -227,7 +232,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       if (argumentList.getExpressionCount() != myParameters.length) return null;
       PsiMethod method = call.resolveMethod();
       if (!checkMethod(method, JAVA_LANG_STRING)) return null;
-      return createMatch(method, argumentList);
+      return createMatch(languageLevel, method, argumentList);
     }
   }
 
@@ -254,14 +259,14 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.family.name");
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.family.name");
     }
 
     @Override

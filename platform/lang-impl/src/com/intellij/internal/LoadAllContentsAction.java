@@ -37,14 +37,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class LoadAllContentsAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.LoadAllContentsAction");
+  LoadAllContentsAction() {
+    super(InternalActionsBundle.messagePointer("action.AnAction.text.load.all.files.content"),
+          InternalActionsBundle.messagePointer("action.AnAction.description.load.all.files.content"), null);
+  }
+  private static final Logger LOG = Logger.getInstance(LoadAllContentsAction.class);
 
   private final AtomicInteger count = new AtomicInteger();
   private final AtomicLong totalSize = new AtomicLong();
-
-  public LoadAllContentsAction() {
-    super("Load all files content", "Measure FileUtil.loadFile() for all files in the project", null);
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

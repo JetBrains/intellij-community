@@ -10,18 +10,19 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
+import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.easymock.IArgumentMatcher;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Set;
 
 import static org.easymock.EasyMock.*;
 
-public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
+public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCase {
   public void testTwoModules() throws Exception {
     configureDependency();
     PsiReference ref = configure();
@@ -75,11 +76,7 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
     assertNotNull(file);
     createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
-    DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
-      @Override
-      public void process(PsiElement place, PsiElement dependency) {
-      }
-    });
+    DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> { });
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
@@ -107,7 +104,7 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
   public void testNoSubpackagesAccess() throws Exception {
     PsiElementFinder mock = createMockFinder();
     ExtensionPointImpl<PsiElementFinder> point = (ExtensionPointImpl<PsiElementFinder>)PsiElementFinder.EP.getPoint(myProject);
-    point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable());
+    point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable(), false);
 
     PsiReference reference = configure();
     assertNull(reference.resolve());
@@ -118,7 +115,9 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
 
   private static PsiElementFinder createMockFinder() {
     Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", "getClasses");
-    Method[] methods = ContainerUtil.findAllAsArray(PsiElementFinder.class.getDeclaredMethods(), m -> !ignoredMethods.contains(m.getName()));
+    Method[] methods = ContainerUtil.findAllAsArray(
+      PsiElementFinder.class.getDeclaredMethods(),
+      m -> !ignoredMethods.contains(m.getName()) && !Modifier.isPrivate(m.getModifiers()) && !Modifier.isStatic(m.getModifiers()));
     PsiElementFinder mock = createMockBuilder(PsiElementFinder.class).addMockedMethods(methods).createMock();
     expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
     expect(mock.findPackage(eq("foo"))).andReturn(null);

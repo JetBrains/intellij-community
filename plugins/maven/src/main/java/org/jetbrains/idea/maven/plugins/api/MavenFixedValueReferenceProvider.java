@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.util.TextRange;
@@ -28,8 +29,7 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                @NotNull MavenDomConfiguration domCfg,
                                                @NotNull ProcessingContext context) {
-    ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    TextRange range = manipulator.getRangeInElement(element);
+    TextRange range = ElementManipulators.getValueTextRange(element);
 
     String text = range.substring(element.getText());
     Matcher matcher = MavenPropertyResolver.PATTERN.matcher(text);
@@ -53,9 +53,8 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
           return null;
         }
 
-        @NotNull
         @Override
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           return myValues;
         }
       }

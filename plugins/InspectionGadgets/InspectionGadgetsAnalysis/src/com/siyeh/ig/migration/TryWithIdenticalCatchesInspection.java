@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,13 +60,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return InspectionGadgetsBundle.message("try.with.identical.catches.problem.descriptor", type.getPresentableText());
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("try.with.identical.catches.display.name");
   }
 
   @Override
@@ -110,9 +103,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       registerProblems(sections, emptyIndices, problems, true);
     }
 
-    private void registerProblems(@NotNull CatchSectionWrapper[] sections,
-                                  @Nullable CatchSectionIndices[] sectionIndices,
-                                  @NotNull boolean[] problems,
+    private void registerProblems(CatchSectionWrapper @NotNull [] sections,
+                                  CatchSectionIndices @Nullable [] sectionIndices,
+                                  boolean @NotNull [] problems,
                                   boolean empty) {
       if (sectionIndices == null) return;
 
@@ -127,7 +120,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       }
     }
 
-    private void registerProblem(@NotNull CatchSectionWrapper[] sections, int at, int collapseIntoIndex, boolean empty) {
+    private void registerProblem(CatchSectionWrapper @NotNull [] sections, int at, int collapseIntoIndex, boolean empty) {
       final PsiCatchSection section = sections[at].myCatchSection;
       final PsiJavaToken rParenth = section.getRParenth();
       if (rParenth != null) {
@@ -138,10 +131,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  static CatchSectionIndices[] getCatchSectionIndices(@NotNull CatchSectionWrapper[] sections,
-                                                      @NotNull boolean[][] canSwap,
-                                                      @NotNull BiPredicate<? super CatchSectionWrapper, ? super CatchSectionWrapper> equals) {
+  static CatchSectionIndices @Nullable [] getCatchSectionIndices(CatchSectionWrapper @NotNull [] sections,
+                                                                 boolean[] @NotNull [] canSwap,
+                                                                 @NotNull BiPredicate<? super CatchSectionWrapper, ? super CatchSectionWrapper> equals) {
     final CatchSectionIndices[] indices = new CatchSectionIndices[sections.length];
     for (int index = 0; index < sections.length; index++) {
       indices[index] = new CatchSectionIndices(index);
@@ -181,7 +173,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     return indices;
   }
 
-  private static boolean[][] collectCanSwap(@NotNull CatchSectionWrapper[] sections) {
+  private static boolean[][] collectCanSwap(CatchSectionWrapper @NotNull [] sections) {
     final boolean[][] canSwap = new boolean[sections.length][sections.length];
     for (int from = 0; from < sections.length; from++) {
       for (int to = from + 1; to < sections.length; to++) {
@@ -215,7 +207,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       duplicate.myHasDuplicate = true;
     }
 
-    void computeInsertionRange(@NotNull boolean[][] canSwap) {
+    void computeInsertionRange(boolean[] @NotNull [] canSwap) {
       boolean[] canSwapWith = canSwap[myIndex];
 
       for (int before = myIndex; ; before--) {
@@ -301,8 +293,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       return true;
     }
 
-    @Nullable
-    static CatchSectionWrapper[] createWrappers(@NotNull PsiTryStatement statement) {
+    static CatchSectionWrapper @Nullable [] createWrappers(@NotNull PsiTryStatement statement) {
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       if (catchSections.length < 2) {
         return null;
@@ -324,7 +315,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final PsiCodeBlock codeBlock = catchSection.getCatchBlock();
       if (parameter != null && codeBlock != null) {
         final List<PsiClassType> types = getClassTypes(parameter.getType());
-        if (types != null) {
+        if (types != null && HighlightControlFlowUtil.isEffectivelyFinal(parameter, codeBlock, null)) {
           final DuplicatesFinder finder = buildDuplicatesFinder(codeBlock, parameter);
           return new CatchSectionWrapper(catchSection, codeBlock, parameter, types, finder);
         }
@@ -352,7 +343,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     @NotNull
     private static DuplicatesFinder buildDuplicatesFinder(@NotNull PsiCodeBlock catchBlock, @NotNull PsiParameter parameter) {
       final InputVariables inputVariables =
-        new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false);
+        new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false, Collections.emptySet());
       return new DuplicatesFinder(new PsiElement[]{catchBlock}, inputVariables, null, Collections.emptyList());
     }
   }
@@ -495,7 +486,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       tracker.deleteAndRestoreComments(duplicateSection.myCatchSection);
     }
 
-    private static int getSectionIndex(@NotNull CatchSectionWrapper[] sections, @NotNull PsiElement catchSection) {
+    private static int getSectionIndex(CatchSectionWrapper @NotNull [] sections, @NotNull PsiElement catchSection) {
       for (int i = 0; i < sections.length; i++) {
         if (sections[i].myCatchSection == catchSection) {
           return i;

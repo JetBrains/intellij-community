@@ -80,7 +80,7 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
           expect("master", "master"));
   }
 
-  private void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {
+  private void check(Collection<? extends VcsRef> unsorted, List<? extends VcsRef> expected) {
     // for the sake of simplicity we check only names of references
     List<VcsRef> actual = sort(unsorted);
     assertEquals("Collections size don't match", expected.size(), actual.size());
@@ -90,7 +90,7 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
   }
 
   @NotNull
-  private List<VcsRef> sort(@NotNull final Collection<VcsRef> refs) {
+  private List<VcsRef> sort(@NotNull final Collection<? extends VcsRef> refs) {
     return ContainerUtil.sorted(refs, new GitRefManager(myProject, repositoryManager).getLabelsOrderComparator());
   }
 }

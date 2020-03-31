@@ -15,8 +15,7 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.util.NameUtilMatchingTest.assertDoesntMatch;
-import static com.intellij.psi.util.NameUtilMatchingTest.assertMatches;
+import static com.intellij.psi.util.NameUtilMatchingTest.*;
 
 /**
  * @author peter
@@ -71,4 +70,44 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
         "<html> <body> <H2> <FONT SIZE=\"-1\"> com.sshtools.cipher</FONT> <BR> Class AES128Cbc</H2> <PRE> java.lang.Object   <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.cipher.SshCipher       <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.crypto.engines.CbcBlockCipher           <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\"><B>com.sshtools.cipher.AES128Cbc</B> </PRE> <HR> <DL> <DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>  <P> This cipher can optionally be added to the J2SSH Maverick API. To add  the ciphers from this package simply add them to the <A HREF=\"../../../com/maverick/ssh2/Ssh2Context.html\" title=\"class in com.maverick.ssh2\"><CODE>Ssh2Context</CODE></A>  <blockquote><pre>   import com.sshtools.cipher.*;   </pre></blockquote> <P>  <P> <DL> <DT><B>Version:</B></DT>   <DD>Revision: 1.20</DD> </DL> <HR> </body> </html>";
       assertDoesntMatch(pattern, html);
     }).assertTiming();
-  }}
+  }
+
+  public void testMatchingLongStringWithAnotherLongStringWhereOnlyEndsDiffer() {
+    String pattern = "*Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nThen";
+    String name =     "Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nTh' is sent into the abyss";
+    assertDoesntMatchFast(pattern, name);
+
+    pattern = "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersions";
+    name =    "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersion_TemplateVersionCode";
+    assertDoesntMatchFast(pattern, name);
+
+    pattern = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bold";
+    name    = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bolid";
+    assertDoesntMatchFast(pattern, name);
+  }
+
+  private void assertDoesntMatchFast(String pattern, String name) {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> assertDoesntMatch(pattern, name)).assertTiming();
+  }
+
+  public void testMatchingLongRuby() {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
+      String pattern = "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end";
+      String name    = "# -*- coding: utf-8 -*-$:.unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App.setup do |app|  # Use `rake config' to see complete project settings.  app.sdk_version = '4.3'  app.frameworks -= ['UIKit']end";
+      assertDoesntMatch(pattern, name);
+    }).assertTiming();
+  }
+
+  public void testLongStringMatchingWithItself() {
+    String s =
+      "the class with its attributes mapped to fields of records parsed by an {@link AbstractParser} or written by an {@link AbstractWriter}.";
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
+      assertMatches(s, s);
+      assertMatches("*" + s, s);
+
+      assertPreference(s, s.substring(0, 10), s);
+      assertPreference("*" + s, s.substring(0, 10), s);
+    }).assertTiming();
+  }
+
+}

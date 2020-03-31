@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.ResolveState
@@ -23,7 +24,7 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
   }
 
   protected val myCandidates = SmartList<GroovyMethodResult>()
-  private var myApplicable: ApplicabilitiesResult? = null
+  private var myApplicable: ApplicabilitiesResult<GroovyMethodResult>? = null
   val acceptMore: Boolean get() = myApplicable?.first.isNullOrEmpty()
 
   final override fun execute(element: PsiElement, state: ResolveState): Boolean {
@@ -32,8 +33,11 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
       return false
     }
     if (element !is PsiMethod) {
-      if (state[sorryCannotKnowElementKind] != true) {
-        log.error("Unexpected element. ${elementInfo(element)}")
+      if (state[sorryCannotKnowElementKind] != true && Registry.`is`("groovy.assert.element.kind.in.resolve")) {
+        log.error(
+          "Unexpected element. " + elementInfo(element) + "\n" +
+          "See org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor docs."
+        )
       }
       return true
     }
@@ -57,7 +61,7 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
   private fun computeApplicableCandidates(): Pair<List<GroovyMethodResult>, Boolean> {
     return myCandidates
       .correctStaticScope()
-      .findApplicable()
+      .filterApplicable(GroovyMethodResult::getApplicability)
   }
 
   val applicableCandidates: List<GroovyMethodResult>?

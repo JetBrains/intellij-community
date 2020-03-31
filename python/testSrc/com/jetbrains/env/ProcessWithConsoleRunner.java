@@ -117,4 +117,11 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
   protected boolean shouldRunAgain() {
     return false;
   }
+
+  /**
+   * @param code exit code. Runner may check it
+   */
+  public void assertExitCodeIsCorrect(int code) {
+
+  }
 }

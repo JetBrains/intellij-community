@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
           return;
         }
       }
-      myProblemsHolder.registerProblem(operand, "Expected <code>#ref</code> never thrown in body of '" + method.getName() + "()' #loc");
+      myProblemsHolder.registerProblem(operand, TestngBundle.message("inspection.testng.expected.exception.never.thrown.problem", method.getName()));
     }
   }
 }

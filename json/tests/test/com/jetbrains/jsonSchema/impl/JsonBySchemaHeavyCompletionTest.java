@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -132,22 +133,22 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
       complete();
       assertStringItems("\"preserve\"", "\"react\"", "\"react-native\"");
 
-      final PsiFile schema = myFile.getParent().findFile("Schema.json");
+      final PsiFile schema = myFixture.getFile().getParent().findFile("Schema.json");
       final int idx = schema.getText().indexOf("react-native");
       Assert.assertTrue(idx > 0);
       PsiElement element = schema.findElementAt(idx);
       element = element instanceof JsonStringLiteral ? element : PsiTreeUtil.getParentOfType(element, JsonStringLiteral.class);
+      Assert.assertNotNull(element);
       Assert.assertTrue(element instanceof JsonStringLiteral);
 
-      final PsiFile dummy = PsiFileFactory.getInstance(myProject).createFileFromText("test.json", JsonFileType.INSTANCE,
+      final PsiFile dummy = PsiFileFactory.getInstance(getProject()).createFileFromText("test.json", JsonFileType.INSTANCE,
                                                                                     "{\"a\": \"completelyChanged\"}");
       Assert.assertTrue(dummy instanceof JsonFile);
       final JsonValue top = ((JsonFile)dummy).getTopLevelValue();
       final JsonValue newLiteral = ((JsonObject)top).findProperty("a").getValue();
 
       PsiElement finalElement = element;
-      WriteAction.run(() -> finalElement.replace(newLiteral));
-
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> WriteAction.run(() -> finalElement.replace(newLiteral)));
       complete();
       assertStringItems("\"completelyChanged\"", "\"preserve\"", "\"react\"");
     });

@@ -24,14 +24,15 @@
 
 package com.intellij.openapi.vcs.changes.ignore.reference;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
+import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
@@ -44,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -99,6 +99,16 @@ public class IgnoreReferenceSet extends FileReferenceSet {
     PsiFile containingFile = getElement().getContainingFile();
     PsiDirectory containingDirectory =
       containingFile.getParent() != null ? containingFile.getParent() : containingFile.getOriginalFile().getContainingDirectory();
+    if (containingDirectory == null) {
+      Language language = containingFile.getLanguage();
+      if (language instanceof IgnoreLanguage) {
+        VirtualFile affectedRoot =
+          ((IgnoreLanguage)language).getAffectedRoot(containingFile.getProject(), containingFile.getOriginalFile().getVirtualFile());
+        if (affectedRoot != null) {
+          containingDirectory = containingFile.getManager().findDirectory(affectedRoot);
+        }
+      }
+    }
     return containingDirectory != null ? Collections.singletonList(containingDirectory) :
            super.computeDefaultContexts();
   }
@@ -106,11 +116,17 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   @Override
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
     return item -> {
-      VirtualFile ignoreFile = getElement().getContainingFile().getOriginalFile().getVirtualFile();
-      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(item.getProject(), ignoreFile);
+      Project project = item.getProject();
+      PsiFile originalFile = getElement().getContainingFile().getOriginalFile();
+      VirtualFile ignoreFile = originalFile.getVirtualFile();
+      Language language = originalFile.getLanguage();
+      if (!(language instanceof IgnoreLanguage)) return false;
+
+      VirtualFile ignoreFileAffectedRoot = ((IgnoreLanguage)language).getAffectedRoot(project, ignoreFile);
+      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileAffectedRoot);
       if (ignoreFileVcsRoot == null) return false;
 
-      return isFileUnderSameVcsRoot(item.getProject(), ignoreFileVcsRoot, item.getVirtualFile());
+      return isFileUnderSameVcsRoot(project, ignoreFileVcsRoot, item.getVirtualFile());
     };
   }
 
@@ -191,6 +207,26 @@ public class IgnoreReferenceSet extends FileReferenceSet {
     myReferences = referencesList.toArray(FileReference.EMPTY);
   }
 
+  @Override
+  protected String getNewAbsolutePath(@NotNull PsiFileSystemItem root, @NotNull String relativePath) {
+    PsiFile ignoreFile = getContainingFile();
+    VirtualFile rootVF = root.getVirtualFile();
+    if (rootVF != null &&
+        ignoreFile != null &&
+        ignoreFile.getVirtualFile() != null &&
+        ignoreFile.getVirtualFile().getParent() != null &&
+        !rootVF.equals(ignoreFile.getVirtualFile().getParent())) {
+      VirtualFile relativeFile = rootVF.findFileByRelativePath(relativePath);
+      if (relativeFile != null) {
+        String relativeToIgnoreFileParent = VfsUtilCore.getRelativePath(relativeFile, ignoreFile.getVirtualFile().getParent());
+        if (relativeToIgnoreFileParent != null) {
+          return absoluteUrlNeedsStartSlash() ? "/" + relativeToIgnoreFileParent : relativeToIgnoreFileParent;
+        }
+      }
+    }
+    return super.getNewAbsolutePath(root, relativePath);
+  }
+
   /**
    * Custom definition of {@link FileReference}.
    */
@@ -218,17 +254,14 @@ public class IgnoreReferenceSet extends FileReferenceSet {
       if (!(containingFile instanceof IgnoreFile)) {
         return;
       }
-      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(context.getProject(), containingFile.getVirtualFile());
+      VirtualFile ignoreFileAffectedRoot =
+        ((IgnoreLanguage)containingFile.getLanguage()).getAffectedRoot(context.getProject(), containingFile.getVirtualFile());
+      if (ignoreFileAffectedRoot == null) return;
+
+      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(context.getProject(), ignoreFileAffectedRoot);
       if (ignoreFileVcsRoot == null) return;
 
-      VirtualFile contextVirtualFile;
-      @SystemIndependent String basePath = getElement().getProject().getBasePath();
-      if (basePath != null && FileUtil.isAncestor(basePath, containingFile.getVirtualFile().getPath(), false)) {
-        contextVirtualFile = context.getVirtualFile();
-      }
-      else {
-        return;
-      }
+      VirtualFile contextVirtualFile = context.getVirtualFile();
 
       if (contextVirtualFile != null) {
         IgnoreEntry entry = (IgnoreEntry)getFileReferenceSet().getElement();
@@ -239,8 +272,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
           VirtualFile root = parent != null ? parent.getVirtualFile() : null;
           PsiManager psiManager = getElement().getManager();
 
-          List<VirtualFile> files = new ArrayList<>();
-          files.addAll(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
+          List<VirtualFile> files = new ArrayList<>(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
           if (files.isEmpty()) {
             files.addAll(ContainerUtil.filter(
               context.getVirtualFile().getChildren(),
@@ -254,7 +286,10 @@ public class IgnoreReferenceSet extends FileReferenceSet {
               continue;
             }
 
-            String name = (root != null) ? VfsUtilCore.getRelativePath(file, root) : file.getName();
+            String relativeToIgnoreFileVcsRoot = VfsUtilCore.getRelativePath(file, ignoreFileVcsRoot);
+            String name = root != null
+                          ? VfsUtilCore.getRelativePath(file, root)
+                          : relativeToIgnoreFileVcsRoot != null ? relativeToIgnoreFileVcsRoot : file.getName();
             if (RegexUtil.match(pattern, name)) {
               PsiFileSystemItem psiFileSystemItem = getPsiFileSystemItem(psiManager, file);
               if (psiFileSystemItem == null) {

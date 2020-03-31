@@ -60,6 +60,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     community.`diverge feature and master`()
     contrib.`place feature on master`()
 
+    refresh()
+    updateChangeListManager()
+
     rebase("master")
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
@@ -130,6 +133,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     community.`prepare simple conflict`()
     contrib.`diverge feature and master`()
 
+    refresh()
+    updateChangeListManager()
+
     var facedConflictInUltimate = false
     var facedConflictInCommunity = false
     vcsHelper.onMerge {
@@ -174,6 +180,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     community.`prepare simple conflict`()
     contrib.`diverge feature and master`()
 
+    refresh()
+    updateChangeListManager()
+
     `do nothing on merge`()
     rebase("master")
     GitRebaseUtils.continueRebase(project)
@@ -186,6 +195,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     ultimate.`diverge feature and master`()
     community.`prepare simple conflict`()
     contrib.`diverge feature and master`()
+
+    refresh()
+    updateChangeListManager()
 
     `do nothing on merge`()
     rebase("master")
@@ -207,6 +219,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       it.git("checkout master")
     }
     git.setShouldRebaseFail { it == contrib }
+
+    refresh()
+    updateChangeListManager()
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
@@ -239,6 +254,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     allRepositories.forEach { it.`diverge feature and master`() }
     localChange?.generate()
 
+    refresh()
+    updateChangeListManager()
+
     git.setShouldRebaseFail { it == contrib }
     try {
       rebase("master")
@@ -254,6 +272,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     ultimate.`diverge feature and master`()
     localChange?.generate()
 
+    refresh()
+    updateChangeListManager()
+
     try {
       rebase("master")
     }
@@ -263,7 +284,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun rebase(onto: String) {
-    GitTestingRebaseProcess(project, GitRebaseParams(onto), allRepositories).rebase()
+    GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, onto), allRepositories).rebase()
   }
 
   private fun abortOngoingRebase() {

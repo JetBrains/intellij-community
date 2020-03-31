@@ -6,10 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
@@ -27,10 +24,11 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -48,10 +46,11 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
+
 /**
  * @author peter
  */
-class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
+class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
       class Foo {
@@ -470,7 +469,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, LookupImpl.FocusDegree focusDegree, int indexDown, int indexUp) {
+  void testArrows(String toType, LookupFocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -483,7 +482,7 @@ class Foo {
 
       type toType
       assert lookup
-      lookup.focusDegree = focusDegree
+      lookup.lookupFocusDegree = focusDegree
 
       edt { myFixture.performEditorAction(action) }
       if (lookup) {
@@ -503,11 +502,11 @@ class Foo {
 
   void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 2
+    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
 
     UISettings.instance.cycleScrolling = false
     try {
-      testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
+      testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
     }
     finally {
       UISettings.instance.cycleScrolling = true
@@ -519,11 +518,11 @@ class Foo {
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
-    testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
+    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
 
     UISettings.instance.cycleScrolling = false
     try {
-      testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
+      testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
       UISettings.instance.cycleScrolling = true
@@ -640,7 +639,9 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    CompletionContributor.EP.getPoint(null).registerExtension(new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name), order, parentDisposable)
+    def extension = new CompletionContributorEP(language: 'any', implementationClass: contributor.name)
+    extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
+    CompletionContributor.EP.getPoint(null).registerExtension(extension, order, parentDisposable)
   }
 
   void testLeftRightMovements() {
@@ -767,7 +768,7 @@ public interface Test {
 
     Editor another = null
     Runnable wca = { WriteCommandAction.writeCommandAction(getProject()).run ({
-        EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
+      TypedAction.instance.handler.execute(another, (char) 'x', DataManager.instance.dataContext)
     } as ThrowableRunnable) }
 
     try {
@@ -1428,7 +1429,7 @@ class Foo {{
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
     LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
-    assert p.tailText == ' ( = 2) (foo)'
+    assert p.tailText == ' ( = 2) foo'
     assert p.typeText == 'int'
 
     type 'fo\n'
@@ -1709,7 +1710,7 @@ class Cls {
     myFixture.configureByText "a.properties", "myprop=ja<caret>"
     type 'v'
     myFixture.assertPreferredCompletionItems 0, 'java'
-    lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
+    lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
     type '.'
     myFixture.checkResult 'myprop=java.<caret>'
     assert lookup

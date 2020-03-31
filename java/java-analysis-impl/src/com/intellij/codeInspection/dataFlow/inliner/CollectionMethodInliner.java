@@ -3,7 +3,10 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -23,20 +26,25 @@ public class CollectionMethodInliner implements CallInliner {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return false;
     if (CLEAR.matches(call)) {
-      inlineClear(builder, qualifier);
-      return true;
+      return inlineClear(builder, qualifier, call);
     }
     return false;
   }
 
-  private static void inlineClear(@NotNull CFGBuilder builder, @NotNull PsiExpression qualifier) {
+  private static boolean inlineClear(@NotNull CFGBuilder builder,
+                                     @NotNull PsiExpression qualifier,
+                                     @NotNull PsiMethodCallExpression call) {
     DfaValueFactory factory = builder.getFactory();
-    builder
-      .pushExpression(qualifier)
-      .unwrap(SpecialField.COLLECTION_SIZE)
-      .push(factory.getInt(0))
-      .assign()
-      .pop()
-      .pushUnknown();
+    DfaValue qualifierVar = factory.createValue(qualifier);
+    if (qualifierVar instanceof DfaVariableValue) {
+      builder.pushExpression(qualifier)
+        .call(call)
+        .push(SpecialField.COLLECTION_SIZE.createValue(factory, qualifierVar))
+        .push(DfTypes.intValue(0))
+        .assign()
+        .pop();
+      return true;
+    }
+    return false;
   }
 }

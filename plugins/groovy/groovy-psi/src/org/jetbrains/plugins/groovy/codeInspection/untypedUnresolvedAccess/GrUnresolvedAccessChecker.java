@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,9 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,7 +19,6 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -29,21 +31,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
-
-  private static final LightCacheKey<Map<String, Boolean>> GROOVY_OBJECT_METHODS_CACHE = new LightCacheKey<Map<String, Boolean>>() {
-    @Override
-    protected long getModificationCount(PsiElement holder) {
-      return holder.getManager().getModificationTracker().getModificationCount();
-    }
-  };
 
   static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
     PsiType qualifierType = PsiImplUtil.getQualifierType(ref);
@@ -90,11 +84,9 @@ public class GrUnresolvedAccessChecker {
   private static boolean checkContainer(@NotNull final PsiMethod patternMethod, @NotNull PsiElement container) {
     final String name = patternMethod.getName();
 
-    Map<String, Boolean> cached = GROOVY_OBJECT_METHODS_CACHE.getCachedValue(container);
-    if (cached == null) {
-      GROOVY_OBJECT_METHODS_CACHE.putCachedValue(container, cached = ContainerUtil.newConcurrentMap());
-    }
-
+    Map<String, Boolean> cached = CachedValuesManager.getCachedValue(container, () -> Result.create(
+      ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT
+    ));
     Boolean cachedResult = cached.get(name);
     if (cachedResult != null) {
       return cachedResult.booleanValue();
@@ -171,23 +163,6 @@ public class GrUnresolvedAccessChecker {
     LOG.assertTrue(resolved instanceof PsiModifierListOwner, resolved + " : " + resolved.getText());
 
     return ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  @NotNull
-  static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
-    GroovyResolveResult[] results = ref.multiResolve(false);
-    if (results.length == 0) return EmptyGroovyResolveResult.INSTANCE;
-    if (results.length == 1) return results[0];
-
-    for (GroovyResolveResult result : results) {
-      if (result.isAccessible() && result.isStaticsOK()) return result;
-    }
-
-    for (GroovyResolveResult result : results) {
-      if (result.isStaticsOK()) return result;
-    }
-
-    return results[0];
   }
 
   static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {

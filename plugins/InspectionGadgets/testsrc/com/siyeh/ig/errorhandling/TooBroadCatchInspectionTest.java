@@ -1,10 +1,10 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class TooBroadCatchInspectionTest extends LightInspectionTestCase {
+public class TooBroadCatchInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTooBroadCatchBlock() {
     doTest();

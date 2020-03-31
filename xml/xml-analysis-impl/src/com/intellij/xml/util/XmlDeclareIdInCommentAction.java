@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Commenter;
@@ -30,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("declare.id.in.comment.quickfix");
+    return XmlAnalysisBundle.message("declare.id.in.comment.quickfix");
   }
 
   @Nullable

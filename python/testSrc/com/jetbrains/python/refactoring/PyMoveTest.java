@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -31,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -441,6 +443,13 @@ public class PyMoveTest extends PyTestCase {
     });
   }
 
+  // PY-23968
+  public void testUpdatingNamesInFromImportsRespectsOrder() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMoveSymbolTest("func", "dst.py");
+  }
+
   private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {
     final String root = "/refactoring/move/" + getTestName(true);
     final String rootBefore = root + "/before/src";
@@ -482,7 +491,7 @@ public class PyMoveTest extends PyTestCase {
     doComparingDirectories(testDir -> moveSymbols(testDir, toFileName, symbolNames));
   }
 
-  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, @NotNull String... symbolNames) {
+  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, String @NotNull ... symbolNames) {
     final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, name -> {
       final PsiNamedElement found = findFirstNamedElement(name);
       assertNotNull("Symbol '" + name + "' does not exist", found);
@@ -502,18 +511,25 @@ public class PyMoveTest extends PyTestCase {
   @Nullable
   private PsiNamedElement findFirstNamedElement(String name) {
     final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
+    final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, scope);
     if (classes.size() > 0) {
       return classes.iterator().next();
     }
-    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project);
+    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project, scope);
     if (functions.size() > 0) {
       return functions.iterator().next();
     }
-    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, ProjectScope.getAllScope(project));
+    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, scope);
     if (targets.size() > 0) {
       return targets.iterator().next();
     }
     return null;
+  }
+
+  @NotNull
+  private PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,9 +36,8 @@ import java.util.List;
  * and use {@link #orderEntries(Project)} to process dependencies of all modules in a project.</p>
  *
  * <p>Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.</p>
- *
- * @author nik
  */
+@ApiStatus.NonExtendable
 public abstract class OrderEnumerator {
   /**
    * Skip test dependencies
@@ -89,13 +89,11 @@ public abstract class OrderEnumerator {
     return withoutDepModules().withoutLibraries().withoutModuleSourceEntries();
   }
 
-  @NotNull
-  public VirtualFile[] getAllLibrariesAndSdkClassesRoots() {
+  public VirtualFile @NotNull [] getAllLibrariesAndSdkClassesRoots() {
     return withoutModuleSourceEntries().withoutDepModules().recursively().exportedOnly().classes().usingCache().getRoots();
   }
 
-  @NotNull
-  public VirtualFile[] getAllSourceRoots() {
+  public VirtualFile @NotNull [] getAllSourceRoots() {
     return recursively().exportedOnly().sources().usingCache().getRoots();
   }
 
@@ -173,16 +171,14 @@ public abstract class OrderEnumerator {
   /**
    * @return classes roots for all entries processed by this enumerator
    */
-  @NotNull
-  public VirtualFile[] getClassesRoots() {
+  public VirtualFile @NotNull [] getClassesRoots() {
     return classes().getRoots();
   }
 
   /**
    * @return source roots for all entries processed by this enumerator
    */
-  @NotNull
-  public VirtualFile[] getSourceRoots() {
+  public VirtualFile @NotNull [] getSourceRoots() {
     return sources().getRoots();
   }
 

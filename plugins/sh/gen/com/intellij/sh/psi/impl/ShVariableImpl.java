@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.psi.PsiReference;
 
 public class ShVariableImpl extends ShLiteralImpl implements ShVariable {
 
@@ -29,6 +30,11 @@ public class ShVariableImpl extends ShLiteralImpl implements ShVariable {
   @NotNull
   public PsiElement getVar() {
     return findNotNullChildByType(VAR);
+  }
+
+  @Override
+  public PsiReference[] getReferences() {
+    return ShPsiImplUtil.getReferences(this);
   }
 
 }

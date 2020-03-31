@@ -4,4 +4,4 @@ class X {
   def foo3(Object... a) {this}
 }
 
-new X().foo1 1, 2, 3 fo<ref>o2 "name" foo3()
+new X().foo1 1, 2, 3 fo<caret>o2 "name" foo3()

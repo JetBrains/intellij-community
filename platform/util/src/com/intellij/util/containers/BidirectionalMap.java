@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +37,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
       if (array.isEmpty()) myValueToKeysMap.remove(oldValue);
     }
 
-    List<K> array = myValueToKeysMap.get(value);
-    if (array == null){
-      array = new ArrayList<>();
-      myValueToKeysMap.put(value, array);
-    }
+    List<K> array = myValueToKeysMap.computeIfAbsent(value, __ -> new SmartList<>());
     array.add(key);
     return oldValue;
   }
@@ -78,7 +75,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   }                                                               
 
   @Override
-  @SuppressWarnings({"SuspiciousMethodCalls"})
+  @SuppressWarnings("SuspiciousMethodCalls")
   public boolean containsValue(Object value){
     return myValueToKeysMap.containsKey(value);
   }
@@ -98,7 +95,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   }
 
   @Override
-  @SuppressWarnings({"SuspiciousMethodCalls"})
+  @SuppressWarnings("SuspiciousMethodCalls")
   public V remove(Object key){
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);
@@ -111,8 +108,8 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t){
-    for (final K k1 : t.keySet()) {
-      put(k1, t.get(k1));
+    for (final Entry<? extends K, ? extends V> entry : t.entrySet()) {
+      put(entry.getKey(), entry.getValue());
     }
   }
 

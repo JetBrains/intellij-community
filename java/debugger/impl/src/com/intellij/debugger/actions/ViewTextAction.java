@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
@@ -59,7 +60,7 @@ public class ViewTextAction extends XFetchValueActionBase {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (getStringNode(e) != null) {
-      e.getPresentation().setText(ActionsBundle.message("action.Debugger.ViewEditText.text"));
+      e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ViewEditText.text"));
     }
   }
 
@@ -93,8 +94,8 @@ public class ViewTextAction extends XFetchValueActionBase {
       super(project, false);
       myStringNode = stringNode;
       setModal(false);
-      setCancelButtonText("Close");
-      setOKButtonText("Set");
+      setCancelButtonText(CommonBundle.message("button.without.mnemonic.close"));
+      setOKButtonText(CommonBundle.message("button.set"));
       getOKAction().setEnabled(false);
       setCrossClosesWindow(true);
 
@@ -126,8 +127,7 @@ public class ViewTextAction extends XFetchValueActionBase {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return myStringNode != null ? new Action[]{getOKAction(), getCancelAction()} : new Action[]{getCancelAction()};
     }
 

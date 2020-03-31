@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -35,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 /**
  * @author ven
@@ -74,7 +62,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
       }
     }
     PsiClassType stringType = PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject()));
-    final ParameterInfoImpl[] newParameters = {new ParameterInfoImpl(-1, "param", stringType)};
+    final ParameterInfoImpl[] newParameters = {ParameterInfoImpl.createNew().withName("param").withType(stringType)};
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(newParameters, new ThrownExceptionInfo[0], methods, null, method));
   }
 
@@ -96,7 +84,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
      exceptionPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
   }
 
-  private static HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
+  private HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
     final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
     final PsiReference[] references =
       MethodReferencesSearch.search(method, GlobalSearchScope.allScope(getProject()), true).toArray(PsiReference.EMPTY_ARRAY);
@@ -144,7 +132,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   }
 
   private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods, final PsiType paramType) {
-    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", paramType, "null")};
+    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("clazz").withType(paramType).withDefaultValue("null")};
     doTest(newParameters, new ThrownExceptionInfo[0], psiMethods, null, method);
   }
 
@@ -180,7 +168,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   private PsiMethod getPrimaryMethod() {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     return (PsiMethod) targetElement;
   }
@@ -193,7 +181,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     ParameterInfoImpl[] result = new ParameterInfoImpl[parameters.length + newParameters.length];
     for (int i = 0; i < parameters.length; i++) {
-      result[i] = new ParameterInfoImpl(i);
+      result[i] = ParameterInfoImpl.create(i);
     }
     System.arraycopy(newParameters, 0, result, parameters.length, newParameters.length);
     return result;

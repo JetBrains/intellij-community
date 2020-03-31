@@ -5,6 +5,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
@@ -42,6 +43,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -59,7 +61,7 @@ import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceList
 
 public class JavaCompletionUtil {
   public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
+  private static final Logger LOG = Logger.getInstance(JavaCompletionUtil.class);
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   private static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
@@ -143,7 +145,7 @@ public class JavaCompletionUtil {
       private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
 
       @Override
-      public PsiType visitClassType(final PsiClassType classType) {
+      public PsiType visitClassType(@NotNull final PsiClassType classType) {
         if (!myVisited.add(classType)) return classType;
 
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
@@ -166,7 +168,7 @@ public class JavaCompletionUtil {
 
 
       @Override
-      public PsiType visitType(PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         return type;
       }
     }.mapType(type);
@@ -418,7 +420,7 @@ public class JavaCompletionUtil {
         if (ref != null) {
           final PsiElement qualifier = ref.getQualifier();
           if (qualifier != null) {
-            final CommonCodeStyleSettings settings = context.getCodeStyleSettings();
+            final CommonCodeStyleSettings settings = CompletionStyleUtil.getCodeStyleSettings(context);
 
             final String parenSpace = settings.SPACE_WITHIN_PARENTHESES ? " " : "";
             document.insertString(qualifier.getTextRange().getEndOffset(), parenSpace + ")");
@@ -552,6 +554,10 @@ public class JavaCompletionUtil {
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        return Collections.singleton(new JavaMethodReferenceElement((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
+      }
+
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
       item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
@@ -631,6 +637,16 @@ public class JavaCompletionUtil {
       return endOffset;
     }
 
+    if (reference != null && !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = psiClass.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(reference.getElement(), null);
+        if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, psiClass, false)) {
+          return endOffset;
+        }
+      }
+    }
+    
     assert document != null;
     document.replaceString(startOffset, endOffset, name);
 
@@ -723,13 +739,13 @@ public class JavaCompletionUtil {
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
-    insertParentheses(context, item, overloadsMatter, hasParams, false);
+    insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false);
   }
 
   public static void insertParentheses(@NotNull InsertionContext context,
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
-                                       boolean hasParams,
+                                       ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
                                        final boolean forceClosingParenthesis) {
     final Editor editor = context.getEditor();
     final char completionChar = context.getCompletionChar();
@@ -746,24 +762,25 @@ public class JavaCompletionUtil {
     }
 
     if (hasTail) {
-      hasParams = false;
+      hasParams = ThreeState.NO;
     }
     final boolean needRightParenth = forceClosingParenthesis ||
                                      !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET ||
-                                                !hasParams && completionChar != '(');
+                                                hasParams == ThreeState.NO && completionChar != '(');
 
     context.commitDocument();
 
-    final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
+    final CommonCodeStyleSettings styleSettings = CompletionStyleUtil.getCodeStyleSettings(context);
     final PsiElement elementAt = file.findElementAt(context.getStartOffset());
     if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
-      final boolean hasParameters = hasParams;
-      final boolean spaceBetweenParentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams;
+      ThreeState hasParameters = hasParams;
+      boolean spaceBetweenParentheses = hasParams == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||
+                                        hasParams == ThreeState.UNSURE && styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES;
       new ParenthesesInsertHandler<LookupElement>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
                                                   needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
         @Override
         protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
-          return hasParameters;
+          return hasParameters != ThreeState.NO;
         }
 
         @Override
@@ -779,7 +796,7 @@ public class JavaCompletionUtil {
       }.handleInsert(context, item);
     }
 
-    if (hasParams) {
+    if (hasParams != ThreeState.NO) {
       // Invoke parameters popup
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
@@ -866,7 +883,7 @@ public class JavaCompletionUtil {
   }
 
   public static boolean isSourceLevelAccessible(PsiElement context, PsiClass psiClass, final boolean pkgContext) {
-    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, null)) {
+    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass.getContainingClass())) {
       return false;
     }
 

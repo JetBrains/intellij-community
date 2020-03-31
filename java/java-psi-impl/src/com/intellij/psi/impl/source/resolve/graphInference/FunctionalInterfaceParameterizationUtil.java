@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -187,7 +188,7 @@ public class FunctionalInterfaceParameterizationUtil {
         if (paramType instanceof PsiWildcardType) {
           final PsiType bound = ((PsiWildcardType)paramType).getBound();
           for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
-            if (PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+            if (PsiTypesUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
               newParameters[i] = bound;
               continue next;
             }

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -18,7 +17,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager.getInstance;
 
@@ -72,12 +72,12 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     final IRootContainer root = FormEditingUtil.getRoot(component);
     final String className = root.getClassToBind();
     if (className == null) {
-      return ArrayUtil.toStringArray(result);
+      return ArrayUtilRt.toStringArray(result);
     }
 
     final PsiClass aClass = FormEditingUtil.findClassToBind(component.getModule(), className);
     if (aClass == null) {
-      return ArrayUtil.toStringArray(result);
+      return ArrayUtilRt.toStringArray(result);
     }
 
     final PsiField[] fields = aClass.getFields();
@@ -89,7 +89,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
       final String fieldName = field.getName();
 
-      if (Comparing.equal(currentName, fieldName)) {
+      if (Objects.equals(currentName, fieldName)) {
         continue;
       }
 
@@ -133,7 +133,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       }
     }
 
-    final String[] names = ArrayUtil.toStringArray(result);
+    final String[] names = ArrayUtilRt.toStringArray(result);
     Arrays.sort(names);
     return names;
   }

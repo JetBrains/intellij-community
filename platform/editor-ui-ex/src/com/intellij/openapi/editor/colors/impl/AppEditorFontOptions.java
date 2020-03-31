@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -14,15 +15,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@State(name = "DefaultFont", storages = @Storage("editor.xml"))
+@State(name = "DefaultFont", storages = @Storage("editor.xml"), reportStatistic = true)
 public class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
-    myFontPreferences.register(
-      FontPreferences.DEFAULT_FONT_NAME,
-      UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+      myFontPreferences.register(
+        FontPreferences.DEFAULT_FONT_NAME,
+        UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+    }
   }
 
   public static class PersistentFontPreferences {

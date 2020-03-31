@@ -1,23 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
 public interface Crumb {
   default Icon getIcon() { return null; }
 
   default String getText() { return toString(); }
 
+  /**
+   * @return synchronously calculated tooltip text
+   */
+  @Nullable
   default String getTooltip() { return null; }
 
   /**

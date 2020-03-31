@@ -43,9 +43,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     myManager = manager;
   }
 
-  @NotNull
   @Override
-  protected Object[] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
+  protected Object @NotNull [] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
     Object[] dependencies = super.normalizeDependencies(result);
     if (dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange)) {
       return ArrayUtil.prepend(PSI_MOD_COUNT_OPTIMIZATION, dependencies);
@@ -72,7 +71,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     // injected files are physical but can sometimes (look at you, completion)
     // be inexplicably injected into non-physical element, in which case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myManager.getProject());
-    if (manager == null) return false; // tests
     PsiFile topLevelFile = manager.getTopLevelFile(dependency);
     return topLevelFile != null && topLevelFile.isPhysical();
   }

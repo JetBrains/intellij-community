@@ -132,11 +132,11 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       ContentRevision rightRevision = rightChange.getBeforeRevision();
 
       String leftTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, leftRevision,
-                                          ChangeDiffRequestProducer.YOUR_VERSION);
+                                          ChangeDiffRequestProducer.getYourVersion());
       String centerTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE, centerRevision,
-                                            ChangeDiffRequestProducer.MERGED_VERSION);
+                                            ChangeDiffRequestProducer.getMergedVersion());
       String rightTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE, rightRevision,
-                                           ChangeDiffRequestProducer.SERVER_VERSION);
+                                           ChangeDiffRequestProducer.getServerVersion());
 
       if (leftRevision == null) {
         return createTwoSideRequest(project, centerRevision, rightRevision, requestTitle, centerTitle, rightTitle, context, indicator);

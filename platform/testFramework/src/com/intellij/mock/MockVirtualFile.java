@@ -2,7 +2,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -158,10 +158,9 @@ public class MockVirtualFile extends VirtualFile {
     myModStamp = modStamp;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() {
-    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(StandardCharsets.UTF_8);
+  public byte @NotNull [] contentsToByteArray() {
+    return myText == null ? ArrayUtilRt.EMPTY_BYTE_ARRAY : myText.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

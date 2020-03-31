@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaHomeFinder;
@@ -19,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +42,10 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated use {@link SdkPopupFactory} instead
+ */
+@Deprecated
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;
@@ -85,7 +89,7 @@ public class JdkChooserPanel extends JPanel {
     };
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     myLoadingDecorator = new LoadingDecorator(panel, project, 0, true);
-    myLoadingDecorator.setLoadingText("Looking for JDKs...");
+    myLoadingDecorator.setLoadingText(JavaUiBundle.message("loading.text.looking.for.jdks"));
     add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);
@@ -97,15 +101,16 @@ public class JdkChooserPanel extends JPanel {
    *
    * @param allowedJdkTypes the array of JDK types which may be shown, or null if all JDK types are allowed.
    */
-  public void setAllowedJdkTypes(@Nullable final SdkType[] allowedJdkTypes) {
+  public void setAllowedJdkTypes(final SdkType @Nullable [] allowedJdkTypes) {
     myAllowedJdkTypes = allowedJdkTypes;
   }
 
+  @Nullable
   public Sdk getChosenJdk() {
     return myCurrentJdk;
   }
 
-  public Object[] getAllJdks() {
+  public Object @NotNull [] getAllJdks() {
     return myListModel.toArray();
   }
 
@@ -123,7 +128,7 @@ public class JdkChooserPanel extends JPanel {
     updateList(selectedJdk, type, null);
   }
 
-  public void updateList(final Sdk selectedJdk, final @Nullable SdkType type, final @Nullable Sdk[] globalSdks) {
+  public void updateList(final Sdk selectedJdk, final @Nullable SdkType type, final Sdk @Nullable [] globalSdks) {
     final int[] selectedIndices = myList.getSelectedIndices();
     fillList(type, globalSdks);
     // restore selection
@@ -155,11 +160,11 @@ public class JdkChooserPanel extends JPanel {
     myCurrentJdk = myList.getSelectedValue();
   }
 
-  public JList getPreferredFocusedComponent() {
+  public JList<Sdk> getPreferredFocusedComponent() {
     return myList;
   }
 
-  public void fillList(final @Nullable SdkType type, final @Nullable Sdk[] globalSdks) {
+  public void fillList(final @Nullable SdkType type, final Sdk @Nullable [] globalSdks) {
     final ArrayList<Sdk> knownJdks = new ArrayList<>();
     if (myProject == null || myProject.isDefault()) {
       final Sdk[] allJdks = globalSdks != null ? globalSdks : ProjectJdkTable.getInstance().getAllJdks();
@@ -180,7 +185,14 @@ public class JdkChooserPanel extends JPanel {
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<String> suggestedPaths = JavaHomeFinder.suggestHomePaths();
-        suggestedPaths.removeAll(ContainerUtil.map(knownJdks, sdk -> sdk.getHomePath()));//remove all known path to avoid duplicates
+        //remove all known path to avoid duplicates
+        for (Sdk sdk : knownJdks) {
+          String homePath = sdk.getHomePath();
+          if (homePath != null) {
+            suggestedPaths.remove(FileUtil.toSystemDependentName(homePath));
+          }
+        }
+
         ApplicationManager.getApplication().invokeLater(() -> {
           for (String homePath : suggestedPaths) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(homePath);
@@ -190,7 +202,7 @@ public class JdkChooserPanel extends JPanel {
               String suggestedName = version != null ? version.toString() : "";
               Sdk jdk = sdkType.createJdk(suggestedName, homePath, false);
               if (jdk instanceof ProjectJdkImpl) {
-                ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks.toArray(new Sdk[0]), virtualFile, sdkType, null, suggestedName);
+                ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks, virtualFile, sdkType, null, suggestedName);
                 String improvedName = tmp.getName();
                 ((ProjectJdkImpl)jdk).setName(improvedName);
               }
@@ -199,7 +211,7 @@ public class JdkChooserPanel extends JPanel {
           }
           updateListModel(allJdks, knownJdks);
           myLoadingDecorator.stopLoading();
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          myList.getEmptyText().setText(StatusText.getDefaultEmptyText());
         }, ModalityState.any());
       });
     } else {
@@ -211,7 +223,7 @@ public class JdkChooserPanel extends JPanel {
     Sdk oldSelection = myList.getSelectedValue();
 
     myListModel.clear();
-    Collections.sort(allJdks, (o1, o2) -> {
+    allJdks.sort((o1, o2) -> {
       boolean unknown1 = !knownJdks.contains(o1);
       boolean unknown2 = !knownJdks.contains(o2);
       if (unknown1 != unknown2) {
@@ -271,6 +283,7 @@ public class JdkChooserPanel extends JPanel {
     myList.addListSelectionListener(listener);
   }
 
+  @Nullable
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null, null);
@@ -286,7 +299,7 @@ public class JdkChooserPanel extends JPanel {
     }
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         dialog.clickDefaultButton();
         return true;
       }
@@ -294,9 +307,14 @@ public class JdkChooserPanel extends JPanel {
     return dialog.showAndGet() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
-  public static Sdk chooseAndSetJDK(final Project project) {
+  /**
+   * @deprecated Use {@link com.intellij.openapi.roots.ui.configuration.SdkPopupFactory}
+   */
+  @Nullable
+  @Deprecated
+  public static Sdk chooseAndSetJDK(@NotNull final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
+    final Sdk jdk = showDialog(project, JavaUiBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     String path = jdk != null ? jdk.getHomePath() : null;
     if (path == null) {
       return null;
@@ -316,7 +334,7 @@ public class JdkChooserPanel extends JPanel {
 
     public MyDialog(Component parent) {
       super(parent, true);
-      setTitle(IdeBundle.message("title.select.jdk"));
+      setTitle(JavaUiBundle.message("title.select.jdk"));
       init();
       myList.addListSelectionListener(this);
       updateOkButton();
@@ -348,8 +366,7 @@ public class JdkChooserPanel extends JPanel {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{new ConfigureAction(), getOKAction(), getCancelAction()};
     }
 
@@ -360,7 +377,7 @@ public class JdkChooserPanel extends JPanel {
 
     private final class ConfigureAction extends AbstractAction {
       ConfigureAction() {
-        super(IdeBundle.message("button.configure.e"));
+        super(JavaUiBundle.message("button.configure.e"));
         putValue(Action.MNEMONIC_KEY, new Integer('E'));
       }
 

@@ -22,8 +22,6 @@ import java.util.Collection;
 
 /**
  * Indexes the output roots of individual build targets.
- *
- * @author nik
  */
 public interface TargetOutputIndex {
   /**

@@ -35,7 +35,7 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueC
  */
 public class JavaSourceInference {
   public static final int MAX_CONTRACT_COUNT = 10;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.inference.JavaSourceInference");
+  private static final Logger LOG = Logger.getInstance(JavaSourceInference.class);
 
   enum InferenceMode {
     DISABLED, ENABLED, PARAMETERS
@@ -124,7 +124,6 @@ public class JavaSourceInference {
   }
   
   private static boolean findPurity(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
     PurityInferenceResult result = data.getPurity();
     if (result == null) return false;
     return Boolean.TRUE.equals(RecursionManager.doPreventingRecursion(method, true, () -> result.isPure(method, data.methodBody(method))));

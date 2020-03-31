@@ -4,14 +4,10 @@ package com.intellij.conversion;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 
-/**
- * @author nik
- */
 public abstract class ConversionService {
   @NotNull
   public static ConversionService getInstance() {
@@ -20,16 +16,13 @@ public abstract class ConversionService {
   }
 
   @NotNull
-  public abstract ConversionResult convertSilently(@NotNull String projectPath);
+  public abstract ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener conversionListener);
 
   @NotNull
-  public abstract ConversionResult convertSilently(@NotNull String projectPath, @NotNull ConversionListener conversionListener);
+  public abstract ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException;
 
   @NotNull
-  public abstract ConversionResult convert(@NotNull VirtualFile projectPath);
+  public abstract ConversionResult convertModule(@NotNull Project project, @NotNull Path moduleFile);
 
-  @NotNull
-  public abstract ConversionResult convertModule(@NotNull Project project, @NotNull File moduleFile);
-
-  public abstract void saveConversionResult(@NotNull String projectPath);
+  public abstract void saveConversionResult(@NotNull Path projectPath);
 }

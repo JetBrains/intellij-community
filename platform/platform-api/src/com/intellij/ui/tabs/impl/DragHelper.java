@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
@@ -21,8 +22,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-class DragHelper extends MouseDragHelper {
-
+final class DragHelper extends MouseDragHelper {
   private final JBTabsImpl myTabs;
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;
@@ -33,23 +33,27 @@ class DragHelper extends MouseDragHelper {
   private TabInfo myDragOutSource;
   private Reference<TabLabel> myPressedTabLabel;
 
-  DragHelper(JBTabsImpl tabs) {
-    super(tabs, tabs);
+  DragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
+    super(parentDisposable, tabs);
+
     myTabs = tabs;
   }
 
-
   @Override
   protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
-    if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
+    if (myDragSource == null || !myDragSource.canBeDraggedOut()) {
+      return false;
+    }
 
     TabLabel label = myTabs.myInfo2Label.get(myDragSource);
-    if (label == null) return false;
+    if (label == null) {
+      return false;
+    }
 
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;
 
-    return myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
+    return myTabs.isDragOut(label, dX, dY);
   }
 
   @Override
@@ -76,7 +80,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processMousePressed(MouseEvent event) {
+  protected void processMousePressed(@NotNull MouseEvent event) {
     // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
     // we'll end up dragging the wrong tab (IDEA-65073)
     TabLabel label = findLabel(new RelativePoint(event).getPoint(myTabs));
@@ -149,7 +153,7 @@ class DragHelper extends MouseDragHelper {
       myTabs.moveDraggedTabLabel();
     } else {
       myTabs.moveDraggedTabLabel();
-      final int border = myTabs.getTabsBorder().getTabBorderSize();
+      final int border = myTabs.getBorderThickness();
       headerRec.x -= border;
       headerRec.y -= border;
       headerRec.width += border * 2;
@@ -172,7 +176,8 @@ class DragHelper extends MouseDragHelper {
 
     if (measurer.getMinValue(myDragRec) < measurer.getMinValue(myDragOriginalRec)) {
       freeSpace = measurer.getMaxValue(myDragOriginalRec) - measurer.getMaxValue(myDragRec);
-    } else {
+    }
+    else {
       freeSpace = measurer.getMinValue(myDragRec) - measurer.getMinValue(myDragOriginalRec);
     }
 
@@ -220,7 +225,7 @@ class DragHelper extends MouseDragHelper {
 
 
   @Override
-  protected boolean canStartDragging(JComponent dragComponent, Point dragComponentPoint) {
+  protected boolean canStartDragging(@NotNull JComponent dragComponent, @NotNull Point dragComponentPoint) {
     return findLabel(dragComponentPoint) != null;
   }
 
@@ -238,8 +243,7 @@ class DragHelper extends MouseDragHelper {
       if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
         final int answer = Messages.showOkCancelDialog(myTabs,
                                                        IdeBundle.message("alphabetical.mode.is.on.warning"),
-                                                       "Reorder Tabs",
-                                                       "Off", "On",
+                                                       IdeBundle.message("title.warning"),
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {
           UISettings.getInstance().setSortTabsAlphabetically(false);

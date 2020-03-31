@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -31,8 +31,8 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     myRawText = rawText;
 
     List<DataFlavorWithPriority> dataFlavors = new ArrayList<>();
-    Collections.addAll(dataFlavors, 
-                       new DataFlavorWithPriority(DataFlavor.stringFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY), 
+    Collections.addAll(dataFlavors,
+                       new DataFlavorWithPriority(DataFlavor.stringFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY),
                        new DataFlavorWithPriority(DataFlavor.plainTextFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY));
     final DataFlavor flavor = RawText.getDataFlavor();
     if (myRawText != null && flavor != null) {
@@ -60,7 +60,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @NotNull
   private static String cleanFromNullsIfNeeded(@NotNull String text) {
     // Clipboard on Windows and Linux works with null-terminated strings, on Mac nulls are not treated in a special way.
-    return SystemInfo.isMac ? text : text.replace('\000', ' '); 
+    return SystemInfo.isMac ? text : text.replace('\000', ' ');
   }
 
   @Override

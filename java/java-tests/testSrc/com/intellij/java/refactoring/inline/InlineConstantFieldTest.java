@@ -94,7 +94,7 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   public void testMultipleInitializers() {
     configureByFile("/refactoring/inlineConstantField/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertTrue(element instanceof PsiField);
     assertNull(InlineConstantFieldHandler.getInitializer((PsiField)element));
   }
@@ -108,8 +108,8 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
     configureByFile(fileName);
     PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiField);
     PsiField field = (PsiField)element.getNavigationElement();

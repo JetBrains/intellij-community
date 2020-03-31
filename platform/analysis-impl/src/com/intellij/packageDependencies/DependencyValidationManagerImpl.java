@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -12,34 +12,38 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
+import com.intellij.ui.IconManager;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.Icon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 @State(
   name = "DependencyValidationManager",
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
-public class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
-    @Override
-    protected Icon compute() {
-      return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
-    }
-  };
+public final class DependencyValidationManagerImpl extends DependencyValidationManager {
+  private static final Icon ourSharedScopeIcon = IconLoader.createLazy(() -> {
+    return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+  });
 
   private static class State {
     private final List<DependencyRule> rules = new ArrayList<>();
@@ -59,11 +63,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  public DependencyValidationManagerImpl(@NotNull Project project, @NotNull NamedScopeManager namedScopeManager) {
+  public DependencyValidationManagerImpl(@NotNull Project project) {
     super(project);
 
-    myNamedScopeManager = namedScopeManager;
-    namedScopeManager.addScopeListener(() -> reloadScopes(), project);
+    myNamedScopeManager = NamedScopeManager.getInstance(project);
+    myNamedScopeManager.addScopeListener(() -> reloadScopes(), project);
   }
 
   @Override
@@ -101,8 +105,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  @NotNull
-  public DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
+  public DependencyRule @NotNull [] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isForbiddenToUse(from, to)) {
@@ -112,9 +115,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[0]);
   }
 
-  @NotNull
   @Override
-  public DependencyRule[] getApplicableRules(@NotNull PsiFile file) {
+  public DependencyRule @NotNull [] getApplicableRules(@NotNull PsiFile file) {
     ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isApplicable(file)) {
@@ -140,9 +142,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return myState.unnamedScopes;
   }
 
-  @NotNull
   @Override
-  public DependencyRule[] getAllRules() {
+  public DependencyRule @NotNull [] getAllRules() {
     List<DependencyRule> rules = myState.rules;
     return rules.toArray(new DependencyRule[0]);
   }
@@ -175,7 +176,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NotNull
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("shared.scopes.node.text");
+    return AnalysisBundle.message("shared.scopes.node.text");
   }
 
   @Override
@@ -197,13 +198,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     Arrays.sort(scopes, (s1, s2) -> {
       final String name1 = s1.getName();
       final String name2 = s2.getName();
-      if (Comparing.equal(name1, name2)){
+      if (Objects.equals(name1, name2)){
         return 0;
       }
       final List<String> order = myNamedScopeManager.myOrderState.myOrder;
       final int i1 = order.indexOf(name1);
       final int i2 = order.indexOf(name2);
-      return i1 > i2 ? 1 : -1;
+      return i1 - i2;
     });
     super.setScopes(scopes);
 
@@ -242,7 +243,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
     State state = myState;
     if (!state.unnamedScopes.isEmpty()) {
-      String[] unnamedScopes = ArrayUtil.toStringArray(state.unnamedScopes.keySet());
+      String[] unnamedScopes = ArrayUtilRt.toStringArray(state.unnamedScopes.keySet());
       Arrays.sort(unnamedScopes);
       for (String unnamedScope : unnamedScopes) {
         element.addContent(new Element(UNNAMED_SCOPE).setAttribute(VALUE, unnamedScope));
@@ -368,7 +369,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public void setScopes(@NotNull NamedScope[] scopes) {
+  public void setScopes(NamedScope @NotNull [] scopes) {
     super.setScopes(scopes);
     final List<String> order = myNamedScopeManager.myOrderState.myOrder;
     order.clear();

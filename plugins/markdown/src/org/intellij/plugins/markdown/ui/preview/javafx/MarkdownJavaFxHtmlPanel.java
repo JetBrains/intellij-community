@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.javafx;
 
 import com.intellij.notification.NotificationGroup;
@@ -7,6 +8,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.javafx.JavaFxHtmlPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import javafx.beans.value.ChangeListener;
@@ -37,8 +39,7 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
     }
   };
 
-  @NotNull
-  private String[] myCssUris = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String @NotNull [] myCssUris = ArrayUtilRt.EMPTY_STRING_ARRAY;
   @NotNull
   private String myCSP = "";
   @NotNull
@@ -108,7 +109,7 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
   }
 
   @Override
-  public void setCSS(@Nullable String inlineCss, @NotNull String... fileUris) {
+  public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
     PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
     myCssUris = inlineCss == null ? fileUris
                                   : ArrayUtil
@@ -152,8 +153,9 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
   @SuppressWarnings("unused")
   public static class JavaPanelBridge {
     static final JavaPanelBridge INSTANCE = new JavaPanelBridge();
-    private static final NotificationGroup MARKDOWN_NOTIFICATION_GROUP =
-      NotificationGroup.toolWindowGroup(MarkdownBundle.message("markdown.navigate.to.header.group"), ToolWindowId.MESSAGES_WINDOW);
+    private static final NotificationGroup MARKDOWN_NOTIFICATION_GROUP = NotificationGroup
+      .toolWindowGroup("Markdown headers group", ToolWindowId.MESSAGES_WINDOW, true,
+                       MarkdownBundle.message("markdown.navigate.to.header.group"));
 
     public void openInExternalBrowser(@NotNull String link) {
       SafeOpener.openLink(link);

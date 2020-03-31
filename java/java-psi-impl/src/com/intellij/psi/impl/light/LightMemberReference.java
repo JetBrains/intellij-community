@@ -54,8 +54,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode){
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
     if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
     return JavaResolveResult.EMPTY_ARRAY;
@@ -73,10 +72,11 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
 
   @Override
   public PsiReferenceParameterList getParameterList() {
-    if (myParameterList == null) {
-      myParameterList = new LightReferenceParameterList(myManager, PsiTypeElement.EMPTY_ARRAY);
+    LightReferenceParameterList parameterList = myParameterList;
+    if (parameterList == null) {
+      myParameterList = parameterList = new LightReferenceParameterList(myManager, PsiTypeElement.EMPTY_ARRAY);
     }
-    return myParameterList;
+    return parameterList;
   }
 
   @Override
@@ -164,8 +164,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     throw new RuntimeException("Variants are not available for light references");
   }
 
@@ -194,8 +193,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeParameters() {
+  public PsiType @NotNull [] getTypeParameters() {
     PsiReferenceParameterList parameterList = getParameterList();
     return parameterList == null ? PsiType.EMPTY_ARRAY : parameterList.getTypeArguments();
   }

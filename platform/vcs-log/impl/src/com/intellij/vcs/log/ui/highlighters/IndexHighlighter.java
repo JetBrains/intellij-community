@@ -46,7 +46,7 @@ public class IndexHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "INDEXED_COMMITS";
+    @NotNull private static final String ID = "INDEXED_COMMITS"; // NON-NLS
 
     @NotNull
     @Override
@@ -63,7 +63,7 @@ public class IndexHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "Indexed Commits";
+      return VcsLogBundle.message("vcs.log.action.highlight.indexed.commits");
     }
 
     @Override

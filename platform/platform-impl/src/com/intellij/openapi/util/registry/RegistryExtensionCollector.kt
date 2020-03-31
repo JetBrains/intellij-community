@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry
 
-import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -10,43 +10,60 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 
-/**
- * @author yole
- */
+private val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
+
+// Since the XML parser removes all the '\n' chars joining indented lines together,
+// we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
+private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
+
+private fun String.unescapeString() = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
+
 class RegistryKeyBean : PluginAware {
-  @JvmField @Attribute("key") val key: String = ""
-  @JvmField @Attribute("description") @Nls(capitalization = Nls.Capitalization.Sentence) val description: String = ""
-  @JvmField @Attribute("defaultValue") val defaultValue: String = ""
-  @JvmField @Attribute("restartRequired") val restartRequired: Boolean = false
-
-  @Transient
-  var pluginDescriptor: PluginDescriptor? = null
-    private set
-
-  @Transient
-  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor?) {
-    this.pluginDescriptor = pluginDescriptor
-  }
-
   companion object {
-    val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
-  }
-}
+    @JvmStatic
+    fun addKeysFromPlugins() {
+      Registry.addKeys(EP_NAME.iterable.map { createRegistryKeyDescriptor(it) })
 
-class RegistryExtensionCollector {
-  init {
-    for (extension in RegistryKeyBean.EP_NAME.extensionList) {
-      val contributedByThirdParty = extension.pluginDescriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
-      Registry.addKey(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
-                      contributedByThirdParty)
+      EP_NAME.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
+        override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
+          Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)))
+        }
+
+        override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
+          Registry.removeKey(extension.key)
+        }
+      }, null)
+    }
+
+    private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
+      val pluginId = extension.descriptor?.pluginId?.idString
+      return RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
+                                   pluginId)
     }
   }
 
-  private companion object {
-    // Since the XML parser removes all the '\n' chars joining indented lines together,
-    // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
-    val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
+  @JvmField
+  @Attribute("key")
+  val key = ""
 
-    fun String.unescapeString(): String = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
+  @JvmField
+  @Attribute("description")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  val description = ""
+
+  @JvmField
+  @Attribute("defaultValue")
+  val defaultValue = ""
+
+  @JvmField
+  @Attribute("restartRequired")
+  val restartRequired = false
+
+  @Transient
+  private var descriptor: PluginDescriptor? = null
+
+  @Transient
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
+    this.descriptor = pluginDescriptor
   }
 }

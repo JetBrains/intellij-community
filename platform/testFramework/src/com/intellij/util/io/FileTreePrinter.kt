@@ -1,52 +1,63 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.util.containers.nullize
+import java.nio.charset.MalformedInputException
 import java.nio.file.Path
-import java.util.*
 
 @JvmOverloads
-fun Path.getDirectoryTree(excluded: Set<String> = emptySet()): String {
+fun Path.getDirectoryTree(excluded: Set<String> = emptySet(), printContent: Boolean = true): String {
   val sb = StringBuilder()
-  getDirectoryTree(this, 0, sb, excluded)
+  getDirectoryTree(this, 0, sb, excluded, printContent = printContent)
   return sb.toString()
 }
 
-private fun getDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded: Set<String>) {
-  val fileList = sortedFileList(dir)?.filter { !excluded.contains(it.fileName.toString()) }.nullize() ?: return
+private fun getDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded: Set<String>, printContent: Boolean) {
+  val fileList = sortedFileList(dir, excluded).nullize() ?: return
 
   getIndentString(indent, sb)
-  sb.append("\u251c\u2500\u2500")
+  if (printContent) {
+    sb.append("\u251c\u2500\u2500")
+  }
   sb.append(dir.fileName.toString())
   sb.append("/")
   sb.append("\n")
   for (file in fileList) {
     if (file.isDirectory()) {
-      getDirectoryTree(file, indent + 1, sb, excluded)
+      getDirectoryTree(file, indent + 1, sb, excluded, printContent)
     }
     else {
-      printFile(file, indent + 1, sb)
+      printFile(file, indent + 1, sb, printContent)
     }
   }
 }
 
-private fun sortedFileList(dir: Path): List<Path>? {
+private fun sortedFileList(dir: Path, excluded: Set<String>): List<Path>? {
   return dir.directoryStreamIfExists { stream ->
-    val list = ArrayList<Path>()
-    stream.mapTo(list) { it }
+    var sequence = stream.asSequence()
+    if (excluded.isNotEmpty()) {
+      sequence = sequence.filter { !excluded.contains(it.fileName.toString()) }
+    }
+    val list = sequence.toMutableList()
     list.sort()
     list
   }
 }
 
-private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
+private fun printFile(file: Path, indent: Int, sb: StringBuilder, printContent: Boolean) {
   getIndentString(indent, sb)
-  sb.append("\u251c\u2500\u2500")
+  if (printContent) {
+    sb.append("\u251c\u2500\u2500")
+  }
   val fileName = file.fileName.toString()
   sb.append(fileName)
   sb.append("\n")
-  if (!(fileName.endsWith(".zip") || fileName.endsWith(".jar"))) {
-    sb.append(file.readChars()).append("\n\n")
+  if (printContent && !(fileName.endsWith(".zip") || fileName.endsWith(".jar") || fileName.endsWith(".class"))) {
+    try {
+      sb.append(file.readChars()).append("\n\n")
+    }
+    catch (ignore: MalformedInputException) {
+    }
   }
 }
 

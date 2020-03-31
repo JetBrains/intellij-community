@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.java.JavaBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,11 +26,11 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   @Override
-  public void compose(final StringBuffer buf, RefEntity refEntity) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refEntity) {
     compose(buf, refEntity, true);
   }
 
-  public void compose(final StringBuffer buf, RefEntity refEntity, boolean toExternalHtml) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refEntity, boolean toExternalHtml) {
     if (toExternalHtml) {
       genPageHeader(buf, refEntity);
     }
@@ -51,7 +38,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (refEntity instanceof RefElement) {
       RefElementImpl refElement = (RefElementImpl)refEntity;
       if (refElement.isSuspicious() && !refElement.isEntry()) {
-        appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
+        appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
         //noinspection HardCodedStringLiteral
         buf.append("<br>");
         buf.append("<div class=\"problem-description\">");
@@ -90,37 +77,37 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
+  public static void appendProblemSynopsis(final RefElement refElement, @NotNull StringBuilder buf) {
     refElement.accept(new RefJavaVisitor() {
       @Override public void visitField(@NotNull RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis"));
           return;
         }
 
         if (!field.isUsedForReading() && field.isUsedForWriting()) {
           if (field.isOnlyAssignedInInitializer()) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis1"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis1"));
             return;
           }
 
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis2"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis2"));
           return;
         }
 
         int nUsages = field.getInReferences().size();
         if (nUsages == 0) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis1"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis1"));
         } else if (nUsages == 1) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis3"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis3"));
         } else {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis4", nUsages));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis4", nUsages));
         }
       }
 
       @Override public void visitClass(@NotNull RefClass refClass) {
         if (refClass.isAnonymous()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis10"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
           String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
           //noinspection HardCodedStringLiteral
@@ -129,28 +116,28 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           int nDerived = getImplementationsCount(refClass);
 
           if (nDerived == 0) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis23", classOrInterface));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis23", classOrInterface));
           } else if (nDerived == 1) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis24", classOrInterface));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis24", classOrInterface));
           } else {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
           }
         } else if (refClass.isUtilityClass()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis11"));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11"));
         } else {
           int nInstantiationsCount = getInstantiationsCount(refClass);
 
           if (nInstantiationsCount == 0) {
             int nImplementations = getImplementationsCount(refClass);
             if (nImplementations != 0) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
             } else {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis13"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis13"));
             }
           } else if (nInstantiationsCount == 1) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis12"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis12"));
           } else {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
           }
         }
       }
@@ -159,35 +146,35 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         RefClass refClass = method.getOwnerClass();
         if (method.isExternalOverride()) {
           String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
         } else if (method.isStatic() || method.isConstructor()) {
           int nRefs = method.getInReferences().size();
           if (method.isConstructor()) {
             if (nRefs == 0) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.constructor"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis26.constructor"));
             } else if (method.isConstructor() && ((RefMethodImpl)method).isSuspiciousRecursive()) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.constructor"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis27.constructor"));
             } else if (nRefs == 1) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.constructor"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis28.constructor"));
             } else {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.constructor", nRefs) );
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis29.constructor", nRefs) );
             }
           } else {
             if (nRefs == 0) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.method"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis26.method"));
             } else if (method.isConstructor() && ((RefMethodImpl)method).isSuspiciousRecursive()) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.method"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis27.method"));
             } else if (nRefs == 1) {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.method"));
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis28.method"));
             } else {
-              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
             }
           }
         } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
           if (method.isAbstract()) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis14"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis15"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis15"));
           }
         } else {
           int nOwnRefs = method.getInReferences().size();
@@ -195,14 +182,14 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           int nDerivedRefs = getDerivedRefsCount(method);
 
           if (nOwnRefs == 0 && nSuperRefs == 0 && nDerivedRefs == 0) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis16"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis16"));
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
             String classOrInterface = refClass == null ? "" : HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
           } else if (((RefMethodImpl)method).isSuspiciousRecursive()) {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis17"));
           } else {
-            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis18"));
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis18"));
           }
         }
       }
@@ -210,7 +197,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   @Override
-  protected void appendAdditionalListItemInfo(StringBuffer buf, RefElement refElement) {
+  protected void appendAdditionalListItemInfo(@NotNull StringBuilder buf, RefElement refElement) {
     if (refElement instanceof RefImplicitConstructor) {
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
@@ -223,21 +210,21 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         if (refClass.isUtilityClass()) {
           // Append nothing.
         } else if (refClass.isAnonymous()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis9.suspicious", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis9.suspicious", getInstantiationsCount(refClass)));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis8.suspicious", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis8.suspicious", getInstantiationsCount(refClass)));
         } else {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis7.suspicious", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis7.suspicious", getInstantiationsCount(refClass)));
         }
       } else {
         if (refClass.isUtilityClass()) {
           // Append nothing.
         } else if (refClass.isAnonymous()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis9", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis9", getInstantiationsCount(refClass)));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis8", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis8", getInstantiationsCount(refClass)));
         } else {
-          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis7", getInstantiationsCount(refClass)));
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis7", getInstantiationsCount(refClass)));
         }
       }
     } else {
@@ -246,9 +233,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         nUsageCount += getDerivedRefsCount((RefMethod) refElement);
       }
       if (((RefElementImpl)refElement).isSuspicious()) {
-        buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6.suspicious", nUsageCount));
+        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis6.suspicious", nUsageCount));
       } else {
-        buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6", nUsageCount));
+        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis6", nUsageCount));
       }
     }
   }
@@ -304,11 +291,11 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     return count;
   }
 
-  private void appendClassInstantiations(StringBuffer buf, RefClass refClass) {
+  private void appendClassInstantiations(@NotNull StringBuilder buf, RefClass refClass) {
     if (!refClass.isInterface() && !refClass.isAbstract() && !refClass.isUtilityClass()) {
       boolean found = false;
 
-      appendHeading(buf, InspectionsBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
+      appendHeading(buf, AnalysisBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
 
       startList(buf);
       for (RefMethod refMethod : refClass.getConstructors()) {
@@ -320,7 +307,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
       if (!found) {
         startListItem(buf);
-        buf.append(InspectionsBundle.message("inspection.dead.code.export.results.no.instantiations.found"));
+        buf.append(AnalysisBundle.message("inspection.dead.code.export.results.no.instantiations.found"));
         doneListItem(buf);
       }
 
@@ -328,11 +315,11 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  private void appendCallesList(RefElement element, StringBuffer buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
+  private void appendCallesList(RefElement element, @NotNull StringBuilder buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
     final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
-        appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
+        appendHeading(buf, JavaBundle.message("inspection.export.results.callees"));
         buf.append("<div class=\"problem-description\">");
       }
       @NonNls final String ul = "<ul>";

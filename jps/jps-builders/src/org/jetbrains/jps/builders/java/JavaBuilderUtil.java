@@ -44,13 +44,14 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JavaBuilderUtil {
+  /**
+   * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
+   */
+  @Deprecated
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
+  private static final Logger LOG = Logger.getInstance(Builder.class);
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
   private static final Key<Set<File>> FILES_TO_COMPILE_KEY = Key.create("_files_to_compile_");
@@ -199,8 +200,7 @@ public class JavaBuilderUtil {
 
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
-            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
-            CONSTANT_SEARCH_SERVICE.get(context)
+            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter
           );
 
           if (LOG.isDebugEnabled()) {

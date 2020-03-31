@@ -18,15 +18,15 @@ import java.util.Set;
 
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
-  private PsiType myT;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {
+    super(type);
     myExpression = expression;
-    myT = type;
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
+    PsiType myT = getCurrentType();
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
       PsiType exprType = myExpression.getType();
@@ -105,15 +105,15 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
         final MethodCandidateInfo currentMethod = session.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
         final JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)myExpression);
-        if (resolveResult instanceof MethodCandidateInfo) {
-          ((MethodCandidateInfo)resolveResult).setErased(callSession.isErased());
+        if (resolveResult instanceof MethodCandidateInfo && callSession.isErased()) {
+          ((MethodCandidateInfo)resolveResult).setErased();
         }
       }
       return true;
     }
 
     if (myExpression instanceof PsiMethodReferenceExpression) {
-      constraints.add(new PsiMethodReferenceCompatibilityConstraint(((PsiMethodReferenceExpression)myExpression), myT));
+      constraints.add(new PsiMethodReferenceCompatibilityConstraint((PsiMethodReferenceExpression)myExpression, myT));
       return true;
     }
 
@@ -198,6 +198,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         return null;
       }
       else if (registerErrorOnFailure) {
+        //keep a sign that an inference failed
         session.registerIncompatibleErrorMessage("Failed to resolve argument");
         return null;
       }
@@ -228,16 +229,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   }
 
   @Override
-  public PsiType getT() {
-    return myT;
-  }
-
-  @Override
-  protected void setT(PsiType t) {
-    myT = t;
-  }
-
-  @Override
   protected InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression) {
     return new ExpressionCompatibilityConstraint(expression, type);
   }
@@ -246,7 +237,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
                                             PsiType returnType,
-                                            Set<InferenceVariable> result) {
+                                            Set<? super InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
       if (!PsiType.VOID.equals(returnType)) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);

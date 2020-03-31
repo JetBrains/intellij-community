@@ -13,6 +13,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.nullize
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService
+import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil
@@ -23,17 +24,24 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
 
   override fun getConfigurationFactory(): ConfigurationFactory = GroovyScriptRunConfigurationType.getInstance().configurationFactory
 
-  private class Data(val location: Location<PsiElement>,
-                     val element: PsiElement,
-                     val clazz: PsiClass,
-                     val file: GroovyFile,
-                     val virtualFile: VirtualFile)
+  private class Data(
+    val location: Location<PsiElement>,
+    val element: PsiElement,
+    val clazz: PsiClass,
+    val file: GroovyFile,
+    val virtualFile: VirtualFile,
+    val scriptType: GroovyRunnableScriptType
+  )
 
   private fun checkAndExtractData(context: ConfigurationContext): Data? {
     val location = context.location ?: return null
     val element = location.psiElement
     val file = element.containingFile as? GroovyFile ?: return null
     val virtualFile = file.virtualFile ?: return null
+    val scriptType = GroovyScriptUtil.getScriptType(file)
+    if (scriptType.runner == null) {
+      return null
+    }
     if (GroovyConsoleStateService.getInstance(location.project).isProjectConsole(virtualFile)) {
       return null
     }
@@ -41,7 +49,7 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
     if (clazz !is GroovyScriptClass && !isRunnable(clazz)) {
       return null
     }
-    return Data(location, element, clazz, file, virtualFile)
+    return Data(location, element, clazz, file, virtualFile, scriptType)
   }
 
   override fun setupConfigurationFromContext(configuration: GroovyScriptRunConfiguration,
@@ -50,7 +58,7 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
     val data = checkAndExtractData(context) ?: return false
     sourceElement.set(data.element)
     configuration.setupFromClass(data.clazz, data.virtualFile)
-    GroovyScriptUtil.getScriptType(data.file).tuneConfiguration(data.file, configuration, data.location)
+    data.scriptType.tuneConfiguration(data.file, configuration, data.location)
     return true
   }
 
@@ -64,6 +72,6 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
   override fun isConfigurationFromContext(configuration: GroovyScriptRunConfiguration, context: ConfigurationContext): Boolean {
     val data = checkAndExtractData(context) ?: return false
     return configuration.scriptPath == ScriptFileUtil.getScriptFilePath(data.virtualFile)
-           && GroovyScriptUtil.getScriptType(data.file).isConfigurationByLocation(configuration, data.location)
+           && data.scriptType.isConfigurationByLocation(configuration, data.location)
   }
 }

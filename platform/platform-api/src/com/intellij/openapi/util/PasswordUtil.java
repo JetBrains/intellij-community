@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class PasswordUtil {
   }
 
   @NotNull
-  public static String encodePassword(@Nullable char[] password) {
+  public static String encodePassword(char @Nullable [] password) {
     if (password == null) {
       return "";
     }
@@ -43,10 +43,9 @@ public class PasswordUtil {
     return password == null ? "" : new String(decodePasswordAsCharArray(password));
   }
 
-  @NotNull
-  public static char[] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
+  public static char @NotNull [] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
     if (StringUtil.isEmpty(password)) {
-      return ArrayUtil.EMPTY_CHAR_ARRAY;
+      return ArrayUtilRt.EMPTY_CHAR_ARRAY;
     }
 
     char[] result = new char[password.length() / 4];

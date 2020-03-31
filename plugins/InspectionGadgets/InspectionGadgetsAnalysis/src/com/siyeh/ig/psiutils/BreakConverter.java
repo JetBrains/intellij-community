@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -42,7 +42,7 @@ public class BreakConverter {
       @Override
       public void visitBreakStatement(PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
-        if (statement.findExitedElement() == mySwitchBlock) {
+        if (statement.findExitedStatement() == mySwitchBlock) {
           breaks.add(statement);
         }
       }
@@ -117,7 +117,7 @@ public class BreakConverter {
               !ControlFlowUtils.statementMayCompleteNormally(statement));
     }
     if (nextStatement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)nextStatement).findExitedElement() == switchStatement;
+      return ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;
     }
     return false;
   }
@@ -132,7 +132,7 @@ public class BreakConverter {
         @Override
         public void visitBreakStatement(PsiBreakStatement statement) {
           super.visitBreakStatement(statement);
-          if (statement.findExitedElement() == switchStatement && !isRemovable(switchStatement, statement)) {
+          if (statement.findExitedStatement() == switchStatement && !isRemovable(switchStatement, statement)) {
             hasNonRemovableBreak = true;
             stopWalking();
           }

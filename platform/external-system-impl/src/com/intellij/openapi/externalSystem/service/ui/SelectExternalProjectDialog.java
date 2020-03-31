@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
@@ -38,23 +39,14 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
 
   public SelectExternalProjectDialog(@NotNull ProjectSystemId systemId, Project project, final ProjectData current) {
     super(systemId, project, String.format("Select %s Project", systemId.getReadableName()), ProjectNode.class,
-          new SelectExternalSystemNodeDialog.NodeSelector() {
-            @Override
-            public boolean shouldSelect(SimpleNode node) {
-              if (node instanceof ProjectNode) {
-                return ((ProjectNode)node).getData() == current;
-              }
-              return false;
-            }
-          });
+          node -> node instanceof ProjectNode && ((ProjectNode)node).getData() == current);
     assert current == null || current.getOwner().equals(systemId);
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    Action selectNoneAction = new AbstractAction("&None") {
+  protected Action @NotNull [] createActions() {
+    Action selectNoneAction = new AbstractAction(ExternalSystemBundle.message("action.text.none")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();

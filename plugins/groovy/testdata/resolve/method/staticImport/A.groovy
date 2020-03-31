@@ -1,3 +1,3 @@
 import static java.lang.Math.min as mm
 
-<ref>mm(0, 1)
+<caret>mm(0, 1)

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
@@ -28,8 +27,9 @@ public class StringToConstraintsTransformer {
   @NonNls private static final String SCRIPT = "script";
   @NonNls private static final String CONTAINS = "contains";
   @NonNls private static final String WITHIN = "within";
+  @NonNls private static final String CONTEXT = "context";
 
-  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN);
+  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(@NotNull String criteria, MatchOptions options) {
@@ -37,16 +37,14 @@ public class StringToConstraintsTransformer {
     int anonymousTypedVarsCount = 0;
     boolean targetFound = false;
 
-    final MatchVariableConstraint context = new MatchVariableConstraint();
-    context.setName(Configuration.CONTEXT_VAR_NAME);
-    options.addVariableConstraint(context);
+    final MatchVariableConstraint context = options.addNewVariableConstraint(Configuration.CONTEXT_VAR_NAME);
 
     final int length = criteria.length();
     for(int index = 0; index < length; ++index) {
       char ch = criteria.charAt(index);
 
       if (index == 0 && ch == '[') {
-        index = handleTypedVarCondition(0, criteria, options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME));
+        index = handleTypedVarCondition(0, criteria, context);
         if (index == length) break;
         ch = criteria.charAt(index);
       }
@@ -88,8 +86,7 @@ public class StringToConstraintsTransformer {
         boolean constraintCreated = false;
 
         if (constraint == null) {
-          constraint = new MatchVariableConstraint();
-          constraint.setName( typedVar );
+          constraint = new MatchVariableConstraint(typedVar);
           constraintCreated = true;
         }
 
@@ -396,9 +393,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
-      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
-      else argument = unescape(argument);
-      constraint.setNameOfExprType(argument);
+      argument = unescape(argument);
+      constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
     else if (option.equalsIgnoreCase(FORMAL)) {
@@ -406,9 +402,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
       }
-      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
-      else argument = unescape(argument);
-      constraint.setNameOfFormalArgType(argument);
+      argument = unescape(argument);
+      constraint.setExpectedTypes(argument);
       constraint.setInvertFormalType(invert);
     }
     else if (option.equalsIgnoreCase(SCRIPT)) {
@@ -425,6 +420,11 @@ public class StringToConstraintsTransformer {
       constraint.setWithinConstraint(argument);
       constraint.setInvertWithinConstraint(invert);
     }
+    else if (option.equalsIgnoreCase(CONTEXT)) {
+      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
+        throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
+      constraint.setContextConstraint(argument);
+    }
     else {
       assert false;
     }
@@ -440,10 +440,10 @@ public class StringToConstraintsTransformer {
   }
 
   private static String unescape(String s) {
-    StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder();
     boolean escaped = false;
     for (int i = 0, length = s.length(); i < length; i++) {
-      int c = s.codePointAt(i);
+      final int c = s.codePointAt(i);
       if (c == '\\' && !escaped) {
         escaped = true;
       }

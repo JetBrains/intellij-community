@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.BracePair;
@@ -8,9 +8,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class YAMLPairedBraceMatcher implements PairedBraceMatcher, YAMLTokenTypes {
     private static final BracePair[] PAIRS = new BracePair[]{
             new BracePair(LBRACE, RBRACE, true),
@@ -18,8 +15,7 @@ public class YAMLPairedBraceMatcher implements PairedBraceMatcher, YAMLTokenType
     };
 
     @Override
-    @NotNull
-    public BracePair[] getPairs() {
+    public BracePair @NotNull [] getPairs() {
         return PAIRS;
     }
 

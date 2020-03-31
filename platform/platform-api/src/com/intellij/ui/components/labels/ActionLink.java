@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -20,13 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,26 +22,29 @@ import java.awt.event.InputEvent;
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
-  private final String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
   private Color myVisitedColor;
   private Color myActiveColor;
   private Color myNormalColor;
 
-  public ActionLink(String text, @NotNull AnAction action) {
+  public ActionLink(@NlsUI.LinkLabel String text, @NotNull AnAction action) {
     this(text, ICON, action);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action) {
-    this(text, icon, action, null);
+  public ActionLink(@NlsUI.LinkLabel String text, Icon icon, @NotNull AnAction action) {
+    this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable final Runnable onDone) {
+  public ActionLink(@NlsUI.LinkLabel String text,
+                    Icon icon,
+                    @NotNull AnAction action,
+                    @Nullable Runnable onDone,
+                    @NotNull String place) {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+        ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);
     myAction = action;

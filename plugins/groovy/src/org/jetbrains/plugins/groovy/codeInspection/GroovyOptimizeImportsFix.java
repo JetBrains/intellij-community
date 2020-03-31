@@ -23,7 +23,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,12 +39,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 public class GroovyOptimizeImportsFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass");
+  private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
   private final boolean onTheFly;
 
   public GroovyOptimizeImportsFix(boolean onTheFly) {
@@ -131,11 +132,10 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
                                                    @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     Project project = file.getProject();
-    TransactionGuard.submitTransaction(project, () -> {
-      if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
-      final UndoManager undoManager = UndoManager.getInstance(project);
-      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+      if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) return;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       String beforeText = file.getText();
       final long oldStamp = editor.getDocument().getModificationStamp();

@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
@@ -38,7 +24,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,17 +34,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SuperMethodWarningUtil {
-  public static Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
+  public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
   private SuperMethodWarningUtil() {}
 
-  @NotNull
-  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
-  @NotNull
-  public static PsiMethod[] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
+  public static PsiMethod @NotNull [] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
@@ -66,9 +50,8 @@ public class SuperMethodWarningUtil {
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
     return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
-  
-  @NotNull
-  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<? extends PsiElement> ignore) {
+
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<? extends PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
     if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
@@ -84,19 +67,22 @@ public class SuperMethodWarningUtil {
       parentInterface |= isInterface;
     }
 
-    SuperMethodWarningDialog dialog =
-        new SuperMethodWarningDialog(method.getProject(), DescriptiveNameUtil.getDescriptiveName(method), actionString, superAbstract,
-                                     parentInterface, method.getContainingClass().isInterface(), ArrayUtil.toStringArray(superClasses));
-    dialog.show();
-
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      return methodTargetCandidates;
+    int shouldIncludeBase = showDialog(
+      method.getProject(),
+      DescriptiveNameUtil.getDescriptiveName(method),
+      actionString,
+      superAbstract,
+      parentInterface,
+      method.getContainingClass().isInterface(),
+      ArrayUtilRt.toStringArray(superClasses));
+    switch (shouldIncludeBase) {
+      case Messages.YES:
+        return methodTargetCandidates;
+      case Messages.NO:
+        return new PsiMethod[] {method};
+      default:
+        return PsiMethod.EMPTY_ARRAY;
     }
-    if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
-      return new PsiMethod[]{method};
-    }
-
-    return PsiMethod.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -112,7 +98,7 @@ public class SuperMethodWarningUtil {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
           siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, "Searching for Sub-Classes", true, aClass.getProject())) {
+        }, JavaBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {
@@ -137,18 +123,20 @@ public class SuperMethodWarningUtil {
 
     PsiClass containingClass = superMethod.getContainingClass();
 
-    SuperMethodWarningDialog dialog =
-        new SuperMethodWarningDialog(
-            method.getProject(),
-            DescriptiveNameUtil.getDescriptiveName(method), actionString, containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
-            containingClass.isInterface(), aClass.isInterface(), containingClass.getQualifiedName()
-        );
-    dialog.show();
-
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) return superMethod;
-    if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) return method;
-
-    return null;
+    int useSuperMethod = showDialog(
+      method.getProject(),
+      DescriptiveNameUtil.getDescriptiveName(method),
+      actionString,
+      containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
+      containingClass.isInterface(),
+      aClass.isInterface(),
+      containingClass.getQualifiedName()
+    );
+    switch (useSuperMethod) {
+      case Messages.YES: return superMethod;
+      case Messages.NO: return method;
+      default: return null;
+    }
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
@@ -210,15 +198,48 @@ public class SuperMethodWarningUtil {
   }
 
   @Messages.YesNoCancelResult
-  public static int askWhetherShouldAnnotateBaseMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    String implement = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-                  ? InspectionsBundle.message("inspection.annotate.quickfix.implements")
-                  : InspectionsBundle.message("inspection.annotate.quickfix.overrides");
-    String message = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.messages",
-                                               DescriptiveNameUtil.getDescriptiveName(method), implement,
-                                               DescriptiveNameUtil.getDescriptiveName(superMethod));
-    String title = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.warning");
-    return Messages.showYesNoCancelDialog(method.getProject(), message, title, "Annotate", "Don't Annotate", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+  private static int showDialog(@NotNull Project project,
+                                @NotNull String name,
+                                @NotNull String actionString,
+                                boolean isSuperAbstract,
+                                boolean isParentInterface,
+                                boolean isContainedInInterface,
+                                String @NotNull ... classNames) {
+    String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
+    return Messages.showYesNoCancelDialog(project,
+                                          message, JavaBundle.message("dialog.title.super.method.found"), JavaBundle.message("button.base.method"),
+                                          JavaBundle.message("button.current.method"),
+                                          Messages.getCancelButton(), Messages.getQuestionIcon());
+  }
+
+  @NotNull
+  private static String getDialogMessage(@NotNull String name,
+                                         @NotNull String actionString,
+                                         boolean isSuperAbstract,
+                                         boolean isParentInterface,
+                                         boolean isContainedInInterface,
+                                         String @NotNull [] classNames) {
+    StringBuilder labelText = new StringBuilder();
+    String classType = isParentInterface ? JavaBundle.message("element.of.interface") : JavaBundle.message("element.of.class");
+    String methodString = JavaPsiBundle.message("element.method");
+    labelText.append("<html>").append(JavaBundle.message("label.method", name)).append("<br>");
+    if (classNames.length == 1) {
+      final String className = classNames[0];
+      labelText.append(isContainedInInterface || !isSuperAbstract
+                       ? JavaBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
+                       : JavaBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className));
+      labelText.append("<br>");
+    }
+    else {
+      labelText.append(JavaBundle.message("label.implements.method.of_interfaces"));
+
+      for (final String className : classNames) {
+        labelText.append("<br>&emsp;'").append(className).append("'");
+      }
+    }
+
+    labelText.append("<br>");
+    labelText.append(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", actionString, classNames.length));
+    return labelText.toString();
   }
 }

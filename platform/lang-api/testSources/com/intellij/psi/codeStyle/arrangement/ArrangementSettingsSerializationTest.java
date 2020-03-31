@@ -63,7 +63,7 @@ public class ArrangementSettingsSerializationTest {
     return holder;
   }
 
-  private static StdArrangementMatchRule rule(boolean byName, @NotNull ArrangementSettingsToken... tokens) {
+  private static StdArrangementMatchRule rule(boolean byName, ArrangementSettingsToken @NotNull ... tokens) {
     final List<ArrangementAtomMatchCondition> conditions = new ArrayList<>();
     for (ArrangementSettingsToken token : tokens) {
       conditions.add(new ArrangementAtomMatchCondition(token));
@@ -80,7 +80,7 @@ public class ArrangementSettingsSerializationTest {
     return ArrangementSectionRule.create(start == null ? null : start.trim(), end == null ? null : end.trim(), rules);
   }
 
-  private static ArrangementSectionRule section(boolean byName, @NotNull ArrangementSettingsToken... tokens) {
+  private static ArrangementSectionRule section(boolean byName, ArrangementSettingsToken @NotNull ... tokens) {
     return section(null, null, rule(byName, tokens));
   }
 

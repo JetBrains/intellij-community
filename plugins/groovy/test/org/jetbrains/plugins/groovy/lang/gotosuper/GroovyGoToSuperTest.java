@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.gotosuper;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.lang.CodeInsightActions;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyGoToSuperTest extends LightCodeInsightFixtureTestCase {
+public class GroovyGoToSuperTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

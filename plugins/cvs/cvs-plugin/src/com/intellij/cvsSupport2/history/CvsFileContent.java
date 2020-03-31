@@ -20,12 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public abstract class CvsFileContent implements VcsFileContent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.CvsFileContent");
+  private static final Logger LOG = Logger.getInstance(CvsFileContent.class);
   protected final ComparableVcsRevisionOnOperation myComparableCvsRevisionOnOperation;
 
   protected CvsFileContent(final ComparableVcsRevisionOnOperation comparableCvsRevisionOnOperation) {
@@ -41,8 +42,7 @@ public abstract class CvsFileContent implements VcsFileContent{
   }
 
   @Override
-  @Nullable
-  public byte[] getContent() throws IOException, VcsException {
+  public byte @Nullable [] getContent() throws IOException, VcsException {
     if (! isLoaded()) return null;
     return myComparableCvsRevisionOnOperation.getContent();
   }
@@ -50,7 +50,7 @@ public abstract class CvsFileContent implements VcsFileContent{
   public abstract VcsRevisionNumber getRevisionNumber();
 
   @Override
-  public byte[] loadContent() throws IOException, VcsException {
+  public byte @NotNull [] loadContent() throws IOException, VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {
       throw new VcsException(CvsBundle.message("exception.text.cannot.load.revision", getRevisionNumber()));

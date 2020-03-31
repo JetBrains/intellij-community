@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,9 +16,12 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.commands.Git;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +40,7 @@ public class GitPreservingProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final Collection<VirtualFile> myRootsToSave;
+  @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
   @NotNull private final String myOperationTitle;
   @NotNull private final String myDestinationName;
   @NotNull private final ProgressIndicator myProgressIndicator;
@@ -50,10 +52,10 @@ public class GitPreservingProcess {
 
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
-                              @NotNull Collection<VirtualFile> rootsToSave,
-                              @NotNull String operationTitle,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
+                              @Nls @NotNull String operationTitle,
                               @NotNull String destinationName,
-                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
+                              @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
     myProject = project;
@@ -74,10 +76,9 @@ public class GitPreservingProcess {
 
   public void execute(@Nullable final Computable<Boolean> autoLoadDecision) {
     Runnable operation = () -> {
-      Ref<Boolean> savedSuccessfully = Ref.create();
-      ProgressManager.getInstance().executeNonCancelableSection(() -> savedSuccessfully.set(save()));
+      boolean savedSuccessfully = ProgressManager.getInstance().computeInNonCancelableSection(() -> save());
       LOG.debug("save result: " + savedSuccessfully);
-      if (savedSuccessfully.get()) {
+      if (savedSuccessfully) {
         try {
           LOG.debug("running operation");
           myOperation.run();
@@ -103,7 +104,7 @@ public class GitPreservingProcess {
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
   @NotNull
-  private GitChangesSaver configureSaver(@NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
+  private GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @NotNull
@@ -117,7 +118,10 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
-        return "Uncommitted changes from stash";
+        return saveMethod.selectBundleMessage(
+          GitBundle.getString("restore.conflict.diff.dialog.left.stash.title"),
+          GitBundle.getString("restore.conflict.diff.dialog.left.shelf.title")
+        );
       }
 
       @NotNull
@@ -146,9 +150,12 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        "Couldn't save uncommitted changes.",
-        String.format("Tried to save uncommitted changes in stash before %s, but failed with an error.<br/>%s",
-                      myOperationTitle, join(e.getMessages())));
+        GitBundle.getString("save.notification.failed.title"),
+        mySaver.getSaveMethod().selectBundleMessage(
+          GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
+          GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))
+        )
+      );
       return false;
     }
   }
@@ -160,5 +167,21 @@ public class GitPreservingProcess {
     else {
       LOG.info("The changes were already loaded");
     }
+  }
+
+  /**
+   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitSaveChangesPolicy,
+   * ProgressIndicator, Runnable)}
+   */
+  @Deprecated
+  public GitPreservingProcess(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
+                              @NotNull String operationTitle,
+                              @NotNull String destinationName,
+                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
+                              @NotNull ProgressIndicator indicator,
+                              @NotNull Runnable operation) {
+    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod.convert(), indicator, operation);
   }
 }

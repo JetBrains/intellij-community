@@ -16,6 +16,23 @@
 package com.intellij.util.indexing;
 
 public interface IdIterator {
+  IdIterator EMPTY = new IdIterator() {
+    @Override
+    public boolean hasNext() {
+      return false;
+    }
+
+    @Override
+    public int next() {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+  };
+
   boolean hasNext();
 
   int next();

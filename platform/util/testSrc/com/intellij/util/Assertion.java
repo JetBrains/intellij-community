@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
@@ -157,7 +157,7 @@ public class Assertion extends Assert {
 
   public void empty(Object[] array) {
     try {
-      compareAll(ArrayUtil.EMPTY_OBJECT_ARRAY, array);
+      compareAll(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
     } catch(AssertionFailedError e) {
       System.err.println("Size: " + array.length);
       throw e;

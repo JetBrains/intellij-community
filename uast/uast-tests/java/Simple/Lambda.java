@@ -25,4 +25,19 @@ public class Lambda {
 
         return variable;
     }
+
+    public static int bar() throws Exception {
+        int variable = 42;
+
+        Callable<Integer> callable1 = () -> variable * 2;
+        callable1.call();
+
+        Callable<Integer> callable2 = () -> {
+            int a = 5;
+            return variable + a;
+        };
+        callable2.call();
+
+        return variable;
+    }
 }

@@ -4,10 +4,9 @@ package com.intellij.util.concurrency;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 /**
- * A common executor for non-urgent tasks, which are expected to be fast most of the time.
+ * A common executor for non-urgent tasks, which are expected to be fast (preferably not more than 10 seconds) most of the time.
  * Used to avoid spawning a lot of threads by different subsystems all reacting to the same event,
  * when all they have to do is several short PSI/index queries in reaction to a file or project model change,
  * or on project opening. If you're using {@link com.intellij.openapi.application.ReadAction#nonBlocking},
@@ -21,15 +20,17 @@ import java.util.concurrent.ExecutorService;
  *   <li>For background processes started by user actions, where people would wait for results, staring at the screen impatiently.</li>
  * </ul>
  */
-public class NonUrgentExecutor implements Executor {
+public final class NonUrgentExecutor implements Executor {
   private static final NonUrgentExecutor ourInstance = new NonUrgentExecutor();
-  private final ExecutorService myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
+  private final Executor myBackend;
 
-  private NonUrgentExecutor() {}
+  private NonUrgentExecutor() {
+    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2, false);
+  }
 
   @Override
   public void execute(@NotNull Runnable command) {
-    myBackend.submit(command);
+    myBackend.execute(command);
   }
 
   @NotNull

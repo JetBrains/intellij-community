@@ -15,8 +15,12 @@
  */
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.RemovePropertyLocalFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -42,7 +46,7 @@ public class DuplicatedPropertiesInspectionProvider implements InconsistentResou
   @NotNull
   @Override
   public String getPresentableName() {
-    return InspectionsBundle.message("inconsistent.bundle.report.duplicate.properties.values");
+    return JavaI18nBundle.message("inconsistent.bundle.report.duplicate.properties.values");
   }
 
   @Override
@@ -65,7 +69,7 @@ public class DuplicatedPropertiesInspectionProvider implements InconsistentResou
         while (parent != null) {
           IProperty parentProperty = parent.findPropertyByKey(overriddenKey);
           if (parentProperty != null && Comparing.strEqual(property.getValue(), parentProperty.getValue())) {
-            String message = InspectionsBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
+            String message = JavaI18nBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
             ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message,
                                                                            RemovePropertyLocalFix.INSTANCE,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);

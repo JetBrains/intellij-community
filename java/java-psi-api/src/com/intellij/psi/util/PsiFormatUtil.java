@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.BitUtil;
@@ -9,6 +10,8 @@ import com.intellij.util.VisibilityUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.StringJoiner;
 
 public class PsiFormatUtil extends PsiFormatUtilBase {
   @MagicConstant(flags = {
@@ -200,7 +203,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         PsiClassType baseClassReference = ((PsiAnonymousClass)aClass).getBaseClassType();
         PsiClass baseClass = baseClassReference.resolve();
         String name = baseClass == null ? baseClassReference.getPresentableText() : formatClass(baseClass, options);
-        buffer.append(PsiBundle.message("anonymous.class.derived.display", name));
+        buffer.append(JavaPsiBundle.message("anonymous.class.derived.display", name));
       }
       else {
         String name = aClass.getName();
@@ -277,7 +280,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         ? list.hasExplicitModifier(PsiModifier.PACKAGE_LOCAL)
         : list.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
       if (element instanceof PsiClass && element.getParent() instanceof PsiDeclarationStatement) { // local class
-        append(buffer, PsiBundle.message("local.class.preposition"));
+        append(buffer, JavaPsiBundle.message("local.class.preposition"));
       }
       else {
         appendModifier(buffer, PsiModifier.PACKAGE_LOCAL);
@@ -335,19 +338,17 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   private static String formatReferenceList(PsiReferenceList list, int options) {
-    StringBuilder buffer = new StringBuilder();
+    StringJoiner buffer = new StringJoiner(", ");
     if (BitUtil.isSet(options, SHOW_RAW_TYPE)) {
       PsiClassType[] types = list.getReferencedTypes();
-      for (int i = 0; i < types.length; i++) {
-        if (i > 0) buffer.append(", ");
-        buffer.append(formatType(types[i], options, PsiSubstitutor.EMPTY));
+      for (PsiClassType type : types) {
+        buffer.add(formatType(type, options, PsiSubstitutor.EMPTY));
       }
     }
     else {
       PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
-      for (int i = 0; i < refs.length; i++) {
-        if (i > 0) buffer.append(", ");
-        buffer.append(formatReference(refs[i], options));
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        buffer.add(formatReference(ref, options));
       }
     }
     return buffer.toString();
@@ -389,6 +390,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   @Nullable
   public static String getExternalName(PsiModifierListOwner owner, boolean showParamName, int maxParamsToShow) {
+    if (owner instanceof PsiPackage) {
+      return ((PsiPackage)owner).getQualifiedName();
+    }
+
     StringBuilder builder = new StringBuilder();
     if (owner instanceof PsiClass) {
       ClassUtil.formatClassName((PsiClass)owner, builder);

@@ -21,11 +21,11 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlBuilderTest extends LightCodeInsightTestCase {
+public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
   private static class TestXmlBuilder implements XmlBuilder {
     private final StringBuilder builder = new StringBuilder();
     private final StringBuilder currentPhysicalText = new StringBuilder();

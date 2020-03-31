@@ -18,7 +18,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.impl.LaterInvocator.*
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import junit.framework.TestCase
 import java.awt.Dialog
@@ -33,7 +33,7 @@ private class NumberedRunnable private constructor(private val myNumber: Int, pr
 }
 
 @SkipInHeadlessEnvironment
-class RunnableActionsTest : PlatformTestCase() {
+class RunnableActionsTest : HeavyPlatformTestCase() {
   private val myPerProjectModalDialog = Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL)
   private val myApplicationModalDialog = Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL)
 
@@ -54,21 +54,21 @@ class RunnableActionsTest : PlatformTestCase() {
     val project = getProject()
     Testable()
       .suspendEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL, true) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
+      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current(), true) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL, true) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
+      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current(), true) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL, true) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()

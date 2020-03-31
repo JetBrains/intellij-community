@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import org.junit.Assert;
@@ -792,7 +792,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   private static void assertTree(JTree tree, String expected) {
-    String actual = TreeTestUtil.toString(tree, true);
+    String actual = new TreeTestUtil(tree).withSelection().toString();
     Assert.assertEquals(expected, !tree.isRootVisible() ? "-Root\n" + actual : actual);
   }
 

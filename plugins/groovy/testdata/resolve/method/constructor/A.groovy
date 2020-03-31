@@ -3,4 +3,4 @@ class A {
   A(i) {}
 }
 
-def a = new <ref>A(0)
+def a = new <caret>A(0)

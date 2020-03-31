@@ -16,24 +16,26 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.openapi.diff.DiffBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 public enum IgnorePolicy {
-  DEFAULT("Do not ignore"),
-  TRIM_WHITESPACES("Trim whitespaces"),
-  IGNORE_WHITESPACES("Ignore whitespaces"),
-  IGNORE_WHITESPACES_CHUNKS("Ignore whitespaces and empty lines"),
-  FORMATTING("Ignore formatting");
+  DEFAULT("option.ignore.policy.none"),
+  TRIM_WHITESPACES("option.ignore.policy.trim"),
+  IGNORE_WHITESPACES("option.ignore.policy.whitespaces"),
+  IGNORE_WHITESPACES_CHUNKS("option.ignore.policy.whitespaces.empty.lines"),
+  FORMATTING("option.ignore.policy.formatting");
 
-  @NotNull private final String myText;
+  @NotNull private final String myTextKey;
 
-  IgnorePolicy(@NotNull String text) {
-    myText = text;
+  IgnorePolicy(@NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey) {
+    myTextKey = textKey;
   }
 
   @NotNull
   public String getText() {
-    return myText;
+    return DiffBundle.message(myTextKey);
   }
 
   @NotNull

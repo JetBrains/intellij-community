@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -17,11 +19,11 @@ import java.util.*;
 
 public abstract class BranchPopupBuilder {
   @NotNull protected final VcsLogDataPack myDataPack;
-  @Nullable private final Collection<VirtualFile> myVisibleRoots;
+  @Nullable private final Collection<? extends VirtualFile> myVisibleRoots;
   @Nullable private final List<? extends List<String>> myRecentItems;
 
   protected BranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
-                               @Nullable Collection<VirtualFile> visibleRoots,
+                               @Nullable Collection<? extends VirtualFile> visibleRoots,
                                @Nullable List<? extends List<String>> recentItems) {
     myDataPack = dataPack;
     myVisibleRoots = visibleRoots;
@@ -48,7 +50,7 @@ public abstract class BranchPopupBuilder {
   }
 
   private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack,
-                                      @Nullable Collection<VirtualFile> visibleRoots,
+                                      @Nullable Collection<? extends VirtualFile> visibleRoots,
                                       @Nullable List<? extends List<String>> recentItems) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
@@ -74,14 +76,15 @@ public abstract class BranchPopupBuilder {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
-      DefaultActionGroup recentGroup = new DefaultActionGroup("Recent", true);
+      DefaultActionGroup recentGroup = new DefaultActionGroup(VcsLogBundle.message("vcs.log.filter.recent"), true);
       for (List<String> recentItem : groups.recentGroups) {
         createRecentAction(recentGroup, recentItem);
       }
       actionGroup.add(recentGroup);
     }
     if (groups.favoriteGroups.size() > 1) {
-      createFavoritesAction(actionGroup, new ArrayList<>(groups.favoriteGroups.keySet()));
+      createFavoritesAction(actionGroup, new ArrayList<>(ContainerUtil.map2LinkedSet(ContainerUtil.flatten(groups.favoriteGroups.values()),
+                                                                                     ref -> ref.getName())));
     }
     for (Map.Entry<String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
@@ -94,7 +97,7 @@ public abstract class BranchPopupBuilder {
     }
     actionGroup.addSeparator();
     for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
-      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
+      DefaultActionGroup popupGroup = DefaultActionGroup.createPopupGroup(() -> group.getKey());
       for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
         popupGroup.add(createCollapsedAction(entry.getKey(), entry.getValue()));
       }
@@ -113,7 +116,9 @@ public abstract class BranchPopupBuilder {
       new TreeMap<>();
   }
 
-  private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<? extends RefGroup> references, @NotNull Groups actions) {
+  private static void putActionsForReferences(@NotNull VcsLogDataPack pack,
+                                              @NotNull List<? extends RefGroup> references,
+                                              @NotNull Groups actions) {
     for (RefGroup refGroup : references) {
       if (refGroup instanceof SingletonRefGroup) {
         VcsRef ref = ((SingletonRefGroup)refGroup).getRef();
@@ -146,7 +151,9 @@ public abstract class BranchPopupBuilder {
     append(map, key, Collections.singleton(value));
   }
 
-  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull Collection<? extends T> values) {
+  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map,
+                                 @NotNull String key,
+                                 @NotNull Collection<? extends T> values) {
     map.computeIfAbsent(key, k -> new HashSet<>()).addAll(values);
   }
 }

@@ -1,0 +1,1 @@
+new A().te<caret>st(1, 1, 1)

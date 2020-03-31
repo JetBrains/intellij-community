@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
+@Deprecated("no proper caching for UAST is implemented, please avoid relying on this key")
 internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 
@@ -127,14 +128,14 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
 
 @Suppress("UNCHECKED_CAST")
+@SafeVarargs
 fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
   this?.let {
     UastFacade.convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
   }
 
 
-inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
-  this?.let { UastFacade.convertElementWithParent(this, T::class.java) as T? }
+inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? = toUElement(T::class.java)
 
 /**
  * Finds an UAST element of a given type at the given [offset] in the specified file. Returns null if there is no UAST

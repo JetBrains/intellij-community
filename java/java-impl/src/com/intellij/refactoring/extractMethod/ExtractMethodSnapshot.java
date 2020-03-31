@@ -57,7 +57,7 @@ public class ExtractMethodSnapshot {
     myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
   }
 
-  public ExtractMethodSnapshot(@NotNull ExtractMethodSnapshot from, @NotNull PsiElement[] pattern, @NotNull PsiElement[] copy) {
+  public ExtractMethodSnapshot(@NotNull ExtractMethodSnapshot from, PsiElement @NotNull [] pattern, PsiElement @NotNull [] copy) {
     myProject = from.myProject;
     myMethodName = from.myMethodName;
     myStatic = from.myStatic;

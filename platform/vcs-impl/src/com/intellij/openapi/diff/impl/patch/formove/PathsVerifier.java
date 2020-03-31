@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -10,25 +12,32 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 public class PathsVerifier {
   // in
@@ -111,16 +120,19 @@ public class PathsVerifier {
     }
   }
 
-  @CalledInAwt
-  public List<FilePatch> nonWriteActionPreCheck() {
+  List<FilePatch> nonWriteActionPreCheck() {
+    List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
       if (!checker.canBeApplied(myDelayedPrecheckContext)) {
-        revert(checker.getErrorMessage());
+        ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
         failedToApply.add(patch);
       }
+    }
+    if (!failedMessages.isEmpty()) {
+      PatchApplier.showError(myProject, StringUtil.join(failedMessages, "\n"));
     }
     final Collection<FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
     mySkipped.addAll(skipped);
@@ -129,27 +141,22 @@ public class PathsVerifier {
     return failedToApply;
   }
 
-  public List<FilePatch> getSkipped() {
+  List<FilePatch> getSkipped() {
     return mySkipped;
   }
 
-  public List<FilePatch> execute() {
+  List<FilePatch> execute() {
+    List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedPatches = new ArrayList<>();
-    try {
-      final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
-      for (FilePatch patch : myPatches) {
-        final CheckPath checker = getChecker(patch);
-        checkers.add(checker);
-      }
-      for (CheckPath checker : checkers) {
-        if (!checker.check()) {
-          failedPatches.add(checker.getPatch());
-          revert(checker.getErrorMessage());
-        }
+    for (FilePatch patch : myPatches) {
+      final CheckPath checker = getChecker(patch);
+      if (!checker.check()) {
+        ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
+        failedPatches.add(checker.getPatch());
       }
     }
-    catch (IOException e) {
-      revert(e.getMessage());
+    if (!failedMessages.isEmpty()) {
+      PatchApplier.showError(myProject, StringUtil.join(failedMessages, "\n"));
     }
     myPatches.removeAll(failedPatches);
     return failedPatches;
@@ -191,8 +198,7 @@ public class PathsVerifier {
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
-      PatchApplier
-        .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because it is directory.");
+      PatchApplier.showError(myProject, VcsBundle.message("patch.apply.file.type.directory.error", file.getPresentableName()));
       return false;
     }
     FileType fileType = file.getFileType();
@@ -200,12 +206,12 @@ public class PathsVerifier {
       fileType = FileTypeChooser.associateFileType(file.getName());
       if (fileType == null) {
         PatchApplier
-          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.");
+          .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
         return false;
       }
     }
     if (fileType.isBinary()) {
-      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.");
+      PatchApplier.showError(myProject, VcsBundle.message("patch.apply.file.type.binary.error", file.getPresentableName()));
       return false;
     }
     return true;
@@ -214,6 +220,14 @@ public class PathsVerifier {
   private class CheckModified extends CheckDeleted {
     private CheckModified(final FilePatch path) {
       super(path);
+    }
+
+    @Override
+    protected boolean precheck(VirtualFile beforeFile, VirtualFile afterFile, DelayedPrecheckContext context) {
+      if (beforeFile == null) {
+        setErrorMessage(fileNotFoundMessage(myBeforeName));
+      }
+      return beforeFile != null;
     }
   }
 
@@ -260,25 +274,39 @@ public class PathsVerifier {
     }
 
     @Override
-    public boolean check() throws IOException {
+    public boolean check() {
       final String[] pieces = RelativePathCalculator.split(myAfterName);
-      final VirtualFile parent = makeSureParentPathExists(pieces);
+      final VirtualFile parent;
+      try {
+        parent = makeSureParentPathExists(pieces);
+      }
+      catch (IOException e) {
+        setErrorMessage(cantCreateFileMessage(myAfterName, e));
+        return false;
+      }
       if (parent == null) {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
       String name = pieces[pieces.length - 1];
       File afterFile = new File(parent.getPath(), name);
-      //if user already accepted overwriting, we shouldn't have created a new one
-      final VirtualFile file = myDelayedPrecheckContext.getOverridenPaths().contains(VcsUtil.getFilePath(afterFile))
-                               ? parent.findChild(name)
-                               : createFile(parent, name);
+      final VirtualFile file;
+      try {
+        //if user already accepted overwriting, we shouldn't have created a new one
+        file = myDelayedPrecheckContext.getOverridenPaths().contains(VcsUtil.getFilePath(afterFile))
+               ? parent.findChild(name)
+               : createFile(parent, name);
+      }
+      catch (IOException e) {
+        setErrorMessage(cantCreateFileMessage(myAfterName, e));
+        return false;
+      }
       if (file == null) {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
       myAddedPaths.add(VcsUtil.getFilePath(file));
-      if (! checkExistsAndValid(file, myAfterName)) {
+      if (!checkExistsAndValid(file, myAfterName)) {
         return false;
       }
       addPatch(myPatch, file);
@@ -303,15 +331,22 @@ public class PathsVerifier {
     }
 
     @Override
-    public boolean check() throws IOException {
+    public boolean check() {
       final String[] pieces = RelativePathCalculator.split(myAfterName);
-      final VirtualFile afterFileParent = makeSureParentPathExists(pieces);
+      final VirtualFile afterFileParent;
+      try {
+        afterFileParent = makeSureParentPathExists(pieces);
+      }
+      catch (IOException e) {
+        setErrorMessage(cantCreateFileMessage(myAfterName, e));
+        return false;
+      }
       if (afterFileParent == null) {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
       final VirtualFile beforeFile = getMappedFile(myBeforeName);
-      if (! checkExistsAndValid(beforeFile, myBeforeName)) {
+      if (!checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
       myMovedFiles.put(beforeFile, new MovedFileData(afterFileParent, beforeFile, myPatch.getAfterFileName()));
@@ -349,7 +384,8 @@ public class PathsVerifier {
     protected abstract boolean precheck(final VirtualFile beforeFile,
                                         final VirtualFile afterFile,
                                         DelayedPrecheckContext context);
-    protected abstract boolean check() throws IOException;
+
+    protected abstract boolean check();
 
     @Contract("null, _ -> false")
     protected boolean checkExistsAndValid(@Nullable VirtualFile file, final String name) {
@@ -364,7 +400,7 @@ public class PathsVerifier {
       if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
       if (!inContent(file) && myVcsManager.getVcsRootFor(file) == null) {
-        setErrorMessage("File to patch found outside content root: " + name);
+        setErrorMessage(VcsBundle.message("patch.apply.outside.content.root.message", name));
         return false;
       }
       return true;
@@ -398,6 +434,10 @@ public class PathsVerifier {
     myWritableFiles.add(file);
   }
 
+  private static String cantCreateFileMessage(final String path, IOException e) {
+    return VcsBundle.message("cannot.create.directory.for.patch", path, e.getMessage());
+  }
+
   private static String fileNotFoundMessage(final String path) {
     return VcsBundle.message("cannot.find.file.to.patch", path);
   }
@@ -405,50 +445,6 @@ public class PathsVerifier {
   private static String fileAlreadyExists(final String path) {
     return VcsBundle.message("cannot.apply.file.already.exists", path);
   }
-
-  private void revert(final String errorMessage) {
-    PatchApplier.showError(myProject, errorMessage);
-
-    // move back
-    /*for (MovedFileData movedFile : myMovedFiles) {
-      try {
-        final VirtualFile current = movedFile.getCurrent();
-        final VirtualFile newParent = current.getParent();
-        final VirtualFile file;
-        if (! Comparing.equal(newParent, movedFile.getOldParent())) {
-          file = moveFile(current, movedFile.getOldParent());
-        } else {
-          file = current;
-        }
-        if (! Comparing.equal(current.getName(), movedFile.getOldName())) {
-          file.rename(PatchApplier.class, movedFile.getOldName());
-        }
-      }
-      catch (IOException e) {
-        // ignore: revert as much as possible
-      }
-    }
-
-    // go back
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (int i = myCreatedDirectories.size() - 1; i >= 0; -- i) {
-          final VirtualFile file = myCreatedDirectories.get(i);
-          try {
-            file.delete(PatchApplier.class);
-          }
-          catch (IOException e) {
-            // ignore
-          }
-        }
-      }
-    });
-
-    myBinaryPatches.clear();
-    myTextPatches.clear();
-    myWritableFiles.clear();*/
-  }
-
 
   private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
     return parent.createChildData(PatchApplier.class, name);
@@ -533,12 +529,7 @@ public class PathsVerifier {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
       myBeforePaths.add(VcsUtil.getFilePath(file));
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-        @Override
-        public VirtualFile compute() throws IOException {
-          return movedFile.doMove();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction((ThrowableComputable<VirtualFile, IOException>)() -> movedFile.doMove());
     }
   }
 
@@ -567,7 +558,7 @@ public class PathsVerifier {
 
     public VirtualFile doMove() throws IOException {
       final VirtualFile oldParent = myCurrent.getParent();
-      boolean needRename = !Comparing.equal(myCurrent.getName(), myNewName);
+      boolean needRename = !Objects.equals(myCurrent.getName(), myNewName);
       boolean needMove = !myNewParent.equals(oldParent);
       if (needRename) {
         if (needMove) {
@@ -588,12 +579,12 @@ public class PathsVerifier {
     }
 
     private void performRenameWithConflicts(@NotNull File oldParent) throws IOException {
-      File tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false);
+      File tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false); //NON-NLS
       File newParentFile = VfsUtilCore.virtualToIoFile(myNewParent);
       File destFile = new File(newParentFile, tmpFileWithUniqueName.getName());
       while (destFile.exists()) {
         destFile = new File(newParentFile,
-                            FileUtil.createTempFile(oldParent, FileUtil.getNameWithoutExtension(destFile.getName()), null, false)
+                            FileUtil.createTempFile(oldParent, FileUtilRt.getNameWithoutExtension(destFile.getName()), null, false)
                               .getName());
       }
       myCurrent.rename(PatchApplier.class, destFile.getName());
@@ -612,7 +603,7 @@ public class PathsVerifier {
       myProject = project;
       myOverrideExisting = new HashMap<>();
       mySkipDeleted = new HashMap<>();
-      myOverridenPaths = new LinkedList<>();
+      myOverridenPaths = new ArrayList<>();
     }
 
     public void addSkip(final FilePath path, final FilePatch filePatch) {
@@ -627,25 +618,26 @@ public class PathsVerifier {
 
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
-      final List<FilePatch> result = new LinkedList<>();
-      if (! myOverrideExisting.isEmpty()) {
-        final String title = "Overwrite Existing Files";
-        List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
-        Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          files, title,
-          "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
-          "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
-          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
-          "Overwrite", "Cancel");
-        if (selected != null) {
-          for (FilePath path : selected) {
-            myOverrideExisting.remove(path);
+      final List<FilePatch> result = new ArrayList<>();
+      if (!myOverrideExisting.isEmpty()) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          final String title = VcsBundle.message("patch.apply.overwrite.existing.title");
+          List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+          Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+            files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
+            VcsBundle.getString("patch.apply.overwrite.existing.file.prompt"),
+            VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
+            CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
+          if (selected != null) {
+            for (FilePath path : selected) {
+              myOverrideExisting.remove(path);
+            }
           }
-        }
-        result.addAll(myOverrideExisting.values());
-        if (selected != null) {
-          myOverridenPaths.addAll(selected);
-        }
+          result.addAll(myOverrideExisting.values());
+          if (selected != null) {
+            myOverridenPaths.addAll(selected);
+          }
+        });
       }
       result.addAll(mySkipDeleted.values());
       return result;

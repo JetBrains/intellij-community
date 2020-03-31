@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
@@ -23,7 +23,7 @@ import java.util.*;
  * @author peter
 */
 public class StatisticsWeigher extends CompletionWeigher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
+  private static final Logger LOG = Logger.getInstance(LookupStatisticsWeigher.class);
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
@@ -58,7 +58,7 @@ public class StatisticsWeigher extends CompletionWeigher {
 
     @NotNull
     @Override
-    public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull final ProcessingContext context) {
+    public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull final ProcessingContext context) {
       List<LookupElement> initialList = getInitialNoStatElements(source, context);
       Iterable<LookupElement> rest = withoutInitial(source, initialList);
       Collection<List<LookupElement>> byWeight = buildMapByWeight(rest).descendingMap().values();
@@ -66,12 +66,12 @@ public class StatisticsWeigher extends CompletionWeigher {
       return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
     }
 
-    private static Iterable<LookupElement> withoutInitial(Iterable<LookupElement> allItems, List<? extends LookupElement> initial) {
+    private static Iterable<LookupElement> withoutInitial(Iterable<? extends LookupElement> allItems, List<? extends LookupElement> initial) {
       Set<LookupElement> initialSet = ContainerUtil.newIdentityTroveSet(initial);
-      return JBIterable.from(allItems).filter(element -> !initialSet.contains(element));
+      return JBIterable.<LookupElement>from(allItems).filter(element -> !initialSet.contains(element));
     }
 
-    private List<LookupElement> getInitialNoStatElements(Iterable<LookupElement> source, ProcessingContext context) {
+    private List<LookupElement> getInitialNoStatElements(Iterable<? extends LookupElement> source, ProcessingContext context) {
       List<LookupElement> initialList = new ArrayList<>();
       for (LookupElement next : myNext.classify(source, context)) {
         if (myNoStats.contains(next)) {
@@ -100,7 +100,7 @@ public class StatisticsWeigher extends CompletionWeigher {
       map.put(0, noStats);
       for (String s : byName.keySet()) {
         List<LookupElement> group = (List<LookupElement>)byName.get(s);
-        Collections.sort(group, Comparator.comparing(this::getScalarWeight).reversed());
+        group.sort(Comparator.comparing(this::getScalarWeight).reversed());
         map.computeIfAbsent(getMaxWeight(group), __ -> new ArrayList<>()).addAll(group);
       }
       return map;
@@ -133,13 +133,13 @@ public class StatisticsWeigher extends CompletionWeigher {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
-      int minRecency = baseInfo.getLastUseRecency();
+      int minRecency = StatisticsManager.getInstance().getLastUseRecency(baseInfo);
       return minRecency == Integer.MAX_VALUE ? 0 : StatisticsManager.RECENCY_OBLIVION_THRESHOLD - minRecency;
     }
 
     @NotNull
     @Override
-    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
+    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull final ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
     }
 

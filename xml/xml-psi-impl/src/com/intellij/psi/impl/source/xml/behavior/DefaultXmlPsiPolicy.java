@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -29,10 +29,13 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy");
+  private static final Logger LOG = Logger.getInstance(DefaultXmlPsiPolicy.class);
 
   @Override
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
@@ -43,7 +46,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
     final XmlTag rootTag =
       ((XmlFile)PsiFileFactory.getInstance(text.getProject())
-        .createFileFromText("a.xml", XMLLanguage.INSTANCE, "<a>" + displayText + "</a>", false, true)).getRootTag();
+        .createFileFromText("a.xml", text.getLanguage(), buildTagForText(text, displayText), false, true)).getRootTag();
 
     assert rootTag != null;
     final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
@@ -58,4 +61,8 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     return element.getFirstChildNode();
   }
 
+  @NotNull
+  protected String buildTagForText(PsiElement text, String displayText) {
+    return "<a>" + displayText + "</a>";
+  }
 }

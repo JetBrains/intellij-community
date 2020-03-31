@@ -1,7 +1,7 @@
 class OuterClass {
   class Inner{
     def foo() {
-      OuterClass.this.fo<ref>o();
+      OuterClass.this.fo<caret>o();
     }
   }
 

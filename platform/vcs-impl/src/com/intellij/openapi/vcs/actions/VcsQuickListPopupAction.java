@@ -62,9 +62,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
   }
 
   public static class Providers extends ActionGroup implements DumbAware {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
@@ -88,9 +87,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
   }
 
   public final static class VcsNameSeparator extends ActionGroup implements DumbAware {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, e.getDataContext());

@@ -14,7 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
@@ -88,7 +88,7 @@ public class HgAnnotateCommand {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
         String date = "";
         try {
-          date = DateFormatUtil.formatPrettyDate(dateFormat.parse(dateGroup));
+          date = FileAnnotation.formatDate(dateFormat.parse(dateGroup));
         }
         catch (ParseException e) {
           LOG.error("Couldn't parse annotation date ", e);

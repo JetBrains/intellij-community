@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +19,14 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JCheckBox myConfirmBreakpointRemoval;
   private JCheckBox myRunToCursorGesture;
 
+  GeneralConfigurableUi() {
+    myShowDebugWindowOnCheckBox.addActionListener(e -> updateControls());
+  }
+
+  private void updateControls() {
+    UIUtil.setEnabled(focusApplicationOnBreakpointCheckBox, myShowDebugWindowOnCheckBox.isSelected(), false);
+  }
+
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
     focusApplicationOnBreakpointCheckBox.setSelected(Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
@@ -28,6 +37,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     myDragToTheEditorRadioButton.setSelected(Registry.is("debugger.click.disable.breakpoints"));
     myConfirmBreakpointRemoval.setSelected(settings.isConfirmBreakpointRemoval());
     myRunToCursorGesture.setSelected(settings.isRunToCursorGestureEnabled());
+    updateControls();
   }
 
   @Override

@@ -6,6 +6,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -62,11 +63,9 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static JPanel createFooterPanel() {
-    JLabel versionLabel = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName() +
-                             " " +
-                             ApplicationInfo.getInstance().getFullVersion() +
-                             " Build " +
-                             ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode());
+    JLabel versionLabel = new JLabel(IdeBundle.message("label.version.0.1.build.2", ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                       ApplicationInfo.getInstance().getFullVersion(),
+                                                       ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()));
     makeSmallFont(versionLabel);
     versionLabel.setForeground(WelcomeScreenColors.FOOTER_FOREGROUND);
 
@@ -81,7 +80,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     });
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
-    footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
+    footerPanel.add(makeSmallFont(new LinkLabel(IdeBundle.message("link.check"), null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         UpdateChecker.updateAndShowResult(null, null);
@@ -98,7 +97,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
-    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
+    JLabel welcome = new JLabel(IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName()),
                                 IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,6 @@ public abstract class ProjectBuilder {
   }
 
   /**
-   * Deprecated. Use {@link #isSuitableSdkType(SdkTypeId)} instead.
-   *
    * Used for automatically assigning an SDK to the project when it gets created.
    * If no SDK is specified in the template project and there is no specific SDK chooser step,
    * the SDK which is set for the project is the highest version SDK for which
@@ -62,6 +60,7 @@ public abstract class ProjectBuilder {
    *
    * @param sdk the candidate SDK
    * @return true if the SDK can be used for this project type, false otherwise
+   * @deprecated. Use {@link #isSuitableSdkType(SdkTypeId)} instead.
    */
   @Deprecated
   public boolean isSuitableSdk(Sdk sdk) {

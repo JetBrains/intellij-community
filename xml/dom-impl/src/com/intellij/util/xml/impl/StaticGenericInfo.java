@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.*;
+import com.intellij.util.ConstantFunction;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -88,7 +77,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       }
 
       final NotNullFunction<String, CollectionChildDescriptionImpl> mapper =
-        xmlName -> ObjectUtils.assertNotNull(myCollections.findDescription(xmlName));
+        xmlName -> Objects.requireNonNull(myCollections.findDescription(xmlName));
       final Map<JavaMethodSignature, String[]> getters = builder.getCompositeCollectionGetters();
       for (final JavaMethodSignature signature : getters.keySet()) {
         myCompositeChildrenMethods.put(signature, ContainerUtil.map2Set(getters.get(signature), mapper));
@@ -153,7 +142,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     if (description != null) {
       return new GetCollectionChildInvocation(description);
     }
-                                                      
+
     description = myCollectionChildrenAdditionMethods.get(signature);
     if (description != null) {
       return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), description, description.getType());
@@ -163,12 +152,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
-      return new Function.First<>();
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(Class.class)) {
+      return s -> (Type)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(Class.class)) {
       return s -> (Type)s[1];
     }
 
@@ -177,12 +165,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
 
   private static Function<Object[], Integer> getIndexGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
-      return new Function.First<>();
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(int.class)) {
+      return s -> (Integer)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(int.class)) {
       return s -> (Integer)s[1];
     }
 

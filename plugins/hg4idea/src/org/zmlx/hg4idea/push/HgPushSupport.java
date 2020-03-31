@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -7,13 +7,14 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import java.util.Objects;
 
 public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
@@ -24,7 +25,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   public HgPushSupport(@NotNull Project project) {
     myProject = project;
-    myVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
+    myVcs = Objects.requireNonNull(HgVcs.getInstance(myProject));
     mySettings = myVcs.getProjectSettings();
     myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
   }
@@ -51,13 +52,18 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @Override
   public HgTarget getDefaultTarget(@NotNull HgRepository repository) {
     String defaultPushPath = repository.getRepositoryConfig().getDefaultPushPath();
-    return defaultPushPath == null ? null : new HgTarget(defaultPushPath, repository.getCurrentBranchName());
+    return defaultPushPath == null ? null : new HgTarget(defaultPushPath, Objects.requireNonNull(repository.getCurrentBranchName()));
   }
+
+  @Override
+  @Nullable
+  public HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {return getDefaultTarget(repository);}
 
   @NotNull
   @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = repository.getCurrentBranchName();
+    assert localBranch != null;
     return new HgPushSource(localBranch);
   }
 
@@ -73,10 +79,12 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
     return new HgPushOptionsPanel();
   }
 
-  @Override
   @NotNull
-  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
-    return new HgPushTargetPanel(repository, defaultTarget);
+  @Override
+  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository,
+                                                     @NotNull HgPushSource source,
+                                                     @Nullable HgTarget defaultTarget) {
+    return new HgPushTargetPanel(repository, source, defaultTarget);
   }
 
   @Override

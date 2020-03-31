@@ -22,29 +22,32 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class MethodCallFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    PsiExpressionList args = null;
+    PsiExpressionList argList = null;
     if (psiElement instanceof PsiMethodCallExpression && !(psiElement instanceof JspMethodCall)) {
-      args = ((PsiMethodCallExpression) psiElement).getArgumentList();
+      argList = ((PsiMethodCallExpression) psiElement).getArgumentList();
     } else if (psiElement instanceof PsiNewExpression) {
-      args = ((PsiNewExpression) psiElement).getArgumentList();
+      argList = ((PsiNewExpression) psiElement).getArgumentList();
     }
 
-    if (args != null && !hasRParenth(args)) {
-      int caret = editor.getCaretModel().getOffset();
+    int caret = editor.getCaretModel().getOffset();
+    if (argList != null && !hasRParenth(argList)) {
       PsiCallExpression innermostCall = PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret - 1, PsiCallExpression.class, false);
       if (innermostCall == null) return;
 
-      args = innermostCall.getArgumentList();
-      if (args == null) return;
+      argList = innermostCall.getArgumentList();
+      if (argList == null) return;
 
       int endOffset = -1;
-      PsiElement child = args.getFirstChild();
+      PsiElement child = argList.getFirstChild();
       while (child != null) {
         if (child instanceof PsiErrorElement) {
           final PsiErrorElement errorElement = (PsiErrorElement)child;
@@ -57,20 +60,21 @@ public class MethodCallFixer implements Fixer {
       }
 
       if (endOffset == -1) {
-        endOffset = args.getTextRange().getEndOffset();
+        endOffset = argList.getTextRange().getEndOffset();
       }
 
-      final PsiExpression[] params = args.getExpressions();
-      if (params.length > 0 && 
-          startLine(editor, args) != startLine(editor, params[0]) &&
-          caret < params[0].getTextRange().getStartOffset()) {
-        endOffset = args.getTextRange().getStartOffset() + 1;
+      PsiExpression[] args = argList.getExpressions();
+      if (args.length > 0 &&
+          startLine(editor, argList) != startLine(editor, args[0]) &&
+          caret < args[0].getTextRange().getStartOffset()) {
+        endOffset = argList.getTextRange().getStartOffset() + 1;
       }
 
-      if (!DumbService.isDumb(args.getProject())) {
+      if (!DumbService.isDumb(argList.getProject())) {
+        int caretArg = ContainerUtil.indexOf(Arrays.asList(args), arg -> arg.getTextRange().containsOffset(caret));
         Integer argCount = getMinimalParameterCount(innermostCall);
-        if (argCount != null && argCount > 0 && argCount < params.length) {
-          endOffset = Math.min(endOffset, params[argCount - 1].getTextRange().getEndOffset());
+        if (argCount != null && argCount > 0 && argCount < args.length) {
+          endOffset = Math.min(endOffset, args[Math.max(argCount - 1, caretArg)].getTextRange().getEndOffset());
         }
       }
 

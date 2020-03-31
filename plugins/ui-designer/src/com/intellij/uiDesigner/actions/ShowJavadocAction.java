@@ -27,7 +27,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class ShowJavadocAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ShowJavadocAction");
+  private static final Logger LOG = Logger.getInstance(ShowJavadocAction.class);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

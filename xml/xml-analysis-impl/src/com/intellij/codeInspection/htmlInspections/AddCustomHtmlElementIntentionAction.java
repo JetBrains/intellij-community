@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
@@ -46,7 +46,7 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("fix.html.family");
+    return XmlAnalysisBundle.message("fix.html.family");
   }
 
   @Override

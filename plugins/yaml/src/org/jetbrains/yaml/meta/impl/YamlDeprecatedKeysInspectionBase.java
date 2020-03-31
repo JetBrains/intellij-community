@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlDeprecatedKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -26,28 +11,36 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+
+import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
 
   private TestFrameworkRunningModel myModel;
+
+  public TestTreeView() {
+    setLargeModel(true);
+  }
 
   protected abstract TreeCellRenderer getRenderer(TestConsoleProperties properties);
 
@@ -79,13 +72,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     installHandlers();
     setCellRenderer(getRenderer(myModel.getProperties()));
+    putClientProperty(SHRINK_LONG_RENDERER, true);
     putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
-  }
-
-  @Override
-  public void setUI(final TreeUI ui) {
-    super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
-    setLargeModel(true);
   }
 
   @Override

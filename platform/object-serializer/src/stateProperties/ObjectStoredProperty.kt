@@ -5,15 +5,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
-import kotlin.reflect.KProperty
 
 abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
+  override fun getValue(thisRef: BaseState): T = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
+  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
     if (value != newValue) {
       thisRef.intIncrementModificationCount()
       value = newValue
@@ -64,7 +63,7 @@ class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: C
 
   override fun getModificationCount() = 0L
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
+  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
     val v = newValue ?: defaultValue
     if (value !== v) {
       thisRef.intIncrementModificationCount()

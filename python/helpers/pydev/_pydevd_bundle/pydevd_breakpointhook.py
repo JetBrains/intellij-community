@@ -14,7 +14,7 @@ def breakpointhook(*args, **kwargs):
         else:
             import pydevd
             py_db = pydevd.get_global_debugger()
-            if (py_db is not None) and (py_db.frame_eval_func is not None):
+            if py_db is not None:
                 from _pydevd_frame_eval.pydevd_frame_tracing import suspend_at_builtin_breakpoint
                 suspend_at_builtin_breakpoint()
             else:
@@ -22,6 +22,6 @@ def breakpointhook(*args, **kwargs):
                     suspend=True,
                     trace_only_current_thread=True,
                     patch_multiprocessing=False,
-                    stop_at_frame=sys._getframe().f_back,
+                    stop_at_frame=sys._getframe().f_back.f_back,
                 )
     pydevd_breakpointhook()

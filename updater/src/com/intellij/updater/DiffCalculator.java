@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.File;
@@ -111,7 +111,7 @@ public class DiffCalculator {
     Map<Long, List<String>> result = new HashMap<>();
     for (Map.Entry<String, Long> entry : map.entrySet()) {
       String path = entry.getKey();
-      if (!path.endsWith("/")) {
+      if (Digester.isFile(entry.getValue())) {
         Long hash = entry.getValue();
         List<String> paths = result.get(hash);
         if (paths == null) result.put(hash, (paths = new LinkedList<>()));
@@ -121,10 +121,11 @@ public class DiffCalculator {
     return result;
   }
 
-  private static Map<String, List<String>> groupFilesByName(Map<String, Long> toDelete) {
+  private static Map<String, List<String>> groupFilesByName(Map<String, Long> map) {
     Map<String, List<String>> result = new HashMap<>();
-    for (String path : toDelete.keySet()) {
-      if (!path.endsWith("/")) {
+    for (Map.Entry<String, Long> entry : map.entrySet()) {
+      String path = entry.getKey();
+      if (Digester.isFile(entry.getValue())) {
         String name = new File(path).getName();
         List<String> paths = result.get(name);
         if (paths == null) result.put(name, (paths = new LinkedList<>()));

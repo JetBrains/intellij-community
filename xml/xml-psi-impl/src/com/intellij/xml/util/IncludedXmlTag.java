@@ -36,7 +36,7 @@ import java.util.Map;
  * @author peter
  */
 public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.IncludedXmlTag");
+  private static final Logger LOG = Logger.getInstance(IncludedXmlTag.class);
   public IncludedXmlTag(@NotNull XmlTag original, @Nullable PsiElement parent) {
     super(original, parent);
   }
@@ -82,8 +82,7 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @NotNull
-  public XmlAttribute[] getAttributes() {
+  public XmlAttribute @NotNull [] getAttributes() {
     XmlAttribute[] original = getOriginal().getAttributes();
     XmlAttribute[] attributes = new XmlAttribute[original.length];
     for (int i = 0; i < original.length; i++) {
@@ -143,8 +142,7 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @NotNull
-  public XmlTag[] getSubTags() {
+  public XmlTag @NotNull [] getSubTags() {
     return wrapTags(getOriginal().getSubTags());
   }
 
@@ -157,14 +155,12 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @NotNull
-  public XmlTag[] findSubTags(@NonNls String qname) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String qname) {
     return wrapTags(getOriginal().findSubTags(qname));
   }
 
   @Override
-  @NotNull
-  public XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String localName, @NonNls String namespace) {
     return wrapTags(getOriginal().findSubTags(localName, namespace));
   }
 

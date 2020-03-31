@@ -8,11 +8,16 @@
     <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
 
     <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
-    <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory language="BuildoutCfg"
-                                   implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
+    <lang.syntaxHighlighter language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgSyntaxHighlighter"/>
+    <fileType name="BuildoutCfg"
+              language="BuildoutCfg"
+              fileNamesCaseInsensitive="buildout.cfg"
+              implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgFileType"
+              fieldName="INSTANCE"/>
+    <lang.syntaxHighlighter language="BuildoutCfg"
+                            implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgSyntaxHighlighter"/>
 
-    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
+    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="messages.PyBundle"
                      key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.buildout.config.inspection.BuildoutUnresolvedPartInspection"/>
 

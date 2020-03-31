@@ -1,25 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -38,7 +22,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
-  private static final Logger LOG = Logger.getInstance(InplaceIntroduceParameterPopup.class);
-
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;
   private final boolean myMustBeFinal;
@@ -69,14 +51,14 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                  final PsiExpression[] occurrences,
                                  final TIntArrayList parametersToRemove,
                                  final boolean mustBeFinal) {
-    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.REFACTORING_NAME
+    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
     );
     myMethod = method;
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
 
     myWholePanel.add(getPreviewComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                   JBUI.insets(0, 5), 0, 0));
+                                                                   JBInsets.create(0, 5), 0, 0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
       @Override
@@ -213,7 +195,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         performRefactoring.run();
       } else {
-        TransactionGuard.getInstance().submitTransactionLater(myProject, performRefactoring);
+        ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);

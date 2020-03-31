@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
 import com.intellij.openapi.Disposable;
@@ -28,47 +14,53 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.lang.ref.WeakReference;
 
-public class UiNotifyConnector implements Disposable, HierarchyListener{
-
+public class UiNotifyConnector implements Disposable, HierarchyListener {
   @NotNull
   private final WeakReference<Component> myComponent;
   private Activatable myTarget;
 
-  public UiNotifyConnector(@NotNull final Component component, @NotNull final Activatable target) {
+  public UiNotifyConnector(@NotNull Component component, @NotNull Activatable target) {
     myComponent = new WeakReference<>(component);
     myTarget = target;
     if (component.isShowing()) {
       showNotify();
-    } else {
+    }
+    else {
       hideNotify();
     }
-    if (isDisposed()) return;
+    if (isDisposed()) {
+      return;
+    }
     component.addHierarchyListener(this);
   }
 
   @Override
   public void hierarchyChanged(@NotNull HierarchyEvent e) {
-    if (isDisposed()) return;
+    if (isDisposed() || (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) <= 0) {
+      return;
+    }
 
-    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      final Runnable runnable = () -> {
-        final Component c = myComponent.get();
-        if (isDisposed() || c == null) return;
-
-        if (c.isShowing()) {
-          showNotify();
-        }
-        else {
-          hideNotify();
-        }
-      };
-      final Application app = ApplicationManager.getApplication();
-      if (app != null && app.isDispatchThread()) {
-        app.invokeLater(runnable, ModalityState.current());
-      } else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(runnable);
+    Runnable runnable = () -> {
+      Component c = myComponent.get();
+      if (isDisposed() || c == null) {
+        return;
       }
+
+      if (c.isShowing()) {
+        showNotify();
+      }
+      else {
+        hideNotify();
+      }
+    };
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isDispatchThread()) {
+      app.invokeLater(runnable, ModalityState.current());
+    }
+    else {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(runnable);
     }
   }
 
@@ -86,10 +78,12 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
 
   @Override
   public void dispose() {
-    if (isDisposed()) return;
+    if (isDisposed()) {
+      return;
+    }
 
     hideOnDispose();
-    final Component c = myComponent.get();
+    Component c = myComponent.get();
     if (c != null) {
       c.removeHierarchyListener(this);
     }
@@ -102,8 +96,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     return myTarget == null;
   }
 
-  public static class Once extends UiNotifyConnector {
-
+  public static final class Once extends UiNotifyConnector {
     private boolean myShown;
     private boolean myHidden;
 
@@ -135,22 +128,20 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     }
   }
 
-  public static void doWhenFirstShown(@NotNull JComponent c, @NotNull final Runnable runnable) {
+  public static void doWhenFirstShown(@NotNull JComponent c, @NotNull Runnable runnable) {
     doWhenFirstShown((Component)c, runnable);
   }
 
-  public static void doWhenFirstShown(@NotNull Component c, @NotNull final Runnable runnable) {
-    Activatable activatable = new Activatable() {
+  public static void doWhenFirstShown(@NotNull Component c, @NotNull Runnable runnable) {
+    doWhenFirstShown(c, new Activatable() {
       @Override
       public void showNotify() {
         runnable.run();
       }
+    });
+  }
 
-      @Override
-      public void hideNotify() {
-      }
-    };
-
+  public static void doWhenFirstShown(@NotNull Component c, @NotNull Activatable activatable) {
     new UiNotifyConnector(c, activatable) {
       @Override
       protected void showNotify() {

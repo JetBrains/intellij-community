@@ -8,15 +8,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlReferenceType extends YamlScalarType {
 
   protected YamlReferenceType(@NotNull String typeName) {
     super(typeName);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesFromValue(@NotNull YAMLScalar valueScalar) {
+  public PsiReference @NotNull [] getReferencesFromValue(@NotNull YAMLScalar valueScalar) {
     return PsiReference.EMPTY_ARRAY;
   }
 }

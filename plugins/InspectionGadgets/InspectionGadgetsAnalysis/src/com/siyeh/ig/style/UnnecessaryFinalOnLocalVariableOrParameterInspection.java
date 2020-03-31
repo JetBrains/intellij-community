@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,6 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
 
   @SuppressWarnings("PublicField")
   public boolean reportParameters = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return message("unnecessary.final.on.local.variable.or.parameter.display.name");
-  }
 
   @Override
   @NotNull
@@ -195,8 +189,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       check(parameter);
     }
 
-    private boolean isNecessaryFinal(PsiVariable parameter, PsiElement context) {
-      return !PsiUtil.isLanguageLevel8OrHigher(parameter) && VariableAccessUtils.variableIsUsedInInnerClass(parameter, context);
+    private boolean isNecessaryFinal(PsiVariable variable, PsiElement context) {
+      return PsiUtil.isConstantExpression(variable.getInitializer()) ||
+             !PsiUtil.isLanguageLevel8OrHigher(variable) && VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
     }
 
     private void check(PsiParameter parameter) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
@@ -23,9 +9,13 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +36,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
       Graphics2D g2d = (Graphics2D)g;
-      double scale = (double)JBUI.sysScale((Graphics2D)g);
+      double scale = JBUIScale.sysScale((Graphics2D)g);
       double devTop = insets.top * scale;
       // A workaround for IDEA-183253. If insets.top is *.5 in device space, then move up the image by one device pixel.
       if (devTop + 0.5 == Math.floor(devTop + 0.5)) {
@@ -149,12 +139,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
         @Override
         public void componentMoved(ComponentEvent e) {
-          updateCurrentSelection();
+          updateCurrentSelectionOnMoveOrResize();
         }
 
         @Override
         public void componentResized(ComponentEvent e) {
-          updateCurrentSelection();
+          updateCurrentSelectionOnMoveOrResize();
         }
       }
     );
@@ -162,12 +152,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
       @Override
       public void ancestorMoved(HierarchyEvent e) {
-        updateCurrentSelection();
+        updateCurrentSelectionOnMoveOrResize();
       }
 
       @Override
       public void ancestorResized(HierarchyEvent e) {
-        updateCurrentSelection();
+        updateCurrentSelectionOnMoveOrResize();
       }
     });
 
@@ -202,11 +192,21 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myKey == null ? Collections.emptyList() : Collections.singleton(myKey);
   }
 
+  private void updateCurrentSelectionOnMoveOrResize() {
+    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION)) {
+      hideHint();
+    }
+    else {
+      updateCurrentSelection();
+    }
+  }
+
   protected void updateCurrentSelection() {
     handleSelectionChange(myKey, true);
   }
 
   protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
+    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_MOUSE_HOVER)) return;
     KeyType selected = getCellKeyForPoint(e.getPoint());
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
       handleSelectionChange(selected, true);
@@ -219,7 +219,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(KeyType selected) {
-    handleSelectionChange(selected, false);
+    handleSelectionChange(UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
@@ -331,9 +331,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
+    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
-    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
+    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
     JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);

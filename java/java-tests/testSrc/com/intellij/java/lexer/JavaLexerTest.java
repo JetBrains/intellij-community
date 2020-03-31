@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.lexer;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -147,11 +147,17 @@ public class JavaLexerTest extends LexerTestCase {
            "IDENTIFIER ('Ɐ')\nWHITE_SPACE (' ')\nIDENTIFIER ('Σx')\nWHITE_SPACE (' ')\nIDENTIFIER ('dΦ')");
   }
 
-  public void testRawLiterals() {
-    doTest(" ``.`.`` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.``')\nWHITE_SPACE (' ')");
-    doTest(" ``.```.`` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.```.``')\nWHITE_SPACE (' ')");
-    doTest(" ``.`.` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.` ')");
-    doTest(" ``.`.``` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.``` ')");
+  public void testTextBlockLiterals() {
+    doTest("\"\"\"\n hi there. \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n hi there. \"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" ')");
+    doTest("\"\"\".\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\"\"\" ')");
+    doTest("\"\"\".\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\".\\\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\\\"\"\" ')");
+    doTest("\"\"\"\"\"\"+\"\"\"\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nPLUS ('+')\nTEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\\\"\"\".\"\"\" ", "BAD_CHARACTER ('\\')\nTEXT_BLOCK_LITERAL ('\"\"\".\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n  \"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n  \"\"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.DataManager;
@@ -12,13 +12,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +28,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Anton Katilin
@@ -43,7 +43,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
 
-  private MyNonOpaquePanel myComponent;
+  private JPanel myComponent;
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<>();
 
@@ -58,14 +58,41 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
   public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project) {
+    this(contentUI, canCloseContents, project, project);
+  }
+
+  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    this(canCloseContents, project, parentDisposable, (contentManager, componentGetter) -> {
+      // if some contentUI expects that myUI will be set before setManager (as it was before introducing ContentUiProducer)
+      ((ContentManagerImpl)contentManager).myUI = contentUI;
+      contentUI.setManager(contentManager);
+      return contentUI;
+    });
+  }
+
+  public interface ContentUiProducer {
+    ContentUI createContent(@NotNull ContentManager contentManager, @NotNull Supplier<@NotNull JPanel> componentGetter);
+  }
+
+  @ApiStatus.Experimental
+  public ContentManagerImpl(boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable, @NotNull ContentUiProducer contentUiProducer) {
     myProject = project;
     myCanCloseContents = canCloseContents;
-    myUI = contentUI;
-    myUI.setManager(this);
+    ContentUI ui = contentUiProducer.createContent(this, () -> {
+      LOG.assertTrue(myComponent == null);
+      myComponent = new MyNonOpaquePanel();
+      return myComponent;
+    });
+    myUI = ui;
 
-    // register on FileManager because before Content disposal the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work for which the findFile() must access filemanager for which it must be alive
-    Disposer.register(((PsiManagerEx)PsiManager.getInstance(project)).getFileManager(), this);
-    Disposer.register(this, contentUI);
+    // register on project (will be disposed before services) because before Content disposal
+    // the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored
+    // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
+    // for which the findFile() must access fileManager for which it must be alive
+    Disposer.register(parentDisposable, this);
+    if (ui instanceof Disposable) {
+      Disposer.register(this, (Disposable)ui);
+    }
   }
 
   @Override
@@ -78,11 +105,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public JComponent getComponent() {
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
-
-      NonOpaquePanel contentComponent = new NonOpaquePanel();
-      contentComponent.setContent(myUI.getComponent());
-
-      myComponent.add(contentComponent, BorderLayout.CENTER);
+      myComponent.add(myUI.getComponent(), BorderLayout.CENTER);
     }
     return myComponent;
   }
@@ -96,9 +119,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
-  private class MyNonOpaquePanel extends NonOpaquePanel implements DataProvider {
+  private final class MyNonOpaquePanel extends JPanel implements DataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
+
+      setOpaque(false);
     }
 
     @Override
@@ -160,15 +185,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public boolean removeContent(@NotNull Content content, final boolean dispose) {
-    boolean wasFocused = content.getComponent() != null && UIUtil.isFocusAncestor(content.getComponent());
+  public boolean removeContent(@NotNull Content content, boolean dispose) {
+    boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
 
   @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean requestFocus, final boolean forcedFocus) {
-    final ActionCallback result = new ActionCallback();
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus) {
+    ActionCallback result = new ActionCallback();
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
         Content current = getSelectedContent();
@@ -176,6 +201,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
           setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
           result.setDone();
         }
       }
@@ -191,16 +217,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
-    if (indexToBeRemoved == -1) return ActionCallback.REJECTED;
+    if (indexToBeRemoved == -1) {
+      return ActionCallback.REJECTED;
+    }
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
-      if (!fireContentRemoveQuery(content, indexToBeRemoved)) {
-        return ActionCallback.REJECTED;
-      }
-      if (!content.isValid()) {
+      if (!fireContentRemoveQuery(content, indexToBeRemoved) || !content.isValid()) {
         return ActionCallback.REJECTED;
       }
 
@@ -224,12 +249,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       mySelectionHistory.remove(content);
+      myContentWithChangedComponent.remove(content);
       myContents.remove(content);
       content.removePropertyChangeListener(this);
 
       fireContentRemoved(content, indexToBeRemoved);
       ((ContentImpl)content).setManager(null);
-
 
       if (dispose) {
         Disposer.dispose(content);
@@ -257,18 +282,22 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return ActionCallback.DONE;
     }
     finally {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        if (!myDisposed) {
-          myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
-        }
+      if (ApplicationManager.getApplication().isDispatchThread() && !myDisposed && myContents.isEmpty()) {
+        // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
+        // at at the same time.
+        myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
       }
     }
   }
 
   @Override
-  public void removeAllContents(final boolean dispose) {
-    Content[] contents = getContents();
-    for (Content content : contents) {
+  public void removeAllContents(boolean dispose) {
+    if (myContents.isEmpty()) {
+      return;
+    }
+
+    for (Content content : new ArrayList<>(myContents)) {
       removeContent(content, dispose);
     }
   }
@@ -279,12 +308,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getContents() {
+  public Content @NotNull [] getContents() {
     return myContents.toArray(new Content[0]);
   }
 
-  //TODO[anton,vova] is this method needed?
   @Override
   public Content findContent(String displayName) {
     for (Content content : myContents) {
@@ -396,8 +423,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getSelectedContents() {
+  public Content @NotNull [] getSelectedContents() {
     return mySelection.toArray(new Content[0]);
   }
 
@@ -435,7 +461,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
-      return requestFocus(content, forcedFocus);
+      return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> requestFocus(content, forcedFocus));
     }
 
     if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {
@@ -472,7 +498,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
     if (focused || requestFocus) {
       if (enabledFocus) {
-        return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> selection.run().notify(result));
+        return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> selection.run().notify(result));
       }
     }
     return selection.run().notify(result);
@@ -497,7 +523,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void setSelectedContent(@NotNull final Content content) {
+  public void setSelectedContent(@NotNull Content content) {
     setSelectedContentCB(content);
   }
 
@@ -538,7 +564,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void removeContentManagerListener(@NotNull ContentManagerListener l) {
     myDispatcher.removeListener(l);
   }
-
 
   private void fireContentAdded(@NotNull Content content, int newIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, newIndex, ContentManagerEvent.ContentOperation.add);
@@ -600,8 +625,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
-    if (myDisposed) return;
-    myUI.beforeDispose();
+    if (!myDisposed) {
+      myUI.beforeDispose();
+    }
   }
 
   @Override

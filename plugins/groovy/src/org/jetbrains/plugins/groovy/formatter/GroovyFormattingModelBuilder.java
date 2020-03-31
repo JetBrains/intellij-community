@@ -49,7 +49,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     if (customSettings.USE_FLYING_GEESE_BRACES) {
       element.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (GeeseUtil.isClosureRBrace(element)) {
             GeeseUtil.calculateRBraceAlignment(element, alignments);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.application.UtilKt;
@@ -37,8 +37,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dmitry Avdeev
@@ -67,7 +70,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
                             "public class Bar {\n" +
                             "}");
   }
-  
+
   public void testSaveProjectUnescaped() throws Exception {
     doTest(false, false, "/** No comments */\n" +
                          "\n" +
@@ -88,7 +91,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   }
 
   private void doTest(boolean shouldEscape, boolean replaceParameters, String initialText, String expected) throws IOException {
-    assertEquals(StorageScheme.DIRECTORY_BASED, ProjectKt.getStateStore(getProject()).getStorageScheme());
+    assertThat(ProjectKt.getStateStore(getProject()).getStorageScheme()).isEqualTo(StorageScheme.DIRECTORY_BASED);
     VirtualFile root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0];
     File rootFile = new File(VfsUtilCore.virtualToIoFile(root), FOO_BAR_JAVA);
     rootFile.getParentFile().mkdirs();
@@ -105,8 +108,8 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
       SaveProjectAsTemplateAction.saveProject(getProject(), zipFile, null, "bar", replaceParameters, new MockProgressIndicator(), shouldEscape);
       return Unit.INSTANCE;
     });
-    assertEquals("foo.zip", zipFile.getFileName().toString());
-    assertTrue(Files.size(zipFile) > 0);
+    assertThat(zipFile.getFileName().toString()).isEqualTo("foo.zip");
+    assertThat(Files.size(zipFile)).isGreaterThan(0);
 
     Project fromTemplate = createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null);
     VirtualFile descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH);
@@ -116,10 +119,9 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     VirtualFile[] roots = ProjectRootManager.getInstance(fromTemplate).getContentRoots();
     VirtualFile child = roots[0].findFileByRelativePath(FOO_BAR_JAVA);
     assertNotNull(Arrays.asList(roots[0].getChildren()).toString(), child);
-    String s = VfsUtilCore.loadText(child);
-    assertEquals(expected, StringUtil.convertLineSeparators(s));
+    assertEquals(expected, StringUtil.convertLineSeparators(VfsUtilCore.loadText(child)));
 
-    assertNotNull(fromTemplate.getBaseDir().findFileByRelativePath(".idea/workspace.xml"));
+    assertThat(Paths.get(fromTemplate.getBasePath(), ".idea/workspace.xml")).isRegularFile();
   }
 
   @Override
@@ -150,7 +152,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return createProject(projectFile.getParent().toFile(), getClass().getName() + "." + getName());
+    return createProject(projectFile.getParent());
   }
 
   @NotNull
@@ -159,7 +161,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     final Module module = super.createMainModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = module.getProject().getBaseDir();
+      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(module.getProject());
       ContentEntry entry = model.addContentEntry(baseDir);
       entry.addSourceFolder(baseDir, false);
       model.commit();

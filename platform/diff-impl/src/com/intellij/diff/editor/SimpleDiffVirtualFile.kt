@@ -4,17 +4,14 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.CalledInAwt
 
-class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile() {
+class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile(DiffBundle.message("label.default.diff.editor.tab.name")) {
   override fun getName(): String = request.title ?: super.getName()
 
-  override fun createProcessorAsync(project: Project): Builder {
-    return Builder.create {
-      MyDiffRequestProcessor(project, request)
-    }
-  }
+  override fun createProcessor(project: Project): DiffRequestProcessor = MyDiffRequestProcessor(project, request)
 
   private class MyDiffRequestProcessor(
     project: Project?,

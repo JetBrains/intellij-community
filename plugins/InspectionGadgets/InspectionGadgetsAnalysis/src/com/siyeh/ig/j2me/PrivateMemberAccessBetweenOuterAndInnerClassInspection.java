@@ -27,12 +27,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
+  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override
   public String getID() {
@@ -43,13 +45,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
   @Override
   public String getAlternativeID() {
     return "PrivateMemberAccessBetweenOuterAndInnerClass";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "private.member.access.between.outer.and.inner.classes.display.name");
   }
 
   @Override
@@ -106,7 +101,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make package-private";
+      return InspectionGadgetsBundle.message("make.package.private.fix.family.name");
     }
 
     @Override
@@ -205,7 +200,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
           return;
         }
         aClass = (PsiClass)target;
-        if (!aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (aClass.isInterface() || !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
           return;
         }
       }

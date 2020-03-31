@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,7 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -47,6 +35,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   private float myDefaultLineSpacing;
   private Color myDefaultCaretColor;
   private KeyboardFocusManager myDefaultFocusManager;
+  private AntialiasingType myDefaultAntiAliasing;
 
   @Override
   protected void setUp() throws Exception {
@@ -57,6 +46,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
     myDefaultCaretColor = getDefaultColorScheme().getColor(EditorColors.CARET_COLOR);
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 
     FontLayoutService.setInstance(null);
 
@@ -65,6 +55,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     setFont(Font.MONOSPACED, 14);
     setLineSpacing(1.3F);
+    UISettings.getInstance().setEditorAAType(AntialiasingType.GREYSCALE);
   }
 
   @Override
@@ -75,6 +66,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
       getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
       getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
+      UISettings.getInstance().setEditorAAType(myDefaultAntiAliasing);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -214,33 +206,33 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   protected void init(String text) {
     init(text, TestFileType.TEXT);
 
-    myEditor.getSettings().setAdditionalLinesCount(0);
-    myEditor.getSettings().setAdditionalColumnsCount(3);
+    getEditor().getSettings().setAdditionalLinesCount(0);
+    getEditor().getSettings().setAdditionalColumnsCount(3);
 
-    myEditor.getSettings().setCaretRowShown(false);
+    getEditor().getSettings().setCaretRowShown(false);
   }
 
   private void assertRenderedCorrectly(int offset, char c) throws IOException {
-    myEditor.getCaretModel().getPrimaryCaret().moveToOffset(offset);
+    getEditor().getCaretModel().getPrimaryCaret().moveToOffset(offset);
 
-    JComponent editorComponent = myEditor.getContentComponent();
+    JComponent editorComponent = getEditor().getContentComponent();
     Dimension size = editorComponent.getPreferredSize();
     editorComponent.setSize(size);
 
     KeyboardFocusManager.setCurrentKeyboardFocusManager(new MockFocusManager(editorComponent));
 
-    BufferedImage image = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     Graphics2D graphics = image.createGraphics();
 
     BufferedImage immediateImage;
 
-    DataContext dataContext = ((EditorImpl)myEditor).getDataContext();
+    DataContext dataContext = ((EditorImpl)getEditor()).getDataContext();
 
     try {
       editorComponent.paint(graphics);
-      ((EditorImpl)myEditor).processKeyTypedImmediately(c, graphics, dataContext);
+      ((EditorImpl)getEditor()).processKeyTypedImmediately(c, graphics, dataContext);
       immediateImage = copy(image);
-      ((EditorImpl)myEditor).processKeyTypedNormally(c, dataContext);
+      ((EditorImpl)getEditor()).processKeyTypedNormally(c, dataContext);
       editorComponent.paint(graphics);
     }
     finally {
@@ -291,20 +283,20 @@ public class ImmediatePainterTest extends AbstractEditorTest {
                                     expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath());
   }
 
-  private static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+  private RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  private static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+  private RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  private static void setCaretRowVisible(boolean visible) {
-    myEditor.getSettings().setCaretRowShown(visible);
+  private void setCaretRowVisible(boolean visible) {
+    getEditor().getSettings().setCaretRowShown(visible);
   }
 
-  private static void setLineCursorWidth(int width) {
-    myEditor.getSettings().setLineCursorWidth(width);
+  private void setLineCursorWidth(int width) {
+    getEditor().getSettings().setLineCursorWidth(width);
   }
 
   private static void setCaretColor(Color color) {
@@ -332,8 +324,8 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     ImmediatePainter.DOUBLE_BUFFERING.setValue(enabled);
   }
 
-  private static void setBlockCursor(boolean blockCursor) {
-    myEditor.getSettings().setBlockCursor(blockCursor);
+  private void setBlockCursor(boolean blockCursor) {
+    getEditor().getSettings().setBlockCursor(blockCursor);
   }
 
   @NotNull

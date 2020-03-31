@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -17,14 +17,22 @@ import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Defines spellchecking support for a custom language.
+ * <p>
+ * Register via extension point {@code com.intellij.spellchecker.support}
+ * and override {@link #getTokenizer(PsiElement)} to skip/handle specific elements.
+ */
 public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
   protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = new XmlAttributeValueTokenizer();
 
-  public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
+  public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
     public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
@@ -41,6 +49,9 @@ public class SpellcheckingStrategy {
   private static final SpellCheckerQuickFix[] BATCH_FIXES =
     new SpellCheckerQuickFix[]{SaveTo.getSaveToLevelFix(DictionaryLevel.APP), SaveTo.getSaveToLevelFix(DictionaryLevel.PROJECT)};
 
+  /**
+   * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
+   */
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
@@ -79,6 +90,7 @@ public class SpellcheckingStrategy {
   /**
    * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @Deprecated
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return getDefaultRegularFixes(useRename, wordWithTypo, null);

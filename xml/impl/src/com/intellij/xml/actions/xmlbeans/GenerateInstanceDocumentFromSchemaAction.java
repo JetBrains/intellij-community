@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -124,7 +124,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
     String xml;
     try {
-      xml = Xsd2InstanceUtils.generate(ArrayUtil.toStringArray(parameters));
+      xml = Xsd2InstanceUtils.generate(ArrayUtilRt.toStringArray(parameters));
     } catch (IllegalArgumentException e) {
       Messages.showErrorDialog(project, StringUtil.getMessage(e), XmlBundle.message("error"));
       return;
@@ -143,7 +143,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Could not save generated XML document: " + StringUtil.getMessage(e), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)), XmlBundle.message("error"));
     }
   }
 

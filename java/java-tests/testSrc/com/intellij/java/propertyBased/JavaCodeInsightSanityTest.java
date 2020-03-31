@@ -1,14 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -22,7 +26,12 @@ import java.util.function.Supplier;
  * @author peter
  */
 @SkipSlowTestLocally
-public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -38,10 +47,9 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 
   public void testRandomActivity() {
@@ -56,13 +64,13 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    MadTestingUtil.enableAllInspections(getProject());
   }
 
   public void testPreserveComments() {
-    boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
+    boolean oldSettings = getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
-      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
+      getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
       enableInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
@@ -71,8 +79,13 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
         .checkScenarios(actionsOnJavaFiles(fileActions));
     }
     finally {
-      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
+      getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
     }
+  }
+
+  private JavaCodeStyleSettings getJavaSettings() {
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
+    return rootSettings.getCommonSettings(JavaLanguage.INSTANCE).getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   public void testParenthesesDontChangeIntention() {
@@ -83,8 +96,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  @NotNull
-  private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+  private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 

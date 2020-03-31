@@ -21,13 +21,15 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PsiUtilEx {
 
@@ -73,23 +75,14 @@ public class PsiUtilEx {
   }
 
   public static boolean isStringOrCharacterLiteral(final PsiElement place) {
-    if (place instanceof PsiLiteralExpression) {
-      final PsiElement child = place.getFirstChild();
-      if (child instanceof PsiJavaToken) {
-        final IElementType tokenType = ((PsiJavaToken)child).getTokenType();
-        if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.RAW_STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return place instanceof PsiLiteralExpression && PsiUtil.isJavaToken(place.getFirstChild(), ElementType.TEXT_LITERALS);
   }
 
   public static boolean isString(@NotNull PsiType type) {
     if (type instanceof PsiClassType) {
       // optimization. doesn't require resolve
       final String shortName = ((PsiClassType)type).getClassName();
-      if (!Comparing.equal(shortName, CommonClassNames.JAVA_LANG_STRING_SHORT)) return false;
+      if (!Objects.equals(shortName, CommonClassNames.JAVA_LANG_STRING_SHORT)) return false;
     }
     return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false));
   }

@@ -31,4 +31,15 @@ abstract class StubSerializationUtil {
 
     return rootStub.getStubType();
   }
+
+  /**
+   * Format warning for {@link ObjectStubSerializer} not being able to deserialize given stub.
+   *
+   * @param root - serializer which couldn't deserialize stub
+   * @return message for broken stub format
+   */
+  @NotNull
+  static String brokenStubFormat(@NotNull final ObjectStubSerializer root) {
+    return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
+  }
 }

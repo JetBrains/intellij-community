@@ -1,22 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.startup
 
+import com.intellij.CommonBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
-import org.jetbrains.plugins.gradle.service.project.open.importProject
+import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import javax.swing.event.HyperlinkEvent
 
-class GradleUnlinkedProjectProcessor : StartupActivity {
+class GradleUnlinkedProjectProcessor : StartupActivity.DumbAware {
 
   override fun runActivity(project: Project) {
     if (isEnabledNotifications(project)) {
@@ -25,9 +32,9 @@ class GradleUnlinkedProjectProcessor : StartupActivity {
   }
 
   companion object {
-    private const val SHOW_UNLINKED_GRADLE_POPUP = "show.inlinked.gradle.project.popup"
-    private const val IMPORT_EVENT_DESCRIPTION = "import"
-    private const val DO_NOT_SHOW_EVENT_DESCRIPTION = "do.not.show"
+    private const val SHOW_UNLINKED_GRADLE_POPUP = "show.unlinked.gradle.project.popup"
+
+    private val LOG = Logger.getInstance(GradleUnlinkedProjectProcessor::class.java)
 
     private fun showNotification(project: Project) {
       if (!GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
@@ -38,22 +45,43 @@ class GradleUnlinkedProjectProcessor : StartupActivity {
       val kotlinDslGradleFile = externalProjectPath + "/" + GradleConstants.KOTLIN_DSL_SCRIPT_NAME
       if (FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile) == null) return
 
-      val message = String.format("%s<br>\n%s",
-                                  GradleBundle.message("gradle.notifications.unlinked.project.found.msg", IMPORT_EVENT_DESCRIPTION),
-                                  GradleBundle.message("gradle.notifications.do.not.show"))
-      val hyperLinkAdapter = object : NotificationListener.Adapter() {
-        override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-          notification.expire()
-          when (e.description) {
-            IMPORT_EVENT_DESCRIPTION -> importProject(externalProjectPath, project)
-            DO_NOT_SHOW_EVENT_DESCRIPTION -> disableNotifications(project)
-          }
+
+      val subscription = Disposer.newDisposable()
+      val notification = GradleNotification.NOTIFICATION_GROUP.createNotification(
+        GradleBundle.message("gradle.notifications.unlinked.project.found.title", ApplicationNamesInfo.getInstance().fullProductName),
+        NotificationType.INFORMATION)
+
+      val notificationExpire = {
+        notification.expire()
+        LOG.debug("Unlinked project notification expired")
+        Disposer.dispose(subscription)
+      }
+
+      notification.addAction(NotificationAction.createSimple(
+        GradleBundle.message("gradle.notifications.unlinked.project.found.import")) {
+        notificationExpire()
+        linkAndRefreshGradleProject(externalProjectPath, project)
+      })
+      notification.addAction(NotificationAction.createSimple(
+        GradleBundle.message("gradle.notifications.unlinked.project.found.skip")) {
+        notificationExpire()
+        disableNotifications(project)
+      })
+
+      notification.contextHelpAction = object : DumbAwareAction(
+        CommonBundle.getHelpButtonText(), GradleBundle.message("gradle.notifications.unlinked.project.found.help"), null) {
+        override fun actionPerformed(e: AnActionEvent) {}
+      }
+
+      val settingsListener = object : GradleSettingsListenerAdapter() {
+        override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
+          notificationExpire()
         }
       }
-      GradleNotification.getInstance(project).showBalloon(
-        GradleBundle.message("gradle.notifications.unlinked.project.found.title"),
-        message, NotificationType.INFORMATION, hyperLinkAdapter
-      )
+      Disposer.register(project, subscription)
+      ExternalSystemApiUtil.subscribe(project, GradleConstants.SYSTEM_ID, settingsListener, subscription)
+
+      notification.notify(project)
     }
 
     private fun isEnabledNotifications(project: Project): Boolean {

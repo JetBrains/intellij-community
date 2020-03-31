@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Surround annotation parameter value with quotes";
+    return QuickFixBundle.message("surround.annotation.parameter.value.with.quotes");
   }
 
   @NotNull

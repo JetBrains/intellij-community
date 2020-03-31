@@ -12,7 +12,6 @@ import java.util.List;
 @Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
 @Stubbed
 public interface IdeaPlugin extends DomElement {
-
   String TAG_NAME = "idea-plugin";
 
   @Nullable
@@ -39,6 +38,9 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   GenericAttributeValue<String> getUrl();
 
+  /**
+   * @deprecated Unused.
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
@@ -132,7 +134,6 @@ public interface IdeaPlugin extends DomElement {
 
   ModuleComponents addModuleComponents();
 
-
   @NotNull
   @SubTagList("actions")
   @Stubbed
@@ -140,9 +141,31 @@ public interface IdeaPlugin extends DomElement {
 
   Actions addActions();
 
+  /**
+   * Available since 192.
+   */
+  @NotNull
+  @SubTagList("applicationListeners")
+  List<Listeners> getApplicationListeners();
 
+  /**
+   * Available since 192.
+   */
+  @NotNull
+  @SubTagList("projectListeners")
+  List<Listeners> getProjectListeners();
+
+  /**
+   * @deprecated not used anymore
+   */
+  @SuppressWarnings("SpellCheckingInspection")
+  @Deprecated
   @NotNull
   List<Helpset> getHelpsets();
 
+  /**
+   * @deprecated not used anymore
+   */
+  @Deprecated
   Helpset addHelpset();
 }

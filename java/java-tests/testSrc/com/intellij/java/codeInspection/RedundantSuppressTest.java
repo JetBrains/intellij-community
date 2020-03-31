@@ -29,14 +29,14 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantSuppressTest extends InspectionTestCase {
+public class RedundantSuppressTest extends JavaInspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
   private InspectionToolWrapper[] myInspectionToolWrappers;
 
@@ -56,9 +56,8 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
-      @NotNull
       @Override
-      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
+      protected InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return myInspectionToolWrappers;
       }
     });

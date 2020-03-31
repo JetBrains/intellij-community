@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
@@ -123,6 +124,19 @@ interface UElement {
    * @param visitor the visitor to pass the element to.
    */
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
+
+
+  /**
+   * NOTE: it is called `lang` instead of "language" to avoid clash with [PsiElement.getLanguage] in classes which implements both interfaces,
+   * @return language of the physical [PsiElement] this [UElement] was made from, or `UAST` language if no "physical" language could be found
+   */
+  @JvmDefault
+  val lang: Language
+    get() = withContainingElements.mapNotNull { it.sourcePsi }.firstOrNull()?.language
+            // ok. another try
+            ?: withContainingElements.mapNotNull { it.getContainingUFile()?.sourcePsi?.language }.firstOrNull()
+            // UAST in the end, hope it will never happen
+            ?: Language.findLanguageByID("UAST")!!
 }
 
 val UElement?.sourcePsiElement: PsiElement?

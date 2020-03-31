@@ -1,18 +1,4 @@
-/*
- * Copyright 2008-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +54,7 @@ public class WeakestTypeFinder {
     if (variableOrMethodClass == null || variableOrMethodClass instanceof PsiTypeParameter) {
       return Collections.emptyList();
     }
-    Set<PsiClass> weakestTypeClasses = new HashSet<>();
+    final Set<PsiClass> weakestTypeClasses = new HashSet<>();
     final GlobalSearchScope scope = variableOrMethod.getResolveScope();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(variableOrMethod.getProject());
     final PsiClass lowerBoundClass;
@@ -100,9 +87,6 @@ public class WeakestTypeFinder {
     boolean hasUsages = false;
     for (PsiReference reference : query) {
       ProgressManager.checkCanceled();
-      if (reference == null) {
-        continue;
-      }
       hasUsages = true;
       PsiElement referenceElement = reference.getElement();
       PsiElement referenceParent = PsiUtil.skipParenthesizedExprUp(referenceElement.getParent());
@@ -111,8 +95,8 @@ public class WeakestTypeFinder {
         referenceParent = PsiUtil.skipParenthesizedExprUp(referenceElement.getParent());
       }
       final PsiElement referenceGrandParent = referenceParent.getParent();
-      if (reference instanceof PsiMethodReferenceExpression) {
-        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)reference;
+      if (referenceElement instanceof PsiMethodReferenceExpression) {
+        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)referenceElement;
         final PsiType type = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
         if (!PsiType.VOID.equals(returnType) && !checkType(returnType, weakestTypeClasses)) {
@@ -128,26 +112,20 @@ public class WeakestTypeFinder {
         }
       }
       else if (referenceParent instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)referenceParent;
-        PsiClassType returnType = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceReturnType(lambda), PsiClassType.class);
-        if (returnType == null) return Collections.emptyList();
-        PsiClass resolvedClass = returnType.resolve();
-        if (resolvedClass == null) return Collections.emptyList();
-        weakestTypeClasses.add(resolvedClass);
+        final PsiLambdaExpression lambda = (PsiLambdaExpression)referenceParent;
+        final PsiClassType returnType = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceReturnType(lambda), PsiClassType.class);
+        checkType(returnType, weakestTypeClasses);
       }
       else if (referenceGrandParent instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceGrandParent;
-        if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression || 
+        if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression ||
             !findWeakestType(methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
         }
       }
       else if (referenceParent instanceof PsiResourceExpression) {
-        PsiClass closeable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, scope);
-        if (closeable == null || variableOrMethodClass.equals(closeable)) {
-          return Collections.emptyList();
-        }
-        weakestTypeClasses.add(closeable);
+        final PsiClass closeable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, scope);
+        checkClass(closeable, weakestTypeClasses);
       }
       else if (referenceParent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)referenceParent;
@@ -361,7 +339,7 @@ public class WeakestTypeFinder {
     }
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiClassType[] classTypes = throwsList.getReferencedTypes();
-    final Collection<PsiClassType> thrownTypes = new HashSet<>(Arrays.asList(classTypes));
+    final Collection<PsiClassType> thrownTypes = ContainerUtil.set(classTypes);
     final List<PsiMethod> superMethods = findAllSuperMethods(method);
     boolean checked = false;
     if (!superMethods.isEmpty()) {
@@ -409,7 +387,7 @@ public class WeakestTypeFinder {
       result.add(method12.getMethod());
       return true;
     });
-    Collections.sort(result, (method1, method2) -> {
+    result.sort((method1, method2) -> {
       // methods from deepest super classes first
       final PsiClass aClass1 = method1.getContainingClass();
       final PsiClass aClass2 = method2.getContainingClass();

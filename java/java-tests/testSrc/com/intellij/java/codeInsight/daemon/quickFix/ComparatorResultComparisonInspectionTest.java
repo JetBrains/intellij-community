@@ -20,11 +20,11 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.ComparatorResultComparisonInspection;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class ComparatorResultComparisonInspectionTest extends LightInspectionTestCase {
+public class ComparatorResultComparisonInspectionTest extends LightJavaInspectionTestCase {
   static final String TEST_DATA_DIR = "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorResultComparison/";
 
   public void testComparatorResultComparison() {
@@ -42,9 +42,8 @@ public class ComparatorResultComparisonInspectionTest extends LightInspectionTes
   }
 
   public static class ComparatorResultComparisonInspectionFixTest extends LightQuickFixParameterizedTestCase {
-    @NotNull
     @Override
-    protected LocalInspectionTool[] configureLocalInspectionTools() {
+    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
       return new LocalInspectionTool[]{new ComparatorResultComparisonInspection()};
     }
 

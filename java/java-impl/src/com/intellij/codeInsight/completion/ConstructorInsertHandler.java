@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -16,8 +17,8 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -35,6 +36,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +50,7 @@ import java.util.List;
 * @author peter
 */
 public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
+  private static final Logger LOG = Logger.getInstance(ConstructorInsertHandler.class);
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
   private final boolean mySmart;
@@ -168,7 +171,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
         public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
-            TransactionGuard.getInstance().submitTransactionAndWait(createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()));
+            createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()).run();
           }
         }
       });
@@ -239,7 +242,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = constructor != null ? !constructor.getParameterList().isEmpty() : hasConstructorParameters(psiClass, place);
+    ThreeState hasParams = constructor != null ? ThreeState.fromBoolean(!constructor.getParameterList().isEmpty())
+                                               : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
     
@@ -255,17 +259,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return true;
   }
 
-  static boolean hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
-    boolean hasParams = false;
-    for (PsiMethod constructor : psiClass.getConstructors()) {
-      if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (!constructor.getParameterList().isEmpty()) {
-        hasParams = true;
-        break;
-      }
-    }
-    return hasParams;
+  static ThreeState hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+    return MethodParenthesesHandler.hasParameters(ContainerUtil.filter(psiClass.getConstructors(),
+                                                                       c -> resolveHelper.isAccessible(c, place, null)));
   }
 
   @Nullable
@@ -360,7 +357,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return false;
   }
 
-  private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
+  private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, final PsiTypeElement @NotNull [] parameters) {
     final Project project = aClass.getProject();
     WriteCommandAction.writeCommandAction(project).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
@@ -383,6 +380,6 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   private static String getCommandName() {
-    return CompletionBundle.message("completion.smart.type.generate.anonymous.body");
+    return JavaBundle.message("completion.smart.type.generate.anonymous.body");
   }
 }

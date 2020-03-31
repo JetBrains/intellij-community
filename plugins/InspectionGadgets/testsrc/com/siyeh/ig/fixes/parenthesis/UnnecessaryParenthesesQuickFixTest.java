@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.parenthesis;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -18,6 +18,7 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   public void testPolyadic() { doTest(); }
   public void testPolyadic2() { doTest(); }
   public void testPolyadic3() { doTest(); }
+  public void testPolyadic4() { doTest(); }
   public void testCommutative() { doTest(); }
   public void testWrapping() { doTest(); }
   public void testNotCommutative() { assertQuickfixNotAvailable(); }
@@ -33,6 +34,7 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   public void testLambdaCast() { doTest(); }
   public void testLambdaBody() { doTest(); }
   public void testDivision() { doTest(); }
+  public void testDivision2() { doTest(); }
   public void testSwitchExpression() { doTest(); }
 
   @Override

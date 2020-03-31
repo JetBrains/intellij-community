@@ -86,7 +86,7 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
       } else
         replacementText.append(condition.getText());
 
-      PyExpression newCondition = elementGenerator.createExpressionFromText(replacementText.toString());
+      PyExpression newCondition = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file), replacementText.toString());
       ifCondition.replace(newCondition);
 
       PyStatementList stList = ((PyIfStatement)firstStatement).getIfPart().getStatementList();

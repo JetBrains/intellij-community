@@ -16,13 +16,13 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MalformedSetUpTearDownInspectionTest extends LightInspectionTestCase {
+public class MalformedSetUpTearDownInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     //noinspection ALL

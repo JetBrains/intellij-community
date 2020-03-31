@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.daemon.impl.IndentsPass;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -22,9 +24,12 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -64,7 +69,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
-    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
   
@@ -77,7 +82,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    myEditor.getColorsScheme().setAttributes(
+    getEditor().getColorsScheme().setAttributes(
       EditorColors.FOLDED_TEXT_ATTRIBUTES,
       new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
     );
@@ -93,14 +98,14 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testInlayAtEmptyLine() throws Exception {
     initText("\n");
-    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
     checkResult();
   }
 
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
-    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
   }
@@ -120,17 +125,17 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addRangeHighlighter(5, 9, 0, new TextAttributes(null, null, null, null, Font.BOLD));
     checkResult(); // initial text layout cache population
 
-    myEditor.getDocument().addDocumentListener(new DocumentListener() {
+    getEditor().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         // force population of text layout cache on document update
         // this can be done by editor implementation in real life,
         // but we're doing it manually here to cover more potential cases
-        myEditor.visualPositionToXY(new VisualPosition(0, 10));
+        getEditor().visualPositionToXY(new VisualPosition(0, 10));
       }
     });
 
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> ((DocumentEx)myEditor.getDocument()).moveText(5, 10, 0));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((DocumentEx)getEditor().getDocument()).moveText(5, 10, 0));
     checkResult();
   }
 
@@ -139,14 +144,153 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     configureSoftWraps(2);
     verifySoftWrapPositions(4, 5);
 
-    RangeHighlighter topHighlighter = addRangeHighlighter(4, 4, 0, null);
-    topHighlighter.setLineSeparatorColor(Color.red);
-    topHighlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-
-    RangeHighlighter bottomHighlighter = addRangeHighlighter(4, 4, 0, null);
-    bottomHighlighter.setLineSeparatorColor(Color.blue);
-    bottomHighlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
+    addLineSeparator(4, SeparatorPlacement.TOP, Color.red);
+    addLineSeparator(4, SeparatorPlacement.BOTTOM, Color.blue);
 
     checkResult();
+  }
+
+  public void testSoftWrappedLineHighlighterWithBlockInlay() throws Exception {
+    initText("some text");
+    configureSoftWraps(5);
+    addBlockInlay(0);
+    addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    checkResultWithGutter();
+  }
+
+  public void testBlockInlaysWithSelection() throws Exception {
+    initText("line 1\nline 2\n");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResult();
+  }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+    initText("  \n");
+    addBlockInlay(0);
+    executeAction(IdeActions.ACTION_SELECT_ALL);
+    getEditor().getSettings().setRightMargin(1);
+    checkResult();
+  }
+
+  public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
+    initText("  a\n    b c");
+    configureSoftWraps(5);
+    runIndentsPass();
+    addBlockInlay(0);
+    checkResult();
+  }
+
+  public void testLineSeparatorRepaint() throws Exception {
+    initText("a\nb");
+    addLineSeparator(3, SeparatorPlacement.TOP, Color.red);
+    checkPartialRepaint(0);
+  }
+
+  public void testLineSeparatorNearBlockInlay() throws Exception {
+    initText("a\nb");
+    addBlockInlay(2, true);
+    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay2() throws Exception {
+    initText("a\nb");
+    addBlockInlay(2, true);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay3() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay4() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
+  public void testBlockInlayWithLineHighlighterEndingAtEmptyLine() throws Exception {
+    initText("\n");
+    addBlockInlay(0);
+    addLineHighlighter(0, 1, HighlighterLayer.SELECTION + 1, null, Color.green);
+    checkResult();
+  }
+
+  public void testEmptyEditorWithGutterIcon() throws Exception {
+    initText("");
+    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+    checkResultWithGutter();
+  }
+
+  public void testBlockInlaysInAnEmptyEditor() throws Exception {
+    initText("");
+    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+    getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
+    getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
+    checkResultWithGutter();
+  }
+
+  private void runIndentsPass() {
+    IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
+    indentsPass.doCollectInformation(new EmptyProgressIndicator());
+    indentsPass.doApplyInformationToEditor();
+  }
+
+  private void addLineSeparator(int offset, SeparatorPlacement placement, Color color) {
+    RangeHighlighter highlighter = addRangeHighlighter(offset, offset, 0, null);
+    highlighter.setLineSeparatorColor(color);
+    highlighter.setLineSeparatorPlacement(placement);
+  }
+
+  private static class ColorGutterIconRenderer extends GutterIconRenderer {
+    private final Icon myIcon;
+
+    private ColorGutterIconRenderer(@NotNull Color color) {
+      myIcon = new ColorIcon(TEST_LINE_HEIGHT, color);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    @Override
+    public @NotNull Icon getIcon() {
+      return myIcon;
+    }
+  }
+
+  private static class ColorBlockElementRenderer implements EditorCustomElementRenderer {
+    private final GutterIconRenderer myGutterIconRenderer;
+
+    private ColorBlockElementRenderer(@NotNull Color color) {
+      myGutterIconRenderer = new ColorGutterIconRenderer(color);
+    }
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return 0;
+    }
+
+    @Override
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {}
+
+    @Override
+    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+      return myGutterIconRenderer;
+    }
   }
 }

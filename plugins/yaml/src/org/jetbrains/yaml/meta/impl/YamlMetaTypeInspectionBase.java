@@ -14,8 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
 
   @Nullable
@@ -34,7 +35,7 @@ public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
 
   protected static abstract class SimpleYamlPsiVisitor extends PsiElementVisitor {
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       ProgressIndicatorProvider.checkCanceled();
 
       if (element instanceof YAMLKeyValue) {
@@ -42,6 +43,9 @@ public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
       }
       else if (element instanceof YAMLMapping) {
         visitYAMLMapping((YAMLMapping)element);
+      }
+      else if (element instanceof YAMLSequenceItem) {
+        visitYAMLSequenceItem((YAMLSequenceItem)element);
       }
       else if (element instanceof YAMLDocument) {
         visitYAMLDocument((YAMLDocument)element);
@@ -55,6 +59,9 @@ public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
     }
 
     protected void visitYAMLDocument(@NotNull YAMLDocument document) {
+    }
+
+    protected void visitYAMLSequenceItem(@NotNull YAMLSequenceItem item) {
     }
   }
 }

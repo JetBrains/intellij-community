@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import com.jetbrains.python.console.protocol.PythonConsoleFrontendService
 import com.jetbrains.python.console.transport.client.TNettyClientTransport
@@ -67,7 +68,7 @@ class PydevConsoleCommunicationClient(project: Project,
         clientTransport.open()
       }
       catch (e: Exception) {
-        LOG.debug(e)
+        LOG.warn(e)
 
         stateLock.withLock {
           isClosed = true
@@ -148,7 +149,7 @@ class PydevConsoleCommunicationClient(project: Project,
     // if client exists then try to gracefully `close()` it
     try {
       client?.apply {
-        progressIndicator?.text2 = "Sending close message to Python Console..."
+        progressIndicator?.text2 = PyBundle.message("debugger.sending.close.message")
 
         close()
         dispose()
@@ -159,7 +160,7 @@ class PydevConsoleCommunicationClient(project: Project,
     }
 
     _pythonConsoleProcess.let {
-      progressIndicator?.text2 = "Waiting for Python Console process to finish..."
+      progressIndicator?.text2 = PyBundle.message("debugger.waiting.to.finish")
 
       // TODO move under the future!
       try {

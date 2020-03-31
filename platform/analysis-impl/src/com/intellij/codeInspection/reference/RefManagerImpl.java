@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.ToolExtensionPoints;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
@@ -41,6 +40,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
+  private static final Logger LOG = Logger.getInstance(RefManager.class);
 
   private long myLastUsedMask = 0x0800_0000; // guarded by this
 
@@ -82,7 +82,7 @@ public class RefManagerImpl extends RefManager {
 
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
-  private final StringInterner myNameInterner = new StringInterner();
+  private final Interner<String> myNameInterner = new StringInterner();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -448,7 +448,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void initializeAnnotators() {
-    ExtensionPoint<RefGraphAnnotator> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR);
+    ExtensionPoint<RefGraphAnnotator> point = Extensions.getRootArea().getExtensionPoint("com.intellij.refGraphAnnotator");
     final RefGraphAnnotator[] graphAnnotators = point.getExtensions();
     for (RefGraphAnnotator annotator : graphAnnotators) {
       registerGraphAnnotator(annotator);
@@ -457,7 +457,7 @@ public class RefManagerImpl extends RefManager {
 
   private class ProjectIterator extends PsiElementVisitor {
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
@@ -519,7 +519,7 @@ public class RefManagerImpl extends RefManager {
     }
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
@@ -683,7 +683,7 @@ public class RefManagerImpl extends RefManager {
   @Override
   public String getQualifiedName(RefEntity refEntity) {
     if (refEntity == null || refEntity instanceof RefElementImpl && !refEntity.isValid()) {
-      return InspectionsBundle.message("inspection.reference.invalid");
+      return AnalysisBundle.message("inspection.reference.invalid");
     }
 
     return refEntity.getQualifiedName();

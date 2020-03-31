@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
@@ -52,13 +51,12 @@ import java.awt.event.MouseEvent;
  * @author peter
  */
 class StatusPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private Notification myCurrentNotification;
-  private int myTimeStart;
+  @Nullable private String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
-  private final Action myCopyAction;
+  private Action myCopyAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -72,24 +70,11 @@ class StatusPanel extends JPanel {
 
     @Override
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-      if (myTimeStart > 0) {
-        if (myTimeStart >= text.length()) {
-          LOG.error(myTimeStart + " " + text.length());
-        }
-        final String time = text.substring(myTimeStart);
-        final int withoutTime = maxWidth - fm.stringWidth(time);
-
-        int end = Math.min(myTimeStart - 1, 1000);
-        while (end > 0) {
-          final String truncated = text.substring(0, end) + "... ";
-          if (fm.stringWidth(truncated) < withoutTime) {
-            text = truncated + time;
-            break;
-          }
-          end--;
-        }
+      if (myTimeText != null && text.endsWith(myTimeText)) {
+        int withoutTime = maxWidth - fm.stringWidth(myTimeText);
+        Rectangle boundsForTrim = new Rectangle(withoutTime, bounds.height);
+        return super.truncateText(text, boundsForTrim, fm, textR, iconR, withoutTime) + myTimeText;
       }
-
       return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
     }
   };
@@ -112,7 +97,6 @@ class StatusPanel extends JPanel {
         return true;
       }
     }.installOn(myTextPanel);
-    myCopyAction = createCopyAction();
 
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -127,7 +111,9 @@ class StatusPanel extends JPanel {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        if (myCopyAction != null && e.isPopupTrigger()) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+          if (myCopyAction == null) myCopyAction = createCopyAction();
+
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
           menu.show(myTextPanel, e.getX(), e.getY());
@@ -180,7 +166,7 @@ class StatusPanel extends JPanel {
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
-      if (project != null) {
+      if (project != null && !project.isDisposed()) {
         myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
       }
     }
@@ -207,10 +193,11 @@ class StatusPanel extends JPanel {
           assert statusMessage != null;
           String text = statusMessage.second;
           if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeStart = text.length() + 1;
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
-          } else {
-            myTimeStart = -1;
+            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            text += myTimeText;
+          }
+          else {
+            myTimeText = null;
           }
           setStatusText(text);
           alarm.addRequest(this, 30000);
@@ -218,7 +205,7 @@ class StatusPanel extends JPanel {
       }.run();
     }
     else {
-      myTimeStart = -1;
+      myTimeText = null;
       UIUtil.setCursor(myTextPanel, Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);

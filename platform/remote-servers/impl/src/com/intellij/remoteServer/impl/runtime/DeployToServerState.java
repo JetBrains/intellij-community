@@ -35,9 +35,6 @@ import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeployToServerState<S extends ServerConfiguration, D extends DeploymentConfiguration> implements RunProfileState {
   @NotNull private final RemoteServer<S> myServer;
   @NotNull private final DeploymentSource mySource;
@@ -54,7 +51,7 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);

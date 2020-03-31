@@ -6,10 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class IfStatementWithIdenticalBranchesInspectionTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     IfStatementWithIdenticalBranchesInspection inspection = new IfStatementWithIdenticalBranchesInspection();
+    inspection.myHighlightWhenLastStatementIsCall = !getTestName(false).equals("LastStatementIsCallInfo.java");
     return new LocalInspectionTool[]{inspection};
   }
 

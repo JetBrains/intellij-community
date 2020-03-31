@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -28,11 +14,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
+  private static final Logger LOG = Logger.getInstance(BraceEnforcer.class);
 
   private final PostFormatProcessorHelper myPostProcessor;
 
@@ -94,7 +77,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
       javaRoot.accept(this);
     }
   }
-  
+
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
     if (options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
@@ -114,7 +97,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     final PsiManager manager = statement.getManager();
     LOG.assertTrue(manager != null);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    
+
     String oldText = blockCandidate.getText();
     // There is a possible case that target block to wrap ends with single-line comment. Example:
     //     if (true) i = 1; // Cool assignment

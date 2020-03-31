@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +25,8 @@ public class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBas
     ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!aClass.isAnnotationType()) {
       return null;
     }
@@ -41,7 +41,7 @@ public class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBas
                                                                        newAnnotation.getParameterList().getAttributes());
         ProblemDescriptor descriptor =
           manager.createProblemDescriptor(ObjectUtils.notNull(aClass.getNameIdentifier(), aClass),
-                                          aClass.getName() + " should have @Retention(RetentionPolicy.RUNTIME)",
+                                          InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description", aClass.getName()),
                                           annotationPsiFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         return new ProblemDescriptor[] {descriptor};
       }
@@ -50,7 +50,7 @@ public class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBas
         if (attributeValue == null || !attributeValue.getText().contains("RUNTIME")) {
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(ObjectUtils.notNull(aClass.getNameIdentifier(), aClass),
-                                            aClass.getName() + "Meta annotation should have @Retention(RetentionPolicy.RUNTIME)",
+                                            InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description", aClass.getName()),
                                             (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
           return new ProblemDescriptor[] {descriptor};
         }

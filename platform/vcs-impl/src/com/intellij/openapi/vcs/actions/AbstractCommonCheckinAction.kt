@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
@@ -9,12 +10,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.removeEllipsisSuffix
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -22,6 +26,12 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   val manager = ChangeListManager.getInstance(project)
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
+
+internal fun Project.getNonModalCommitWorkflowHandler() = ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
+
+internal fun AnActionEvent.isProjectUsesNonModalCommit() = getProjectCommitWorkflowHandler() != null
+internal fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? = project?.getNonModalCommitWorkflowHandler()
+internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
@@ -48,8 +58,10 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     LOG.debug("actionPerformed. ")
 
     val project = context.project!!
-    val actionName = getActionName(context)?.let { removeMnemonic(it) } ?: templatePresentation.text
-    val isFreezedDialogTitle = actionName?.let { "Can not $it now" }
+    val actionName = getActionName(context) ?: templatePresentation.text
+    val isFreezedDialogTitle = actionName?.let {
+      VcsBundle.message("error.cant.perform.operation.now", removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase())
+    }
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
       LOG.debug("ChangeListManager is freezed. returning.")
@@ -59,10 +71,19 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
     else {
       val roots = prepareRootsForCommit(getRoots(context), project)
-      ChangeListManager.getInstance(project).invokeAfterUpdate(
-        { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-        message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current())
+      queueCheckin(project, context, roots)
     }
+  }
+
+  protected open fun queueCheckin(
+    project: Project,
+    context: VcsContext,
+    roots: Array<FilePath>
+  ) {
+    ChangeListManager.getInstance(project).invokeAfterUpdate(
+      { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+      VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
+    )
   }
 
   @Deprecated("getActionName() will be used instead")
@@ -76,17 +97,20 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
+  protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
+
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
 
     val selectedChanges = context.selectedChanges
-    val selectedUnversioned = context.selectedUnversionedFiles
+    val selectedUnversioned = context.selectedUnversionedFilePaths
+    val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
-    val included: Collection<*>
+    val included: Collection<Any>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
-      included = changesToCommit
+      included = initialChangeList.changes.intersect(changesToCommit)
     }
     else {
       changesToCommit = selectedChanges.orEmpty().toList()
@@ -94,22 +118,24 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    if (executor == null && isNonModalCommit()) {
-      val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
-      workflowHandler?.activate()
+    val workflowHandler = project.getNonModalCommitWorkflowHandler()
+    if (executor == null && workflowHandler != null) {
+      workflowHandler.run {
+        setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())
+        activate()
+      }
     }
     else {
-      val initialChangeList = getInitiallySelectedChangeList(context, project)
       CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
     }
   }
 
-  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {
+  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
     val manager = ChangeListManager.getInstance(project)
 
-    context.selectedChangeLists?.firstOrNull()?.let { return manager.findChangeList(it.name) }
-    context.selectedChanges?.firstOrNull()?.let { return manager.getChangeList(it) }
-    return manager.defaultChangeList
+    return context.selectedChangeLists?.firstOrNull()?.let { manager.findChangeList(it.name) }
+           ?: context.selectedChanges?.firstOrNull()?.let { manager.getChangeList(it) }
+           ?: manager.defaultChangeList
   }
 
   protected open fun getExecutor(project: Project): CommitExecutor? = null

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,52 +15,34 @@
  */
 package org.jetbrains.idea.devkit.dom.index;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 class RegistrationIndexer {
 
-  private final FileContent myContent;
-  private Map<String, List<RegistrationEntry>> myValueMap;
+  private final IdeaPlugin myPlugin;
+  private final Map<String, List<RegistrationEntry>> myValueMap = FactoryMap.create(s -> new SmartList<>());
 
-  RegistrationIndexer(FileContent content) {
-    myContent = content;
+  RegistrationIndexer(IdeaPlugin plugin) {
+    myPlugin = plugin;
   }
 
   @NotNull
   Map<String, List<RegistrationEntry>> indexFile() {
-    CharSequence text = myContent.getContentAsText();
-    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
-      return Collections.emptyMap();
-    }
-
-    final PsiFile file = ((FileContentImpl)myContent).getPsiFileForPsiDependentIndex();
-    if (!(file instanceof XmlFile)) return Collections.emptyMap();
-
-    final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
-    if (fileElement == null) return Collections.emptyMap();
-
-    myValueMap = FactoryMap.create(s -> new SmartList<>());
-    process(fileElement.getRootElement());
+    process(myPlugin);
 
     return myValueMap;
   }
@@ -100,6 +82,7 @@ class RegistrationIndexer {
 
   private void processGroup(Group group) {
     addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+    addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
 
     for (Action action : group.getActions()) {
       processAction(action);
@@ -111,6 +94,17 @@ class RegistrationIndexer {
 
   private void processAction(Action action) {
     addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+    addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
+  }
+
+  private void addIdEntry(DomElement domElement,
+                          GenericAttributeValue<String> idValue,
+                          RegistrationEntry.RegistrationType type) {
+    if (!DomUtil.hasXml(domElement)) return;
+    String id = idValue.getStringValue();
+    if (StringUtil.isEmpty(id)) return;
+
+    storeEntry(id, domElement, type);
   }
 
   private void addEntry(DomElement domElement,
@@ -122,14 +116,15 @@ class RegistrationIndexer {
 
     final String className = clazz.replace('$', '.');
 
-    List<RegistrationEntry> entries = myValueMap.get(className);
-    RegistrationEntry entry = new RegistrationEntry(type, getOffset(domElement));
-    entries.add(entry);
+    storeEntry(className, domElement, type);
   }
 
-  private static int getOffset(DomElement element) {
-    final XmlElement xmlElement = element.getXmlElement();
-    assert xmlElement != null : element;
-    return xmlElement.getTextOffset();
+  private void storeEntry(String key, DomElement domElement, RegistrationEntry.RegistrationType type) {
+    List<RegistrationEntry> entries = myValueMap.get(key);
+
+    final XmlElement xmlElement = domElement.getXmlElement();
+    assert xmlElement != null : domElement;
+    RegistrationEntry entry = new RegistrationEntry(type, xmlElement.getTextOffset());
+    entries.add(entry);
   }
 }

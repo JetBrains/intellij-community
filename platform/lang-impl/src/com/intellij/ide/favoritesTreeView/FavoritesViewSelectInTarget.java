@@ -4,6 +4,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -22,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
-  public FavoritesViewSelectInTarget(final Project project) {
+final class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
+  FavoritesViewSelectInTarget(final Project project) {
     super(project);
 
     if (PlatformUtils.isPyCharmEducational()) {
@@ -32,12 +33,12 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return SelectInManager.FAVORITES;
+    return SelectInManager.getFavorites();
   }
 
   @Override
   public String getToolWindowId() {
-    return SelectInManager.FAVORITES;
+    return SelectInManager.getFavorites();
   }
 
   @Override
@@ -50,6 +51,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
     PsiElement toSelect = findElementToSelect(element, null);
     if (toSelect != null) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(toSelect);
+      virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
       select(toSelect, virtualFile, requestFocus);
     }
   }
@@ -86,12 +88,13 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public static String findSuitableFavoritesList(VirtualFile file, Project project, final String currentSubId) {
-    return FavoritesManager.getInstance(project).getFavoriteListName(currentSubId, file);
+    FavoritesManager manager = FavoritesManager.getInstance(project);
+    return manager != null ? manager.getFavoriteListName(currentSubId, file) : null;
   }
 
   @Override
   public String getMinorViewId() {
-    return FavoritesProjectViewPane.ID;
+    return FavoritesViewTreeBuilder.ID;
   }
 
   @Override

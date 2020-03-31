@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -32,7 +33,7 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
 
   public DeleteElementFix(@NotNull PsiElement element) {
     super(element);
-    myText = null;
+    myText = CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.fromElement(element).object());
   }
 
   public DeleteElementFix(@NotNull PsiElement element, @NotNull @Nls String text) {
@@ -51,7 +52,7 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   @NotNull
   @Override
   public String getFamilyName() {
-    return QuickFixBundle.message("delete.element.fix.text");
+    return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.UNKNOWN.object());
   }
 
   @Override

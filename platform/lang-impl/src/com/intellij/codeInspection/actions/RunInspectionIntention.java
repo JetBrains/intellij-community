@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.analysis.dialog.ModelScopeItem;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -97,8 +83,8 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                  @NotNull Project project) {
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, customScope, module, context);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
-      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project,
+      CodeInsightBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+      CodeInsightBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project,
       items, AnalysisUIOptions.getInstance(project), true);
     if (!dlg.showAndGet()) {
       return;
@@ -132,18 +118,23 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public static InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
                                                     @NotNull InspectionManagerEx managerEx,
                                                     @Nullable PsiElement psiElement) {
-    InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
+    final Project project = managerEx.getProject();
+    InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
-    rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
-    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
-    InspectionProfileImpl model = InspectionProfileKt.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
+    rootProfile.collectDependentInspections(toolWrapper, allWrappers, project);
+    List<InspectionToolWrapper> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    InspectionProfileImpl model = new InspectionProfileImpl(toolWrapper.getDisplayName(), new InspectionToolsSupplier.Simple(toolWrappers), rootProfile);
+    for (InspectionToolWrapper wrapper : toolWrappers) {
+      model.enableTool(wrapper.getShortName(), project);
+    }
     try {
       Element element = new Element("toCopy");
       for (InspectionToolWrapper wrapper : toolWrappers) {
         wrapper.getTool().writeSettings(element);
-        InspectionToolWrapper tw = psiElement == null ? model.getInspectionTool(wrapper.getShortName(), managerEx.getProject())
+        InspectionToolWrapper tw = psiElement == null ? model.getInspectionTool(wrapper.getShortName(), project)
                                                       : model.getInspectionTool(wrapper.getShortName(), psiElement);
+        assert tw != null;
         tw.getTool().readSettings(element);
       }
     }

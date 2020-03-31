@@ -4,6 +4,7 @@ package org.jetbrains.debugger
 import com.intellij.util.Url
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.nullPromise
+import org.jetbrains.concurrency.resolvedPromise
 
 // used in goland
 @Suppress("unused")
@@ -22,7 +23,7 @@ class DummyBreakpointManager : BreakpointManager {
 
   override fun removeAll(): Promise<*> = nullPromise()
 
-  override fun flush(breakpoint: Breakpoint): Promise<*> = nullPromise()
+  override fun flush(breakpoint: Breakpoint): Promise<out Breakpoint> = resolvedPromise(breakpoint)
 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = nullPromise()
 

@@ -4,6 +4,7 @@ package com.intellij.util.net;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
@@ -101,7 +104,8 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     myClearPasswordsButton.addActionListener(e -> {
       settings.clearGenericPasswords();
       //noinspection DialogTitleCapitalization
-      Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected Proxy", Messages.getInformationIcon());
+      Messages.showMessageDialog(myMainPanel, IdeBundle.message("message.text.proxy.passwords.were.cleared"),
+                                 IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon());
     });
 
     configureCheckButton();
@@ -120,9 +124,10 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return;
       }
 
-      final String title = "Check Proxy Settings";
+      final String title = IdeBundle.message("dialog.title.check.proxy.settings");
       final String answer =
-        Messages.showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
+        Messages.showInputDialog(myMainPanel,
+                                 IdeBundle.message("message.text.enter.url.to.check.connection"),
                                  title, Messages.getQuestionIcon(), "http://", null);
       if (StringUtil.isEmptyOrSpaces(answer)) {
         return;
@@ -144,13 +149,13 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         catch (IOException e) {
           exceptionReference.set(e);
         }
-      }, "Check Connection", true, null);
+      }, IdeBundle.message("progress.title.check.connection"), true, null);
 
       reset(settings);  // since password might have been set
 
       final IOException exception = exceptionReference.get();
       if (exception == null) {
-        Messages.showMessageDialog(myMainPanel, "Connection successful", title, Messages.getInformationIcon());
+        Messages.showMessageDialog(myMainPanel, IdeBundle.message("message.connection.successful"), title, Messages.getInformationIcon());
       }
       else {
         final String message = exception.getMessage();
@@ -194,6 +199,19 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       myOtherWarning.setText(oldStyleText);
       myOtherWarning.setIcon(Messages.getWarningIcon());
     }
+  }
+
+  private void createUIComponents() {
+    myProxyExceptions = new RawCommandLineEditor(text -> {
+      List<String> result = new ArrayList<>();
+      for (String token : text.split(",")) {
+        String trimmedToken = token.trim();
+        if (!trimmedToken.isEmpty()) {
+          result.add(trimmedToken);
+        }
+      }
+      return result;
+    }, strings -> StringUtil.join(strings, ", "));
   }
 
   @NotNull

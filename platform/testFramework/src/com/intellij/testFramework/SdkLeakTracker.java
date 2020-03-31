@@ -1,21 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.util.Arrays;
 import java.util.Set;
 
 @TestOnly
-public class SdkLeakTracker {
-  @NotNull
-  private final Sdk[] oldSdks;
+public final class SdkLeakTracker {
+  private final Sdk @NotNull [] oldSdks;
+
   public SdkLeakTracker() {
     ProjectJdkTable table = ProjectJdkTable.getInstance();
     oldSdks = table == null ? new Sdk[0] : table.getAllJdks();
@@ -23,25 +22,28 @@ public class SdkLeakTracker {
 
   public void checkForJdkTableLeaks() {
     ProjectJdkTable table = ProjectJdkTable.getInstance();
-    if (table != null) {
-      Sdk[] jdks = table.getAllJdks();
-      if (jdks.length != 0) {
-        Set<Sdk> leaked = new THashSet<>(Arrays.asList(jdks));
-        Set<Sdk> old = new THashSet<>(Arrays.asList(oldSdks));
-        leaked.removeAll(old);
+    if (table == null) {
+      return;
+    }
 
-        try {
-          if (!leaked.isEmpty()) {
-            Assert.fail("Leaked SDKs: " + leaked);
-          }
-        }
-        finally {
-          for (Sdk jdk : leaked) {
-            WriteAction.run(()-> table.removeJdk(jdk));
-          }
-        }
+    Sdk[] jdks = table.getAllJdks();
+    if (jdks.length == 0) {
+      return;
+    }
+
+    Set<Sdk> leaked = ContainerUtil.set(jdks);
+    Set<Sdk> old = ContainerUtil.set(oldSdks);
+    leaked.removeAll(old);
+
+    try {
+      if (!leaked.isEmpty()) {
+        Assert.fail("Leaked SDKs: " + leaked+". Please remove leaking SDKs by e.g. ProjectJdkTable.getInstance().removeJdk() or by disposing the ProjectJdkImpl");
+      }
+    }
+    finally {
+      for (Sdk jdk : leaked) {
+        WriteAction.run(() -> table.removeJdk(jdk));
       }
     }
   }
-
 }

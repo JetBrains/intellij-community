@@ -32,8 +32,10 @@ internal class ExternalModuleListStorageImpl(private val project: Project)
       return e
     }
 
-    val moduleManager = ModuleManagerImpl.getInstanceImpl(project)
-    moduleManager.writeExternal(e, getFilteredModuleList(project, moduleManager.modules, true))
+    val moduleManager = ModuleManagerEx.getInstanceEx(project)
+    val filteredModuleList = getFilteredModuleList(project, moduleManager.modules, true)
+    ModuleManagerImpl.writeExternal(e, filteredModuleList, moduleManager)
+
     return e
   }
 

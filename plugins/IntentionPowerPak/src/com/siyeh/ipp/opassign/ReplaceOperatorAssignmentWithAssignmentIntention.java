@@ -25,7 +25,6 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
-
   @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {

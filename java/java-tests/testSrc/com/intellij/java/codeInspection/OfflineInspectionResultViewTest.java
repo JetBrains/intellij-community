@@ -44,10 +44,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
 
-    HighlightDisplayKey key = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
-    if (key == null) {
-      HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME);
-    }
+    HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.getDisplayNameText(), UnusedDeclarationInspectionBase.SHORT_NAME);
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {
       @Override
@@ -56,8 +53,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       }
 
       @Override
-      @NotNull
-      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+      public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
         return new InspectionToolWrapper[]{myUnusedToolWrapper};
       }
 
@@ -66,8 +62,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       public InspectionProfileModifiableModel getModifiableModel() {
         return new InspectionProfileModifiableModel(this) {
           @Override
-          @NotNull
-          public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+          public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
             return new InspectionToolWrapper[]{myUnusedToolWrapper};
           }
 

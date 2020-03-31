@@ -17,16 +17,20 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateInnerClassFromNewFix");
+  private static final Logger LOG = Logger.getInstance(CreateInnerClassFromNewFix.class);
 
   public CreateInnerClassFromNewFix(final PsiNewExpression expr) {
     super(expr);
@@ -34,7 +38,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", CreateClassKind.CLASS.getDescription(), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", getKind().getDescriptionAccusative(), varName);
   }
 
   @Override
@@ -54,14 +58,20 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  private void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
     assert ref != null;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
-    PsiClass created = elementFactory.createClass(refName);
+    PsiClass created = getKind().create(elementFactory, refName);
+    created = (PsiClass)targetClass.add(created);
+
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (PsiTreeUtil.isAncestor(targetClass, newExpression, true)) {
@@ -72,12 +82,11 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
       }
     }
 
-    if (!targetClass.isInterface() && 
+    if (!created.hasModifierProperty(PsiModifier.STATIC) &&
         newExpression.getQualifier() == null &&
         (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
-    created = (PsiClass)targetClass.add(created);
 
     setupGenericParameters(created, ref);
     setupClassFromNewExpression(created, newExpression);

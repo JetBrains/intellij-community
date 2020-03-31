@@ -15,7 +15,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -157,8 +157,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                                     @NotNull ModifiableRootModel moduleRootModel,
                                                     boolean hasUnresolvedLibraries) {
     for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
-      if (entry instanceof ModuleLibraryOrderEntryImpl) {
-        ModuleLibraryOrderEntryImpl moduleLibraryOrderEntry = (ModuleLibraryOrderEntryImpl)entry;
+      if (OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
+        LibraryOrderEntry moduleLibraryOrderEntry = (LibraryOrderEntry)entry;
         Library library = moduleLibraryOrderEntry.getLibrary();
         final VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
         final Set<String> moduleLibraryKey = new HashSet<>(libraryFiles.length);
@@ -209,7 +209,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     final LibraryData libraryDependencyDataTarget = libraryDependencyData.getTarget();
     Map<OrderRootType, Collection<File>> files = ProjectDataService.EP_NAME.findExtensionOrFail(LibraryDataService.class)
       .prepareLibraryFiles(libraryDependencyDataTarget);
-    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, libraryModel, libraryName);
+    Set<String> excludedPaths = libraryDependencyDataTarget.getPaths(LibraryPathType.EXCLUDED);
+    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, excludedPaths, libraryModel, libraryName);
     LibraryOrderEntry orderEntry = findLibraryOrderEntry(moduleRootModel, library, libraryDependencyData.getScope());
 
     assert orderEntry != null;
@@ -228,13 +229,10 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         if (library == libraryOrderEntry.getLibrary()) {
           return libraryOrderEntry;
         }
-        if (library.equals(libraryOrderEntry.getLibrary())) {
-          if (libraryOrderEntry.getScope() == scope) {
-            return libraryOrderEntry;
-          }
-          else {
-            candidate = libraryOrderEntry;
-          }
+        // LibraryImpl.equals will return true for unrelated module library if it's just created and empty
+        if (library.equals(libraryOrderEntry.getLibrary()) &&
+            (candidate == null || libraryOrderEntry.getScope() == scope)) {
+          candidate = libraryOrderEntry;
         }
       }
     }

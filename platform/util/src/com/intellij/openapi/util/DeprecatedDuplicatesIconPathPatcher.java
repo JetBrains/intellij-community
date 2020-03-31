@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -324,7 +325,7 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
   @Nullable
   @Override
-  public String patchPath(String path, ClassLoader classLoader) {
+  public String patchPath(@NotNull String path, ClassLoader classLoader) {
     return ourDeprecatedIconsReplacements.get(path);
   }
 }

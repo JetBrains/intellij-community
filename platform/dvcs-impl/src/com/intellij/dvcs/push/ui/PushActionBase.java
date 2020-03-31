@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ public abstract class PushActionBase extends DumbAwareAction {
 
   protected abstract boolean isEnabled(@NotNull VcsPushUi dialog);
 
+  @Nls
   @Nullable
   protected abstract String getDescription(@NotNull VcsPushUi dialog, boolean enabled);
 

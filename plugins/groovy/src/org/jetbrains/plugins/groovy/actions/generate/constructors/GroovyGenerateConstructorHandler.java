@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
 import com.intellij.codeInsight.generation.*;
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +25,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
   private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
 
   @Override
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     final ClassMember[] classMembers = chooseOriginalMembersImpl(aClass, project);
     if (classMembers == null) return null;
 
@@ -61,8 +60,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     return res.toArray(ClassMember.EMPTY_ARRAY);
   }
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
     return super.chooseOriginalMembers(aClass, project);
   }
 
@@ -98,8 +96,8 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
         parametersTypes.add(fullName.startsWith(DEF_PSEUDO_ANNO) ? null : parameter.getType().getCanonicalText());
       }
 
-      final String[] paramNames = ArrayUtil.toStringArray(parametersNames);
-      final String[] paramTypes = ArrayUtil.toStringArray(parametersTypes);
+      final String[] paramNames = ArrayUtilRt.toStringArray(parametersNames);
+      final String[] paramTypes = ArrayUtilRt.toStringArray(parametersTypes);
       assert constructorName != null;
       GrMethod grConstructor = factory.createConstructorFromText(constructorName, paramTypes, paramNames, body);
       PsiReferenceList throwsList = grConstructor.getThrowsList();

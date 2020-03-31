@@ -5,11 +5,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.util.ui.JBUI
-import java.awt.*
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBImageIcon
+import java.awt.Font
+import java.awt.Frame
+import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
-import java.util.ArrayList
+import java.util.*
 import javax.swing.*
 
 open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
@@ -79,7 +84,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         updateCustomDecorationHitTestSpots()
     }
 
-    override fun addMenuItems(menu: JMenu) {
+    override fun addMenuItems(menu: JPopupMenu) {
         menu.add(myRestoreAction)
         menu.add(myIconifyAction)
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {
@@ -89,7 +94,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         menu.add(JSeparator())
 
         val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
     }
 
     override fun getHitTestSpots(): ArrayList<RelativeRectangle> {

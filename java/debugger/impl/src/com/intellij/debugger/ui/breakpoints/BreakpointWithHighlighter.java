@@ -37,7 +37,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import javax.swing.*;
 
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
+  private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
 
   @Nullable
   private SourcePosition mySourcePosition;
@@ -197,12 +197,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
     if (isCountFilterEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
       buf.append(getCountFilter());
     }
     if (isClassFiltersEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
       ClassFilter[] classFilters = getClassFilters();
       for (ClassFilter classFilter : classFilters) {
         buf.append(classFilter.getPattern()).append(" ");
@@ -210,7 +210,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
     if (isInstanceFiltersEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters"));
       InstanceFilter[] instanceFilters = getInstanceFilters();
       for (InstanceFilter instanceFilter : instanceFilters) {
         buf.append(instanceFilter.getId()).append(" ");
@@ -300,11 +300,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              if (!myProject.isDisposed()) {
-                updateCaches(debugProcess);
-              }
-            });
+            if (!myProject.isDisposed()) {
+              updateCaches(debugProcess);
+            }
           }
         });
       }

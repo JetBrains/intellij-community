@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -78,9 +78,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
     final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
       new NotNullLazyValue<PsiMethodWithOverridingPercentMember[]>() {
-        @NotNull
         @Override
-        protected PsiMethodWithOverridingPercentMember[] compute() {
+        protected PsiMethodWithOverridingPercentMember @NotNull [] compute() {
           final PsiMethodWithOverridingPercentMember[] elements =
             PsiMethodWithOverridingPercentMember.calculateOverridingPercents(candidates);
           Arrays.sort(elements, PsiMethodWithOverridingPercentMember.COMPARATOR);
@@ -184,10 +183,10 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
 
   private static String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
-           ? CodeInsightBundle.message("methods.to.implement.chooser.title")
+           ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
-             ? CodeInsightBundle.message("methods.to.override.implement.chooser.title")
-             : CodeInsightBundle.message("methods.to.override.chooser.title");
+             ? JavaBundle.message("methods.to.override.implement.chooser.title")
+             : JavaBundle.message("methods.to.override.chooser.title");
   }
 
   private static PsiMethodMember[] convertToMethodMembers(Collection<? extends CandidateInfo> candidates) {
@@ -230,7 +229,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
 
   private class MyMergeAction extends ToggleAction {
     private MyMergeAction() {
-      super("Show methods to implement", "Show methods to implement", AllIcons.General.Show_to_implement);
+      super(JavaBundle.message("action.text.show.methods.to.implement"), JavaBundle.message(
+        "action.text.show.methods.to.implement"), AllIcons.General.Show_to_implement);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
       registerCustomShortcutSet(getActiveKeymapShortcuts("OverrideMethods"), myTree);
     }

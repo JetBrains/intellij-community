@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @SomeQueue
 public class ControlledCycle {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
+  private static final Logger LOG = Logger.getInstance(ControlledCycle.class);
 
   private final Alarm mySimpleAlarm;
   private final int myRefreshInterval;

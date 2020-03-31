@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
  * The application wide settings for the git
  */
 @State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.PER_OS))
-public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
+public final class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
-  public static class State {
+  public static final class State {
     public String myPathToGit = null;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
@@ -55,10 +54,6 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
-  }
-
-  public boolean isUseIdeaSsh() {
-    return Registry.is("git.use.builtin.ssh");
   }
 
   public boolean isIgnoreWhitespaces() {

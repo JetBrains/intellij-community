@@ -15,13 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 
 /**
  * @author Sergey Evdokimov
  */
-class GroovyRegexFindExpressionTest extends LightCodeInsightFixtureTestCase {
+class GroovyRegexFindExpressionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testHighlighting() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)

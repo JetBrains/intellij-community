@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,6 +63,6 @@ public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
       return name;
     }
 
-    return RefactoringBundle.message("anonymous.class.text");
+    return JavaRefactoringBundle.message("anonymous.class.text");
   }
 }

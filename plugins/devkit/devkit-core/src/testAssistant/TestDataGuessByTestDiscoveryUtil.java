@@ -17,7 +17,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,16 +34,10 @@ public class TestDataGuessByTestDiscoveryUtil {
     if (testClassQualifiedName == null) return Collections.emptyList();
     List<Couple<String>> testQName =
       Collections.singletonList(Couple.of(testClassQualifiedName, ReadAction.compute(() -> method.getName())));
-    try {
-      Project project = ReadAction.compute(() -> method.getProject());
-      AffectedPathConsumer consumer = new AffectedPathConsumer(project);
-      TestDiscoveryProducer.consumeAffectedPaths(project, testQName, consumer, (byte)0x0 /* TODO */);
-      return consumer.getTestData();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return Collections.emptyList();
-    }
+    Project project = ReadAction.compute(() -> method.getProject());
+    AffectedPathConsumer consumer = new AffectedPathConsumer(project);
+    TestDiscoveryProducer.consumeAffectedPaths(project, testQName, consumer, (byte)0x0 /* TODO */);
+    return consumer.getTestData();
   }
 
   @NotNull
@@ -53,15 +46,9 @@ public class TestDataGuessByTestDiscoveryUtil {
     String testClassQualifiedName = ReadAction.compute(() -> parametrizedTestClass.getQualifiedName());
     if (testClassQualifiedName == null) return Collections.emptyList();
     Project project = ReadAction.compute(() -> parametrizedTestClass.getProject());
-    try {
-      AffectedPathConsumer consumer = new AffectedPathConsumer(project);
-      TestDiscoveryProducer.consumeAffectedPaths(project, testClassQualifiedName, consumer, (byte)0x0 /* TODO */);
-      return consumer.getTestData();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return Collections.emptyList();
-    }
+    AffectedPathConsumer consumer = new AffectedPathConsumer(project);
+    TestDiscoveryProducer.consumeAffectedPaths(project, testClassQualifiedName, consumer, (byte)0x0 /* TODO */);
+    return consumer.getTestData();
   }
 
   private static boolean isEnabled() {

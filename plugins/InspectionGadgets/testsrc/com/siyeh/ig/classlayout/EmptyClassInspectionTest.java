@@ -1,10 +1,10 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyClassInspectionTest extends LightInspectionTestCase {
+public class EmptyClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testEmptyClass() {
     doTest();

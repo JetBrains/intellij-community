@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.BatchModeDescriptorsUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -30,9 +31,11 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +43,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -141,11 +143,9 @@ public class InspectionTree extends Tree {
     myModel.clearTree();
   }
 
-  @Nullable
-  public String[] getSelectedGroupPath() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return null;
-    final TreePath commonPath = TreeUtil.findCommonPath(paths);
+  public String @Nullable [] getSelectedGroupPath() {
+    TreePath commonPath = TreePathUtil.findCommonAncestor(getSelectionPaths());
+    if (commonPath == null) return null;
     for (Object n : commonPath.getPath()) {
       if (n instanceof InspectionGroupNode) {
         return getGroupPath((InspectionGroupNode)n);
@@ -242,8 +242,7 @@ public class InspectionTree extends Tree {
     return currentCommonNode;
   }
 
-  @NotNull
-  public RefEntity[] getSelectedElements() {
+  public RefEntity @NotNull [] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       InspectionToolWrapper toolWrapper = getSelectedToolWrapper(true);
@@ -284,13 +283,11 @@ public class InspectionTree extends Tree {
     }
   }
 
-  @NotNull
-  public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
+  public CommonProblemDescriptor @NotNull [] getAllValidSelectedDescriptors() {
     return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, true, null));
   }
 
-  @NotNull
-  public CommonProblemDescriptor[] getSelectedDescriptors() {
+  public CommonProblemDescriptor @NotNull [] getSelectedDescriptors() {
     return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, false, null));
   }
 
@@ -332,9 +329,8 @@ public class InspectionTree extends Tree {
     return descriptors;
   }
 
-  @Nullable
   @Override
-  public TreePath[] getSelectionPaths() {
+  public TreePath @Nullable [] getSelectionPaths() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return super.getSelectionPaths();
   }
@@ -394,7 +390,7 @@ public class InspectionTree extends Tree {
 
   public int getSelectedProblemCount() {
     int count = 0;
-    for (TreePath path : TreeUtil.selectMaximals(getSelectionPaths())) {
+    for (TreePath path : TreePathRoots.collect(getSelectionPaths())) {
       LevelAndCount[] levels = ((InspectionTreeNode)path.getLastPathComponent()).getProblemLevels();
       for (LevelAndCount level : levels) {
         count += level.getCount();
@@ -456,7 +452,8 @@ public class InspectionTree extends Tree {
     for (InspectionTreeNode parent : parents) {
       parent.dropProblemCountCaches();
     }
-    TreeUtil.selectPath(this, TreeUtil.findCommonPath(pathsToSelect.toArray(new TreePath[0])));
+    TreePath commonPath = TreePathUtil.findCommonAncestor(pathsToSelect);
+    if (commonPath != null) TreeUtil.selectPath(this, commonPath);
 
     revalidate();
     repaint();
@@ -496,7 +493,7 @@ public class InspectionTree extends Tree {
       return node.getChildren().stream().allMatch(this::shouldDelete);
     }
     else if (node instanceof InspectionNode) {
-      InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
+      InspectionToolResultExporter presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
       SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       if (problemElements.isEmpty()) {
         return true;
@@ -511,8 +508,7 @@ public class InspectionTree extends Tree {
     return myView.getGlobalInspectionContext();
   }
 
-  @NotNull
-  private static String[] getGroupPath(@NotNull InspectionGroupNode node) {
+  private static String @NotNull [] getGroupPath(@NotNull InspectionGroupNode node) {
     List<String> path = new ArrayList<>(2);
     while (true) {
       InspectionTreeNode parent = node.getParent();
@@ -520,7 +516,7 @@ public class InspectionTree extends Tree {
       node = (InspectionGroupNode)parent;
       path.add(node.getSubGroup());
     }
-    return ArrayUtil.toStringArray(path);
+    return ArrayUtilRt.toStringArray(path);
   }
 
   @Nullable

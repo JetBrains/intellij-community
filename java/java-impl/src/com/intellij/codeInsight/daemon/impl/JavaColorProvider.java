@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ElementColorProvider;
@@ -10,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
@@ -27,17 +29,23 @@ import java.util.List;
  */
 @SuppressWarnings("UseJBColor")
 public class JavaColorProvider implements ElementColorProvider {
+
+  UastMetaLanguage myUastMetaLanguage = Language.findInstance(UastMetaLanguage.class);
+
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
     if (element.getFirstChild() != null) return null;
+    if (element instanceof PsiWhiteSpace) return null;
+    if (!myUastMetaLanguage.matchesLanguage(element.getLanguage())) return null;
     PsiElement parent = element.getParent();
-    Color color = getJavaColorFromExpression(parent);
+    UCallExpression newExpression = UastUtils.findContaining(parent, UCallExpression.class);
+    Color color = getJavaColorFromExpression(parent, newExpression);
     if (color == null) {
       parent = parent == null ? null : parent.getParent();
       color = getJavaColorFromExpression(parent);
     }
-    UCallExpression newExpression = UastContextKt.toUElement(parent, UCallExpression.class);
-    if (newExpression != null) {
+
+    if (newExpression != null && color != null) {
       UReferenceExpression uRef = newExpression.getClassReference();
       String resolvedName = uRef == null ? null : uRef.getResolvedName();
       if (resolvedName != null && element.textMatches(resolvedName)) {
@@ -66,7 +74,12 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Nullable
   public static Color getJavaColorFromExpression(@Nullable PsiElement element) {
-    UCallExpression newExpression = UastContextKt.toUElement(element, UCallExpression.class);
+    UCallExpression newExpression = UastUtils.findContaining(element, UCallExpression.class);
+    return getJavaColorFromExpression(element, newExpression);
+  }
+
+  @Nullable
+  private static Color getJavaColorFromExpression(@Nullable PsiElement element, @Nullable UCallExpression newExpression) {
     if (newExpression != null && newExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
         isColorType(newExpression.getReturnType())) {
       return getColor(newExpression.getValueArguments());
@@ -249,7 +262,7 @@ public class JavaColorProvider implements ElementColorProvider {
       };
     }
     CommandProcessor.getInstance()
-      .executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
+      .executeCommand(element.getProject(), command, JavaBundle.message("change.color.command.text"), null, document);
   }
 
   private static void replaceInt(PsiExpression expr, int newValue) {

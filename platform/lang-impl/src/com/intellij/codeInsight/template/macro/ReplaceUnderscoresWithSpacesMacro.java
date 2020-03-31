@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReplaceUnderscoresWithSpacesMacro extends MacroBase {
   public ReplaceUnderscoresWithSpacesMacro() {
-    super("underscoresToSpaces", CodeInsightBundle.message("macro.undescoresToSpaces.string"));
+    super("underscoresToSpaces", CodeInsightBundle.message("macro.underscoresToSpaces.string"));
   }
 
   @Override
-  protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
+  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context);
     if (text != null) {
       return new TextResult(text.replace('_', ' '));

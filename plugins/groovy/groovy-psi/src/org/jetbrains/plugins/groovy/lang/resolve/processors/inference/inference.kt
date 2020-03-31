@@ -11,9 +11,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -24,22 +25,23 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.typing.devoid
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
-  if (expression is GrMethodCall) {
-    val resolved = expression.advancedResolve() as? GroovyMethodResult
-    resolved?.candidate?.let {
-      val session = GroovyInferenceSessionBuilder(expression, it, resolved.contextSubstitutor)
-        .resolveMode(false)
-        .build()
-      return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
-    }
-    return null
-  }
-
   if (expression is GrFunctionalExpression) {
     return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, expression)
   }
 
-  return expression.type
+  val result = when (expression) {
+    is GrMethodCall -> expression.advancedResolve() as? GroovyMethodResult
+    is GrReferenceExpression -> expression.rValueReference?.advancedResolve() as? GroovyMethodResult ?: return expression.type
+    is GrIndexProperty -> expression.rValueReference?.advancedResolve() as? GroovyMethodResult ?: return expression.type
+    else -> return expression.type
+  }
+
+  return result?.candidate?.let {
+    val session = GroovyInferenceSessionBuilder(expression, it, result.contextSubstitutor)
+      .resolveMode(false)
+      .build()
+    session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
+  }
 }
 
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
@@ -49,9 +51,9 @@ fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
     return ExpressionArgument(qualifierExpression)
   }
 
-  val resolvedThis = state[ClassHint.THIS_TYPE]
-  if (resolvedThis != null) {
-    return JustTypeArgument(resolvedThis)
+  val receiver = state[ClassHint.RECEIVER]
+  if (receiver != null) {
+    return receiver
   }
 
   val type = ref?.let(::getQualifierType)
@@ -83,3 +85,5 @@ fun inferDerivedSubstitutor(leftType: PsiType, derived: PsiClass, context: PsiEl
   session.addConstraint(TypeCompatibilityConstraint(leftType, session.substituteWithInferenceVariables(derived.type())))
   return session.infer()
 }
+
+class ExpectedType(val type: PsiType, val position: GrTypeConverter.Position)

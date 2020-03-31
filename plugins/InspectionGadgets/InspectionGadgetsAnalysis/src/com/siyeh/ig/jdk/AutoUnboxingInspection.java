@@ -61,12 +61,6 @@ public class AutoUnboxingInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("auto.unboxing.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("auto.unboxing.problem.descriptor");
   }

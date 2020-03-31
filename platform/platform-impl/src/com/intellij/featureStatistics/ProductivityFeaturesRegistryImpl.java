@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,8 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
-public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
+public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
+  private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
@@ -180,8 +180,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   @Override
-  @NotNull
-  public ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId) {
+  public ApplicabilityFilter @NotNull [] getMatchingFilters(@NotNull String featureId) {
     lazyLoadFromPluginsFeaturesProviders();
     List<ApplicabilityFilter> filters = new ArrayList<>();
     for (Pair<String, ApplicabilityFilter> pair : myApplicabilityFilters) {

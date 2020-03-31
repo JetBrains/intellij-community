@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +20,6 @@ import java.util.Map;
  * @see AnAction#actionPerformed(AnActionEvent)
  * @see AnAction#update(AnActionEvent)
  */
-
 public class AnActionEvent implements PlaceProvider<String> {
   private final InputEvent myInputEvent;
   @NotNull private final ActionManager myActionManager;
@@ -75,6 +74,9 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
 
+  /**
+   * @deprecated use {@link #createFromInputEvent(InputEvent, String, Presentation, DataContext, boolean, boolean)}
+   */
   @Deprecated
   @NotNull
   public static AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
@@ -124,6 +126,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   /**
    * Returns the {@code InputEvent} which causes invocation of the action. It might be
    * {@code KeyEvent}, {@code MouseEvent}.
+   *
    * @return the {@code InputEvent} instance.
    */
   public InputEvent getInputEvent() {
@@ -166,7 +169,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * Returns the context which allows to retrieve information about the state of IDEA related to
+   * Returns the context which allows to retrieve information about the state of IDE related to
    * the action invocation (active editor, selection and so on).
    *
    * @return the data context instance.
@@ -182,7 +185,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * Returns not null data by a data key. This method assumes that data has been checked for null in AnAction#update method.
+   * Returns not null data by a data key. This method assumes that data has been checked for {@code null} in {@code AnAction#update} method.
    *<br/><br/>
    * Example of proper usage:
    *
@@ -190,13 +193,13 @@ public class AnActionEvent implements PlaceProvider<String> {
    *
    * public class MyAction extends AnAction {
    *   public void update(AnActionEvent e) {
-   *     //perform action if and only if EDITOR != null
+   *     // perform action if and only if EDITOR != null
    *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
    *     e.getPresentation.setEnabled(enabled);
    *   }
    *
    *   public void actionPerformed(AnActionEvent e) {
-   *     //if we're here then EDITOR != null
+   *     // if we're here then EDITOR != null
    *     Document doc = e.getRequiredData(CommonDataKeys.EDITOR).getDocument();
    *     doSomething(doc);
    *   }
@@ -212,7 +215,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * Returns the identifier of the place in the IDEA user interface from where the action is invoked
+   * Returns the identifier of the place in the IDE user interface from where the action is invoked
    * or updated.
    *
    * @return the place identifier
@@ -229,7 +232,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * @deprecated This method returns true for both main menu and context menu invocations. Use {@link ActionPlaces#isPopupPlace(String)}
+   * @deprecated This method returns {@code true} for both main menu and context menu invocations. Use {@link ActionPlaces#isPopupPlace(String)}
    * instead to get results only from context menus.
    */
   @Deprecated

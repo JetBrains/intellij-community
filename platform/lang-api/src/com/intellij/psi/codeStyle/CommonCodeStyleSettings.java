@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -13,6 +16,8 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -57,6 +62,8 @@ public class CommonCodeStyleSettings {
   private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+
+  private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
   public CommonCodeStyleSettings(Language language, FileType fileType) {
     myLanguage = language;
@@ -163,6 +170,7 @@ public class CommonCodeStyleSettings {
       myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
     }
     mySoftMargins.deserializeFrom(element);
+    LOG.info("Loaded " + myLanguage.getDisplayName() + " common code style settings");
   }
 
   public void writeExternal(Element element) {
@@ -341,9 +349,6 @@ public class CommonCodeStyleSettings {
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int LAMBDA_BRACE_STYLE = END_OF_LINE;
 
-  @Deprecated
-  public boolean USE_FLYING_GEESE_BRACES = false;
-
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
 
   /**
@@ -419,9 +424,6 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_RESOURCES = true;
   public boolean ALIGN_MULTILINE_FOR = true;
-
-  @Deprecated
-  public boolean INDENT_WHEN_CASES = true;
 
   public boolean ALIGN_MULTILINE_BINARY_OPERATION = false;
   public boolean ALIGN_MULTILINE_ASSIGNMENT = false;
@@ -905,9 +907,6 @@ public class CommonCodeStyleSettings {
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
-  @Deprecated
-  public int LABELED_STATEMENT_WRAP = WRAP_ALWAYS;
-
   public boolean WRAP_COMMENTS = false;
 
   @WrapConstant
@@ -1163,5 +1162,11 @@ public class CommonCodeStyleSettings {
 
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
+  }
+
+  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
+    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 }

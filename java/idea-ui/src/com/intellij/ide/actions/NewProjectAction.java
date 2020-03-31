@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.lang.IdeLanguageCustomization;
@@ -10,23 +11,15 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
   @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
-    Project eventProject = getEventProject(e);
-    NewProjectUtil.createNewProject(eventProject, wizard);
+    NewProjectUtil.createNewProject(wizard);
   }
 
   @Override
@@ -40,7 +33,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
   @NotNull
   @Override
   public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
-    return ProjectBundle.message("new.project.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
+    return JavaUiBundle.message("new.project.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 
   public static <T extends AnAction & NewProjectOrModuleAction> void updateActionText(@NotNull T action, @NotNull AnActionEvent e) {

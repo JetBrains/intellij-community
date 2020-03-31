@@ -23,7 +23,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
+class IntroduceConstantTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     TestUtils.testDataPath + "refactoring/introduceConstant/"

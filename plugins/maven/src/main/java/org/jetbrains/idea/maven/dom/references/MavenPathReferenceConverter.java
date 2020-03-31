@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.Condition;
@@ -25,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -61,8 +48,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
                                                 @NotNull final Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
-    ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    TextRange range = manipulator.getRangeInElement(element);
+    TextRange range = ElementManipulators.getValueTextRange(element);
     String text = range.substring(element.getText());
 
     FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, false) {
@@ -104,6 +90,17 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                   PsiDirectory psiDirectory = context.getManager().findDirectory(file);
                   if (psiDirectory != null) {
                     result.add(new PsiElementResolveResult(psiDirectory));
+                  }
+                }
+              }
+              else if ("..".equals(resolvedText)) {
+                PsiFileSystemItem resolved = context.getParent();
+                if (resolved != null) {
+                  if (context instanceof XmlFileImpl) {
+                    resolved = resolved.getParent();  // calculated regarding parent directory, not the pom itself
+                  }
+                  if (resolved != null) {
+                    result.add(new PsiElementResolveResult(resolved));
                   }
                 }
               }
@@ -160,15 +157,13 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     return set.getAllReferences();
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     return createReferences(genericDomValue, element, myCondition);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, boolean soft) {
     throw new UnsupportedOperationException();
   }
 }

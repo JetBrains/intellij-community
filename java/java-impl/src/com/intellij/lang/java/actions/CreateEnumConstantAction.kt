@@ -3,11 +3,11 @@ package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.ExpectedTypeUtil
-import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedTypes
@@ -18,6 +18,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class CreateEnumConstantAction(
@@ -27,7 +28,7 @@ internal class CreateEnumConstantAction(
 
   override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
-  override fun getText(): String = QuickFixBundle.message("create.enum.constant.from.usage.text", request.fieldName)
+  override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), request.fieldName)
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val name = request.fieldName
@@ -44,7 +45,7 @@ internal class CreateEnumConstantAction(
     val parameters = constructor.parameterList.parameters
     if (parameters.isEmpty()) return
 
-    val paramString = parameters.joinToString(",") { it.name ?: "" }
+    val paramString = parameters.joinToString(",") { it.name }
     enumConstant = enumConstant.replace(elementFactory.createEnumConstantFromText("$name($paramString)", null)) as PsiEnumConstant
 
     val builder = TemplateBuilderImpl(enumConstant)

@@ -16,9 +16,11 @@
 package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
+import com.intellij.codeInsight.daemon.impl.HectorComponentFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -54,7 +56,8 @@ public class AntChangeContextLocalFix implements LocalQuickFix {
     if (editor == null) {
       return;
     }
-    final HectorComponent component = new HectorComponent(containingFile.getOriginalFile());
+    final HectorComponent component = ServiceManager
+      .getService(project, HectorComponentFactory.class).create(containingFile.getOriginalFile());
     component.showComponent(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
   }
 }

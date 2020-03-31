@@ -56,5 +56,6 @@ public interface FrameDiffTool extends DiffTool {
     @Nullable public List<AnAction> toolbarActions;
     @Nullable public List<AnAction> popupActions;
     @Nullable public JComponent statusPanel;
+    public boolean needTopToolbarBorder = false;
   }
 }

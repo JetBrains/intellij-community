@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -55,9 +55,8 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element,
                                                    @NotNull OperationMode operationMode) {
     return new JavaFindUsagesHandler(element, this) {
-      @NotNull
       @Override
-      public PsiElement[] getSecondaryElements() {
+      public PsiElement @NotNull [] getSecondaryElements() {
         PsiElement element = getPsiElement();
         final PsiField field = (PsiField)element;
         PsiClass containingClass = field.getContainingClass();
@@ -68,8 +67,8 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
             final boolean doSearch;
             if (arePhysical(getters) || arePhysical(setters)) {
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
-              doSearch = Messages.showYesNoDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
-                                             FindBundle.message("find.field.accessors.title"),
+              doSearch = Messages.showYesNoDialog(JavaBundle.message("find.field.accessors.prompt", field.getName()),
+                                             JavaBundle.message("find.field.accessors.title"),
                                              Messages.getQuestionIcon()) == Messages.YES;
             }
             else {
@@ -78,11 +77,11 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
             if (doSearch) {
               final List<PsiElement> elements = new ArrayList<>();
               for (PsiMethod getter : getters) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
+                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, getActionString()));
               }
 
               for (PsiMethod setter : setters) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
+                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, getActionString()));
               }
               for (Iterator<PsiElement> iterator = elements.iterator(); iterator.hasNext(); ) {
                 if (iterator.next() instanceof GrAccessorMethod) iterator.remove();

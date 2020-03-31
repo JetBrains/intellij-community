@@ -5,5 +5,5 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 public interface MemberImplementorExplorer {
-  @NotNull PsiMethod[] getMethodsToImplement(PsiClass aClass);
+  PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass);
 }

@@ -241,12 +241,8 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     // unknown path format: try to add a classified at the end of the filename
     int dotPos = path.lastIndexOf('.');
     if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason why.
-      StringBuilder res = new StringBuilder();
-      res.append(path, 0, dotPos);
-      res.append('-');
-      res.append(extraArtifactClassifier);
-      res.append(customExtension == null ? myExtension : customExtension);
-      return res.toString();
+      return path.substring(0, dotPos) + '-' + extraArtifactClassifier +
+             (customExtension == null ? myExtension : customExtension);
     }
 
     return path;

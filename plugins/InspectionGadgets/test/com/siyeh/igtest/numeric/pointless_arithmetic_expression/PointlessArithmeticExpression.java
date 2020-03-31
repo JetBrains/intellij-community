@@ -16,7 +16,7 @@ public class PointlessArithmeticExpression
         System.out.println(k);
          k = <warning descr="'j - 0' can be replaced with 'j'">j - 0</warning>;
         System.out.println(k);
-        k = 0 - j;
+        k = <warning descr="'0 - j' can be replaced with '- j'">0 - j</warning>;
         System.out.println(k);
         k = j * ZERO_CONSTANT;
         System.out.println(k);
@@ -115,6 +115,12 @@ class Main {
   }
 
   int one = <warning descr="'5/5' can be replaced with '1'">5/5</warning>;
+
+  void foo(int x) {
+    int a = <warning descr="'x - x - 10' can be replaced with '- 10'">x - x - 10</warning>;
+    int b = 10 - x - x;
+    int c = <warning descr="'x - 10 - x' can be replaced with '- 10'">x - 10 - x</warning>;
+  }
 }
 class Expanded {{
   int m = <warning descr="'1/**/ - (byte)0 - 9' can be replaced with '1 - 9'">1/**/ - (byte)0 - 9</warning>; // warn

@@ -1,16 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.testFramework.runInEdtAndWait
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ide.TestManager.TestDescriptor
+import org.junit.After
 import org.junit.Test
 import java.net.HttpURLConnection
 import java.net.URL
 
 internal class RestApiTest : BuiltInServerTestCase() {
   override val urlPathPrefix = "/api/file"
+
+  @After
+  fun closeAllEditors() {
+    projectRule.projectIfOpened?.let {
+      runInEdtAndWait {
+        FileEditorManagerEx.getInstanceEx(it).closeAllFiles()
+      }
+    }
+  }
 
   @Test
   @TestDescriptor(filePath = "", status = 400)

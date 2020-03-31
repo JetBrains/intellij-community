@@ -15,10 +15,18 @@
  */
 package com.intellij.util.containers;
 
+import java.util.Collections;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class EmptyListIterator<E> extends EmptyIterator<E> implements ListIterator<E> {
+/**
+ * @deprecated Use {@link Collections#emptyListIterator()} instead
+ */
+@Deprecated
+class EmptyListIterator<E> extends EmptyIterator<E> implements ListIterator<E> {
+  private EmptyListIterator() {
+  }
+
   private static final EmptyListIterator<Object> INSTANCE = new EmptyListIterator<Object>();
 
   public static <E> EmptyListIterator<E> getInstance() {

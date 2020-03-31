@@ -85,8 +85,8 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     }
 
     private static String getFunctionName(ShFunctionDefinition myElement) {
-      PsiElement word = myElement.getWord();
-      return word == null ? "<unnamed>" : word.getText();
+      String name = myElement.getName();
+      return name == null ? ShBundle.message("sh.unnamed.element.presentable.name") : name;
     }
 
     @NotNull
@@ -95,9 +95,8 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
       return this;
     }
 
-    @NotNull
     @Override
-    public TreeElement[] getChildren() {
+    public TreeElement @NotNull [] getChildren() {
       return SyntaxTraverser.psiTraverser(myElement)
           .children(myElement).flatMap(
               ch -> SyntaxTraverser.psiTraverser(ch).expand(psiElement -> !(psiElement instanceof ShFunctionDefinition))
@@ -130,7 +129,7 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     public Icon getIcon(boolean open) {
       if (!myElement.isValid()) return null;
       if (myElement instanceof ShFunctionDefinition) {
-        return AllIcons.Nodes.Function;
+        return AllIcons.Nodes.Lambda;
       }
       return myElement.getIcon(0);
     }

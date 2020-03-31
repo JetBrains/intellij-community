@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -17,10 +18,9 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -30,13 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Dmitry Avdeev
  */
-public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTestCase {
+public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testInfoTestAttributes() {
-    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
-    extension.language="TEXT";
-    extension.implementationClass = TestAnnotator.class.getName();
-    ExtensionPointName.<LanguageExtensionPoint<Annotator>>create(LanguageAnnotators.EP_NAME)
-      .getPoint(null).registerExtension(extension, myFixture.getTestRootDisposable());
+    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>("TEXT", new TestAnnotator());
+    LanguageAnnotators.EP_NAME.getPoint(null).registerExtension(extension, myFixture.getTestRootDisposable());
     myFixture.configureByText(PlainTextFileType.INSTANCE, "foo");
     EditorColorsScheme scheme = new EditorColorsSchemeImpl(new DefaultColorsScheme()){{initFonts();}};
     scheme.setAttributes(HighlighterColors.TEXT, new TextAttributes(Color.black, Color.white, null, null, Font.PLAIN));
@@ -62,7 +59,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      holder.createInfoAnnotation(element, null);
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
     }
   }
 }

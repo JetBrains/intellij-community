@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.Executor;
@@ -15,7 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -37,11 +35,9 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   private final Project myProject;
 
   @Tag("arguments")
-  @Nullable
-  private String[] myArguments;
+  private String @Nullable [] myArguments;
   @Tag("runOnlyEnvs")
-  @Nullable
-  private String[] myRunOnlyEnvs;
+  private String @Nullable [] myRunOnlyEnvs;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
     super(project, factory);
@@ -51,21 +47,24 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     mySkipModuleSerialization = true;
   }
 
-  @NotNull
-  String[] getRunOnlyEnvs() {
-    return (myRunOnlyEnvs == null ? ArrayUtil.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
+  @Override
+  public boolean isIdTestBased() {
+    return true;
   }
 
-  void setRunOnlyEnvs(@NotNull final String... tests) {
+  String @NotNull [] getRunOnlyEnvs() {
+    return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
+  }
+
+  void setRunOnlyEnvs(final String @NotNull ... tests) {
     myRunOnlyEnvs = tests.clone();
   }
 
-  @NotNull
-  String[] getArguments() {
-    return (myArguments == null ? ArrayUtil.EMPTY_STRING_ARRAY : myArguments.clone());
+  String @NotNull [] getArguments() {
+    return (myArguments == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myArguments.clone());
   }
 
-  void setArguments(@NotNull final String... arguments) {
+  void setArguments(final String @NotNull ... arguments) {
     myArguments = arguments.clone();
   }
 

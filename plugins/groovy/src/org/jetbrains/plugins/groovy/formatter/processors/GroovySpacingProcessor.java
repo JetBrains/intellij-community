@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*;
 
@@ -433,6 +434,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     ASTNode rBraceAtTheEnd = GeeseUtil.getClosureRBraceAtTheEnd(myChild1);
+    boolean spacesWithinBraces = closure.getParent() instanceof GrStringInjection
+                                 ? myGroovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
+                                 : mySettings.SPACE_WITHIN_BRACES;
+    boolean simpleClosure = shouldHandleAsSimpleClosure(closure, mySettings);
+    int spaces = simpleClosure && spacesWithinBraces ? 1 : 0;
     if (myGroovySettings.USE_FLYING_GEESE_BRACES && myType2 == GroovyTokenTypes.mRCURLY && rBraceAtTheEnd != null) {
       String text = rBraceAtTheEnd.getTreeParent().getText();
       if (text.indexOf('\n') < 0) {
@@ -452,19 +458,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType1 == GroovyTokenTypes.mLCURLY && myType2 != GroovyEmptyStubElementTypes.PARAMETER_LIST && myType2 !=
                                                                                                              GroovyTokenTypes.mCLOSABLE_BLOCK_OP || myType2 ==
                                                                                                                                             GroovyTokenTypes.mRCURLY) { //spaces between statements
-      boolean spacesWithinBraces = closure.getParent() instanceof GrStringInjection
-                  ? myGroovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
-                  : mySettings.SPACE_WITHIN_BRACES;
-      createDependentLFSpacing(true, spacesWithinBraces, closure.getTextRange());
+      myResult = Spacing.createSpacing(spaces, spaces, simpleClosure ? 0 : 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (myType1 == GroovyTokenTypes.mCLOSABLE_BLOCK_OP) {
       myResult = GroovySpacingProcessorBasic.createDependentSpacingForClosure(mySettings, myGroovySettings, closure, true);
     }
-    else if (myType1 == GroovyTokenTypes.mLCURLY && (myType2 == GroovyEmptyStubElementTypes.PARAMETER_LIST || myType2 ==
-                                                                                                              GroovyTokenTypes.mCLOSABLE_BLOCK_OP)) {
-      boolean spacesWithinBraces = closure.getParent() instanceof GrStringInjection
-                                   ? myGroovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
-                                   : mySettings.SPACE_WITHIN_BRACES;
+    else if (myType1 == GroovyTokenTypes.mLCURLY) {
       createSpaceInCode(spacesWithinBraces);
     }
 
@@ -565,13 +564,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (TokenSets.METHOD_DEFS.contains(myType1) || isSemiAfter(TokenSets.METHOD_DEFS) || TokenSets.METHOD_DEFS.contains((myType2))) {
       if (myType1 == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
         createLF(true);
-        return;
       }
       else {
         final int minBlankLines = isInterface ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
         myResult = Spacing.createSpacing(0, 0, minBlankLines + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
-        return;
       }
+      return;
     }
 
     if (TokenSets.TYPE_DEFINITIONS.contains(myType1) || isSemiAfter(TokenSets.TYPE_DEFINITIONS) || TokenSets.TYPE_DEFINITIONS.contains((myType2)) ) {

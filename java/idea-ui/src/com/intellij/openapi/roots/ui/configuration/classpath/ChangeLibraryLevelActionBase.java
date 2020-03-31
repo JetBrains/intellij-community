@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,11 +39,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class ChangeLibraryLevelActionBase extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase");
+  private static final Logger LOG = Logger.getInstance(ChangeLibraryLevelActionBase.class);
   protected final Project myProject;
   protected final String myTargetTableLevel;
   protected final boolean myCopy;
@@ -51,7 +49,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     myProject = project;
     myTargetTableLevel = targetTableLevel;
     myCopy = copy;
-    getTemplatePresentation().setText(getActionName() + " to " + targetTableName + "...");
+    getTemplatePresentation().setText(JavaUiBundle.message("action.text.library.0.to.1", getActionName(), targetTableName));
   }
 
   protected abstract LibraryTableModifiableModelProvider getModifiableTableModelProvider();
@@ -100,13 +98,13 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
                                     @NotNull final String targetDirPath,
                                     final Map<String, String> copiedFiles) {
     final Ref<Boolean> finished = Ref.create(false);
-    new Task.Modal(myProject, (myCopy ? "Copying" : "Moving") + " Library Files", true) {
+    new Task.Modal(myProject, JavaUiBundle.message("progress.title.0.library.files", myCopy ? "Copying" : "Moving"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final File targetDir = new File(FileUtil.toSystemDependentName(targetDirPath));
         for (final File from : filesToProcess) {
           indicator.checkCanceled();
-          final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtil.getNameWithoutExtension(from),
+          final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtilRt.getNameWithoutExtension(from.getName()),
                                                               FileUtilRt.getExtension(from.getName()));
           try {
             if (from.isDirectory()) {
@@ -129,7 +127,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
           catch (IOException e) {
             final String actionName = getActionName();
             final String message = "Cannot " + StringUtil.toLowerCase(actionName) + " file " + from.getAbsolutePath() + ": " + e.getMessage();
-            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, "Cannot " + actionName);
+            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, JavaUiBundle.message(
+              "dialog.title.cannot.change.library.0", actionName));
             LOG.info(e);
             return;
           }

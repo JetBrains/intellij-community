@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   @Override
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                                               @NotNull final Collection<PyMemberInfo<PyFunction>> members,
-                                              @NotNull final PyClass... to) {
+                                              final PyClass @NotNull ... to) {
     final Collection<PyFunction> methodsToMove = fetchElements(Collections2.filter(members, new AbstractFilter(false)));
     final Collection<PyFunction> methodsToAbstract = fetchElements(Collections2.filter(members, new AbstractFilter(true)));
 
@@ -119,7 +120,7 @@ class MethodsManager extends MembersManager<PyFunction> {
       final PyClass abcMetaClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC_META, aClass);
       final TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
 
-      if (abcMetaClass != null && PyClassRefactoringUtil.addMetaClassIfNotExist(aClass, abcMetaClass, context)) {
+      if (abcMetaClass != null && PyPsiRefactoringUtil.addMetaClassIfNotExist(aClass, abcMetaClass, context)) {
         filesToCheckImport.add(file);
       }
     }
@@ -171,7 +172,7 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @return if method could be made abstract? (that means "create abstract version if method in parent class")
    */
   private static boolean couldBeAbstract(@NotNull final PyFunction function) {
-    if (PyUtil.isInit(function)) {
+    if (PyUtil.isInitMethod(function)) {
       return false; // Who wants to make __init__ abstract?!
     }
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(function);
@@ -243,7 +244,7 @@ class MethodsManager extends MembersManager<PyFunction> {
             final PyFunction calleeFunction = (PyFunction)calleeDeclaration;
             final PyClass clazz = calleeFunction.getContainingClass();
             if (clazz != null) {
-              if (PyUtil.isInit(calleeFunction)) {
+              if (PyUtil.isInitMethod(calleeFunction)) {
                 return; // Init call should not be marked as dependency
               }
               myResult.putValue(clazz, calleeFunction);

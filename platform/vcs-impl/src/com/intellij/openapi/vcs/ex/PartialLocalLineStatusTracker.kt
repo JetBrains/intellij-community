@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
@@ -56,6 +56,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun getExcludedFromCommitState(changelistId: String): ExclusionState
 
   fun setExcludedFromCommit(isExcluded: Boolean)
+  fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean)
   fun setExcludedFromCommit(range: Range, isExcluded: Boolean)
   fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean)
 
@@ -63,7 +64,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun hasPartialChangesToCommit(): Boolean
 
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
-  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean)
+  fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
 
 
   fun addListener(listener: Listener, disposable: Disposable)
@@ -114,7 +115,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   private var hasUndoInCommand: Boolean = false
 
-  private var shouldInitializeWithExcludedFromCommit: Boolean = false
+  private val initialExcludeState = mutableMapOf<ChangeListMarker, Boolean>()
 
   private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
@@ -301,7 +302,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   private inner class MyUndoDocumentListener : DocumentListener {
     override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
-      if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
+      if (undoManager.isUndoOrRedoInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)
@@ -455,18 +456,21 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     override fun onUnfreeze() {
       super.onUnfreeze()
 
-      if (shouldInitializeWithExcludedFromCommit) {
-        shouldInitializeWithExcludedFromCommit = false
-        for (block in blocks) {
-          block.excludedFromCommit = true
-        }
+      if (initialExcludeState.isNotEmpty()) {
+        blocks.forEach { block -> initialExcludeState[block.marker]?.let { block.excludedFromCommit = it } }
+        initialExcludeState.clear()
       }
 
       if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@ChangelistsLocalLineStatusTracker)
     }
 
-    private fun mergeExcludedFromCommitRanges(ranges: List<DocumentTracker.Block>): Boolean {
-      if (ranges.isEmpty()) return false
+    private fun mergeExcludedFromCommitRanges(ranges: List<Block>): Boolean {
+      if (ranges.isEmpty()) {
+        val marker = currentMarker ?: defaultMarker
+        val changeListBlocks = blocks.filter { it.marker == marker }
+        // only include if all changed blocks from this change list are included
+        return changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
+      }
       return ranges.all { it.excludedFromCommit }
     }
   }
@@ -526,11 +530,11 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  override fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
+  override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val idsSet = changelistsIds.toSet()
     runBulkRollback {
       idsSet.contains(it.marker.changelistId) &&
-      (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
+      (!honorExcludedFromCommit || !it.excludedFromCommit)
     }
   }
 
@@ -678,9 +682,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
-    setExcludedFromCommit({ true }, isExcluded)
+    affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
+  }
 
-    if (!isOperational() || !isExcluded) shouldInitializeWithExcludedFromCommit = isExcluded
+  override fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean) {
+    val marker = ChangeListMarker(changelistId)
+    setExcludedFromCommit({ it.marker == marker }, isExcluded)
+
+    if (!isOperational()) initialExcludeState[marker] = isExcluded
   }
 
   override fun setExcludedFromCommit(range: Range, isExcluded: Boolean) {
@@ -707,6 +716,10 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     eventDispatcher.multicaster.onExcludedFromCommitChange(this)
   }
 
+  internal fun resetExcludedFromCommitMarkers() {
+    setExcludedFromCommit(false)
+    dropExistingUndoActions()
+  }
 
   @CalledInAwt
   internal fun storeTrackerState(): FullState {
@@ -733,7 +746,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   @CalledInAwt
   private fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
-      blocks.map { RangeState(it.range, it.marker.changelistId) }
+      blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
     }
   }
 
@@ -783,6 +796,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
+      states[i].excludedFromCommit?.let { block.excludedFromCommit = it }
     }
 
     updateAffectedChangeLists()
@@ -843,7 +857,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   internal class RangeState(
     val range: com.intellij.diff.util.Range,
-    val changelistId: String
+    val changelistId: String,
+    val excludedFromCommit: Boolean? = null // should not be persisted
   )
 
   protected data class ChangeListMarker(val changelistId: String) {
@@ -852,7 +867,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
 
   protected data class MyBlockData(var marker: ChangeListMarker? = null,
-                                   var excludedFromCommit: Boolean = false
+                                   var excludedFromCommit: Boolean = true
   ) : LineStatusTrackerBase.BlockData()
 
   override fun createBlockData(): BlockData = MyBlockData()

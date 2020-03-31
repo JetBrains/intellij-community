@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -19,8 +20,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 /**
  * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
  *
@@ -29,11 +28,13 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
-  public static final int SIGINT = getSignalNumber("INT");
-  public static final int SIGKILL = getSignalNumber("KILL");
-  public static final int SIGTERM = getSignalNumber("TERM");
+  // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
+  public static final int SIGINT = 2;
+  public static final int SIGABRT = 6;
+  public static final int SIGKILL = 9;
+  public static final int SIGTERM = 15;
+  public static final int SIGPIPE = getSignalNumber("PIPE");
 
-  @SuppressWarnings("SpellCheckingInspection")
   private interface CLib extends Library {
     int getpid();
     int kill(int pid, int signal);
@@ -57,15 +58,15 @@ public class UnixProcessManager {
 
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (SystemInfo.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+      if (SystemInfoRt.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
         //noinspection JavaReflectionMemberAccess
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
 
-      return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
+      return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
-      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+      throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 

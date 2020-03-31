@@ -1,0 +1,89 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin>
+  <resource-bundle>messages.PyBundle</resource-bundle>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
+    </component>
+  </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.jetbrains.python.PythonIdeLanguageCustomization"
+                        overrides="true"/>
+
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PythonContentEntriesConfigurable.display.name"
+                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         groupWeight="5"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDependenciesConfigurable.display.name"
+                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
+
+    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
+
+    <statusBarWidgetFactory id="pythonInterpreterWidget"
+                            implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
+                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
+
+    <projectConfigurable groupId="build"
+                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.BuildoutModulesConfigurable.display.name"
+                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
+
+    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
+                                  order="after PlatformProjectConfigurator"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
+                                  order="after sdk"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
+                                  order="after sourceRoot"/>
+    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformInspectionProfileConfigurator"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
+                        overrides="true"/>
+
+    <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
+                                    order="before py-function"/>
+    <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
+
+    <optionsApplicabilityFilter implementation="com.jetbrains.python.PyOptionsApplicabilityFilter"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
+
+    <!-- Console -->
+    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
+
+    <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
+    <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+    </action>
+
+    <group id="WelcomeScreen.Platform.NewProject">
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"
+              icon="AllIcons.Welcome.CreateNewProject"/>
+      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"
+              icon="AllIcons.Actions.Menu_open"/>
+
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

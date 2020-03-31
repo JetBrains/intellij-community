@@ -22,9 +22,8 @@ public class NullNode extends SimpleNode {
     super();
   }
 
-  @NotNull
   @Override
-  public SimpleNode[] getChildren() {
+  public SimpleNode @NotNull [] getChildren() {
     return NO_CHILDREN;
   }
 }

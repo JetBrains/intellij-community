@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +131,7 @@ public class TestUtils {
     if (aClass == null) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, CHECK_HIERARCHY)) return runWithIsTestClass;
     for (final PsiMethod method : aClass.getAllMethods()) {
-      if (isJUnit4TestMethod(method)) return true;
+      if (isExplicitlyJUnit4TestAnnotated(method)) return true;
     }
     return false;
   }
@@ -203,7 +203,7 @@ public class TestUtils {
 
   public static boolean hasExpectedExceptionAnnotation(PsiMethod method) {
     final PsiModifierList modifierList = method.getModifierList();
-    return hasAnnotationWithParameter(modifierList, "org.junit.Test", "expected") ||
+    return hasAnnotationWithParameter(modifierList, JUnitCommonClassNames.ORG_JUNIT_TEST, "expected") ||
            hasAnnotationWithParameter(modifierList, "org.testng.annotations.Test", "expectedExceptions");
   }
 
@@ -221,5 +221,13 @@ public class TestUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * @param method method to check
+   * @return true if given method is directly annotated as JUnit4 test method
+   */
+  public static boolean isExplicitlyJUnit4TestAnnotated(@NotNull PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, 0);
   }
 }

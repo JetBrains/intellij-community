@@ -3,7 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.SymbolResolveResult;
-import com.intellij.model.SymbolService;
+import com.intellij.model.psi.PsiSymbolService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public interface ResolveResult extends SymbolResolveResult {
   @NotNull
   @Override
   default Symbol getTarget() {
-    PsiElement element = Objects.requireNonNull(getElement(), "Don't access this property on empty results");
-    return SymbolService.adaptPsiElement(element);
+    PsiElement element = Objects.requireNonNull(getElement(), "#getTarget() must not be invoked on empty resolve result");
+    return PsiSymbolService.getInstance().asSymbol(element);
   }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -10,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpPattern;
@@ -23,13 +22,6 @@ import java.util.Set;
  * @author Bas Leijdekkers
  */
 public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Duplicate branch in alternation";
-  }
 
   @NotNull
   @Override
@@ -74,7 +66,7 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     }
 
     private void registerProblem(RegExpBranch branch1) {
-      myHolder.registerProblem(branch1, "Duplicate branch in alternation", new DuplicateAlternationBranchFix());
+      myHolder.registerProblem(branch1, RegExpBundle.message("inspection.warning.duplicate.branch.in.alternation"), new DuplicateAlternationBranchFix());
     }
   }
 
@@ -84,7 +76,7 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove duplicate branch";
+      return RegExpBundle.message("inspection.quick.fix.remove.duplicate.branch");
     }
 
     @Override

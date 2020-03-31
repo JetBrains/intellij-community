@@ -17,7 +17,7 @@ package com.intellij.lang.properties.formatting;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter;
@@ -35,7 +35,7 @@ public class PropertiesStripTrailingSpacesFilterFactory extends PsiBasedStripTra
       protected void process(@NotNull PsiFile psiFile) {
         new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (element instanceof PropertyImpl) {
               final ASTNode valueNode = ((PropertyImpl)element).getValueNode();
               if (valueNode != null) {
@@ -51,6 +51,6 @@ public class PropertiesStripTrailingSpacesFilterFactory extends PsiBasedStripTra
 
   @Override
   protected boolean isApplicableTo(@NotNull Language language) {
-    return language.is(StdLanguages.PROPERTIES);
+    return language.is(PropertiesLanguage.INSTANCE);
   }
 }

@@ -2,12 +2,12 @@
 package org.editorconfig.language.headers
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.isSubcaseOf
 import org.junit.Test
 
-class EditorConfigGlobUtilTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigGlobUtilTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/globs/"
 

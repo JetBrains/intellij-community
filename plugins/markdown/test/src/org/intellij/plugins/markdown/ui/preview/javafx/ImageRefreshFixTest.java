@@ -4,11 +4,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.IOException;
 
-public class ImageRefreshFixTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ImageRefreshFixTest extends BasePlatformTestCase {
 
   public void testSimple() throws IOException {
     final VirtualFile file = myFixture.getTempDirFixture().createFile("test.png");

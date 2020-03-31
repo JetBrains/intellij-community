@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.openapi.util.Comparing;
@@ -8,7 +8,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -172,7 +172,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
       uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
 
-    return new SuggestedNameInfo(ArrayUtil.toStringArray(uniqueNames)) {
+    return new SuggestedNameInfo(ArrayUtilRt.toStringArray(uniqueNames)) {
       @Override
       public void nameChosen(String name) {
         baseNameInfo.nameChosen(name);

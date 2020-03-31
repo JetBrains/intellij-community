@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.function.Function;
 
-class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
+final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
@@ -69,9 +70,9 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @NotNull
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
-                                                           @NotNull Change[] changes,
+                                                           Change @NotNull [] changes,
                                                            @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
-    List<T> result = ContainerUtil.newSmartList();
+    List<T> result = new SmartList<>();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
       if (!(change.getAfterRevision() instanceof CurrentContentRevision)) continue;

@@ -20,17 +20,20 @@ import com.intellij.codeInsight.editorActions.ReferenceData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author peter
@@ -67,12 +70,21 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
     }
   }
 
-
-  @NotNull
   @Override
-  protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                         RangeMarker bounds,
-                                                         ReferenceData[] referenceData) {
+  protected void removeImports(PsiFile file, Set<String> imports) {
+    GroovyFile groovyFile = (GroovyFile)file;
+    for (GrImportStatement statement : groovyFile.getImportStatements()) {
+      if (imports.contains(statement.getImportedName())) {
+        groovyFile.removeImport(statement);
+      }
+    }
+  }
+
+
+  @Override
+  protected GrReferenceElement @NotNull [] findReferencesToRestore(PsiFile file,
+                                                                   RangeMarker bounds,
+                                                                   ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -117,7 +129,8 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
 
   @Override
   protected void restoreReferences(ReferenceData[] referenceData,
-                                   GrReferenceElement[] refs) {
+                                   GrReferenceElement[] refs,
+                                   Set<String> imported) {
     for (int i = 0; i < refs.length; i++) {
       GrReferenceElement reference = refs[i];
       if (reference == null) continue;
@@ -128,12 +141,14 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
         if (refClass != null) {
           if (refData.staticMemberName == null) {
             reference.bindToElement(refClass);
+            imported.add(refData.qClassName);
           }
           else {
             LOG.assertTrue(reference instanceof GrReferenceExpression);
             PsiMember member = findMember(refData, refClass);
             if (member != null) {
               ((GrReferenceExpression)reference).bindToElementViaStaticImport(member);
+              imported.add(StringUtil.getQualifiedName(refData.qClassName, refData.staticMemberName));
             }
           }
         }

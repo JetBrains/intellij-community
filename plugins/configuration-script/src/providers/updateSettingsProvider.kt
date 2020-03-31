@@ -1,8 +1,8 @@
 package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.ConfigurationFileManager
-import com.intellij.configurationScript.Keys
 import com.intellij.configurationScript.readIntoObject
+import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
@@ -10,14 +10,14 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import org.snakeyaml.engine.v1.nodes.MappingNode
-import org.snakeyaml.engine.v1.nodes.ScalarNode
+import com.intellij.util.xmlb.annotations.XCollection
 
 private val dataKey = NotNullLazyKey.create<SynchronizedClearableLazy<PluginsConfiguration?>, Project>("MyUpdateSettingsProvider") { project ->
   val data = SynchronizedClearableLazy {
-    val node = ConfigurationFileManager.getInstance(project).getConfigurationNode() ?: return@SynchronizedClearableLazy null
-    readPluginsConfiguration(node)
+    val node = ConfigurationFileManager.getInstance(project).findValueNode(PluginJsonSchemaGenerator.plugins) ?: return@SynchronizedClearableLazy null
+    readIntoObject(PluginsConfiguration(), node)
   }
+
   ConfigurationFileManager.getInstance(project).registerClearableLazyValue(data)
   data
 }
@@ -35,18 +35,6 @@ private class MyUpdateSettingsProvider : UpdateSettingsProvider {
 }
 
 internal class PluginsConfiguration : BaseState() {
+  @get:XCollection
   val repositories by list<String>()
-}
-
-internal fun readPluginsConfiguration(rootNode: MappingNode): PluginsConfiguration? {
-  // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
-  // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
-  for (tuple in rootNode.value) {
-    val keyNode = tuple.keyNode
-    if (keyNode is ScalarNode && keyNode.value == Keys.plugins) {
-      val valueNode = tuple.valueNode as? MappingNode ?: continue
-      return readIntoObject(PluginsConfiguration(), valueNode)
-    }
-  }
-  return null
 }

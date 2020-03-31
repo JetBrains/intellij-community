@@ -37,12 +37,6 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DeprecationUtil.FOR_REMOVAL_DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return "";
   }

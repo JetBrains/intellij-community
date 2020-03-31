@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
@@ -27,9 +26,8 @@ import java.util.Set;
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
       final Language language = element.getLanguage();
       SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, language);
@@ -73,7 +71,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(final PsiElement element) {
+      public void visitElement(@NotNull final PsiElement element) {
         if (holder.getResultCount()>1000) return;
 
         final ASTNode node = element.getNode();

@@ -24,9 +24,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   private ArtifactRepositoryManager myRepositoryManager;
 

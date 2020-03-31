@@ -27,7 +27,7 @@ import java.util.*;
  * for vcses where it is reasonable to ask revision of each item separately
  */
 public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsNumbersCache");
+  public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
 
   // every hour (time unit to check for server commits)
   // default, actual in settings
@@ -132,12 +132,13 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
         }
         final VirtualFile vf = pair.getFirst();
         final AbstractVcs newVcs = pair.getSecond();
+        final VirtualFile newRoot = newVcs != null ? myVcsManager.getVcsRootFor(vf) : null;
 
-        if (newVcs == null) {
+        if (newRoot == null) {
           myData.remove(key);
           getQueue(storedVcsRoot).forceRemove(key);
-        } else {
-          final VirtualFile newRoot = myVcsManager.getVcsRootFor(vf);
+        }
+        else {
           final VcsRoot newVcsRoot = new VcsRoot(newVcs, newRoot);
           if (! storedVcsRoot.equals(newVcsRoot)) {
             switchVcs(storedVcsRoot, newVcsRoot, key);

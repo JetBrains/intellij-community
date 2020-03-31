@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -15,20 +16,20 @@ class GroovyAnnotatorPre18(private val holder: AnnotationHolder, private val ver
 
   override fun visitTypeArgumentList(typeArgumentList: GrTypeArgumentList) {
     if (typeArgumentList.isDiamond) {
-      holder.createErrorAnnotation(typeArgumentList, message("unsupported.diamonds.0", version))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.diamonds.0", version)).create()
     }
   }
 
   override fun visitMethodCall(call: GrMethodCall) {
     if (call.isCommandExpression) {
-      holder.createErrorAnnotation(call, message("unsupported.command.syntax.0", version))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.command.syntax.0", version)).create()
     }
   }
 
   override fun visitRegexExpression(expression: GrRegex) {
     val tokenType = expression.node.firstChildNode.elementType
     if (tokenType == DOLLAR_SLASHY_BEGIN) {
-      holder.createErrorAnnotation(expression, message("unsupported.dollar.slashy.string.0", version))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.dollar.slashy.string.0", version)).create()
     }
     else if (tokenType == SLASHY_BEGIN) {
       highlightMultilineSlashyString(expression)
@@ -38,7 +39,7 @@ class GroovyAnnotatorPre18(private val holder: AnnotationHolder, private val ver
   override fun visitLiteralExpression(literal: GrLiteral) {
     val tokenType = literal.node.firstChildNode.elementType
     if (tokenType == DOLLAR_SLASHY_LITERAL) {
-      holder.createErrorAnnotation(literal, message("unsupported.dollar.slashy.string.0", version))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.dollar.slashy.string.0", version)).create()
     }
     else if (tokenType == SLASHY_LITERAL) {
       highlightMultilineSlashyString(literal)
@@ -47,7 +48,7 @@ class GroovyAnnotatorPre18(private val holder: AnnotationHolder, private val ver
 
   private fun highlightMultilineSlashyString(string: GroovyPsiElement) {
     if (string.text.let { "\n" in it || "\r" in it }) {
-      holder.createErrorAnnotation(string, message("unsupported.multiline.slashy.string.0", version))
+      holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.multiline.slashy.string.0", version)).create()
     }
   }
 }

@@ -1,17 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Expandable;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus.Experimental;
+import com.intellij.util.Functions;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,10 +29,7 @@ import static java.beans.EventHandler.create;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
 
-/**
- * @author Sergey Malenkov
- */
-@Experimental
+@Internal
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
   private final Source source;
   private final Function<? super String, String> onShow;
@@ -42,8 +40,8 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
 
   public ExpandableSupport(@NotNull Source source, Function<? super String, String> onShow, Function<? super String, String> onHide) {
     this.source = source;
-    this.onShow = onShow != null ? onShow : Function.ID;
-    this.onHide = onHide != null ? onHide : Function.ID;
+    this.onShow = onShow != null ? onShow : Functions.identity();
+    this.onHide = onHide != null ? onHide : Functions.identity();
     source.putClientProperty(Expandable.class, this);
     source.addAncestorListener(create(AncestorListener.class, this, "collapse"));
     source.addComponentListener(create(ComponentListener.class, this, "collapse"));
@@ -153,7 +151,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
       .setCancelOnWindowDeactivation(false)
       .setKeyboardActions(singletonList(Pair.create(event -> {
         collapse();
-        Window window = UIUtil.getWindow(source);
+        Window window = ComponentUtil.getWindow(source);
         if (window != null) {
           window.dispatchEvent(
             new KeyEvent(source, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
@@ -205,7 +203,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
         }
 
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           Runnable action = extension.getActionOnClick();
           if (action != null) action.run();
         }

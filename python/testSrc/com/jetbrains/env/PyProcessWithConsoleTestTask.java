@@ -190,6 +190,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }
     else {
       try {
+        runner.assertExitCodeIsCorrect(code);
         checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
       }
       catch (Throwable e) {

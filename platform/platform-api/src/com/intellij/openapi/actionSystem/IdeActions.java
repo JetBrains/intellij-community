@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Identifiers for standard actions and action groups supported by IDEA.
+ * Identifiers for standard actions and action groups.
  */
 public interface IdeActions {
   @NonNls String ACTION_EDITOR_CUT = "EditorCut";
@@ -135,14 +135,15 @@ public interface IdeActions {
   @NonNls String ACTION_FIND = "Find";
   @NonNls String ACTION_FIND_NEXT = "FindNext";
   @NonNls String ACTION_FIND_PREVIOUS = "FindPrevious";
+  @NonNls String ACTION_FIND_WORD_AT_CARET = "FindWordAtCaret";
   @NonNls String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   @NonNls String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   @NonNls String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
   @NonNls String ACTION_REPLACE = "Replace";
+  @NonNls String ACTION_TOGGLE_FIND_IN_SELECTION_ONLY = "ToggleFindInSelection";
   @NonNls String ACTION_COMPILE = "Compile";
   @NonNls String ACTION_COMPILE_PROJECT = "CompileProject";
   @NonNls String ACTION_MAKE_MODULE = "MakeModule";
-  @NonNls String ACTION_GENERATE_ANT_BUILD = "GenerateAntBuild";
   @NonNls String ACTION_INSPECT_CODE = "InspectCode";
 
   @NonNls String ACTION_FIND_USAGES = "FindUsages";
@@ -173,6 +174,7 @@ public interface IdeActions {
   @NonNls String ACTION_EXPORT_TO_TEXT_FILE = "ExportToTextFile";
 
   @NonNls String ACTION_COLLAPSE_REGION = "CollapseRegion";
+  @NonNls String ACTION_EXPAND_REGION = "ExpandRegion";
   @NonNls String ACTION_EXPAND_ALL_REGIONS = "ExpandAllRegions";
   @NonNls String ACTION_COLLAPSE_ALL_REGIONS = "CollapseAllRegions";
   @NonNls String ACTION_EXPAND_REGION_RECURSIVELY = "ExpandRegionRecursively";
@@ -253,6 +255,9 @@ public interface IdeActions {
   @NonNls String ACTION_QUICK_IMPLEMENTATIONS = "QuickImplementations";
   @NonNls String ACTION_CHECKIN_PROJECT = "CheckinProject";
   @NonNls String ACTION_FILE_STRUCTURE_POPUP = "FileStructurePopup";
+  @NonNls String ACTION_TOGGLE_RENDERED_DOC = "ToggleRenderedDocPresentation";
+
+  @NonNls String GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU = "DocCommentGutterIconContextMenu";
 
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";
 
@@ -294,6 +299,10 @@ public interface IdeActions {
 
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
   @NonNls String ACTION_EDITOR_DUPLICATE_LINES = "EditorDuplicateLines";
+  @NonNls String ACTION_EDITOR_SORT_LINES = "EditorSortLines";
+  @NonNls String ACTION_EDITOR_REVERSE_LINES = "EditorReverseLines";
+
+  @NonNls String ACTION_EDIT_PROPERTY_VALUE = "EditPropertyValue";
 
   @NonNls String GROUP_EDITOR_GUTTER = "EditorGutterPopupMenu";
 
@@ -335,4 +344,11 @@ public interface IdeActions {
   @NonNls String ACTION_BRACE_OR_QUOTE_OUT = "BraceOrQuoteOut";
 
   @NonNls String GROUP_TOUCHBAR = "TouchBar";
+
+  @NonNls String BREADCRUMBS_OPTIONS_GROUP = "EditorBreadcrumbsSettings";
+  @NonNls String BREADCRUMBS_SHOW_ABOVE = "EditorBreadcrumbsShowAbove";
+  @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
+  @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
+
+  @NonNls String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
 }

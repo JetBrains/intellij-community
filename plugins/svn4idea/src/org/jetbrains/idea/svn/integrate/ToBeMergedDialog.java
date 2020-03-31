@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -53,7 +54,6 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
-import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
@@ -185,9 +185,8 @@ public class ToBeMergedDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myAllStatusesCalculated) {
       return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
         @Override
@@ -300,7 +299,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private List<Change> getAlreadyMergedPaths(@NotNull SvnChangeList svnChangeList) {
     Collection<String> notMerged = myMergeChecker.getNotMergedPaths(svnChangeList);
 
-    return isEmpty(notMerged) ? emptyList() : svnChangeList.getAffectedPaths().stream()
+    return isEmpty(notMerged) ? ContainerUtil.emptyList() : svnChangeList.getAffectedPaths().stream()
       .filter(path -> !notMerged.contains(path))
       .map(svnChangeList::getByPath)
       .collect(Collectors.toList());
@@ -309,11 +308,11 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ChangeNodeDecorator createChangesDecorator() {
     return new ChangeNodeDecorator() {
       @Override
-      public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
+      public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
       }
 
       @Override
-      public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+      public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
           renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
@@ -452,7 +451,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     private void setEmptyData() {
-      myLists = emptyList();
+      myLists = ContainerUtil.emptyList();
       myIsLastListLoaded = false;
     }
 
@@ -494,7 +493,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         final SvnChangeList changeList = (SvnChangeList)value;
         myRenderer.renderChangeList(table, changeList);
 
-        final Color bg = selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground();
+        final Color bg = selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
         final Color fg = selected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
 
         myRenderer.setBackground(bg);

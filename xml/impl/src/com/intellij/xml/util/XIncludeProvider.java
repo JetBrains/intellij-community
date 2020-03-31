@@ -3,6 +3,7 @@ package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
@@ -27,7 +28,7 @@ public class XIncludeProvider extends FileIncludeProvider {
 
   @Override
   public boolean acceptFile(VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
   }
 
   @Override
@@ -35,9 +36,8 @@ public class XIncludeProvider extends FileIncludeProvider {
     fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();

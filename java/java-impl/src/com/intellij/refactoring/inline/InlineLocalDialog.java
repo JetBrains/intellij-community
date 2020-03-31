@@ -9,8 +9,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineLocalDialog extends AbstractInlineLocalDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
-
   private final PsiVariable myVariable;
 
   private int myOccurrencesNumber = -1;
@@ -20,7 +18,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
     myVariable = variable;
     myInvokedOnReference = ref != null;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
     myOccurrencesNumber = occurrencesCount;
     init();
   }
@@ -68,5 +66,9 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
   @Override
   protected boolean hasPreviewButton() {
     return false;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("inline.variable.title");
   }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -105,9 +106,8 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       mySouthPanel.setContent(super.createSouthPanel());
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{
         myHasOKAction.isSelected() ? getOKAction() : null,
         myHasCancelAction.isSelected() ? getCancelAction() : null,
@@ -116,9 +116,8 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       };
     }
 
-    @NotNull
     @Override
-    protected Action[] createLeftSideActions() {
+    protected Action @NotNull [] createLeftSideActions() {
       return myHasLeftAction.isSelected() ? new Action[]{new MyAction("Left")} : new Action[0];
     }
 
@@ -151,9 +150,8 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
         };
       }
 
-      @NotNull
       @Override
-      public Action[] getOptions() {
+      public Action @NotNull [] getOptions() {
         return myActions;
       }
     }

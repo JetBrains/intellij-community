@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladimir Kondratyev
  */
 public final class CreateFieldFix extends QuickFix{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.quickFixes.CreateFieldFix");
+  private static final Logger LOG = Logger.getInstance(CreateFieldFix.class);
 
   private final PsiClass myClass;
   private final String myFieldClassName;

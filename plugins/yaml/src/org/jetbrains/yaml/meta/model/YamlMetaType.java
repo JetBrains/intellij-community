@@ -1,31 +1,33 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.*;
+import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMetaType {
   @NotNull
   private final String myTypeName;
   @NotNull
   private String myDisplayName;
 
-  protected YamlMetaType(@NotNull String typeName) {
+  protected YamlMetaType(@NonNls @NotNull String typeName) {
     myTypeName = typeName;
     myDisplayName = typeName;
   }
@@ -48,15 +50,128 @@ public abstract class YamlMetaType {
     return AllIcons.Json.Object;
   }
 
-  public void setDisplayName(@NotNull final String displayName) {
+  public void setDisplayName(@NonNls @NotNull final String displayName) {
     myDisplayName = displayName;
   }
 
   @Nullable
   public abstract Field findFeatureByName(@NotNull String name);
 
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
+  /**
+   * Computes the set of {@link Field#getName()}s which are missing in the given set of the existing keys.
+   *
+   * @see org.jetbrains.yaml.meta.impl.YamlMissingKeysInspectionBase
+   */
+  @NotNull
+  public abstract List<String> computeMissingFields(@NotNull Set<String> existingFields);
+
+  /**
+   * Computes the list of fields that should be included into the completion list for the key completion inside the given mapping,
+   * which is guaranteed to be typed by <code>this<code/> type.
+   * <p/>
+   * It is assumed that the list does not depend on the insertion position inside the <code>existingMapping</code>.
+   * As an optimisation, the result list may include fields which are already present in the <code>existingMapping</code>, the additional
+   * filtering will be done by the caller.
+   *
+   * @see org.jetbrains.yaml.meta.impl.YamlMetaTypeCompletionProviderBase
+   */
+  @NotNull
+  public abstract List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping);
+
+  public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
     //
+  }
+
+  public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
+    //
+  }
+
+  /**
+   * Validates the value not only at current level but also goes recursively through its children if it's a compound YAML value
+   * TODO: unfinished experimental feature to support JSON Schema like features (anyOf, oneOf, allOf, not). Used in Kubernetes plugin. WIP
+   */
+  public void validateDeep(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
+    validateValue(value, problemsHolder);
+
+    // TODO a case for sequence
+
+    if(value instanceof YAMLMapping) {
+      YAMLMapping mapping = (YAMLMapping)value;
+
+      Collection<YAMLKeyValue> keyValues = mapping.getKeyValues();
+
+      // check for missing keys
+      // TODO reuse with YamlMissingKeysInspectionBase
+      final Collection<String> missingKeys =
+        computeMissingFields(keyValues.stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet()));
+
+      if (!missingKeys.isEmpty()) {
+        String msg = YAMLBundle.message("YamlMissingKeysInspectionBase.missing.keys", String.join(", ", missingKeys));
+        problemsHolder.registerProblem(mapping, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
+
+      for (YAMLKeyValue keyValue : keyValues) {
+        String featureName = keyValue.getKeyText().trim();
+
+        if(featureName.isEmpty())
+          continue;
+
+        Field feature = findFeatureByName(featureName);
+        if(feature == null) {
+          String msg = YAMLBundle.message("YamlUnknownKeysInspectionBase.unknown.key", keyValue.getKeyText());
+          final PsiElement key = keyValue.getKey();
+          assert key != null;
+          problemsHolder.registerProblem(key, msg, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          continue;
+        }
+
+        YAMLValue subValue = keyValue.getValue();
+
+        if (subValue == null) {
+          if (!feature.isEmptyValueAllowed()) {
+            // TODO report problem
+          }
+
+          continue;
+        }
+
+        final Field.Relation relation;
+        if(subValue instanceof YAMLScalar) {
+          relation = Field.Relation.SCALAR_VALUE;
+        } else if (subValue instanceof YAMLSequence) {
+          relation = Field.Relation.SEQUENCE_ITEM;
+        } else {
+          relation = Field.Relation.OBJECT_CONTENTS;
+        }
+
+        YamlMetaType subType = feature.getType(relation);
+
+        if(!(subValue instanceof YAMLSequence))
+          subType.validateDeep(subValue, problemsHolder);
+        else {
+          List<YAMLSequenceItem> sequenceItems = ((YAMLSequence)subValue).getItems();
+          for (YAMLSequenceItem item : sequenceItems) {
+            YAMLValue itemValue = item.getValue();
+
+            if (itemValue == null) {
+              if (!feature.isEmptyValueAllowed()) {
+                // TODO report problem
+              }
+
+              continue;
+            }
+
+            subType.validateDeep(itemValue, problemsHolder);
+          }
+        }
+      }
+    }
+  }
+
+
+  @NotNull
+  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
+    return Collections.emptyList();
   }
 
   /**
@@ -83,7 +198,7 @@ public abstract class YamlMetaType {
     return getClass().getSimpleName() + ":" + myTypeName + "@" + Integer.toHexString(hashCode());
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class YamlInsertionMarkup {
     public static final String CRLF_MARKUP = "<crlf>";
     public static final String CARET_MARKUP = "<caret>";
@@ -175,7 +290,7 @@ public abstract class YamlMetaType {
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class ForcedCompletionPath {
     private static final Iteration OFF_PATH_ITERATION = new OffPathIteration();
     private static final Iteration NULL_ITERATION = new NullIteration();

@@ -1,51 +1,42 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
-import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.ui.frame.EditorDiffPreview
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
+import javax.swing.event.ListSelectionListener
 
-internal class FileHistoryDiffPreview(project: Project, private val changeGetter: () -> Change?, isInEditor: Boolean,
-                                      disposable: Disposable) :
-  ChangeViewDiffRequestProcessor(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW) {
+class FileHistoryEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val fileHistoryPanel: FileHistoryPanel) :
+  EditorDiffPreview(uiProperties, fileHistoryPanel) {
 
   init {
-    myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    Disposer.register(disposable, this)
+    init(project)
   }
 
-  override fun getSelectedChanges(): List<ChangeViewDiffRequestProcessor.Wrapper> = allChanges
+  override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable
 
-  override fun getAllChanges(): List<ChangeViewDiffRequestProcessor.Wrapper> {
-    val change = changeGetter() ?: return emptyList()
-    return listOf(MyChangeWrapper(change))
-  }
+  override fun getEditorTabName(): @Nls String = fileHistoryPanel.filePath.name
 
-  override fun selectChange(change: ChangeViewDiffRequestProcessor.Wrapper) {}
-
-  fun updatePreview(state: Boolean) {
-    updatePreview(state, false)
-  }
-
-  override fun getFastLoadingTimeMillis(): Int {
-    return 10
-  }
-
-  private inner class MyChangeWrapper internal constructor(private val change: Change) : ChangeViewDiffRequestProcessor.Wrapper() {
-
-    override fun getUserObject(): Any {
-      return change
+  override fun addSelectionListener(listener: () -> Unit) {
+    val selectionListener = ListSelectionListener {
+      if (!fileHistoryPanel.graphTable.selectionModel.isSelectionEmpty) {
+        listener()
+      }
     }
 
-    override fun createProducer(project: Project?): DiffRequestProducer? {
-      return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap(), true)
-    }
+    fileHistoryPanel.graphTable.selectionModel.addListSelectionListener(selectionListener)
+    Disposer.register(owner, Disposable { fileHistoryPanel.graphTable.selectionModel.removeListSelectionListener(selectionListener) })
   }
+
+  override fun createDiffRequestProcessor(): DiffRequestProcessor {
+    val preview: FileHistoryDiffProcessor = fileHistoryPanel.createDiffPreview(true)
+    preview.updatePreview(true)
+    return preview
+  }
+
 }

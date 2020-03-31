@@ -21,7 +21,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
@@ -64,7 +63,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       }
 
       //can types be specified
-      if (LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) == null) {
+      if (LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) == null) {
         return false;
       }
 
@@ -80,9 +79,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
         return inputVariables.stream()
           .allMatch(variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
       }
-      catch (PrepareFailedException ignored) {
-      }
-      catch (ControlFlowWrapper.ExitStatementsNotSameException ignored) {
+      catch (PrepareFailedException | ControlFlowWrapper.ExitStatementsNotSameException ignored) {
       }
     }
     return false;
@@ -104,7 +101,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 
       String parameters =
-        LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
+        LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
       String targetMethodName = getUniqueMethodName(targetClass, elementFactory, functionalInterfaceType, parameters);
 
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
@@ -120,7 +117,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
                                                                   targetMethodName + parameters, targetClass);
       PsiCodeBlock targetMethodBody = emptyMethod.getBody();
       LOG.assertTrue(targetMethodBody != null);
-      if (elements.length > 0) targetMethodBody.addRange(elements[0], elements[elements.length - 1]);
+      targetMethodBody.replace(body);
 
       PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project)
         .reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
@@ -128,6 +125,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
         (PsiMethodReferenceExpression)elementFactory
           .createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
       CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(lambdaExpression.getBody());
       methodReference = (PsiMethodReferenceExpression)tracker.replace(lambdaExpression, methodReference);
       tracker.insertCommentsBefore(methodReference);
 
@@ -195,7 +193,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      MethodDuplicatesHandler.REFACTORING_NAME, true, project);
+                                                                      MethodDuplicatesHandler.getRefactoringName(), true, project);
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

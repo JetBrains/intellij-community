@@ -25,9 +25,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XCopyValueAction extends XFetchValueActionBase {
   @Override
   protected void handle(final Project project, final String value, XDebuggerTree tree) {

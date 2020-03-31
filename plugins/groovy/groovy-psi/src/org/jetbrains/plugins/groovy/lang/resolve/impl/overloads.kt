@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.SmartList
+import com.intellij.util.containers.minimalElements
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.inapplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -24,21 +26,23 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver
  * In such case we assume both overloads as [potentially applicable][canBeApplicable]
  * and offer navigation to both of them, etc.
  */
-typealias ApplicabilitiesResult = Pair<List<GroovyMethodResult>, Boolean>
+typealias ApplicabilitiesResult<X> = Pair<List<X>, Boolean>
 
-fun List<GroovyMethodResult>.findApplicable(): ApplicabilitiesResult {
-  if (isEmpty()) return ApplicabilitiesResult(emptyList(), true)
-  val results = SmartList<GroovyMethodResult>()
+fun <X> List<X>.filterApplicable(applicability: (X) -> Applicability): ApplicabilitiesResult<X> {
+  if (isEmpty()) {
+    return ApplicabilitiesResult(emptyList(), true)
+  }
+  val results = SmartList<X>()
   var canSelectOverload = true
-  for (result in this) {
-    val applicability = result.applicability
-    if (applicability == inapplicable) {
+  for (thing in this) {
+    val thingApplicability = applicability(thing)
+    if (thingApplicability == inapplicable) {
       continue
     }
-    if (applicability == canBeApplicable) {
+    if (thingApplicability == canBeApplicable) {
       canSelectOverload = false
     }
-    results += result
+    results += thing
   }
   return ApplicabilitiesResult(results, canSelectOverload)
 }
@@ -48,33 +52,6 @@ fun List<GroovyMethodResult>.correctStaticScope(): List<GroovyMethodResult> {
   return filterTo(SmartList()) {
     it.isStaticsOK
   }
-}
-
-fun chooseOverloads(candidates: List<GroovyMethodResult>): List<GroovyMethodResult> {
-  if (candidates.size <= 1) return candidates
-
-  val results = SmartList<GroovyMethodResult>()
-
-  var minResult: GroovyMethodResult? = null
-  for (candidate in candidates) {
-    if (minResult == null) {
-      minResult = candidate
-      results += candidate
-    }
-    else {
-      val comparisonResult = compare(minResult, candidate)
-      if (comparisonResult > 0) {
-        minResult = candidate
-        results.clear()
-        results += candidate
-      }
-      else if (comparisonResult == 0) {
-        results += candidate
-      }
-    }
-  }
-
-  return results
 }
 
 private val overloadResolverEp = ExtensionPointName.create<GroovyOverloadResolver>("org.intellij.groovy.overloadResolver")
@@ -87,6 +64,12 @@ private fun compare(left: GroovyMethodResult, right: GroovyMethodResult): Int {
     }
   }
   return 0
+}
+
+private val resultOverloadComparator: Comparator<GroovyMethodResult> = Comparator(::compare)
+
+fun chooseOverloads(candidates: List<GroovyMethodResult>): List<GroovyMethodResult> {
+  return SmartList(candidates.minimalElements(resultOverloadComparator))
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,12 @@ public class UtilityClassUtil {
     if (implementsList != null && implementsList.getReferenceElements().length > 0) {
       return false;
     }
-    final PsiMethod[] methods = aClass.getMethods();
-    final int staticMethodCount = countStaticMethods(methods);
+    final int staticMethodCount = countStaticMethods(aClass.getMethods());
     if (staticMethodCount < 0) {
       return false;
     }
-    final PsiField[] fields = aClass.getFields();
-    if (!allFieldsStatic(fields)) {
+    final int staticFieldCount = countStaticFields(aClass.getFields());
+    if (staticFieldCount < 0) {
       return false;
     }
     if (fullCheck) {
@@ -70,20 +69,29 @@ public class UtilityClassUtil {
         }
       }
     }
-    return (!fullCheck || staticMethodCount != 0) || fields.length != 0;
-  }
-
-  private static boolean allFieldsStatic(PsiField[] fields) {
-    for (final PsiField field : fields) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
-      }
-    }
-    return true;
+    return !fullCheck || staticMethodCount != 0 || staticFieldCount != 0;
   }
 
   /**
-   * @return -1 if an instance method was found, else the number of static methods in the class
+   * @param fields  the fields to inspect
+   * @return the number of non-private static fields in the array, or -1 if an instance field was found.
+   */
+  private static int countStaticFields(PsiField[] fields) {
+    int count = 0;
+    for (PsiField field : fields) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return -1;
+      }
+      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        continue;
+      }
+      count++;
+    }
+    return count;
+  }
+
+  /**
+   * @return -1 if an instance method was found, else the number of non-private static methods in the specified array.
    */
   private static int countStaticMethods(PsiMethod[] methods) {
     int staticCount = 0;

@@ -9,16 +9,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +55,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(configurable, null);
   }
 
-  public SettingsDialog(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
+  public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     super(project, true);
 
     myDimensionServiceKey = DIMENSION_KEY;
@@ -66,22 +64,25 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
-  @NotNull
-  protected SettingsTreeView treeViewFactory(SettingsFilter filter, List<ConfigurableGroup> groups) {
-    return new SettingsTreeView(filter, groups);
+  public SettingsDialog(@NotNull Project project, @Nullable Component parentComponent, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
+    super(project, parentComponent, true, IdeModalityType.IDE);
+
+    myDimensionServiceKey = DIMENSION_KEY;
+    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
+    myApplyButtonNeeded = true;
+    init(null, project);
   }
 
-  @Override
-  public void show() {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
+  @NotNull
+  protected SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
+    return new SettingsTreeView(filter, groups);
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) {
-      title = OptionsBundle.message("title.for.new.projects",
-                                    title, StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
+      title = IdeUICustomization.getInstance().projectMessage("title.for.new.projects", title);
     }
     setTitle(name == null ? title : name.replace('\n', ' '));
 
@@ -91,6 +92,12 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     }
 
     init();
+    if (configurable == null) {
+      JRootPane rootPane = getPeer().getRootPane();
+      if (rootPane != null) {
+        rootPane.setMinimumSize(new JBDimension(900, 700));
+      }
+    }
   }
 
   @Override
@@ -146,9 +153,8 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
@@ -180,7 +186,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public void applyAndClose(boolean scheduleSave) {
     if (myEditor.apply()) {
       if (scheduleSave) {
-        SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
+        SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* saveDocuments = */ false, /* forceSavingAllSettings = */ true), false);
       }
       super.doOKAction();
     }
@@ -189,7 +195,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doCancelAction(AWTEvent source) {
     if (source instanceof KeyEvent || source instanceof ActionEvent) {
-      if (!myEditor.cancel()) {
+      if (!myEditor.cancel(source)) {
         return;
       }
     }

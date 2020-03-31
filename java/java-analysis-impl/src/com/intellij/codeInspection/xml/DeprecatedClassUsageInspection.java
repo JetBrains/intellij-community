@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -59,14 +60,7 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "XML";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Deprecated API usage in XML";
+    return JavaAnalysisBundle.message("deprecated.class.usage.group.xml");
   }
 
   @NotNull

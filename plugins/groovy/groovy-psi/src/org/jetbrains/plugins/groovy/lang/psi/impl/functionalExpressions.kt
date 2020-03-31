@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessLocals
@@ -81,7 +82,7 @@ private fun GrFunctionalExpression.processDelegate(processor: PsiScopeProcessor,
                                                    classToDelegate: PsiType?): Boolean {
   if (classToDelegate == null) return true
 
-  val delegateState = state.put(ClassHint.THIS_TYPE, classToDelegate).put(ClassHint.RESOLVE_CONTEXT, this)
+  val delegateState = state.put(ClassHint.RECEIVER, JustTypeArgument(classToDelegate)).put(ClassHint.RESOLVE_CONTEXT, this)
   return ResolveUtil.processAllDeclarations(classToDelegate, processor, delegateState, place)
 }
 

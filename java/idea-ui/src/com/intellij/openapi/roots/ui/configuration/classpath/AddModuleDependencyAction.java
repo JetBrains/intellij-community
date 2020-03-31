@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-/**
-* @author nik
-*/
 class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
   private final ClasspathPanel myClasspathPanel;
@@ -36,7 +36,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   AddModuleDependencyAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
-    super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
+    super(classpathPanel, actionIndex, JavaUiBundle.message("classpath.add.module.dependency.action"),
           StdModuleTypes.JAVA.getIcon());
     myContext = context;
     myClasspathPanel = classpathPanel;
@@ -49,7 +49,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private List<Module> getNotAddedModules() {
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
-    Set<Module> addedModules = new HashSet<>(Arrays.asList(rootModel.getModuleDependencies(true)));
+    Set<Module> addedModules = ContainerUtil.set(rootModel.getModuleDependencies(true));
     addedModules.add(rootModel.getModule());
 
     final Module[] modules = myClasspathPanel.getModuleConfigurationState().getModulesProvider().getModules();
@@ -66,12 +66,12 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   protected ClasspathElementChooser<Module> createChooser() {
     final List<Module> chooseItems = getNotAddedModules();
     if (chooseItems.isEmpty()) {
-      Messages.showMessageDialog(myClasspathPanel.getComponent(), ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(),
+      Messages.showMessageDialog(myClasspathPanel.getComponent(), JavaUiBundle.message("message.no.module.dependency.candidates"), getTitle(),
                                  Messages.getInformationIcon());
       return null;
     }
-    return new ModuleChooser(myClasspathPanel, chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"),
-                             ProjectBundle.message("classpath.chooser.description.add.module.dependency"));
+    return new ModuleChooser(myClasspathPanel, chooseItems, JavaUiBundle.message("classpath.chooser.title.add.module.dependency"),
+                             JavaUiBundle.message("classpath.chooser.description.add.module.dependency"));
   }
 
   private static class ModuleChooser implements ClasspathElementChooser<Module> {

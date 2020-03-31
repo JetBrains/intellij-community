@@ -3,11 +3,11 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RedundantOperationOnEmptyContainerInspectionTest extends LightInspectionTestCase {
+public class RedundantOperationOnEmptyContainerInspectionTest extends LightJavaInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -21,6 +21,9 @@ public class RedundantOperationOnEmptyContainerInspectionTest extends LightInspe
     doTest();
   }
   public void testStaticInitializer() {
+    doTest();
+  }
+  public void testEmptyCollectionReturnThis() { 
     doTest();
   }
 

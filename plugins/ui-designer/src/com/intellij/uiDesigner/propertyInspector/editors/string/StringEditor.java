@@ -32,7 +32,7 @@ import java.awt.event.ActionListener;
  * @author Vladimir Kondratyev
  */
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor");
+  private static final Logger LOG = Logger.getInstance(StringEditor.class);
 
   @Nullable private final IntroStringProperty myProperty;
   private final TextFieldWithBrowseButton myTfWithButton;

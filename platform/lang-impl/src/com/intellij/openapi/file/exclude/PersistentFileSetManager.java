@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -22,21 +22,32 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String PATH_ATTR = "url";
 
   private final Set<VirtualFile> myFiles = new THashSet<>();
-  
+
   protected boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     myFiles.add(file);
+    onFileAdded(file);
     return true;
   }
-  
+
   protected boolean containsFile(@NotNull VirtualFile file) {
     return myFiles.contains(file);
   }
-  
+
   protected boolean removeFile(@NotNull VirtualFile file) {
-    if (!myFiles.contains(file)) return false;
-    myFiles.remove(file);
-    return true;
+    boolean isRemoved = myFiles.remove(file);
+    if (isRemoved) {
+      onFileRemoved(file);
+    }
+    return isRemoved;
+  }
+
+  protected void onFileAdded(@NotNull VirtualFile file) {
+
+  }
+
+  protected void onFileRemoved(@NotNull VirtualFile file) {
+
   }
 
   @NotNull
@@ -47,10 +58,10 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   @NotNull
   private Collection<VirtualFile> getSortedFiles() {
     List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
-    Collections.sort(sortedFiles, Comparator.comparing(file -> StringUtil.toLowerCase(file.getPath())));
+    sortedFiles.sort(Comparator.comparing(file -> StringUtil.toLowerCase(file.getPath())));
     return sortedFiles;
   }
-  
+
   @Override
   public Element getState() {
     final Element root = new Element("root");
@@ -65,6 +76,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(@NotNull Element state) {
+    Set<VirtualFile> oldFiles = new THashSet<>(myFiles);
     myFiles.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Object child : state.getChildren(FILE_ELEMENT)) {
@@ -80,6 +92,17 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
         }
       }
     }
+
+    for (VirtualFile file : myFiles) {
+      if (!oldFiles.contains(file)) {
+        onFileAdded(file);
+      }
+    }
+
+    for (VirtualFile file : oldFiles) {
+      if (!myFiles.contains(file)) {
+        onFileRemoved(file);
+      }
+    }
   }
-  
 }

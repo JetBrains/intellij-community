@@ -19,7 +19,8 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
 /**
- * @author nik
+ * Represents a panel in "Code inspection highlighting settings" popup which is shown after clicking on "Hector" icon in the status bar.
+ * @see HectorComponentPanelsProvider
  */
 public abstract class HectorComponentPanel implements UnnamedConfigurable {
 

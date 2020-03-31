@@ -22,9 +22,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 
-/**
- * @author nik
- */
 fun getQualifiedNameModuleGrouper(project: Project): ModuleGrouper {
   return runWithQualifiedModuleNamesEnabled { ModuleGrouper.instanceFor(project) }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class InsertPathAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.InsertPathAction");
+  private static final Logger LOG = Logger.getInstance(InsertPathAction.class);
   protected final JTextComponent myTextField;
   protected static final CustomShortcutSet CTRL_F = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
   protected final FileChooserDescriptor myDescriptor;
@@ -44,7 +45,7 @@ public class InsertPathAction extends AnAction {
   protected static final Key INSERT_PATH_ACTION= Key.create("insertPathAction");
 
   private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
-    super(UIBundle.message("insert.file.path.to.text.action.name"));
+    super(UIBundle.messagePointer("insert.file.path.to.text.action.name"));
     myTextField = textField;
     myInsertSystemDependentPaths = insertSystemDependentPaths;
     registerCustomShortcutSet(CTRL_F, myTextField);

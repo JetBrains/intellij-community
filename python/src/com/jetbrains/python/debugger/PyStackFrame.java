@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -13,37 +14,46 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.IntStream;
+
+import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.addGroupValues;
 
 
 public class PyStackFrame extends XStackFrame {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyStackFrame");
+  private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
-  public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
-  public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
-  public static final HashSet<String> HIDE_TYPES = new HashSet<>(Arrays.asList("function", "type", "classobj", "module"));
+  @NotNull @NonNls public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
+  @NotNull @NonNls public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
+  @NotNull @NonNls public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
   public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
-
+  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = ImmutableSet.of("<genexpr>", "<listcomp>", "<dictcomp>",
+                                                                                         "<setcomp>");
   private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
+
+  private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
 
   public PyStackFrame(@NotNull Project project,
                       @NotNull final PyFrameAccessor debugProcess,
@@ -91,25 +101,15 @@ public class PyStackFrame extends XStackFrame {
         }
       });
 
-    component.append(myFrameInfo.getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(", ", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(myPosition.getFile().getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(":", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(Integer.toString(myPosition.getLine() + 1), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    component.append(myFrameInfo.getName(), gray(isExternal));
+    component.append(", ", gray(isExternal));
+    component.append(myPosition.getFile().getName(), gray(isExternal));
+    component.append(":", gray(isExternal));
+    component.append(Integer.toString(myPosition.getLine() + 1), gray(isExternal));
   }
 
-  private static SimpleTextAttributes gray(SimpleTextAttributes attributes, boolean gray) {
-    if (!gray) {
-      return attributes;
-    }
-    else {
-      return getGrayAttributes(attributes);
-    }
-  }
-
-  protected static SimpleTextAttributes getGrayAttributes(SimpleTextAttributes attributes) {
-    return (attributes.getStyle() & SimpleTextAttributes.STYLE_ITALIC) != 0
-           ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+  protected static SimpleTextAttributes gray(boolean gray) {
+    return (gray) ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @Override
@@ -145,7 +145,7 @@ public class PyStackFrame extends XStackFrame {
     final XValueChildrenList filteredChildren = new XValueChildrenList();
     final HashMap<String, XValue> returnedValues = new HashMap<>();
     final ArrayList<Map<String, XValue>> specialValuesGroups = new ArrayList<>();
-    IntStream.range(0, NUMBER_OF_GROUPS).mapToObj(i -> new HashMap()).forEach(specialValuesGroups::add);
+    IntStream.range(0, NUMBER_OF_GROUPS).mapToObj(i -> new HashMap<String, XValue>()).forEach(specialValuesGroups::add);
     boolean isSpecialEmpty = true;
 
     for (int i = 0; i < children.size(); i++) {
@@ -153,6 +153,9 @@ public class PyStackFrame extends XStackFrame {
       String name = children.getName(i);
       if (value instanceof PyDebugValue) {
         PyDebugValue pyValue = (PyDebugValue)value;
+
+        restoreValueDescriptor(pyValue);
+
         if (pyValue.isReturnedVal() && debuggerSettings.isWatchReturnValues()) {
           returnedValues.put(name, value);
         }
@@ -183,55 +186,22 @@ public class PyStackFrame extends XStackFrame {
     }
     node.addChildren(filteredChildren, returnedValues.isEmpty() && isSpecialEmpty);
     if (!returnedValues.isEmpty()) {
-      addReturnedValuesGroup(node, returnedValues);
+      addGroupValues(RETURN_VALUES_GROUP_NAME, AllIcons.Debugger.WatchLastReturnValue, node, returnedValues, "()");
     }
     if (!isSpecialEmpty) {
-      addSpecialValuesGroup(node, specialValuesGroups);
+      final Map<String, XValue> specialElements = mergeSpecialGroupElementsOrdered(specialValuesGroups);
+      addGroupValues(SPECIAL_VARIABLES_GROUP_NAME, PythonIcons.Python.Debug.SpecialVar, node, specialElements, null);
     }
   }
 
-  private static void addReturnedValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> returnedValues) {
-    final ArrayList<XValueGroup> group = Lists.newArrayList();
-    group.add(new XValueGroup(RETURN_VALUES_GROUP_NAME) {
-      @Override
-      public void computeChildren(@NotNull XCompositeNode node) {
-        XValueChildrenList list = new XValueChildrenList();
-        for (Map.Entry<String, XValue> entry : returnedValues.entrySet()) {
-          list.add(entry.getKey() + "()", entry.getValue());
-        }
-        node.addChildren(list, true);
+  private static Map<String, XValue> mergeSpecialGroupElementsOrdered(List<Map<String, XValue>> specialValuesGroups) {
+    final LinkedHashMap<String, XValue> result = new LinkedHashMap<>();
+    for (Map<String, XValue> group : specialValuesGroups) {
+      for (Map.Entry<String, XValue> entry : group.entrySet()) {
+        result.put(entry.getKey(), entry.getValue());
       }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return AllIcons.Debugger.WatchLastReturnValue;
-      }
-    });
-    node.addChildren(XValueChildrenList.topGroups(group), true);
-  }
-
-  private static void addSpecialValuesGroup(@NotNull final XCompositeNode node, List<Map<String, XValue>> specialValuesGroups) {
-    final ArrayList<XValueGroup> group = Lists.newArrayList();
-    group.add(new XValueGroup(SPECIAL_VARIABLES_GROUP_NAME) {
-      @Override
-      public void computeChildren(@NotNull XCompositeNode node) {
-        XValueChildrenList list = new XValueChildrenList();
-        for (Map<String, XValue> group : specialValuesGroups) {
-          for (Map.Entry<String, XValue> entry : group.entrySet()) {
-            list.add(entry.getKey(), entry.getValue());
-          }
-        }
-        node.addChildren(list, true);
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return PythonIcons.Python.Debug.SpecialVar;
-      }
-    });
-    node.addChildren(XValueChildrenList.topGroups(group), true);
+    }
+    return result;
   }
 
   public String getThreadId() {
@@ -248,5 +218,36 @@ public class PyStackFrame extends XStackFrame {
 
   protected XSourcePosition getPosition() {
     return myPosition;
+  }
+
+  @NotNull
+  public String getName() {
+    return myFrameInfo.getName();
+  }
+
+  public boolean isComprehension() {
+    return COMPREHENSION_NAMES.contains(getName());
+  }
+
+  public void setChildrenDescriptors(@Nullable Map<String, PyDebugValueDescriptor> childrenDescriptors) {
+    myChildrenDescriptors = childrenDescriptors;
+  }
+
+  public void restoreChildrenDescriptors(@NotNull Map<String, Map<String, PyDebugValueDescriptor>> descriptorsCache) {
+    final String threadFrameId = getThreadFrameId();
+    final Map<String, PyDebugValueDescriptor> childrenDescriptors = descriptorsCache.getOrDefault(threadFrameId, Maps.newHashMap());
+    setChildrenDescriptors(childrenDescriptors);
+    descriptorsCache.put(threadFrameId, childrenDescriptors);
+  }
+
+  private void restoreValueDescriptor(PyDebugValue value) {
+    if (myChildrenDescriptors != null) {
+      PyDebugValueDescriptor descriptor = myChildrenDescriptors.getOrDefault(value.getName(), null);
+      if (descriptor == null) {
+        descriptor = new PyDebugValueDescriptor();
+        myChildrenDescriptors.put(value.getName(), descriptor);
+      }
+      value.setDescriptor(descriptor);
+    }
   }
 }

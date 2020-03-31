@@ -1,15 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +20,7 @@ import java.util.Set;
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
   @NonNls
-  static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.display.name");
-  }
+  static final Set<String> loggingMethodNames = ContainerUtil.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
 
   @NotNull
   @Override
@@ -63,7 +55,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       final PsiClass aClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger")) {
+          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger") &&
+          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.LogBuilder")) {
         return;
       }
       final PsiParameter[] parameters = method.getParameterList().getParameters();

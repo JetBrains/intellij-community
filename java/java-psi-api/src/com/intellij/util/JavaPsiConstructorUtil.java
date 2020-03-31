@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -16,10 +17,9 @@ public class JavaPsiConstructorUtil {
    * @param constructor constructor to search in
    * @return found this/super constructor method call or null if not found or supplied method is null or not a constructor
    */
-  @Contract("null -> null")
   @Nullable
-  public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@Nullable PsiMethod constructor) {
-    if (constructor == null || !constructor.isConstructor()) return null;
+  public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {
+    if (!constructor.isConstructor()) return null;
     PsiCodeBlock body = constructor.getBody();
     if (body == null) return null;
     PsiElement bodyElement = body.getFirstBodyElement();
@@ -46,9 +46,8 @@ public class JavaPsiConstructorUtil {
   }
 
   /**
-   * Returns true if given element is a super constructor call
    * @param call element to check
-   * @return true if given element is a super constructor call
+   * @return true if given element is a {@code super} constructor call
    */
   @Contract("null -> false")
   public static boolean isSuperConstructorCall(@Nullable PsiElement call) {
@@ -58,9 +57,8 @@ public class JavaPsiConstructorUtil {
   }
 
   /**
-   * Returns true if given element is chained or super constructor call
    * @param call element to check
-   * @return true if given element is chained or super constructor call
+   * @return true if given element is {@code this} or {@code super} constructor call
    */
   @Contract("null -> false")
   public static boolean isConstructorCall(@Nullable PsiElement call) {
@@ -69,20 +67,20 @@ public class JavaPsiConstructorUtil {
     return child instanceof PsiKeyword && (child.textMatches(PsiKeyword.SUPER) || child.textMatches(PsiKeyword.THIS));
   }
 
-  public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
+  public static PsiMethod findConstructorInSuper(@NotNull PsiMethod constructor) {
     return findConstructorInSuper(constructor, new HashSet<>());
   }
 
-  private static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<? super PsiMethod> visited) {
-    if (visited.contains(constructor)) return null;
-    visited.add(constructor);
+  private static PsiMethod findConstructorInSuper(@NotNull PsiMethod constructor, @NotNull Set<? super PsiMethod> visited) {
+    if (!visited.add(constructor)) return null;
     PsiMethodCallExpression call = findThisOrSuperCallInConstructor(constructor);
     if (isSuperConstructorCall(call)) {
       PsiMethod superConstructor = call.resolveMethod();
       if (superConstructor != null) {
         return superConstructor;
       }
-    } else if (isChainedConstructorCall(call)) {
+    }
+    else if (isChainedConstructorCall(call)) {
       PsiMethod chainedConstructor = call.resolveMethod();
       if (chainedConstructor != null) {
         return findConstructorInSuper(chainedConstructor, visited);

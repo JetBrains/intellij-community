@@ -90,14 +90,14 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
     assert "Param" == presentation.itemText
-    assert presentation.tailText == " (type parameter of Foo)"
+    assert presentation.tailText == " type parameter of Foo"
     assert !presentation.typeText
     assert !presentation.icon
     assert !presentation.itemTextBold
 
     presentation = renderElement(myItems[1])
     assert "Param2" == presentation.itemText
-    assert presentation.tailText == " (type parameter of goo)"
+    assert presentation.tailText == " type parameter of goo"
   }
 
   void testDisplayDefaultValueInAnnotationMethods() {
@@ -995,7 +995,12 @@ public class ListUtils {
 
   void testMethodParameterAnnotationClass() throws Throwable { doTest() }
 
-  void testInnerAnnotation() { doTest('\n') }
+  void testInnerAnnotation() {
+    configure()
+    assert myFixture.lookupElementStrings == ['Dependency']
+    type '\t'
+    checkResult()
+  }
 
   void testPrimitiveCastOverwrite() throws Throwable { doTest() }
 
@@ -1501,8 +1506,22 @@ class XInternalError {}
 
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'
-    lookup.currentItem = lookup.items[1]
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override', 'public void run'
+    lookup.currentItem = lookup.items[2]
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
     myFixture.type('\n')
     checkResult()
   }
@@ -1513,6 +1532,9 @@ class XInternalError {}
     assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
     assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
   }
+
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
 
   void testAccessorViaCompletion() {
     configure()
@@ -1684,11 +1706,19 @@ class Bar {
 
   void testShowVarInitializers() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
-    assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' ( = 42)'
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailFragments[0].italic
+    myFixture.assertPreferredCompletionItems 0, 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
+    def items = myFixture.lookup.items
+    assert items.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
+    assert LookupElementPresentation.renderElement(items[3]).tailFragments[0].italic
+  }
+
+  void testShowNonImportedVarInitializers() {
+    configure()
+    myFixture.assertPreferredCompletionItems 1, 'Field', 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
+    def fieldItems = myFixture.lookup.items[1..4]
+    assert fieldItems.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
+    assert LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[0].italic
+    assert !LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[1].italic
   }
 
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
@@ -1915,5 +1945,45 @@ class Abc {
     myFixture.completeBasic()
     myFixture.type('\n')
     myFixture.checkResult("class MyClass { MyClass<caret> }")
+  }
+
+  void testRemoveParenthesesWhenReplacingEmptyCallWithConstant() {
+    doTest('\t')
+  }
+
+  void testNoCallsAfterAnnotationInCodeBlock() { doTest() }
+  
+  void testExtendsAfterEnum() {
+    myFixture.configureByText("a.java", "enum X ex<caret>") // should not complete
+    myFixture.completeBasic()
+    myFixture.checkResult("enum X ex")
+  }
+
+  void testAddImportWhenCompletingInnerAfterNew() {
+    myFixture.addClass("package p; public class Outer { public static class Inner {} }")
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Inner') })
+    checkResult()
+  }
+
+  void "test completing qualified class name"() {
+    myFixture.configureByText("a.java", "class C implements java.util.Li<caret>")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'List')
+    myFixture.type('\n')
+    myFixture.checkResult("class C implements java.util.List<caret>")
+  }
+
+  void "test suggest Object methods when super is unresolved"() {
+    def checkGetClassPresent = { String text ->
+      myFixture.configureByText("a.java", text)
+      myFixture.completeBasic()
+      myFixture.assertPreferredCompletionItems 0, 'getClass'
+    }
+    checkGetClassPresent("class C extends Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+
   }
 }

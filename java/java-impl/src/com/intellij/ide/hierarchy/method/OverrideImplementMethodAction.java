@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
@@ -23,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 abstract class OverrideImplementMethodAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementMethodAction.class);
 
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent event) {
@@ -132,8 +133,8 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
 
     Collection<MethodSignature> allOriginalSignatures = toImplement
-                                                        ? OverrideImplementUtil.getMethodSignaturesToImplement(psiClass)
-                                                        : OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
+                                                        ? OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass)
+                                                        : OverrideImplementExploreUtil.getMethodSignaturesToOverride(psiClass);
     for (final MethodSignature originalSignature : allOriginalSignatures) {
       if (originalSignature.equals(signature)) {
         return true;

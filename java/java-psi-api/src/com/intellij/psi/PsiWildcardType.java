@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmType;
@@ -47,15 +33,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     myBound = bound;
   }
 
-  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider provider) {
-    super(provider);
-    myManager = type.myManager;
-    myIsExtending = type.myIsExtending;
-    myBound = type.myBound;
-  }
-
-  @NotNull
-  public static PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
+  public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
     PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
     if (unboundedWildcard == null) {
       unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, new PsiWildcardType(manager, false, null));
@@ -63,42 +41,28 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return unboundedWildcard;
   }
 
-  @NotNull
-  public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType));
-    LOG.assertTrue(bound != PsiType.NULL);
+  public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, true, bound);
   }
 
-  @NotNull
-  public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
+  public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
     LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, false, bound);
   }
 
-  /**
-   * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
-   */
-  @Deprecated
-  public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
-    return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
-  }
-
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
-    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText());
+  public @NotNull String getPresentableText(boolean annotated) {
+    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText(annotated));
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(true, annotated, myBound == null ? null : myBound.getCanonicalText(annotated));
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(true, true, myBound == null ? null : myBound.getInternalCanonicalText());
   }
 
@@ -121,8 +85,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     if (myBound != null) {
       GlobalSearchScope scope = myBound.getResolveScope();
       if (scope != null) {
@@ -133,8 +96,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return new PsiType[]{getExtendsBound()};
   }
 
@@ -151,8 +113,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     }
   }
 
-  @NotNull
-  public PsiManager getManager() {
+  public @NotNull PsiManager getManager() {
     return myManager;
   }
 
@@ -180,8 +141,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code null} if unbounded, a bound otherwise.
    */
-  @Nullable
-  public PsiType getBound() {
+  public @Nullable PsiType getBound() {
     return myBound;
   }
 
@@ -233,8 +193,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing a lower bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getExtendsBound() {
+  public @NotNull PsiType getExtendsBound() {
     if (myBound == null || !myIsExtending) {
       return getJavaLangObject(myManager, getResolveScope());
     }
@@ -252,20 +211,17 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getSuperBound() {
+  public @NotNull PsiType getSuperBound() {
     return myBound == null || myIsExtending ? NULL : myBound;
   }
 
-  @NotNull
   @Override
-  public JvmType upperBound() {
+  public @NotNull JvmType upperBound() {
     return getExtendsBound();
   }
 
-  @NotNull
   @Override
-  public JvmType lowerBound() {
+  public @NotNull JvmType lowerBound() {
     return getSuperBound();
   }
 }

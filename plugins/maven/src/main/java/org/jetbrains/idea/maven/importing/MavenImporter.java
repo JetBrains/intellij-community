@@ -21,16 +21,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.ResolveContext;
+import org.jetbrains.idea.maven.project.SupportedRequestType;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
@@ -38,14 +43,20 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
   protected final String myPluginGroupID;
   protected final String myPluginArtifactID;
 
-  public MavenImporter(String pluginGroupID, String pluginArtifactID) {
+  public MavenImporter(@NonNls String pluginGroupID, @NonNls String pluginArtifactID) {
     myPluginGroupID = pluginGroupID;
     myPluginArtifactID = pluginArtifactID;
   }
@@ -115,6 +126,9 @@ public abstract class MavenImporter {
     return null;
   }
 
+  /**
+   * @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)}
+   */
   @Deprecated
   public void resolve(Project project,
                       MavenProject mavenProject,
@@ -192,27 +206,27 @@ public abstract class MavenImporter {
   }
 
   @Nullable
-  protected Element getConfig(MavenProject p, String path) {
+  protected Element getConfig(MavenProject p, @NonNls String path) {
     return MavenJDOMUtil.findChildByPath(getConfig(p), path);
   }
 
   @Nullable
-  protected String findConfigValue(MavenProject p, String path) {
+  protected String findConfigValue(MavenProject p, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getConfig(p), path);
   }
 
   @Nullable
-  protected String findConfigValue(MavenProject p, String path, String defaultValue) {
+  protected String findConfigValue(MavenProject p, @NonNls String path, @NonNls String defaultValue) {
     return MavenJDOMUtil.findChildValueByPath(getConfig(p), path, defaultValue);
   }
 
   @Nullable
-  protected Element getGoalConfig(MavenProject p, String goal) {
+  protected Element getGoalConfig(MavenProject p, @NonNls String goal) {
     return p.getPluginGoalConfiguration(myPluginGroupID, myPluginArtifactID, goal);
   }
 
   @Nullable
-  protected String findGoalConfigValue(MavenProject p, String goal, String path) {
+  protected String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
 

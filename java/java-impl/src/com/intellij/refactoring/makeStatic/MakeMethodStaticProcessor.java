@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -50,7 +36,7 @@ import java.util.Set;
  * @author dsl
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
+  private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
   private List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
@@ -160,18 +146,23 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
 
       if (mySettings.isMakeClassParameter()) {
-        params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(),
-                                         factory.createType(containingClass, PsiSubstitutor.EMPTY), "this"));
+        params.add(ParameterInfoImpl.createNew()
+                     .withName(mySettings.getClassParameterName())
+                     .withType(factory.createType(containingClass, PsiSubstitutor.EMPTY))
+                     .withDefaultValue("this"));
       }
 
       if (mySettings.isMakeFieldParameters()) {
         for (Settings.FieldParameter parameter : mySettings.getParameterOrderList()) {
-          params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(), parameter.type, parameter.field.getName()));
+          params.add(ParameterInfoImpl.createNew()
+                       .withName(mySettings.getClassParameterName())
+                       .withType(parameter.type)
+                       .withDefaultValue(parameter.field.getName()));
         }
       }
 
       for (int i = 0; i < parameters.length; i++) {
-        params.add(new ParameterInfoImpl(i));
+        params.add(ParameterInfoImpl.create(i));
       }
 
       final PsiType returnType = myMember.getReturnType();

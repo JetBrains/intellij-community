@@ -1,19 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
@@ -31,8 +33,10 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public class MavenArtifactSearchPanel extends JPanel {
 
@@ -71,7 +75,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private void initComponents(String initialText) {
     myResultList = new Tree();
     myResultList.setExpandableItemsEnabled(false);
-    myResultList.getEmptyText().setText("Loading...");
+    myResultList.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);
@@ -143,7 +147,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         final TreePath path = myResultList.getPathForLocation(e.getX(), e.getY());
         if (path != null && myResultList.isPathSelected(path)) {
           Object sel = path.getLastPathComponent();
@@ -175,37 +179,16 @@ public class MavenArtifactSearchPanel extends JPanel {
     }, 500);
   }
 
-  private void resortUsingDependencyVersionMap(List<MavenArtifactSearchResult> result) {
-    for (MavenArtifactSearchResult searchResult : result) {
-      if (searchResult.getSearchResults().isEmpty()) continue;
-
-      MavenDependencyCompletionItem artifactInfo = searchResult.getSearchResults().get(0);
-      final String managedVersion = myManagedDependenciesMap.get(Pair.create(artifactInfo.getGroupId(), artifactInfo.getArtifactId()));
-      if (managedVersion != null) {
-        Collections.sort(searchResult.getSearchResults(), (o1, o2) -> {
-          String v1 = o1.getVersion();
-          String v2 = o2.getVersion();
-          if (Comparing.equal(v1, v2)) return 0;
-          if (managedVersion.equals(v1)) return -1;
-          if (managedVersion.equals(v2)) return 1;
-          return 0;
-        });
-      }
-    }
-  }
-
   private void doSearch(String searchText) {
     MavenSearcher searcher = myClassMode ? new MavenClassSearcher() : new MavenArtifactSearcher();
     List<MavenArtifactSearchResult> result = searcher.search(myProject, searchText, MAX_RESULT);
-
-    resortUsingDependencyVersionMap(result);
 
     final TreeModel model = new MyTreeModel(result);
 
     SwingUtilities.invokeLater(() -> {
       if (!myDialog.isVisible()) return;
 
-      myResultList.getEmptyText().setText("No results");
+      myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
       myResultList.setModel(model);
       myResultList.setSelectionRow(0);
       myResultList.setPaintBusy(false);
@@ -223,7 +206,7 @@ public class MavenArtifactSearchPanel extends JPanel {
         info = (MavenDependencyCompletionItem)sel;
       }
       else {
-        info = ((MavenArtifactSearchResult)sel).getSearchResults().get(0);
+        info = ((MavenArtifactSearchResult)sel).getSearchResults().getItems()[0];
       }
       result.add(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
     }
@@ -257,7 +240,9 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     public List getList(Object parent) {
       if (parent == myItems) return myItems;
-      if (parent instanceof MavenArtifactSearchResult) return ((MavenArtifactSearchResult)parent).getSearchResults();
+      if (parent instanceof MavenArtifactSearchResult) {
+        return Arrays.asList(((MavenArtifactSearchResult)parent).getSearchResults().getItems());
+      }
       return null;
     }
 
@@ -345,7 +330,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       myLeftComponent.clear();
       myRightComponent.clear();
 
-      setBackground(selected ? UIUtil.getTreeSelectionBackground(hasFocus) : tree.getBackground());
+      setBackground(RenderingUtil.getBackground(tree, selected));
 
       myLeftComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
       myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
@@ -378,14 +363,8 @@ public class MavenArtifactSearchPanel extends JPanel {
     }
 
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult, boolean selected) {
-      MavenDependencyCompletionItem info = searchResult.getSearchResults().get(0);
-      MavenDependencyCompletionItem iconInfo = Collections.max(searchResult.getSearchResults(),
-                                                               Comparator.comparing(r -> {
-                                                                 if (r.getType() == null) {
-                                                                   return Integer.MIN_VALUE;
-                                                                 }
-                                                                 return r.getType().getWeight();
-                                                               }));
+      MavenDependencyCompletionItem info = searchResult.getSearchResults().getItems()[0];
+      MavenDependencyCompletionItem iconInfo = MavenDependencyCompletionUtil.getMaxIcon(searchResult);
 
       myLeftComponent.setIcon(MavenDependencyCompletionUtil.getIcon(iconInfo.getType()));
       appendArtifactInfo(myLeftComponent, info, selected);
@@ -402,6 +381,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     }
   }
 
+
   private class MyClassCellRenderer extends MyArtifactCellRenderer {
 
     private MyClassCellRenderer(Tree tree) {
@@ -411,7 +391,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     @Override
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult, boolean selected) {
       MavenClassSearchResult classResult = (MavenClassSearchResult)searchResult;
-      MavenDependencyCompletionItem info = searchResult.getSearchResults().get(0);
+      MavenDependencyCompletionItem info = searchResult.getSearchResults().getItems()[0];
 
       myLeftComponent.setIcon(AllIcons.Nodes.Class);
       myLeftComponent.append(classResult.getClassName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

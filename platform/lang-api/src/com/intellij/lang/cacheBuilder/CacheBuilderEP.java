@@ -16,6 +16,7 @@
 
 package com.intellij.lang.cacheBuilder;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,7 +26,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author yole
  */
 public class CacheBuilderEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.cacheBuilder.CacheBuilderEP");
+  private static final Logger LOG = Logger.getInstance(CacheBuilderEP.class);
 
   public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<>("com.intellij.cacheBuilder");
 
@@ -44,12 +45,12 @@ public class CacheBuilderEP extends AbstractExtensionPointBean {
     try {
       Class<WordsScanner> aClass = myCachedClass;
       if (aClass == null) {
-        myCachedClass = aClass = findClass(wordsScannerClass);
+        myCachedClass = aClass = findExtensionClass(wordsScannerClass);
       }
       return aClass.newInstance();
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
       return null;
     }
   }

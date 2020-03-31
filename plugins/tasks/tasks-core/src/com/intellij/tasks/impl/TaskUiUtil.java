@@ -7,10 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,29 +163,4 @@ public class TaskUiUtil {
     }
   }
 
-  /**
-   * Very simple wrapper around {@link ListCellRendererWrapper} useful for
-   * combo boxes where each item has plain text representation with special message for
-   * {@code null} value.
-   *
-   * @deprecated Use {@link com.intellij.ui.SimpleListCellRenderer#create(String, Function)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static class SimpleComboBoxRenderer<T> extends ListCellRendererWrapper<T> {
-    private final String myNullDescription;
-    public SimpleComboBoxRenderer(@NotNull String nullDescription) {
-      myNullDescription = nullDescription;
-    }
-
-    @Override
-    public final void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
-      setText(value == null ? myNullDescription : getDescription(value));
-    }
-
-    @NotNull
-    protected String getDescription(@NotNull T item) {
-      return item.toString();
-    }
-  }
 }

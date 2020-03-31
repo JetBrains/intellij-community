@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -44,8 +44,8 @@ import java.util.Arrays;
  * @author peter
  */
 @SuppressWarnings({"ConstantConditions", "EmptyCatchBlock"})
-public class XmlTagTest extends LightCodeInsightTestCase {
-  private static XmlTag createTag(String value) throws IncorrectOperationException {
+public class XmlTagTest extends LightJavaCodeInsightTestCase {
+  private XmlTag createTag(String value) throws IncorrectOperationException {
     return XmlElementFactory.getInstance(getProject()).createTagFromText("<foo>" + value + "</foo>");
   }
 
@@ -286,7 +286,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     assertEquals("<p>ab</p>", tag.getText());
   }
 
-  private static XmlTag createTag(final String name, final String text) {
+  private XmlTag createTag(final String name, final String text) {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText(name, StdFileTypes.XML, text, LocalTimeCounter.currentTime(), true);
     return file.getDocument().getRootTag();
@@ -496,7 +496,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     doTestSimpleDeletion(" x y z ");
   }
 
-  private static void doTestSimpleDeletion(final String text) throws IncorrectOperationException {
+  private void doTestSimpleDeletion(final String text) throws IncorrectOperationException {
     ApplicationManager.getApplication().runWriteAction(() -> {
       for (int i = 0; i < text.length(); i++) {
         for (int j = i; j < text.length(); j++) {
@@ -514,7 +514,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     });
   }
 
-  private static void doTestSimpleInsertion(final String text, final String textToInsert) throws IncorrectOperationException {
+  private void doTestSimpleInsertion(final String text, final String textToInsert) throws IncorrectOperationException {
     ApplicationManager.getApplication().runWriteAction(() -> {
       for (int i = 0; i <= text.length(); i++) {
         XmlTag tag = XmlElementFactory.getInstance(getProject()).createXHTMLTagFromText("<a>" + text + "</a>");
@@ -557,7 +557,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     doTestEscapedInsertion("_x_y_z_", "a");
   }
 
-  public static void notestEscapedDeletion() {
+  public void notestEscapedDeletion() {
     doTestEscapedDeletion("&");
     doTestEscapedDeletion("&&");
     doTestEscapedDeletion(" &&");
@@ -581,7 +581,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     doTestEscapedDeletion("abc& ");
   }
 
-  private static void doTestEscapedInsertion(final String text, final String textToInsert) throws IncorrectOperationException {
+  private void doTestEscapedInsertion(final String text, final String textToInsert) throws IncorrectOperationException {
     String tagText = toEscapedText(text);
     for (int i = 0; i <= text.length(); i++) {
       XmlTag tag = XmlElementFactory.getInstance(getProject()).createXHTMLTagFromText("<a>" + tagText + "</a>");
@@ -599,7 +599,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     }
   }
 
-  private static void doTestEscapedDeletion(final String text) throws IncorrectOperationException {
+  private void doTestEscapedDeletion(final String text) throws IncorrectOperationException {
     ApplicationManager.getApplication().runWriteAction(() -> {
       String tagText = toEscapedText(text);
       for (int i = 0; i < text.length(); i++) {
@@ -718,11 +718,11 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     assertEquals("1&nbsp;", nbsp1.getText());
   }
 
-  private static void doCoordinateMappingConsistentFromDisplayText(final String text) throws IncorrectOperationException {
+  private void doCoordinateMappingConsistentFromDisplayText(final String text) throws IncorrectOperationException {
     doCoordinateMappingConsistentFromEscapedText(toEscapedText(text));
   }
                                                
-  private static void doCoordinateMappingConsistentFromEscapedText(final String tagText) throws IncorrectOperationException {
+  private void doCoordinateMappingConsistentFromEscapedText(final String tagText) throws IncorrectOperationException {
     String text = toDisplay(tagText);
     XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>" + tagText + "</a>");
     final PsiElement[] children = tag.getValue().getTextElements();

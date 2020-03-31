@@ -6,7 +6,9 @@ import com.intellij.execution.RunManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,7 @@ import javax.swing.*;
  * @see ConfigurationType#getConfigurationFactories()
  */
 public abstract class ConfigurationFactory {
+  public static final ConfigurationFactory[] EMPTY_ARRAY = new ConfigurationFactory[0];
   private final ConfigurationType myType;
 
   protected ConfigurationFactory(@NotNull ConfigurationType type) {
@@ -66,13 +69,16 @@ public abstract class ConfigurationFactory {
   }
 
   /**
-   * Returns the id of the run configuration that is used for serialization.
-   * For compatibility reason the default implementation calls
-   * the method <code>getName</code> instead of <code>myType.getId()</code>.
-   * New implementations need to call <code>myType.getId()</code> by default.
+   * Returns the id of the run configuration that is used for serialization. For compatibility reason the default implementation calls
+   * the method {@link #getName()} and this may cause problems if {@link #getName} returns localized value. So the default implementation
+   * <strong>must be overriden</strong> in all inheritors. In existing implementations you need to use the same value which is returned
+   * by {@link #getName()} for compatibility but store it directly in the code instead of taking from a message bundle. For new configurations
+   * you may use any unique ID; if a new {@link ConfigurationType} has a single {@link ConfigurationFactory}, use {@link SimpleConfigurationType} instead.
    */
-  @NotNull
+  @NotNull @NonNls
   public String getId() {
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getId",
+      "The default implementation delegates to 'getName' which may be localized but return value of this method must not depend on current localization.");
     return getName();
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
 
   private final ImmutableList<String> myExtensions;
 
-  public FileTypeDescriptor(String title, @NotNull String... extensions) {
+  public FileTypeDescriptor(String title, String @NotNull ... extensions) {
     super(true, false, false, true, false, false);
     assert extensions.length > 0 : "There should be at least one extension";
     myExtensions = ContainerUtil.immutableList(ContainerUtil.map(extensions, ext -> {

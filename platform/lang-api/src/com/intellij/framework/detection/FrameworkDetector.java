@@ -43,8 +43,6 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;framework.detector implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public abstract class FrameworkDetector {
   public static final ExtensionPointName<FrameworkDetector> EP_NAME = ExtensionPointName.create("com.intellij.framework.detector");

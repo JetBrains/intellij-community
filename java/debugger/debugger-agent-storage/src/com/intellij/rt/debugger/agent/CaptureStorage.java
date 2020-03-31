@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import java.lang.ref.ReferenceQueue;
@@ -7,9 +7,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author egor
- */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
   public static final String GENERATED_INSERT_METHOD_POSTFIX = "$$$capture";
@@ -250,12 +247,19 @@ public class CaptureStorage {
       List<StackTraceElement> stackTrace = stack.getStackTrace();
       if (stack instanceof DeepCapturedStack) {
         int depth = 0;
-        for (; depth < stackTrace.size(); depth++) {
+        int size = stackTrace.size();
+        for (; depth < size; depth++) {
           if (stackTrace.get(depth).getMethodName().endsWith(GENERATED_INSERT_METHOD_POSTFIX)) {
             break;
           }
         }
-        stackTrace = stackTrace.subList(0, depth + 2);
+        int newEnd = depth + 2;
+        if (newEnd > size) {
+          IllegalStateException exception = new IllegalStateException("Insertion point was not found in stack:");
+          exception.setStackTrace(stackTrace.toArray(new StackTraceElement[0]));
+          throw exception;
+        }
+        stackTrace = stackTrace.subList(0, newEnd);
         stack = ((DeepCapturedStack)stack).myInsertMatch;
       }
       else {

@@ -1,9 +1,9 @@
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 Queue = _queue.Queue
 import traceback
+import sys
 from _pydev_runfiles.pydev_runfiles_coverage import start_coverage_support_from_params
-
+import threading
 
 
 #=======================================================================================================================

@@ -123,7 +123,6 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
         final FileTemplateNode node = (FileTemplateNode)value;
         setText((String) node.getUserObject());
         setIcon(node.getIcon());
-        setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(node.getTemplateName(), getTitle()) ? Font.BOLD : Font.PLAIN));
 
         final FileTemplate template = getTemplate(node);
         if (template != null && !template.isDefault()) {
@@ -147,7 +146,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       selectTemplate(selection);
     }
     else {
-      TreeUtil.selectFirstNode(myTree);
+      TreeUtil.promiseSelectFirst(myTree);
     }
   }
 

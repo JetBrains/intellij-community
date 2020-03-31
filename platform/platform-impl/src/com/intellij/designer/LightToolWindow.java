@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -18,7 +19,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.AnchoredButton;
 import com.intellij.openapi.wm.impl.StripeButtonUI;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
@@ -77,7 +77,7 @@ public class LightToolWindow extends JPanel {
                          @NotNull Project project,
                          @NotNull String key,
                          int defaultWidth,
-                         @Nullable AnAction[] actions) {
+                         AnAction @Nullable [] actions) {
     super(new BorderLayout());
     myContent = content;
     myFocusedComponent = focusedComponent;
@@ -312,7 +312,7 @@ public class LightToolWindow extends JPanel {
     if (component != null) {
       return true;
     }
-    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
+    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getFrame(myProject));
     return owner != null && SwingUtilities.isDescendingFrom(owner, this);
   }
 
@@ -326,7 +326,7 @@ public class LightToolWindow extends JPanel {
     group.add(myManager.createGearActions());
     if (myManager.getAnchor() == null) {
       group.addSeparator();
-      DefaultActionGroup viewModeGroup = new DefaultActionGroup(ActionsBundle.groupText("ViewMode"), true);
+      DefaultActionGroup viewModeGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.groupText("ViewMode"));
       for (ToolWindowViewModeAction.ViewMode viewMode : ToolWindowViewModeAction.ViewMode.values()) {
         viewModeGroup.add(new MyViewModeAction(viewMode));
       }
@@ -338,7 +338,7 @@ public class LightToolWindow extends JPanel {
   private void showGearPopup(Component component, int x, int y) {
     ActionPopupMenu popupMenu =
       ((ActionManagerImpl)ActionManager.getInstance())
-        .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, createGearPopupGroup(), new MenuItemPresentationFactory());
+        .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createGearPopupGroup(), new MenuItemPresentationFactory());
     popupMenu.getComponent().show(component, x, y);
   }
 
@@ -365,7 +365,7 @@ public class LightToolWindow extends JPanel {
   private class HideAction extends AnAction {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setText(UIBundle.message("tool.window.hide.action.name"));
+      presentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"));
       presentation.setIcon(AllIcons.General.HideToolWindow);
     }
 
@@ -378,7 +378,7 @@ public class LightToolWindow extends JPanel {
   private class MyViewModeAction extends ToolWindowViewModeAction {
     private MyViewModeAction(@NotNull ViewMode mode) {
       super(mode);
-      copyFrom(ActionManager.getInstance().getAction(mode.getActionID()));
+      ActionUtil.copyFrom(this, mode.getActionID());
     }
 
     @Nullable

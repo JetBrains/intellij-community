@@ -1,17 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * @author max
- */
 public interface Query<Result> extends Iterable<Result> {
   /**
    * Get all of the results in the {@link Collection}
@@ -41,8 +40,7 @@ public interface Query<Result> extends Iterable<Result> {
   @NotNull
   AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer);
 
-  @NotNull
-  Result[] toArray(@NotNull Result[] a);
+  Result @NotNull [] toArray(Result @NotNull [] a);
 
   /**
    * Checks whether predicate is satisfied for every result of this query.
@@ -71,6 +69,33 @@ public interface Query<Result> extends Iterable<Result> {
   @Contract(pure = true)
   default boolean anyMatch(@NotNull Predicate<? super Result> predicate) {
     return !forEach(t -> !predicate.test(t));
+  }
+
+  /**
+   * @param mapper pure function
+   */
+  @Experimental
+  @NotNull
+  default <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
+    return Queries.getInstance().mapping(this, mapper);
+  }
+
+  /**
+   * @param predicate pure function
+   */
+  @Experimental
+  @NotNull
+  default Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
+    return Queries.getInstance().filtering(this, predicate);
+  }
+
+  /**
+   * @param mapper pure function
+   */
+  @Experimental
+  @NotNull
+  default <R> Query<R> flatMapping(@NotNull Function<? super Result, ? extends Query<? extends R>> mapper) {
+    return Queries.getInstance().flatMapping(this, mapper);
   }
 
   /**

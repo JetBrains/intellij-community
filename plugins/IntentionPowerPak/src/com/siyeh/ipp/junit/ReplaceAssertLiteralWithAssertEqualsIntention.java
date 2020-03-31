@@ -75,22 +75,27 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     @NonNls final StringBuilder newExpression = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
+      final PsiMethod method = call.resolveMethod();
+      assert method != null;
+      final PsiClass aClass = method.getContainingClass();
+      assert aClass != null;
+      final String qualifiedName = aClass.getQualifiedName();
+      assert qualifiedName != null;
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", element)) {
-        newExpression.append("org.junit.Assert.");
+          !ImportUtils.addStaticImport(qualifiedName, "assertEquals", element)) {
+        newExpression.append(qualifiedName).append('.');
       }
     }
     else {
-      newExpression.append(qualifier.getText());
-      newExpression.append('.');
+      newExpression.append(qualifier.getText()).append('.');
     }
     newExpression.append("assertEquals(");
     final String postfix = methodName.substring("assert".length());
     final String literal = StringUtil.toLowerCase(postfix);
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    CommentTracker commentTracker = new CommentTracker();
+    final CommentTracker commentTracker = new CommentTracker();
     if (arguments.length > 1) {
       newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -12,7 +12,7 @@ import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -26,6 +26,7 @@ import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +37,17 @@ import javax.swing.*;
  * @author spleaner
  */
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
+  private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   /**
-   * @deprecated to be removed in IDEA 2017
+   * @deprecated to be removed in IDEA 2020.1
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
   /**
-   * @deprecated to be removed in IDEA 2017
+   * @deprecated to be removed in IDEA 2020.1
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
@@ -127,9 +130,8 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
-      final Semaphore done = new Semaphore();
-      done.down();
-      TransactionGuard.submitTransaction(myProject, () -> {
+      Semaphore done = new Semaphore(1);
+      ApplicationManager.getApplication().invokeLater(() -> {
         final ProjectTask projectTask;
         Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
         final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
@@ -157,12 +159,16 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         }
 
         if (!myProject.isDisposed()) {
-          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, executionResult -> {
-            if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
-              result.set(Boolean.TRUE);
-            }
-            done.up();
-          });
+          ProjectTaskContext context = new ProjectTaskContext(sessionId, configuration);
+          env.copyUserDataTo(context);
+          projectTaskManager
+            .run(context, projectTask)
+            .onSuccess(taskResult -> {
+              if ((!taskResult.hasErrors() || ignoreErrors) && !taskResult.isAborted()) {
+                result.set(Boolean.TRUE);
+              }
+            })
+            .onProcessed(taskResult -> done.up());
         }
         else {
           done.up();

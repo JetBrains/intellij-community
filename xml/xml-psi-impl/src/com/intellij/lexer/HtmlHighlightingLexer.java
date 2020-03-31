@@ -33,17 +33,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
+  private static final Logger LOG = Logger.getInstance(HtmlHighlightingLexer.class);
 
-  private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
-  private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;
-  private static final FileType ourInlineScriptFileType;
-  static {
-    // At the moment only JS.
-    HtmlInlineScriptTokenTypesProvider provider =
-      LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
-    ourInlineScriptFileType = provider != null ? provider.getFileType() : null;
-  }
+  private final int EMBEDDED_LEXER_ON = 0x1 << getBaseStateShift();
+  private final int EMBEDDED_LEXER_STATE_SHIFT = getBaseStateShift() + 1;
+
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   protected Lexer elLexer;
   private Lexer embeddedLexer;
@@ -67,6 +61,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, value);
+    registerHandler(XmlTokenType.XML_START_TAG_START, value);
     registerHandler(XmlTokenType.XML_DATA_CHARACTERS, value);
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS, value);
   }
@@ -76,7 +71,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON) != 0) {
-      int state = initialState >> EMBEDDED_LEXER_STATE_SHIFT;
+      int state = getEmbeddedLexerState(initialState);
       setEmbeddedLexer();
       LOG.assertTrue(embeddedLexer != null);
       embeddedLexer.start(buffer, startOffset, skipToTheEndOfTheEmbeddment(), state);
@@ -88,9 +83,14 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
+  protected int getEmbeddedLexerState(int initialState) {
+    return initialState >> EMBEDDED_LEXER_STATE_SHIFT;
+  }
+
   protected Lexer getInlineScriptHighlightingLexer() {
-    SyntaxHighlighter syntaxHighlighter =
-      ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
+    HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
+    FileType fileType = provider != null ? provider.getFileType() : null;
+    SyntaxHighlighter syntaxHighlighter = fileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null) : null;
     return syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
   }
 
@@ -112,16 +112,10 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
               LOG.assertTrue(highlighter != null, ourStyleFileType);
               styleLexer = highlighter.getHighlightingLexer();
             }
-            else {
-              styleLexer = null;
-            }
             styleLexers.put(styleType, styleLexer);
           }
           else if (hasSeenAttribute()) {
-            if (ourStyleFileType == null) {
-              styleLexer = null;
-            }
-            else {
+            if (ourStyleFileType != null) {
               SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
               LOG.assertTrue(highlighter != null, ourStyleFileType);
               styleLexer = highlighter.getHighlightingLexer();
@@ -265,6 +259,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       final IElementType tokenType = lexer.getTokenType();
 
       if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && hasSeenAttribute() ||
+          tokenType == XmlTokenType.XML_START_TAG_START && hasSeenTag() ||
           tokenType == XmlTokenType.XML_DATA_CHARACTERS && hasSeenTag() ||
           tokenType == XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
         ) {

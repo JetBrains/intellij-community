@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi
 
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 
@@ -46,7 +32,7 @@ import java.util.concurrent.Future
  * @author peter
  */
 @SkipSlowTestLocally
-class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
+class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test modifying file with stubs via VFS"() {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject('Foo.java', 'class Foo {}')
@@ -226,7 +212,7 @@ class B {
   }
 
   private static void loadAndGcAst(PsiFile file) {
-    GCWatcher.tracking(file.node).tryGc()
+    GCWatcher.tracking(file.node).ensureCollected()
     assert !((PsiFileImpl)file).treeElement
   }
 
@@ -288,7 +274,7 @@ class B {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
     for (iteration in 0..<3) {
-      GCWatcher.tracking(files.collect { it.node }).tryGc()
+      GCWatcher.tracking(files.collect { it.node }).ensureCollected()
       files.each { assert !it.treeElement }
 
       List<Future<PsiImportList>> stubFutures = []

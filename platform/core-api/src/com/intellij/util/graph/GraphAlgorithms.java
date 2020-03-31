@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class GraphAlgorithms {
   public static GraphAlgorithms getInstance() {
     return ServiceManager.getService(GraphAlgorithms.class);

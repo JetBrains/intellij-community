@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +19,8 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
 
   public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
                                            @NotNull EventHandler eventHandler,
-                                           @NotNull LinkListener<IdeaPluginDescriptor> listener,
-                                           @NotNull LinkListener<String> searchListener,
-                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
-    super(layout, eventHandler, listener, searchListener, function);
+                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
+    super(layout, eventHandler, function);
     myIcon.setOpaque(false);
     myIcon.setPaintPassiveIcon(false);
     add(myIcon);

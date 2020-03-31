@@ -5,9 +5,6 @@ import org.jetbrains.jps.model.JpsElement;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsAntArtifactExtension extends JpsElement {
   boolean isEnabled();
 

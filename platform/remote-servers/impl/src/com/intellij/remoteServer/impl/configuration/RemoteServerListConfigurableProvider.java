@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.options.Configurable;
@@ -16,9 +16,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class RemoteServerListConfigurableProvider extends ConfigurableProvider {
   @Override
   public boolean canCreateConfigurable() {

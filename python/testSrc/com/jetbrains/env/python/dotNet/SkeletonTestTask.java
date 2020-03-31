@@ -21,7 +21,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -85,7 +86,8 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws IOException, InvalidSdkException {
     final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
-    final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()));
+    final File skeletonsPath = new File(PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()));
+    Arrays.stream(skeletonsPath.listFiles()).forEach(FileUtil::delete);
     File skeletonFileOrDirectory = new File(skeletonsPath, myModuleNameToBeGenerated); // File with module skeleton
 
     // Module may be stored in "moduleName.py" or "moduleName/__init__.py"
@@ -114,11 +116,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-      IntentionAction intention = myFixture.findSingleIntention(intentionName);
-
-      if (intention instanceof IntentionActionDelegate) {
-        intention = ((IntentionActionDelegate)intention).getDelegate();
-      }
+      IntentionAction intention = IntentionActionDelegate.unwrap(myFixture.findSingleIntention(intentionName));
 
       Assert.assertNotNull("No intention found to generate skeletons!", intention);
       Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));

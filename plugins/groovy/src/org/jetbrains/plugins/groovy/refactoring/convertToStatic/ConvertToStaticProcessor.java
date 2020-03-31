@@ -42,11 +42,10 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return myFiles;
       }
 
@@ -57,14 +56,13 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     };
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return UsageInfo.EMPTY_ARRAY;
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     int counter = 0;
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     LOG.assertTrue(progressIndicator != null);

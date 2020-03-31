@@ -24,29 +24,25 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 
-@PlatformTestCase.WrapInCommand
-public class UpdateCacheTest extends PsiTestCase {
+@HeavyPlatformTestCase.WrapInCommand
+public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
-    myProjectManager = ProjectManagerEx.getInstanceEx();
-    LOG.assertTrue(myProjectManager != null, "Cannot instantiate ProjectManager component");
-
-    Path projectFile = getProjectDirOrFile();
-    loadAndSetupProject(projectFile.toString());
+    loadAndSetupProject(getProjectDirOrFile().toString());
   }
 
   private void loadAndSetupProject(String path) throws Exception {
@@ -56,26 +52,13 @@ public class UpdateCacheTest extends PsiTestCase {
 
     setUpModule();
 
-    final String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/updateCache";
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/updateCache";
     createTestProjectStructure( root);
 
     setUpJdk();
 
-    myProjectManager.openTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     runStartupActivities();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, false);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   public void testFileCreation() {
@@ -114,7 +97,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass stringClass = myJavaFacade.findClass("java.lang.String", GlobalSearchScope.allScope(getProject()));
     assertNotNull(stringClass);
-    checkUsages(stringClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    checkUsages(stringClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void testExternalFileModification() {
@@ -135,7 +118,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
-    checkUsages(objectClass, new String[]{});
+    checkUsages(objectClass, ArrayUtil.EMPTY_STRING_ARRAY);
     FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
 
     final String projectLocation = myProject.getPresentableUrl();
@@ -143,7 +126,7 @@ public class UpdateCacheTest extends PsiTestCase {
     PlatformTestUtil.saveProject(myProject);
     final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     myProject = null;
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
 
@@ -202,7 +185,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass threadClass = myJavaFacade.findClass("java.lang.Thread", GlobalSearchScope.allScope(getProject()));
     assertNotNull(threadClass);
-    checkUsages(threadClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    checkUsages(threadClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void testTodoConfigurationChange() {
@@ -242,7 +225,7 @@ public class UpdateCacheTest extends PsiTestCase {
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
     checkUsages(exceptionClass, new String[]{"1.java"});
-    checkTodos(new String[]{});
+    checkTodos(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void testRemoveExcludeRoot() {
@@ -372,8 +355,8 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
-    checkUsages(exceptionClass, new String[]{});
-    checkTodos(new String[]{});
+    checkUsages(exceptionClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    checkTodos(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   private void checkUsages(PsiElement element, @NonNls String[] expectedFiles){

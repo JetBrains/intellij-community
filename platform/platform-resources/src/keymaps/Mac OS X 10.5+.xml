@@ -54,6 +54,9 @@
     <keyboard-shortcut first-keystroke="control J"/>
     <mouse-shortcut keystroke="control button2"/>
   </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
   <action id="ExpressionTypeInfo">
     <keyboard-shortcut first-keystroke="control shift P"/>
   </action>
@@ -176,6 +179,7 @@
     <keyboard-shortcut first-keystroke="meta shift LEFT"/>
   </action>
   <action id="ContextHelp">
+    <keyboard-shortcut first-keystroke="meta shift F1"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="meta 0"/>
@@ -208,12 +212,18 @@
   <action id="ActivateStructureToolWindow">
     <keyboard-shortcut first-keystroke="meta 7"/>
   </action>
-  <action id="ActivateHierarchyToolWindow">
+  <action id="ActivateHierarchyToolWindow"/>
+  <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="meta 8"/>
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="meta 9"/>
-    <keyboard-shortcut first-keystroke="meta shift 9"/>
+  </action>
+  <action id="NextWindow">
+    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+  </action>
+  <action id="PreviousWindow">
+    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
   </action>
   <action id="Generate">
     <keyboard-shortcut first-keystroke="meta N"/>
@@ -236,6 +246,11 @@
   </action>
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
+  </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="meta B"/>
+    <mouse-shortcut keystroke="meta button1"/>
+    <mouse-shortcut keystroke="Force touch" />
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="meta shift B"/>
@@ -283,6 +298,9 @@
 
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="meta R"/>
+  </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="meta alt shift R"/>
   </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="meta R"/>
@@ -462,6 +480,9 @@
     <keyboard-shortcut first-keystroke="meta control F"/>
   </action>
 
+  <action id="Vcs.ToggleAmendCommitMode">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
     <keyboard-shortcut first-keystroke="meta E"/>
@@ -624,7 +645,7 @@
     <keyboard-shortcut first-keystroke="alt DOWN"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
 
@@ -658,5 +679,32 @@
   <action id="RunToCursor">
     <keyboard-shortcut first-keystroke="alt f9" />
     <mouse-shortcut keystroke="Force touch" />
+  </action>
+
+  <action id="ChangesView.GroupBy.Directory">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="ChangesView.GroupBy.Module">
+    <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+
+  <action id="TodoViewGroupByShowModules">
+    <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+  <action id="TodoViewGroupByShowPackages">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="TodoViewGroupByFlattenPackage">
+    <keyboard-shortcut first-keystroke="control F"/>
+  </action>
+
+  <action id="ServiceView.GroupByContributor">
+    <keyboard-shortcut first-keystroke="control T"/>
+  </action>
+  <action id="ServiceView.GroupByServiceGroups">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="ToggleFindInSelection">
+    <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
 </keymap>

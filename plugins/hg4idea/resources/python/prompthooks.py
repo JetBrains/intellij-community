@@ -19,8 +19,8 @@
 
 import socket
 import struct
-import urllib2
-from mercurial import  ui, util, error
+import sys
+from mercurial import ui, util, error
 from mercurial.i18n import _
 
 try:
@@ -28,24 +28,26 @@ try:
 except:
     from mercurial.httprepo import passwordmgr
 
-def sendInt( client, number):
-    length = struct.pack('>L', number)
-    client.sendall( length )
+PY3 = sys.version_info[0] == 3
 
-def send( client, data ):
+def sendInt(client, number):
+    length = struct.pack('>L', number)
+    client.sendall(length)
+
+def send(client, data):
     if data is None:
         sendInt(client, 0)
     else:
         # we need to send data length and data together because it may produce read problems, see org.zmlx.hg4idea.execution.SocketServer
-        client.sendall(struct.pack('>L', len(data)) + data)
+        client.sendall(struct.pack('>L', len(data)) + data.encode('utf-8'))
     
 def receiveIntWithMessage(client, message):
     requiredLength = struct.calcsize('>L')
-    buffer = ''
+    buffer = ''.encode('utf-8')
     while len(buffer)<requiredLength:
         chunk = client.recv(requiredLength-len(buffer))
         if chunk == '':
-            raise error.Abort( message )
+            raise error.Abort(message)
         buffer = buffer + chunk
         
     # struct.unpack always returns a tuple, even if that tuple only contains a single
@@ -58,17 +60,17 @@ def receiveIntWithMessage(client, message):
 def receiveInt(client):
     return receiveIntWithMessage(client, "could not get information from server")
 
-def receive( client ):
+def receive(client):
     receiveWithMessage(client, "could not get information from server")
     
-def receiveWithMessage( client, message ):
+def receiveWithMessage(client, message):
     length = receiveIntWithMessage(client, message)
-    buffer = ''
+    buffer = ''.encode('utf-8')
     while len(buffer) < length :
         chunk = client.recv(length - len(buffer))
         if chunk == '':
-            raise error.Abort( message)
-        buffer = buffer+chunk
+            raise error.Abort(message)
+        buffer = buffer + chunk
         
     return buffer
 
@@ -80,7 +82,7 @@ def monkeypatch_method(cls):
     return decorator
 
 def sendchoicestoidea(ui, msg, choices, default):
-    port = int(ui.config( 'hg4ideaprompt', 'port', None, True))
+    port = int(ui.config( b'hg4ideaprompt', b'port', None, True))
 
     if not port:
         raise error.Abort("No port was specified")
@@ -95,18 +97,18 @@ def sendchoicestoidea(ui, msg, choices, default):
     if not numOfChoices:
         return default
 
-    client = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     try:
-        client.connect( ('127.0.0.1', port) )
+        client.connect(('127.0.0.1', port))
 
-        send( client, msg )
-        sendInt( client, numOfChoices )
+        send(client, msg)
+        sendInt(client, numOfChoices)
         for choice in choices:
-            send( client, choice )
-        sendInt( client, default )
+            send(client, choice)
+        sendInt(client, default)
     
-        answer = receiveInt( client )
+        answer = receiveInt(client)
         if answer == -1:
             raise error.Abort("User cancelled")
         else:      
@@ -114,25 +116,15 @@ def sendchoicestoidea(ui, msg, choices, default):
     except:
         raise
 
-# determine which method to monkey patch : 
-# in Mercurial 1.4 the prompt method was renamed to promptchoice
-if getattr(ui.ui, 'promptchoice', None):
-    @monkeypatch_method(ui.ui)
-    def promptchoice(self, msg, choices=None, default=0):
-        return sendchoicestoidea(self, msg, choices, default)
-else:
-    @monkeypatch_method(ui.ui)
-    def prompt(self, msg, choices=None, default="y"):
-        resps = [s[s.index('&')+1].lower() for s in choices]
-        defaultIndex = resps.index( default )
-        responseIndex = sendchoicestoidea( self, msg, choices, defaultIndex)
-        return resps[responseIndex]
+@monkeypatch_method(ui.ui)
+def promptchoice(self, msg, choices=None, default=0):
+    return sendchoicestoidea(self, msg, choices, default)
 
 original_warn = ui.ui.warn
 @monkeypatch_method(ui.ui)
 def warn(self, *msg):
     original_warn(self, *msg)
-    hg4ideaWarnConfig = self.config('hg4ideawarn', 'port', None, True)
+    hg4ideaWarnConfig = self.config(b'hg4ideawarn', b'port', None, True)
     if hg4ideaWarnConfig is None:
         return
     port = int(hg4ideaWarnConfig)
@@ -142,19 +134,19 @@ def warn(self, *msg):
 
     self.debug( "hg4idea prompt server waiting on port %s" % port )
 
-    client = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    self.debug( "connecting ..." )
-    client.connect( ('127.0.0.1', port) )
-    self.debug( "connected, sending data ..." )
+    self.debug("connecting ...")
+    client.connect(('127.0.0.1', port))
+    self.debug("connected, sending data ...")
     
-    sendInt( client, len(msg) )
+    sendInt(client, len(msg))
     for message in msg:
-        send( client, message )
+        send(client, message)
 
 
 def retrieve_pass_from_server(ui, uri,path, proposed_user):
-    port = int(ui.config('hg4ideapass', 'port', None, True))
+    port = int(ui.config(b'hg4ideapass', b'port', None, True))
     if port is None:
         raise error.Abort("No port was specified")
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -166,8 +158,8 @@ def retrieve_pass_from_server(ui, uri,path, proposed_user):
     send(client, uri)
     send(client, path)
     send(client, proposed_user)
-    user = receiveWithMessage(client, "http authorization required")
-    password = receiveWithMessage(client, "http authorization required")
+    user = receiveWithMessage(client, b"http authorization required")
+    password = receiveWithMessage(client, b"http authorization required")
     return user, password
 
 
@@ -177,44 +169,34 @@ def find_user_password(self, realm, authuri):
     try:
         return original_retrievepass(self, realm, authuri)
     except error.Abort:
-
-        # In mercurial 1.8 the readauthtoken method was replaced with
-        # the readauthforuri method, which has different semantics
-        if getattr(self, 'readauthtoken', None):
-            def read_hgrc_authtoken(ui, authuri):
-                return self.readauthtoken(authuri)
-        else:
-            def read_hgrc_authtoken(ui, authuri):
-                try:
-                    # since hg 1.8
-                    from mercurial.url import readauthforuri
-                except ImportError:
-                    # hg 1.9: readauthforuri moved to httpconnection
-                    from mercurial.httpconnection import readauthforuri
-                from inspect import getargspec
-                args, _, _, _ = getargspec(readauthforuri)
-                if len(args) == 2:
-                    res = readauthforuri(self.ui, authuri)
-                else:
-                    # since hg 1.9.2 readauthforuri accepts 3 required arguments instead of 2
-                    res = readauthforuri(self.ui, authuri, "")
-                if res:
-                    group, auth = res
-                    return auth
-                else:
-                    return None
+        def read_hgrc_authtoken(ui, authuri):
+            from mercurial.httpconnection import readauthforuri
+            from inspect import getargspec
+            args, _, _, _ = getargspec(readauthforuri)
+            res = readauthforuri(self.ui, authuri, "")
+            if res:
+                group, auth = res
+                return auth
+            else:
+                return None
 
         # After mercurial 3.8.3 urllib2.HTTPPasswordmgrwithdefaultrealm.find_user_password etc were changed to appropriate methods
         # in util.urlreq module with slightly different semantics
-        newMerc = False if isinstance(self, urllib2.HTTPPasswordMgrWithDefaultRealm) else True
+        #
+        # Mercurial 5.2 started supporting python3, where urllib2 has been split into several modules
+        if PY3:
+            import urllib.request as urllib
+        else:
+            import urllib2 as urllib
+        newMerc = False if isinstance(self, urllib.HTTPPasswordMgrWithDefaultRealm) else True
         if newMerc:
             user, password = util.urlreq.httppasswordmgrwithdefaultrealm().find_user_password(realm, authuri)
         else:
-            user, password = urllib2.HTTPPasswordMgrWithDefaultRealm.find_user_password(self, realm, authuri)
+            user, password = urllib.HTTPPasswordMgrWithDefaultRealm.find_user_password(self, realm, authuri)
         if user is None:
             auth = read_hgrc_authtoken(self.ui, authuri)
             if auth:
-                user = auth.get("username")
+                user = auth.get(b"username")
 
         pmWithRealm = util.urlreq.httppasswordmgrwithdefaultrealm() if newMerc else self
         reduced_uri, path = pmWithRealm.reduce_uri(authuri, False)

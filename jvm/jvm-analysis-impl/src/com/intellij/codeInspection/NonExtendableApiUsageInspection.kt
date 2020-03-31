@@ -7,7 +7,7 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -22,8 +22,12 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
     val ANNOTATION_NAME = ApiStatus.NonExtendable::class.java.canonicalName!!
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-    ApiUsageUastVisitor.createPsiElementVisitor(NonExtendableApiUsageProcessor(holder))
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    if (JavaPsiFacade.getInstance(holder.project).findClass(ANNOTATION_NAME, holder.file.resolveScope) != null) {
+      ApiUsageUastVisitor.createPsiElementVisitor(NonExtendableApiUsageProcessor(holder))
+    } else {
+      PsiElementVisitor.EMPTY_VISITOR
+    }
 
   private class NonExtendableApiUsageProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
 
@@ -32,21 +36,15 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
       return virtualFile != null && ProjectFileIndex.getInstance(element.project).isInLibraryClasses(virtualFile)
     }
 
-    private fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
-      val ancestorPsi = ancestor.sourcePsi ?: return false
-      val childPsi = child.sourcePsi ?: return false
-      return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, false)
-    }
-
-    private fun isSuperClassReferenceInSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) =
-      subclassDeclaration.uastSuperTypes.any { isPsiAncestor(it, sourceNode) }
+    private fun isSuperClassReferenceInSubclassDeclaration(subclassDeclaration: UClass, superClass: PsiClass) =
+      subclassDeclaration.uastSuperTypes.any { superClass.manager.areElementsEquivalent(superClass, PsiTypesUtil.getPsiClass(it.type)) }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       if (target !is PsiClass || !target.hasAnnotation(ANNOTATION_NAME)) {
         return
       }
       val classDeclaration = sourceNode.sourcePsi.findContaining(UClass::class.java)
-      if (classDeclaration == null || !isSuperClassReferenceInSubclassDeclaration(sourceNode, classDeclaration)) {
+      if (classDeclaration == null || !isSuperClassReferenceInSubclassDeclaration(classDeclaration, target)) {
         return
       }
 
@@ -56,7 +54,8 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
         val description = if (target.isInterface) {
           if (classDeclaration.isInterface) {
             JvmAnalysisBundle.message("jvm.inspections.api.no.extension.interface.extend.description", className)
-          } else {
+          }
+          else {
             JvmAnalysisBundle.message("jvm.inspections.api.no.extension.interface.implement.description", className)
           }
         }
@@ -69,8 +68,8 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
 
     override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {
       val elementToHighlight = method.uastAnchor.sourcePsiElement ?: return
-      val methodName = HighlightMessageUtil.getSymbolName(overriddenMethod) ?: return
       if (overriddenMethod.hasAnnotation(ANNOTATION_NAME) && isLibraryElement(overriddenMethod)) {
+        val methodName = HighlightMessageUtil.getSymbolName(overriddenMethod) ?: return
         val description = JvmAnalysisBundle.message("jvm.inspections.api.no.extension.method.overriding.description", methodName)
         problemsHolder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }

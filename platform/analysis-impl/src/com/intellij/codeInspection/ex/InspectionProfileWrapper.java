@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class InspectionProfileWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
+  private static final Logger LOG = Logger.getInstance(InspectionProfileWrapper.class);
 
   /**
    * Key that is assumed to hold strategy that customizes {@link InspectionProfileWrapper} object to use.
@@ -48,7 +48,7 @@ public class InspectionProfileWrapper {
     myProfile = profile;
   }
 
-  public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
+  public static void checkInspectionsDuplicates(InspectionToolWrapper @NotNull [] toolWrappers) {
     if (alreadyChecked) {
       return;
     }
@@ -67,8 +67,8 @@ public class InspectionProfileWrapper {
     return myProfile.isToolEnabled(key, element);
   }
 
-  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey,
-                                             PsiElement element) {
+  @NotNull
+  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 

@@ -14,8 +14,7 @@ public interface GrSignature {
   @NotNull
   PsiSubstitutor getSubstitutor();
 
-  @NotNull
-  GrClosureParameter[] getParameters();
+  GrClosureParameter @NotNull [] getParameters();
 
   int getParameterCount();
 

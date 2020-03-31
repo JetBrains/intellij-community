@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -154,8 +155,12 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     Set<LookupElement> plainVariants =
       JavaSmartCompletionContributor.completeReference(qualifier, qualifier, filter, true, true, parameters, qMatcher);
 
-    for (PsiClass aClass : PsiShortNamesCache.getInstance(qualifier.getProject()).getClassesByName(referenceName, qualifier.getResolveScope())) {
-      plainVariants.add(JavaClassNameCompletionContributor.createClassLookupItem(aClass, true));
+    Project project = qualifier.getProject();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    for (PsiClass aClass : PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, qualifier.getResolveScope())) {
+      if (helper.isAccessible(aClass, qualifier, null)) {
+        plainVariants.add(JavaClassNameCompletionContributor.createClassLookupItem(aClass, true));
+      }
     }
 
     if (!plainVariants.isEmpty()) {

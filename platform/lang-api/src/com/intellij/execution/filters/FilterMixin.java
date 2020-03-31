@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface FilterMixin {
   boolean shouldRunHeavy();
-  void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<AdditionalHighlight> consumer);
+  void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<? super AdditionalHighlight> consumer);
 
   @NotNull
   String getUpdateMessage();
@@ -34,8 +34,7 @@ public interface FilterMixin {
       super(start, end, null);
     }
 
-    @SuppressWarnings("unused")
-    public AdditionalHighlight(@NotNull List<Filter.ResultItem> resultItems) {
+    public AdditionalHighlight(@NotNull List<? extends Filter.ResultItem> resultItems) {
       super(resultItems);
     }
 

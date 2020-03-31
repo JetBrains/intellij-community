@@ -1,0 +1,4 @@
+-r base_requirements.txt
+pandas
+cookiecutter
+Jinja2

@@ -11,7 +11,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.function.Supplier;
 
 public class ClipboardUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
+  private static final Logger LOG = Logger.getInstance(ClipboardUtil.class);
 
   public static <E> E handleClipboardSafely(@NotNull Supplier<? extends E> supplier, E defaultValue) {
     try {

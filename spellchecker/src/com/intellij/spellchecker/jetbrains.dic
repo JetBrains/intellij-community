@@ -1,7 +1,9 @@
 accessor
 accessors
 additivity
+agentlib
 agentmain
+agentpath
 aggregator
 ajax
 akka
@@ -13,6 +15,7 @@ anyschema
 aopalliance
 apomorphism
 apothem
+appdata
 appender
 archivelog
 argc
@@ -58,7 +61,9 @@ bfile
 bigfile
 bigint
 binlog
+bintray
 bitcoin
+blit
 blog
 blogger
 blogging
@@ -81,6 +86,7 @@ calc
 callee
 callouts
 camelcase
+cancellability
 cancelable
 cancellable
 capath
@@ -99,6 +105,7 @@ checkboxes
 checkstyle
 checksum
 chmod
+cifs
 clangd
 classloader
 classloading
@@ -125,6 +132,7 @@ commonjs
 comonad
 comparision
 concat
+concatenable
 cond
 conda
 conf
@@ -223,6 +231,7 @@ facelets
 fallthrough
 fastcall
 favicon
+fdatasync
 filename
 fileset
 filesets
@@ -241,6 +250,7 @@ freelists
 freemarker
 freepools
 frontend
+fsync
 ftlvariable
 fulltext
 func
@@ -261,6 +271,7 @@ getters
 gists
 github
 gitlab
+gitter
 globals
 google
 googletest
@@ -268,6 +279,7 @@ goto
 gradle
 grapheme
 graphemes
+graphql
 grayscale
 greenplum
 greyscale
@@ -291,6 +303,7 @@ haxe
 hazelcast
 hdiv
 helvetica
+helidon
 holdability
 hicpp
 hostname
@@ -320,6 +333,7 @@ initializer
 initrans
 injectable
 inline
+inlining
 innodb
 inode
 inode's
@@ -339,6 +353,7 @@ isnull
 iterable
 iterables
 jacoco
+jaeger
 javabean
 javabeans
 javac
@@ -349,7 +364,7 @@ javascript
 javax
 jaxb
 jaxen
-jetbrains
+jcef
 jibx
 jira
 jndi
@@ -398,6 +413,7 @@ liskov
 listable
 lldb
 llvm
+localappdata
 localhost
 localtime
 localtimestamp
@@ -418,6 +434,7 @@ lossy
 lucene
 lvalue
 lvalues
+LVTI
 macrodef
 mailto
 makefile
@@ -443,6 +460,10 @@ metacharacters
 metadata
 metas
 metaspace
+micronaut
+microprofile
+microservice
+microservices
 middleint
 middleware
 millis
@@ -462,6 +483,7 @@ mongodb
 monoid
 monoidal
 monoids
+monorepo
 monospaced
 msql
 mssql
@@ -575,9 +597,11 @@ pctversion
 perf
 permalink
 petersburg
+pgrep
 pipelined
 pipenv
 pipfile
+pkill
 plaintext
 playlist
 playlists
@@ -610,9 +634,6 @@ preconfigured
 preconfigures
 prefetch
 premain
-prepend
-prepended
-prepends
 preprocessor
 preprocessors
 println
@@ -629,6 +650,7 @@ proxool
 pseudorandom
 ptrdiff
 pycharm
+quarkus
 queryable
 radiobutton
 reactivestreams
@@ -689,6 +711,8 @@ rubymine
 runtime
 rvalue
 rvalues
+rxkotlin
+rxjava
 samskivert
 savepoint
 sbin
@@ -716,7 +740,9 @@ sftp
 shader
 sharding
 shellcheck
+shfmt
 sigabrt
+sigaction
 sigaio
 sigalrm
 sigbus
@@ -737,6 +763,7 @@ sigprof
 sigpwr
 sigquit
 sigsegv
+sigset
 sigstop
 sigsys
 sigterm
@@ -886,6 +913,7 @@ ungroup
 ungrouped
 ungrouping
 unhandled
+uninject
 uninstall
 uniques
 unmarshal
@@ -898,6 +926,7 @@ upsource
 urlencoded
 urowid
 username
+userprofile
 utf
 util
 utils
@@ -916,6 +945,7 @@ vectorcall
 verdana
 versa
 vertices
+vertx
 viewlet
 viewport
 viewports

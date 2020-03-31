@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -20,7 +22,6 @@ import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -60,7 +61,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class JarRepositoryManager {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler");
+  private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
 
   private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
@@ -102,29 +103,27 @@ public class JarRepositoryManager {
     }
 
     final NewLibraryConfiguration config = resolveAndDownload(
-      project, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories(), libraryDescriptor
+      project, libraryDescriptor, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
-      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + libraryDescriptor.getMavenId(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(parentComponent, JavaUiBundle.message("error.message.no.files.were.downloaded.for.0", libraryDescriptor.getMavenId()), CommonBundle.getErrorTitle());
     }
     return config;
   }
 
-  private static NewLibraryConfiguration resolveAndDownload(Project project,
-                                                            EnumSet<ArtifactKind> kinds,
-                                                            String copyTo,
-                                                            Collection<RemoteRepositoryDescription> repositories,
-                                                            JpsMavenRepositoryLibraryDescriptor libraryDescriptor) {
-    RepositoryLibraryProperties props = new RepositoryLibraryProperties(libraryDescriptor);
-    final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
+  @Nullable
+  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                           Set<ArtifactKind> kinds,
+                                                           String copyTo,
+                                                           Collection<RemoteRepositoryDescription> repositories) {
     final Collection<OrderRoot> roots = new ArrayList<>();
-    if (libDescriptor.getMavenId() != null) {
-      roots.addAll(loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo));
+    if (descriptor.getMavenId() != null) {
+      roots.addAll(loadDependenciesModal(project, descriptor, kinds, repositories, copyTo));
     }
-
     if (!roots.isEmpty()) {
       notifyArtifactsDownloaded(project, roots);
-      return createNewLibraryConfiguration(props, roots);
+      return createNewLibraryConfiguration(new RepositoryLibraryProperties(descriptor), roots);
     }
     return null;
   }
@@ -138,8 +137,9 @@ public class JarRepositoryManager {
                                                            String copyTo,
                                                            Collection<RemoteRepositoryDescription> repositories) {
     JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
-    return resolveAndDownload(project, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()),
-                              copyTo, repositories, libraryDescriptor);
+    return resolveAndDownload(
+      project, libraryDescriptor, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()), copyTo, repositories
+    );
   }
 
   @NotNull
@@ -312,7 +312,7 @@ public class JarRepositoryManager {
     else {
       template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, packaging, true), null);
     }
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaPsiBundle.message("task.background.title.maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
@@ -351,7 +351,7 @@ public class JarRepositoryManager {
   public static void searchRepositories(Project project,
                                         Collection<String> serviceUrls,
                                         Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaPsiBundle.message("task.background.title.maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
@@ -414,7 +414,7 @@ public class JarRepositoryManager {
   private static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
-    JobExecutor.INSTANCE.submit(() -> {
+    JobExecutor.INSTANCE.execute(() -> {
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
@@ -582,7 +582,7 @@ public class JarRepositoryManager {
       }
       catch (Exception e) {
         final String resolvedVersion = resolveVersion(manager, version);
-        if (Comparing.equal(version, resolvedVersion)) { // no changes
+        if (Objects.equals(version, resolvedVersion)) { // no changes
           throw e;
         }
         try {

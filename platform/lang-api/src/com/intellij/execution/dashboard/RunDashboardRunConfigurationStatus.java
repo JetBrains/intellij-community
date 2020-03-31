@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.treeView.WeighedItem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public class RunDashboardRunConfigurationStatus {
+public class RunDashboardRunConfigurationStatus implements WeighedItem {
   public static final RunDashboardRunConfigurationStatus STARTED = new RunDashboardRunConfigurationStatus(
     ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Actions.Execute, 10);
   public static final RunDashboardRunConfigurationStatus FAILED = new RunDashboardRunConfigurationStatus(
@@ -38,12 +39,12 @@ public class RunDashboardRunConfigurationStatus {
 
   private final String myName;
   private final Icon myIcon;
-  private final int myPriority;
+  private final int myWeight;
 
-  public RunDashboardRunConfigurationStatus(String name, Icon icon, int priority) {
+  public RunDashboardRunConfigurationStatus(String name, Icon icon, int weight) {
     myName = name;
     myIcon = icon;
-    myPriority = priority;
+    myWeight = weight;
   }
 
   public String getName() {
@@ -54,8 +55,9 @@ public class RunDashboardRunConfigurationStatus {
     return myIcon;
   }
 
-  public int getPriority() {
-    return myPriority;
+  @Override
+  public int getWeight() {
+    return myWeight;
   }
 
   @NotNull

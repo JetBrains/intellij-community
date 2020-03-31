@@ -26,9 +26,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerImpl");
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("move.inner.to.upper.level.title");
+  private static final Logger LOG = Logger.getInstance(MoveInnerImpl.class);
 
   public static void doMove(final Project project, PsiElement[] elements, final MoveCallback moveCallback, @Nullable PsiElement targetContainer) {
     if (elements.length != 1) return;
@@ -87,5 +85,9 @@ public class MoveInnerImpl {
     // should not happen
     LOG.assertTrue(false);
     return null;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("move.inner.to.upper.level.title");
   }
 }

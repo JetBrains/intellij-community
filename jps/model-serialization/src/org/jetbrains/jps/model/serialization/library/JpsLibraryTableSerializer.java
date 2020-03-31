@@ -29,16 +29,13 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JpsLibraryTableSerializer {
   private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true)
   };
-  private static final String NAME_ATTRIBUTE = "name";
-  private static final String TYPE_ATTRIBUTE = "type";
+  public static final String NAME_ATTRIBUTE = "name";
+  public static final String TYPE_ATTRIBUTE = "type";
   public static final String PROPERTIES_TAG = "properties";
   public static final String JAR_DIRECTORY_TAG = "jarDirectory";
   private static final String URL_ATTRIBUTE = "url";

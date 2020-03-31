@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
+import com.intellij.codeInsight.lookup.CommaTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public abstract class RParenthTailType extends TailType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.RParenthSimpleTailType");
+  private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
 
   private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
     PsiElement element = file.findElementAt(startOffset);
@@ -53,7 +54,8 @@ public abstract class RParenthTailType extends TailType {
 
   @Override
   public int processTail(final Editor editor, int tailOffset) {
-    return addRParenth(editor, tailOffset, isSpaceWithinParentheses(getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
+    return addRParenth(editor, tailOffset,
+                       isSpaceWithinParentheses(CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
   }
 
   public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {

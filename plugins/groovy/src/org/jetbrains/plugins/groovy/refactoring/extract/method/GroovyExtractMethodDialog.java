@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
@@ -17,6 +17,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +73,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myParameterTablePanel.init(myHelper);
 
     setModal(true);
-    setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
+    setTitle(GroovyExtractMethodHandler.getRefactoringName());
     init();
     setUpNameField();
     setUpDialog();
@@ -275,7 +276,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtil.toStringArray(conflicts));
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtilRt.toStringArray(conflicts));
     return conflictsDialog.showAndGet();
   }
 

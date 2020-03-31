@@ -19,8 +19,8 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,12 +38,12 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     return Collections.singleton(new AttachSourcesAction() {
       @Override
       public String getName() {
-        return ProjectBundle.message("maven.action.download.sources");
+        return MavenProjectBundle.message("maven.action.download.sources");
       }
 
       @Override
       public String getBusyText() {
-        return ProjectBundle.message("maven.action.download.sources.busy.text");
+        return MavenProjectBundle.message("maven.action.download.sources.busy.text");
       }
 
       @Override
@@ -80,7 +80,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
             message.append("</html>");
 
             Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                      "Cannot download sources",
+                                                      MavenProjectBundle.message("maven.sources.cannot.download"),
                                                       message.toString(),
                                                       NotificationType.WARNING),
                                      psiFile.getProject());

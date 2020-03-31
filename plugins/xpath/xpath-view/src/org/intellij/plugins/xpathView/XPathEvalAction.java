@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
@@ -27,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.FileViewProvider;
@@ -64,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -119,7 +115,7 @@ import java.util.List;
  */
 public class XPathEvalAction extends XPathAction {
 
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
+    private static final Logger LOG = Logger.getInstance(XPathEvalAction.class);
 
   @Override
     protected void updateToolbar(AnActionEvent event) {
@@ -301,7 +297,6 @@ public class XPathEvalAction extends XPathAction {
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, "XML Document(s)"));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
         final UsageTarget[] usageTargets = { usageTarget };
@@ -414,35 +409,10 @@ public class XPathEvalAction extends XPathAction {
             throw new IllegalArgumentException();
         }
 
-        @Override
-        public void findUsagesInEditor(@NotNull FileEditor editor) {
-            throw new IllegalArgumentException();
-        }
-
-      @Override
-      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
-        throw new UnsupportedOperationException();
-      }
-
       @Override
       public boolean isValid() {
             // re-run will become unavailable if the context node is invalid
             return myContextNode == null || myContextNode.isValid();
-        }
-
-        @Override
-        public boolean isReadOnly() {
-            return true;
-        }
-
-        @Override
-        @Nullable
-        public VirtualFile[] getFiles() {
-            return null;
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override
@@ -482,7 +452,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<? super Usage> processor) {
             Runnable runnable = () -> {
                 final List<?> list;
                 if (myResult.isEmpty()) {
@@ -501,13 +471,14 @@ public class XPathEvalAction extends XPathAction {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
                 indicator.setText("Collecting matches...");
 
-                Collections.sort(list, (Comparator)(o1, o2) -> {
-                    indicator.checkCanceled();
-                    if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
-                        return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
-                    } else {
-                        return String.valueOf(o1).compareTo(String.valueOf(o2));
-                    }
+                list.sort((Comparator)(o1, o2) -> {
+                  indicator.checkCanceled();
+                  if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
+                    return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
+                  }
+                  else {
+                    return String.valueOf(o1).compareTo(String.valueOf(o2));
+                  }
                 });
                 for (int i = 0; i < size; i++) {
                     indicator.checkCanceled();

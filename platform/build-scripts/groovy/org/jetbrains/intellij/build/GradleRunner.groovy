@@ -1,45 +1,48 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @CompileStatic
 class GradleRunner {
-  private final File projectDir
+  private final File gradleProjectDir
+  private final String projectDir
   private final BuildMessages messages
   private final String javaHome
+  @Lazy
+  private volatile GradleRunner modularGradleRunner = {
+    createModularRunner()
+  }()
 
-  GradleRunner(File projectDir, BuildMessages messages, String javaHome) {
+  GradleRunner(File gradleProjectDir, String projectDir, BuildMessages messages, String javaHome) {
     this.messages = messages
     this.projectDir = projectDir
+    this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
   }
 
   /**
-   * Invokes Gradle tasks on {@link #projectDir} project.
+   * Invokes Gradle tasks on {@link #gradleProjectDir} project.
    * Logs error and stops the build process if Gradle process is failed.
    */
   boolean run(String title, String... tasks) {
     return runInner(title, false, tasks)
   }
-  
+
   /**
-   * Invokes Gradle tasks on {@link #projectDir} project.
+   *
+   * @see GradleRunner#run(java.lang.String, java.lang.String [ ])
+   */
+  boolean runWithModularRuntime(String title, String... tasks) {
+    if (isModularRuntime()) return run(title, tasks)
+    return modularGradleRunner.run(title, tasks)
+  }
+
+  /**
+   * Invokes Gradle tasks on {@link #gradleProjectDir} project.
    * Ignores the result of running Gradle.
    */
   boolean forceRun(String title, String... tasks) {
@@ -67,24 +70,44 @@ class GradleRunner {
   private boolean runInner(String... tasks) {
     def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
     List<String> command = new ArrayList()
-    command.add("${projectDir.absolutePath}/$gradleScript".toString())
+    command.add("${gradleProjectDir.absolutePath}/$gradleScript".toString())
     command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
-    command.addAll(tasks)
     command.add('--stacktrace')
     if (System.getProperty("intellij.build.use.gradle.daemon", "false").toBoolean()) {
       command.add('--daemon')
-    } else {
+    }
+    else {
       command.add('--no-daemon')
     }
     def additionalParams = System.getProperty('intellij.gradle.jdk.build.parameters')
     if (additionalParams != null && !additionalParams.isEmpty()) {
       command.addAll(additionalParams.split(" "))
     }
-    def processBuilder = new ProcessBuilder(command).directory(projectDir)
+    command.addAll(tasks)
+    def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
     processBuilder.environment().put("JAVA_HOME", javaHome)
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
     return process.waitFor() == 0
+  }
+
+  private boolean isModularRuntime() {
+    return JdkVersionDetector.instance
+             .detectJdkVersionInfo(javaHome)
+             .@version.feature >= 11
+  }
+
+  private GradleRunner createModularRunner() {
+    if (isModularRuntime()) {
+      return this
+    }
+    run('Downloading JBR 11', 'setupJbr11')
+    def modularRuntime = "$projectDir/build/jdk/11"
+    if (SystemInfo.isMac) {
+      modularRuntime += '/Contents/Home'
+    }
+    modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)
+    return new GradleRunner(gradleProjectDir, projectDir, messages, modularRuntime)
   }
 }

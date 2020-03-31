@@ -24,12 +24,6 @@ import java.util.List;
  * @author okli
  */
 public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values");
-  }
 
   @NotNull
   @Override

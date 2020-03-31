@@ -32,13 +32,6 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.final.field.of.exception.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.of.exception.problem.descriptor");

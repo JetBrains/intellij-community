@@ -90,8 +90,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  @NotNull
-  public RangeHighlighter[] getAllHighlighters() {
+  public RangeHighlighter @NotNull [] getAllHighlighters() {
     return RangeHighlighter.EMPTY_ARRAY;
   }
 
@@ -140,6 +139,15 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @NotNull
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+    return MarkupIterator.EMPTY;
+  }
+
+  @NotNull
+  @Override
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                int endOffset,
+                                                                boolean onlyRenderedInGutter,
+                                                                boolean onlyRenderedInScrollBar) {
     return MarkupIterator.EMPTY;
   }
 

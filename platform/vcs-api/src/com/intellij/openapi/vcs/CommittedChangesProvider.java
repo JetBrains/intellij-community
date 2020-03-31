@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
@@ -16,39 +16,48 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
-public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends VcsProviderMarker {
+public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
   @NotNull
   default U createDefaultSettings() {
     //noinspection unchecked
     return (U)new ChangeBrowserSettings();
   }
 
-  ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
+  @NotNull
+  ChangesBrowserSettingsEditor<U> createFilterUI(boolean showDateFilter);
 
   @Nullable
-  RepositoryLocation getLocationFor(FilePath root);
+  RepositoryLocation getLocationFor(@NotNull FilePath root);
 
+  /**
+   * @deprecated use {@link #getLocationFor(FilePath)}
+   */
   @SuppressWarnings("unused")
   @Deprecated // Required for compatibility with external plugins.
   @Nullable
-  default RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
+  default RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
     return getLocationFor(root);
   }
 
   @Nullable
-  VcsCommittedListsZipper getZipper();
+  default VcsCommittedListsZipper getZipper() {
+    return null;
+  }
 
-  List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
+  @NotNull
+  List<T> getCommittedChanges(U settings, RepositoryLocation location, int maxCount) throws VcsException;
 
-  void loadCommittedChanges(U settings, RepositoryLocation location, final int maxCount, final AsynchConsumer<CommittedChangeList> consumer) throws VcsException;
+  void loadCommittedChanges(U settings,
+                            @NotNull RepositoryLocation location,
+                            int maxCount,
+                            @NotNull AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException;
 
-  ChangeListColumn[] getColumns();
+  ChangeListColumn @NotNull [] getColumns();
 
   @Nullable
-  VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location);
+  default VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+    return null;
+  }
 
   /**
    * since may be different for different VCSs
@@ -59,13 +68,18 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
    * @return required list and path of the target file in that revision (changes when move/rename)
    */
   @Nullable
-  Pair<T, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException;
+  Pair<T, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) throws VcsException;
 
-  RepositoryLocation getForNonLocal(final VirtualFile file);
+  @Nullable
+  default RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
+    return null;
+  }
 
   /**
    * Return true if this committed changes provider can be used to show the incoming changes.
    * If false is returned, the "Incoming" tab won't be shown in the Changes toolwindow.
    */
-  boolean supportsIncomingChanges();
+  default boolean supportsIncomingChanges() {
+    return true;
+  }
 }

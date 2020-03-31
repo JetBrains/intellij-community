@@ -29,14 +29,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public final class UnscrambleAction extends AnAction implements DumbAware {
-
   static {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC,
-                                                                            new UnscrambleListener());
-  }
-
-  public UnscrambleAction() {
-    super("Analyze _Stack Trace or Thread Dump...", "Open console with the navigatable stack trace or a thread dump", null);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new UnscrambleListener());
   }
 
   @Override
@@ -45,7 +39,8 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
     String message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
     if (message != null) {
       AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
-    } else {
+    }
+    else {
       new UnscrambleDialog(project).show();
     }
   }

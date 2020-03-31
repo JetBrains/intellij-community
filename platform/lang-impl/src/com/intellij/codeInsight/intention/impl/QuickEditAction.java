@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,7 +35,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,19 +42,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * "Quick Edit Language" intention action that provides an editor which shows an injected language
  * fragment's complete prefix and suffix in non-editable areas and allows to edit the fragment
  * without having to consider any additional escaping rules (e.g. when editing regexes in String
  * literals).
- * 
+ *
  * @author Gregory Shrago
  * @author Konstantin Bulenkov
  */
-public class QuickEditAction implements IntentionAction, LowPriorityAction {
+public class QuickEditAction extends QuickEditActionKeys implements IntentionAction, LowPriorityAction {
   public static final Key<QuickEditHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
-  public static final Key<Boolean> EDIT_ACTION_AVAILABLE = Key.create("EDIT_ACTION_AVAILABLE");
   private String myLastLanguageName;
 
   @Override
@@ -90,7 +90,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
   public QuickEditHandler invokeImpl(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
-    Pair<PsiElement, TextRange> pair = ObjectUtils.assertNotNull(getRangePair(file, editor));
+    Pair<PsiElement, TextRange> pair = Objects.requireNonNull(getRangePair(file, editor));
 
     PsiFile injectedFile = (PsiFile)pair.first;
     QuickEditHandler handler = getHandler(project, injectedFile, editor, file);
@@ -141,7 +141,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   protected boolean isShowInBalloon() {
     return false;
   }
-  
+
   @Nullable
   protected JComponent createBalloonComponent(@NotNull PsiFile file) {
     return null;
@@ -150,13 +150,13 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   @Override
   @NotNull
   public String getText() {
-    return "Edit "+ StringUtil.notNullize(myLastLanguageName, "Injected")+" Fragment";
+    return CodeInsightBundle.message("intention.text.edit.0.fragment", StringUtil.notNullize(myLastLanguageName, "Injected"));
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Edit Injected Fragment";
+    return CodeInsightBundle.message("intention.family.edit.injected.fragment");
   }
 
   public static Balloon.Position getBalloonPosition(Editor editor) {

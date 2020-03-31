@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class GitResetAction extends GitOneCommitPerRepoLogAction {
     if (dialog.showAndGet()) {
       final GitResetMode selectedMode = dialog.getResetMode();
       settings.setResetMode(selectedMode);
-      new Task.Backgroundable(project, "Git reset", true) {
+      new Task.Backgroundable(project, GitBundle.message("git.reset.process"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           Map<GitRepository, Hash> hashes = commits.keySet().stream().collect(

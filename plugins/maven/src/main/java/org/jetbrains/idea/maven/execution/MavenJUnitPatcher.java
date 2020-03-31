@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
@@ -6,33 +6,50 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenJUnitPatcher extends JUnitPatcher {
-  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+public final class MavenJUnitPatcher extends JUnitPatcher {
+  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
+  public static final Pattern ARG_LINE_PATTERN = Pattern.compile("@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
+  private static final Set<String> EXCLUDE_SUBTAG_NAMES =
+    ContainerUtil.immutableSet("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
+  // See org.apache.maven.artifact.resolver.filter.AbstractScopeArtifactFilter
+  private static final Map<String, List<String>> SCOPE_FILTER = ContainerUtil.<String, List<String>>immutableMapBuilder()
+    .put("compile", Arrays.asList("system", "provided", "compile"))
+    .put("runtime", Arrays.asList("compile", "runtime"))
+    .put("compile+runtime", Arrays.asList("system", "provided", "compile", "runtime"))
+    .put("runtime+system", Arrays.asList("system", "compile", "runtime"))
+    .put("test", Arrays.asList("system", "provided", "compile", "runtime", "test"))
+    .build();
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
@@ -41,21 +58,79 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
     if (mavenProject == null) return;
 
-    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "surefire", config);
+    UnaryOperator<String> runtimeProperties = getDynamicConfigurationProperties(module, mavenProject, javaParameters);
+
+    configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-surefire-plugin", "surefire");
+    configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
+  }
+
+  private static void configureFromPlugin(@NotNull Module module,
+                                          JavaParameters javaParameters,
+                                          MavenProject mavenProject,
+                                          UnaryOperator<String> runtimeProperties,
+                                          String pluginArtifact,
+                                          String pluginName) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", pluginArtifact);
+    if (plugin != null) {
+      Element config = mavenProject.getPluginGoalConfiguration(plugin, null);
+      if (config == null) {
+        config = new Element("configuration");
+      }
+      patchJavaParameters(module, javaParameters, mavenProject, pluginName, config, runtimeProperties);
     }
-    config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-failsafe-plugin");
-    if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "failsafe", config);
+  }
+
+  private static UnaryOperator<String> getDynamicConfigurationProperties(Module module,
+                                                                         MavenProject mavenProject,
+                                                                         JavaParameters javaParameters) {
+    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+    if (domModel == null) {
+      return s -> s;
     }
+    Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
+    ParametersList vmParameters = javaParameters.getVMParametersList();
+    return name -> {
+      String vmPropertyValue = vmParameters.getPropertyValue(name);
+      if (vmPropertyValue != null) {
+        return vmPropertyValue;
+      }
+      String staticPropertyValue = staticProperties.getProperty(name);
+      if (staticPropertyValue != null) {
+        return staticPropertyValue;
+      }
+      if (name.equals(jaCoCoConfigProperty)) {
+        return "";
+      }
+      return null;
+    };
+  }
+
+  private static String getJaCoCoArgLineProperty(MavenProject mavenProject) {
+    String jaCoCoConfigProperty = "argLine";
+    Element jaCoCoConfig = mavenProject.getPluginConfiguration("org.jacoco", "jacoco-maven-plugin");
+    if (jaCoCoConfig != null) {
+      Element propertyName = jaCoCoConfig.getChild("propertyName");
+      if (propertyName != null) {
+        jaCoCoConfigProperty = propertyName.getTextTrim();
+      }
+    }
+    Element jaCoCoGoalConfig = mavenProject.getPluginGoalConfiguration("org.jacoco", "jacoco-maven-plugin", "prepare-agent");
+    if (jaCoCoGoalConfig != null) {
+      Element propertyName = jaCoCoGoalConfig.getChild("propertyName");
+      if (propertyName != null) {
+        jaCoCoConfigProperty = propertyName.getTextTrim();
+      }
+    }
+    return jaCoCoConfigProperty;
   }
 
   private static void patchJavaParameters(@NotNull Module module,
                                           @NotNull JavaParameters javaParameters,
                                           @NotNull MavenProject mavenProject,
                                           @NotNull String plugin,
-                                          @NotNull Element config) {
+                                          @NotNull Element config,
+                                          @NotNull UnaryOperator<String> runtimeProperties) {
     MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
     MavenTestRunningSettings testRunningSettings = MavenProjectSettings.getInstance(module.getProject()).getTestRunningSettings();
@@ -63,8 +138,23 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
     if (paths.size() > 0) {
-      for (String path : paths) {
-        javaParameters.getClassPath().add(resolvePluginProperties(plugin, path, domModel));
+      for (String pathLine : paths) {
+        for (String path : pathLine.split(",")) {
+          javaParameters.getClassPath().add(resolvePluginProperties(plugin, path.trim(), domModel));
+        }
+      }
+    }
+
+    List<String> excludes = getExcludedArtifacts(config);
+    String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
+
+    if (scopeExclude != null || !excludes.isEmpty()) {
+      for (MavenArtifact dependency : mavenProject.getDependencies()) {
+        if (SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
+            excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
+          File file = dependency.getFile();
+          javaParameters.getClassPath().remove(file.getAbsolutePath());
+        }
       }
     }
 
@@ -92,15 +182,9 @@ public class MavenJUnitPatcher extends JUnitPatcher {
             systemPropertiesFilePath = mavenProject.getDirectory() + '/' + systemPropertiesFilePath;
           }
           if (StringUtil.isNotEmpty(systemPropertiesFilePath) && new File(systemPropertiesFilePath).exists()) {
-            try {
-              Reader fis = new BufferedReader(new FileReader(systemPropertiesFilePath));
-              try {
-                Map<String, String> properties = FileUtil.loadProperties(fis);
-                properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
-              }
-              finally {
-                fis.close();
-              }
+            try (Reader fis = Files.newBufferedReader(Paths.get(systemPropertiesFilePath), StandardCharsets.ISO_8859_1)) {
+              Map<String, String> properties = PropertiesUtil.loadProperties(fis);
+              properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
             }
             catch (IOException e) {
               LOG.warn("Can't read property file '" + systemPropertiesFilePath + "': " + e.getMessage());
@@ -129,28 +213,54 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     if (testRunningSettings.isPassArgLine() && isEnabled(plugin, "argLine")) {
       Element argLine = config.getChild("argLine");
-      if (argLine != null) {
-        String value = resolvePluginProperties(plugin, argLine.getTextTrim(), domModel);
-        value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-        if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
-          if (value.contains("@{argLine}")) {
-            String parametersString = javaParameters.getVMParametersList().getParametersString();
-            javaParameters.getVMParametersList().clearAll();
-            javaParameters.getVMParametersList().addParametersString(StringUtil.replace(value, "@{argLine}", parametersString));
-          }
-          else {
-            javaParameters.getVMParametersList().addParametersString(value);
-          }
+      String propertyText = argLine != null ? argLine.getTextTrim() : "${argLine}";
+      String value = resolvePluginProperties(plugin, propertyText, domModel);
+      value = resolveVmProperties(javaParameters.getVMParametersList(), value);
+      if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
+        value = resolveRuntimeProperties(value, runtimeProperties);
+        javaParameters.getVMParametersList().addParametersString(value);
+      }
+    }
+  }
+
+  private static String resolveRuntimeProperties(String value, UnaryOperator<String> runtimeProperties) {
+    Matcher matcher = ARG_LINE_PATTERN.matcher(value);
+    StringBuffer sb = new StringBuffer();
+    while (matcher.find()) {
+      String replacement = runtimeProperties.apply(matcher.group(1));
+      matcher.appendReplacement(sb, replacement == null ? matcher.group() : replacement);
+    }
+    matcher.appendTail(sb);
+    return sb.toString();
+  }
+
+  @NotNull
+  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+    Element excludesElement = config.getChild("classpathDependencyExcludes");
+    if (excludesElement == null) {
+      return Collections.emptyList();
+    }
+    String rawText = excludesElement.getTextTrim();
+    List<String> excludes = new ArrayList<>();
+    if (!rawText.isEmpty()) {
+      StreamEx.split(rawText, ',').map(String::trim).into(excludes);
+    }
+    for (Element child : excludesElement.getChildren()) {
+      if (EXCLUDE_SUBTAG_NAMES.contains(child.getName())) {
+        String excludeItem = child.getTextTrim();
+        if (!excludeItem.isEmpty()) {
+          StreamEx.split(excludeItem, ',').map(String::trim).into(excludes);
         }
       }
     }
+    return excludes;
   }
 
   private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
     if (domModel != null) {
       value = MavenPropertyResolver.resolve(value, domModel);
     }
-    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)\\}", "1");
+    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)}", "1");
   }
 
   private static String resolveVmProperties(@NotNull ParametersList vmParameters, @NotNull String value) {

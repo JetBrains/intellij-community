@@ -2,16 +2,24 @@
 package com.intellij.execution;
 
 import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+
+import java.util.function.Supplier;
 
 /**
  * @author lesya
  */
-public class ExecutionBundle extends AbstractBundle {
+public class ExecutionBundle extends DynamicBundle {
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
   }
 
   public static final String PATH_TO_BUNDLE = "messages.ExecutionBundle";

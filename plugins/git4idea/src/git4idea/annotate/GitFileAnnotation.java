@@ -15,6 +15,7 @@
  */
 package git4idea.annotate;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,9 +32,11 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
@@ -41,6 +44,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
+import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import gnu.trove.TObjectIntHashMap;
@@ -60,11 +64,13 @@ public class GitFileAnnotation extends FileAnnotation {
   @Nullable private List<VcsFileRevision> myRevisions;
   @Nullable private TObjectIntHashMap<VcsRevisionNumber> myRevisionMap;
   @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
+  private final VcsLogApplicationSettings myLogSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getAuthorDate());
+      Date date = getDate(info);
+      return FileAnnotation.formatDate(date);
     }
   };
 
@@ -81,6 +87,7 @@ public class GitFileAnnotation extends FileAnnotation {
       return lineInfo.getAuthor();
     }
   };
+  private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
 
   public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
@@ -93,6 +100,13 @@ public class GitFileAnnotation extends FileAnnotation {
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
+    myLogSettings.addChangeListener(myLogSettingChangeListener);
+  }
+
+  public <T> void onLogSettingChange(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+    if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE)) {
+      reload(null);
+    }
   }
 
   public GitFileAnnotation(@NotNull GitFileAnnotation annotation) {
@@ -101,11 +115,17 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @Override
   public void dispose() {
+    myLogSettings.removeChangeListener(myLogSettingChangeListener);
   }
 
   @Override
-  public LineAnnotationAspect[] getAspects() {
+  public LineAnnotationAspect @NotNull [] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
+  }
+
+  @NotNull
+  private Date getDate(LineInfo info) {
+    return Boolean.TRUE.equals(myLogSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ? info.getCommitterDate() : info.getAuthorDate();
   }
 
   @Nullable
@@ -120,6 +140,7 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
+  @Nullable
   @Override
   public List<VcsFileRevision> getRevisions() {
     return myRevisions;
@@ -152,24 +173,37 @@ public class GitFileAnnotation extends FileAnnotation {
   @Nullable
   @Override
   public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     LineInfo lineInfo = getLineInfo(lineNumber);
     if (lineInfo == null) return null;
 
+    AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    String path = null;
-    if (!myFilePath.equals(lineInfo.myFilePath)) {
-      path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+    atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
+    atb.appendLine("Author: " + lineInfo.getAuthor());
+    atb.appendLine("Date: " + DateFormatUtil.formatDateTime(getDate(lineInfo)));
+
+    if (!myFilePath.equals(lineInfo.getFilePath())) {
+      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.getFilePath().getPresentableUrl());
+      atb.appendLine("Path: " + path);
     }
 
     String commitMessage = getCommitMessage(revisionNumber);
     if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
+    atb.appendCommitMessageBlock(commitMessage);
 
-    return "commit " + revisionNumber.asString() +
-           "\nAuthor: " + lineInfo.getAuthor() +
-           "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
-           (path != null ? "\nPath: " + path : "") +
-           "\n\n" + commitMessage;
+    return atb.toString();
   }
 
   @Nullable
@@ -193,7 +227,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public Date getLineDate(int lineNumber) {
     LineInfo lineInfo = getLineInfo(lineNumber);
-    return lineInfo != null ? lineInfo.getAuthorDate() : null;
+    return lineInfo != null ? getDate(lineInfo) : null;
   }
 
   private boolean lineNumberCheck(int lineNumber) {
@@ -235,7 +269,7 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  static class LineInfo {
+  static class CommitInfo {
     @NotNull private final Project myProject;
     @NotNull private final GitRevisionNumber myRevision;
     @NotNull private final FilePath myFilePath;
@@ -246,15 +280,15 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
-    LineInfo(@NotNull Project project,
-                    @NotNull GitRevisionNumber revision,
-                    @NotNull FilePath path,
-                    @NotNull Date committerDate,
-                    @NotNull Date authorDate,
-                    @NotNull VcsUser author,
-                    @NotNull String subject,
-                    @Nullable GitRevisionNumber previousRevision,
-                    @Nullable FilePath previousPath) {
+    CommitInfo(@NotNull Project project,
+             @NotNull GitRevisionNumber revision,
+             @NotNull FilePath path,
+             @NotNull Date committerDate,
+             @NotNull Date authorDate,
+             @NotNull VcsUser author,
+             @NotNull String subject,
+             @Nullable GitRevisionNumber previousRevision,
+             @Nullable FilePath previousPath) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -305,6 +339,66 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull
     public String getSubject() {
       return mySubject;
+    }
+  }
+
+  public static class LineInfo {
+    @NotNull private final CommitInfo myCommitInfo;
+    private final int myLineNumber;
+    private final int myOriginalLineNumber;
+
+    LineInfo(@NotNull CommitInfo commitInfo, int lineNumber, int originalLineNumber) {
+      this.myCommitInfo = commitInfo;
+      this.myLineNumber = lineNumber;
+      this.myOriginalLineNumber = originalLineNumber;
+    }
+
+    public int getLineNumber() {
+      return myLineNumber;
+    }
+
+    public int getOriginalLineNumber() {
+      return myOriginalLineNumber;
+    }
+
+    @NotNull
+    public GitRevisionNumber getRevisionNumber() {
+      return myCommitInfo.getRevisionNumber();
+    }
+
+    @NotNull
+    public FilePath getFilePath() {
+      return myCommitInfo.getFilePath();
+    }
+
+    @NotNull
+    public VcsFileRevision getFileRevision() {
+      return myCommitInfo.getFileRevision();
+    }
+
+    @Nullable
+    public VcsFileRevision getPreviousFileRevision() {
+      return myCommitInfo.getPreviousFileRevision();
+    }
+
+    @NotNull
+    public Date getCommitterDate() {
+      return myCommitInfo.getCommitterDate();
+    }
+
+    @NotNull
+    public Date getAuthorDate() {
+      return myCommitInfo.getAuthorDate();
+    }
+
+    @NotNull
+    public String getAuthor() {
+      return myCommitInfo.getAuthor();
+    }
+
+    @NotNull
+    public String getSubject() {
+      return myCommitInfo.getSubject();
     }
   }
 

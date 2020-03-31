@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.PathsList;
@@ -39,7 +39,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class ModuleScopesTest extends ModuleTestCase {
+public class ModuleScopesTest extends JavaModuleTestCase {
   private LightTempDirTestFixtureImpl myFixture;
 
   @Override

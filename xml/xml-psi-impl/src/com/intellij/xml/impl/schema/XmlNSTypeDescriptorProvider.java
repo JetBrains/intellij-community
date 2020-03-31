@@ -18,9 +18,6 @@ package com.intellij.xml.impl.schema;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface XmlNSTypeDescriptorProvider {
   @Nullable
   TypeDescriptor getTypeDescriptor(String name, XmlTag context);

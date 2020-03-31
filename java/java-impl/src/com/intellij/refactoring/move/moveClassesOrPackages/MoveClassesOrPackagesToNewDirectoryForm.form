@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/RefactoringBundle" key="move.specified.classes.to"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="move.specified.classes.to"/>
         </properties>
       </component>
       <component id="dea4e" class="javax.swing.JCheckBox" binding="mySearchInCommentsAndStringsCheckBox" default-binding="true">
@@ -45,7 +45,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="To directory:"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="move.files.to.new.directory.prompt"/>
             </properties>
           </component>
         </children>
@@ -64,7 +64,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="&amp;Don't move to another source folder"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="dont.move.to.another.source.folder.option"/>
         </properties>
       </component>
       <vspacer id="c1dce">

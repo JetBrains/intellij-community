@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -17,15 +17,22 @@ import com.intellij.ui.components.DialogPanel
  * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
 inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
-  val builder = createLayoutBuilder(isUseMagic = !constraints.contains(LCFlags.disableMagic))
+  val builder = createLayoutBuilder()
   builder.init()
 
   val panel = DialogPanel(title, layout = null)
   builder.builder.build(panel, constraints)
+  initPanel(builder, panel)
+  return panel
+}
+
+@PublishedApi
+internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
+  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
+  panel.customValidationRequestors = builder.builder.customValidationRequestors
   panel.applyCallbacks = builder.builder.applyCallbacks
   panel.resetCallbacks = builder.builder.resetCallbacks
   panel.isModifiedCallbacks = builder.builder.isModifiedCallbacks
-  return panel
 }

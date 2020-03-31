@@ -28,9 +28,10 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStub> implements PsiParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiParameterListImpl.class);
 
   public PsiParameterListImpl(@NotNull PsiParameterListStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER_LIST);
@@ -41,8 +42,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
   }
 
   @Override
-  @NotNull
-  public PsiParameter[] getParameters() {
+  public PsiParameter @NotNull [] getParameters() {
     return getStubOrPsiChildren(JavaStubElementTypes.PARAMETER, PsiParameter.ARRAY_FACTORY);
   }
 
@@ -63,7 +63,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     final PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       int count = 0;
-      for (StubElement child : stub.getChildrenStubs()) {
+      for (StubElement<?> child : stub.getChildrenStubs()) {
         if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
           count++;
         }
@@ -74,11 +74,44 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     return getNode().countChildren(Constants.PARAMETER_BIT_SET);
   }
 
+  @Nullable
+  @Override
+  public PsiParameter getParameter(int index) {
+    if (index < 0) {
+      throw new IllegalArgumentException("index is negative: " + index);
+    }
+    final PsiParameterListStub stub = getGreenStub();
+    if (stub != null) {
+      int count = 0;
+      for (StubElement<?> child : stub.getChildrenStubs()) {
+        if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+          if (count == index) return (PsiParameter)child.getPsi(); 
+          count++;
+        }
+      }
+    } else {
+      CompositeElement node = getNode();
+      int count = 0;
+      for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
+          if (count == index) return (PsiParameter)child.getPsi();
+          count++;
+        }
+      }
+    }
+    return null;
+  }
+
   @Override
   public boolean isEmpty() {
     final PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenStubs().stream().noneMatch(child -> child.getStubType() == JavaStubElementTypes.PARAMETER);
+      for (StubElement<?> child : stub.getChildrenStubs()) {
+        if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+          return false;
+        }
+      }
+      return true;
     }
 
     return getNode().findChildByType(Constants.PARAMETER_BIT_SET) == null;

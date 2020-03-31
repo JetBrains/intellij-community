@@ -38,7 +38,7 @@ import java.awt.event.ComponentEvent;
 import java.lang.reflect.Method;
 
 public class PopupUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.popup.util.PopupUtil");
+  private static final Logger LOG = Logger.getInstance(PopupUtil.class);
 
   private PopupUtil() {
   }
@@ -204,7 +204,6 @@ public class PopupUtil {
     MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
     if (selectedPath.length > 0) { // hide popup menu if any
       menuSelectionManager.clearSelectedPath();
-      return true;
     }
     else {
       if (ApplicationManager.getApplication() == null) {
@@ -214,7 +213,7 @@ public class PopupUtil {
       if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
         return false;
       }
-      return true;
     }
+    return true;
   }
 }

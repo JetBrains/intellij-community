@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author peter
@@ -43,14 +46,14 @@ public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Replace '" + myQualifierText + ".equals(...)' with 'Objects.equals(" + myReplacementText + ", ...)'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", myQualifierText + ".equals(...)", "Objects.equals(" + myReplacementText + ", ...)");
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace '.equals()' with 'Objects.equals()'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", ".equals()", "Objects.equals()");
   }
 
   @Override
@@ -82,7 +85,7 @@ public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     PsiMethod method = call.resolveMethod();
     if (method != null &&
         method.getParameterList().getParametersCount() == 1 &&
-        method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       return new ReplaceWithObjectsEqualsFix(qualifier.getText(), noParens.getText());
     }
     return null;

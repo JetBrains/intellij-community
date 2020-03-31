@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,13 +48,6 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "integer.division.in.floating.point.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "integer.division.in.floating.point.context.problem.descriptor");
@@ -67,6 +59,8 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
   }
 
   private static class IntegerDivisionInFloatingPointContextVisitor extends BaseInspectionVisitor {
+
+    IntegerDivisionInFloatingPointContextVisitor() {}
 
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -82,27 +76,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       if (context == null) {
         return;
       }
-      final PsiType contextType;
-      if (context instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs == null) {
-          return;
-        }
-        if (PsiTreeUtil.isAncestor(lhs, expression, false)) {
-          contextType = rhs.getType();
-        }
-        else if (PsiTreeUtil.isAncestor(binaryExpression.getROperand(), expression, false)) {
-          contextType = lhs.getType();
-        }
-        else {
-          return;
-        }
-      }
-      else {
-        contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      }
+      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
       if (!PsiType.FLOAT.equals(contextType) && !PsiType.DOUBLE.equals(contextType)) {
         return;
       }
@@ -122,12 +96,9 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-        if (!ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())) {
-          return getContainingExpression(binaryExpression);
-        }
-        else {
-          return (PsiExpression)parent;
-        }
+        return !ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())
+               ? getContainingExpression(binaryExpression)
+               : expression;
       }
       else if (parent instanceof PsiPolyadicExpression ||
                parent instanceof PsiParenthesizedExpression ||

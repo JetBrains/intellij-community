@@ -16,30 +16,24 @@ import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.history.ReachableNodesUtilKt;
 import com.intellij.vcs.log.impl.VcsLogImpl;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
+public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
@@ -54,7 +48,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
 
-  @NotNull protected VisiblePack myVisiblePack;
+  @NotNull protected VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   public AbstractVcsLogUi(@NotNull String id,
                           @NotNull VcsLogData logData,
@@ -69,8 +63,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     Disposer.register(this, myRefresher);
 
     myLog = new VcsLogImpl(logData, this);
-    myVisiblePack = VisiblePack.EMPTY;
-
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
       if (!Disposer.isDisposed(this)) {
         setVisiblePack(visiblePack);
@@ -83,14 +75,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @Override
   public String getId() {
     return myId;
-  }
-
-  public void requestFocus() {
-    // todo fix selection
-    VcsLogGraphTable graphTable = getTable();
-    if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(() -> graphTable.setRowSelectionInterval(0, 0));
-    }
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {
@@ -106,45 +90,21 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     getTable().repaint();
   }
 
-  public void jumpToNearestCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    jumpTo(hash, (model, h) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(h, root))) return GraphTableModel.COMMIT_NOT_FOUND;
-      int commitIndex = myLogData.getCommitIndex(h, root);
-      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-      if (rowIndex == null) {
-        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
-      }
-      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create());
-  }
-
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
 
-  @NotNull
-  public abstract VcsLogGraphTable getTable();
-
-  @NotNull
-  public abstract Component getMainComponent();
-
-  @NotNull
-  public abstract VcsLogUiProperties getProperties();
-
-  @Nullable
-  public abstract History getNavigationHistory();
-
-  @Nullable
-  public abstract String getHelpId();
-
+  @Override
   @NotNull
   public VisiblePackRefresher getRefresher() {
     return myRefresher;
   }
 
+  @Override
   @NotNull
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
+  @Override
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
@@ -167,37 +127,43 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myVisiblePack;
   }
 
-  public void jumpToRow(int row) {
+  @Override
+  public void jumpToRow(int row, boolean silently) {
     jumpTo(row, (model, r) -> {
       if (model.getRowCount() <= r) return -1;
       return r;
-    }, SettableFuture.create());
+    }, SettableFuture.create(), silently);
   }
 
+  @Override
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpToCommit(commitHash, root, future);
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
     return future;
   }
 
-  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<? super Boolean> future) {
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
-  }
-
-  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
+  @NotNull
+  @Override
+  public ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found", MessageType.WARNING);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                    VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
+                                                    MessageType.WARNING);
       future.set(false);
-      return;
+      return future;
     }
-    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future);
+    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
+    return future;
   }
 
-  protected <T> void jumpTo(@NotNull final T commitId,
-                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                            @NotNull final SettableFuture<? super Boolean> future) {
+  @Override
+  public <T> void jumpTo(@NotNull final T commitId,
+                         @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                         @NotNull final SettableFuture<? super Boolean> future,
+                         boolean silently) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
@@ -208,13 +174,13 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       future.set(true);
     }
     else if (model.canRequestMore()) {
-      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future));
+      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future, silently));
     }
     else if (!myVisiblePack.isFull()) {
-      invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
+      invokeOnChange(() -> jumpTo(commitId, rowGetter, future, silently));
     }
     else {
-      handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
+      if (!silently) handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
       future.set(false);
     }
   }
@@ -227,9 +193,10 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   }
 
   @NotNull
+  @Nls
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? "Commit " + getCommitPresentation(commitId) + " doesn't match the filters" :
-           "Commit " + getCommitPresentation(commitId) + " not found";
+    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", getCommitPresentation(commitId)) :
+           VcsLogBundle.message("vcs.log.commit.not.found", getCommitPresentation(commitId));
   }
 
   @NotNull
@@ -243,7 +210,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return commitId.toString();
   }
 
-  protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {
+  protected void showWarningWithLink(@Nls @NotNull String mainText, @Nls @NotNull String linkText, @NotNull Runnable onClick) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
                                                   new NamedRunnable(linkText) {
                                                     @Override
@@ -277,7 +244,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     invokeOnChange(runnable, Conditions.alwaysTrue());
   }
 
-  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
+  public void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
@@ -292,7 +259,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-    LOG.debug("Disposing VcsLogUi \'" + myId + "\'");
+    LOG.debug("Disposing VcsLogUi '" + myId + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

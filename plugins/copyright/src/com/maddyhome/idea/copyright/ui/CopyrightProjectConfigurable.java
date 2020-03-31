@@ -2,6 +2,7 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -22,7 +23,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public String getDisplayName() {
-    return "Copyright";
+    return CopyrightBundle.message("configurable.CopyrightProjectConfigurable.display.name");
   }
 
   @Override

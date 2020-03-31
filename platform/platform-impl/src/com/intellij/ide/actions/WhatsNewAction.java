@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -10,9 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -25,9 +22,9 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     e.getPresentation().setVisible(visible);
     if (visible) {
       e.getPresentation()
-        .setText(IdeBundle.message("whatsnew.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+        .setText(IdeBundle.messagePointer("whatsnew.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
       e.getPresentation().setDescription(
-        IdeBundle.message("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+        IdeBundle.messagePointer("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 }

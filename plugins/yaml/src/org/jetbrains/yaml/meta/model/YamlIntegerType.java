@@ -11,7 +11,7 @@ import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlIntegerType extends YamlScalarType {
   private static final YamlIntegerType SHARED_INSTANCE_NO_QUOTED_VALUES_ALLOWED = new YamlIntegerType(false);
   private static final YamlIntegerType SHARED_INSTANCE_QUOTED_VALUES_ALLOWED = new YamlIntegerType(true);
@@ -34,7 +34,7 @@ public class YamlIntegerType extends YamlScalarType {
       if (!myQuotedValuesAllowed && scalarValue instanceof YAMLQuotedText) {
         throw new NumberFormatException("no quoted values allowed");
       }
-      Integer.parseInt(scalarValue.getTextValue());
+      Long.parseLong(scalarValue.getTextValue());
     }
     catch (NumberFormatException e) {
       holder.registerProblem(scalarValue, YAMLBundle.message("YamlIntegerType.error.integer.value"), ProblemHighlightType.ERROR);

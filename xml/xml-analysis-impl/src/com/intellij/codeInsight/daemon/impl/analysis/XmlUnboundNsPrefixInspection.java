@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -24,9 +23,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -102,8 +101,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         for (PsiReference reference : references) {
           if (reference instanceof SchemaPrefixReference) {
             if (!XML.equals(((SchemaPrefixReference)reference).getNamespacePrefix()) && reference.resolve() == null) {
-              holder.registerProblem(reference, XmlErrorMessages.message("unbound.namespace",
-                                                                         ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+              holder.registerProblem(reference, XmlAnalysisBundle.message("unbound.namespace",
+                                                                       ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             }
           }
         }
@@ -133,7 +132,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       return;
     }
 
-    final String localizedMessage = isOnTheFly ? XmlErrorMessages.message("unbound.namespace", namespacePrefix) : XmlErrorMessages.message("unbound.namespace.no.param");
+    final String localizedMessage = isOnTheFly ? XmlAnalysisBundle.message("unbound.namespace", namespacePrefix) : XmlAnalysisBundle
+      .message("unbound.namespace.no.param");
 
     if (namespacePrefix.isEmpty()) {
       final XmlTag tag = (XmlTag)element;
@@ -180,18 +180,6 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.unbound.prefix");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -7,9 +7,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -43,6 +44,7 @@ import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -54,12 +56,15 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
+import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
-import static org.jetbrains.idea.maven.project.ProjectBundle.message;
+import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
@@ -67,6 +72,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
+  private final ExecutorService boundedUpdateService;
 
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
@@ -90,6 +96,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     myTasksManager = tasksManager;
     myShortcutsManager = shortcutsManager;
     myProjectsNavigator = projectsNavigator;
+    boundedUpdateService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1);
 
     configureTree(tree);
 
@@ -523,7 +530,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     protected void sort(List<? extends MavenSimpleNode> list) {
-      Collections.sort(list, NODE_COMPARATOR);
+      list.sort(NODE_COMPARATOR);
     }
   }
 
@@ -722,7 +729,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                   return result;
                 }
               })
-              .setTitle("Choose file to open ")
+              .setTitle(MavenProjectBundle.message("maven.notification.choose.file.to.open"))
               .setItemChosenCallback((value) -> {
                 final Navigatable navigatable = getNavigatable(value);
                 if (navigatable != null) navigatable.navigate(requestFocus);
@@ -773,7 +780,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myRunConfigurationsNode = new RunConfigurationsNode(this);
 
       setUniformIcon(MavenIcons.MavenProject);
-      updateProject();
     }
 
     public MavenProject getMavenProject() {
@@ -993,7 +999,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     public MavenProject getMavenProject() {
@@ -1075,7 +1081,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1105,7 +1111,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1119,35 +1125,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updatePlugins(MavenProject mavenProject) {
+
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-
-      for (Iterator<PluginNode> itr = myPluginNodes.iterator(); itr.hasNext(); ) {
-        PluginNode each = itr.next();
-
-        if (plugins.contains(each.getPlugin())) {
-          each.updatePlugin();
-        }
-        else {
-          itr.remove();
-        }
-      }
-      for (MavenPlugin each : plugins) {
-        if (!hasNodeFor(each)) {
-          myPluginNodes.add(new PluginNode(this, each));
-        }
-      }
-
-      sort(myPluginNodes);
-      childrenChanged();
-    }
-
-    private boolean hasNodeFor(MavenPlugin plugin) {
-      for (PluginNode each : myPluginNodes) {
-        if (each.getPlugin().getMavenId().equals(plugin.getMavenId())) {
-          return true;
-        }
-      }
-      return false;
+      boundedUpdateService.execute(new UpdatePluginsTreeTask(this, plugins));
     }
   }
 
@@ -1155,12 +1135,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final MavenPlugin myPlugin;
     private MavenPluginInfo myPluginInfo;
 
-    public PluginNode(PluginsNode parent, MavenPlugin plugin) {
+    public PluginNode(PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo) {
       super(parent);
       myPlugin = plugin;
 
       setUniformIcon(MavenIcons.MavenPlugin);
-      updatePlugin();
+      updatePlugin(pluginInfo);
     }
 
     public MavenPlugin getPlugin() {
@@ -1177,11 +1157,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndTooltip(getName(), null, myPluginInfo != null ? myPlugin.getDisplayString() : null);
     }
 
-    public void updatePlugin() {
+    public void updatePlugin(@Nullable MavenPluginInfo newPluginInfo) {
       boolean hadPluginInfo = myPluginInfo != null;
 
-      myPluginInfo = MavenArtifactUtil.readPluginInfo(myProjectsManager.getLocalRepository(), myPlugin.getMavenId());
-
+      myPluginInfo = newPluginInfo;
       boolean hasPluginInfo = myPluginInfo != null;
 
       setErrorLevel(myPluginInfo == null ? ErrorLevel.ERROR : ErrorLevel.NONE);
@@ -1232,7 +1211,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenDomMojo mojo : pluginModel.getMojos().getMojos()) {
         final XmlElement xmlElement = mojo.getGoal().getXmlElement();
 
-        if (xmlElement instanceof Navigatable && Comparing.equal(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
+        if (xmlElement instanceof Navigatable && Objects.equals(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
           return new NavigatableAdapter() {
             @Override
             public void navigate(boolean requestFocus) {
@@ -1435,7 +1414,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public RunConfigurationsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     @Override
@@ -1526,8 +1505,38 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-      MavenActionsUsagesCollector.trigger(myProject, "ExecuteMavenRunConfigurationAction", TOOL_WINDOW_PLACE_ID, false);
+      MavenActionsUsagesCollector
+        .trigger(myProject, MavenActionsUsagesCollector.ActionID.ExecuteMavenRunConfigurationAction, TOOL_WINDOW_PLACE_ID, false, null);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
+    }
+  }
+
+  private class UpdatePluginsTreeTask implements Runnable {
+    @NotNull private final PluginsNode myParentNode;
+    private final List<MavenPlugin> myPlugins;
+
+    UpdatePluginsTreeTask(PluginsNode parentNode, List<MavenPlugin> plugins) {
+      myParentNode = parentNode;
+      myPlugins = plugins;
+    }
+
+
+    @Override
+    public void run() {
+      File localRepository = myProjectsManager.getLocalRepository();
+      List<PluginNode> pluginInfos = ContainerUtil.map(myPlugins, it -> new PluginNode(myParentNode, it, MavenArtifactUtil
+        .readPluginInfo(localRepository, it.getMavenId())));
+
+      updateNodesInEDT(pluginInfos);
+    }
+
+    private void updateNodesInEDT(List<PluginNode> pluginNodes) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myParentNode.myPluginNodes.clear();
+        myParentNode.myPluginNodes.addAll(pluginNodes);
+        myParentNode.sort(myParentNode.myPluginNodes);
+        myParentNode.childrenChanged();
+      });
     }
   }
 }

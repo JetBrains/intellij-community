@@ -1,38 +1,28 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
-public abstract class FrameworkTypeEx extends FrameworkType {
+public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyDumbAware {
   public static final ExtensionPointName<FrameworkTypeEx> EP_NAME = ExtensionPointName.create("com.intellij.framework.type");
 
   protected FrameworkTypeEx(@NotNull String id) {
     super(id);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 
   /**
@@ -40,6 +30,7 @@ public abstract class FrameworkTypeEx extends FrameworkType {
    * @see #getUnderlyingFrameworkTypeId()
    */
   @Nullable
+  @Contract(pure = true)
   public FrameworkGroup<?> getParentGroup() {
     return null;
   }
@@ -49,13 +40,16 @@ public abstract class FrameworkTypeEx extends FrameworkType {
    * @see #getParentGroup()
    */
   @Nullable
+  @Contract(pure = true)
   public String getUnderlyingFrameworkTypeId() {
     return null;
   }
 
   @NotNull
+  @Contract(pure = true)
   public abstract FrameworkSupportInModuleProvider createProvider();
 
+  @Contract(pure = true)
   public <V extends FrameworkVersion> List<V> getVersions() {
     return Collections.emptyList();
   }

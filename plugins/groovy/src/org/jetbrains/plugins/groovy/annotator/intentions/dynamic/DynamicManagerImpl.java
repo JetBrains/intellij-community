@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -346,7 +346,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   @Override
   public void fireChange() {
-    TransactionGuard.submitTransaction(myProject, () -> PsiManager.getInstance(myProject).dropPsiCaches());
+    ApplicationManager.getApplication().invokeLater(() -> PsiManager.getInstance(myProject).dropPsiCaches(), myProject.getDisposed());
   }
 
   @Override

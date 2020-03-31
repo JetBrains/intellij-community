@@ -15,8 +15,7 @@ import java.util.Set;
 public abstract class ModuleContextProvider {
   public static final ExtensionPointName<ModuleContextProvider> EP_NAME = ExtensionPointName.create("com.intellij.moduleContextProvider");
 
-  @NotNull
-  public abstract Module[] getContextModules(@NotNull PsiFile context);
+  public abstract Module @NotNull [] getContextModules(@NotNull PsiFile context);
 
   public static Module[] getModules(@Nullable PsiFile context) {
     if (context == null) return Module.EMPTY_ARRAY;

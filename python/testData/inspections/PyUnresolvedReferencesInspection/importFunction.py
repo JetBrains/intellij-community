@@ -1,3 +1,3 @@
-import collections.<warning descr="No module named OrderedDict">OrderedDict</warning>
+import collections.<error descr="No module named OrderedDict">OrderedDict</error>
 
 collections.OrderedDict()

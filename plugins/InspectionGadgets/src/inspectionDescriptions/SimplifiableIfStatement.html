@@ -2,15 +2,18 @@
 <body>
 Reports 'if' statements which can be replaced with condition using '&&', '||' or '?:' operator.
 The result is usually shorter, but not always more clear, so it's not advised to apply it everywhere.
-Also this change may reduce compiled bytecode size which could be useful in some environments like J2ME.
+Also this change may reduce compiled bytecode size which could be useful in some environments like Java ME.
 <p>
   Example: <b>if (<i>condition</i>) return true; else return <i>foo</i>;</b> could be replaced with
   <b>return <i>condition</i> || <i>foo</i>;</b>
 </p>
   <!-- tooltip end -->
 <p>
-  Use checkbox to skip warning when '?:' operator is suggested. In this case only '&&' and '||' suggestions
+  Use the first checkbox to skip warning when '?:' operator is suggested. In this case only '&&' and '||' suggestions
   will be highlighted. The fix action to replace with '?:' will still be available in the editor.
+</p>
+<p>
+  Use the second checkbox to skip warning on 'if-else' chains. The fix action will still be available in the editor.
 </p>
 <p><small>New in 2018.2</small></p>
 </body>

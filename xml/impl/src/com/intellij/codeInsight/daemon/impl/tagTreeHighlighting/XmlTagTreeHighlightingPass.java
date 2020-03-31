@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -25,12 +26,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx;
 import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector;
 import org.jetbrains.annotations.NotNull;
@@ -125,12 +128,12 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return null;
     }
 
-    ASTNode tagName = startTagStart.getTreeNext();
+    ASTNode tagName = TemplateLanguageUtil.getSameLanguageTreeNext(startTagStart);
     if (tagName == null || (tagName.getElementType() != XmlTokenType.XML_NAME && tagName.getElementType() != XmlTokenType.XML_TAG_NAME)) {
       return null;
     }
 
-    ASTNode next = tagName.getTreeNext();
+    ASTNode next = TemplateLanguageUtil.getSameLanguageTreeNext(tagName);
     if (next != null && next.getElementType() == XmlTokenType.XML_TAG_END) {
       tagName = next;
     }
@@ -147,7 +150,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     ASTNode endTagEnd = endTagStart;
     while (endTagEnd != null && endTagEnd.getElementType() != XmlTokenType.XML_TAG_END) {
-      endTagEnd = endTagEnd.getTreeNext();
+      endTagEnd = TemplateLanguageUtil.getSameLanguageTreeNext(endTagEnd);
     }
 
     if (endTagEnd == null) {
@@ -161,7 +164,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     if (myDocument != null) {
       final List<HighlightInfo> infos = getHighlights();
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+      UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
     }
   }
 
@@ -174,7 +177,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     final Color[] baseColors = XmlTagTreeHighlightingUtil.getBaseColors();
     final Color[] colorsForEditor = count > 1 ? toColorsForEditor(baseColors) :
-                                    new Color[] {myEditor.getColorsScheme().getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES).getBackgroundColor()};
+                                    new Color[] {myEditor.getColorsScheme().getAttributes(XmlHighlighterColors.MATCHED_TAG_NAME).getBackgroundColor()};
     final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
     final List<RangeHighlighter> newHighlighters = new ArrayList<>();
@@ -289,7 +292,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       final Color color = baseColors[i];
 
       final Color color1 = color != null
-                           ? XmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency)
+                           ? UIUtil.makeTransparent(color, tagBackground, transparency)
                            : null;
       resultColors[i] = color1;
     }

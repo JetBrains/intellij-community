@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @SkipSlowTestLocally
@@ -71,8 +72,9 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
     final CountDownLatch reads = new CountDownLatch(numOfThreads);
     final Random random = new Random();
-    List<Thread> threads = ContainerUtil.map(Collections.nCopies(numOfThreads, ""), i ->
-      new Thread(() -> {
+
+    List<Future<?>> threads = ContainerUtil.map(Collections.nCopies(numOfThreads, ""), i ->
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (int i1 = 0; i1 < readIterations; i1++) {
           if (myPsiManager == null) return;
           ProgressManager.getInstance().runProcess(() -> ApplicationManager.getApplication().runReadAction(() -> {
@@ -82,8 +84,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         }
 
         reads.countDown();
-      }, "stress thread" + i));
-    threads.forEach(Thread::start);
+      }));
 
     final Document document = documentManager.getDocument(myFile);
 
@@ -100,7 +101,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
-    ConcurrencyUtil.joinAll(threads);
+    ConcurrencyUtil.getAll(threads);
   }
 
   private static void mark(final String s) {
@@ -151,11 +152,11 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("h");
         aClass.accept(new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(final PsiElement element) {
+          public void visitElement(@NotNull final PsiElement element) {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(getProject())) {
+            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
               HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
               v.analyze(myFile, true, infoHolder, () -> v.visit(element));
             }

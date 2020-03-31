@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -20,7 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * @deprecated use {@link com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase}
+ * @deprecated use {@link LightJavaCodeInsightFixtureTestCase}
  * author ven
  */
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {

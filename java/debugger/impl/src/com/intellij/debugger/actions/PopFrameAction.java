@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -8,7 +6,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
@@ -34,6 +32,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -83,14 +82,14 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
 
                                   @Override
                                   public void errorOccurred(@NotNull final String errorMessage) {
-                                    showError(project, DebuggerBundle.message("error.executing.finally", errorMessage),
+                                    showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
                                               UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)));
                                   }
                                 })) return;
       popFrame(debugProcess, debuggerContext, stackFrame);
     }
     catch (NativeMethodException e2){
-      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"),
+      Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.native.method.exception"),
                                  UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
     }
     catch (InvalidStackFrameException | VMDisconnectedException ignored) {
@@ -115,12 +114,12 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
         else {
           int res = MessageDialogBuilder
             .yesNoCancel(title,
-                         DebuggerBundle.message("warning.finally.block.detected") + sb)
+                         JavaDebuggerBundle.message("warning.finally.block.detected") + sb)
             .project(project)
             .icon(Messages.getWarningIcon())
-            .yesText(DebuggerBundle.message("button.execute.finally"))
-            .noText(DebuggerBundle.message("button.drop.anyway"))
-            .cancelText(CommonBundle.message("button.cancel"))
+            .yesText(JavaDebuggerBundle.message("button.execute.finally"))
+            .noText(JavaDebuggerBundle.message("button.drop.anyway"))
+            .cancelText(CommonBundle.getCancelButtonText())
             .doNotAsk(
               new DialogWrapper.DoNotAskOption() {
                 @Override
@@ -153,7 +152,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
                 @NotNull
                 @Override
                 public String getDoNotShowMessage() {
-                  return CommonBundle.message("dialog.options.do.not.show");
+                  return UIBundle.message("dialog.options.do.not.show");
                 }
               })
             .show();

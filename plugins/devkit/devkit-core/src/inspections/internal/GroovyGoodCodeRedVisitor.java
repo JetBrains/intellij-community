@@ -36,7 +36,7 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
       @Override
       protected void registerError(@NotNull PsiElement location,
                                    @NotNull String description,
-                                   @Nullable LocalQuickFix[] fixes,
+                                   LocalQuickFix @Nullable [] fixes,
                                    ProblemHighlightType highlightType) {
         if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
           holder.registerProblem(location, description);

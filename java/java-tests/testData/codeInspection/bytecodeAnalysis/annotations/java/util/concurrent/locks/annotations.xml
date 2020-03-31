@@ -163,6 +163,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.Node SHARED'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.Node boolean isShared()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

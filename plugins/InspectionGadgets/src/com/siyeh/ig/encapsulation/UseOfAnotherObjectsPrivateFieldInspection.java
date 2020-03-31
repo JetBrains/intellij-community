@@ -54,13 +54,6 @@ public class UseOfAnotherObjectsPrivateFieldInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "accessing.non.public.field.of.another.object.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "accessing.non.public.field.of.another.object.problem.descriptor");
@@ -70,7 +63,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("ignore.accesses.from.the.same.class"), "ignoreSameClass");
-    panel.addDependentCheckBox("Ignore accesses from inner classes", "ignoreInnerClasses", box);
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("inspection.use.of.private.field.inner.classes.option"), "ignoreInnerClasses", box);
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.accesses.from.equals.method"), "ignoreEquals");
     return panel;
   }

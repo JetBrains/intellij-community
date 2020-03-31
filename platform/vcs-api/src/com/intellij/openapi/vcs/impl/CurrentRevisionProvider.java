@@ -19,8 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-import java.io.IOException;
-
 /**
  * @author irengrig
  */

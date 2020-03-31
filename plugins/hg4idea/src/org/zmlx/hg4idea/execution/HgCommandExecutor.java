@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -25,9 +26,9 @@ import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -99,6 +100,11 @@ public class HgCommandExecutor {
     myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
+  /**
+   * @deprecated Use synchronous versions of "execute", e.g. {@link #executeInCurrentThread(VirtualFile, String, List)}.
+   * Use {@link BackgroundTaskUtil#executeOnPooledThread(Disposable, Runnable)} if need to execute on a pooled thread.
+   */
+  @Deprecated
   public void execute(@Nullable final VirtualFile repo,
                       @NotNull final String operation,
                       @Nullable final List<String> arguments,
@@ -229,9 +235,9 @@ public class HgCommandExecutor {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
     String message =
-      HgVcsMessages.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
+      HgBundle.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
       "\nOriginal Error:\n" +
       e.getMessage();
-    VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
+    VcsImplUtil.showErrorMessage(myProject, message, HgBundle.message("hg4idea.error"));
   }
 }

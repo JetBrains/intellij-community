@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 
 import java.util.Set;
@@ -13,8 +14,8 @@ import java.util.Set;
 public class ScriptPredicate extends MatchPredicate {
   private final ScriptSupport scriptSupport;
 
-  public ScriptPredicate(Project project, String name, String within, Set<String> variableNames) {
-    scriptSupport = new ScriptSupport(project, within, name, variableNames);
+  public ScriptPredicate(Project project, String name, String within, Set<String> variableNames, MatchOptions matchOptions) {
+    scriptSupport = new ScriptSupport(project, within, name, variableNames, matchOptions);
   }
 
   @Override

@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +60,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return entry;
   }
 
-  private static int index(@NotNull String relativePath, @NotNull ArchiveHandler.EntryInfo[] entries) {
+  private static int index(@NotNull String relativePath, ArchiveHandler.EntryInfo @NotNull [] entries) {
     return (relativePath.hashCode() & 0x7fffffff) % entries.length;
   }
 
@@ -81,7 +80,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   @Nullable
   private static ArchiveHandler.EntryInfo put(@NotNull String relativePath,
                                               @NotNull ArchiveHandler.EntryInfo value,
-                                              @NotNull ArchiveHandler.EntryInfo[] entries) {
+                                              ArchiveHandler.EntryInfo @NotNull [] entries) {
     int index = index(relativePath, entries);
     ArchiveHandler.EntryInfo entry;
     int i = index;
@@ -121,8 +120,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return endIndex==0;
   }
 
-  @NotNull
-  private ArchiveHandler.EntryInfo[] rehash() {
+  private ArchiveHandler.EntryInfo @NotNull [] rehash() {
     ArchiveHandler.EntryInfo[] newEntries = new ArchiveHandler.EntryInfo[entries.length < 1000 ? entries.length  * 2 : entries.length * 3/2];
     for (ArchiveHandler.EntryInfo entry : entries) {
       if (entry != null) {
@@ -188,7 +186,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
     @Override
     public final Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
-      return ContainerUtil.mapIterator(ContainerUtil.iterate(entries, Condition.NOT_NULL).iterator(),
+      return ContainerUtil.mapIterator(ContainerUtil.iterate(entries, Conditions.notNull()).iterator(),
                                        entry -> new SimpleEntry<>(getRelativePath(entry), entry));
     }
 
@@ -212,6 +210,6 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   @NotNull
   @Override
   public Collection<ArchiveHandler.EntryInfo> values() {
-    return ContainerUtil.filter(entries, Condition.NOT_NULL);
+    return ContainerUtil.filter(entries, Conditions.notNull());
   }
 }

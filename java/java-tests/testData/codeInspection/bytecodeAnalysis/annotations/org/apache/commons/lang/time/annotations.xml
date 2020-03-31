@@ -357,6 +357,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils H'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils M'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils S'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils d'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.time.DurationFormatUtils java.lang.String format(org.apache.commons.lang.time.DurationFormatUtils.Token[], int, int, int, int, int, int, int, boolean)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -393,7 +405,16 @@
     <item name='org.apache.commons.lang.time.DurationFormatUtils java.lang.String formatPeriodISO(long, long)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils m'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.time.DurationFormatUtils org.apache.commons.lang.time.DurationFormatUtils.Token[] lexx(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils s'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils y'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.time.DurationFormatUtils.Token Token(java.lang.Object)'>
@@ -612,6 +633,12 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.TimeZoneNameRule void appendTo(java.lang.StringBuffer, java.util.Calendar) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TimeZoneNumberRule INSTANCE_COLON'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TimeZoneNumberRule INSTANCE_NO_COLON'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TimeZoneNumberRule TimeZoneNumberRule(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -642,6 +669,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwentyFourHourField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitMonthField INSTANCE'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitMonthField TwoDigitMonthField()'>
@@ -682,6 +712,9 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitNumberField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitYearField INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitYearField TwoDigitYearField()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -701,6 +734,9 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitYearField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedMonthField INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedMonthField UnpaddedMonthField()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -718,6 +754,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedMonthField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedNumberField INSTANCE_YEAR'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedNumberField UnpaddedNumberField(int)'>

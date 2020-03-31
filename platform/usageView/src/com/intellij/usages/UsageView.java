@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
@@ -15,9 +13,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author max
- */
 public interface UsageView extends Disposable {
   /**
    * Returns {@link UsageTarget} to look usages for
@@ -38,9 +33,9 @@ public interface UsageView extends Disposable {
 
   void appendUsage(@NotNull Usage usage);
   void removeUsage(@NotNull Usage usage);
-  void includeUsages(@NotNull Usage[] usages);
-  void excludeUsages(@NotNull Usage[] usages);
-  void selectUsages(@NotNull Usage[] usages);
+  void includeUsages(Usage @NotNull [] usages);
+  void excludeUsages(Usage @NotNull [] usages);
+  void selectUsages(Usage @NotNull [] usages);
 
   void close();
   boolean isSearchInProgress();
@@ -96,7 +91,6 @@ public interface UsageView extends Disposable {
     return getComponent();
   }
 
-
   int getUsagesCount();
 
   /**
@@ -104,15 +98,16 @@ public interface UsageView extends Disposable {
    * Reloads the whole tree model once instead of firing individual remove event for each node.
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
-  void removeUsagesBulk(@NotNull Collection<Usage> usages);
+  void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
   default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
 
+  @FunctionalInterface
   interface ExcludeListener {
     /**
      *
      * @param usages unmodifiable set or nodes that were excluded or included
-     * @param excluded if <code>true</code> usages were excluded otherwise they were included
+     * @param excluded if {@code true} usages were excluded otherwise they were included
      */
     void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
   }

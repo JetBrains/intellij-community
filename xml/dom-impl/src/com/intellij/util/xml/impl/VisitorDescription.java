@@ -35,10 +35,10 @@ public class VisitorDescription {
   public VisitorDescription(final Class<? extends DomElementVisitor> visitorClass) {
     myVisitorClass = visitorClass;
     for (final Method method : ReflectionUtil.getClassPublicMethods(visitorClass)) {
-      final Class<?>[] parameterTypes = method.getParameterTypes();
-      if (parameterTypes.length != 1) {
+      if (method.getParameterCount() != 1) {
         continue;
       }
+      final Class<?>[] parameterTypes = method.getParameterTypes();
       final Class<?> domClass = parameterTypes[0];
       if (!ReflectionUtil.isAssignable(DomElement.class, domClass)) {
         continue;

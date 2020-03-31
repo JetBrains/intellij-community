@@ -7,8 +7,9 @@ import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectio
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -16,7 +17,7 @@ import java.util.Locale;
 /**
  * @author Dmitry Batkovich
  */
-public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
   public void testUnsorted() {
     doTest();
   }
@@ -26,10 +27,10 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
   }
 
   public void testUnsortedSuppressed() {
-    PlatformTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
-                                    Collections.singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
+    ExtensionTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
+                                     Collections.<AlphaUnsortedPropertiesFileInspectionSuppressor>singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
                                       @Override
-                                      public boolean suppressInspectionFor(PropertiesFile propertiesFile) {
+                                      public boolean suppressInspectionFor(@NotNull PropertiesFile propertiesFile) {
                                         return propertiesFile.getName().toLowerCase(Locale.ENGLISH).contains("suppress");
                                       }
                                     }), myFixture.getTestRootDisposable());

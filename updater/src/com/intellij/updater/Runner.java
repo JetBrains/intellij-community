@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import org.apache.log4j.FileAppender;
@@ -13,6 +13,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -90,12 +93,20 @@ public class Runner {
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
-      String destFolder = args[1];
-      checkCaseSensitivity(destFolder);
+      String destPath = args[1];
+      checkCaseSensitivity(destPath);
+
+      Path destDirectory = null;
+      try {
+        destDirectory = Paths.get(destPath).toRealPath();
+      }
+      catch (InvalidPathException | IOException e) {
+        logger().error(e);
+      }
 
       initLogger();
       logger().info("args: " + Arrays.toString(args));
-      logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
+      logger().info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
       UpdaterUI ui;
       if ("install".equals(args[0]) || "batch-install".equals(args[0])) {
@@ -110,16 +121,16 @@ public class Runner {
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
-      if (!new File(destFolder).isDirectory()) {
-        ui.showError("Invalid target directory: " + destFolder);
+      if (destDirectory == null || !Files.isDirectory(destDirectory)) {
+        ui.showError("Invalid target directory: " + destPath);
         success = false;
       }
       else if (!"batch-install".equals(args[0])) {
-        success = install(jarFile, destFolder, ui, backup);
+        success = install(jarFile, destDirectory, ui, backup);
       }
       else {
         String[] patches = args[2].split(File.pathSeparator);
-        success = install(patches, destFolder, ui, backup);
+        success = install(patches, destDirectory, ui, backup);
       }
       System.exit(success ? 0 : 1);
     }
@@ -214,11 +225,11 @@ public class Runner {
       "  <new_version>: A description of the version to generate the patch to.\n" +
       "  <old_folder>: The folder where to find the old version.\n" +
       "  <new_folder>: The folder where to find the new version.\n" +
-      "  <patch_file>: The .jar patch file to create which contains the patch and the patcher.\n" +
+      "  <patch_file>: The .jar patch file to create, which will contain the patch and the patcher.\n" +
       "  <file_set>: Can be one of:\n" +
       "    ignored: The set of files that will not be included in the patch.\n" +
-      "    critical: Fully included in the patch, so they can be replaced at destination even if they have changed.\n" +
-      "    optional: A set of files that is ok for them no to exist when applying the patch.\n" +
+      "    critical: Fully included in the patch, so they can be replaced at the destination even if they have changed.\n" +
+      "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
       "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
@@ -231,8 +242,8 @@ public class Runner {
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
       "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
       "                  A normalized patch must be used to move from an installation that was patched\n" +
-      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
-      "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
+      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
+      "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
       "                  guarantees that the patched version will match exactly the original one.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
@@ -292,7 +303,7 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static boolean install(String patch, String destPath, UpdaterUI ui, boolean doBackup) {
+  private static boolean install(String patch, Path dest, UpdaterUI ui, boolean doBackup) {
     try {
       PatchFileCreator.PreparationResult preparationResult;
       File backupDir = null;
@@ -312,15 +323,21 @@ public class Runner {
 
         ui.checkCancelled();
 
-        File destDir = new File(destPath);
+        File destDir = dest.toFile();
         preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
 
         List<ValidationResult> problems = preparationResult.validationResults;
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+        if (! resolutions.isEmpty()) {
+          logger().warn("Some conflicts were found: ");
+          for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
+            logger().warn("  " + entry.getKey());
+          }
+        }
 
         if (doBackup) {
           backupDir = Utils.getTempFile("backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
         }
 
         applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
@@ -379,7 +396,7 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
-        refreshApplicationIcon(destPath);
+        refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);
@@ -387,10 +404,10 @@ public class Runner {
     }
   }
 
-  private static boolean install(String[] patches, String dest, UpdaterUI ui, boolean backup) {
+  private static boolean install(String[] patches, Path dest, UpdaterUI ui, boolean backup) {
     try {
       List<File> patchFiles = new ArrayList<>(patches.length);
-      File destDir = new File(dest);
+      File destDir = dest.toFile();
       File backupDir = null;
 
       String jarName = null;
@@ -414,7 +431,7 @@ public class Runner {
 
         if (backup) {
           backupDir = Utils.getTempFile("backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
 
           logger().info("Backing up files...");
           ui.startProcess("Backing up files...");
@@ -444,6 +461,12 @@ public class Runner {
 
           List<ValidationResult> problems = preparationResult.validationResults;
           Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+          if (! resolutions.isEmpty()) {
+            logger().warn("Some conflicts were found: ");
+            for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
+              logger().warn("  " + entry.getKey());
+            }
+          }
 
           PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, resolutions, null, ui);
           needRestore |= !applicationResult.appliedActions.isEmpty();
@@ -512,7 +535,7 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
-        refreshApplicationIcon(dest);
+        refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);

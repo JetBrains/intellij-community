@@ -7,13 +7,12 @@ import com.intellij.codeInspection.miscGenerics.IterableUsedAsVarargInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_10;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_10;
 
 
 public class IterableUsedAsVarargInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new IterableUsedAsVarargInspection[]{new IterableUsedAsVarargInspection()};
   }
   

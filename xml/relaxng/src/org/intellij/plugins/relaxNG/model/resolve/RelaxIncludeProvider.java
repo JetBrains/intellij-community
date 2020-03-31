@@ -11,7 +11,7 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncElement;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
@@ -39,14 +39,13 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     fileTypeSink.consume(RncFileType.getInstance());
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     final ArrayList<FileIncludeInfo> infos;
 
     if (content.getFileType() == XmlFileType.INSTANCE) {
       CharSequence inputDataContentAsText = content.getContentAsText();
-      if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
+      if (CharArrayUtil.indexOf(inputDataContentAsText, RelaxNgMetaDataContributor.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
       infos = new ArrayList<>();
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(content.getContentAsText()), new RngBuilderAdapter(infos));
     }
@@ -83,7 +82,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
 
     @Override
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-      boolean isRngTag = ApplicationLoader.RNG_NAMESPACE.equals(nsURI);
+      boolean isRngTag = RelaxNgMetaDataContributor.RNG_NAMESPACE.equals(nsURI);
       if (!isRNG) { // analyzing start tag
         if (isRngTag) {
           isRNG = true;

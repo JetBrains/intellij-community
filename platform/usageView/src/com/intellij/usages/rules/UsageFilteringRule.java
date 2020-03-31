@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public interface UsageFilteringRule {
   UsageFilteringRule[] EMPTY_ARRAY = new UsageFilteringRule[0];
 
-  default boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  default boolean isVisible(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return isVisible(usage);
   }
 

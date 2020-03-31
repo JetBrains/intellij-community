@@ -58,7 +58,6 @@ public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
     final PsiField field = myGetter ? PropertyUtil.getFieldOfGetter(method) : PropertyUtil.getFieldOfSetter(method);
     if (field == null) return;
     final String name = field.getName();
-    if (name == null) return;
     final CommentTracker tracker = new CommentTracker();
     final StringBuilder newText = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();

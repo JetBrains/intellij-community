@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,17 +31,17 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
+import static com.intellij.refactoring.util.CommonRefactoringUtil.capitalize;
+
 /**
  * @author Pavel.Dolgov
  */
 public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase {
-
   private String myInterfaceName;
 
   public CreateServiceInterfaceOrClassFix(PsiJavaCodeReferenceElement referenceElement) {
     referenceElement = findTopmostReference(referenceElement);
     PsiElement parent = referenceElement.getParent();
-
     if (parent instanceof PsiUsesStatement && ((PsiUsesStatement)parent).getClassReference() == referenceElement ||
         parent instanceof PsiProvidesStatement && ((PsiProvidesStatement)parent).getInterfaceReference() == referenceElement) {
       if (referenceElement.isQualified()) {
@@ -66,12 +66,9 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myInterfaceName == null) {
-      return false;
-    }
+    if (myInterfaceName == null) return false;
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-
     return psiFacade.findClass(myInterfaceName, projectScope) == null &&
            isQualifierInProject(myInterfaceName, project);
   }
@@ -146,7 +143,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
 
     protected CreateServiceInterfaceDialog(@Nullable Project project, @NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
       super(project);
-      setTitle("Create Service");
+      setTitle(QuickFixBundle.message("create.service"));
 
       myModuleCombo.setRenderer(SimpleListCellRenderer.create("", Module::getName));
 
@@ -157,13 +154,9 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-
-      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON,
-                          CreateClassKind.CLASS.name());
-      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON,
-                          CreateClassKind.INTERFACE.name());
-      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON,
-                          CreateClassKind.ANNOTATION.name());
+      myKindCombo.addItem(capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
+      myKindCombo.addItem(capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 
       init();
     }
@@ -174,9 +167,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(moduleRootDirs));
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
@@ -191,10 +183,14 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"));
-      if (myModuleCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"));
-      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+      builder.add(UI.PanelFactory.panel(nameTextField).withLabel(CommonBundle.message("label.name") + ":"));
+      if (myModuleCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel(CommonBundle.message("label.module") + ":"));
+      }
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
+      }
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("label.kind") + ":"));
       return builder.createPanel();
     }
 

@@ -1,31 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -62,6 +50,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -78,12 +67,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author mike
- */
 public class CreateFromUsageUtils {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
 
@@ -148,7 +133,7 @@ public class CreateFromUsageUtils {
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
-    Properties properties = new Properties();
+    Properties properties = FileTemplateManager.getInstance(method.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
                            PsiTypesUtil.getDefaultValueOfType(returnType));
@@ -170,38 +155,36 @@ public class CreateFromUsageUtils {
       throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
 
-    if (methodText != null) {
-      PsiMethod m;
-      try {
-        m = factory.createMethodFromText(methodText, aClass);
-      }
-      catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                   QuickFixBundle.message("new.method.body.template.error.title")));
-        return;
-      }
-
-      PsiElement newBody = m.getBody();
-      LOG.assertTrue(newBody != null);
-
-      PsiElement oldBody = method.getBody();
-      if (oldBody == null) {
-        PsiElement last = method.getLastChild();
-        if (last instanceof PsiErrorElement &&
-            JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
-          oldBody = last;
-        }
-      }
-      if (oldBody != null) {
-        oldBody.replace(newBody);
-      }
-      else {
-        method.add(newBody);
-      }
-
-      csManager.reformat(method);
+    PsiMethod m;
+    try {
+      m = factory.createMethodFromText(methodText, aClass);
     }
+    catch (IncorrectOperationException e) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                 QuickFixBundle.message("new.method.body.template.error.title")));
+      return;
+    }
+
+    PsiElement newBody = m.getBody();
+    LOG.assertTrue(newBody != null);
+
+    PsiElement oldBody = method.getBody();
+    if (oldBody == null) {
+      PsiElement last = method.getLastChild();
+      if (last instanceof PsiErrorElement &&
+          JavaPsiBundle.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+        oldBody = last;
+      }
+    }
+    if (oldBody != null) {
+      oldBody.replace(newBody);
+    }
+    else {
+      method.add(newBody);
+    }
+
+    csManager.reformat(method);
   }
 
   public static void setupEditor(@NotNull PsiMethod method, @NotNull Editor newEditor) {
@@ -285,22 +268,14 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
-        argType = PsiType.getJavaLangObject(psiManager, resolveScope);
-      } else if (argType instanceof PsiDisjunctionType) {
-        argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
-      } else if (argType instanceof PsiWildcardType) {
-        argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
-      }
-      PsiParameter parameter;
-      if (parameterList.getParametersCount() <= i) {
+      argType = getParameterTypeByArgumentType(argType, psiManager, resolveScope);
+      PsiParameter parameter = parameterList.getParameter(i);
+      if (parameter == null) {
         PsiParameter param = factory.createParameter(names[0], argType);
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
-      } else {
-        parameter = parameterList.getParameters()[i];
       }
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
@@ -311,6 +286,30 @@ public class CreateFromUsageUtils {
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
     }
+  }
+
+  /**
+   * Get a type suitable for parameter declaration based on given argument type
+   *
+   * @param argType argument type
+   * @param psiManager psiManager to use
+   * @param resolveScope type resolve scope
+   * @return a type suitable for parameter declaration; java.lang.Object if supplied argument type is null
+   */
+  @NotNull
+  public static PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
+                                                       @NotNull PsiManager psiManager,
+                                                       @NotNull GlobalSearchScope resolveScope) {
+    if (argType instanceof PsiDisjunctionType) {
+      argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
+    }
+    else if (argType instanceof PsiWildcardType) {
+      argType = ((PsiWildcardType)argType).getBound();
+    }
+    if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
+      argType = PsiType.getJavaLangObject(psiManager, resolveScope);
+    }
+    return argType;
   }
 
   @Nullable
@@ -348,7 +347,7 @@ public class CreateFromUsageUtils {
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescription()));
+      String title = CommonQuickFixBundle.message("fix.create.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
 
       CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
         @Override
@@ -363,6 +362,9 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
     else {
+      if (!FileModificationService.getInstance().prepareFileForWrite(sourceFile)) {
+        return null;
+      }
       targetDirectory = null;
     }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
@@ -397,6 +399,7 @@ public class CreateFromUsageUtils {
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
                       elementFactory.createEnum(name);
     CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
@@ -418,22 +421,7 @@ public class CreateFromUsageUtils {
           PsiClass targetClass;
           if (directory != null) {
             try {
-              if (classKind == CreateClassKind.INTERFACE) {
-                targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
-              }
-              else if (classKind == CreateClassKind.CLASS) {
-                targetClass = JavaDirectoryService.getInstance().createClass(directory, name);
-              }
-              else if (classKind == CreateClassKind.ENUM) {
-                targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
-              }
-              else if (classKind == CreateClassKind.ANNOTATION) {
-                targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
-              }
-              else {
-                LOG.error("Unknown kind of a class to create");
-                return null;
-              }
+              targetClass = classKind.createInDirectory(directory, name);
             }
             catch (final IncorrectOperationException e) {
               scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
@@ -444,27 +432,13 @@ public class CreateFromUsageUtils {
             }
           }
           else { //tests
-            PsiClass aClass;
-            if (classKind == CreateClassKind.INTERFACE) {
-              aClass = factory.createInterface(name);
-            }
-            else if (classKind == CreateClassKind.CLASS) {
-              aClass = factory.createClass(name);
-            }
-            else if (classKind == CreateClassKind.ENUM) {
-              aClass = factory.createEnum(name);
-            }
-            else if (classKind == CreateClassKind.ANNOTATION) {
-              aClass = factory.createAnnotationType(name);
-            }
-            else {
-              LOG.error("Unknown kind of a class to create");
-              return null;
-            }
+            PsiClass aClass = classKind.create(factory, name);
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
+          if (superClassName != null &&
+              (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
+              (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
           }
           if (contextElement instanceof PsiJavaCodeReferenceElement) {
@@ -499,16 +473,15 @@ public class CreateFromUsageUtils {
   }
 
   @SafeVarargs
-  @NotNull
-  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, @NotNull Class<? extends PsiElement>... scopes) {
+  public static PsiReferenceExpression @NotNull [] collectExpressions(final PsiExpression expression, Class<? extends PsiElement> @NotNull ... scopes) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
-        if (expression instanceof PsiReferenceExpression && 
+        if (expression instanceof PsiReferenceExpression &&
             (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
-          if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
+          if (Objects.equals(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
         }
@@ -518,7 +491,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && 
+          if (Objects.equals(methodExpression.getReferenceName(),
+                             ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName()) &&
               methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }
@@ -533,8 +507,7 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiReferenceExpression[0]);
   }
 
-  @NotNull
-  static PsiVariable[] guessMatchingVariables(final PsiExpression expression) {
+  static PsiVariable @NotNull [] guessMatchingVariables(final PsiExpression expression) {
     List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
     List<String> expectedMethodNames = new ArrayList<>();
     List<String> expectedFieldNames  = new ArrayList<>();
@@ -654,8 +627,7 @@ public class CreateFromUsageUtils {
     return compareMembers(c1, c2, expression);
   }
 
-  @NotNull
-  private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
+  private static ExpectedTypeInfo @NotNull [] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
     final PsiType[] argumentTypes = methodCall.getArgumentList().getExpressionTypes();
     if (argumentTypes.length != 1) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
@@ -668,8 +640,7 @@ public class CreateFromUsageUtils {
     return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
   }
 
-  @NotNull
-  public static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
+  public static ExpectedTypeInfo @NotNull [] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
     PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
@@ -709,7 +680,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -723,8 +694,7 @@ public class CreateFromUsageUtils {
   }
 
 
-  @NotNull
-  static PsiType[] guessType(PsiExpression expression, final boolean allowVoidType) {
+  static PsiType @NotNull [] guessType(PsiExpression expression, final boolean allowVoidType) {
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
 
@@ -761,7 +731,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -776,7 +746,7 @@ public class CreateFromUsageUtils {
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
         @Override
         @Nullable
-        public PsiType visitType(PsiType type) {
+        public PsiType visitType(@NotNull PsiType type) {
           if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
@@ -804,7 +774,7 @@ public class CreateFromUsageUtils {
         }
 
         @Override
-        public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
           return capturedWildcardType.getUpperBound().accept(this);
         }
       };
@@ -859,12 +829,13 @@ public class CreateFromUsageUtils {
 
   private static int compareMembers(PsiMember m1, PsiMember m2, PsiExpression context) {
     ProgressManager.checkCanceled();
-    int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
+    final StatisticsManager m = StatisticsManager.getInstance();
+    int result = m.getUseCount(JavaStatisticsManager.createInfo(null, m2)) - m.getUseCount(JavaStatisticsManager.createInfo(null, m1));
     if (result != 0) return result;
     final PsiClass aClass = m1.getContainingClass();
     final PsiClass bClass = m2.getContainingClass();
     if (aClass != null && bClass != null) {
-      result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+      result = m.getUseCount(JavaStatisticsManager.createInfo(null, bClass)) - m.getUseCount(JavaStatisticsManager.createInfo(null, aClass));
       if (result != 0) return result;
     }
 
@@ -880,8 +851,8 @@ public class CreateFromUsageUtils {
     return Comparing.compare(name1, name2);
   }
 
-  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {
-    for (PsiExpression expression : expressionOccurences) {
+  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurrences) {
+    for (PsiExpression expression : expressionOccurrences) {
       if(expression.isValid() && PsiUtil.isAccessedForWriting(expression)) return true;
     }
 
@@ -992,6 +963,9 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
+  /**
+   * Could be used for record component name as well
+   */
   public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
@@ -1013,33 +987,15 @@ public class CreateFromUsageUtils {
     }
 
     @Override
-    @NotNull
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement @NotNull [] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
-      PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) {
-        if (elementAt == null) return LookupElement.EMPTY_ARRAY;
-        final PsiElement parent = elementAt.getParent();
-        if (parent instanceof PsiMethod) {
-          parameterList = ((PsiMethod)parent).getParameterList();
-        }
-        else {
-          return LookupElement.EMPTY_ARRAY;
-        }
-      }
-
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
-
-      Set<String> parameterNames = new HashSet<>();
-      for (PsiParameter psiParameter : parameterList.getParameters()) {
-        if (psiParameter == parameter) continue;
-        parameterNames.add(psiParameter.getName());
-      }
+      Set<String> parameterNames = getPeerNames(elementAt);
+      if (parameterNames == null) return LookupElement.EMPTY_ARRAY;
 
       Set<LookupElement> set = new LinkedHashSet<>();
 
@@ -1067,6 +1023,40 @@ public class CreateFromUsageUtils {
       }
 
       return set.toArray(LookupElement.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    protected Set<String> getPeerNames(PsiElement elementAt) {
+      PsiElement parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class, PsiRecordHeader.class);
+      if (parameterList == null) {
+        if (elementAt == null) return null;
+        final PsiElement parent = elementAt.getParent();
+        if (!(parent instanceof PsiMethod)) return null;
+        parameterList = ((PsiMethod)parent).getParameterList();
+      }
+      PsiVariable[] allVariables;
+      if (parameterList instanceof PsiParameterList) {
+        allVariables = ((PsiParameterList)parameterList).getParameters();
+      }
+      else if (parameterList instanceof PsiRecordHeader) {
+        allVariables = ((PsiRecordHeader)parameterList).getRecordComponents();
+      } else {
+        return null;
+      }
+
+      PsiVariable parameter = PsiTreeUtil.getParentOfType(elementAt, PsiVariable.class);
+      Set<String> parameterNames = new HashSet<>();
+      for (PsiVariable psiParameter : allVariables) {
+        if (psiParameter == parameter) continue;
+        parameterNames.add(psiParameter.getName());
+      }
+      return parameterNames;
+    }
+
+    @NotNull
+    @Override
+    public LookupFocusDegree getLookupFocusDegree() {
+      return LookupFocusDegree.UNFOCUSED;
     }
   }
 }

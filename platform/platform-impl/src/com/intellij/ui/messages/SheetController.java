@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -10,7 +10,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -82,6 +84,8 @@ public class SheetController implements Disposable {
   private final JEditorPane messageTextPane = new JEditorPane();
   private final Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
+  private final JEditorPane headerLabel = new JEditorPane();
+
   SheetController(final SheetMessage sheetMessage,
                   final String title,
                   final String message,
@@ -135,7 +139,7 @@ public class SheetController implements Disposable {
     myDefaultButton = (defaultButtonIndex == -1) ? buttons[0] : buttons[defaultButtonIndex];
 
     if (myResult == null) {
-      myResult = Messages.CANCEL_BUTTON;
+      myResult = Messages.getCancelButton();
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
@@ -249,7 +253,7 @@ public class SheetController implements Disposable {
 
         paintShadow(g);
         // draw the sheet background
-        if (UIUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula()) {
           g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
         } else {
           //todo make bottom corners
@@ -276,11 +280,6 @@ public class SheetController implements Disposable {
         myIcon.paintIcon(this, g, 0, 0);
       }
     };
-
-
-    JEditorPane headerLabel = new JEditorPane();
-
-
 
     headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     headerLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
@@ -330,7 +329,7 @@ public class SheetController implements Disposable {
 
     int widestWordWidth = 250;
 
-    String [] words = (message == null) ? ArrayUtil.EMPTY_STRING_ARRAY : message.split(SPACE_OR_LINE_SEPARATOR_PATTERN);
+    String [] words = (message == null) ? ArrayUtilRt.EMPTY_STRING_ARRAY : message.split(SPACE_OR_LINE_SEPARATOR_PATTERN);
 
     for (String word : words) {
       widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);
@@ -410,7 +409,7 @@ public class SheetController implements Disposable {
 
 
   private static float getShadowAlpha() {
-    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+    return ((StartupUiUtil.isUnderDarcula())) ? .85f : .35f;
   }
 
   private void paintShadowFromParent(Graphics2D g2d) {
@@ -435,6 +434,7 @@ public class SheetController implements Disposable {
     int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
 
     // update the pane if the sheet is going to be wider
+    headerLabel.setSize(Math.max(headerLabel.getWidth(), buttonWidth), headerLabel.getHeight());
     messageTextPane.setSize(Math.max(messageTextPane.getWidth(), buttonWidth), messageTextPane.getHeight());
 
     SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
@@ -487,7 +487,7 @@ public class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    BufferedImage image = UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

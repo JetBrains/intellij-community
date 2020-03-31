@@ -4,17 +4,16 @@ package com.intellij.facet;
 
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetType;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class FacetFinderTest extends FacetTestCase {
   private FacetFinder myFacetFinder;
 
@@ -66,17 +65,17 @@ public class FacetFinderTest extends FacetTestCase {
     assertNull(findFacet(configFile));
   }
 
-  public void testAddRemoveModule() {
+  public void testAddRemoveModule() throws Exception {
     final VirtualFile file = findFile("../module/src/pack/MyClass.java");
 
     assertNull(findFacet(file));
-    final Module module = loadModule("facet/module/MyFacetModule.iml");
+    File imlFile = PathManagerEx.findFileUnderCommunityHome("java/java-tests/testData/facet/module/MyFacetModule.iml");
+    final Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).loadModule(FileUtil.toSystemIndependentName(imlFile.getAbsolutePath())));
     final MockFacet facet = findFacet(file);
     assertNotNull(facet);
     assertSame(module, facet.getModule());
 
     ModuleManager.getInstance(myProject).disposeModule(module);
-    myModulesToDispose.remove(module);
     assertNull(findFacet(file));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,12 +9,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
-    if (!UIUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
+    if (icon != null && !StartupUiUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
       return IconLoader.getDarkIcon(icon, true);
     }
     return icon;
@@ -36,7 +37,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     Object node = TreeUtil.getUserObject(value);
 
     if (node instanceof NodeDescriptor) {
-      NodeDescriptor descriptor = (NodeDescriptor)node;
+      NodeDescriptor<?> descriptor = (NodeDescriptor<?>)node;
       // TODO: use this color somewhere
       Color color = descriptor.getColor();
       setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
@@ -46,7 +47,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
     if (p0 instanceof PresentationData) {
       PresentationData presentation = (PresentationData)p0;
-      Color color = node instanceof NodeDescriptor ? ((NodeDescriptor)node).getColor() : null;
+      Color color = node instanceof NodeDescriptor ? ((NodeDescriptor<?>)node).getColor() : null;
       setIcon(fixIconIfNeeded(presentation.getIcon(false), selected, hasFocus));
 
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
@@ -66,6 +67,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       }
       else {
         boolean first = true;
+        boolean isMain = true;
         for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
           SimpleTextAttributes simpleTextAttributes = each.getAttributes();
           if (each.getAttributes().getFgColor() == null && forcedForeground != null) {
@@ -81,8 +83,8 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
             }
             first = false;
           }
-          // treat grayed text as non-main
-          boolean isMain = simpleTextAttributes != SimpleTextAttributes.GRAYED_ATTRIBUTES;
+          // the first grayed text (inactive foreground, regular or small) ends main speed-searchable text
+          isMain = isMain && !Comparing.equal(simpleTextAttributes.getFgColor(), SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor());
           append(each.getText(), simpleTextAttributes, isMain);
         }
         String location = presentation.getLocationString();
@@ -109,7 +111,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @Nullable
   protected ItemPresentation getPresentation(Object node) {
-    return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor)node).getPresentation() :
+    return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor<?>)node).getPresentation() :
            node instanceof NavigationItem ? ((NavigationItem)node).getPresentation() :
            null;
   }
@@ -138,7 +140,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
     return getSimpleTextAttributes(presentation, getScheme());
   }
-  
+
   private static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
                                                               @NotNull EditorColorsScheme colorsScheme)
   {

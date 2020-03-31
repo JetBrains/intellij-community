@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.statistics;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class JavaStatisticsManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.JavaStatisticsManager");
+  private static final Logger LOG = Logger.getInstance(JavaStatisticsManager.class);
   @NonNls public static final String CLASS_PREFIX = "class#";
 
   @NotNull
@@ -63,11 +49,11 @@ public abstract class JavaStatisticsManager {
   }
 
   public static int getVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
-    return createVariableUseInfo(name, variableKind, propertyName, type).getUseCount();
+    return StatisticsManager.getInstance().getUseCount(createVariableUseInfo(name, variableKind, propertyName, type));
   }
 
   public static void incVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
-    createVariableUseInfo(name, variableKind, propertyName, type).incUseCount();
+    StatisticsManager.getInstance().incUseCount(createVariableUseInfo(name, variableKind, propertyName, type));
   }
 
   @Nullable
@@ -130,8 +116,7 @@ public abstract class JavaStatisticsManager {
     return new StatisticsInfo(getMemberUseKey1(qualifierType), getMemberUseKey2(member));
   }
 
-  @NotNull
-  public static String[] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
+  public static String @NotNull [] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
     StatisticsInfo[] keys2 = StatisticsManager.getInstance().getAllValues(getVariableNameUseKey1(propertyName, type));
 
     List<String> list = new ArrayList<>();
@@ -143,7 +128,7 @@ public abstract class JavaStatisticsManager {
       list.add(name);
     }
 
-    return ArrayUtil.toStringArray(list);
+    return ArrayUtilRt.toStringArray(list);
   }
 
   @NotNull

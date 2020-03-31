@@ -36,7 +36,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (myT instanceof PsiWildcardType && myS instanceof PsiWildcardType) {
       final PsiType tBound = ((PsiWildcardType)myT).getBound();
       final PsiType sBound = ((PsiWildcardType)myS).getBound();

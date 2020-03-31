@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.psi.PsiReference;
 
 public class ShLiteralExpressionImpl extends ShExpressionImpl implements ShLiteralExpression {
 
@@ -65,6 +66,11 @@ public class ShLiteralExpressionImpl extends ShExpressionImpl implements ShLiter
   @NotNull
   public List<ShVariable> getVariableList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShVariable.class);
+  }
+
+  @Override
+  public PsiReference[] getReferences() {
+    return ShPsiImplUtil.getReferences(this);
   }
 
 }

@@ -238,6 +238,7 @@
     <keyboard-shortcut first-keystroke="shift meta F"/>
   </action>
   <action id="Refresh"/>
+  <action id="ForceRefresh"/>
   <action id="Unwrap"/>  <!-- TODO -->
   <action id="Replace"/>
   <action id="ReplaceInPath"/>
@@ -343,7 +344,7 @@
   <action id="tasks.switch">
     <keyboard-shortcut first-keystroke="meta F9"/>
   </action>
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="alt meta H"/>
   </action>
 

@@ -36,7 +36,7 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Issue Type:"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="label.issue.type"/>
         </properties>
       </component>
       <component id="21bc" class="com.intellij.ui.components.JBLabel">
@@ -47,7 +47,7 @@
         <properties>
           <horizontalAlignment value="2"/>
           <horizontalTextPosition value="2"/>
-          <text value="The information may contain sensitive data"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="label.the.information.may.contain.sensitive.data"/>
         </properties>
       </component>
     </children>

@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.google.common.base.Predicate;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -37,6 +23,8 @@ import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -54,7 +42,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * Accepts only those members whose element is PyClass object (new classes)
    */
-  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
+  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyRefactoringUtil.ObjectPredicate(true);
 
   private PyExtractSuperclassHelper() {
   }
@@ -103,7 +91,7 @@ public final class PyExtractSuperclassHelper {
     if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
     }
-    PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+    PyPsiRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
 
     final RefactoringEventData afterData = new RefactoringEventData();
     afterData.addElement(newClass);
@@ -120,7 +108,7 @@ public final class PyExtractSuperclassHelper {
 
   private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
-      .findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
+      .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
     if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile())) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
@@ -159,7 +147,7 @@ public final class PyExtractSuperclassHelper {
       psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON27, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
+    PyPsiRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
     return newClass;
   }
 

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportInModuleConfigurable implements Disposable {
   @Nullable
   public abstract JComponent createComponent();

@@ -14,6 +14,8 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -21,11 +23,18 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 
 public class HgDiffProvider implements DiffProvider {
 
@@ -102,6 +111,31 @@ public class HgDiffProvider implements DiffProvider {
     }
     HgFile hgFile = new HgFile(vcsRoot, HgUtil.getOriginalFileName(VcsUtil.getFilePath(file), ChangeListManager.getInstance(project)));
     return HgContentRevision.create(project, hgFile, hgRevisionNumber);
+  }
+
+  @Override
+  public boolean canCompareWithWorkingDir() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                  @NotNull VcsRevisionNumber revNum) throws VcsException {
+
+    final HgRepository repo = HgUtil.getRepositoryManager(project).getRepositoryForFile(fileOrDir);
+    if (repo == null) {
+      throw new VcsException("Couldn't find Git Repository for " + fileOrDir.getName());
+    }
+    assert revNum instanceof HgRevisionNumber : "Expected " + HgRevisionNumber.class.getSimpleName()
+                                                + ", got " + revNum.getClass().getSimpleName();
+    FilePath filePath = VcsUtil.getFilePath(fileOrDir);
+    final List<Change> changes = HgUtil.getDiff(project, repo.getRoot(), filePath, (HgRevisionNumber)revNum, null);
+    if (changes.isEmpty() && !filePath.isDirectory()) {
+      final HgFile hgFile = new HgFile(repo.getRoot(), filePath);
+      return createChangesWithCurrentContentForFile(filePath, HgContentRevision.create(project, hgFile, (HgRevisionNumber)revNum));
+    }
+    return changes;
   }
 
 }

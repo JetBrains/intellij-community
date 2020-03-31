@@ -107,13 +107,13 @@ public class AutoUnboxing {
 
   void switchExpressions(E e) {
     Integer integer = 1;
-    int i = (int)<warning descr="Auto-unboxing 'switch (e) { case A,B: break integer; case C: break integer; }'">switch (e) {
-      case A,B: break integer;
-      case C: break integer;
+    int i = (int)<warning descr="Auto-unboxing 'switch (e) { case A,B: yield integer; case C: yield integer; }'">switch (e) {
+      case A,B: yield integer;
+      case C: yield integer;
     }</warning>;
     int j = switch (e) {
-      case A,B: break <warning descr="Auto-unboxing 'integer'">integer</warning>;
-      case C: break <warning descr="Auto-unboxing 'integer'">integer</warning>;
+      case A,B: yield <warning descr="Auto-unboxing 'integer'">integer</warning>;
+      case C: yield <warning descr="Auto-unboxing 'integer'">integer</warning>;
     };
     if ((switch(0) {default -> false;})) {}
   }

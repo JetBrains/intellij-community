@@ -21,8 +21,7 @@ package com.intellij.lang.html;
 
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.xml.XmlFormattingModel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -30,7 +29,6 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.xml.HtmlPolicy;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.lang.xml.XmlFormattingModel;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlFormattingModelBuilder implements FormattingModelBuilder {

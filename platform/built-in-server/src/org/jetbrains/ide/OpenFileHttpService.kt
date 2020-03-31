@@ -122,7 +122,7 @@ internal class OpenFileHttpService : RestService() {
     return null
   }
 
-  internal fun openFile(request: OpenFileRequest, context: ChannelHandlerContext, httpRequest: HttpRequest?): Promise<Void?>? {
+  private fun openFile(request: OpenFileRequest, context: ChannelHandlerContext, httpRequest: HttpRequest?): Promise<Void?>? {
     val systemIndependentPath = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(request.file!!))
     val file = Paths.get(FileUtil.toSystemDependentName(systemIndependentPath))
     if (file.isAbsolute) {
@@ -221,13 +221,10 @@ private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
   if (virtualFile == null) {
     for (openedProject in projects) {
       for (vcsRoot in ProjectLevelVcsManager.getInstance(openedProject).allVcsRoots) {
-        val root = vcsRoot.path
-        if (root != null) {
-          virtualFile = root.findFileByRelativePath(path)
-          if (virtualFile != null) {
-            project = openedProject
-            break
-          }
+        virtualFile = vcsRoot.path.findFileByRelativePath(path)
+        if (virtualFile != null) {
+          project = openedProject
+          break
         }
       }
     }
@@ -241,9 +238,11 @@ private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
 
 private fun openAbsolutePath(file: Path, request: OpenFileRequest): Promise<Void?> {
   val promise = AsyncPromise<Void?>()
-  ApplicationManager.getApplication().invokeLater {
+  val task = Runnable {
     promise.catchError {
-      val virtualFile = runWriteAction {  LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath) }
+      val virtualFile = runWriteAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
+      }
       if (virtualFile == null) {
         promise.setError(NOT_FOUND)
       }
@@ -252,6 +251,14 @@ private fun openAbsolutePath(file: Path, request: OpenFileRequest): Promise<Void
         promise.setResult(null)
       }
     }
+  }
+
+  val app = ApplicationManager.getApplication()
+  if (app.isUnitTestMode) {
+    app.invokeAndWait(task)
+  }
+  else {
+    app.invokeLater(task)
   }
   return promise
 }

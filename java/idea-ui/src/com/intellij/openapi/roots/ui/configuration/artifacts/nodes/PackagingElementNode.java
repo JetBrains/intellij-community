@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class PackagingElementNode<E extends PackagingElement<?>> extends ArtifactsTreeNode {
   private final List<E> myPackagingElements;
   private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<>(1);
@@ -79,9 +76,8 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return myPackagingElements.size() == 1 ? myPackagingElements.get(0) : null;
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return ArrayUtil.toObjectArray(myPackagingElements);
   }
 
@@ -140,20 +136,6 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   public ArtifactEditorContext getContext() {
     return myContext;
-  }
-
-  @Nullable
-  public CompositePackagingElementNode findCompositeChild(@NotNull String name) {
-    final SimpleNode[] children = getChildren();
-    for (SimpleNode child : children) {
-      if (child instanceof CompositePackagingElementNode) {
-        final CompositePackagingElementNode composite = (CompositePackagingElementNode)child;
-        if (name.equals(composite.getFirstElement().getName())) {
-          return composite;
-        }
-      }
-    }
-    return null;
   }
 
 

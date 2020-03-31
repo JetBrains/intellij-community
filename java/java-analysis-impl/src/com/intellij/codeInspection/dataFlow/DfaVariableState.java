@@ -17,49 +17,50 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiPrimitiveType;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 class DfaVariableState {
-  @NotNull final DfaFactMap myFactMap;
+  @NotNull final DfType myDfType;
   private final int myHash;
 
   DfaVariableState(@NotNull DfaVariableValue dfaVar) {
-    this(dfaVar.getInherentFacts());
+    this(dfaVar.getInherentType());
   }
 
-  public boolean isSuperStateOf(DfaVariableState that) {
-    return myFactMap.isSuperStateOf(that.myFactMap);
+  DfaVariableState(@NotNull DfType dfType) {
+    myDfType = dfType instanceof DfReferenceType ? ((DfReferenceType)dfType).dropSpecialField() : dfType;
+    myHash = myDfType.hashCode();
   }
 
-  DfaVariableState(@NotNull DfaFactMap factMap) {
-    myFactMap = factMap.with(DfaFactType.SPECIAL_FIELD_VALUE, null);
-    myHash = myFactMap.hashCode();
-  }
-
-  @Nullable
-  DfaVariableState withInstanceofValue(@NotNull DfaPsiType dfaType) {
-    if (dfaType.getPsiType() instanceof PsiPrimitiveType) return this;
-    return withFacts(TypeConstraint.withInstanceOf(myFactMap, dfaType));
-  }
-
-  @Nullable
-  DfaVariableState withNotInstanceofValue(@NotNull DfaPsiType dfaType) {
-    TypeConstraint typeConstraint = getTypeConstraint();
-    TypeConstraint newTypeConstraint = typeConstraint.withNotInstanceofValue(dfaType);
-    return newTypeConstraint == null ? null : withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
+  public boolean isSuperStateOf(DfaVariableState other) {
+    return this.myDfType.isMergeable(other.myDfType);
   }
 
   @NotNull
-  DfaVariableState withoutType(@NotNull DfaPsiType type) {
-    return withFact(DfaFactType.TYPE_CONSTRAINT, getTypeConstraint().withoutType(type));
+  DfaVariableState withoutType(@NotNull TypeConstraint type) {
+    if (myDfType instanceof DfReferenceType) {
+      DfReferenceType dfType = (DfReferenceType)myDfType;
+      TypeConstraint constraint = dfType.getConstraint();
+      if (constraint.equals(type)) {
+        return createCopy(dfType.dropTypeConstraint());
+      }
+      if (type instanceof TypeConstraint.Exact) {
+        TypeConstraint.Exact exact = (TypeConstraint.Exact)type;
+        TypeConstraint result = TypeConstraints.TOP;
+        result = constraint.instanceOfTypes().without(exact).map(TypeConstraint.Exact::instanceOf)
+          .foldLeft(result, TypeConstraint::meet);
+        result = constraint.notInstanceOfTypes().without(exact).map(TypeConstraint.Exact::notInstanceOf)
+          .foldLeft(result, TypeConstraint::meet);
+        return createCopy(dfType.dropTypeConstraint().meet(result.asDfType()));
+      }
+    }
+    return this;
   }
 
   public int hashCode() {
@@ -70,55 +71,44 @@ class DfaVariableState {
     if (obj == this) return true;
     if (!(obj instanceof DfaVariableState)) return false;
     DfaVariableState aState = (DfaVariableState) obj;
-    return myHash == aState.myHash && Objects.equals(myFactMap, aState.myFactMap);
+    return myHash == aState.myHash && myDfType.equals(aState.myDfType);
   }
 
   @NotNull
-  protected DfaVariableState createCopy(@NotNull DfaFactMap factMap) {
-    return new DfaVariableState(factMap);
+  protected DfaVariableState createCopy(@NotNull DfType dfType) {
+    return dfType.equals(myDfType) ? this : new DfaVariableState(dfType);
   }
 
   public String toString() {
-    return "State: " + myFactMap;
+    return "State: " + myDfType;
   }
 
   @NotNull
   Nullability getNullability() {
-    return DfaNullability.toNullability(myFactMap.get(DfaFactType.NULLABILITY));
+    return DfaNullability.toNullability(DfaNullability.fromDfType(myDfType));
   }
 
   public boolean isNotNull() {
-    return DfaNullability.isNotNull(myFactMap);
+    return !myDfType.isSuperType(DfTypes.NULL);
   }
 
   @NotNull
   DfaVariableState withNotNull() {
-    return getNullability() == Nullability.NOT_NULL ? this : withoutFact(DfaFactType.NULLABILITY);
+    return getNullability() == Nullability.NOT_NULL ? this : withNullability(DfaNullability.UNKNOWN);
   }
-
+  
   @NotNull
-  <T> DfaVariableState withFact(DfaFactType<T> type, T value) {
-    return withFacts(myFactMap.with(type, value));
-  }
-
-  @NotNull
-  <T> DfaVariableState withoutFact(DfaFactType<T> type) {
-    return withFact(type, null);
+  DfaVariableState withNullability(@NotNull DfaNullability nullability) {
+    if (myDfType instanceof DfReferenceType && ((DfReferenceType)myDfType).getNullability() != nullability) {
+      return createCopy(((DfReferenceType)myDfType).dropNullability().meet(nullability.asDfType()));
+    }
+    return this;
   }
 
   @Nullable
-  <T> DfaVariableState intersectFact(DfaFactType<T> type, T value) {
-    return withFacts(myFactMap.intersect(type, value));
-  }
-
-  @Nullable
-  DfaVariableState intersectMap(DfaFactMap map) {
-    return withFacts(myFactMap.intersect(map));
-  }
-
-  @Contract("null -> null;!null -> !null")
-  public DfaVariableState withFacts(@Nullable DfaFactMap facts) {
-    return facts == null ? null : facts.equals(myFactMap) ? this : createCopy(facts);
+  DfaVariableState meet(DfType dfType) {
+    DfType result = myDfType.meet(dfType);
+    return result == DfTypes.BOTTOM ? null : createCopy(result);
   }
 
   @NotNull
@@ -126,19 +116,8 @@ class DfaVariableState {
     return this;
   }
 
-  @Nullable
-  public DfaValue getValue() {
-    return null;
-  }
-
   @NotNull
   public TypeConstraint getTypeConstraint() {
-    TypeConstraint fact = getFact(DfaFactType.TYPE_CONSTRAINT);
-    return fact == null ? TypeConstraint.empty() : fact;
-  }
-
-  @Nullable
-  public <T> T getFact(@NotNull DfaFactType<T> factType) {
-    return myFactMap.get(factType);
+    return TypeConstraint.fromDfType(myDfType);
   }
 }

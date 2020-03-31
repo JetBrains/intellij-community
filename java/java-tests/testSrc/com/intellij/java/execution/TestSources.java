@@ -28,7 +28,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TempFiles;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,7 +42,7 @@ public class TestSources {
   private File mySrc;
   private Module myModule;
 
-  public TestSources(Project project, Collection<File> filesToDelete) {
+  public TestSources(@NotNull Project project, @NotNull Collection<File> filesToDelete) {
     myProject = project;
     myTempFiles = new TempFiles(filesToDelete);
   }
@@ -54,19 +54,20 @@ public class TestSources {
     }
   }
 
-  public PsiPackage createPackage(String name) {
+  @NotNull
+  public PsiPackage createPackage(@NotNull String name) {
     File dir = new File(mySrc, name);
     dir.mkdir();
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     return findPackage(name);
   }
 
-  public PsiPackage findPackage(String name) {
+  public PsiPackage findPackage(@NotNull String name) {
     return JavaPsiFacade.getInstance(myProject).findPackage(name);
   }
 
-  @Nullable
-  public PsiClass createClass(String className, String code) throws FileNotFoundException {
+  @NotNull
+  public PsiClass createClass(@NotNull String className, @NotNull String code) throws FileNotFoundException {
     File file = new File(mySrc, className + ".java");
     try (PrintStream stream = new PrintStream(new FileOutputStream(file))) {
       stream.println(code);
@@ -87,26 +88,27 @@ public class TestSources {
     disposeModule(tempModule);
   }
 
-  private void disposeModule(Module tempModule) {
+  private void disposeModule(@NotNull Module tempModule) {
     ModuleManager.getInstance(myProject).disposeModule(tempModule);
   }
 
-  public void copyJdkFrom(Module module) {
+  public void copyJdkFrom(@NotNull Module module) {
     ModuleRootModificationUtil.setModuleSdk(myModule, ModuleRootManager.getInstance(module).getSdk());
   }
 
-  public void addLibrary(VirtualFile lib) {
+  public void addLibrary(@NotNull VirtualFile lib) {
     ModuleRootModificationUtil.addModuleLibrary(myModule, lib.getUrl());
   }
 
-  public VirtualFile createPackageDir(String packageName) {
+  @NotNull
+  public VirtualFile createPackageDir(@NotNull String packageName) {
     File pkg = new File(mySrc, packageName);
     pkg.mkdirs();
     VirtualFile pkgFile = TempFiles.getVFileByFile(pkg);
     return pkgFile;
   }
 
-  public PsiClass findClass(String fqName) {
+  public PsiClass findClass(@NotNull String fqName) {
     return JavaPsiFacade.getInstance(myProject).findClass(fqName, GlobalSearchScope.moduleScope(myModule));
   }
 }

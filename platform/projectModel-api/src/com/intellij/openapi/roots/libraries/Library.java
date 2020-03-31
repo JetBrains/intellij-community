@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,17 +29,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author dsl
  */
+@ApiStatus.NonExtendable
 public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];
 
   @Nullable
   String getName();
 
-  @NotNull
-  String[] getUrls(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
-  @NotNull
-  VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
   /**
    * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)!
@@ -58,8 +58,7 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
 
   interface ModifiableModel extends Disposable {
-    @NotNull
-    String[] getUrls(@NotNull OrderRootType rootType);
+    String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
     void setName(String name);
 
@@ -85,8 +84,7 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
 
     void commit();
 
-    @NotNull
-    VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+    VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
     boolean isChanged();
 

@@ -24,6 +24,7 @@
 
 package com.intellij.openapi.vcs.changes.ignore.reference;
 
+import com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributor;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.*;
@@ -56,14 +57,18 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
      * @param processingContext context
      * @return {@link PsiReference} list
      */
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement,
-                                                 @NotNull ProcessingContext processingContext) {
-      if (psiElement instanceof IgnoreEntry) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement,
+                                                           @NotNull ProcessingContext processingContext) {
+      String text = psiElement.getText();
+      if (psiElement instanceof IgnoreEntry && !shouldSkipCompletion(text)) {
         return new IgnoreReferenceSet((IgnoreEntry)psiElement).getAllReferences();
       }
       return PsiReference.EMPTY_ARRAY;
+    }
+
+    private static boolean shouldSkipCompletion(@NotNull String text) {
+      return FileExtensionCompletionContributor.Companion.completionSupported(text);
     }
   }
 }

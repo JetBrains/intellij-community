@@ -2,7 +2,7 @@
 package org.editorconfig.language.headers
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.assertIterableEquals
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
@@ -10,7 +10,7 @@ import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcher
 import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearcher
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 
-class EditorConfigHeaderHierarchyTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigHeaderHierarchyTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/headers/"
 

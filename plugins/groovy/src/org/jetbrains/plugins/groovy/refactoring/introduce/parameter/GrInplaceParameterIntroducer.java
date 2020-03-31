@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -18,9 +18,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -44,7 +46,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
   private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(GrIntroduceParameterHandler.REFACTORING_NAME, choice, context);
+    super(GrIntroduceParameterHandler.getRefactoringName(), choice, context);
     myInfo = info;
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
@@ -55,13 +57,12 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   @Override
   protected String getActionName() {
-    return GrIntroduceParameterHandler.REFACTORING_NAME;
+    return GrIntroduceParameterHandler.getRefactoringName();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
-    return ArrayUtil.toStringArray(mySuggestedNames);
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+    return ArrayUtilRt.toStringArray(mySuggestedNames);
   }
 
   @Override
@@ -71,7 +72,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     previewPanel.add(getPreviewEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
 
-    myDelegateCB = new JBCheckBox("Delegate via overloading method");
+    myDelegateCB = new JBCheckBox(GroovyBundle.message("checkbox.delegate.via.overloading.method"));
     myDelegateCB.setMnemonic('l');
     myDelegateCB.setFocusable(false);
 

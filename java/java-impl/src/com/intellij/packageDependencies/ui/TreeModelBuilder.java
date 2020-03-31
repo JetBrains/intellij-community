@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
@@ -47,10 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeModelBuilder {
-  public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
+  private static final Logger LOG = Logger.getInstance(TreeModelBuilder.class);
+
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
   private final boolean myShowModuleGroups;
   protected final JavaPsiFacade myJavaPsiFacade;
   private static final Key<Integer> FILE_COUNT = Key.create("packages.FILE_COUNT");
@@ -82,10 +69,6 @@ public class TreeModelBuilder {
   private GeneralGroupNode myTestRoot;
   private GeneralGroupNode myLibsRoot;
 
-  public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
-  public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
-  public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
-
   public TreeModelBuilder(@NotNull Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     final boolean multiModuleProject = ModuleManager.getInstance(project).getModules().length > 1;
@@ -106,9 +89,9 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, AllIcons.Modules.SourceFolder, project);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Modules.TestSourceFolder, project);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibFolder, project);
+      mySourceRoot = new GeneralGroupNode(getProductionName(), AllIcons.Nodes.Package, project);
+      myTestRoot = new GeneralGroupNode(getTestName(), AllIcons.Nodes.TestSourceFolder, project);
+      myLibsRoot = new GeneralGroupNode(getLibraryName(), AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -194,7 +177,7 @@ public class TreeModelBuilder {
   }
 
   private void processFilesRecursively(@NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       private PackageDependenciesNode parent;
 
       @Override
@@ -218,7 +201,7 @@ public class TreeModelBuilder {
   }
 
   private void countFilesRecursively(VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
@@ -233,7 +216,7 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, true, 0);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
     }
   }
 
@@ -254,7 +237,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      final String title = AnalysisScopeBundle.message("package.dependencies.build.process.title");
+      final String title = CodeInsightBundle.message("package.dependencies.build.process.title");
       ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, title, false, myProject);
     }
     else {
@@ -269,7 +252,7 @@ public class TreeModelBuilder {
   private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
@@ -427,7 +410,7 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"),
+        myAllLibsNode = new GeneralGroupNode(JavaBundle.message("dependencies.libraries.node.text"),
                                              AllIcons.Nodes.PpLibFolder,
                                              myProject);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);
@@ -461,5 +444,21 @@ public class TreeModelBuilder {
         return myLibsRoot;
       }
     }
+  }
+
+  public static String getScanningPackagesMessage() {
+    return CodeInsightBundle.message("package.dependencies.build.progress.text");
+  }
+
+  public static String getProductionName() {
+    return JavaBundle.message("package.dependencies.production.node.text");
+  }
+
+  public static String getTestName() {
+    return JavaBundle.message("package.dependencies.test.node.text");
+  }
+
+  public static String getLibraryName() {
+    return CodeInsightBundle.message("package.dependencies.library.node.text");
   }
 }

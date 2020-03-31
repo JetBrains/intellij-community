@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -55,5 +56,10 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
     else {
       return false;
     }
+  }
+
+  @Override
+  public boolean producesAllPossibleConfigurations(@NotNull PsiFile file) {
+    return false;
   }
 }

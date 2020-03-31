@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractCommand.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(AbstractCommand.class);
 
   public static final String CMD_PREFIX = "%";
 
@@ -68,9 +68,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
         // prevent previous action context affecting next action.
         // E.g. previous action may have called callback.setDone from inside write action, while
         // next action may not expect that
-
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
       else {
         ApplicationManager.getApplication().executeOnPooledThread(runnable);

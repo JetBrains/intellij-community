@@ -19,9 +19,9 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class JavaMoveLineTest extends LightCodeInsightTestCase {
+public class JavaMoveLineTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/moveLine/";
 
   @Override
@@ -31,11 +31,11 @@ public class JavaMoveLineTest extends LightCodeInsightTestCase {
 
   public void testMoveThroughFolding() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    FoldRegion lambdaStart = myEditor.getFoldingModel().getFoldRegion(140, 227);
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    FoldRegion lambdaStart = getEditor().getFoldingModel().getFoldRegion(140, 227);
     assertNotNull(lambdaStart);
     assertFalse(lambdaStart.isExpanded());
-    FoldRegion lambdaEnd = myEditor.getFoldingModel().getFoldRegion(248, 272);
+    FoldRegion lambdaEnd = getEditor().getFoldingModel().getFoldRegion(248, 272);
     assertNotNull(lambdaEnd);
     assertFalse(lambdaEnd.isExpanded());
 

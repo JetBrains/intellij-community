@@ -29,8 +29,13 @@ interface UResolvable {
   fun resolve(): PsiElement?
 }
 
-@ApiStatus.Experimental
 interface UMultiResolvable {
+  /**
+   * Returns multiple elements where the reference could be resolved.
+   * It could happen if there is an ambiguity in code: it is incomplete or resolve target cannot be statically determined
+   *
+   * @see [com.intellij.psi.PsiPolyVariantReference] as a similar entity for plain PSI
+   */
   fun multiResolve(): Iterable<ResolveResult>
 }
 

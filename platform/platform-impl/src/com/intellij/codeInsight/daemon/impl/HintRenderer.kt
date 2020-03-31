@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 
@@ -23,9 +23,6 @@ import java.awt.font.FontRenderContext
 import javax.swing.UIManager
 import kotlin.math.roundToInt
 
-/**
- * @author egor
- */
 open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   var widthAdjustment: HintWidthAdjustment? = null
 
@@ -52,11 +49,19 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     paintHint(g, editor, r, text, attributes, textAttributes, widthAdjustment)
   }
 
+  /**
+   * @deprecated
+   * @see calcHintTextWidth
+   */
+  protected fun doCalcWidth(text: String?, fontMetrics: FontMetrics): Int {
+    return calcHintTextWidth(text, fontMetrics)
+  }
+
   companion object {
     @JvmStatic
     fun calcWidthInPixels(editor: Editor, text: String?, widthAdjustment: HintWidthAdjustment?): Int {
       val fontMetrics = getFontMetrics(editor).metrics
-      return doCalcWidth(text, fontMetrics) + calcWidthAdjustment(text, editor, fontMetrics, widthAdjustment)
+      return calcHintTextWidth(text, fontMetrics) + calcWidthAdjustment(text, editor, fontMetrics, widthAdjustment)
     }
 
     @JvmStatic
@@ -161,10 +166,12 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     private fun calcWidthAdjustment(text: String?, editor: Editor, fontMetrics: FontMetrics, widthAdjustment: HintWidthAdjustment?): Int {
       if (widthAdjustment == null || editor !is EditorImpl) return 0
       val editorTextWidth = editor.getFontMetrics(Font.PLAIN).stringWidth(widthAdjustment.editorTextToMatch)
-      return Math.max(0, editorTextWidth + doCalcWidth(widthAdjustment.hintTextToMatch, fontMetrics) - doCalcWidth(text, fontMetrics))
+      return Math.max(0, editorTextWidth
+                         + calcHintTextWidth(widthAdjustment.hintTextToMatch, fontMetrics)
+                         - calcHintTextWidth(text, fontMetrics))
     }
 
-    protected class MyFontMetrics constructor(editor: Editor, familyName: String, size: Int) {
+    class MyFontMetrics internal constructor(editor: Editor, familyName: String, size: Int) {
       val metrics: FontMetrics
       val lineHeight: Int
 
@@ -217,11 +224,16 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    protected fun doCalcWidth(text: String?, fontMetrics: FontMetrics): Int {
+    protected fun calcHintTextWidth(text: String?, fontMetrics: FontMetrics): Int {
       return if (text == null) 0 else fontMetrics.stringWidth(text) + 14
     }
 
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
     private const val BACKGROUND_ALPHA = 0.55f
   }
+
+  // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"
+  @JvmSynthetic
+  @JvmName("getFontMetrics$")
+  protected fun getFontMetrics(editor: Editor): MyFontMetrics = Companion.getFontMetrics(editor)
 }

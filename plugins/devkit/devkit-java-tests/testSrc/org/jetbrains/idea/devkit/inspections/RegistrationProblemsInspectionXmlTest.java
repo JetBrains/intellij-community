@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml")
-public class RegistrationProblemsInspectionXmlTest extends LightCodeInsightFixtureTestCase {
+public class RegistrationProblemsInspectionXmlTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";

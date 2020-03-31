@@ -4,6 +4,8 @@ final class MyModule {
   public static @interface Dependency { }
 }
 
+class MyAnotherModule {}
+
 final class SomeService {
 
   SomeService(@MyModule.Dependency<caret>) {

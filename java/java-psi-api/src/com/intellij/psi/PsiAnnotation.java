@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
@@ -32,7 +32,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    */
   enum TargetType {
     // see java.lang.annotation.ElementType
-    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE,
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE, RECORD_COMPONENT,
     // auxiliary value, used when it's impossible to determine annotation's targets
     UNKNOWN;
 
@@ -103,25 +103,6 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   @Nullable
   PsiAnnotationOwner getOwner();
 
-  @Nullable
-  @Override
-  default PsiElement getSourceElement() {
-    return this;
-  }
-
-  @Override
-  default void navigate(boolean requestFocus) {}
-
-  @Override
-  default boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  default boolean canNavigateToSource() {
-    return false;
-  }
-
   @NotNull
   @Override
   default List<JvmAnnotationAttribute> getAttributes() {
@@ -137,7 +118,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   }
 
   /**
-   * don't use or override; it's temporarily left for compatibility with older plugins
+   * @deprecated don't use or override; it's temporarily left for compatibility with older plugins
    */
   @Nullable
   @Deprecated

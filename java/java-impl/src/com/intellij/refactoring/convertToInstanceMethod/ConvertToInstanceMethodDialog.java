@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,10 +19,10 @@ import java.awt.event.MouseEvent;
  * @author ven
  */
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog");
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodDialog.class);
 
   public ConvertToInstanceMethodDialog(final PsiMethod method, final Object[] variables) {
-    super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME);
+    super(method, variables, ConvertToInstanceMethodHandler.getRefactoringName(), false);
     init();
   }
 
@@ -55,7 +56,7 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     final JList variableChooser = super.createTargetVariableChooser();
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         Point point = e.getPoint();
         int index = variableChooser.locationToIndex(point);
         if (index == -1) return false;
@@ -65,15 +66,5 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
       }
     }.installOn(variableChooser);
     return variableChooser;
-  }
-
-  @Override
-  protected String getMovePropertySuffix() {
-    return null;
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return null;
   }
 }

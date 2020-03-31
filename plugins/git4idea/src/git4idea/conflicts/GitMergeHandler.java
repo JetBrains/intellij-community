@@ -10,11 +10,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
@@ -36,11 +36,16 @@ public class GitMergeHandler {
   private static final Logger LOG = Logger.getInstance(GitMergeHandler.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final GitDefaultMergeDialogCustomizer myDialogCustomizer;
+  @NotNull private final MergeDialogCustomizer myDialogCustomizer;
 
-  public GitMergeHandler(@NotNull Project project) {
+  public GitMergeHandler(@NotNull Project project, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     myProject = project;
-    myDialogCustomizer = new GitDefaultMergeDialogCustomizer(project);
+    myDialogCustomizer = mergeDialogCustomizer;
+  }
+
+  @NotNull
+  public String loadMergeDescription() {
+    return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
   }
 
   public boolean canResolveConflict(@NotNull GitConflict conflict) {
@@ -52,12 +57,9 @@ public class GitMergeHandler {
   }
 
   @NotNull
-  public Resolver resolveConflict(@NotNull GitConflict conflict, boolean isReversed) throws VcsException {
+  public Resolver resolveConflict(@NotNull GitConflict conflict, @NotNull VirtualFile file, boolean isReversed) throws VcsException {
     VirtualFile root = conflict.getRoot();
     FilePath path = conflict.getFilePath();
-
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
-    if (file == null) throw new VcsException("Can't find file for " + path);
 
     MergeData mergeData = GitMergeUtil.loadMergeData(myProject, root, path, isReversed);
 
@@ -66,12 +68,14 @@ public class GitMergeHandler {
     String centerTitle = myDialogCustomizer.getCenterPanelTitle(file);
     String rightTitle = myDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER);
 
+    DiffEditorTitleCustomizerList titleCustomizerList = myDialogCustomizer.getTitleCustomizerList(path);
+
     return new Resolver(myProject, conflict, isReversed, file, mergeData,
-                        windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle));
+                        windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle), titleCustomizerList);
   }
 
-  public void acceptOneVersion(@NotNull Collection<GitConflict> conflicts,
-                               @NotNull Collection<VirtualFile> reversedRoots,
+  public void acceptOneVersion(@NotNull Collection<? extends GitConflict> conflicts,
+                               @NotNull Collection<? extends VirtualFile> reversedRoots,
                                boolean takeTheirs) throws VcsException {
     try {
       MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(conflicts);
@@ -91,7 +95,7 @@ public class GitMergeHandler {
   }
 
   @NotNull
-  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<GitConflict> conflicts) {
+  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<? extends GitConflict> conflicts) {
     MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
     for (GitConflict conflict : conflicts) {
       byRoot.putValue(conflict.getRoot(), conflict);
@@ -108,6 +112,7 @@ public class GitMergeHandler {
 
     @NotNull private final String myWindowTitle;
     @NotNull private final List<String> myContentTitles;
+    @NotNull private final DiffEditorTitleCustomizerList myTitleCustomizerList;
 
     private volatile boolean myIsValid = true;
 
@@ -117,7 +122,8 @@ public class GitMergeHandler {
                      @NotNull VirtualFile file,
                      @NotNull MergeData mergeData,
                      @NotNull String windowTitle,
-                     @NotNull List<String> contentTitles) {
+                     @NotNull List<String> contentTitles,
+                     @NotNull DiffEditorTitleCustomizerList titleCustomizerList) {
       myProject = project;
       myConflict = conflict;
       myIsReversed = isReversed;
@@ -125,6 +131,7 @@ public class GitMergeHandler {
       myFile = file;
       myWindowTitle = windowTitle;
       myContentTitles = contentTitles;
+      myTitleCustomizerList = titleCustomizerList;
     }
 
     @NotNull
@@ -176,9 +183,14 @@ public class GitMergeHandler {
       return myContentTitles;
     }
 
+    @NotNull
+    public DiffEditorTitleCustomizerList getTitleCustomizerList() {
+      return myTitleCustomizerList;
+    }
+
     public boolean checkIsValid() {
       if (myIsValid) {
-        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myConflict.getRoot());
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(myConflict.getRoot());
         if (repository == null) return true;
         myIsValid = repository.getConflictsHolder().findConflict(myConflict.getFilePath()) != null;
       }

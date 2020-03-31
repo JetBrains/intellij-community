@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
+  private static final Logger LOG = Logger.getInstance(CachedValueImpl.class);
   private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 
@@ -32,7 +32,7 @@ public abstract class CachedValueBase<T> {
   @NotNull
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     if (result == null) {
-      return new Data<>(null, ArrayUtil.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
+      return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
     }
     T value = result.getValue();
     Object[] inferredDependencies = normalizeDependencies(result);
@@ -66,8 +66,7 @@ public abstract class CachedValueBase<T> {
     myData = data == null ? null : new SoftReference<>(data);
   }
 
-  @NotNull
-  protected Object[] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
+  protected Object @NotNull [] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
     Object[] items = result.getDependencyItems();
     T value = result.getValue();
     Object[] rawDependencies = myTrackValue && value != null ? ArrayUtil.append(items, value) : items;
@@ -101,7 +100,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  final Data<T> getRawData() {
+  private Data<T> getRawData() {
     return SoftReference.dereference(myData);
   }
 
@@ -122,7 +121,7 @@ public abstract class CachedValueBase<T> {
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  private static void collectDependencies(@NotNull List<Object> resultingDeps, @NotNull Object[] dependencies) {
+  private static void collectDependencies(@NotNull List<Object> resultingDeps, Object @NotNull [] dependencies) {
     for (Object dependency : dependencies) {
       if (dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
@@ -176,24 +175,20 @@ public abstract class CachedValueBase<T> {
 
   protected static class Data<T> implements Getter<T> {
     private final T myValue;
-    @NotNull
-    private final Object[] myDependencies;
-    @NotNull
-    private final long[] myTimeStamps;
+    private final Object @NotNull [] myDependencies;
+    private final long @NotNull [] myTimeStamps;
 
-    Data(final T value, @NotNull Object[] dependencies, @NotNull long[] timeStamps) {
+    Data(final T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
     }
 
-    @NotNull
-    public Object[] getDependencies() {
+    public Object @NotNull [] getDependencies() {
       return myDependencies;
     }
 
-    @NotNull
-    public long[] getTimeStamps() {
+    public long @NotNull [] getTimeStamps() {
       return myTimeStamps;
     }
 
@@ -211,8 +206,8 @@ public abstract class CachedValueBase<T> {
     @NotNull private final ProfilingInfo myProfilingInfo;
 
     private ProfilingData(T value,
-                          @NotNull Object[] dependencies,
-                          @NotNull long[] timeStamps,
+                          Object @NotNull [] dependencies,
+                          long @NotNull [] timeStamps,
                           @NotNull ProfilingInfo profilingInfo) {
       super(value, dependencies, timeStamps);
       myProfilingInfo = profilingInfo;
@@ -247,7 +242,7 @@ public abstract class CachedValueBase<T> {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         if (reuse) {
-          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass());
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData);
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
@@ -259,4 +254,9 @@ public abstract class CachedValueBase<T> {
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" + getValueProvider() + "}";
+  }
 }

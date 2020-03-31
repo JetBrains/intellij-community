@@ -145,15 +145,15 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
     );
   }
 
-  private static void doTestLineToIndentMapping(@NotNull String text, int... spacesForLine) {
+  private void doTestLineToIndentMapping(@NotNull String text, int... spacesForLine) {
     configureFromFileText("x.java", text);
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(myFile);
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     
     Assert.assertNotNull(document);
     Assert.assertNotNull(builder);
     
-    FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
+    FormattingModel model = builder.createModel(getFile(), CodeStyleSettingsManager.getSettings(getProject()));
     Block block = model.getRootBlock();
     List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block, null).build();
     

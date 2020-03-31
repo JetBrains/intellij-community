@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,8 @@ import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -47,8 +50,6 @@ import java.util.List;
 
 /**
  * Describes step of compilation process which copies resources files from source and resource roots of a Java module.
- *
- * @author nik
  */
 public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
   private final ResourcesTargetType myTargetType;
@@ -130,12 +131,21 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     int fingerprint = 0;
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
     final List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
-      fingerprint += FileUtil.fileHashCode(root.getRootFile());
+      String path = relativizer.toRelative(root.getRootFile().getAbsolutePath());
+      fingerprint += pathHashCode(path);
       fingerprint += root.getPackagePrefix().hashCode();
     }
     out.write(Integer.toHexString(fingerprint));
   }
 
+  private static int pathHashCode(@Nullable String path) {
+    // On case insensitive OS hash calculated from path converted to lower case
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
+    }
+    return FileUtil.pathHashCode(path);
+  }
 }

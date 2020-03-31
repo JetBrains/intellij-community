@@ -36,29 +36,17 @@ import java.util.Objects;
  *
  * @author Tagir Valeev
  */
-public class IteratorDeclaration {
+public class IteratorDeclaration extends IterableTraversal {
   private final @NotNull PsiLocalVariable myIterator;
-  private final @Nullable PsiExpression myIterable;
-  private final boolean myCollection;
 
   private IteratorDeclaration(@NotNull PsiLocalVariable iterator, @Nullable PsiExpression iterable, boolean collection) {
+    super(iterable, collection);
     myIterator = iterator;
-    myIterable = iterable;
-    myCollection = collection;
   }
 
   @NotNull
   public PsiLocalVariable getIterator() {
     return myIterator;
-  }
-
-  @Nullable
-  public PsiExpression getIterable() {
-    return myIterable;
-  }
-
-  public boolean isCollection() {
-    return myCollection;
   }
 
   public boolean isHasNextCall(PsiExpression condition) {
@@ -85,6 +73,11 @@ public class IteratorDeclaration {
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression expression = call.getMethodExpression();
     return method.equals(expression.getReferenceName()) && ExpressionUtils.isReferenceTo(expression.getQualifierExpression(), myIterator);
+  }
+
+  @Override
+  public boolean isRemoveCall(PsiExpression candidate) {
+    return isIteratorMethodCall(candidate, "remove");
   }
 
   public PsiVariable getNextElementVariable(PsiStatement statement) {

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class AppEngineSdkEditor {
   private final ComboboxWithBrowseButton myPathEditor;
 

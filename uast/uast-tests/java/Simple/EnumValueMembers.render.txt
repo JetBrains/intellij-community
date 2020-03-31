@@ -10,4 +10,8 @@ public enum Style {
     public fun getExitAnimation() : java.lang.String {
         return null
     }
+    public static fun values() : Style[] {
+    }
+    public static fun valueOf(name: java.lang.String) : Style {
+    }
 }

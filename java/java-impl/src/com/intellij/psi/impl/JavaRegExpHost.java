@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.module.Module;
@@ -41,6 +27,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   protected static final EnumSet<RegExpGroup.Type> SUPPORTED_NAMED_GROUP_TYPES = EnumSet.of(RegExpGroup.Type.NAMED_GROUP);
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
+  private static final int myNumberOfGeneralCategoryProperties = 58;
   private final String[][] myPropertyNames = {
     {"Cn", "Unassigned"},
     {"Lu", "Uppercase letter"},
@@ -83,19 +70,6 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     {"LD", "Letter or digit"},
     {"L1", "Latin-1"},
     {"all", "All"},
-    {"ASCII", "Ascii"},
-    {"Alnum", "Alphanumeric characters"},
-    {"Alpha", "Alphabetic characters"},
-    {"Blank", "Space and tab characters"},
-    {"Cntrl", "Control characters"},
-    {"Digit", "Numeric characters"},
-    {"Graph", "Printable and visible"},
-    {"Lower", "Lowercase Alphabetic"},
-    {"Print", "Printable characters"},
-    {"Punct", "Punctuation characters"},
-    {"Space", "Space characters"},
-    {"Upper", "Uppercase alphabetic"},
-    {"XDigit", "Hexadecimal digits"},
     {"javaLowerCase", },
     {"javaUpperCase", },
     {"javaTitleCase", },
@@ -114,6 +88,20 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     {"javaWhitespace", },
     {"javaISOControl", },
     {"javaMirrored", },
+    /* end of general category properties */
+    {"ASCII", "Ascii"},
+    {"Alnum", "Alphanumeric characters"},
+    {"Alpha", "Alphabetic characters"},
+    {"Blank", "Space and tab characters"},
+    {"Cntrl", "Control characters"},
+    {"Digit", "Numeric characters"},
+    {"Graph", "Printable and visible"},
+    {"Lower", "Lowercase Alphabetic"},
+    {"Print", "Printable characters"},
+    {"Punct", "Punctuation characters"},
+    {"Space", "Space characters"},
+    {"Upper", "Uppercase alphabetic"},
+    {"XDigit", "Hexadecimal digits"},
   };
 
   public JavaRegExpHost() {
@@ -202,6 +190,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     switch (boundary.getType()) {
       case UNICODE_EXTENDED_GRAPHEME:
         return hasAtLeastJdkVersion(boundary, JavaSdkVersion.JDK_1_9);
+      case RESET_MATCH:
+        return false;
       case LINE_START:
       case LINE_END:
       case WORD:
@@ -263,9 +253,49 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean isValidPropertyName(@NotNull String name) {
+    return isScriptProperty(name) || isBlockProperty(name) || isCategoryProperty(name);
+  }
+
+  private static boolean isScriptProperty(@NotNull String propertyName) {
+    return "script".equalsIgnoreCase(propertyName) || "sc".equalsIgnoreCase(propertyName);
+  }
+
+  private static boolean isBlockProperty(@NotNull String propertyName) {
+    return "block".equalsIgnoreCase(propertyName) || "blk".equalsIgnoreCase(propertyName);
+  }
+
+  private static boolean isCategoryProperty(@NotNull String propertyName) {
+    return "general_category".equalsIgnoreCase(propertyName) || "gc".equalsIgnoreCase(propertyName);
+  }
+
+  @Override
+  public boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value) {
+    if (isScriptProperty(propertyName)) {
+      return isValidUnicodeScript(value);
+    }
+    else if (isBlockProperty(propertyName)) {
+      return isValidUnicodeBlock(value);
+    }
+    else if (isCategoryProperty(propertyName)) {
+      return isValidGeneralCategory(value);
+    }
+    return false;
+  }
+
+  public boolean isValidGeneralCategory(String value) {
+    for (int i = 0; i < myNumberOfGeneralCategoryProperties; i++) {
+      if (value.equals(myPropertyNames[i][0])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public boolean isValidCategory(@NotNull String category) {
     if (category.startsWith("In")) {
-      return isValidUnicodeBlock(category);
+      return isValidUnicodeBlock(category.substring(2));
     }
     if (category.startsWith("Is")) {
       category = category.substring(2);
@@ -315,16 +345,16 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return false;
   }
 
-  private boolean isValidUnicodeBlock(@NotNull String category) {
+  private static boolean isValidUnicodeBlock(@NotNull String category) {
     try {
-      return Character.UnicodeBlock.forName(category.substring(2)) != null;
+      return Character.UnicodeBlock.forName(category) != null;
     }
     catch (IllegalArgumentException e) {
       return false;
     }
   }
 
-  private boolean isValidUnicodeScript(@NotNull String category) {
+  private static boolean isValidUnicodeScript(@NotNull String category) {
     try {
       return Character.UnicodeScript.forName(category) != null;
     }
@@ -346,16 +376,15 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public Integer getQuantifierValue(@NotNull RegExpNumber number) {
     try {
-      return Integer.valueOf(number.getText());
+      return Integer.valueOf(number.getUnescapedText());
     }
     catch (NumberFormatException e) {
       return null;
     }
   }
 
-  @NotNull
   @Override
-  public String[][] getAllKnownProperties() {
+  public String[] @NotNull [] getAllKnownProperties() {
     return myPropertyNames;
   }
 
@@ -370,11 +399,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         return stringArray.length > 1 ? stringArray[1] : stringArray[0];
       }
     }
-    return null;  }
+    return null;
+  }
 
-  @NotNull
   @Override
-  public String[][] getKnownCharacterClasses() {
+  public String[] @NotNull [] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
   }
 }

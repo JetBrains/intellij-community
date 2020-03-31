@@ -27,7 +27,7 @@ public class JsonWordSelectionTest extends JsonTestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       myFixture.copyDirectoryToProject(directoryName, directoryName);
       myFixture.configureByFile(directoryName + "/before." + filesExtension);
-      Editor editor = getEditor();
+      Editor editor = myFixture.getEditor();
       boolean camelWords = editor.getSettings().isCamelWords();
       try {
         editor.getSettings().setCamelWords(true);

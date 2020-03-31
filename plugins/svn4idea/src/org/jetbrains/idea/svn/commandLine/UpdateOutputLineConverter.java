@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,8 +12,6 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,7 +97,7 @@ public class UpdateOutputLineConverter {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
-  private final static Set<Character> ourActions = new HashSet<>(Arrays.asList('A', 'D', 'U', 'C', 'G', 'E', 'R'));
+  private final static Set<Character> ourActions = ContainerUtil.set('A', 'D', 'U', 'C', 'G', 'E', 'R');
 
   @Nullable
   private ProgressEvent parseNormalString(final String line) {

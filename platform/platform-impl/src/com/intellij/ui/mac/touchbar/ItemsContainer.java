@@ -1,90 +1,79 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-class ItemsContainer {
+final class ItemsContainer {
   private final @NotNull String myName;    // just for logging/debugging
-  private final @Nullable ItemListener myListener;
   private final @NotNull List<TBItem> myItems = new ArrayList<>();
 
   private long myCounter = 0; // for unique id generation
 
-  ItemsContainer(@NotNull String name, @Nullable ItemListener listener) { myName = name; myListener = listener; }
+  ItemsContainer(@NotNull String name) { myName = name; }
 
   boolean isEmpty() { return myItems.isEmpty(); }
+
   boolean hasAnActionItems() { return anyMatchDeep(item -> item instanceof TBItemAnActionButton); }
 
   @Override
   public String toString() { return myName; }
 
-  @NotNull TBItemButton addButton() {
-    final TBItemButton butt = new TBItemButton(_genNewID("button"), myListener);
-    myItems.add(butt);
-    return butt;
+  void addItem(@NotNull TBItem item) {
+    addItem(item, -1);
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, @Nullable TBItem positionAnchor) {
-    final String actId = ApplicationManager.getApplication() != null ? ActionManager.getInstance().getId(act) : act.toString();
-    final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, actId);
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act);
-
-    if (positionAnchor != null) {
-      final int index = myItems.indexOf(positionAnchor);
-      if (index >= 0 && index < myItems.size())
-        myItems.add(index, butt);
-      else
-        myItems.add(butt);
-    } else
-      myItems.add(butt);
-
-    return butt;
+  void addItem(@NotNull TBItem item, int index) {
+    if (item.getUid() == null || item.getUid().isEmpty()) {
+      item.setUid(_genNewID(item.getName()));
+    }
+    if (index >= 0 && index < myItems.size()) {
+      myItems.add(index, item);
+    }
+    else {
+      myItems.add(item);
+    }
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act) {
-    return addAnActionButton(act, null);
-  }
-
-  @NotNull TBItemGroup addGroup() {
-    final TBItemGroup group = new TBItemGroup(_genNewID("group"), myListener);
-    myItems.add(group);
-    return group;
-  }
-
-  @NotNull TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
-    final TBItemPopover popover = new TBItemPopover(_genNewID("popover"), myListener, icon, text, width, expandTB, tapAndHoldTB);
-    myItems.add(popover);
-    return popover;
-  }
-
-  @NotNull TBItemScrubber addScrubber() {
-    final int defaultScrubberWidth = 500;
-    final TBItemScrubber scrubber = new TBItemScrubber(_genNewID("scrubber"), myListener, defaultScrubberWidth);
-    myItems.add(scrubber);
-    return scrubber;
+  void addItem(@NotNull TBItem item, @Nullable TBItem positionAnchor) {
+    final int index = positionAnchor != null ? myItems.indexOf(positionAnchor) : -1;
+    addItem(item, index);
   }
 
   void addSpacing(boolean large) {
-    final SpacingItem spacing = new SpacingItem(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
-    myItems.add(spacing);
+    addSpacing(large, -1);
+  }
+
+  void addSpacing(boolean large, int index) {
+    final SpacingItem spacing = new SpacingItem();
+    spacing.setUid(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
+    if (index >= 0 && index < myItems.size()) {
+      myItems.add(index, spacing);
+    }
+    else {
+      myItems.add(spacing);
+    }
   }
 
   void addFlexibleSpacing() {
-    final SpacingItem spacing = new SpacingItem("static_touchbar_item_flexible_space");
-    myItems.add(spacing);
+    addFlexibleSpacing(-1);
+  }
+
+  void addFlexibleSpacing(int index) {
+    final SpacingItem spacing = new SpacingItem();
+    spacing.setUid("static_touchbar_item_flexible_space");
+    if (index >= 0 && index < myItems.size()) {
+      myItems.add(index, spacing);
+    }
+    else {
+      myItems.add(spacing);
+    }
   }
 
   void releaseAll() {
@@ -105,8 +94,9 @@ class ItemsContainer {
       if (item instanceof TBItemGroup) {
         final ItemsContainer group = ((TBItemGroup)item).getContainer();
         group.remove(filter);
-        if (group.isEmpty())
+        if (group.isEmpty()) {
           removeGroup = true;
+        }
       }
       if (removeGroup || filter.test(item)) {
         item.releaseNativePeer();
@@ -115,25 +105,44 @@ class ItemsContainer {
     }
   }
 
-  @NotNull String[] getVisibleIds() {
-    final String[] ids = new String[myItems.size()];
+  @NotNull String @NotNull [] getVisibleIds() {
+    String[] ids = new String[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible)
-        ids[c++] = item.myUid;
+      if (item.myIsVisible) {
+        ids[c++] = item.getUid();
+      }
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
 
-  @NotNull ID[] getVisibleNativePeers() {
+  ID @NotNull [] getVisibleNativePeers() {
     final ID[] ids = new ID[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer()))
+      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer())) {
         ids[c++] = item.getNativePeer();
+      }
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
+
+  void softClear(@NotNull Map<AnAction, TBItemAnActionButton> actPool, @NotNull LinkedList<TBItemGroup> groupPool) {
+    myItems.forEach((item -> {
+      if (item instanceof TBItemAnActionButton) {
+        final TBItemAnActionButton actItem = (TBItemAnActionButton)item;
+        actPool.put(actItem.getAnAction(), actItem);
+      }
+      if (item instanceof TBItemGroup) {
+        final TBItemGroup group = (TBItemGroup)item;
+        group.getContainer().softClear(actPool, groupPool);
+        groupPool.add(group);
+      }
+    }));
+    myItems.clear();
+  }
+
+  TBItem getItem(int index) { return index >= 0 && index < myItems.size() ? myItems.get(index) : null; }
 
   void forEachDeep(Consumer<? super TBItem> proc) {
     myItems.forEach((item -> {
@@ -147,8 +156,9 @@ class ItemsContainer {
 
   boolean anyMatchDeep(Predicate<? super TBItem> proc) {
     return myItems.stream().anyMatch(item -> {
-      if (item instanceof TBItemGroup)
+      if (item instanceof TBItemGroup) {
         return ((TBItemGroup)item).getContainer().anyMatchDeep(proc);
+      }
       return proc.test(item);
     });
   }
@@ -169,9 +179,11 @@ class ItemsContainer {
 
   @Nullable
   TBItem findItem(String uid) {
-    for (TBItem item : myItems)
-      if (item.myUid.equals(uid))
+    for (TBItem item : myItems) {
+      if (item.getUid().equals(uid)) {
         return item;
+      }
+    }
     return null;
   }
 

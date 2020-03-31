@@ -4,6 +4,9 @@ package com.intellij.psi.impl.search;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -13,11 +16,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,14 +32,14 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -51,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
+  private static final Logger LOG = Logger.getInstance(PsiSearchHelperImpl.class);
   private final PsiManagerEx myManager;
   private final DumbService myDumbService;
 
@@ -78,14 +81,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return scope;
   }
 
-  public PsiSearchHelperImpl(@NotNull PsiManagerEx manager) {
-    myManager = manager;
+  public PsiSearchHelperImpl(@NotNull Project project) {
+    myManager = PsiManagerEx.getInstanceEx(project);
+    myDumbService = DumbService.getInstance(myManager.getProject());
+  }
+
+  /**
+   * @deprecated Use {@link #PsiSearchHelperImpl(Project)}
+   */
+  @Deprecated
+  public PsiSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
+    myManager = psiManager;
     myDumbService = DumbService.getInstance(myManager.getProject());
   }
 
   @Override
-  @NotNull
-  public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
+  public PsiElement @NotNull [] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final List<PsiElement> result = Collections.synchronizedList(new ArrayList<>());
     Processor<PsiElement> processor = Processors.cancelableCollectProcessor(result);
     processCommentsContainingIdentifier(identifier, searchScope, processor);
@@ -151,11 +162,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
-  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
-                                              @NotNull final String text,
-                                              final short searchContext,
+  boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+                                              @NotNull String text,
+                                              short searchContext,
                                               @NotNull EnumSet<Options> options,
-                                              @Nullable String containerName, @NotNull final BulkOccurrenceProcessor processor) {
+                                              @Nullable String containerName,
+                                              @NotNull BulkOccurrenceProcessor processor) {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -189,7 +201,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           LOG.debug("Element " + scopeElement + " of class " + scopeElement.getClass() + " has null range");
           return true;
         }
-        return processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher, progress), searcher);
+        return processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher), searcher);
       }
 
       @Override
@@ -213,9 +225,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull final ProgressIndicator progress,
-                                                      @NotNull final StringSearcher searcher,
-                                                      @NotNull final BulkOccurrenceProcessor processor) {
+  static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
@@ -225,7 +235,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
 
         return scopeElement.isValid() &&
-               processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher, progress), searcher);
+               processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher), searcher);
       }
 
       @Override
@@ -245,15 +255,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     progress.pushState();
     boolean result;
     try {
-      progress.setText(PsiBundle.message("psi.scanning.files.progress"));
+      progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
 
       String text = searcher.getPattern();
       Set<VirtualFile> fileSet = new THashSet<>();
       getFilesWithText(scope, searchContext, caseSensitively, text, fileSet);
 
-      progress.setText(PsiBundle.message("psi.search.for.word.progress", text));
+      progress.setText(IndexingBundle.message("psi.search.for.word.progress", text));
 
-      final Processor<PsiElement> localProcessor = localProcessor(progress, searcher, processor);
+      final Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
       if (containerName != null) {
         List<VirtualFile> intersectionWithContainerFiles = new ArrayList<>();
         // intersectionWithContainerFiles holds files containing words from both `text` and `containerName`
@@ -295,11 +305,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       final AtomicBoolean stopped = new AtomicBoolean(false);
-
+      ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(progress);
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
-        TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
+        TooManyUsagesStatus.getFrom(originalIndicator).pauseProcessingIfTooManyUsages();
         try {
-          processVirtualFile(vfile, localProcessor, stopped);
+          processVirtualFile(vfile, stopped, localProcessor);
         }
         catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
@@ -322,7 +332,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
   // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
-  // {@code localProcessor} must be as idempotent as possible.
+  // {@code localProcessor} must be as idempotent as possible (and must not return false on progress cancel)
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                     @NotNull List<? extends VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
@@ -332,66 +342,95 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (!app.isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(progress);
     }
-
+    List<VirtualFile> processedFiles = Collections.synchronizedList(new ArrayList<>(files.size()));
     while (true) {
       ProgressManager.checkCanceled();
-      List<VirtualFile> failedList = new SmartList<>();
-      List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
-      boolean completed;
-      if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
-        // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-        // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
-        completed = ContainerUtil.process(files, localProcessor);
-      }
-      else if (app.isWriteActionPending()) {
-        completed = true;
-        // we don't have read action now so wait for write action to complete
-        failedFiles.addAll(files);
-      }
-      else {
-        final Processor<VirtualFile> processor = vfile -> {
-          ProgressManager.checkCanceled();
-          if (failedFiles.isEmpty()) {
+      ProgressIndicator wrapper = new SensitiveProgressWrapper(progress);
+      ApplicationListener listener = new ApplicationListener() {
+        @Override
+        public void beforeWriteActionStart(@NotNull Object action) {
+          wrapper.cancel();
+        }
+      };
+      processedFiles.clear();
+      Disposable disposable = Disposer.newDisposable();
+      app.addApplicationListener(listener, disposable);
+      boolean processorCanceled = false;
+      try {
+        if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
+          // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
+          // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
+          processorCanceled = !ContainerUtil.process(files, localProcessor);
+          if (processorCanceled) {
+            stopped.set(true);
+          }
+          processedFiles.addAll(files);
+        }
+        else if (app.isWriteActionPending()) {
+          // we don't have read action now so wait for write action to complete
+        }
+        else {
+          AtomicBoolean someTaskFailed = new AtomicBoolean();
+          Processor<VirtualFile> processor = vfile -> {
+            ProgressManager.checkCanceled();
+            // optimisation: avoid unnecessary processing if it's doomed to fail because some other task has failed already,
+            // and bail out of fork/join task as soon as possible
+            if (someTaskFailed.get()) {
+              return false;
+            }
             try {
               // wrap in unconditional impatient reader to bail early at write action start,
               // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
               app.executeByImpatientReader(() -> {
-                if (!localProcessor.process(vfile)) {
+                if (localProcessor.process(vfile)) {
+                  processedFiles.add(vfile);
+                }
+                else {
                   stopped.set(true);
                 }
               });
             }
-            catch (ApplicationUtil.CannotRunReadActionException action) {
-              failedFiles.add(vfile);
+            catch (ProcessCanceledException e) {
+              someTaskFailed.set(true);
+              throw e;
             }
+            return !stopped.get();
+          };
+          // try to run parallel read actions but fail as soon as possible
+          try {
+            JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, wrapper, processor);
+            processorCanceled = stopped.get();
           }
-          else {
-            // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
-            // and 2nd: bail out of fork/join task as soon as possible
-            failedFiles.add(vfile);
+          catch (ProcessCanceledException e) {
+            // we can be interrupted by wrapper (means write action is about to start) or by genuine exception in progress
+            progress.checkCanceled();
           }
-          return !stopped.get();
-        };
-        // try to run parallel read actions but fail as soon as possible
-        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, processor);
+        }
       }
-      if (!completed) {
+      finally {
+        Disposer.dispose(disposable);
+      }
+      if (processorCanceled) {
         return false;
       }
-      if (failedFiles.isEmpty()) {
+
+      if (processedFiles.size() == files.size()) {
         break;
       }
       // we failed to run read action in job launcher thread
       // run read action in our thread instead to wait for a write action to complete and resume parallel processing
       DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
-      files = failedList;
+      Set<VirtualFile> t = new THashSet<>(files);
+      synchronized (processedFiles) {
+        t.removeAll(processedFiles);
+      }
+      files = new ArrayList<>(t);
     }
     return true;
   }
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,
-                                  @NotNull final Processor<? super PsiFile> localProcessor,
-                                  @NotNull final AtomicBoolean stopped) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull final AtomicBoolean stopped, @NotNull final Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       ApplicationUtil.tryRunReadAction(() -> {
@@ -424,32 +463,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                 final boolean caseSensitively,
                                 @NotNull String text,
                                 @NotNull Collection<? super VirtualFile> result) {
-    myManager.startBatchFilesProcessingMode();
-    try {
-      Processor<? super VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-      boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
-      // success == false means exception in index
-    }
-    finally {
-      myManager.finishBatchFilesProcessingMode();
-    }
+    processCandidateFilesForText(scope, searchContext, caseSensitively, text, Processors.cancelableCollectProcessor(result));
   }
 
-  public boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
-                                      final short searchContext,
-                                      final boolean caseSensitively,
-                                      @NotNull String text,
-                                      @NotNull final Processor<? super VirtualFile> processor) {
+  @Override
+  public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
+                                              short searchContext,
+                                              boolean caseSensitively,
+                                              @NotNull String text,
+                                              @NotNull Processor<? super VirtualFile> processor) {
     List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
-    Condition<Integer> contextMatches = integer -> (integer.intValue() & searchContext) != 0;
+    Condition<Integer> contextMatches = matchContextCondition(searchContext);
     return processFilesContainingAllKeys(myManager.getProject(), scope, contextMatches, entries, processor);
   }
 
   @Override
-  @NotNull
-  public PsiFile[] findFilesWithPlainTextWords(@NotNull String word) {
+  public PsiFile @NotNull [] findFilesWithPlainTextWords(@NotNull String word) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(word, UsageSearchContext.IN_PLAIN_TEXT,
                                                                                      GlobalSearchScope.projectScope(myManager.getProject()),
                                                                                      true);
@@ -490,7 +521,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     progress.pushState();
     final Ref<Boolean> stopped = Ref.create(Boolean.FALSE);
     try {
-      progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
+      progress.setText(IndexingBundle.message("psi.search.in.non.java.files.progress"));
 
       final SearchScope useScope = originalElement == null ? null : myDumbService.runReadActionInSmartMode(() -> getUseScope(originalElement));
 
@@ -502,7 +533,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         final CharSequence text = ReadAction.compute(() -> psiFile.getViewProvider().getContents());
 
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, index -> {
+        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, index -> {
           boolean isReferenceOK = myDumbService.runReadActionInSmartMode(() -> {
             PsiReference referenceAt = psiFile.findReferenceAt(index);
             return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
@@ -528,7 +559,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processAllFilesWithWord(@NotNull String word,
                                          @NotNull GlobalSearchScope scope,
-                                         @NotNull Processor<PsiFile> processor,
+                                         @NotNull Processor<? super PsiFile> processor,
                                          final boolean caseSensitively) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
@@ -536,7 +567,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processAllFilesWithWordInText(@NotNull final String word,
                                                @NotNull final GlobalSearchScope scope,
-                                               @NotNull final Processor<PsiFile> processor,
+                                               @NotNull final Processor<? super PsiFile> processor,
                                                final boolean caseSensitively) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
   }
@@ -544,18 +575,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processAllFilesWithWordInComments(@NotNull String word,
                                                    @NotNull GlobalSearchScope scope,
-                                                   @NotNull Processor<PsiFile> processor) {
+                                                   @NotNull Processor<? super PsiFile> processor) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
   }
 
   @Override
   public boolean processAllFilesWithWordInLiterals(@NotNull String word,
                                                    @NotNull GlobalSearchScope scope,
-                                                   @NotNull Processor<PsiFile> processor) {
+                                                   @NotNull Processor<? super PsiFile> processor) {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
-  private static class RequestWithProcessor {
+  private static class RequestWithProcessor implements WordRequestInfo {
     @NotNull private final PsiSearchRequest request;
     @NotNull private Processor<? super PsiReference> refProcessor;
 
@@ -579,6 +610,34 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     public String toString() {
       return request.toString();
     }
+
+    @NotNull
+    @Override
+    public String getWord() {
+      return request.word;
+    }
+
+    @NotNull
+    @Override
+    public SearchScope getSearchScope() {
+      return request.searchScope;
+    }
+
+    @Override
+    public short getSearchContext() {
+      return request.searchContext;
+    }
+
+    @Override
+    public boolean isCaseSensitive() {
+      return request.caseSensitive;
+    }
+
+    @Nullable
+    @Override
+    public String getContainerName() {
+      return request.containerName;
+    }
   }
 
   @Override
@@ -595,7 +654,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final List<Computable<Boolean>> customs = new ArrayList<>();
       final Set<RequestWithProcessor> locals = new LinkedHashSet<>();
       Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors = new THashMap<>();
-      distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
+      distributePrimitives(collectors, locals, globals, customs, localProcessors);
       if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
         return false;
       }
@@ -671,15 +730,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
 
+    return processGlobalRequests(singles, progress, localProcessors);
+  }
+
+  <T extends WordRequestInfo> boolean processGlobalRequests(@NotNull Map<Set<IdIndexEntry>, Collection<T>> singles,
+                                                            @NotNull ProgressIndicator progress,
+                                                            @NotNull Map<T, Processor<? super PsiElement>> localProcessors) {
     progress.pushState();
-    progress.setText(PsiBundle.message("psi.scanning.files.progress"));
+    progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
     boolean result;
 
     try {
       // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
-      final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionCandidateFiles = new HashMap<>();
+      final Map<VirtualFile, Collection<T>> intersectionCandidateFiles = new HashMap<>();
       // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
-      final Map<VirtualFile, Collection<RequestWithProcessor>> restCandidateFiles = new HashMap<>();
+      final Map<VirtualFile, Collection<T>> restCandidateFiles = new HashMap<>();
       collectFiles(singles, intersectionCandidateFiles, restCandidateFiles);
 
       if (intersectionCandidateFiles.isEmpty() && restCandidateFiles.isEmpty()) {
@@ -687,11 +752,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       final Set<String> allWords = new TreeSet<>();
-      for (RequestWithProcessor singleRequest : localProcessors.keySet()) {
+      for (T singleRequest : localProcessors.keySet()) {
         ProgressManager.checkCanceled();
-        allWords.add(singleRequest.request.word);
+        allWords.add(singleRequest.getWord());
       }
-      progress.setText(PsiBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords)));
+      progress.setText(IndexingBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords)));
 
       if (intersectionCandidateFiles.isEmpty()) {
         result = processCandidates(localProcessors, restCandidateFiles, progress, restCandidateFiles.size(), 0);
@@ -756,7 +821,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final RequestResultProcessor wrapped = singleRequest.processor;
     return new BulkOccurrenceProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement scope, @NotNull int[] offsetsInScope, @NotNull StringSearcher searcher) {
+      public boolean execute(@NotNull PsiElement scope, int @NotNull [] offsetsInScope, @NotNull StringSearcher searcher) {
         try {
           ProgressManager.checkCanceled();
           if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
@@ -787,17 +852,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
-                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionResult,
-                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> restResult) {
-    for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
+  private <T extends WordRequestInfo> void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<T>> singles,
+                                                        @NotNull final Map<VirtualFile, Collection<T>> intersectionResult,
+                                                        @NotNull final Map<VirtualFile, Collection<T>> restResult) {
+    for (Map.Entry<Set<IdIndexEntry>, Collection<T>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       final Set<IdIndexEntry> keys = entry.getKey();
       if (keys.isEmpty()) {
         continue;
       }
 
-      final Collection<RequestWithProcessor> processors = entry.getValue();
+      final Collection<T> processors = entry.getValue();
       final GlobalSearchScope commonScope = uniteScopes(processors);
       final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, keys);
 
@@ -811,11 +876,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           myDumbService.runReadActionInSmartMode(
             () -> FileBasedIndex.getInstance().processValues(IdIndex.NAME, indexEntry, file, (file1, value) -> {
               int mask = value.intValue();
-              for (RequestWithProcessor single : processors) {
+              for (T single : processors) {
                 ProgressManager.checkCanceled();
-                final PsiSearchRequest request = single.request;
-                if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
-                  Map<VirtualFile, Collection<RequestWithProcessor>> result1 =
+                if ((mask & single.getSearchContext()) != 0 && single.getSearchScope().contains(file1)) {
+                  Map<VirtualFile, Collection<T>> result1 =
                     intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file1) ? restResult : intersectionResult;
                   result1.computeIfAbsent(file1, __ -> new SmartList<>()).add(single);
                 }
@@ -829,23 +893,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Nullable("null means we did not find common container files")
   private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
-                                                              @NotNull Collection<? extends RequestWithProcessor> data,
+                                                              @NotNull Collection<? extends WordRequestInfo> data,
                                                               @NotNull Set<IdIndexEntry> keys) {
     String commonName = null;
     short searchContext = 0;
     boolean caseSensitive = true;
-    for (RequestWithProcessor r : data) {
+    for (WordRequestInfo r : data) {
       ProgressManager.checkCanceled();
-      String containerName = r.request.containerName;
+      String containerName = r.getContainerName();
       if (containerName != null) {
         if (commonName == null) {
           commonName = containerName;
-          searchContext = r.request.searchContext;
-          caseSensitive = r.request.caseSensitive;
+          searchContext = r.getSearchContext();
+          caseSensitive = r.isCaseSensitive();
         }
         else if (commonName.equals(containerName)) {
-          searchContext |= r.request.searchContext;
-          caseSensitive &= r.request.caseSensitive;
+          searchContext |= r.getSearchContext();
+          caseSensitive &= r.isCaseSensitive();
         }
         else {
           return null;
@@ -858,8 +922,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (entries.isEmpty()) return null;
     entries.addAll(keys); // should find words from both text and container names
 
-    final short finalSearchContext = searchContext;
-    Condition<Integer> contextMatches = context -> (context.intValue() & finalSearchContext) != 0;
+    Condition<Integer> contextMatches = matchContextCondition(searchContext);
     Set<VirtualFile> containerFiles = new THashSet<>();
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(containerFiles);
     processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, processor);
@@ -868,8 +931,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
-    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.request.searchScope);
+  private static Condition<Integer> matchContextCondition(short searchContext) {
+    return context -> (context & searchContext) != 0;
+  }
+
+  @NotNull
+  private static GlobalSearchScope uniteScopes(@NotNull Collection<? extends WordRequestInfo> requests) {
+    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.getSearchScope());
     return GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
@@ -877,8 +945,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                            @NotNull Set<RequestWithProcessor> locals,
                                            @NotNull Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals,
                                            @NotNull List<? super Computable<Boolean>> customs,
-                                           @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
-                                           @NotNull ProgressIndicator progress) {
+                                           @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors) {
     for (final Map.Entry<SearchRequestCollector, Processor<? super PsiReference>> entry : collectors.entrySet()) {
       ProgressManager.checkCanceled();
       final Processor<? super PsiReference> processor = entry.getValue();
@@ -908,7 +975,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         StringSearcher searcher = new StringSearcher(primitive.word, primitive.caseSensitive, true, false);
         BulkOccurrenceProcessor adapted = adaptProcessor(primitive, singleRequest.refProcessor);
 
-        Processor<PsiElement> localProcessor = localProcessor(progress, searcher, adapted);
+        Processor<PsiElement> localProcessor = localProcessor(searcher, adapted);
 
         assert !localProcessors.containsKey(singleRequest) || localProcessors.get(singleRequest) == localProcessor;
         localProcessors.put(singleRequest, localProcessor);
@@ -981,16 +1048,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processFilesContainingAllKeys(@NotNull Project project,
                                                        @NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<? super Integer> checker,
-                                                       @NotNull final Collection<? extends IdIndexEntry> keys,
+                                                       @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
-    final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
-                                                                        file -> !index.shouldBeFound(scope, file) || processor.process(file)));
+    Computable<Boolean> query =
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+
+    Boolean[] result = {null};
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+      ReadAction.nonBlocking(() ->
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+      ).executeSynchronously();
+    }
+    return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+  static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     if (words.isEmpty()) {
       String trimmed = name.trim();
@@ -1000,27 +1073,5 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     if (words.isEmpty()) return Collections.emptyList();
     return ContainerUtil.map2List(words, word -> new IdIndexEntry(word, caseSensitively));
-  }
-
-  public static boolean processTextOccurrences(@NotNull final PsiElement element,
-                                               @NotNull String stringToSearch,
-                                               @NotNull GlobalSearchScope searchScope,
-                                               @NotNull final Processor<? super UsageInfo> processor,
-                                               @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
-
-    return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
-      try {
-        UsageInfo usageInfo = ReadAction.compute(() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
-        return usageInfo == null || processor.process(usageInfo);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        return true;
-      }
-    }, searchScope);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.Properties;
@@ -29,7 +30,7 @@ public class SimpleTemplatesTest extends LightPlatformTestCase {
     template.setText("#set($flag = \"$!IJ_BASE_PACKAGE\" != \"\")\n" +
                      "<option name=\"MAIN_CLASS_NAME\" value=\"$IJ_BASE_PACKAGE#if($flag).#{end}Main\" />"
     );
-    Properties attributes = new Properties();
+    Properties attributes = FileTemplateManager.getInstance(getProject()).getDefaultProperties();
     attributes.setProperty("IJ_BASE_PACKAGE", "");
     assertEquals("<option name=\"MAIN_CLASS_NAME\" value=\"Main\" />", template.getText(attributes));
     attributes.setProperty("IJ_BASE_PACKAGE", "foo.bar");
@@ -39,7 +40,7 @@ public class SimpleTemplatesTest extends LightPlatformTestCase {
   public void testInline() throws Exception {
     CustomFileTemplate template = new CustomFileTemplate("foo", "bar");
     template.setText("$IJ_BASE_PACKAGE.replace(\".\", \"/\")");
-    Properties attributes = new Properties();
+    Properties attributes = FileTemplateManager.getInstance(getProject()).getDefaultProperties();
     attributes.setProperty("IJ_BASE_PACKAGE", "foo.bar");
     assertEquals("foo/bar", template.getText(attributes));
   }

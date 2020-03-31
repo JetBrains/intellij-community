@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -23,30 +24,31 @@ import com.intellij.platform.*;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
-import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
-public class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
+public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
   private final Customization<T> myCustomization;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
     myCustomization = customization;
     updateActions();
+    DirectoryProjectGenerator.EP_NAME.addExtensionPointListener(() -> updateActions(), null);
   }
 
   @Override
@@ -62,7 +64,6 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     addProjectSpecificAction(projectSpecificAction);
 
     DirectoryProjectGenerator<T>[] generators = myCustomization.getProjectGenerators();
-    myCustomization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(myCustomization.getActions(generators, callback));
     if (myCustomization.showUserDefinedProjects()) {
@@ -75,7 +76,6 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
                                                                         new DirectoryProjectGenerator[templates.length]);
       addAll(myCustomization.getActions(projectGenerators, callback));
     }
-    addAll(myCustomization.getExtraActions(callback));
   }
 
   protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
@@ -100,12 +100,11 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
                                                                                     @NotNull AbstractCallback<T> callback);
 
 
-    @NotNull
-    protected DirectoryProjectGenerator<T>[] getProjectGenerators() {
+    protected DirectoryProjectGenerator<T> @NotNull [] getProjectGenerators() {
       return DirectoryProjectGenerator.EP_NAME.getExtensions();
     }
 
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T>[] generators, @NotNull AbstractCallback<T> callback) {
+    public AnAction[] getActions(DirectoryProjectGenerator<T> @NotNull [] generators, @NotNull AbstractCallback<T> callback) {
       final List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<T> projectGenerator : generators) {
         try {
@@ -117,33 +116,29 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
+    public AnAction @NotNull [] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
       if (shouldIgnore(generator)) {
         return AnAction.EMPTY_ARRAY;
       }
 
-      ProjectSettingsStepBase<T> step = generator instanceof CustomStepProjectGenerator ?
-                                     ((ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback)) :
-                                     createProjectSpecificSettingsStep(generator, callback);
+      ProjectSettingsStepBase<T> step;
+      if (generator instanceof CustomStepProjectGenerator) {
+        //noinspection unchecked
+        step = (ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback);
+      }
+      else {
+        step = createProjectSpecificSettingsStep(generator, callback);
+      }
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);
       return projectSpecificAction.getChildren(null);
     }
 
-    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator generator) {
+    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
       return generator instanceof HideableProjectGenerator && ((HideableProjectGenerator)generator).isHidden();
     }
 
-    @NotNull
-    public AnAction[] getExtraActions(@NotNull AbstractCallback<T> callback) {
-      return AnAction.EMPTY_ARRAY;
-    }
-
-    public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
-    }
-
-    public boolean showUserDefinedProjects(){
+    public boolean showUserDefinedProjects() {
       return false;
     }
   }
@@ -156,27 +151,28 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
       // todo projectToClose should be passed from calling action, this is just a quick workaround
       IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
       final Project projectToClose = frame != null ? frame.getProject() : null;
-      final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-
+      DirectoryProjectGenerator<?> generator = settings.getProjectGenerator();
       Object actualSettings = projectGeneratorPeer.getSettings();
-
       doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
     }
   }
 
-  public static Project doGenerateProject(@Nullable final Project projectToClose,
-                                          @NotNull final String locationString,
-                                          @Nullable final DirectoryProjectGenerator generator,
+  public static Project doGenerateProject(@Nullable Project projectToClose,
+                                          @NotNull String locationString,
+                                          @Nullable DirectoryProjectGenerator generator,
                                           @NotNull Object settings) {
-    final File location = new File(FileUtil.toSystemDependentName(locationString));
-    if (!location.exists() && !location.mkdirs()) {
-      String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.getAbsolutePath());
+    Path location = Paths.get(locationString);
+    try {
+      Files.createDirectories(location);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.toString());
       Messages.showErrorDialog(projectToClose, message, ActionsBundle.message("action.NewDirectoryProject.title"));
       return null;
     }
 
-    final VirtualFile baseDir =
-      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
+    VirtualFile baseDir = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
@@ -184,28 +180,24 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
-      String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.getAbsolutePath());
-      int rc = Messages.showYesNoDialog(projectToClose, message, ActionsBundle.message("action.NewDirectoryProject.title"), Messages.getQuestionIcon());
-      if (rc == Messages.YES) {
-        return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
+      String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.toString());
+      int result = Messages.showYesNoDialog(projectToClose, message, ActionsBundle.message("action.NewDirectoryProject.title"), Messages.getQuestionIcon());
+      if (result == Messages.YES) {
+        return PlatformProjectOpenProcessor.doOpenProject(location, new OpenProjectTask());
       }
     }
 
-    String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
 
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(location.getParent()));
-
-    ProjectOpenedCallback callback = null;
-    if(generator instanceof TemplateProjectDirectoryGenerator){
-      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
-    } else {
-      callback = (p, module) -> {
-        if (generator != null) {
-          generator.generateProject(p, baseDir, settings, module);
-        }
-      };
+    OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ false, projectToClose);
+    options.isNewProject = true;
+    options.isRefreshVfsNeeded = false;
+    if (generator instanceof TemplateProjectDirectoryGenerator) {
+      ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
-    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, projectToClose, -1, callback, options);
+    else if (generator != null) {
+      options.setCallback((p, module) -> generator.generateProject(p, baseDir, settings, module));
+    }
+    return PlatformProjectOpenProcessor.openExistingProject(location, location, options);
   }
 }

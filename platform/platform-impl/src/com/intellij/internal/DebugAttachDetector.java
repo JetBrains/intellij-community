@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -9,7 +8,10 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -17,10 +19,7 @@ import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author egor
- */
-public class DebugAttachDetector {
+public final class DebugAttachDetector {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
   private Properties myAgentProperties = null;
 
@@ -51,8 +50,8 @@ public class DebugAttachDetector {
       LOG.error(ex);
     }
     catch (IllegalAccessException ex) {
-      if (app.isInternal()) {
-        LOG.warn("Unable to start DebugAttachDetector, please add `--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED` to VM options");
+      if (app.isInternal() && !PluginManagerCore.isRunningFromSources()) {
+        LOG.warn("Unable to start DebugAttachDetector, please add `--add-exports java.base/jdk.internal.vm=ALL-UNNAMED` to VM options");
       }
     }
 
@@ -65,7 +64,7 @@ public class DebugAttachDetector {
       return;
     }
 
-    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+    myTask = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
       boolean attached = isAttached(myAgentProperties);
       if (!myReady) {
         myAttached = attached;
@@ -86,15 +85,29 @@ public class DebugAttachDetector {
     return property != null && property.isEmpty();
   }
 
+  @Nullable
+  private static final String DEBUG_ARGS = getDebugArgs();
+
+  private static String getDebugArgs() {
+    return ContainerUtil.find(ManagementFactory.getRuntimeMXBean().getInputArguments(), s -> s.contains("-agentlib:jdwp"));
+  }
+
   public static boolean isDebugEnabled() {
-    return ManagementFactory.getRuntimeMXBean().getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
+    return DEBUG_ARGS != null;
+  }
+
+  private static boolean isDebugServer() {
+    return DEBUG_ARGS != null && DEBUG_ARGS.contains("server=y");
   }
 
   public static boolean isAttached() {
     if (!isDebugEnabled()) {
       return false;
     }
-    Properties properties = ApplicationManager.getApplication().getComponent(DebugAttachDetector.class).myAgentProperties;
+    if (!isDebugServer()) {
+      return true;
+    }
+    Properties properties = ApplicationManager.getApplication().getService(DebugAttachDetector.class).myAgentProperties;
     if (properties == null) { // For now return true if can not detect
       return true;
     }

@@ -153,4 +153,10 @@ public class MarkdownSettingsConfigurable implements SearchableConfigurable {
       return new File(getDirectoryToDownload(), PLANTUML_JAR);
     }
   }
+
+  @Nullable
+  @Override
+  public String getHelpTopic() {
+    return "Settings.Markdown";
+  }
 }

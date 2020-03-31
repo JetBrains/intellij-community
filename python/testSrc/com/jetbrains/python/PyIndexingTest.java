@@ -30,9 +30,9 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -74,37 +74,44 @@ public class PyIndexingTest extends PyTestCase {
 
   public void testTodoIndexInLibs() {
     final String libraryWithTodoName = "numbers.py";
-    final List<VirtualFile> indexFiles = getTodoFiles(myFixture.getProject());
 
-    // project file in the TodoIndex
-    assertTrue(indexFiles.stream().anyMatch((x) -> "a.py".equals(x.getName())));
+    runWithAdditionalFileInLibDir(
+      libraryWithTodoName,
+      "# TODO: this should be updated",
+      (__) -> {
+        final List<VirtualFile> indexFiles = getTodoFiles(myFixture.getProject());
 
-    // no library files in the TodoIndex
-    assertFalse(indexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
+        // project file in the TodoIndex
+        assertTrue(indexFiles.stream().anyMatch((x) -> "a.py".equals(x.getName())));
 
-    final Module module = myFixture.getModule();
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        // no library files in the TodoIndex
+        assertFalse(indexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
 
-    final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(sdk);
+        final Module module = myFixture.getModule();
+        final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
-    ModuleRootModificationUtil.addContentRoot(module, libDir);
-    try {
-      // mock sdk doesn't fire events
-      FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
-      FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, myFixture.getProject(), null);
-      final List<VirtualFile> updatedIndexFiles = getTodoFiles(myFixture.getProject());
-      // but if it is added as a content root - it should be in the TodoIndex
-      assertTrue(updatedIndexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
-    }
-    finally {
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        for (ContentEntry entry : model.getContentEntries()) {
-          if (libDir.equals(entry.getFile())) {
-            model.removeContentEntry(entry);
-          }
+        final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
+
+        ModuleRootModificationUtil.addContentRoot(module, libDir);
+        try {
+          // mock sdk doesn't fire events
+          FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
+          FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, myFixture.getProject(), null);
+          final List<VirtualFile> updatedIndexFiles = getTodoFiles(myFixture.getProject());
+          // but if it is added as a content root - it should be in the TodoIndex
+          assertTrue(updatedIndexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
         }
-      });
-    }
+        finally {
+          ModuleRootModificationUtil.updateModel(module, model -> {
+            for (ContentEntry entry : model.getContentEntries()) {
+              if (libDir.equals(entry.getFile())) {
+                model.removeContentEntry(entry);
+              }
+            }
+          });
+        }
+      }
+    );
   }
 
   // PY-19047

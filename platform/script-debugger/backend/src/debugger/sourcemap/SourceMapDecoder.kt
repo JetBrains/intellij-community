@@ -15,7 +15,9 @@
  */
 package org.jetbrains.debugger.sourcemap
 
+import com.google.gson.JsonParseException
 import com.google.gson.stream.JsonToken
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -23,49 +25,77 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.UriUtil
+import com.intellij.util.Url
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
-import java.util.*
-import kotlin.properties.Delegates.notNull
+import java.nio.file.Path
 
-private val MAPPING_COMPARATOR_BY_SOURCE_POSITION = Comparator<MappingEntry> { o1, o2 ->
-  if (o1.sourceLine == o2.sourceLine) {
-    o1.sourceColumn - o2.sourceColumn
-  }
-  else {
-    o1.sourceLine - o2.sourceLine
-  }
-}
-
-val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Comparator { o1, o2 ->
-  if (o1.generatedLine == o2.generatedLine) {
-    o1.generatedColumn - o2.generatedColumn
-  }
-  else {
-    o1.generatedLine - o2.generatedLine
-  }
-}
 
 internal const val UNMAPPED = -1
 
-// https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
-fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String?>?) -> SourceResolver): SourceMap? {
-  if (`in`.isEmpty()) {
-    throw IOException("source map contents cannot be empty")
-  }
-
-  val reader = JsonReaderEx(`in`)
-  reader.isLenient = true
-  return parseMap(reader, 0, 0, ArrayList(), sourceResolverFactory)
+fun decodeSourceMapFromFile(file: Path,
+                            trimFileScheme: Boolean,
+                            baseUrl: Url?,
+                            baseUrlIsFile: Boolean): SourceMap? {
+  return FileBackedSourceMap.newFileBackedSourceMap(file, trimFileScheme, baseUrl, baseUrlIsFile)
 }
 
-private fun parseMap(reader: JsonReaderEx,
-                     line: Int,
-                     column: Int,
-                     mappings: MutableList<MappingEntry>,
-                     sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String?>?) -> SourceResolver): SourceMap? {
+fun decodeSourceMapSafely(sourceMapData: CharSequence,
+                          trimFileScheme: Boolean,
+                          baseUrl: Url?,
+                          baseUrlIsFile: Boolean): SourceMap? {
+  return decodeSourceMap(sourceMapData) { sourceUrls -> SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile) }
+}
+
+fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?): SourceMapDataImpl? {
+  try {
+    if (sourceMapData.isEmpty()) {
+      throw IOException("source map contents cannot be empty")
+    }
+    val reader = JsonReaderEx(sourceMapData)
+    reader.isLenient = true
+    return parseMap(reader)
+  }
+  catch (e: JsonParseException) {
+    logger<SourceMap>().warn("Cannot decode sourcemap $mapDebugName", e)
+  }
+  catch (t: Throwable) {
+    // WEB-9565
+    logger<SourceMap>().error("Cannot decode sourcemap $mapDebugName", t, Attachment("sourceMap.txt", sourceMapData.toString()))
+  }
+
+  return null
+}
+
+// https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
+fun decodeSourceMap(sourceMapData: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
+  val data = SourceMapDataCache.getOrCreate(sourceMapData.toString()) ?: return null
+  return OneLevelSourceMap(data, sourceResolverFactory(data.sourceMapData.sources))
+}
+
+internal fun calculateReverseMappings(data: SourceMapData): Array<MappingList?> {
+  val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(data.sources.size)
+  for (entry in data.mappings) {
+    val sourceIndex = entry.source
+    if (sourceIndex >= 0) {
+      val reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex)
+      reverseMappings.add(entry)
+    }
+  }
+  return Array(reverseMappingsBySourceUrl.size) {
+    val entries = reverseMappingsBySourceUrl[it]
+    if (entries == null) {
+      null
+    }
+    else {
+      SourceMappingList(entries)
+    }
+  }
+}
+
+private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
   reader.beginObject()
   var sourceRoot: String? = null
   var sourcesReader: JsonReaderEx? = null
@@ -74,6 +104,7 @@ private fun parseMap(reader: JsonReaderEx,
   var file: String? = null
   var version = -1
   var sourcesContent: MutableList<String?>? = null
+  val mappings = ArrayList<MappingEntry>()
   while (reader.hasNext()) {
     when (reader.nextName()) {
       "sections" -> throw IOException("sections is not supported yet")
@@ -171,39 +202,24 @@ private fun parseMap(reader: JsonReaderEx,
     return null
   }
 
-  val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(sources.size)
-  readMappings(encodedMappings!!, line, column, mappings, reverseMappingsBySourceUrl, names)
+  readMappings(encodedMappings, mappings, names)
 
-  val sourceToEntries = Array<MappingList?>(reverseMappingsBySourceUrl.size) {
-    val entries = reverseMappingsBySourceUrl[it]
-    if (entries == null) {
-      null
-    }
-    else {
-      entries.sortWith(MAPPING_COMPARATOR_BY_SOURCE_POSITION)
-      SourceMappingList(entries)
-    }
-  }
-  return OneLevelSourceMap(file, GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory(sources, sourcesContent), !names.isNullOrEmpty())
+  return SourceMapDataImpl(file, sources, sourcesContent, !names.isNullOrEmpty(), mappings)
 }
 
 private fun readSourcePath(reader: JsonReaderEx): String = PathUtil.toSystemIndependentName(reader.nextString().trim { it <= ' ' })
 
 private fun readMappings(value: String,
-                         initialLine: Int,
-                         initialColumn: Int,
                          mappings: MutableList<MappingEntry>,
-                         reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>,
                          names: List<String>?) {
   if (value.isEmpty()) {
     return
   }
 
-  var line = initialLine
-  var column = initialColumn
+  var line = 0
+  var column = 0
   val charIterator = CharSequenceIterator(value)
   var sourceIndex = 0
-  var reverseMappings: MutableList<MappingEntry> = getMapping(reverseMappingsBySourceUrl, sourceIndex)
   var sourceLine = 0
   var sourceColumn = 0
   var nameIndex = 0
@@ -241,7 +257,6 @@ private fun readMappings(value: String,
     val sourceIndexDelta = Base64VLQ.decode(charIterator)
     if (sourceIndexDelta != 0) {
       sourceIndex += sourceIndexDelta
-      reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex)
     }
     sourceLine += Base64VLQ.decode(charIterator)
     sourceColumn += Base64VLQ.decode(charIterator)
@@ -255,7 +270,6 @@ private fun readMappings(value: String,
       assert(names != null)
       entry = NamedEntry(names!![nameIndex], line, column, sourceIndex, sourceLine, sourceColumn)
     }
-    reverseMappings.add(entry)
     addEntry(entry)
   }
 }
@@ -287,10 +301,10 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
 }
 
 private fun getMapping(reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>, sourceIndex: Int): MutableList<MappingEntry> {
-  var reverseMappings = reverseMappingsBySourceUrl.get(sourceIndex)
+  var reverseMappings = reverseMappingsBySourceUrl[sourceIndex]
   if (reverseMappings == null) {
     reverseMappings = ArrayList()
-    reverseMappingsBySourceUrl.set(sourceIndex, reverseMappings)
+    reverseMappingsBySourceUrl[sourceIndex] = reverseMappings
   }
   return reverseMappings
 }
@@ -305,7 +319,7 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
 }
 
 interface MutableEntry : MappingEntry {
-  override var nextGenerated: MappingEntry
+  override var nextGenerated: MappingEntry?
 }
 
 /**
@@ -316,7 +330,7 @@ private data class UnmappedEntry(override val generatedLine: Int, override val g
 
   override val sourceColumn = UNMAPPED
 
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 /**
@@ -327,7 +341,7 @@ private data class UnnamedEntry(override val generatedLine: Int,
                                 override val source: Int,
                                 override val sourceLine: Int,
                                 override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 /**
@@ -339,7 +353,7 @@ private data class NamedEntry(override val name: String,
                               override val source: Int,
                               override val sourceLine: Int,
                               override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 // java CharacterIterator is ugly, next() impl, so, we reinvent
@@ -355,18 +369,20 @@ private class CharSequenceIterator(private val content: CharSequence) : CharIter
 }
 
 private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
   override fun getLine(mapping: MappingEntry) = mapping.sourceLine
 
   override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
-
-  override val comparator = MAPPING_COMPARATOR_BY_SOURCE_POSITION
 }
 
-private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
   override fun getLine(mapping: MappingEntry) = mapping.generatedLine
 
   override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
 
-  override val comparator = MAPPING_COMPARATOR_BY_GENERATED_POSITION
+  override fun getNext(mapping: MappingEntry): MappingEntry? {
+    return mapping.nextGenerated
+  }
 }
 

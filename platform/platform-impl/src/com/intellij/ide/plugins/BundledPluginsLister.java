@@ -1,64 +1,84 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/**
- * @author Ivan Chirkov
- */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class BundledPluginsLister implements ApplicationStarter {
+final class BundledPluginsLister implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "listBundledPlugins";
   }
 
   @Override
-  public void premain(String[] args) { }
+  public int getRequiredModality() {
+    return NOT_IN_EDT;
+  }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull List<String> args) {
     try {
-      OutputStream out;
-      if (args.length == 2) {
-        File outFile = new File(args[1]);
-        FileUtil.createParentDirs(outFile);
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        out = new FileOutputStream(outFile);
+      Writer out;
+      if (args.size() == 2) {
+        Path outFile = Paths.get(args.get(1));
+        Files.createDirectories(outFile.getParent());
+        out = Files.newBufferedWriter(outFile);
       }
       else {
-        out = System.out;
+        // noinspection UseOfSystemOutOrSystemErr,IOResourceOpenedButNotSafelyClosed
+        out = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
       }
 
-      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
-        IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+      try (JsonWriter writer = new JsonWriter(out)) {
+        List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+        List<String> modules = new ArrayList<>();
+        List<String> pluginIds = new ArrayList<>(plugins.size());
+        for (IdeaPluginDescriptor plugin : plugins) {
+          pluginIds.add(plugin.getPluginId().getIdString());
 
-        List<String> modules = Arrays.stream(plugins)
-          .flatMap(it -> it instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)it).getModules().stream() : Stream.empty())
-          .sorted()
-          .collect(Collectors.toList());
+          for (PluginId pluginId : ((IdeaPluginDescriptorImpl)plugin).getModules()) {
+            modules.add(pluginId.getIdString());
+          }
+        }
 
-        List<String> pluginIds = Arrays.stream(plugins)
-                                       .map(plugin -> plugin.getPluginId().getIdString())
-                                       .sorted()
-                                       .collect(Collectors.toList());
+        pluginIds.sort(null);
+        modules.sort(null);
+
+        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        List<String> extensions = new ArrayList<>();
+        for (FileType type : fileTypeManager.getRegisteredFileTypes()) {
+          if (!(type instanceof PlainTextLikeFileType)) {
+            for (FileNameMatcher matcher : fileTypeManager.getAssociations(type)) {
+              extensions.add(matcher.getPresentableString());
+            }
+          }
+        }
 
         writer.beginObject();
         writeList(writer, "modules", modules);
         writeList(writer, "plugins", pluginIds);
+        writeList(writer, "extensions", extensions);
         writer.endObject();
       }
     }
     catch (IOException e) {
+      //noinspection UseOfSystemOutOrSystemErr
       e.printStackTrace(System.err);
       System.exit(1);
     }
@@ -66,7 +86,7 @@ public class BundledPluginsLister implements ApplicationStarter {
     System.exit(0);
   }
 
-  private static void writeList(JsonWriter writer, String name, List<String> elements) throws IOException {
+  private static void writeList(@NotNull JsonWriter writer, String name, @NotNull List<String> elements) throws IOException {
     writer.name(name).beginArray();
     for (String module : elements) {
       writer.value(module);

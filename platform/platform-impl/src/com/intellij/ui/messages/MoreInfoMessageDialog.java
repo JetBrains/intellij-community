@@ -18,7 +18,7 @@ class MoreInfoMessageDialog extends MessageDialog {
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
                                @Nullable String moreInfo,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {

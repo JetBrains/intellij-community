@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotateMethodInGeneratedFilesTest extends LightCodeInsightFixtureTestCase {
+public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixtureTestCase {
   private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {
     @Override
     public boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
@@ -24,38 +10,35 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author max
- */
 public class Conditions {
   private Conditions() { }
-  @SuppressWarnings("unchecked")
-  public static final Condition<Object> TRUE = Condition.TRUE;
-  @SuppressWarnings("unchecked")
-  public static final Condition<Object> FALSE = Condition.FALSE;
+  /**
+   * @deprecated use {@link #alwaysTrue()} instead
+   */
+  @Deprecated
+  public static final Condition<Object> TRUE = alwaysTrue();
 
   @NotNull
   public static <T> Condition<T> alwaysTrue() {
-    //noinspection unchecked
-    return (Condition<T>)TRUE;
+    //noinspection unchecked,deprecation
+    return (Condition<T>)Condition.TRUE;
   }
 
   @NotNull
   public static <T> Condition<T> alwaysFalse() {
-    //noinspection unchecked
-    return (Condition<T>)FALSE;
+    //noinspection unchecked,deprecation
+    return (Condition<T>)Condition.FALSE;
   }
 
   @NotNull
   public static <T> Condition<T> notNull() {
-    //noinspection unchecked
+    //noinspection unchecked,deprecation
     return (Condition<T>)Condition.NOT_NULL;
   }
 
   @NotNull
   public static <T> Condition<T> constant(boolean value) {
-    //noinspection unchecked
-    return (Condition<T>)(value ? TRUE : FALSE);
+    return value ? Conditions.<T>alwaysTrue() : Conditions.<T>alwaysFalse();
   }
 
   @NotNull
@@ -77,10 +60,9 @@ public class Conditions {
   }
 
   @NotNull
-  public static Condition<Class> assignableTo(@NotNull final Class clazz) {
-    return new Condition<Class>() {
-      public boolean value(Class t) {
-        //noinspection unchecked
+  public static Condition<Class<?>> assignableTo(@NotNull final Class<?> clazz) {
+    return new Condition<Class<?>>() {
+      public boolean value(Class<?> t) {
         return clazz.isAssignableFrom(t);
       }
     };
@@ -137,11 +119,11 @@ public class Conditions {
 
   @NotNull
   public static <T> Condition<T> not(@NotNull Condition<? super T> c) {
-    if (c == TRUE) return alwaysFalse();
-    if (c == FALSE) return alwaysTrue();
+    if (c == alwaysTrue()) return alwaysFalse();
+    if (c == alwaysFalse()) return alwaysTrue();
     if (c instanceof Not) {
       //noinspection unchecked
-      return ((Not)c).c;
+      return (Condition<T>)((Not<T>)c).c;
     }
     return new Not<T>(c);
   }
@@ -153,11 +135,11 @@ public class Conditions {
 
   @NotNull
   public static <T> Condition<T> and2(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
-    if (c1 == TRUE || c2 == FALSE) {
+    if (c1 == alwaysTrue() || c2 == alwaysFalse()) {
       //noinspection unchecked
       return (Condition<T>)c2;
     }
-    if (c2 == TRUE || c1 == FALSE) {
+    if (c2 == alwaysTrue() || c1 == alwaysFalse()) {
       //noinspection unchecked
       return (Condition<T>)c1;
     }
@@ -171,11 +153,11 @@ public class Conditions {
 
   @NotNull
   public static <T> Condition<T> or2(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
-    if (c1 == FALSE || c2 == TRUE) {
+    if (c1 == alwaysFalse()|| c2 == alwaysTrue()) {
       //noinspection unchecked
       return (Condition<T>)c2;
     }
-    if (c2 == FALSE || c1 == TRUE) {
+    if (c2 == alwaysFalse() || c1 == alwaysTrue()) {
       //noinspection unchecked
       return (Condition<T>)c1;
     }

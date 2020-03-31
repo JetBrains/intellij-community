@@ -1,33 +1,25 @@
 <idea-plugin>
-
-  <actions>
-    <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
-           class="com.intellij.spellchecker.actions.SpellingPopupActionGroup" text="Spelling" popup="true">
-      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-    </group>
-
-  </actions>
-
   <extensionPoints>
-    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     </extensionPoint>
-    <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
-    <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider"/>
+    <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.runtimeDictionaryProvider" interface="com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
-    <fileTypeFactory implementation="com.intellij.spellchecker.DictionaryFileTypeFactory"/>
+    <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
     <projectService serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <projectConfigurable groupId="editor" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="com.intellij.spellchecker.util.SpellCheckerBundle" />
+    <applicationService serviceImplementation="com.intellij.spellchecker.SpellcheckerCorrectionsFilter"/>
+    <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
-
-    <localInspection shortName="SpellCheckingInspection" bundle="com.intellij.spellchecker.util.SpellCheckerBundle"
-                     key="spellchecking.inspection.name" groupKey="spelling" enabledByDefault="true" level="TYPO"
+    <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
+                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
                      implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
 
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
@@ -40,5 +32,8 @@
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
+    <statistics.counterUsagesCollector groupId="spellchecker.fixes" version="1"/>
+    <notificationWhitelist groupIds="Spell Checker Dictionary;Spellchecker"/>
   </extensions>
 </idea-plugin>

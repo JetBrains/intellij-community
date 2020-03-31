@@ -16,13 +16,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * Please, DO NOT use this interface in plugins until <code>@Experimental</code> is removed.
- * Probably this interface will be extended in future, which will break its implementations.
- *
- * @see com.siyeh.ig.callMatcher.CallMatcher
- */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface UastCallMatcher {
 
   @Contract("null -> false")
@@ -38,7 +32,7 @@ public interface UastCallMatcher {
   }
 
   @NotNull
-  static UastCallMatcher anyOf(@NotNull UastCallMatcher... matchers) {
+  static UastCallMatcher anyOf(UastCallMatcher @NotNull ... matchers) {
     return new UastCallMatcher() {
       @Override
       public boolean testCallExpression(@Nullable UCallExpression expression) {
@@ -75,7 +69,7 @@ public interface UastCallMatcher {
 
 
     public SimpleUastCallMatcher(@Nullable String methodName,
-                                 @Nullable String[] arguments,
+                                 String @Nullable [] arguments,
                                  boolean matchArgumentTypeInheritors,
                                  @Nullable String classFqn,
                                  @Nullable String returnTypeClassFqn) {
@@ -238,7 +232,7 @@ public interface UastCallMatcher {
     }
 
     @NotNull
-    public Builder withArgumentTypes(@NotNull String... arguments) {
+    public Builder withArgumentTypes(String @NotNull ... arguments) {
       myArguments = arguments;
       return this;
     }

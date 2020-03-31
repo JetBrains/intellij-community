@@ -17,10 +17,6 @@
               "version_added": true,
               "notes": "Removal in Edge is <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
             },
-            "edge_mobile": {
-              "version_added": true,
-              "notes": "Removal in Edge is <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
-            },
             "firefox": {
               "version_added": true,
               "version_removed": "56"
@@ -72,9 +68,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -130,9 +123,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -184,9 +174,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -242,9 +229,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -296,9 +280,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -354,9 +335,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -408,9 +386,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -466,9 +441,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -520,9 +492,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -578,9 +547,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -632,9 +598,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -690,9 +653,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -744,9 +704,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -802,9 +759,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true,
                 "version_removed": "56"
@@ -856,9 +810,6 @@
                 "version_removed": "47"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

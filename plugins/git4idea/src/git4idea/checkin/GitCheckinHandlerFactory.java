@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
@@ -52,7 +53,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
   @NotNull
   @Override
-  protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
+  protected CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new MyCheckinHandler(panel);
   }
 
@@ -143,17 +144,22 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private void setCoreAutoCrlfAttribute(@NotNull VirtualFile aRoot) {
-      try {
-        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global");
-      }
-      catch (VcsException e) {
-        // it is not critical: the user just will get the dialog again next time
-        LOG.warn("Couldn't globally set core.autocrlf in " + aRoot, e);
-      }
+      ProgressManager.getInstance().run(new Task.Modal(myProject, "Updating Git Config...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator pi) {
+          try {
+            GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global");
+          }
+          catch (VcsException e) {
+            // it is not critical: the user just will get the dialog again next time
+            LOG.warn("Couldn't globally set core.autocrlf in " + aRoot, e);
+          }
+        }
+      });
     }
 
     private ReturnResult checkGitVersionAndEnv() {
-      GitVersion version = GitExecutableManager.getInstance().getVersionOrCancel(myProject);
+      GitVersion version = GitExecutableManager.getInstance().getVersionUnderModalProgressOrCancel(myProject);
       if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
         Messages.showErrorDialog(myProject,
                                  "You are using Git " +
@@ -199,7 +205,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     @NotNull
     private static Map<VirtualFile, Couple<String>> getDefinedUserNames(@NotNull final Project project,
-                                                                        @NotNull final Collection<VirtualFile> roots,
+                                                                        @NotNull final Collection<? extends VirtualFile> roots,
                                                                         final boolean stopWhenFoundFirst) {
       final Map<VirtualFile, Couple<String>> defined = new HashMap<>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name...", true) {
@@ -228,7 +234,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private boolean setUserNameUnderProgress(@NotNull final Project project,
-                                             @NotNull final Collection<VirtualFile> notDefined,
+                                             @NotNull final Collection<? extends VirtualFile> notDefined,
                                              @NotNull final GitUserNameNotDefinedDialog dialog) {
       final Ref<String> error = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(project, "Setting Git User Name...", true) {
@@ -346,7 +352,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private DetachedRoot getDetachedRoot() {
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myPanel.getProject());
       for (VirtualFile root : getSelectedRoots()) {
-        GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+        GitRepository repository = repositoryManager.getRepositoryForRootQuick(root);
         if (repository == null) {
           continue;
         }
@@ -366,7 +372,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
         if (vcsRoot != null) {
           VirtualFile root = vcsRoot.getPath();
-          if (git.equals(vcsRoot.getVcs()) && root != null) {
+          if (git.equals(vcsRoot.getVcs())) {
             result.add(root);
           }
         }

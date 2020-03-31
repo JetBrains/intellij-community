@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -40,11 +40,10 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
  */
 public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
-    if (module == null) return;
-
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg == null) return;
+
 
     configureJdk(cfg, module);
 
@@ -125,7 +124,9 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
         }
       }
 
-      model.commit();
+      WriteAction.run(() ->
+                        model.commit()
+      );
     }
   }
 }

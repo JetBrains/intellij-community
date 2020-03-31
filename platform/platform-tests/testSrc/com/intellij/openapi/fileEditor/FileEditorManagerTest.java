@@ -1,19 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -25,13 +23,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- * @author Vassiliy Kudryashov
- */
-@SuppressWarnings("ConstantConditions")
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
-
   public void testTabOrder() throws Exception {
 
     openFiles(STRING);
@@ -107,9 +99,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   private void callTrimToSize() {
-    UISettingsState uiSettings = UISettings.getInstance().getState();
     for (EditorsSplitters each : myManager.getAllSplitters()) {
-      each.trimToSize(uiSettings.getEditorTabLimit());
+      each.trimToSize();
     }
   }
 
@@ -166,6 +157,28 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, myManager.getWindows().length);
   }
 
+  public void testOpenFileInTablessSplitter() {
+    VirtualFile file1 = getFile("/src/1.txt");
+    assertNotNull(file1);
+    file1.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
+    myManager.openFile(file1, false);
+    VirtualFile file2 = getFile("/src/2.txt");
+    file2.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
+    assertNotNull(file2);
+    myManager.openFile(file2, true);
+    EditorWindow primaryWindow = myManager.getCurrentWindow();//1.txt and selected 2.txt
+    assertNotNull(primaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    assertNotNull(secondaryWindow);
+    UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
+    myManager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
+    assertEquals(2, primaryWindow.getTabCount());
+    assertEquals(2, secondaryWindow.getTabCount());
+    assertOrderedEquals(primaryWindow.getFiles(), file1, file2);
+    assertOrderedEquals(secondaryWindow.getFiles(), file2, file1);
+  }
+
   public void testStoringCaretStateForFileWithFoldingsWithNoTabs() {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
@@ -187,7 +200,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     editor.getSelectionModel().setSelection(textLength - 1, textLength);
 
     myManager.openFile(getFile("/src/1.txt"), false);
-    assertEquals(0, myManager.getEditors(file).length);
+    assertEquals(1, myManager.getEditors(file).length);
     editors = myManager.openFile(file, false);
 
     assertEquals(1, editors.length);
@@ -215,6 +228,19 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     finally {
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
     }
+  }
+
+  public void testOpenSpecificTextEditor() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null)
+      .registerExtension(new MyTextEditorProvider("one", 1), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null)
+      .registerExtension(new MyTextEditorProvider("two", 2), myFixture.getTestRootDisposable());
+    Project project = getProject();
+    VirtualFile file = getFile("/src/Test.java");
+    myManager.openTextEditor(new OpenFileDescriptor(project, file, 1), true);
+    assertEquals("one", myManager.getSelectedEditor(file).getName());
+    myManager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
+    assertEquals("two", myManager.getSelectedEditor(file).getName());
   }
 
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
@@ -255,8 +281,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
                                        "  </component>\n";
 
   private void assertOpenFiles(String... fileNames) {
-    EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    List<String> names = ContainerUtil.map(files, composite -> composite.getFile().getName());
+    List<String> names = ContainerUtil.map(myManager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 
@@ -317,6 +342,87 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     public String getEditorTypeId() {
       return "dumbAware";
     }
+  }
+
+  private static class MyTextEditorProvider implements FileEditorProvider, DumbAware {
+    private final String myId;
+    private final int myTargetOffset;
+
+    private MyTextEditorProvider(String id, int targetOffset) {
+      myId = id;
+      myTargetOffset = targetOffset;
+    }
+
+    @Override
+    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+      return new MyTextEditor(FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
+    }
+
+    @NotNull
+    @Override
+    public String getEditorTypeId() {
+      return myId;
+    }
+
+    @NotNull
+    @Override
+    public FileEditorPolicy getPolicy() {
+      return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+    }
+  }
+
+  private static class MyTextEditor extends Mock.MyFileEditor implements TextEditor {
+    private final Editor myEditor;
+    private final String myName;
+    private final int myTargetOffset;
+
+    private MyTextEditor(Document document, String name, int targetOffset) {
+      myEditor = EditorFactory.getInstance().createEditor(document);
+      myName = name;
+      myTargetOffset = targetOffset;
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+      finally {
+        super.dispose();
+      }
+    }
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      return new JLabel();
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    @Override
+    public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+      return navigatable instanceof OpenFileDescriptor && ((OpenFileDescriptor)navigatable).getOffset() == myTargetOffset;
+    }
+
+    @Override
+    public void navigateTo(@NotNull Navigatable navigatable) {}
   }
 }
 

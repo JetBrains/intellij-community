@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -20,6 +20,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
@@ -49,7 +49,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls private static final String USED_LEVELS = "used_levels";
   @TestOnly
   public static boolean INIT_INSPECTIONS;
-  @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
+  @NotNull protected final InspectionToolsSupplier myToolSupplier;
   protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
@@ -63,7 +63,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager) {
     this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), null);
   }
@@ -73,13 +73,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @Nullable InspectionProfileImpl baseProfile) {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
   protected InspectionProfileImpl(@NotNull String profileName,
-                                  @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                                  @NotNull InspectionToolsSupplier toolSupplier,
                                   @NotNull BaseInspectionProfileManager profileManager,
                                   @Nullable InspectionProfileImpl baseProfile,
                                   @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
@@ -94,7 +94,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), dataHolder);
@@ -413,8 +413,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element) {
+  public InspectionToolWrapper @NotNull [] getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools(element == null ? null : element.getProject());
     List<InspectionToolWrapper> result = new ArrayList<>();
     for (Tools toolList : myTools.values()) {
@@ -457,7 +456,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @NotNull
   protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
-    return myToolSupplier.get();
+    return myToolSupplier.createTools();
   }
 
   @Override
@@ -488,7 +487,58 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
+      if (toolWrapper instanceof LocalInspectionToolWrapper &&
+          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+          //some settings were read for the tool, so it must be initialized,
+          //otherwise no dynamic tools are expected
+          toolWrapper.isInitialized()) {
+        final ToolsImpl parent = myTools.get(toolWrapper.getShortName());
+        if (!parent.isEnabled()) continue;
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
+        if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
+          boolean isLocked = myLockedProfile;
+          myLockedProfile = false;
+          for (LocalInspectionToolWrapper wrapper : children) {
+            addTool(project, wrapper, dependencies);
+            final String shortName = wrapper.getShortName();
+            if (InspectionElementsMerger.getMerger(shortName) != null) continue;
+            InspectionElementsMerger.addMerger(shortName, new InspectionElementsMergerBase() {
+              @Override
+              public @NotNull String getMergedToolName() {
+                return shortName;
+              }
+
+              @Override
+              public String @NotNull [] getSourceToolNames() {
+                return ArrayUtil.EMPTY_STRING_ARRAY;
+              }
+
+              @Override
+              protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
+                // returns true when settings are default, so defaults will not be saved in profile
+                return Boolean.parseBoolean(element.getAttributeValue("enabled")) == wrapper.isEnabledByDefault() &&
+                       wrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+                       Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == wrapper.isEnabledByDefault();
+              }
+            });
+          }
+          myLockedProfile = isLocked;
+        }
+      }
     }
+    myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
+      @Override
+      public void toolAdded(@NotNull InspectionToolWrapper inspectionTool) {
+        addTool(project, inspectionTool, null);
+        getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
+      }
+
+      @Override
+      public void toolRemoved(@NotNull InspectionToolWrapper inspectionTool) {
+        removeTool(inspectionTool);
+        getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
+      }
+    }, project);
 
     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
       @NotNull
@@ -504,7 +554,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }));
     if (builder.isAcyclic()) {
-      myScopesOrder = ArrayUtil.toStringArray(builder.getSortedNodes());
+      myScopesOrder = ArrayUtilRt.toStringArray(builder.getSortedNodes());
     }
 
     copyToolsConfigurations(project);
@@ -519,18 +569,20 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
-  public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Map<String, List<String>> dependencies) {
+  public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @Nullable Map<String, List<String>> dependencies) {
     final String shortName = toolWrapper.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName()) : extension::getDisplayName;
+      Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
+                                      ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
+                                      : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable);
+        key = HighlightDisplayKey.register(shortName, computable, shortName);
       }
     }
 
@@ -544,7 +596,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
+    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     Element element = myUninitializedSettings.remove(shortName);
     try {
@@ -575,6 +627,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myTools.put(shortName, toolsList);
   }
 
+  public void removeTool(@NotNull InspectionToolWrapper inspectionTool) {
+    String shortName = inspectionTool.getShortName();
+    removeTool(shortName);
+  }
+
+  public void removeTool(@NotNull String shortName) {
+    myTools.remove(shortName);
+    HighlightDisplayKey.unregister(shortName);
+  }
+
   @Nullable
   private static InspectionElementsMergerBase getMerger(@NotNull String shortName) {
     final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(shortName);
@@ -588,21 +650,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
-      @NotNull
       @Override
-      public String[] getSourceToolNames() {
+      public String @NotNull [] getSourceToolNames() {
         return merger.getSourceToolNames();
       }
     };
   }
 
-  @Nullable
   @Transient
-  public String[] getScopesOrder() {
+  public String @Nullable [] getScopesOrder() {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(@NotNull String[] scopesOrder) {
+  public void setScopesOrder(String @NotNull [] scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
@@ -865,6 +925,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void disableAllTools(Project project) {
     for (InspectionToolWrapper entry : getInspectionTools(null)) {
       setToolEnabled(entry.getShortName(), false, project);
+    }
+  }
+
+  public static void setToolEnabled(boolean newState,
+                                    @NotNull InspectionProfileImpl profile,
+                                    @NotNull String shortName,
+                                    @NotNull Project project) {
+    profile.setToolEnabled(shortName, newState, project, false);
+    for (ScopeToolState scopeToolState : profile.getTools(shortName, project).getTools()) {
+      scopeToolState.setEnabled(newState);
     }
   }
 }

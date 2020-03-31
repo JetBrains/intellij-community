@@ -46,7 +46,7 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
       matchOptions.setScope(new LocalSearchScope(getFile()));
     }
     matchOptions.fillSearchCriteria(what);
-    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions);
+    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions, getProject());
     assertNull(message, message);
     return Replacer.testReplace(in, what, by, this.options, getProject(), sourceIsFile);
   }

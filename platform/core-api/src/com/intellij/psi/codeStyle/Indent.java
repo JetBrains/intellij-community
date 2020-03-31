@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.psi.codeStyle;
 
 /**
- * @deprecated
- * @see com.intellij.formatting.Indent
+ * @deprecated use {@link com.intellij.formatting.Indent}
  */
 @Deprecated
 public interface Indent {
   boolean isGreaterThan(Indent indent);
 
   Indent min(Indent anotherIndent);
+
   Indent max(Indent anotherIndent);
 
   Indent add(Indent indent);
+
   Indent subtract(Indent indent);
 
   boolean isZero();

@@ -19,9 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class ProjectStructureProblemsSettings {
   public static ProjectStructureProblemsSettings getProjectInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectStructureProblemsSettings.class);

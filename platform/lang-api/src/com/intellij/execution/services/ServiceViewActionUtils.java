@@ -2,6 +2,7 @@
 package com.intellij.execution.services;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
@@ -11,9 +12,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Experimental
 public class ServiceViewActionUtils {
+  public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
+  public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
+
   private ServiceViewActionUtils() {
   }
 

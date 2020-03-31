@@ -1,90 +1,202 @@
-<keymap version="1" name="ReSharper" parent="Visual Studio">
+<keymap name="ReSharper" parent="Visual Studio" version="1"  disable-mnemonics="false">
   <action id="ChangeSignature">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="S"/>
+    <keyboard-shortcut first-keystroke="control F6"/>
   </action>
   <action id="ClassNameCompletion">
-    <keyboard-shortcut first-keystroke="shift alt ENTER"/>
+    <keyboard-shortcut first-keystroke="control alt SPACE"/>
   </action>
   <action id="ExtractMethod">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="M"/>
+    <keyboard-shortcut first-keystroke="control alt M"/>
   </action>
-  <action id="FileStructurePopup"/>
   <action id="FindUsages">
-    <keyboard-shortcut first-keystroke="shift F12"/>
+    <keyboard-shortcut first-keystroke="alt F7"/>
   </action>
   <action id="FindUsagesInFile">
-    <keyboard-shortcut first-keystroke="shift alt F11"/>
+    <keyboard-shortcut first-keystroke="control shift F7"/>
   </action>
-  <action id="Generate">
-    <keyboard-shortcut first-keystroke="meta ENTER"/>
+  <action id="HighlightUsagesInFile">
+    <keyboard-shortcut first-keystroke="control shift F7"/>
   </action>
   <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="control button1"/>
     <mouse-shortcut keystroke="button2"/>
-    <keyboard-shortcut first-keystroke="F12"/>
   </action>
-  <action id="GotoImplementation">
-    <mouse-shortcut keystroke="control alt button1"/>
+  <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="control F12"/>
   </action>
+  <action id="SearchEverywhere">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="GotoChangedFile">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="GotoFile">
+    <keyboard-shortcut first-keystroke="control shift N"/>
+  </action>
+  <action id="GotoSymbol">
+    <keyboard-shortcut first-keystroke="control shift alt N"/>
+  </action>
+  <action id="GotoImplementation">
+    <keyboard-shortcut first-keystroke="control alt b" />
+    <mouse-shortcut keystroke="ctrl alt button1"/>
+  </action>
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="control alt F7"/>
+    <keyboard-shortcut first-keystroke="ctrl shift alt G"/>
   </action>
   <action id="GotoTypeDeclaration">
-    <keyboard-shortcut first-keystroke="shift control F11"/>
+    <keyboard-shortcut first-keystroke="ctrl shift T"/>
+    <mouse-shortcut keystroke="ctrl shift button1"/>
   </action>
   <action id="Inline">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="I"/>
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
   <action id="InsertLiveTemplate">
-    <keyboard-shortcut first-keystroke="control E" second-keystroke="L"/>
+    <keyboard-shortcut first-keystroke="control J"/>
+  </action>
+  <action id="ParameterInfo">
+    <keyboard-shortcut first-keystroke="control P"/>
   </action>
   <action id="IntroduceParameter">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="P"/>
+    <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
   <action id="IntroduceVariable">
     <keyboard-shortcut first-keystroke="control alt V"/>
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="V"/>
-  </action>
-  <action id="JumpToLastChange">
-    <keyboard-shortcut first-keystroke="shift control BACK_SPACE"/>
   </action>
   <action id="Move">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="O"/>
-  </action>
-  <action id="RecentChanges">
-    <keyboard-shortcut first-keystroke="shift control COMMA"/>
+    <keyboard-shortcut first-keystroke="F6"/>
   </action>
   <action id="RecentFiles">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
-  </action>
-  <action id="SwitcherRecentEditedChangedToggleCheckBox">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
+    <keyboard-shortcut first-keystroke="control E"/>
   </action>
   <action id="RenameElement">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+    <keyboard-shortcut first-keystroke="F2"/>
   </action>
-  <action id="RestoreDefaultLayout"/>
   <action id="SafeDelete">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="D"/>
+    <keyboard-shortcut first-keystroke="alt DELETE"/>
   </action>
-  <action id="ShowUsages"/>
+  <action id="ShowUsages">
+    <keyboard-shortcut first-keystroke="control alt F7"/>
+  </action>
   <action id="SmartTypeCompletion">
-    <keyboard-shortcut first-keystroke="control alt SPACE"/>
+    <keyboard-shortcut first-keystroke="control shift SPACE"/>
   </action>
   <action id="SurroundWithLiveTemplate">
-    <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
+    <keyboard-shortcut first-keystroke="control alt J"/>
   </action>
-  <action id="Vcs.ShowMessageHistory">
-    <keyboard-shortcut first-keystroke="control M"/>
+  <action id="GotoNextError">
+    <keyboard-shortcut first-keystroke="F12"/>
   </action>
-  <action id="Git.Reword.Commit">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  <action id="GotoPreviousError">
+    <keyboard-shortcut first-keystroke="shift F12"/>
   </action>
-  <action id="ChangesView.Rename">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
-  <action id="ShelvedChanges.Rename">
-    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  <action id="TypeHierarchy">
+    <keyboard-shortcut first-keystroke="control alt H"/>
   </action>
+  <action id="ReformatCode">
+    <keyboard-shortcut first-keystroke="control alt L"/>
+  </action>
+  <action id="QuickJavaDoc">
+    <keyboard-shortcut first-keystroke="control Q"/>
+  </action>
+  <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="control W"/>
+  </action>
+  <action id="EditorUnSelectWord">
+    <keyboard-shortcut first-keystroke="control shift W"/>
+  </action>
+  <action id="CommentByLineComment">
+    <keyboard-shortcut first-keystroke="control SLASH"/>
+    <keyboard-shortcut first-keystroke="control DIVIDE"/>
+  </action>
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="control shift SLASH"/>
+    <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+  </action>
+  <action id="GotoSuperMethod">
+    <keyboard-shortcut first-keystroke="control U"/>
+  </action>
+  <action id="IntroduceField">
+    <keyboard-shortcut first-keystroke="control alt D"/>
+  </action>
+  <action id="JumpToLastWindow">
+    <keyboard-shortcut first-keystroke="control alt BACK_SPACE"/>
+    <keyboard-shortcut first-keystroke="shift alt F6"/>
+  </action>
+  <action id="EditorStartNewLine">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
+  </action>
+  <action id="CodeCompletion">
+    <keyboard-shortcut first-keystroke="control SPACE"/>
+  </action>
+  <action id="RecentChangedFiles">
+    <keyboard-shortcut first-keystroke="control shift alt BACK_SPACE"/>
+  </action>
+  <action id="ShowSettingsAndFindUsages">
+    <keyboard-shortcut first-keystroke="shift alt F7"/>
+  </action>
+  <action id="CheckinProject">
+    <keyboard-shortcut first-keystroke="control K"/>
+  </action>
+  <action id="ToggleBookmark"/>
+  <action id="GotoNextBookmark"/>
+  <action id="GotoPreviousBookmark"/>
+  <action id="ShowNavBar">
+    <keyboard-shortcut first-keystroke="alt HOME"/>
+  </action>
+  <action id="ViewBreakpoints">
+    <keyboard-shortcut first-keystroke="control shift F8"/>
+  </action>
+  <action id="Vcs.QuickListPopupAction">
+    <keyboard-shortcut first-keystroke="alt BACK_QUOTE"/>
+  </action>
+  <action id="ActivateProjectToolWindow">
+    <keyboard-shortcut first-keystroke="Alt 1"/>
+  </action>
+  <action id="Unscramble">
+    <keyboard-shortcut first-keystroke="control shift E"/>
+  </action>
+  <action id="NewElement">
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
+  <action id="CodeCleanup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+  <action id="SilentCodeCleanup">
+    <keyboard-shortcut first-keystroke="control shift alt F"/>
+  </action>
+  <action id="ActivateFindToolWindow">
+    <keyboard-shortcut first-keystroke="alt 3"/>
+    <keyboard-shortcut first-keystroke="control alt U"/>
+  </action>
+  <action id="QuickImplementations">
+    <keyboard-shortcut first-keystroke="control shift I"/>
+  </action>
+  <action id="EditorToggleShowWhitespaces"/>
+  <action id="EditorToggleUseSoftWraps"/>
+  <action id="Refresh"/>
+  <action id="RecentLocations"/>
+  <action id="ToggleBookmarkWithMnemonic"/>
+  <action id="ActivateStructureToolWindow">
+    <keyboard-shortcut first-keystroke="control F11"/>
+  </action>
+  <action id="VcsShowNextChangeMarker"/>
+  <action id="VcsShowPrevChangeMarker"/>
+  <action id="Print"/>
+  <action id="CallHierarchy"/>
+  <action id="ImplementMethods">
+    <keyboard-shortcut first-keystroke="control I"/>
+  </action>
+  <action id="IncrementalSearch"/>
+
+  <!--  Rider-specific actions-->
+
+  <action id="ActivateInspectionResultsToolWindow">
+    <keyboard-shortcut first-keystroke="alt control 4"/>
+    <keyboard-shortcut first-keystroke="control alt COMMA"/>
+  </action>
+
 </keymap>

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
@@ -35,6 +36,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -52,20 +54,20 @@ import java.util.List;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
-public class RecentLocationsAction extends DumbAwareAction {
-  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+public class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
+  public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
-  private static final int DEFAULT_WIDTH = JBUI.scale(700);
-  private static final int DEFAULT_HEIGHT = JBUI.scale(530);
-  private static final int MINIMUM_WIDTH = JBUI.scale(600);
-  private static final int MINIMUM_HEIGHT = JBUI.scale(450);
-  private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
-  public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
-                                                                SHORTCUT_FOREGROUND_COLOR.getRed(),
-                                                                SHORTCUT_FOREGROUND_COLOR.getGreen(),
-                                                                SHORTCUT_FOREGROUND_COLOR.getBlue());
-
-  static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
+  private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
+  private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
+  private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
+  private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
+  static class Holder {
+    private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
+    public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
+                                                                  SHORTCUT_FOREGROUND_COLOR.getRed(),
+                                                                  SHORTCUT_FOREGROUND_COLOR.getGreen(),
+                                                                  SHORTCUT_FOREGROUND_COLOR.getBlue());
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -75,8 +77,12 @@ public class RecentLocationsAction extends DumbAwareAction {
       return;
     }
 
+    showPopup(project, false);
+  }
+
+  public static void showPopup(@NotNull Project project, boolean showChanged) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project, new ArrayList<>());
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(false)));
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -84,7 +90,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     ShortcutSet showChangedOnlyShortcutSet = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
-    JBCheckBox checkBox = createCheckbox(showChangedOnlyShortcutSet);
+    JBCheckBox checkBox = createCheckbox(showChangedOnlyShortcutSet, showChanged);
 
     ListWithFilter<RecentLocationItem> listWithFilter = (ListWithFilter<RecentLocationItem>)ListWithFilter
       .wrap(list, scrollPane, getNamer(model, checkBox), true);
@@ -107,12 +113,12 @@ public class RecentLocationsAction extends DumbAwareAction {
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
-    JLabel title = createTitle();
+    JLabel title = createTitle(showChanged);
 
     JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
-    Color borderColor = SystemInfoRt.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
+    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
                         ? topPanel.getBackground()
                         : null;
 
@@ -206,15 +212,16 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  public JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet) {
+  public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
-                  + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                  + " <font color=\"" + Holder.SHORTCUT_HEX_COLOR + "\">"
                   + KeymapUtil.getShortcutsText(checkboxShortcutSet.getShortcuts()) + "</font>"
                   + "</html>";
     JBCheckBox checkBox = new JBCheckBox(text);
     checkBox.setBorder(JBUI.Borders.empty());
     checkBox.setOpaque(false);
+    checkBox.setSelected(showChanged);
 
     return checkBox;
   }
@@ -266,7 +273,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     topPanel.add(checkbox, BorderLayout.EAST);
 
     Dimension size = topPanel.getPreferredSize();
-    size.height = JBUI.scale(29);
+    size.height = JBUIScale.scale(29);
     topPanel.setPreferredSize(size);
     topPanel.setBorder(JBUI.Borders.empty(5, 8));
 
@@ -278,10 +285,10 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static JLabel createTitle() {
+  private static JLabel createTitle(boolean showChanged) {
     JBLabel title = new JBLabel();
     title.setFont(title.getFont().deriveFont(Font.BOLD));
-    updateTitleText(title, false);
+    updateTitleText(title, showChanged);
     return title;
   }
 
@@ -360,9 +367,13 @@ public class RecentLocationsAction extends DumbAwareAction {
                                          @NotNull JBPopup popup,
                                          @NotNull Ref<? super Boolean> navigationRef) {
     ContainerUtil.reverse(list.getSelectedValuesList())
-      .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo()));
+      .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo(), true));
 
     navigationRef.set(true);
     popup.closeOk(null);
+  }
+
+  static String getEmptyFileText() {
+    return IdeBundle.message("recent.locations.popup.empty.file.text");
   }
 }

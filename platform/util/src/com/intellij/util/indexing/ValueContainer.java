@@ -33,6 +33,7 @@ public abstract class ValueContainer<Value> {
     int size();
   }
 
+  @FunctionalInterface
   public interface IntPredicate {
     boolean contains(int id);
   }

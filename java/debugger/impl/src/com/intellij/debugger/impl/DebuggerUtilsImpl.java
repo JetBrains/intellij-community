@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -16,19 +14,25 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
@@ -42,13 +46,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerUtilsImpl.class);
 
   @Override
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
@@ -234,33 +240,20 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return defaultValue;
   }
 
-  public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
-    if (ApplicationManagerEx.getApplicationEx().holdsReadLock()) {
-      return action.compute();
-    }
-    Ref<T> res = Ref.create();
-    while (true) {
-      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
-        return res.get();
-      }
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
-  }
-
   public static String getConnectionDisplayName(RemoteConnection connection) {
     if (connection instanceof PidRemoteConnection) {
       return "pid " + ((PidRemoteConnection)connection).getPid();
     }
-    String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
-    String transportName = DebuggerBundle.getTransportName(connection);
-    return DebuggerBundle.message("string.connection", addressDisplayName, transportName);
+    String addressDisplayName = JavaDebuggerBundle.getAddressDisplayName(connection);
+    String transportName = JavaDebuggerBundle.getTransportName(connection);
+    return JavaDebuggerBundle.message("string.connection", addressDisplayName, transportName);
   }
 
   public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
     if (type == null) {
       return false;
     }
-    if (superType.equals(type)) {
+    if (superType.equals(type) || CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
       return true;
     }
     return supertypes(type).anyMatch(t -> instanceOf(t, superType));
@@ -275,8 +268,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return StreamEx.empty();
   }
 
-  @Nullable
-  public static byte[] readBytesArray(Value bytesArray) {
+  public static byte @Nullable [] readBytesArray(Value bytesArray) {
     if (bytesArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)bytesArray).getValues();
       byte[] res = new byte[values.size()];
@@ -292,5 +284,37 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       return res;
     }
     return null;
+  }
+
+  @Override
+  protected Location getLocation(SuspendContext context) {
+    return ((SuspendContextImpl)context).getLocation();
+  }
+
+  @NotNull
+  public static String getIdeaRtPath() {
+    if (PluginManagerCore.isRunningFromSources()) {
+      Class<JavacRunner> aClass = JavacRunner.class;
+      try {
+        String resourcePath = aClass.getName().replace('.', '/') + ".class";
+        Enumeration<URL> urls = aClass.getClassLoader().getResources(resourcePath);
+        while (urls.hasMoreElements()) {
+          URL url = urls.nextElement();
+          // prefer dir
+          if (url.getProtocol().equals(URLUtil.FILE_PROTOCOL)) {
+            String path = URLUtil.urlToFile(url).getPath();
+            String testPath = path.replace('\\', '/');
+            String testResourcePath = resourcePath.replace('\\', '/');
+            if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
+              return path.substring(0, path.length() - resourcePath.length() - 1);
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return JavaSdkUtil.getIdeaRtJarPath();
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -23,6 +9,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
+public final class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
   private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 
   @NotNull
@@ -69,9 +56,6 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
   };
 
-  public UiActivityMonitorImpl() {
-  }
-
   public void installListener() {
     LaterInvocator.addModalityStateListener(this, this);
   }
@@ -94,7 +78,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @NotNull
   @Override
-  public BusyObject getBusy(@NotNull Project project, @NotNull UiActivity... toWatch) {
+  public BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(project, toWatch);
@@ -102,7 +86,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @NotNull
   @Override
-  public BusyObject getBusy(@NotNull UiActivity... toWatch) {
+  public BusyObject getBusy(UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(null, toWatch);
@@ -154,7 +138,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @NotNull
-  private BusyImpl _getBusy(@Nullable Project key, @NotNull UiActivity... toWatch) {
+  private BusyImpl _getBusy(@Nullable Project key, UiActivity @NotNull ... toWatch) {
     return getBusyContainer(key).getOrCreateBusy(toWatch);
   }
 
@@ -213,7 +197,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @NotNull
-  protected ModalityState getCurrentState() {
+  private static ModalityState getCurrentState() {
     return ModalityState.current();
   }
 
@@ -274,7 +258,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
       myActivities.put(activity, new ActivityInfo(effectiveModalityState));
       myQueuedToRemove.remove(activity);
-      
+
       myContainer.onActivityAdded(activity);
     }
 
@@ -314,8 +298,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
 
     @NotNull
-    public BusyImpl getOrCreateBusy(@NotNull UiActivity... activities) {
-      Set<UiActivity> key = new HashSet<>(Arrays.asList(activities));
+    public BusyImpl getOrCreateBusy(UiActivity @NotNull ... activities) {
+      Set<UiActivity> key = ContainerUtil.set(activities);
 
       if (myActivities2Object.containsKey(key)) {
         return myActivities2Object.get(key);

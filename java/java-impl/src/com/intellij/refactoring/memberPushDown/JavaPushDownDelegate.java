@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,10 +7,11 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -106,7 +93,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         context = (PsiElement)newClassContext;
       }
     }
-    if (targetClass instanceof PsiAnonymousClass && 
+    if (targetClass instanceof PsiAnonymousClass &&
         toMove.stream().map(MemberInfoBase::getOverrides).anyMatch(Objects::nonNull)) {
       conflicts.putValue(targetClass, "Unable to push implements to anonymous class");
     }
@@ -120,15 +107,16 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiFile containingFile = aClass.getContainingFile();
     final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");
     if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL) || defaultPackage) {
-      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. "
-                                                       : (defaultPackage ? "Class " : "Final class ") + aClass.getQualifiedName() + "does not have inheritors. ") +
-                                      "Pushing members down will result in them being deleted. " +
-                                      "Would you like to proceed?", conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("push.down.delete.warning.text",
+                                                                aClass.isEnum() ? JavaRefactoringBundle.message("push.down.enum.no.constants.warning.text")
+                                                                                : JavaRefactoringBundle.message(defaultPackage ? "push.down.no.inheritors.class.warning.text"
+                                                                                                                           : "push.down.no.inheritors.final.class.warning.text", aClass.getQualifiedName())),
+                                      conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
         return NewSubClassData.ABORT_REFACTORING;
       }
     } else {
       String noInheritors = aClass.isInterface() ?
-                            RefactoringBundle.message("interface.0.does.not.have.inheritors", aClass.getQualifiedName()) :
+                            JavaRefactoringBundle.message("interface.0.does.not.have.inheritors", aClass.getQualifiedName()) :
                             RefactoringBundle.message("class.0.does.not.have.inheritors", aClass.getQualifiedName());
       final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
       final int answer = Messages.showYesNoCancelDialog(message, conflictDialogTitle, Messages.getWarningIcon());
@@ -217,7 +205,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               if (!(resolve instanceof PsiClass) || resolve != sourceClass) {
                 continue;
               }
-              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Condition.TRUE, false);
+              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Conditions.alwaysTrue(), false);
               if (inheritor != null && inheritor != targetClass) {
                 //usages in other targets should be updated on corresponding turns
                 continue;
@@ -321,8 +309,8 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               }
             }
             PsiJavaCodeReferenceElement classRef = classType != null ? factory.createReferenceElementByType(classType) : factory.createClassReferenceElement(psiClass);
-            PsiReferenceList extendsImplementsList = psiClass.isInterface() && !targetClass.isInterface() 
-                                                     ? targetClass.getImplementsList() 
+            PsiReferenceList extendsImplementsList = psiClass.isInterface() && !targetClass.isInterface()
+                                                     ? targetClass.getImplementsList()
                                                      : targetClass.getExtendsList();
             if (extendsImplementsList != null) {
               extendsImplementsList.add(classRef);
@@ -340,7 +328,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       if (newMember != null) {
         decodeRefs(sourceClass, newMember, targetClass);
         //rebind imports first
-        Collections.sort(refsToRebind, Comparator.comparing(PsiReference::getElement, PsiUtil.BY_POSITION));
+        refsToRebind.sort(Comparator.comparing(PsiReference::getElement, PsiUtil.BY_POSITION));
         for (PsiReference psiReference : refsToRebind) {
           JavaCodeStyleManager.getInstance(sourceClass.getProject()).shortenClassReferences(psiReference.bindToElement(newMember));
         }
@@ -360,8 +348,11 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression) {
         PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-        new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
-          .inlineMethodCall(referenceExpression);
+        if (superMethod.getBody() != null) {
+          // No super method body: either native method or compilation error
+          new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
+            .inlineMethodCall(referenceExpression);
+        }
       }
     }
   }
@@ -422,7 +413,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     }
     return true;
   }
-  
+
   private static void encodeRef(PsiClass aClass,
                                 final PsiJavaCodeReferenceElement expression,
                                 final Set<PsiMember> movedMembers,
@@ -437,7 +428,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
                                 @NotNull final Set<PsiMember> movedMembers,
                                 @NotNull final PsiElement toPut,
                                 @Nullable final PsiElement qualifier) {
-    
+
     for (PsiMember movedMember : movedMembers) {
       if (movedMember.equals(resolved)) {
         if (qualifier == null) {
@@ -501,7 +492,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     try {
       if (toGet.getCopyableUserData(REMOVE_QUALIFIER_KEY) != null) {
         toGet.putCopyableUserData(REMOVE_QUALIFIER_KEY, null);
-        final PsiElement qualifier = ref instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)ref).getQualifier() 
+        final PsiElement qualifier = ref instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)ref).getQualifier()
                                                                                 : ref;
         if (qualifier != null) qualifier.delete();
       }

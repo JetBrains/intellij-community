@@ -9,13 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.generateCreateMethodActions
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause
@@ -115,15 +116,17 @@ fun generateReferenceExpressionFixes(ref: GrReferenceExpression): Collection<Int
   generateAddDynamicMemberAction(ref)?.let(actions::add)
 
   if (targetClass !is SyntheticElement || targetClass is GroovyScriptClass) {
-    actions += factory.createCreateFieldFromUsageFix(ref)
-    if (PsiUtil.isAccessedForReading(ref)) {
-      actions += factory.createCreateGetterFromUsageFix(ref, targetClass)
-    }
-    if (PsiUtil.isLValue(ref)) {
-      actions += factory.createCreateSetterFromUsageFix(ref)
-    }
-    if (ref.parent is GrCall && ref.parent is GrExpression) {
-      actions += factory.createCreateMethodFromUsageFix(ref)
+    val parent = ref.parent
+    if (parent is GrMethodCall) {
+      actions += generateCreateMethodActions(parent)
+    } else {
+      actions += factory.createCreateFieldFromUsageFix(ref)
+      if (PsiUtil.isAccessedForReading(ref)) {
+        actions += factory.createCreateGetterFromUsageFix(ref, targetClass)
+      }
+      if (PsiUtil.isLValue(ref)) {
+        actions += factory.createCreateSetterFromUsageFix(ref)
+      }
     }
   }
 

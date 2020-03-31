@@ -33,7 +33,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Function;
 
@@ -90,16 +89,14 @@ public class ProjectBytecodeAnalysis {
     return null;
   }
 
-  @NotNull
-  public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+  public PsiAnnotation @NotNull [] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
     return CachedValuesManager.getCachedValue(listOwner, () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
-  @NotNull
-  private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
+  private PsiAnnotation @NotNull [] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     PsiFile psiFile = listOwner.getContainingFile();
     VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
     if (file != null && ClassDataIndexer.isFileExcluded(file)) {
@@ -107,8 +104,7 @@ public class ProjectBytecodeAnalysis {
     }
 
     try {
-      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      EKey primaryKey = getKey(listOwner, md);
+      EKey primaryKey = getKey(listOwner);
       if (primaryKey == null) {
         return PsiAnnotation.EMPTY_ARRAY;
       }
@@ -120,6 +116,15 @@ public class ProjectBytecodeAnalysis {
       else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
         return toPsi(parameterAnnotations);
+      }
+      else if (listOwner instanceof PsiField && listOwner.hasModifierProperty(PsiModifier.STATIC)) {
+        Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
+        collectEquations(Collections.singletonList(primaryKey), outSolver);
+        Map<EKey, Value> solutions = outSolver.solve();
+        Value value = solutions.get(primaryKey);
+        if (value == Value.NotNull) {
+          return new PsiAnnotation[]{getNotNullAnnotation()};
+        }
       }
       return PsiAnnotation.EMPTY_ARRAY;
     }
@@ -139,8 +144,7 @@ public class ProjectBytecodeAnalysis {
    * @param methodAnnotations inferred annotations
    * @return Psi annotations
    */
-  @NotNull
-  private PsiAnnotation[] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
+  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     boolean pure = methodAnnotations.pures.contains(primaryKey);
@@ -180,8 +184,7 @@ public class ProjectBytecodeAnalysis {
    * @param parameterAnnotations inferred parameter annotations
    * @return Psi annotations
    */
-  @NotNull
-  private PsiAnnotation[] toPsi(ParameterAnnotations parameterAnnotations) {
+  private PsiAnnotation @NotNull [] toPsi(ParameterAnnotations parameterAnnotations) {
     if (parameterAnnotations.notNull) {
       return new PsiAnnotation[]{getNotNullAnnotation()};
     }
@@ -211,24 +214,26 @@ public class ProjectBytecodeAnalysis {
   }
 
   @Nullable
-  public EKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
+  public EKey getKey(@NotNull PsiModifierListOwner owner) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
+    EKey key = null;
     if (owner instanceof PsiMethod) {
-      EKey key = BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out);
-      return key == null ? null : myEquationProvider.adaptKey(key, md);
+      key = BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out);
     }
-    if (owner instanceof PsiParameter) {
+    else if (owner instanceof PsiField) {
+      key = BytecodeAnalysisConverter.psiKey((PsiField)owner, Out);
+    }
+    else if (owner instanceof PsiParameter) {
       PsiElement parent = owner.getParent();
       if (parent instanceof PsiParameterList) {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          EKey key = BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false));
-          return key == null ? null : myEquationProvider.adaptKey(key, md);
+          key = BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false));
         }
       }
     }
-    return null;
+    return key == null ? null : myEquationProvider.adaptKey(key);
   }
 
   /**
@@ -326,7 +331,8 @@ public class ProjectBytecodeAnalysis {
       for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         stable &= equations.stable;
         Effects effects = (Effects)equations.find(curKey.getDirection())
-          .orElseGet(() -> new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS));
+          .orElseGet(() -> new Effects(DataValue.UnknownDataValue1,
+                                       curKey.getDirection() == Volatile ? Collections.emptySet() : Effects.TOP_EFFECTS));
         combined = combined == null ? effects : combined.combine(effects);
       }
       if (combined != null) {
@@ -526,7 +532,7 @@ public class ProjectBytecodeAnalysis {
       project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, myEquationCache::clear);
     }
 
-    abstract EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest);
+    abstract EKey adaptKey(@NotNull EKey key);
 
     abstract List<Equations> getEquations(MemberDescriptor method);
   }
@@ -541,7 +547,7 @@ public class ProjectBytecodeAnalysis {
     }
 
     @Override
-    public EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest) {
+    public EKey adaptKey(@NotNull EKey key) {
       assert key.member instanceof Member;
       return key;
     }
@@ -605,13 +611,13 @@ public class ProjectBytecodeAnalysis {
     }
 
     @Override
-    public EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest) {
-      return key.hashed(messageDigest);
+    public EKey adaptKey(@NotNull EKey key) {
+      return key.hashed();
     }
 
     @Override
     public List<Equations> getEquations(MemberDescriptor method) {
-      HMember key = method.hashed(null);
+      HMember key = method.hashed();
       return myEquationCache.computeIfAbsent(key, m -> ClassDataIndexer.getEquations(ProjectScope.getLibrariesScope(myProject), m));
     }
   }

@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -20,11 +21,9 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.io.File;
 import java.util.*;
@@ -57,18 +56,11 @@ public class HgResolveCommand {
     if (repo == null) {
       resultHandler.consume(Collections.emptyMap());
     }
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
-    executor.execute(repo, "resolve", Collections.singletonList("--list"), new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (result == null) {
-          resultHandler.consume(Collections.emptyMap());
-        }
-
-        final Map<HgFile, HgResolveStatusEnum> resolveStatus = handleResult(repo, result);
-        resultHandler.consume(resolveStatus);
-      }
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+      HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Collections.singletonList("--list"));
+      resultHandler.consume(result == null ? Collections.emptyMap() : handleResult(repo, result));
     });
   }
 
@@ -93,10 +85,11 @@ public class HgResolveCommand {
 
   public void markResolved(@NotNull VirtualFile repo, @NotNull Collection<FilePath> paths) {
     for (List<String> chunk : VcsFileUtil.chunkPaths(repo, paths)) {
-      final List<String> args = new ArrayList<>();
+      List<String> args = new ArrayList<>();
       args.add("--mark");
       args.addAll(chunk);
-      new HgCommandExecutor(myProject).execute(repo, "resolve", args, null);
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
+        new HgCommandExecutor(myProject).executeInCurrentThread(repo, "resolve", args));
     }
   }
 

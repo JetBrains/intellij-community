@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.notification.NotificationAction
@@ -26,6 +26,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.findProtectedRemoteBranchContainingCommit
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
 import git4idea.repo.GitRepository
@@ -76,7 +77,8 @@ class GitRewordOperation(private val repository: GitRepository,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
 
-    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true,
+    val params = GitRebaseParams.editCommits(repository.vcs.version,
+                                             commit.parents.first().asString(), rebaseEditor, true,
                                              GitRebaseParams.AutoSquashOption.DISABLE)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
@@ -96,8 +98,10 @@ class GitRewordOperation(private val repository: GitRepository,
       return false
     }
     handler.addParameters("--amend")
-    handler.addParameters("-F", messageFile.absolutePath)
+    handler.addParameters("-F")
+    handler.addAbsoluteFile(messageFile)
     handler.addParameters("--only") // without any files: to amend only the message
+    handler.addParameters("--no-verify") // to prevent unnecessary hooks execution
 
     val result = Git.getInstance().runCommand(handler)
     repository.update()
@@ -112,11 +116,16 @@ class GitRewordOperation(private val repository: GitRepository,
 
   internal fun undo() {
     val possibility = checkUndoPossibility()
-    val errorTitle = "Can't Undo Reword"
+    val errorTitle = GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.title")
     when (possibility) {
-      is UndoPossibility.HeadMoved -> notifier.notifyError(errorTitle, "Repository has already been changed")
-      is UndoPossibility.PushedToProtectedBranch ->
-        notifier.notifyError(errorTitle, "Commit has already been pushed to ${possibility.branch}")
+      is UndoPossibility.HeadMoved -> notifier.notifyError(
+        errorTitle,
+        GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message")
+      )
+      is UndoPossibility.PushedToProtectedBranch -> notifier.notifyError(
+        errorTitle,
+        GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.commit.pushed.message", possibility.branch)
+      )
       is UndoPossibility.Error -> notifier.notifyError(errorTitle, "")
       else -> doUndo()
     }
@@ -126,7 +135,7 @@ class GitRewordOperation(private val repository: GitRepository,
     val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
     repository.update()
     if (!res.success()) {
-      notifier.notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
+      notifier.notifyError(GitBundle.getString("rebase.log.reword.action.notification.undo.failed.title"), res.errorOutputAsHtmlString)
     }
   }
 
@@ -184,11 +193,18 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun notifySuccess() {
-    val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
-    notification.addAction(NotificationAction.createSimple("Undo") {
-      notification.expire()
-      undoInBackground()
-    })
+    val notification = STANDARD_NOTIFICATION.createNotification(
+      GitBundle.getString("rebase.log.reword.action.notification.successful.title"),
+      "",
+      NotificationType.INFORMATION,
+      null
+    )
+    notification.addAction(NotificationAction.createSimple(
+      GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
+      Runnable {
+        notification.expire()
+        undoInBackground()
+      }))
 
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
@@ -204,7 +220,10 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun undoInBackground() {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword...") {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(
+      project,
+      GitBundle.getString("rebase.log.reword.action.progress.indicator.undo.title")
+    ) {
       override fun run(indicator: ProgressIndicator) {
         undo()
       }

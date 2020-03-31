@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -74,10 +74,10 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
               elseCompletesNormally ||
               !nextStatementMayBecomeUnreachable(ifStatement)) {
             if (thenCompletesNormally) {
-              setText(CodeInsightBundle.message("intention.unwrap.else.branch.changes.semantics"));
+              setText(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
             }
             else {
-              setText(CodeInsightBundle.message("intention.unwrap.else.branch"));
+              setText(JavaBundle.message("intention.unwrap.else.branch"));
             }
             return true;
           }
@@ -129,6 +129,6 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.unwrap.else.branch");
+    return JavaBundle.message("intention.unwrap.else.branch");
   }
 }

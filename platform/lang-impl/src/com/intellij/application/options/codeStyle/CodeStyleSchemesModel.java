@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -50,8 +36,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final Project myProject;
   private boolean myUiEventsEnabled = true;
 
-  private @NotNull String myOverridingStatus     = "";
-  private final    Lock   myOverridingStatusLock = new ReentrantLock();
+  private final @NotNull OverridingStatus myOverridingStatus = new OverridingStatus();
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
@@ -106,7 +91,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public void reset() {
     mySchemes.clear();
-    ContainerUtil.addAll(mySchemes, CodeStyleSchemesImpl.getSchemeManager().getAllSchemes());
+    mySchemes.addAll(CodeStyleSchemesImpl.getSchemeManager().getAllSchemes());
     mySchemes.add(myProjectScheme);
     updateClonedSettings();
 
@@ -200,7 +185,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   public void fireSchemeListChanged() {
     myDispatcher.getMulticaster().schemeListChanged();
   }
-  
+
   public void fireAfterCurrentSettingsChanged() {
     myDispatcher.getMulticaster().afterCurrentSettingsChanged();
   }
@@ -278,7 +263,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public List<CodeStyleScheme> getAllSortedSchemes() {
     List<CodeStyleScheme> schemes = new ArrayList<>(getSchemes());
-    Collections.sort(schemes, (s1, s2) -> {
+    schemes.sort((s1, s2) -> {
       if (isProjectScheme(s1)) return -1;
       if (isProjectScheme(s2)) return 1;
       if (s1.isDefault()) return -1;
@@ -304,13 +289,17 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (canResetScheme(scheme)) {
       CodeStyleSettings currSettings = getCloneSettings(scheme);
       currSettings.copyFrom(CodeStyleSettings.getDefaults());
-      myUiEventsEnabled = false;
-      try {
-        myDispatcher.getMulticaster().settingsChanged(currSettings);
-      }
-      finally {
-        myUiEventsEnabled = true;
-      }
+      fireModelSettingsChanged(currSettings);
+    }
+  }
+
+  void fireModelSettingsChanged(@NotNull CodeStyleSettings currSettings) {
+    myUiEventsEnabled = false;
+    try {
+      myDispatcher.getMulticaster().settingsChanged(currSettings);
+    }
+    finally {
+      myUiEventsEnabled = true;
     }
   }
 
@@ -328,35 +317,30 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   public void updateOverridingStatus() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        myOverridingStatusLock.lock();
+        myOverridingStatus.getLock().lock();
         List<CodeStyleSettingsModifier> modifiers = getOverridingModifiers();
-        final StringBuilder messageBuilder = new StringBuilder();
         if (modifiers.size() > 0) {
-          messageBuilder.append("May be overridden by ");
-          boolean isList = false;
-          for (CodeStyleSettingsModifier modifier : modifiers) {
-            if (isList) messageBuilder.append(", ");
-            messageBuilder.append(modifier.getName());
-            isList = true;
-          }
+          myOverridingStatus.update(modifiers);
         }
-        myOverridingStatus = messageBuilder.toString();
+        else {
+          myOverridingStatus.reset();
+        }
       }
       finally {
-        myOverridingStatusLock.unlock();
+        myOverridingStatus.getLock().unlock();
       }
       myDispatcher.getMulticaster().overridingStatusChanged();
     });
   }
 
   @Nullable
-  public String getOverridingStatus() {
-    if (myOverridingStatusLock.tryLock()) {
+  public OverridingStatus getOverridingStatus() {
+    if (myOverridingStatus.getLock().tryLock()) {
       try {
-        return !myOverridingStatus.isEmpty() ? myOverridingStatus : null;
+        return !myOverridingStatus.isEmpty()? myOverridingStatus : null;
       }
       finally {
-        myOverridingStatusLock.unlock();
+        myOverridingStatus.getLock().unlock();
       }
     }
     return null;
@@ -404,6 +388,38 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
     public boolean isLocked() {
       return myLocked;
+    }
+  }
+
+  public static class OverridingStatus {
+    private final Lock myLock = new ReentrantLock();
+
+    private final static CodeStyleSettingsModifier[] EMPTY_MODIFIER_ARRAY = new CodeStyleSettingsModifier[0];
+
+    @Nullable
+    private List<CodeStyleSettingsModifier> myModifiers;
+
+    @NotNull
+    public Lock getLock() {
+      return myLock;
+    }
+
+    private void update(@NotNull List<CodeStyleSettingsModifier> modifiers) {
+      myModifiers = modifiers;
+    }
+
+    public CodeStyleSettingsModifier @NotNull [] getModifiers() {
+      return myModifiers != null && !myModifiers.isEmpty()
+             ? myModifiers.toArray(new CodeStyleSettingsModifier[0])
+             : EMPTY_MODIFIER_ARRAY;
+    }
+
+    private boolean isEmpty() {
+      return myModifiers == null || myModifiers.isEmpty();
+    }
+
+    private void reset() {
+      myModifiers = null;
     }
   }
 }

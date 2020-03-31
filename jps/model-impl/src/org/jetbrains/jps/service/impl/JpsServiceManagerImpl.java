@@ -15,7 +15,8 @@
  */
 package org.jetbrains.jps.service.impl;
 
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -24,9 +25,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
 public class JpsServiceManagerImpl extends JpsServiceManager {
   private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
@@ -37,19 +35,26 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     //noinspection unchecked
     T service = (T)myServices.get(serviceClass);
     if (service == null) {
-      final Iterator<T> iterator = ServiceLoader.load(serviceClass, serviceClass.getClassLoader()).iterator();
-      if (!iterator.hasNext()) {
-        throw new ServiceConfigurationError("Implementation for " + serviceClass + " not found");
-      }
-      final T loadedService = iterator.next();
-      if (iterator.hasNext()) {
-        throw new ServiceConfigurationError(
-          "More than one implementation for " + serviceClass + " found: " + loadedService.getClass() + " and " + iterator.next().getClass());
-      }
-      //noinspection unchecked
-      service = (T)myServices.putIfAbsent(serviceClass, loadedService);
-      if (service == null) {
-        service = loadedService;
+      // confine costly service initialization to single thread for defined startup profile
+      synchronized (myServices) {
+        //noinspection unchecked
+        service = (T)myServices.get(serviceClass);
+        if (service == null) {
+          final Iterator<T> iterator = ServiceLoader.load(serviceClass, serviceClass.getClassLoader()).iterator();
+          if (!iterator.hasNext()) {
+            throw new ServiceConfigurationError("Implementation for " + serviceClass + " not found");
+          }
+          final T loadedService = iterator.next();
+          if (iterator.hasNext()) {
+            throw new ServiceConfigurationError("More than one implementation for " + serviceClass + " found: " + loadedService.getClass() +
+              " and " + iterator.next().getClass());
+          }
+          //noinspection unchecked
+          service = (T)myServices.putIfAbsent(serviceClass, loadedService);
+          if (service == null) {
+            service = loadedService;
+          }
+        }
       }
     }
     return service;
@@ -59,10 +64,16 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
-      cached = myExtensions.putIfAbsent(extensionClass, extensions);
-      if (cached == null) {
-        cached = extensions;
+      // confine costly service initialization to single thread for defined startup profile
+      synchronized (myExtensions) {
+        cached = myExtensions.get(extensionClass);
+        if (cached == null) {
+          final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
+          cached = myExtensions.putIfAbsent(extensionClass, extensions);
+          if (cached == null) {
+            cached = extensions;
+          }
+        }
       }
     }
     //noinspection unchecked
@@ -75,7 +86,16 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     if (pluginManager == null) {
       Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
       if (managers.hasNext()) {
-        pluginManager = managers.next();
+        try {
+          pluginManager = managers.next();
+        }
+        catch (ServiceConfigurationError e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)cause;
+          }
+          throw e;
+        }
         if (managers.hasNext()) {
           throw new ServiceConfigurationError("More than one implementation of " + JpsPluginManager.class + " found: " + pluginManager.getClass() + " and " + managers.next().getClass());
         }
@@ -93,7 +113,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     @Override
     public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
       ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
-      return ContainerUtilRt.newArrayList(loader);
+      return ContainerUtil.newArrayList(loader);
     }
   }
 }

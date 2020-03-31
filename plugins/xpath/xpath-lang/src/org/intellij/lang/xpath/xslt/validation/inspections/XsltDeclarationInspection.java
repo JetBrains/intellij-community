@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -24,15 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
-    private NamesValidator myNamesValidator;
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Declaration Problems";
-    }
-
-    @Override
+  @Override
     @NotNull
     public String getShortName() {
         return "XsltDeclarations";
@@ -97,7 +89,7 @@ public class XsltDeclarationInspection extends XsltInspection {
             }
 
             private boolean isLegalName(String value, Project project) {
-                return getNamesValidator().isIdentifier(value, project);
+                return LanguageNamesValidation.isIdentifier(XPathFileType.XPATH.getLanguage(), value, project);
             }
         };
     }
@@ -107,12 +99,5 @@ public class XsltDeclarationInspection extends XsltInspection {
             myXsltElementFactory = XsltElementFactory.getInstance();
         }
         return myXsltElementFactory;
-    }
-
-    public NamesValidator getNamesValidator() {
-        if (myNamesValidator == null) {
-            myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
-        }
-        return myNamesValidator;
     }
 }

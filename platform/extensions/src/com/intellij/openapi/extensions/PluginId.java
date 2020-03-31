@@ -8,9 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Represents an ID of a plugin. A full descriptor of the plugin may be obtained via {@link com.intellij.ide.plugins.PluginManager#getPlugin(PluginId)} method.
+ * Represents an ID of a plugin. A full descriptor of the plugin may be obtained via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
  */
-public class PluginId implements Comparable<PluginId> {
+public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
   private static final Map<String, PluginId> ourRegisteredIds = new THashMap<>();
@@ -21,7 +21,7 @@ public class PluginId implements Comparable<PluginId> {
   }
 
   @Nullable
-  public static synchronized PluginId findId(@NotNull String... idStrings) {
+  public static synchronized PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
       PluginId pluginId = ourRegisteredIds.get(idString);
       if (pluginId != null) {

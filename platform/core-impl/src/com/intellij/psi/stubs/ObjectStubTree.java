@@ -17,7 +17,9 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ public class ObjectStubTree<T extends Stub> {
   private static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
   protected final ObjectStubBase myRoot;
   private String myDebugInfo;
+  private boolean myHasBackReference;
   private final List<T> myPlainList;
 
   public ObjectStubTree(@NotNull final ObjectStubBase root, final boolean withBackReference) {
@@ -59,9 +62,15 @@ public class ObjectStubTree<T extends Stub> {
     return getPlainList();
   }
 
+  @Deprecated
   @NotNull
   public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
-    StubIndexSink sink = new StubIndexSink();
+    return indexStubTree(key -> TObjectHashingStrategy.CANONICAL);
+  }
+
+  @NotNull
+  public Map<StubIndexKey, Map<Object, int[]>> indexStubTree(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> keyHashingStrategyFunction) {
+    StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
     final List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
       final Stub stub = plainList.get(i);
@@ -92,11 +101,11 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   public void setDebugInfo(@NotNull String info) {
-    ObjectStubTree ref = getStubTree(myRoot);
+    ObjectStubTree<?> ref = getStubTree(myRoot);
     if (ref != null) {
       assert ref == this;
-      info += "; with backReference";
     }
+    myHasBackReference = ref != null;
     myDebugInfo = info;
   }
 
@@ -106,24 +115,29 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   public String getDebugInfo() {
-    return myDebugInfo;
+    return myHasBackReference ? myDebugInfo + "; with backReference" : myDebugInfo;
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{myDebugInfo='" + myDebugInfo + '\'' + ", myRoot=" + myRoot + '}' + hashCode();
+    return getClass().getSimpleName() + "{myDebugInfo='" + getDebugInfo() + '\'' + ", myRoot=" + myRoot + '}' + hashCode();
   }
 
   private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {
     private final THashMap<StubIndexKey, Map<Object, int[]>> myResult = new THashMap<>();
+    private final Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> myHashingStrategyFunction;
     private int myStubIdx;
     private Map<Object, int[]> myProcessingMap;
+
+    private StubIndexSink(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> hashingStrategyFunction) {
+      myHashingStrategyFunction = hashingStrategyFunction;
+    }
 
     @Override
     public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = new THashMap<>();
+        map = new THashMap<>((TObjectHashingStrategy<Object>)myHashingStrategyFunction.fun(indexKey));
         myResult.put(indexKey, map);
       }
 

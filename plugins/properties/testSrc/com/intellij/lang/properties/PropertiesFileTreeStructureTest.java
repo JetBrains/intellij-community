@@ -5,11 +5,11 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import javax.swing.*;
 
-public class PropertiesFileTreeStructureTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PropertiesFileTreeStructureTest extends BasePlatformTestCase {
   public void testGrouping() {
     doTest("a.b.c=dddd\n" +
            "a.b.d=dddd\n" +

@@ -3,7 +3,6 @@ package com.siyeh.igtest.threading.field_accessed_synchronized_and_unsynchronize
 public class FieldAccessedSynchronizedAndUnsynchronized
 {
     private final Object m_lock = new Object();          
-    private Object <warning descr="Field 'm_contents' is accessed in both synchronized and unsynchronized contexts">m_contents</warning> = new Object();
     private Object <warning descr="Field 'a' is accessed in both synchronized and unsynchronized contexts">a</warning>;
     private Object b;
 
@@ -11,21 +10,9 @@ public class FieldAccessedSynchronizedAndUnsynchronized
     {
         synchronized(m_lock)
         {
-            m_contents = new Object();
             a = new Object();
             b = new Object();
         }
-        getContents();
-    }
-
-    private Object getContents()
-    {
-        getContents2();
-        return m_contents;
-    }
-
-    private void getContents2() {
-        getContents();
     }
 
     public synchronized void g() {

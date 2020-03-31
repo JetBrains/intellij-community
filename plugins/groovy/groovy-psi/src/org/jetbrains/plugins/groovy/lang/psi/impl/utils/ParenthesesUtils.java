@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -142,8 +143,13 @@ public class ParenthesesUtils {
 
   @NotNull
   public static GrExpression parenthesize(@NotNull GrExpression expression) {
+    return parenthesize(expression, null);
+  }
+
+  @NotNull
+  public static GrExpression parenthesize(@NotNull GrExpression expression, @Nullable PsiElement context) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    return factory.createParenthesizedExpr(expression);
+    return factory.createParenthesizedExpr(expression, context);
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
  * <p> If the problem is caused by a class, use {@link #createByClass} to create
  * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
  * to get the plugin ID.
+ *
+ * <p> In order to report problems from code in 'intellij.platform.extensions' module where this class is not accessible, use
+ * {@link com.intellij.openapi.extensions.ExtensionInstantiationException} or {@link com.intellij.openapi.extensions.ExtensionException} instead.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
@@ -54,7 +43,7 @@ public class PluginException extends RuntimeException {
   }
 
   @Override
-  @NotNull 
+  @NotNull
   public String getMessage() {
     String message = super.getMessage();
     return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
@@ -65,7 +54,7 @@ public class PluginException extends RuntimeException {
    * @param pluginClass a problematic class which caused the error
    */
   @NotNull
-  public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+  public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
   }
 
@@ -74,7 +63,7 @@ public class PluginException extends RuntimeException {
    * @param pluginClass a problematic class which caused the error
    */
   @NotNull
-  public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class pluginClass) {
+  public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class<?> pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtil.notNullize(cause.getMessage()), cause, pluginClass);
   }
 
@@ -82,7 +71,7 @@ public class PluginException extends RuntimeException {
    * Log an error caused by a problem in a plugin's code.
    * @param pluginClass a problematic class which caused the error
    */
-  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     logger.error(createByClass(errorMessage, cause, pluginClass));
   }
 }

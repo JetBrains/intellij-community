@@ -2,17 +2,15 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnqualifiedStaticUsageInspectionTest extends LightInspectionTestCase {
+public class UnqualifiedStaticUsageInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnqualifiedStaticUsage() {
     doTest();
@@ -27,6 +25,6 @@ public class UnqualifiedStaticUsageInspectionTest extends LightInspectionTestCas
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 }

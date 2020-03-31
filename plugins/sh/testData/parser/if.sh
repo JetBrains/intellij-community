@@ -92,3 +92,7 @@ array=(*.sh)
 a=array[1]
 
 echo "${a}"
+
+if test "x$auth_opt" != "x" ; then
+	echo $auth_opt >> $OBJ/sshd_proxy
+fi

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -31,19 +31,9 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = PsiImplementationViewSession.getEditor(dataContext);
 
-    PsiElement element = PsiImplementationViewSession.getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
-
-    if (element == null && file == null) return;
-    PsiFile containingFile = element != null ? element.getContainingFile() : file;
-    if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return;
-
-
-    if (editor != null) {
-      PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
-      if (element == null && ref != null) {
-        element = TargetElementUtil.getInstance().adjustReference(ref);
-      }
-    }
+    Pair<PsiElement, PsiReference> pair = PsiImplementationViewSession.getElementAndReference(dataContext, project, file, editor);
+    PsiElement element = pair != null ? pair.first : null;
+    if (element == null) return;
 
     final PsiElement[] superElements =findSuperElements(element);
     if (superElements.length == 0) return;
@@ -87,8 +77,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     return false;
   }
 
-  @NotNull
-  private static PsiElement[] findSuperElements(final PsiElement element) {
+  private static PsiElement @NotNull [] findSuperElements(final PsiElement element) {
     PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (parent == null) {
       return PsiElement.EMPTY_ARRAY;

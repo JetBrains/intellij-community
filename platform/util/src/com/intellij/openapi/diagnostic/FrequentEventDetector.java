@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FrequentEventDetector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diagnostic.FrequentEventDetector");
+  private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 
   public enum Level {INFO, WARN, ERROR}
 
@@ -41,7 +41,7 @@ public class FrequentEventDetector {
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
-  private static boolean enabled = true;
+  private static final AtomicInteger disableRequests = new AtomicInteger();
 
   public FrequentEventDetector(int eventCountThreshold, int timeSpanMs) {
     this(eventCountThreshold, timeSpanMs, Level.INFO);
@@ -58,38 +58,43 @@ public class FrequentEventDetector {
    */
   @Nullable
   public String getMessageOnEvent(@NotNull Object event) {
-    if (!enabled) return null;
-    if (myEventsPosted.incrementAndGet() > myEventCountThreshold) {
-      boolean shouldLog = false;
-
-      synchronized (myEventsPosted) {
-        if (myEventsPosted.get() > myEventCountThreshold) {
-          long timeNow = System.currentTimeMillis();
-          shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
-          myEventsPosted.set(0);
-          myStartedCounting = timeNow;
-        }
-      }
-
-      if (shouldLog) {
-        String trace = ExceptionUtil.getThrowableText(new Throwable());
-        boolean logTrace;
-        int traceId;
-        synchronized (myEventsPosted) {
-          Integer existingTraceId = myRecentTraces.get(trace);
-          logTrace = existingTraceId == null;
-          if (logTrace) {
-            myRecentTraces.put(trace, traceId = myLastTraceId.incrementAndGet());
-          }
-          else {
-            traceId = existingTraceId;
-          }
-        }
-
-        return "Too many events posted, #" + traceId + ". Event: " + event + (logTrace ? "\n" + trace : "");
-      }
+    if (disableRequests.get() == 0 && myEventsPosted.incrementAndGet() > myEventCountThreshold && manyEventsHappenedInSmallTimeSpan()) {
+      return generateMessage(event);
     }
     return null;
+  }
+
+  private boolean manyEventsHappenedInSmallTimeSpan() {
+    boolean shouldLog = false;
+
+    synchronized (myEventsPosted) {
+      if (myEventsPosted.get() > myEventCountThreshold) {
+        long timeNow = System.currentTimeMillis();
+        shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
+        myEventsPosted.set(0);
+        myStartedCounting = timeNow;
+      }
+    }
+    return shouldLog;
+  }
+
+  @NotNull
+  private String generateMessage(@NotNull Object event) {
+    String trace = ExceptionUtil.getThrowableText(new Throwable());
+    boolean logTrace;
+    int traceId;
+    synchronized (myEventsPosted) {
+      Integer existingTraceId = myRecentTraces.get(trace);
+      logTrace = existingTraceId == null;
+      if (logTrace) {
+        myRecentTraces.put(trace, traceId = myLastTraceId.incrementAndGet());
+      }
+      else {
+        traceId = existingTraceId;
+      }
+    }
+
+    return "Too many events posted, #" + traceId + ". Event: " + event + (logTrace ? "\n" + trace : "");
   }
 
   public void logMessage(@NotNull String message) {
@@ -116,12 +121,7 @@ public class FrequentEventDetector {
 
   @TestOnly
   public static void disableUntil(@NotNull Disposable reenable) {
-    enabled = false;
-    Disposer.register(reenable, new Disposable() {
-      @Override
-      public void dispose() {
-        enabled = true;
-      }
-    });
+    disableRequests.incrementAndGet();
+    Disposer.register(reenable, () -> disableRequests.decrementAndGet());
   }
 }

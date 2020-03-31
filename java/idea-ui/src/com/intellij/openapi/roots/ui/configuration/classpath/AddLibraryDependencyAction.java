@@ -16,17 +16,18 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.roots.LibraryDependencyScopeSuggester;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
@@ -35,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
@@ -103,8 +101,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
         String name = item.getName();
         if (name != null && name.equals(libraryOrderEntry.getLibraryName())) {
           if (orderEntry.isValid()) {
-            Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added", item.getName()),
-                                     ProjectBundle.message("classpath.title.adding.dependency"));
+            Messages.showErrorDialog(JavaUiBundle.message("classpath.message.library.already.added", item.getName()),
+                                     JavaUiBundle.message("classpath.title.adding.dependency"));
             return null;
           }
           else {

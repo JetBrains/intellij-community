@@ -18,9 +18,12 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -30,14 +33,12 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class GuessManagerImpl extends GuessManager {
     initMethodPatterns();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
@@ -83,9 +84,8 @@ public class GuessManagerImpl extends GuessManager {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
+  public PsiType @NotNull [] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
     HashSet<PsiType> typesSet = new HashSet<>();
 
     PsiType type = containerExpr.getType();
@@ -122,9 +122,8 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType[] guessTypeToCast(PsiExpression expr) {
+  public PsiType @NotNull [] guessTypeToCast(PsiExpression expr) {
     LinkedHashSet<PsiType> types = new LinkedHashSet<>(getControlFlowExpressionTypeConjuncts(expr));
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
@@ -151,7 +150,7 @@ public class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = new DataFlowRunner() {
+    DataFlowRunner runner = new DataFlowRunner(scope.getProject()) {
       @NotNull
       @Override
       protected DfaMemoryState createMemoryState() {
@@ -159,7 +158,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = type == null ? null : runner.getFactory().createDfaType(type).asConstraint();
+    TypeConstraint initial = type == null ? null : TypeConstraints.instanceOf(type);
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
@@ -346,7 +345,7 @@ public class GuessManagerImpl extends GuessManager {
       GuessTypeVisitor visitor = tryGuessingTypeWithoutDfa(place, honorAssignments);
       if (!visitor.isDfaNeeded()) {
         result = visitor.mySpecificType == null ?
-                 Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
+                 Collections.emptyList() : Collections.singletonList(DfaPsiUtil.tryGenerify(expr, visitor.mySpecificType));
       }
     }
     if (result == null) {
@@ -357,7 +356,7 @@ public class GuessManagerImpl extends GuessManager {
       PsiClass typeClass = PsiUtil.resolveClassInType(t);
       return typeClass == null || PsiUtil.isAccessible(typeClass, expr, null);
     });
-    if (result.equals(Collections.singletonList(expr.getType()))) {
+    if (result.equals(Collections.singletonList(TypeConversionUtil.erasure(expr.getType())))) {
       return Collections.emptyList();
     }
     return result;
@@ -388,27 +387,14 @@ public class GuessManagerImpl extends GuessManager {
   private static List<PsiType> flattenConjuncts(@NotNull PsiExpression expr, Collection<PsiType> conjuncts) {
     if (!conjuncts.isEmpty()) {
       Set<PsiType> flatTypes = PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>());
-      return ContainerUtil.mapNotNull(flatTypes, type -> tryGenerify(expr, type));
+      return ContainerUtil.mapNotNull(flatTypes, type -> DfaPsiUtil.tryGenerify(expr, type));
     }
     return Collections.emptyList();
   }
 
-  private static PsiType tryGenerify(PsiExpression expression, PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return type;
-    }
-    PsiClassType classType = (PsiClassType)type;
-    if (!classType.isRaw()) {
-      return classType;
-    }
-    PsiClass psiClass = classType.resolve();
-    if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
-  }
-
   private static class GuessTypeVisitor extends JavaElementVisitor {
+    private static final CallMatcher OBJECT_GET_CLASS =
+      CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
     private final @NotNull PsiExpression myPlace;
     PsiType mySpecificType;
     private boolean myNeedDfa;
@@ -463,6 +449,17 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (OBJECT_GET_CLASS.test(call)) {
+        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+        if (qualifier != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
+          myNeedDfa = true;
+        }
+      }
+      super.visitMethodCallExpression(call);
+    }
+
+    @Override
     public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
       if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
@@ -495,7 +492,7 @@ public class GuessManagerImpl extends GuessManager {
 
     MultiMap<PsiExpression, PsiType> getResult() {
       if (myConstraint != null && myForPlace instanceof PsiExpression) {
-        PsiType type = myConstraint.getPsiType();
+        PsiType type = myConstraint.getPsiType(myForPlace.getProject());
         if (type instanceof PsiIntersectionType) {
           myResult.putValues((PsiExpression)myForPlace, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
         }
@@ -522,8 +519,8 @@ public class GuessManagerImpl extends GuessManager {
       }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
-      DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation, false));
+      DfaCondition relation = operand.cond(RelationType.IS, type);
+      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation));
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 
@@ -559,11 +556,14 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                           DataFlowRunner runner,
+                                           DfaMemoryState memState,
+                                           DfaValue value) {
       if (myForPlace == instruction.getExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
+      DfaInstructionState[] states = super.visitPush(instruction, runner, memState, value);
       if (myForPlace == instruction.getExpression()) {
         addConstraints(states);
       }
@@ -573,17 +573,11 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.empty()) return;
-        TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
-        if (constraint == null) {
-          constraint = myInitial;
-        }
+        if (myConstraint == TypeConstraints.TOP) return;
+        DfType type = memoryState.getDfType(memoryState.peek());
+        TypeConstraint constraint = type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : myInitial;
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
-          if (myConstraint == null) {
-            myConstraint = TypeConstraint.empty();
-            return;
-          }
+          myConstraint = myConstraint == null ? constraint : myConstraint.join(constraint);
         }
       }
     }

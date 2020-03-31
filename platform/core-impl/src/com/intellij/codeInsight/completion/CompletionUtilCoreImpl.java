@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -28,6 +26,10 @@ public class CompletionUtilCoreImpl {
     if (containingFile == null || psi instanceof LightElement) return psi;
 
     PsiFile originalFile = containingFile.getOriginalFile();
+    if (psi == containingFile && psi.getClass().isInstance(originalFile)) {
+      //noinspection unchecked
+      return (T)originalFile;
+    }
     TextRange range;
     if (originalFile != containingFile && !(originalFile instanceof PsiCompiledFile) && (range = psi.getTextRange()) != null) {
       Integer start = range.getStartOffset();
@@ -62,5 +64,11 @@ public class CompletionUtilCoreImpl {
     }
 
     return psi;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
+    final T element = getOriginalElement(psi);
+    return element == null ? psi : element;
   }
 }

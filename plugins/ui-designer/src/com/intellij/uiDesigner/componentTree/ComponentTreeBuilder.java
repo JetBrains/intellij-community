@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -29,7 +29,7 @@ import java.util.Set;
  * @author Vladimir Kondratyev
  */
 public final class ComponentTreeBuilder extends AbstractTreeBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.componentTree.ComponentTreeBuilder");
+  private static final Logger LOG = Logger.getInstance(ComponentTreeBuilder.class);
 
   private final GuiEditor myEditor;
   private final MySelectionWatcher mySelectionWatcher;
@@ -133,7 +133,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   /**
    * Compares RadComponent based on their natural order in the container.
    */
-  private static final class MyComparator implements Comparator<NodeDescriptor>{
+  private static final class MyComparator implements Comparator<NodeDescriptor<?>>{
     public static final MyComparator ourComparator=new MyComparator();
 
     private static int indexOf(final RadContainer container, final RadComponent component){

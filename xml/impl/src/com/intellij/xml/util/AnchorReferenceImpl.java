@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -16,7 +16,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
@@ -157,7 +157,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    return ElementManipulators.getManipulator(myElement).handleContentChange(
+    return ElementManipulators.handleContentChange(
       myElement,
       getRangeInElement(),
       newElementName
@@ -176,12 +176,11 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final Map<String, XmlTag> idMap = getIdMap();
-    if (idMap == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (idMap == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-    String[] variants = ArrayUtil.toStringArray(idMap.keySet());
+    String[] variants = ArrayUtilRt.toStringArray(idMap.keySet());
     LookupElement[] elements = new LookupElement[variants.length];
     for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
       elements[i] = LookupElementBuilder.create(variants[i]).withCaseSensitivity(true);
@@ -215,7 +214,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   @NotNull
   public String getUnresolvedMessagePattern() {
     final XmlFile xmlFile = getFile();
-    return xmlFile == null ? 
+    return xmlFile == null ?
            XmlBundle.message("cannot.resolve.anchor", myAnchor) :
            XmlBundle.message("cannot.resolve.anchor.in.file", myAnchor, xmlFile.getName());
   }

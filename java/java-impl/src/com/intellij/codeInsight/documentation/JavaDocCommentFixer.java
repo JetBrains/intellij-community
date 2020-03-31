@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -19,7 +19,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    *   }
    * </pre>
    */
-  private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
+  private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtil.newHashSet(PARAM_TAG, "@throws", "@return");
 
   private static final Comparator<PsiElement> COMPARATOR =
     (e1, e2) -> e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
@@ -165,7 +165,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       return;
     }
     if (toRemove.size() > 1) {
-      Collections.sort(toRemove, COMPARATOR);
+      toRemove.sort(COMPARATOR);
     }
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);

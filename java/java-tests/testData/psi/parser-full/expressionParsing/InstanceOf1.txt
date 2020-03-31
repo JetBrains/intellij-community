@@ -24,7 +24,7 @@ PsiJavaFile:InstanceOf1.java
         PsiReturnStatement
           PsiKeyword:return('return')
           PsiWhiteSpace(' ')
-          PsiInstanceofExpression:a instanceof
+          PsiInstanceofExpression
             PsiReferenceExpression:a
               PsiReferenceParameterList
                 <empty list>

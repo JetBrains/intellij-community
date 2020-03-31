@@ -11,7 +11,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -137,6 +136,13 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
 
+    if (myTailText != null) {
+      if (myTailText.startsWith(EQ)) {
+        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
+      } else {
+        presentation.setTailText(myTailText, true);
+      }
+    }
     if (myHelper != null) {
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
@@ -144,13 +150,6 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
     } else {
       presentation.setTypeText(getType().getPresentableText());
-    }
-    if (myTailText != null && StringUtil.isEmpty(presentation.getTailText())) {
-      if (myTailText.startsWith(EQ)) {
-        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
-      } else {
-        presentation.setTailText(myTailText, true);
-      }
     }
   }
 
@@ -166,8 +165,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       if (willBeImported()) {
         RangeMarker toDelete = JavaCompletionUtil.insertTemporary(context.getTailOffset(), document, " ");
         context.commitDocument();
-        final PsiReferenceExpression
-          ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
+        PsiReferenceExpression ref = findReference(context, context.getStartOffset());
         if (ref != null) {
           if (ref.isQualified()) {
             return; // shouldn't happen, but sometimes we see exceptions because of this
@@ -185,12 +183,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       }
     }
 
-    PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    PsiReferenceExpression ref = findReference(context, context.getTailOffset() - 1);
     if (ref != null) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(ref);
     }
 
-    ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    ref = findReference(context, context.getTailOffset() - 1);
     PsiElement target = ref == null ? null : ref.resolve();
     if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
       makeFinalIfNeeded(context, (PsiVariable)target);
@@ -199,11 +197,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     final char completionChar = context.getCompletionChar();
     if (completionChar == '=') {
       context.setAddCompletionChar(false);
-      TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
+      EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
       context.setAddCompletionChar(false);
-      TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
+      CommaTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
     else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
@@ -220,6 +218,23 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+    else if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+      removeEmptyCallParentheses(context);
+    }
+  }
+
+  private static void removeEmptyCallParentheses(@NotNull InsertionContext context) {
+    PsiReferenceExpression ref = findReference(context, context.getTailOffset() - 1);
+    if (ref != null && ref.getParent() instanceof PsiMethodCallExpression) {
+      PsiExpressionList argList = ((PsiMethodCallExpression)ref.getParent()).getArgumentList();
+      if (argList.getExpressionCount() == 0) {
+        context.getDocument().deleteString(argList.getTextRange().getStartOffset(), argList.getTextRange().getEndOffset());
+      }
+    }
+  }
+
+  private static PsiReferenceExpression findReference(@NotNull InsertionContext context, int offset) {
+    return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiReferenceExpression.class, false);
   }
 
   private static boolean isTernaryCondition(PsiReferenceExpression ref) {

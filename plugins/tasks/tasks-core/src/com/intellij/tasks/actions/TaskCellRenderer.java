@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.actions;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +15,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import icons.TasksIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +42,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
       final boolean isLocalTask = taskManager.findTask(task.getId()) != null;
       final boolean isClosed = task.isClosed() || (task instanceof LocalTask && taskManager.isLocallyClosed((LocalTask)task));
 
-      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : UIUtil.getDecoratedRowColor();
+      final Color bg = sel ? UIUtil.getListSelectionBackground(true) : isLocalTask ? UIUtil.getListBackground() : UIUtil.getDecoratedRowColor();
       panel.setBackground(bg);
       SimpleTextAttributes attr = getAttributes(sel, isClosed);
 
@@ -58,7 +58,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
     }
     else if (GotoTaskAction.CREATE_NEW_TASK_ACTION == value) {
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      c.setIcon(LayeredIcon.create(TasksIcons.Unknown, AllIcons.Actions.New));
+      c.setIcon(LayeredIcon.create(AllIcons.FileTypes.Unknown, AllIcons.Actions.New));
       c.append(GotoTaskAction.CREATE_NEW_TASK_ACTION.getActionText());
       panel.add(c, BorderLayout.CENTER);
     }

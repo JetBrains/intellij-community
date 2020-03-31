@@ -17,9 +17,13 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +38,11 @@ import java.util.Map;
  * @version 1.0
  */
 public interface Filter {
-
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
     private NextAction myNextAction = NextAction.EXIT;
-    private final List<ResultItem> myResultItems;
+    private final List<? extends ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
@@ -70,18 +73,18 @@ public interface Filter {
       myResultItems = null;
     }
 
-    public Result(@NotNull List<ResultItem> resultItems) {
-      super(-1, -1, null, null, null);
+    public Result(@NotNull List<? extends ResultItem> resultItems) {
+      super(0, 0, null, null, null);
       myResultItems = resultItems;
     }
 
     @NotNull
     public List<ResultItem> getResultItems() {
-      List<ResultItem> resultItems = myResultItems;
+      List<? extends ResultItem> resultItems = myResultItems;
       if (resultItems == null) {
         resultItems = Collections.singletonList(this);
       }
-      return resultItems;
+      return Collections.unmodifiableList(resultItems);
     }
 
     /**
@@ -162,23 +165,15 @@ public interface Filter {
       }
     }
 
+    private final int highlightStartOffset;
+    private final int highlightEndOffset;
     /**
-     * @deprecated use getter, the visibility of this field will be decreased.
-     */
-    @Deprecated
-    public final int highlightStartOffset;
-    /**
-     * @deprecated use getter, the visibility of this field will be decreased.
-     */
-    @Deprecated
-    public final int highlightEndOffset;
-    /**
-     * @deprecated use getter, the visibility of this field will be decreased.
+     * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
      */
     @Deprecated @Nullable
     public final TextAttributes highlightAttributes;
     /**
-     * @deprecated use getter, the visibility of this field will be decreased.
+     * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
      */
     @Deprecated @Nullable
     public final HyperlinkInfo hyperlinkInfo;
@@ -205,7 +200,6 @@ public interface Filter {
            grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES) : null);
     }
 
-    @SuppressWarnings("deprecation")
     public ResultItem(final int highlightStartOffset,
                       final int highlightEndOffset,
                       @Nullable final HyperlinkInfo hyperlinkInfo,
@@ -213,6 +207,7 @@ public interface Filter {
                       @Nullable final TextAttributes followedHyperlinkAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
+      TextRange.assertProperRange(highlightStartOffset, highlightEndOffset, "");
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
@@ -271,7 +266,7 @@ public interface Filter {
    * @param line         The line to be filtered. Note that the line must contain a line
    *                     separator at the end.
    * @param entireLength The length of the entire text including the line passed for filtration.
-   * @return <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}
+   * @return {@code null} if there was no match. Otherwise, an instance of {@link Result}
    */
   @Nullable
   Result applyFilter(@NotNull String line, int entireLength);

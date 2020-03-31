@@ -16,8 +16,8 @@
 
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -54,12 +54,12 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
 
   @Override
   public String getRootNodeNameInUsageView() {
-    return AnalysisScopeBundle.message("backward.dependencies.usage.view.root.node.text");
+    return AnalysisBundle.message("backward.dependencies.usage.view.root.node.text");
   }
 
   @Override
   public String getInitialUsagesPosition() {
-    return AnalysisScopeBundle.message("backward.dependencies.usage.view.initial.text");
+    return AnalysisBundle.message("backward.dependencies.usage.view.initial.text");
   }
 
   @Override
@@ -93,7 +93,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
           if (indicator.isCanceled()) {
             throw new ProcessCanceledException();
           }
-          indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
+          indicator.setText(AnalysisBundle.message("package.dependencies.progress.text"));
           indicator.setText2(getRelativeToProjectPath(virtualFile));
           if (fileCount > 0) {
             indicator.setFraction(((double)++myFileCount) / myTotalFileCount);

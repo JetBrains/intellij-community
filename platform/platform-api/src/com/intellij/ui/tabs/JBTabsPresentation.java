@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +27,6 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
-  JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected);
-
-  JBTabsPresentation setStealthTabMode(boolean stealthTabMode);
-
   JBTabsPresentation setSideComponentVertical(boolean vertical);
 
   JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
@@ -48,7 +45,13 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setInnerInsets(Insets innerInsets);
 
-  JBTabsPresentation setGhostsAlwaysVisible(boolean visible);
+  /**
+   * @deprecated This logic is no longer supported, please remove calls of this method
+   */
+  @Deprecated
+  default JBTabsPresentation setGhostsAlwaysVisible(boolean visible) {
+    return this;
+  }
 
   JBTabsPresentation setFocusCycle(final boolean root);
 
@@ -80,5 +83,5 @@ public interface JBTabsPresentation {
 
   void setFirstTabOffset(int offset);
 
-  JBTabsPresentation setEmptyText(@Nullable String text);
+  JBTabsPresentation setEmptyText(@Nullable @NlsContexts.StatusText String text);
 }

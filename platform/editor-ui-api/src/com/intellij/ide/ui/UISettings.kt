@@ -1,22 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PropertyName")
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.NonInjectable
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Graphics
@@ -29,7 +28,9 @@ import kotlin.math.roundToInt
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRoamableUiSettings = NotRoamableUiSettings()) : PersistentStateComponent<UISettingsState> {
+class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+  constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
+
   private var state = UISettingsState()
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
@@ -52,15 +53,13 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.allowMergeButtons = value
     }
 
-  val alwaysShowWindowsButton: Boolean
-    get() = state.alwaysShowWindowsButton
-
   var animateWindows: Boolean
     get() = state.animateWindows
     set(value) {
       state.animateWindows = value
     }
 
+  @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
     set(value) {
@@ -71,6 +70,12 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     get() = state.colorBlindness
     set(value) {
       state.colorBlindness = value
+    }
+
+  var useContrastScrollbars: Boolean
+    get() = state.useContrastScrollBars
+    set(value) {
+      state.useContrastScrollBars = value
     }
 
   var hideToolStripes: Boolean
@@ -115,8 +120,20 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.useSmallLabelsOnTabs = value
     }
 
-  val smoothScrolling: Boolean
+  var smoothScrolling: Boolean
     get() = state.smoothScrolling
+    set(value) {
+      state.smoothScrolling = value
+    }
+
+  val animatedScrolling: Boolean
+    get() = state.animatedScrolling
+
+  val animatedScrollingDuration: Int
+    get() = state.animatedScrollingDuration
+
+  val animatedScrollingCurvePoints: Int
+    get() = state.animatedScrollingCurvePoints
 
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
@@ -131,6 +148,12 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     get() = state.navigateToPreview
     set(value) {
       state.navigateToPreview = value
+    }
+
+  var selectedTabsLayoutInfoId: String?
+    get() = state.selectedTabsLayoutInfoId
+    set(value) {
+      state.selectedTabsLayoutInfoId = value
     }
 
   val scrollTabLayoutInEditor: Boolean
@@ -154,16 +177,40 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.showNavigationBar = value
     }
 
+  var showMembersInNavigationBar: Boolean
+    get() = state.showMembersInNavigationBar
+    set(value) {
+      state.showMembersInNavigationBar = value
+    }
+
   var showStatusBar: Boolean
     get() = state.showStatusBar
     set(value) {
       state.showStatusBar = value
     }
 
+  var showMainMenu: Boolean
+    get() = state.showMainMenu
+    set(value) {
+      state.showMainMenu = value
+    }
+
   var showIconInQuickNavigation: Boolean
     get() = state.showIconInQuickNavigation
     set(value) {
       state.showIconInQuickNavigation = value
+    }
+
+  var showTreeIndentGuides: Boolean
+    get() = state.showTreeIndentGuides
+    set(value) {
+      state.showTreeIndentGuides = value
+    }
+
+  var compactTreeIndents: Boolean
+    get() = state.compactTreeIndents
+    set(value) {
+      state.compactTreeIndents = value
     }
 
   var moveMouseOnDefaultButton: Boolean
@@ -190,9 +237,13 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.sortLookupElementsLexicographically = value
     }
 
-  val hideTabsIfNeed: Boolean
-    get() = state.hideTabsIfNeed
-
+  val hideTabsIfNeeded: Boolean
+    get() = state.hideTabsIfNeeded
+  var showFileIconInTabs: Boolean
+    get() = state.showFileIconInTabs
+    set(value) {
+      state.showFileIconInTabs = value
+    }
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs
     set(value) {
@@ -232,8 +283,11 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.presentationMode = value
     }
 
-  val presentationModeFontSize: Int
+  var presentationModeFontSize: Int
     get() = state.presentationModeFontSize
+    set(value) {
+      state.presentationModeFontSize = value
+    }
 
   var editorTabPlacement: Int
     get() = state.editorTabPlacement
@@ -247,11 +301,17 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.editorTabLimit = value
     }
 
-  val recentFilesLimit: Int
+  var recentFilesLimit: Int
     get() = state.recentFilesLimit
+    set(value) {
+      state.recentFilesLimit = value
+    }
 
-  val recentLocationsLimit: Int
+  var recentLocationsLimit: Int
     get() = state.recentLocationsLimit
+    set(value) {
+      state.recentLocationsLimit = value
+    }
 
   var maxLookupWidth: Int
     get() = state.maxLookupWidth
@@ -344,12 +404,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.sortTabsAlphabetically = value
     }
 
-  var openTabsAtTheEnd: Boolean
-    get() = state.openTabsAtTheEnd
-    set(value) {
-      state.openTabsAtTheEnd = value
-    }
-
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -359,13 +413,22 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
+  var enableAlphaMode: Boolean
+    get() = state.enableAlphaMode
+    set(value) {
+      state.enableAlphaMode = value
+    }
+
+  var fullPathsInWindowHeader: Boolean
+    get() = state.fullPathsInWindowHeader
+    set(value) {
+      state.fullPathsInWindowHeader = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical")) {
+    if (SystemProperties.`is`("tabs.alphabetical")) {
       sortTabsAlphabetically = true
-    }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
-      openTabsAtTheEnd = true
     }
   }
 
@@ -376,7 +439,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
 
     @JvmStatic
     private fun verbose(msg: String, vararg args: Any) {
-      if (UIUtil.SCALE_VERBOSE) {
+      if (JBUIScale.SCALE_VERBOSE) {
         LOG.info(String.format(msg, *args))
       }
     }
@@ -388,23 +451,26 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
 
     @Suppress("ObjectPropertyName")
     @Volatile
-    private var _instance: UISettings? = null
+    private var cachedInstance: UISettings? = null
 
     @JvmStatic
     val instance: UISettings
-      get() = instanceOrNull!!
+      get() {
+        var result = cachedInstance
+        if (result == null) {
+          LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
+          result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+          cachedInstance = result
+        }
+        return result
+      }
 
     @JvmStatic
     val instanceOrNull: UISettings?
       get() {
-        var result = _instance
-        if (result == null) {
-          if (ApplicationManager.getApplication() == null) {
-            return null
-          }
-
-          result = ServiceManager.getService(UISettings::class.java)
-          _instance = result
+        val result = cachedInstance
+        if (result == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+          return instance
         }
         return result
       }
@@ -415,18 +481,10 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     val shadowInstance: UISettings
-      get() {
-        val uiSettings = if (ApplicationManager.getApplication() == null) null else instanceOrNull
-        return when {
-          uiSettings != null -> uiSettings
-          else -> {
-            return UISettings()
-          }
-        }
-      }
+      get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
@@ -442,26 +500,18 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     fun setupAntialiasing(g: Graphics) {
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+      g as Graphics2D
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        // We cannot use services while Application has not been loaded yet
-        // So let's apply the default hints.
-        UIUtil.applyRenderingHints(g)
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred && ApplicationManager.getApplication() == null) {
+        // cannot use services while Application has not been loaded yet, so let's apply the default hints
+        GraphicsUtil.applyRenderingHints(g)
         return
       }
 
-      val uiSettings = ServiceManager.getService(UISettings::class.java)
-      if (uiSettings != null) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
-      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-      setupFractionalMetrics(g2d)
+      setupFractionalMetrics(g)
     }
 
     /**
@@ -488,7 +538,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+      get() = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else JBUIScale.sysScale()
 
     /**
      * Returns the default font size scaled by #defFontScale
@@ -505,22 +555,10 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       if (readScale == null || readScale <= 0) {
         verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
+        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
       }
-      else {
-        var oldDefFontScale = defFontScale
-        if (SystemInfo.isLinux) {
-          val fdata = UIUtil.getSystemFontData()
-          if (fdata != null) {
-            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-            // not converting fonts stored with scale equal to the old calculation
-            oldDefFontScale = fdata.second / 12f
-            verbose("oldDefFontScale=%.2f", oldDefFontScale)
-          }
-        }
-        if (readScale != defFontScale && readScale != oldDefFontScale) {
-          size = ((readSize / readScale) * defFontScale).roundToInt()
-        }
+      else if (readScale != defFontScale) {
+        size = ((readSize / readScale) * defFontScale).roundToInt()
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
@@ -545,7 +583,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
-    if (this === _instance) {
+    if (this === cachedInstance) {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
@@ -635,85 +673,85 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
   @JvmField
   @Transient
   var FONT_FACE: String? = null
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
   @JvmField
   @Transient
   var FONT_SIZE: Int? = 0
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
   @JvmField
   @Transient
   var HIDE_TOOL_STRIPES = true
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
   @JvmField
   @Transient
   var CONSOLE_COMMAND_HISTORY_LIMIT = 300
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
   @JvmField
   @Transient
   var CYCLE_SCROLLING = true
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
   @JvmField
   @Transient
   var SHOW_MAIN_TOOLBAR = false
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
   @JvmField
   @Transient
   var SHOW_CLOSE_BUTTON = true
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
   @JvmField
   @Transient
   var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
   @JvmField
   @Transient
   var PRESENTATION_MODE = false
 
-  @Suppress("unused", "SpellCheckingInspection")
+  @Suppress("unused", "PropertyName", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient
   var OVERRIDE_NONIDEA_LAF_FONTS = false
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
   @JvmField
   @Transient
   var PRESENTATION_MODE_FONT_SIZE = 24
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
   @JvmField
   @Transient
   var EDITOR_TAB_LIMIT = editorTabLimit
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use overrideConsoleCycleBufferSize", replaceWith = ReplaceWith("overrideConsoleCycleBufferSize"))
   @JvmField
   @Transient
   var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
 
-  @Suppress("unused")
+  @Suppress("unused", "PropertyName")
   @Deprecated("Use consoleCycleBufferSizeKb", replaceWith = ReplaceWith("consoleCycleBufferSizeKb"))
   @JvmField
   @Transient

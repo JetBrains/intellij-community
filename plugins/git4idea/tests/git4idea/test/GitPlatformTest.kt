@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -9,13 +10,15 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
-import com.intellij.vcs.test.overrideService
 import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -24,6 +27,7 @@ import git4idea.commands.GitHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -38,6 +42,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var appSettings: GitVcsApplicationSettings
   protected lateinit var git: TestGitImpl
   protected lateinit var vcs: GitVcs
+  protected lateinit var commitContext: CommitContext
   protected lateinit var dialogManager: TestDialogManager
   protected lateinit var vcsHelper: MockVcsHelper
   protected lateinit var logProvider: GitLogProvider
@@ -50,12 +55,15 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     super.setUp()
 
     dialogManager = service<DialogManager>() as TestDialogManager
-    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(project)
+    vcsHelper = MockVcsHelper(myProject)
+    project.replaceService(AbstractVcsHelper::class.java, vcsHelper, testRootDisposable)
 
     repositoryManager = GitUtil.getRepositoryManager(project)
-    git = overrideService<Git, TestGitImpl>()
+    git = TestGitImpl()
+    ApplicationManager.getApplication().replaceService(Git::class.java, git, testRootDisposable)
     vcs = GitVcs.getInstance(project)
     vcs.doActivate()
+    commitContext = CommitContext()
 
     settings = GitVcsSettings.getInstance(project)
     appSettings = GitVcsApplicationSettings.getInstance()
@@ -67,6 +75,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
+    overrideDefaultSaveChangesPolicy()
 
     credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
@@ -77,9 +86,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     RunAll()
       .append(ThrowableRunnable { restoreCredentialHelpers() })
       .append(ThrowableRunnable { restoreGlobalSslVerify() })
-      .append(ThrowableRunnable { if (wasInit { dialogManager }) dialogManager.cleanup() })
-      .append(ThrowableRunnable { if (wasInit { git }) git.reset() })
-      .append(ThrowableRunnable { if (wasInit { settings }) settings.appSettings.setPathToGit(null) })
+      .append(ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() })
+      .append(ThrowableRunnable { if (::git.isInitialized) git.reset() })
+      .append(ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }
@@ -94,6 +103,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected open fun createRepository(rootDir: String): GitRepository {
     return createRepository(project, rootDir)
+  }
+
+  protected open fun getDefaultSaveChangesPolicy() : GitSaveChangesPolicy = GitSaveChangesPolicy.SHELVE
+
+  private fun overrideDefaultSaveChangesPolicy() {
+    settings.saveChangesPolicy = getDefaultSaveChangesPolicy()
   }
 
   /**
@@ -125,20 +140,20 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     git("remote add origin " + parentRepo.path)
     git("push --set-upstream origin master:master")
 
-    Executor.cd(broRepo.path)
+    cd(broRepo.path)
     git("pull")
 
     return ReposTrinity(repository, parentRepo, broRepo)
   }
 
   private fun createParentRepo(parentName: String): File {
-    Executor.cd(testRoot)
+    cd(testRoot)
     git("init --bare $parentName.git")
-    return File(testRoot, parentName + ".git")
+    return File(testRoot, "$parentName.git")
   }
 
   protected fun createBroRepo(broName: String, parentRepo: File): File {
-    Executor.cd(testRoot)
+    cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
     cd(broName)
     setupDefaultUsername(project)
@@ -176,16 +191,16 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   private fun restoreCredentialHelpers() {
-    credentialHelpers.forEach { scope, values ->
+    credentialHelpers.forEach { (scope, values) ->
       values.forEach { git("config --add ${scope.param()} credential.helper ${it}", true) }
     }
   }
 
   private fun readAndDisableSslVerifyGlobally(): Boolean? {
     val value = git("config --global --get-all -z http.sslVerify", true)
-      .split("\u0000")
-      .singleOrNull { it.isNotBlank() }
-      ?.let { it.toBoolean() }
+        .split("\u0000")
+        .singleOrNull { it.isNotBlank() }
+        ?.toBoolean()
     git("config --global http.sslVerify false", true)
     return value
   }
@@ -204,7 +219,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
   protected fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment")
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
     updateChangeListManager()
   }
@@ -223,6 +238,20 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `assert commit dialog was shown`() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+  }
+
+  protected fun assertNoChanges() {
+    changeListManager.assertNoChanges()
+  }
+
+  protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
+  }
+
+  protected fun assertChangesWithRefresh(changes: ChangesBuilder.() -> Unit): List<Change> {
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    changeListManager.ensureUpToDate()
+    return changeListManager.assertChanges(changes)
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)

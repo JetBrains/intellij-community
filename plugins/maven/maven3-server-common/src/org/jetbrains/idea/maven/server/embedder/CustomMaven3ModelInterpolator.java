@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.ProjectBuilderConfiguration;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -51,12 +49,13 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   protected List<ValueSource> createValueSources(Model model, File projectDir, ProjectBuilderConfiguration config) {
     List<ValueSource> sources = super.createValueSources(model, projectDir, config);
 
-    int firstMapIndex = ContainerUtilRt.indexOf(sources, new Condition<ValueSource>() {
-      @Override
-      public boolean value(ValueSource source) {
-        return source instanceof MapBasedValueSource;
+    int firstMapIndex = -1;
+    for (int i = 0; i < sources.size(); i++) {
+      if (sources.get(i) instanceof MapBasedValueSource) {
+        firstMapIndex = i;
+        break;
       }
-    });
+    }
 
     Map<String, Object> rightOrderProperties = new HashMap<String, Object>(3);
     if (config.getExecutionProperties().containsKey(REVISION_PROPERTY)) {

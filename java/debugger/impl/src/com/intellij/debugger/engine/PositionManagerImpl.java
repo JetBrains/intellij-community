@@ -26,7 +26,6 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -44,7 +43,7 @@ import java.util.function.Consumer;
  * @author lex
  */
 public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
+  private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
 
@@ -172,14 +171,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     int lambdaOrdinal = -1;
     if (DebuggerUtilsEx.isLambda(method)) {
-      Set<Method> lambdas =
-        ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), location1 -> {
-          Method method1 = location1.method();
-          if (DebuggerUtilsEx.isLambda(method1)) {
-            return method1;
-          }
-          return null;
-        });
+      int line = sourcePosition.getLine() + 1;
+      Set<Method> lambdas = StreamEx.of(location.declaringType().methods())
+        .filter(DebuggerUtilsEx::isLambda)
+        .filter(m -> !DebuggerUtilsEx.locationsOfLine(m, line).isEmpty())
+        .toSet();
       if (lambdas.size() > 1) {
         ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
         lambdasList.sort(DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
@@ -623,7 +619,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (myCompiledMethod == null) {
         super.visitElement(element);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,13 +21,18 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +54,7 @@ import java.util.*;
 public class VcsStructureChooser extends DialogWrapper {
   private final static int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
-  public static final String CAN_NOT_ADD_TEXT =
-    "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
-  private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
+  @NonNls private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
@@ -62,7 +66,7 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             @NotNull String title,
+                             @NlsContexts.DialogTitle @NotNull String title,
                              @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);
@@ -90,6 +94,7 @@ public class VcsStructureChooser extends DialogWrapper {
     TreeSet<VirtualFile> checkSet = new TreeSet<>(FilePathComparator.getInstance());
     checkSet.addAll(roots);
     for (Module module : modules) {
+      if (ModuleType.isInternal(module)) continue;
       VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
         VirtualFile floor = checkSet.floor(file);
@@ -232,7 +237,10 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          selectedLabel.setText(CAN_NOT_ADD_TEXT);
+          String errorText = "<font color=red>(" +
+                             VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) +
+                             ")</font>";
+          selectedLabel.setText(XmlStringUtil.wrapInHtml(VcsLogBundle.message("vcs.log.filters.structure.label", errorText)));
         }
         selectedLabel.revalidate();
       }
@@ -279,7 +287,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
-      setBackground(tree.getBackground());
+      setBackground(RenderingUtil.getBackground(tree));
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(@NotNull JTree tree,
@@ -293,8 +301,8 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       };
       myFictive = new JBList();
-      myFictive.setBackground(tree.getBackground());
-      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground());
+      myFictive.setBackground(RenderingUtil.getBackground(tree));
+      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
       myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
@@ -305,10 +313,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
-      myTextRenderer.setBackground(tree.getBackground());
+      myTextRenderer.setBackground(RenderingUtil.getBackground(tree));
 
       myCheckbox = new JCheckBox();
-      myCheckbox.setBackground(tree.getBackground());
+      myCheckbox.setBackground(RenderingUtil.getBackground(tree));
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);

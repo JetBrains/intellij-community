@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaValue;
@@ -67,7 +67,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
   }
 
@@ -84,7 +84,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
-              LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local.getSlot(), newValue);
+              LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local, newValue);
               update(debuggerContext);
             }
 

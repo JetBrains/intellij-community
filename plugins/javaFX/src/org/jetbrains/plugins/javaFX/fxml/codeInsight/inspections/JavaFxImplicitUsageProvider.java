@@ -27,7 +27,7 @@ import java.util.List;
 public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof PsiMethod) {
       return isImplicitMethodUsage((PsiMethod)element);
     }
@@ -60,17 +60,16 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     if (element instanceof PsiField) {
       final PsiField field = (PsiField)element;
       if (!isImplicitFxmlAccess(field)) return false;
       final String fieldName = field.getName();
-      if (fieldName == null) return false;
 
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) return false;
@@ -102,10 +101,8 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
   private static boolean isInjectedByFxmlLoader(@NotNull PsiField field) {
     final String fieldName = field.getName();
     final PsiType fieldType = field.getType();
-    return fieldName != null &&
-           ("resources".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.util.ResourceBundle") ||
-            "location".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.net.URL")) &&
-           isDeclaredInControllerClass(field);
+    return ("resources".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.util.ResourceBundle") ||
+            "location".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.net.URL")) && isDeclaredInControllerClass(field);
   }
 
   private static boolean isDeclaredInControllerClass(@NotNull PsiMember member) {

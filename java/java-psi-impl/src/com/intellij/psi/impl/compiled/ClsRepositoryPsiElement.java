@@ -69,8 +69,7 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     @SuppressWarnings("unchecked") List<StubElement> stubs = getStub().getChildrenStubs();
     if (stubs.size() == 0) return EMPTY_ARRAY;
     PsiElement[] children = new PsiElement[stubs.size()];

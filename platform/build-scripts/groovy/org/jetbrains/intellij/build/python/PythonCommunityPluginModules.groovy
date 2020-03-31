@@ -1,43 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.python
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-/**
- * @author nik
- */
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
-    "intellij.python.langInjection",
     "intellij.python.community",
-    "intellij.python.community.plugin",
+    "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
-    "intellij.python.configure",
-    "intellij.python.community.plugin.minor",
     "intellij.python.psi",
+    "intellij.python.psi.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
+    "intellij.python.langInjection",
+    "intellij.python.copyright",
+    "intellij.python.terminal",
+    "intellij.python.grazie",
+    "intellij.python.reStructuredText",
+    "intellij.python.sdk",
   ]
-  public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
-  static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
-    "intellij.python.langInjection"
-  ]
+  static String pythonCommunityName = "python-ce"
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.dependencies",
-                 COMMUNITY_MODULES) {
-      withProjectLibrary("markdown4j")  // Required for ipnb
-      PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
-        excludeFromModule(module, "META-INF/plugin.xml")
-      }
-      excludeFromModule(PYTHON_COMMUNITY_PLUGIN_MODULE, "META-INF/python-plugin-dependencies.xml")
+    def communityOnlyModules = [
+      "intellij.python.community.plugin",
+      "intellij.python.community.plugin.minor",
+    ]
+    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) {
       body.delegate = delegate
       body()
     }
   }
 
-  static PluginLayout pythonPlugin(String mainModuleName, String name, String buildPatchesModule, List<String> modules,
+  static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     PluginLayout.plugin(mainModuleName) {
       directoryName = name
@@ -45,13 +42,8 @@ class PythonCommunityPluginModules {
       modules.each { module ->
         withModule(module, mainJarName, null)
       }
-      withModule(buildPatchesModule, mainJarName, null)
-      withResourceFromModule("intellij.python.helpers", "", "helpers")
-      withCustomVersion { BuildContext context ->
-        // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE
-        def pluginBuildNumber = getPluginBuildNumber()
-        "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
-      }
+      withModule(mainModuleName, mainJarName)
+      withGeneratedResources(new HelpersGenerator(), "helpers")
       doNotCreateSeparateJarForLocalizableResources()
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
@@ -61,5 +53,20 @@ class PythonCommunityPluginModules {
 
   static String getPluginBuildNumber() {
     System.getProperty("build.number", "SNAPSHOT")
+  }
+}
+
+class HelpersGenerator implements ResourcesGenerator {
+  @Override
+  File generateResources(BuildContext context) {
+    String output = "$context.paths.temp/python/helpers"
+    context.ant.copy(todir: output) {
+      fileset(dir: "$context.paths.communityHome/python/helpers") {
+        exclude(name: "**/setup.py")
+        exclude(name: "pydev/pydev_test*")
+        exclude(name: "tests/")
+      }
+    }
+    return new File(output)
   }
 }

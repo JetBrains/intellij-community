@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -20,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -29,9 +14,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.function.BiFunction
-/**
- * @author nik
- */
+
 @CompileStatic
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
@@ -59,14 +42,17 @@ class BuildContextImpl extends BuildContext {
     this.compilationContext = compilationContext
     this.global = compilationContext.global
     this.productProperties = productProperties
-    this.proprietaryBuildTools = proprietaryBuildTools
+    this.proprietaryBuildTools = proprietaryBuildTools == null ? ProprietaryBuildTools.DUMMY : proprietaryBuildTools
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
-    if (productProperties.productCode != null && applicationInfo.productCode == null) {
+    if (productProperties.customProductCode != null) {
+      applicationInfo.productCode = productProperties.customProductCode
+    }
+    else if (productProperties.productCode != null && applicationInfo.productCode == null) {
       applicationInfo.productCode = productProperties.productCode
     }
     else if (productProperties.productCode == null && applicationInfo.productCode != null) {
@@ -85,7 +71,8 @@ class BuildContextImpl extends BuildContext {
     new File(paths.communityHome, "build.txt").text.trim()
   }
 
-  private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome, ProductProperties productProperties) {
+  private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
+                                                                                              ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
       def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
       def applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
@@ -94,7 +81,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   static File findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    JpsModule module = project.modules.find {it.name == productProperties.applicationInfoModule }
+    JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
     if (module == null) {
       messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
     }
@@ -147,11 +134,6 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  JpsGantProjectBuilder getProjectBuilder() {
-    compilationContext.projectBuilder
-  }
-
-  @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
   }
@@ -194,14 +176,15 @@ class BuildContextImpl extends BuildContext {
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
       new File(it.first, StringUtil.trimStart(relativePath, it.second))
-    }.find {it.exists()}
+    }.find { it.exists() }
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])
   @CompileDynamic
   private static List<Pair<File, String>> getSourceRootsWithPrefixes(JpsModule module) {
     module.sourceRoots.findAll { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }.collect {
-      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") : it.properties.relativeOutputPath
+      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") :
+                      it.properties.relativeOutputPath
       if (!prefix.endsWith("/")) prefix += "/"
       Pair.create(it.file, StringUtil.trimStart(prefix, "/"))
     }
@@ -212,7 +195,7 @@ class BuildContextImpl extends BuildContext {
     if (proprietaryBuildTools.signTool != null) {
       messages.progress("Signing $path")
       proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signing done")
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -243,7 +226,8 @@ class BuildContextImpl extends BuildContext {
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
-    def compilationContextCopy = compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
+    def compilationContextCopy = compilationContext.
+      createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
     def child = new BuildContextImpl(compilationContextCopy, productProperties,
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools)
@@ -260,9 +244,11 @@ class BuildContextImpl extends BuildContext {
 
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    def compilationContextCopy = compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
+    def compilationContextCopy =
+      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
-                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools)
+                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                    proprietaryBuildTools)
     copy.paths.artifacts = paths.artifacts
     copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.compilationContext.prepareForBuild()
@@ -280,8 +266,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   private boolean isJavaSupportedInProduct() {
-    def productLayout = productProperties.productLayout
-    return DistributionJARsBuilder.getIncludedPlatformModules(productLayout).contains("intellij.java.execution.impl")
+    return productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
   }
 
   @CompileDynamic

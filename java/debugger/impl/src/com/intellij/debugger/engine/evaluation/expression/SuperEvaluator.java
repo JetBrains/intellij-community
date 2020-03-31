@@ -20,7 +20,7 @@ package com.intellij.debugger.engine.evaluation.expression;
  */
 public class SuperEvaluator extends ThisEvaluator{
 
-  public SuperEvaluator(final int iterations) {
-    super(iterations);
+  public SuperEvaluator(CaptureTraverser traverser) {
+    super(traverser);
   }
 }

@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ui.VcsCloneComponent;
+import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,5 +51,10 @@ public interface CheckoutProvider {
     public int compare(@NotNull final CheckoutProvider o1, @NotNull final CheckoutProvider o2) {
       return getTextWithoutMnemonicEscaping(o1.getVcsName()).compareTo(getTextWithoutMnemonicEscaping(o2.getVcsName()));
     }
+  }
+
+  @NotNull
+  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
+    return new VcsCloneComponentStub(this, "Clone");
   }
 }

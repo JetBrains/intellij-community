@@ -15,9 +15,13 @@
  */
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
@@ -44,7 +48,7 @@ public class PropertiesPlaceholdersInspectionProvider implements InconsistentRes
   @NotNull
   @Override
   public String getPresentableName() {
-    return InspectionsBundle.message("inconsistent.bundle.report.inconsistent.properties.placeholders");
+    return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties.placeholders");
   }
 
   @Override
@@ -75,7 +79,7 @@ public class PropertiesPlaceholdersInspectionProvider implements InconsistentRes
           final int parentOccurrences = JavaI18nUtil.getPropertyValuePlaceholdersCount(parentPropertyValue);
           if (occurrences != parentOccurrences) {
             final String problemDescriptorString =
-              InspectionsBundle.message("inconsistent.bundle.property.inconsistent.placeholders", parentOccurrences, parent.getName());
+              JavaI18nBundle.message("inconsistent.bundle.property.inconsistent.placeholders", parentOccurrences, parent.getName());
             final PsiElement propertyPsiElement = property.getPsiElement();
             processor.addProblemElement(refManager.getReference(file.getContainingFile()),
                                         manager.createProblemDescriptor(propertyPsiElement, problemDescriptorString, true,

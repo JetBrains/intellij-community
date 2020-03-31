@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.search
 
 import com.intellij.codeInsight.AutoPopupController
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -18,13 +19,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.search.GithubIssueSearchSort
+import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
 internal class GithubPullRequestSearchPanel(project: Project,
                                             private val autoPopupController: AutoPopupController,
-                                            private val holder: GithubPullRequestSearchQueryHolder) : BorderLayoutPanel() {
+                                            private val holder: GithubPullRequestSearchQueryHolder)
+  : BorderLayoutPanel(), Disposable {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
 
@@ -45,14 +47,12 @@ internal class GithubPullRequestSearchPanel(project: Project,
     override fun setupBorder(editor: EditorEx) {
       editor.setBorder(JBUI.Borders.empty(6, 5))
     }
-  }
 
-  var searchText: String
-    get() = searchField.text
-    set(value) {
-      searchField.text = value
-      updateQuery()
+    override fun updateUI() {
+      super.updateUI()
+      UIUtil.setNotOpaqueRecursively(this)
     }
+  }
 
   init {
     val icon = JBLabel(AllIcons.Actions.Find).apply {
@@ -60,17 +60,21 @@ internal class GithubPullRequestSearchPanel(project: Project,
     }
     addToLeft(icon)
     addToCenter(searchField)
-    UIUtil.setNotOpaqueRecursively(searchField)
+    holder.addQueryChangeListener(this) {
+      searchField.text = holder.query.toString()
+    }
   }
 
   private fun updateQuery() {
-    holder.searchQuery = GithubPullRequestSearchQuery.parseFromString(searchField.text)
+    holder.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
   }
 
   override fun updateUI() {
     super.updateUI()
     background = UIUtil.getListBackground()
   }
+
+  override fun dispose() {}
 
   private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {
     private val addColonInsertHandler = object : InsertHandler<LookupElement> {

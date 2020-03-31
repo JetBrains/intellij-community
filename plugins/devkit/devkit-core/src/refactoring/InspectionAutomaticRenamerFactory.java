@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
@@ -128,7 +126,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
       String descriptionFileName = descriptionFile.getName();
 
       String defaultShortName = getDescriptionFileName(inspectionClassName);
-      if (!newName.endsWith(INSPECTION_CLASS_SUFFIX) || !defaultShortName.equals(FileUtil.getNameWithoutExtension(descriptionFileName))) {
+      if (!newName.endsWith(INSPECTION_CLASS_SUFFIX) || !defaultShortName.equals(FileUtilRt.getNameWithoutExtension(descriptionFileName))) {
         return;
       }
 

@@ -13,8 +13,10 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +181,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
         }
       }
       catch (IncorrectOperationException ignored) {
-        PyUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
+        PyUiUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
       }
     }
 
@@ -193,7 +195,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           moduleName = PyPsiUtils.toPath(reference);
         }
       }
-      return PyBundle.message("INTN.convert.to.from.$0.import.$1", getDots() + moduleName, "...");
+      return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", getDots() + moduleName, "...");
     }
 
     @NotNull

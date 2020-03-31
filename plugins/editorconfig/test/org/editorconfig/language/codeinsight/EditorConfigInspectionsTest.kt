@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.codeinsight.inspections.*
 import kotlin.reflect.KClass
 
-class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigInspectionsTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/inspections"
 
@@ -57,6 +57,12 @@ class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
   fun testIgnoreCaseKey() = doTest(EditorConfigKeyCorrectnessInspection::class)
   fun testIgnoreCaseValue() = doTest(EditorConfigValueCorrectnessInspection::class)
   fun testIgnoreCaseReference() = doTest(EditorConfigReferenceCorrectnessInspection::class)
+
+  // Bugfixes
+
+  fun testIncompleteHeader() = doTest(EditorConfigNoMatchingFilesInspection::class)
+
+  // Utils
 
   private fun doTest(
     vararg inspections: KClass<out LocalInspectionTool>,

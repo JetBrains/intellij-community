@@ -27,7 +27,7 @@ import java.io.File;
  */
 public class CvsVfsUtil {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.util.CvsVfsUtil");
+  private static final Logger LOG = Logger.getInstance(CvsVfsUtil.class);
 
   public static VirtualFile findFileByPath(final String path) {
     return LocalFileSystem.getInstance().findFileByPath(path);
@@ -69,8 +69,7 @@ public class CvsVfsUtil {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
-  @NotNull
-  public static VirtualFile[] getChildrenOf(final VirtualFile directory) {
+  public static VirtualFile @NotNull [] getChildrenOf(final VirtualFile directory) {
     if (!directory.isValid()) {
       return VirtualFile.EMPTY_ARRAY;
     }

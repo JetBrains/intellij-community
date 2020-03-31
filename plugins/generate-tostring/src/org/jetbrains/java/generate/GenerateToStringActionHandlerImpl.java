@@ -20,7 +20,9 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
@@ -110,13 +112,18 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 }
             };
         //noinspection DialogTitleCapitalization
-        chooser.setTitle("Generate toString()");
+        chooser.setTitle(JavaBundle.message("generate.tostring.title"));
 
         chooser.setCopyJavadocVisible(false);
         chooser.selectElements(getPreselection(clazz, dialogMembers));
         header.setChooser(chooser);
-        chooser.show();
 
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          chooser.close(DialogWrapper.OK_EXIT_CODE);
+        }
+        else {
+          chooser.show();
+        }
         if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
             Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
 
@@ -128,7 +135,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 // decide what to do if the method already exists
                 ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
                 try {
-                    WriteAction.run(() -> worker.execute(selectedMembers, template, resolutionPolicy));
+                    WriteCommandAction.runWriteCommandAction(project, "Generate toString()", null,
+                                                             () -> worker.execute(selectedMembers, template, resolutionPolicy));
                 }
                 catch (Exception e) {
                     GenerationUtil.handleException(project, e);
@@ -205,7 +213,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
             final TemplateResource[] all = templates.toArray(new TemplateResource[0]);
 
-            final JButton settingsButton = new JButton("Settings");
+            final JButton settingsButton = new JButton(JavaBundle.message("button.text.settings"));
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
             comboBox = new ComboBox<>(all);
@@ -236,7 +244,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
                         @Override
                         public String getDisplayName() {
-                            return "toString() Generation Settings";
+                            return JavaBundle.message("generate.tostring.tab.title");
                         }
 
                         @Override
@@ -264,7 +272,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
             comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
 
-            final JLabel templatesLabel = new JLabel("Template: ");
+            final JLabel templatesLabel = new JLabel(JavaBundle.message("generate.tostring.template.label"));
             templatesLabel.setDisplayedMnemonic('T');
             templatesLabel.setLabelFor(comboBox);
 

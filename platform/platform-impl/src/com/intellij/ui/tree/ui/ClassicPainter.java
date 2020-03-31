@@ -1,20 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import javax.swing.UIManager;
+import javax.swing.*;
+import java.awt.*;
 
 final class ClassicPainter implements Control.Painter {
+  private static final int GAP = 2; // minimal space between a control icon and a renderer component
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
@@ -35,7 +34,7 @@ final class ClassicPainter implements Control.Painter {
     int left = getLeftIndent(controlWidth / 2);
     int right = getRightIndent();
     int offset = getLeafIndent(leaf);
-    if (offset < 0) offset = Math.max(controlWidth, left + right);
+    if (offset < 0) offset = Math.max(controlWidth + left - controlWidth / 2 + JBUIScale.scale(GAP), left + right);
     return depth > 1 ? (depth - 1) * (left + right) + offset : offset;
   }
 
@@ -74,22 +73,29 @@ final class ClassicPainter implements Control.Painter {
     control.paint(c, g, controlX, y, controlWidth, height, expanded, selected);
   }
 
+  static boolean getPaintLines(@Nullable Boolean paintLines) {
+    if (paintLines != null) return paintLines;
+    if (UIManager.getBoolean("Tree.paintLines")) return true;
+    UISettings settings = UISettings.getInstanceOrNull();
+    return settings != null && settings.getShowTreeIndentGuides();
+  }
+
   private boolean getPaintLines() {
-    return myPaintLines != null ? myPaintLines : UIManager.getBoolean("Tree.paintLines");
+    return getPaintLines(myPaintLines);
   }
 
   private int getLeftIndent(int min) {
-    return Math.max(min, myLeftIndent != null ? JBUI.scale(myLeftIndent) : UIManager.getInt("Tree.leftChildIndent"));
+    return Math.max(min, myLeftIndent != null ? JBUIScale.scale(myLeftIndent) : UIManager.getInt("Tree.leftChildIndent"));
   }
 
   private int getRightIndent() {
     int old = myRightIndent == null ? Registry.intValue("ide.ui.tree.indent", -1) : -1;
-    if (old >= 0) return JBUI.scale(old); // support old registry key temporarily
-    return Math.max(0, myRightIndent != null ? JBUI.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
+    if (old >= 0) return JBUIScale.scale(old);
+    return Math.max(0, myRightIndent != null ? JBUIScale.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
   }
 
   private int getLeafIndent(boolean leaf) {
-    return !leaf || myLeafIndent == null ? -1 : JBUI.scale(myLeafIndent);
+    return !leaf || myLeafIndent == null ? -1 : JBUIScale.scale(myLeafIndent);
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {

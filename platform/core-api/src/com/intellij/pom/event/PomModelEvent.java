@@ -51,15 +51,6 @@ public class PomModelEvent extends EventObject {
     }
   }
 
-  public <T extends PomChangeSet> T registerChangeSetIfAbsent(PomModelAspect aspect, @NotNull T set) {
-    final PomChangeSet oldSet = getChangeSet(aspect);
-    if (oldSet != null) return (T)oldSet;
-
-    registerChangeSet(aspect, set);
-    return set;
-  }
-
-
   @Nullable
   public PomChangeSet getChangeSet(PomModelAspect aspect) {
     if (myChangeSets == null) return null;

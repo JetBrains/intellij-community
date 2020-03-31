@@ -81,8 +81,7 @@ public class IdReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof XmlAttributeValue) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(element);
       if (extension != null && extension.hasDynamicComponents(element)) {

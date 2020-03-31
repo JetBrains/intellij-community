@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -15,11 +14,11 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -55,7 +53,7 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
   public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }
@@ -251,7 +249,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(overridden, targetClass, method);
   }
 
-  public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, @NotNull String... annosToRemove) throws IncorrectOperationException {
+  public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, String @NotNull ... annosToRemove) throws IncorrectOperationException {
     Project project = result.getProject();
     AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
     if (fix.isAvailable(project, null, result.getContainingFile())) {
@@ -381,8 +379,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     catch (IncorrectOperationException e) {
       ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
-                                     CodeInsightBundle.message("override.implement.broken.file.template.title")));
+        () -> Messages.showErrorDialog(JavaBundle.message("override.implement.broken.file.template.message"),
+                                     JavaBundle.message("override.implement.broken.file.template.title")));
       return;
     }
     PsiCodeBlock oldBody = result.getBody();
@@ -413,7 +411,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
@@ -426,7 +424,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
     WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() ->
       overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
                                              chooser.isInsertOverrideAnnotation())
@@ -477,14 +475,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                             final boolean toImplement,
                                                             @NotNull MemberChooser<PsiMethodMember> chooser) {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
 
     @NonNls final String s = toImplement ? "OverrideMethods" : "ImplementMethods";
-    final Shortcut[] shortcuts = keymap.getShortcuts(s);
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(s);
 
-    if (shortcuts.length > 0 && shortcuts[0] instanceof KeyboardShortcut) {
+    if (shortcut instanceof KeyboardShortcut) {
       preferredFocusedComponent.getInputMap().put(
-        ((KeyboardShortcut)shortcuts[0]).getFirstKeyStroke(), s
+        ((KeyboardShortcut)shortcut).getFirstKeyStroke(), s
       );
 
       preferredFocusedComponent.getActionMap().put(
@@ -495,10 +492,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
-              TransactionGuard.getInstance().submitTransactionLater(project, () -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
                 handler.invoke(project, editor, aClass.getContainingFile());
-              });
+              }, project.getDisposed());
             }
           }
       );

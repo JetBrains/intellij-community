@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -31,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -47,9 +32,6 @@ import static java.util.Objects.hash;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author max
- */
 public class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
@@ -95,6 +77,12 @@ public class ChangesUtil {
   public static FilePath getAfterPath(@NotNull Change change) {
     ContentRevision revision = change.getAfterRevision();
     return revision == null ? null : revision.getFile();
+  }
+
+  public static boolean isAffectedByChange(@NotNull FilePath filePath, @NotNull Change change) {
+    if (filePath.equals(getBeforePath(change))) return true;
+    if (filePath.equals(getAfterPath(change))) return true;
+    return false;
   }
 
   @Nullable
@@ -159,6 +147,13 @@ public class ChangesUtil {
   }
 
   @NotNull
+  public static Stream<VirtualFile> getFilesFromPaths(@NotNull Stream<? extends FilePath> paths) {
+    return paths
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull);
+  }
+
+  @NotNull
   public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<? extends Change> changes) {
     return changes
       .map(ChangesUtil::getAfterPath)
@@ -167,18 +162,15 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
-  @NotNull
-  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
+  public static VirtualFile @NotNull [] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull VirtualFile[] files) {
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, VirtualFile @NotNull [] files) {
     return getNavigatableArray(project, Stream.of(files));
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
     return files
       .filter(file -> !file.isDirectory())
       .map(file -> new OpenFileDescriptor(project, file))
@@ -186,7 +178,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, Change @Nullable [] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 
@@ -222,12 +214,6 @@ public class ChangesUtil {
       }
     }
     return filePath;
-  }
-
-  @Nullable
-  public static VirtualFile findValidParentUnderReadAction(@NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    return file != null ? file : getValidParentUnderReadAction(path);
   }
 
   @Nullable
@@ -370,7 +356,7 @@ public class ChangesUtil {
     FilePath before = getBeforePath(change);
     FilePath after = getAfterPath(change);
     return before == null
-           ? ObjectUtils.assertNotNull(after).getIOFile()
+           ? Objects.requireNonNull(after).getIOFile()
            : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
   }
 }

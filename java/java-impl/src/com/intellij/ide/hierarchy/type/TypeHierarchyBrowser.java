@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -25,7 +25,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(TypeHierarchyBrowser.class);
 
   public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
     super(project, psiClass);
@@ -47,7 +47,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     actionGroup.add(new ChangeScopeAction() {
       @Override
       protected boolean isEnabled() {
-        return !Comparing.strEqual(getCurrentViewType(), SUPERTYPES_HIERARCHY_TYPE);
+        return !Comparing.strEqual(getCurrentViewType(), getSupertypesHierarchyType());
       }
     });
   }
@@ -81,19 +81,19 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    if (getSupertypesHierarchyType().equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
-    else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getSubtypesHierarchyType().equals(typeName)) {
       return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
-    else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getTypeHierarchyType().equals(typeName)) {
       return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else {

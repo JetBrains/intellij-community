@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
+@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"), reportStatistic = true)
 public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -51,7 +51,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
-      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac
+                                                                                                                           ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER),
       new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.EXPLORER, "Edge", SystemInfo.isWindows ? EDGE_COMMAND : null, true, null)
     );
@@ -59,6 +60,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   private List<ConfigurableWebBrowser> browsers;
   private boolean myShowBrowserHover = true;
+  private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
@@ -119,6 +121,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
+    }
+    if (myShowBrowserHoverXml) {
+      state.setAttribute("showHoverXml", "true");
     }
 
     if (!browsers.equals(getPredefinedBrowsers())) {
@@ -429,7 +434,15 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     myShowBrowserHover = showBrowserHover;
   }
 
+  public void setShowBrowserHoverXml(boolean showBrowserHover) {
+    myShowBrowserHoverXml = showBrowserHover;
+  }
+
   public boolean isShowBrowserHover() {
     return myShowBrowserHover;
+  }
+
+  public boolean isShowBrowserHoverXml() {
+    return myShowBrowserHoverXml;
   }
 }

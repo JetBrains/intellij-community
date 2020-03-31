@@ -20,9 +20,6 @@ import java.util.List;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * @author nik
- */
 public class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, MockFacetConfiguration> {
   public static final String ROOT_TAG_NAME = "root";
   public static final String ROOT_TAG = "<" + ROOT_TAG_NAME + "/>";

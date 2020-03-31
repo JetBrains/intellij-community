@@ -1,12 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class PsiReferenceWrapper implements PsiReference {
   private final PsiReference myOriginalPsiReference;
 
@@ -52,9 +50,8 @@ public class PsiReferenceWrapper implements PsiReference {
     return myOriginalPsiReference.isReferenceTo(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return myOriginalPsiReference.getVariants();
   }
 

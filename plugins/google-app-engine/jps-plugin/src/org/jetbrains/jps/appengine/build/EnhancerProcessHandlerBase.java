@@ -31,11 +31,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.enhancement.EnhancerProcessHandler");
+  private static final Logger LOG = Logger.getInstance(EnhancerProcessHandlerBase.class);
   private final Map<Key, EnhancerOutputParser> myParsers =
     FactoryMap.create(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
 

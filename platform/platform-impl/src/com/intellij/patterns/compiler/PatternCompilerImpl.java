@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.patterns.compiler;
 
@@ -25,11 +11,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternCondition;
 import com.intellij.patterns.InitialPatternCondition;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -48,9 +32,9 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
   private final Set<Method> myStaticMethods;
-  private final StringInterner myStringInterner = new StringInterner();
+  private final Interner<String> myStringInterner = new StringInterner();
 
-  public PatternCompilerImpl(final List<Class> patternClasses) {
+  public PatternCompilerImpl(final List<Class<?>> patternClasses) {
     myStaticMethods = getStaticMethods(patternClasses);
   }
 
@@ -101,13 +85,14 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       for (int i = 0, argsLength = args.length; i < argsLength; i++) {
         args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
       }
-      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
+      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY
+                                                                                                      : args);
     });
     if (node == null) node = new Node(ERROR_NODE, text, null);
     return new LazyPresentablePattern<>(node, myStaticMethods);
   }
 
-  private static Set<Method> getStaticMethods(List<Class> patternClasses) {
+  private static Set<Method> getStaticMethods(List<Class<?>> patternClasses) {
     return new THashSet<>(ContainerUtil.concat(
       patternClasses,
       aClass -> ContainerUtil.findAll(aClass.getMethods(),
@@ -334,8 +319,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<? super Boolean> convertVarArgs) {
     main: for (Method method : methods) {
       if (!methodName.equals(method.getName())) continue;
+      if (method.getParameterCount() != arguments.length && !method.isVarArgs()) continue;
       final Class<?>[] parameterTypes = method.getParameterTypes();
-      if (!method.isVarArgs() && parameterTypes.length != arguments.length) continue;
       convertVarArgs.set(false);
       for (int i = 0, parameterTypesLength = parameterTypes.length; i < arguments.length; i++) {
         final Class<?> type = ReflectionUtil
@@ -361,14 +346,14 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   @Override
   public String dumpContextDeclarations() {
     final StringBuilder sb = new StringBuilder();
-    final THashMap<Class, Collection<Class>> classes = new THashMap<>();
-    final THashSet<Class> missingClasses = new THashSet<>();
+    final Map<Class<?>, Collection<Class<?>>> classes = new THashMap<>();
+    final Set<Class<?>> missingClasses = new THashSet<>();
     classes.put(Object.class, missingClasses);
     for (Method method : myStaticMethods) {
       for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
         final Class<?> enclosingClass = type.getEnclosingClass();
         if (enclosingClass != null) {
-          Collection<Class> list = classes.get(enclosingClass);
+          Collection<Class<?>> list = classes.get(enclosingClass);
           if (list == null) {
             list = new THashSet<>();
             classes.put(enclosingClass, list);
@@ -380,16 +365,16 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         }
       }
     }
-    for (Class aClass : classes.keySet()) {
+    for (Class<?> aClass : classes.keySet()) {
       if (aClass == Object.class) continue;
       printClass(aClass, classes, sb);
     }
     for (Method method : myStaticMethods) {
       printMethodDeclaration(method, sb, classes);
     }
-    for (Class aClass : missingClasses) {
+    for (Class<?> aClass : missingClasses) {
       sb.append("class ").append(aClass.getSimpleName());
-      final Class superclass = aClass.getSuperclass();
+      final Class<?> superclass = aClass.getSuperclass();
       if (missingClasses.contains(superclass)) {
         sb.append(" extends ").append(superclass.getSimpleName());
       }
@@ -399,19 +384,19 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     return sb.toString();
   }
 
-  private static void printClass(Class aClass, Map<Class, Collection<Class>> classes, StringBuilder sb) {
+  private static void printClass(Class<?> aClass, Map<Class<?>, Collection<Class<?>>> classes, StringBuilder sb) {
     final boolean isInterface = aClass.isInterface();
     sb.append(isInterface ? "interface ": "class ");
     dumpType(aClass, aClass, sb, classes);
     final Type superClass = aClass.getGenericSuperclass();
-    final Class rawSuperClass = (Class)(superClass instanceof ParameterizedType ? ((ParameterizedType)superClass).getRawType() : superClass);
+    final Class<?> rawSuperClass = (Class)(superClass instanceof ParameterizedType ? ((ParameterizedType)superClass).getRawType() : superClass);
     if (superClass != null && classes.containsKey(rawSuperClass)) {
       sb.append(" extends ");
       dumpType(null, superClass, sb, classes);
     }
     int implementsIdx = 1;
     for (Type superInterface : aClass.getGenericInterfaces()) {
-      final Class rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superInterface);
+      final Class<?> rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superInterface);
       if (classes.containsKey(rawSuperInterface)) {
         if (implementsIdx++ == 1) sb.append(isInterface? " extends " : " implements ");
         else sb.append(", ");
@@ -425,19 +410,19 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           Modifier.isVolatile(method.getModifiers())) continue;
       printMethodDeclaration(method, sb.append("  "), classes);
     }
-    final Collection<Class> innerClasses = classes.get(aClass);
+    Collection<Class<?>> innerClasses = classes.get(aClass);
     sb.append("}\n");
     if (innerClasses != null) {
-      for (Class innerClass : innerClasses) {
+      for (Class<?> innerClass : innerClasses) {
         printClass(innerClass, classes, sb);
       }
     }
   }
 
-  private static void dumpType(GenericDeclaration owner, Type type, StringBuilder sb, Map<Class, Collection<Class>> classes) {
+  private static void dumpType(GenericDeclaration owner, Type type, StringBuilder sb, Map<Class<?>, Collection<Class<?>>> classes) {
     if (type instanceof Class) {
-      final Class aClass = (Class)type;
-      final Class enclosingClass = aClass.getEnclosingClass();
+      final Class<?> aClass = (Class<?>)type;
+      final Class<?> enclosingClass = aClass.getEnclosingClass();
       if (enclosingClass != null) {
         sb.append(enclosingClass.getSimpleName()).append("_");
       }
@@ -476,7 +461,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static void dumpTypeParametersArray(GenericDeclaration owner, final Type[] typeVariables,
                                               final StringBuilder sb,
-                                              final String prefix, final String suffix, Map<Class, Collection<Class>> classes) {
+                                              final String prefix, final String suffix, Map<Class<?>, Collection<Class<?>>> classes) {
     int typeVarIdx = 1;
     for (Type typeVariable : typeVariables) {
       if (typeVariable == Object.class) continue;
@@ -487,7 +472,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     if (typeVarIdx > 1) sb.append(suffix);
   }
 
-  private static void printMethodDeclaration(Method method, StringBuilder sb, Map<Class, Collection<Class>> classes) {
+  private static void printMethodDeclaration(Method method, StringBuilder sb, Map<Class<?>, Collection<Class<?>>> classes) {
     if (Modifier.isStatic(method.getModifiers())) {
       sb.append("static ");
     }
@@ -539,7 +524,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     final String method;
     final Object[] args;
 
-    Node(@Nullable Node target, @Nullable String method, @Nullable Object[] args) {
+    Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
       this.target = target;
       this.method = method;
       this.args = args;
@@ -640,7 +625,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       }
       sb.append(node.method).append('(');
       boolean first = true;
-      for (Object arg : (node.args == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : node.args)) {
+      for (Object arg : (node.args == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : node.args)) {
         if (first) first = false;
         else sb.append(',').append(' ');
         if (arg instanceof Node) {

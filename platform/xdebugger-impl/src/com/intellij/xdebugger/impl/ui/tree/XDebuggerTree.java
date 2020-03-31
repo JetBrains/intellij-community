@@ -28,6 +28,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
@@ -46,9 +47,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
@@ -57,7 +55,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   };
 
-  private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  public static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
@@ -129,17 +127,20 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XValueMarkers<?,?> myValueMarkers;
   private final TreeExpansionListener myTreeExpansionListener;
+  private final XDebuggerPinToTopManager myPinToTopManager;
+  XDebuggerTreeSpeedSearch mySpeedSearch;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
                        final @Nullable XSourcePosition sourcePosition,
                        final @NotNull String popupActionGroupId, @Nullable XValueMarkers<?, ?> valueMarkers) {
+    super(new DefaultTreeModel(null));
     myValueMarkers = valueMarkers;
     myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
-    myTreeModel = new DefaultTreeModel(null);
-    setModel(myTreeModel);
+    myTreeModel = (DefaultTreeModel)getModel();
+    myPinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(project);
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
@@ -153,13 +154,29 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
           ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
         }
       }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        super.mouseMoved(e);
+        if (!myPinToTopManager.isEnabled()) {
+          return;
+        }
+        TreePath pathForLocation = getPathForLocation(e.getX(), e.getY());
+        if (pathForLocation == null) {
+          myPinToTopManager.onNodeHovered(null, XDebuggerTree.this);
+          return;
+        }
+        Object lastPathComponent = pathForLocation.getLastPathComponent();
+        myPinToTopManager
+          .onNodeHovered(lastPathComponent instanceof XDebuggerTreeNode ? (XDebuggerTreeNode) lastPathComponent : null, XDebuggerTree.this);
+      }
     }.installOn(this);
     setRootVisible(false);
     setShowsRootHandles(true);
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         return expandIfEllipsis();
       }
     }.installOn(this);
@@ -174,12 +191,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    if (Registry.is("debugger.variablesView.rss")) {
-      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
-    else {
-      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
+    mySpeedSearch = new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
 
     final ActionManager actionManager = ActionManager.getInstance();
     addMouseListener(new PopupHandler() {
@@ -305,6 +317,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   @Nullable
   public XValueMarkers<?, ?> getValueMarkers() {
     return myValueMarkers;
+  }
+
+  @NotNull
+  public XDebuggerPinToTopManager getPinToTopManager() {
+    return myPinToTopManager;
   }
 
   public DefaultTreeModel getTreeModel() {

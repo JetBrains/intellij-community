@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import org.jetbrains.annotations.Nls;
@@ -38,7 +38,7 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Global Libraries";
+    return JavaUiBundle.message("configurable.GlobalLibrariesConfigurable.display.name");
   }
 
   @Override
@@ -70,6 +70,6 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   @Override
   protected String getAddText() {
-    return ProjectBundle.message("add.new.global.library.text");
+    return JavaUiBundle.message("add.new.global.library.text");
   }
 }

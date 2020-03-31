@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase;
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase;
@@ -24,18 +25,14 @@ import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
@@ -117,6 +114,7 @@ public class PyChangeSignatureDialog extends
     boolean hadPositionalContainer = false;
     boolean hadKeywordContainer = false;
     boolean hadDefaultValue = false;
+    boolean hadSlash = false;
     boolean hadSingleStar = false;
     boolean hadParamsAfterSingleStar = false;
     final LanguageLevel languageLevel = LanguageLevel.forElement(myMethod.getMethod());
@@ -129,19 +127,34 @@ public class PyChangeSignatureDialog extends
       final String name = parameter.getName();
       final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
       if (parameterNames.contains(nameWithoutStars)) {
-        return PyBundle.message("ANN.duplicate.param.name");
+        return PyPsiBundle.message("ANN.duplicate.param.name");
       }
       parameterNames.add(nameWithoutStars);
 
       if (name.equals("*")) {
         hadSingleStar = true;
         if (index == parametersLength - 1) {
-          return PyBundle.message("ANN.named.parameters.after.star");
+          return PyPsiBundle.message("ANN.named.parameters.after.star");
+        }
+      }
+      else if (name.equals("/")) {
+        if (hadSlash) {
+          return PyPsiBundle.message("ANN.multiple.slash");
+        }
+        hadSlash = true;
+        if (hadPositionalContainer) {
+          return PyPsiBundle.message("ANN.slash.param.after.vararg");
+        }
+        else if (hadKeywordContainer) {
+          return PyPsiBundle.message("ANN.slash.param.after.keyword");
+        }
+        if (index == 0) {
+          return PyPsiBundle.message("ANN.named.parameters.before.slash");
         }
       }
       else if (name.startsWith("*") && !name.startsWith("**")) {
         if (hadKeywordContainer) {
-          return PyBundle.message("ANN.starred.param.after.kwparam");
+          return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }
         if (hadSingleStar || hadPositionalContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
@@ -153,7 +166,7 @@ public class PyChangeSignatureDialog extends
       }
       else if (name.startsWith("**")) {
         if (hadSingleStar && !hadParamsAfterSingleStar) {
-          return PyBundle.message("ANN.named.parameters.after.star");
+          return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
         if (hadKeywordContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
@@ -171,10 +184,10 @@ public class PyChangeSignatureDialog extends
           hadParamsAfterSingleStar = true;
         }
         if (hadPositionalContainer && languageLevel.isPython2()) {
-          return PyBundle.message("ANN.regular.param.after.vararg");
+          return PyPsiBundle.message("ANN.regular.param.after.vararg");
         }
         else if (hadKeywordContainer) {
-          return PyBundle.message("ANN.regular.param.after.keyword");
+          return PyPsiBundle.message("ANN.regular.param.after.keyword");
         }
         final String defaultValue = info.getDefaultValue();
         if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue) && parameter.getDefaultInSignature()) {
@@ -182,7 +195,7 @@ public class PyChangeSignatureDialog extends
         }
         else {
           if (hadDefaultValue && !hadSingleStar && (languageLevel.isPython2() || !hadPositionalContainer)) {
-            return PyBundle.message("ANN.non.default.param.after.default");
+            return PyPsiBundle.message("ANN.non.default.param.after.default");
           }
         }
       }
@@ -237,7 +250,7 @@ public class PyChangeSignatureDialog extends
 
   @Override
   protected VisibilityPanelBase<String> createVisibilityControl() {
-    return new ComboBoxVisibilityPanel<>(ArrayUtil.EMPTY_STRING_ARRAY);
+    return new ComboBoxVisibilityPanel<>(ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -293,8 +306,6 @@ public class PyChangeSignatureDialog extends
 
             final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
                                                          UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel,
-                                                   myDefaultInSignature);
             defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
             myDefaultInSignature = new JCheckBox();
             myDefaultInSignature.setSelected(((PyParameterTableModelItem)item).isDefaultInSignature());
@@ -305,7 +316,7 @@ public class PyChangeSignatureDialog extends
               }
             });
             myDefaultInSignature.addChangeListener(mySignatureUpdater);
-            myDefaultInSignature.setEnabled(item.parameter.getOldIndex() == -1);
+            myDefaultInSignature.setEnabled(item.parameter.isNew());
             defaultValuePanel.add(myDefaultInSignature, BorderLayout.EAST);
             return defaultValuePanel;
           }
@@ -314,12 +325,19 @@ public class PyChangeSignatureDialog extends
             final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
             final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
             myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
-            final JBLabel defaultValueLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.label"),
-                                                          UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
+            final JBLabel defaultValueLabel =
+              new JBLabel(RefactoringBundle.message("changeSignature.default.value.label"), UIUtil.ComponentStyle.SMALL);
             defaultValuePanel.add(defaultValueLabel);
             defaultValuePanel.add(myDefaultValueEditor);
             myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+            // The corresponding PyParameterInfo field can't be updated by just RowEditorChangeListener(1) 
+            // because the corresponding column value is not String but Pair<PsiCodeFragment, Boolean>.
+            myDefaultValueEditor.addDocumentListener(new DocumentListener() {
+              @Override
+              public void documentChanged(@NotNull DocumentEvent event) {
+                item.parameter.setDefaultValue(myDefaultValueEditor.getText().trim());
+              }
+            });
             myDefaultValueEditor.addDocumentListener(mySignatureUpdater);
             return defaultValuePanel;
           }
@@ -329,14 +347,13 @@ public class PyChangeSignatureDialog extends
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
             final JBLabel nameLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.name.label"),
                                                   UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
             myNameEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myNameEditor.addDocumentListener(new RowEditorChangeListener(0));
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override
               public void documentChanged(@NotNull DocumentEvent event) {
-                fireDocumentChanged(event, 0);
                 myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
                 myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
               }

@@ -1,16 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -38,7 +38,7 @@ public class SceneBuilderInfo {
   public boolean equals(Object object) {
     if (object instanceof SceneBuilderInfo) {
       SceneBuilderInfo info = (SceneBuilderInfo)object;
-      return Comparing.equal(path, info.path) && Comparing.equal(libPath, info.libPath);
+      return Objects.equals(path, info.path) && Objects.equals(libPath, info.libPath);
     }
     return false;
   }
@@ -115,7 +115,7 @@ public class SceneBuilderInfo {
       fillPaths(programFiles, suspiciousPaths, sb20, sb11, sb10);
       fillPaths(programFiles + " (x86)", suspiciousPaths, sb20, sb11, sb10);
 
-      path = findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
+      path = findFirstThatExist(ArrayUtilRt.toStringArray(suspiciousPaths));
     }
     else if (SystemInfo.isMac) {
       path = findFirstThatExist("/Applications/JavaFX Scene Builder 2.0.app",

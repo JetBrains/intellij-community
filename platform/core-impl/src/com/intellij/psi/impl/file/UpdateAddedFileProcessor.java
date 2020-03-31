@@ -4,6 +4,9 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,5 +29,21 @@ public abstract class UpdateAddedFileProcessor {
       }
     }
     return null;
+  }
+
+  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis) throws IncorrectOperationException {
+    for (PsiFile copyPsi : copyPsis) {
+      final UpdateAddedFileProcessor processor = forElement(copyPsi);
+      if (processor != null) {
+        final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
+        if (tree != null) {
+          ChangeUtil.encodeInformation(tree);
+        }
+        processor.update(copyPsi, null);
+        if (tree != null) {
+          ChangeUtil.decodeInformation(tree);
+        }
+      }
+    }
   }
 }

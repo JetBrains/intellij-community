@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiErrorElement;
+import org.jetbrains.annotations.NotNull;
 
 public class ErrorUtil {
 
@@ -35,7 +36,7 @@ public class ErrorUtil {
     private boolean containsErrorElement = false;
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       containsErrorElement = true;
     }
 

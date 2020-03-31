@@ -33,7 +33,7 @@ public class PropertiesColorsPage implements ColorSettingsPage {
 
   static {
     ATTRS = new AttributesDescriptor[PropertiesHighlighter.DISPLAY_NAMES.size()];
-    TextAttributesKey[] keys = PropertiesHighlighter.DISPLAY_NAMES.keySet().toArray(new TextAttributesKey[0]);
+    TextAttributesKey[] keys = PropertiesHighlighter.DISPLAY_NAMES.keySet().toArray(TextAttributesKey.EMPTY_ARRAY);
     for (int i = 0; i < keys.length; i++) {
       TextAttributesKey key = keys[i];
       String name = PropertiesHighlighter.DISPLAY_NAMES.get(key).getFirst();
@@ -53,14 +53,12 @@ public class PropertiesColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

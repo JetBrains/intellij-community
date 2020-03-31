@@ -42,7 +42,7 @@ public class MavenProjectsProcessorResolvingTask extends MavenProjectsBatchProce
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolve(project, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
+    myResolver.resolve(project, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 }

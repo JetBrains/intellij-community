@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
@@ -28,9 +14,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Sergey.Malenkov
- */
 abstract class MnemonicWrapper<T extends JComponent> implements Runnable, PropertyChangeListener {
   public static MnemonicWrapper getWrapper(Component component) {
     if (component == null || component.getClass().getName().equals("com.intellij.openapi.wm.impl.StripeButton")) {
@@ -91,7 +74,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       int code = disabled ? KeyEvent.VK_UNDEFINED : myCode;
       if (code != getMnemonicCode()) setMnemonicCode(code);
       // update input map to support Alt-based mnemonics
-      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl", true)) {
         InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         if (map != null) updateInputMap(map, code);
       }
@@ -159,7 +142,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
           sb.append(ch);
         }
         else if (i + 1 < length) {
-          code = KeyEvent.getExtendedKeyCodeForChar((int)text.charAt(i + 1));
+          code = KeyEvent.getExtendedKeyCodeForChar(text.charAt(i + 1));
           index = sb.length();
         }
       }

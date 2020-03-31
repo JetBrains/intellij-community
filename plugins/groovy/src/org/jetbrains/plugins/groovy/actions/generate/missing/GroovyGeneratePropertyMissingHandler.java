@@ -125,9 +125,8 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     return GenerationInfo.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     final PsiMethod[] missings = aClass.findMethodsByName("propertyMissing", true);
 
     PsiMethod getter = null;
@@ -181,13 +180,12 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
            parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
-  @Nullable
   @Override
-  protected ClassMember[] chooseMembers(ClassMember[] members,
-                                        boolean allowEmptySelection,
-                                        boolean copyJavadocCheckbox,
-                                        Project project,
-                                        @Nullable Editor editor) {
+  protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                   boolean allowEmptySelection,
+                                                   boolean copyJavadocCheckbox,
+                                                   Project project,
+                                                   @Nullable Editor editor) {
     return ClassMember.EMPTY_ARRAY;
   }
 }

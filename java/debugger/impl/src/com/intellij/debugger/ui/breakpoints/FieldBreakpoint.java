@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class FieldBreakpoint
@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -43,7 +43,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointPro
 import javax.swing.*;
 
 public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.FieldBreakpoint");
+  private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
   private boolean myIsStatic;
 
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
@@ -94,7 +94,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     try {
       PsiField field = ReadAction.compute(() -> {
         PsiClass psiClass = getPsiClassAt(sourcePosition);
-        return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
+        return psiClass != null ? psiClass.findFieldByName(getFieldName(), false) : null;
       });
       if (field != null) {
         return field;
@@ -152,8 +152,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       RequestManagerImpl manager = debugProcess.getRequestsManager();
       Field field = refType.fieldByName(getFieldName());
       if (field == null) {
-        manager.setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
-                                                        getFieldName(), refType.name()));
+        manager.setInvalid(this, JavaDebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
+                                                            getFieldName(), refType.name()));
         return;
       }
       if (isWatchModification() && vm.canWatchFieldModification()) {
@@ -184,7 +184,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       final ObjectReference object = modificationEvent.object();
       final Field field = modificationEvent.field();
       if (object != null) {
-        return DebuggerBundle.message(
+        return JavaDebuggerBundle.message(
           "status.field.watchpoint.reached.modification",
           field.declaringType().name(),
           field.name(),
@@ -196,7 +196,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
           object.uniqueID()
         );
       }
-      return DebuggerBundle.message(
+      return JavaDebuggerBundle.message(
         "status.static.field.watchpoint.reached.modification",
         field.declaringType().name(),
         field.name(),
@@ -212,7 +212,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       final ObjectReference object = accessEvent.object();
       final Field field = accessEvent.field();
       if (object != null) {
-        return DebuggerBundle.message(
+        return JavaDebuggerBundle.message(
           "status.field.watchpoint.reached.access",
           field.declaringType().name(),
           field.name(),
@@ -222,7 +222,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
           object.uniqueID()
         );
       }
-      return DebuggerBundle.message(
+      return JavaDebuggerBundle.message(
         "status.static.field.watchpoint.reached.access",
         field.declaringType().name(),
         field.name(),
@@ -237,7 +237,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   @Override
   public String getDisplayName() {
     if(!isValid()) {
-      return DebuggerBundle.message("status.breakpoint.invalid");
+      return JavaDebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
     return className != null && !className.isEmpty() ? className + "." + getFieldName() : getFieldName();

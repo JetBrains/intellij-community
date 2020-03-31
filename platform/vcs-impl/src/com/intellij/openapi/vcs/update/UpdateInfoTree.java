@@ -66,7 +66,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private boolean myCanGroupByChangeList = false;
   private boolean myGroupByChangeList = false;
   private JLabel myLoadingChangeListsLabel;
-  private List<CommittedChangeList> myCommittedChangeLists;
+  private List<? extends CommittedChangeList> myCommittedChangeLists;
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
   @NonNls private static final String CARD_STATUS = "Status";
   @NonNls private static final String CARD_CHANGES = "Changes";
@@ -316,7 +316,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private VirtualFilePointer getSelectedFilePointer() {
-    AbstractTreeNode treeNode = (AbstractTreeNode)myTree.getSelectionPath().getLastPathComponent();
+    TreePath path = myTree.getSelectionPath();
+    if (path == null) return null;
+    AbstractTreeNode treeNode = (AbstractTreeNode)path.getLastPathComponent();
     return treeNode instanceof FileTreeNode ? ((FileTreeNode)treeNode).getFilePointer() : null;
   }
 
@@ -332,8 +334,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  @Nullable
-  private File[] getFileArray() {
+  private File @Nullable [] getFileArray() {
     ArrayList<File> result = new ArrayList<>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
@@ -368,7 +369,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
+  public void setChangeLists(final List<? extends CommittedChangeList> receivedChanges) {
     final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -396,7 +397,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
     MyGroupByPackagesAction() {
-      super(VcsBundle.message("action.name.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
+      super(VcsBundle.messagePointer("action.name.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
 
     @Override
@@ -419,7 +420,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     GroupByChangeListAction() {
-      super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
+      super(VcsBundle.messagePointer("update.info.group.by.changelist"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override
@@ -485,7 +486,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class FilterAction extends ToggleAction implements DumbAware {
     FilterAction() {
-      super("Scope Filter", VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
+      super(VcsBundle.messagePointer("action.ToggleAction.text.scope.filter"),
+            () -> VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
     }
 
     @Override

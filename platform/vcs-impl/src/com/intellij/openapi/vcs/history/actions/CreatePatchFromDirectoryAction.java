@@ -63,8 +63,8 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
-    e.getPresentation().setText(VcsBundle.message("action.name.create.patch.for.selected.revisions"));
-    e.getPresentation().setDescription(VcsBundle.message("action.description.create.patch.for.selected.revisions"));
+    e.getPresentation().setText(VcsBundle.messagePointer("action.name.create.patch"));
+    e.getPresentation().setDescription(VcsBundle.messagePointer("action.description.create.patch.for.selected.revisions"));
 
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);

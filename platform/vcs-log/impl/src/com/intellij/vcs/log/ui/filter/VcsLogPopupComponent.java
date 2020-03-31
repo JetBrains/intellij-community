@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -22,10 +8,13 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -34,33 +23,30 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
+import java.util.function.Supplier;
 
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
   private static final int BORDER_SIZE = 2;
 
-  @NotNull protected final String myName;
-  @NotNull private JLabel myNameLabel;
+  private final PopupState myPopupState = new PopupState();
+  @NotNull private final Supplier<String> myDisplayName;
+  @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
 
-  protected VcsLogPopupComponent(@NotNull String name) {
-    myName = name;
+  protected VcsLogPopupComponent(@NotNull Supplier<String> displayName) {
+    myDisplayName = displayName;
   }
 
   public JComponent initUi() {
-    myNameLabel = new JLabel(myName + ": ");
-    myValueLabel = new JLabel() {
-      @Override
-      public String getText() {
-        return getCurrentText();
-      }
-    };
+    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + ": ") : null;
+    myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
     setBorder(createUnfocusedBorder());
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-    add(myNameLabel);
+    if (myNameLabel != null) add(myNameLabel);
     add(myValueLabel);
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(new JLabel(AllIcons.Ide.Statusbar_arrows));
@@ -71,7 +57,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
-    indicateHovering();
+    if (shouldIndicateHovering()) {
+      indicateHovering();
+    }
     indicateFocusing();
     return this;
   }
@@ -80,6 +68,19 @@ public abstract class VcsLogPopupComponent extends JPanel {
   public abstract String getCurrentText();
 
   public abstract void installChangeListener(@NotNull Runnable onChange);
+
+  @NotNull
+  protected Color getDefaultSelectorForeground() {
+    return StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker();
+  }
+
+  protected boolean shouldIndicateHovering() {
+    return true;
+  }
+
+  protected boolean shouldDrawLabel() {
+    return true;
+  }
 
   /**
    * Create popup actions available under this filter.
@@ -136,17 +137,23 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private void setDefaultForeground() {
-    myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-    myValueLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker());
+    if (myNameLabel != null) {
+      myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+    }
+    myValueLabel.setForeground(getDefaultSelectorForeground());
   }
 
   private void setOnHoverForeground() {
-    myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
-    myValueLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
+    if (myNameLabel != null) {
+      myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
+    }
+    myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
   private void showPopupMenu() {
+    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = createPopupMenu();
+    popup.addListener(myPopupState);
     popup.showUnderneathOf(this);
   }
 
@@ -188,6 +195,18 @@ public abstract class VcsLogPopupComponent extends JPanel {
       ((Graphics2D)g).fill(area);
 
       config.restore();
+    }
+  }
+
+  private static class DynamicLabel extends JLabel {
+    private final Supplier<String> myText;
+
+    private DynamicLabel(@NotNull Supplier<String> text) {myText = text;}
+
+    @Override
+    public String getText() {
+      if (myText == null) return "";
+      return myText.get();
     }
   }
 }

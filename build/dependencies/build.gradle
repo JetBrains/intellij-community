@@ -5,6 +5,7 @@ buildscript {
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.4.2"
+    classpath "gradle.plugin.org.jetbrains.gradle.plugin.idea-ext:gradle-idea-ext:0.5"
   }
 }
 
@@ -24,7 +25,7 @@ group 'intellij.tools'
 version '1.0'
 
 try {
-  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(1000)
+  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(5000)
   if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
     project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
   }
@@ -46,6 +47,7 @@ apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
 apply from: 'setupBundledMaven.gradle'
+apply from: 'setupCidr.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
@@ -63,7 +65,7 @@ task dependenciesFile() {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.3.1'
+wrapper {
+  gradleVersion = '5.5'
   distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

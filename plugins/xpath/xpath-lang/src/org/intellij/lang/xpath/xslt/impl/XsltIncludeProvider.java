@@ -4,6 +4,7 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
@@ -29,7 +30,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
 
   @Override
   public boolean acceptFile(VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
   }
 
   @Override
@@ -38,8 +39,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
   }
 
   @Override
-  @NotNull
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XsltSupport.XSLT_NS, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();

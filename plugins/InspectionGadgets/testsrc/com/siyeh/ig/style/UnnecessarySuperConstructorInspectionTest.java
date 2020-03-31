@@ -2,13 +2,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessarySuperConstructorInspectionTest extends LightInspectionTestCase {
+public class UnnecessarySuperConstructorInspectionTest extends LightJavaInspectionTestCase {
 
   public void testQualifiedSuper() {
     doTest("class Outer {" +

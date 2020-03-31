@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
 
 /**
  * @author Pavel.Dolgov

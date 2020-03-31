@@ -9,9 +9,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,22 +19,21 @@ import java.util.Arrays;
 import java.util.Collection;
 
 // provides list of all excluded folders across all opened projects, fast.
-class ExcludeRootsCache {
+final class ExcludeRootsCache {
   private volatile CachedUrls myCache;
 
   private static class CachedUrls {
     private final long myModificationCount;
-    @NotNull
-    private final String[] myUrls;
+    private final String @NotNull [] myUrls;
 
-    private CachedUrls(long count, @NotNull String[] urls) {
+    private CachedUrls(long count, String @NotNull [] urls) {
       myModificationCount = count;
       myUrls = urls;
     }
   }
 
-  ExcludeRootsCache(@NotNull MessageBus messageBus) {
-    messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+  ExcludeRootsCache(@NotNull MessageBusConnection connection) {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         myCache = null;
@@ -47,8 +46,7 @@ class ExcludeRootsCache {
     });
   }
 
-  @NotNull
-  String[] getExcludedUrls() {
+  String @NotNull [] getExcludedUrls() {
     return ReadAction.compute(() -> {
       CachedUrls cache = myCache;
       long actualModCount = Arrays.stream(ProjectManager.getInstance().getOpenProjects())
@@ -67,7 +65,7 @@ class ExcludeRootsCache {
             ContainerUtil.addAll(excludedUrls, urls);
           }
         }
-        urls = ArrayUtil.toStringArray(excludedUrls);
+        urls = ArrayUtilRt.toStringArray(excludedUrls);
         Arrays.sort(urls);
         myCache = new CachedUrls(actualModCount, urls);
       }

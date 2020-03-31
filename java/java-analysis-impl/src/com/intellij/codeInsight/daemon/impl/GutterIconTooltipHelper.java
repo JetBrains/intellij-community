@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.psi.PsiClass;
@@ -32,22 +29,24 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * @deprecated use {@link GutterTooltipHelper}
+ */
+@Deprecated
 public class GutterIconTooltipHelper {
   private GutterIconTooltipHelper() {
   }
 
   /**
-   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
-   * @deprecated
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
-  public static String composeText(@NotNull PsiElement[] elements, @NotNull String start, @NotNull String pattern) {
+  public static String composeText(PsiElement @NotNull [] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
 
   /**
-   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
-   * @deprecated
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
@@ -55,8 +54,7 @@ public class GutterIconTooltipHelper {
   }
 
   /**
-   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
-   * @deprecated
+   * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
   static String composeText(@NotNull Iterable<? extends PsiElement> elements,

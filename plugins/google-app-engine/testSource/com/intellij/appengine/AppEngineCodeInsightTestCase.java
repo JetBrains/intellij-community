@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   @NonNls private static final String DEFAULT_VERSION = "1.3.7";
   private JavaModuleFixtureBuilder myModuleBuilder;
@@ -88,12 +85,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     Assert.assertNotNull("Test data directory not found: " + testDataPath, dir);
     VfsUtil.processFilesRecursively(dir, new CommonProcessors.CollectProcessor<>());
     dir.refresh(false, true);
-    tempDir.copyAll(testDataPath, "", new VirtualFileFilter() {
-      @Override
-      public boolean accept(VirtualFile file) {
-        return !file.getName().contains("_after");
-      }
-    });
+    tempDir.copyAll(testDataPath, "", file -> !file.getName().contains("_after"));
     return codeInsightFixture;
   }
 

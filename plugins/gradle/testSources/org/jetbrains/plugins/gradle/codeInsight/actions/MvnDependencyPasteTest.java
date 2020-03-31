@@ -20,11 +20,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
+public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
   public void testPastedGradleDependency() {
     configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "runtime", null));
@@ -122,25 +122,25 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
     return dependency;
   }
 
-  private static void configureGradleFile() {
+  private void configureGradleFile() {
     configureFromFileText("build.gradle",
                           "dependencies {\n" +
                           "    <caret>\n" +
                           "}");
   }
 
-  private static void selectWholeFile() {
+  private void selectWholeFile() {
     Document document = getEditor().getDocument();
     getEditor().getSelectionModel().setSelection(0, document.getTextLength());
   }
 
-  private static void performCut() {
+  private void performCut() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT);
     actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());
   }
 
-  private static void performPaste() {
+  private void performPaste() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
     actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());

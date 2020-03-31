@@ -39,12 +39,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Bas Leijdekkers
  */
 public class SimplifiableBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.boolean.expression.display.name");
-  }
 
   @NotNull
   @Override
@@ -127,6 +121,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
 
     if (hasOperand(conjunction, rightDisjunct)) return commentTracker.text(rightDisjunct);
     PsiExpression[] operands = conjunction.getOperands();
+    if (operands.length < 2) return null; // incomplete
     boolean isFirst;
     if (BoolUtils.areExpressionsOpposite(operands[0], rightDisjunct)) {
       isFirst = true;
@@ -193,7 +188,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
         registerError(disjunction, disjunction);
       }
       PsiExpression[] operands = conjunction.getOperands();
-      if ((BoolUtils.areExpressionsOpposite(operands[0], rightDisjunct) ||
+      if (operands.length >= 2 && (BoolUtils.areExpressionsOpposite(operands[0], rightDisjunct) ||
            BoolUtils.areExpressionsOpposite(operands[operands.length - 1], rightDisjunct)) &&
           !SideEffectChecker.mayHaveSideEffects(rightDisjunct)) {
         registerError(disjunction, disjunction);

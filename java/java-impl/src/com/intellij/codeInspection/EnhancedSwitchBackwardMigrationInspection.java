@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,13 +31,12 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
-        String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
+        String message = JavaBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
         holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
@@ -45,7 +44,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       public void visitSwitchStatement(PsiSwitchStatement statement) {
         if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
-        String message = InspectionsBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
+        String message = JavaBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
@@ -98,12 +97,13 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.old.style.switch.statement.fix.name");
+      return JavaBundle.message("inspection.replace.with.old.style.switch.statement.fix.name");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchBlock switchBlock = tryCast(descriptor.getStartElement().getParent(), PsiSwitchBlock.class);
+      PsiElement element = descriptor.getPsiElement();
+      PsiSwitchBlock switchBlock = tryCast(element instanceof PsiSwitchBlock ? element : element.getParent(), PsiSwitchBlock.class);
       if (switchBlock == null) return;
       Replacer replacer = findReplacer(switchBlock);
       if (replacer == null) return;
@@ -225,9 +225,9 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
                                          CommentTracker ct,
                                          PsiSwitchBlock switchBlock) {
       StreamEx.ofTree((PsiElement)rule, el -> StreamEx.of(el.getChildren()))
-        .select(PsiBreakStatement.class)
-        .filter(breakStatement -> breakStatement.getValueExpression() != null && breakStatement.findExitedElement() == switchBlock)
-        .forEach(breakStatement -> handleBreakInside(breakStatement, ct));
+        .select(PsiYieldStatement.class)
+        .filter(statement -> statement.getExpression() != null && statement.findEnclosingExpression() == switchBlock)
+        .forEach(statement -> handleYieldInside(statement, ct));
       PsiExpressionList caseValues = rule.getCaseValues();
       String caseExpressionsText;
       if (caseValues == null || caseValues.isEmpty()) {
@@ -259,7 +259,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         .joining("\n");
     }
 
-    abstract void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct);
+    abstract void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct);
 
     abstract String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct);
   }
@@ -270,11 +270,11 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     }
 
     @Override
-    void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct) {
-      PsiExpression valueExpression = breakStatement.getValueExpression();
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
       assert valueExpression != null;
-      PsiStatement replacement = myFactory.createStatementFromText("return " + ct.text(valueExpression) + ";", breakStatement);
-      ct.replace(breakStatement, replacement);
+      PsiStatement replacement = myFactory.createStatementFromText("return " + ct.text(valueExpression) + ";", yieldStatement);
+      ct.replace(yieldStatement, replacement);
     }
 
     @Override
@@ -293,12 +293,12 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     }
 
     @Override
-    void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct) {
-      PsiExpression valueExpression = breakStatement.getValueExpression();
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
       assert valueExpression != null;
       String assignText = myVariable.getName() + " = " + ct.text(valueExpression) + ";\n";
       PsiStatement assignment = myFactory.createStatementFromText(assignText, valueExpression);
-      PsiStatement newAssignment = (PsiStatement)ct.replace(breakStatement, assignment);
+      PsiStatement newAssignment = (PsiStatement)ct.replace(yieldStatement, assignment);
       BlockUtils.addAfter(newAssignment, myFactory.createStatementFromText("break;", null));
     }
 
@@ -317,7 +317,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     }
 
     @Override
-    void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct) {
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
       // impossible, only if code is already broken, it can happen
     }
 

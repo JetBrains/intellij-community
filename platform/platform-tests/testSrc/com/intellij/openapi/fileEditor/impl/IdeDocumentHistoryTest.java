@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
@@ -6,14 +6,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class IdeDocumentHistoryTest extends PlatformTestCase {
+public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   private IdeDocumentHistoryImpl myHistory;
 
   private Mock.MyFileEditor  mySelectedEditor;
@@ -42,7 +43,13 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
       }
     };
 
-    myHistory = new IdeDocumentHistoryImpl(getProject(), new EditorManager()) {
+    EditorManager editorManager = new EditorManager();
+    myHistory = new IdeDocumentHistoryImpl(getProject()) {
+      @Override
+      protected FileEditorManagerEx getFileEditorManager() {
+        return editorManager;
+      }
+
       @Override
       protected FileEditorWithProvider getSelectedEditor() {
         return mySelectedEditor == null ? null : new FileEditorWithProvider(mySelectedEditor, myProvider);

@@ -16,13 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class ContainsSynchronizationVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private boolean containsSynchronization = false;
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (containsSynchronization) {
       return;
     }

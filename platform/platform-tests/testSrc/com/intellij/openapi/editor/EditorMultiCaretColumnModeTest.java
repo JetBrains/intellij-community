@@ -286,10 +286,10 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "bbb\n" +
          "ccccc");
-    ((EditorEx)myEditor).setColumnMode(false);
+    ((EditorEx)getEditor()).setColumnMode(false);
     mouse().pressAt(0, 0).dragTo(1, 1).release();
     copy();
-    ((EditorEx)myEditor).setColumnMode(true);
+    ((EditorEx)getEditor()).setColumnMode(true);
     mouse().clickAt(1, 0);
     paste();
     checkResultByText("a\n" +
@@ -448,6 +448,6 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
   private void init(String text) {
     configureFromFileText(getTestName(false) + ".txt", text);
     setEditorVisibleSize(1000, 1000);
-    ((EditorEx)myEditor).setColumnMode(true);
+    ((EditorEx)getEditor()).setColumnMode(true);
   }
 }

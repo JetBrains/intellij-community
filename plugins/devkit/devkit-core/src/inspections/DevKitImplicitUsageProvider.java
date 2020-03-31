@@ -18,7 +18,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author anna
@@ -26,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)element;
       return isDomElementClass(psiClass);
@@ -41,12 +44,12 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return false;
   }
 
@@ -109,7 +112,7 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
       return false;
     }
 
-    final PsiType psiType = method.getParameterList().getParameters()[0].getType();
+    final PsiType psiType = Objects.requireNonNull(method.getParameterList().getParameter(0)).getType();
     return isDomElementInheritor(psiType);
   }
 

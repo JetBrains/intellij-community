@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2;
 
 
@@ -7,7 +7,6 @@ import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent;
-import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment;
@@ -56,7 +55,7 @@ import java.util.function.Function;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionProvider, EditFileProvider {
+public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider {
   private static final String NAME = "CVS";
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
@@ -337,6 +336,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return new CvsRevisionSelector(myProject);
   }
 
+  @NotNull
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
     return myCommittedChangesProvider;
@@ -372,11 +372,6 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
         return FindAllRootsHelper.findVersionedUnder(result);
       }
     };
-  }
-
-  @Override
-  public boolean needsLegacyDefaultMappings() {
-    return true;
   }
 
   @Override

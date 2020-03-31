@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
@@ -108,7 +109,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
                     "Select items in the tree below or press Cancel to cancel operation.");
     myTreeTable = createTreeTable(suggestedRoots);
     myPane = ScrollPaneFactory.createScrollPane(myTreeTable);
-    setTitle("Detected Roots");
+    setTitle(ProjectBundle.message("dialog.title.detected.roots"));
     init();
   }
 
@@ -128,7 +129,6 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         VirtualFile file = node.getFile();
         String text;
         SimpleTextAttributes attributes;
-        Icon icon;
         boolean isValid = true;
         if (leaf) {
           VirtualFile ancestor = ((VirtualFileCheckedTreeNode)node.getParent()).getFile();
@@ -146,15 +146,13 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
             text = file.getPresentableUrl();
           }
           attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-          icon = PlatformIcons.FOLDER_ICON;
         }
         else {
           text = file.getPresentableUrl();
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-          icon = PlatformIcons.FOLDER_ICON;
         }
         final ColoredTreeCellRenderer textRenderer = getTextRenderer();
-        textRenderer.setIcon(icon);
+        textRenderer.setIcon(PlatformIcons.FOLDER_ICON);
         if (!isValid) {
           textRenderer.append("[INVALID] ", SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
@@ -204,7 +202,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
 
   @Override
   protected JComponent createTitlePane() {
-    return new TitlePanel("Choose Roots", myDescription);
+    return new TitlePanel(ProjectBundle.message("section.title.choose.roots"), myDescription);
   }
 
   @Nullable

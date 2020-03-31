@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -49,11 +49,11 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
   static {
     GenerateAccessorProviderRegistrar.registerProvider(s -> {
-      if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
+      if (s.getLanguage() != JavaLanguage.INSTANCE) return Collections.emptyList();
       final List<EncapsulatableClassMember> result = new ArrayList<>();
       for (PsiField field : s.getFields()) {
         if (!(field instanceof PsiEnumConstant)) {
@@ -151,8 +151,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   }
 
   @Override
-  @Nullable
-  protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
+  protected ClassMember @Nullable [] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);
     if (list.isEmpty()) {
       return null;

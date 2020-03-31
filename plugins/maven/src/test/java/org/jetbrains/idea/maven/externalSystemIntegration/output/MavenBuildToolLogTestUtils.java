@@ -9,12 +9,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import org.apache.log4j.Logger;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -38,21 +38,43 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
   protected ExternalSystemTaskId myTaskId;
 
+  public interface ThrowingRunnable {
+    void run() throws Throwable;
+  }
+
+
+  public static  void failOnWarns(ThrowingRunnable runnable) throws Throwable {
+    LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
+    try {
+      LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+        @Override
+        public void processWarn(String message, Throwable t, @NotNull Logger logger) {
+          super.processWarn(message, t, logger);
+          fail(message + t);
+        }
+      });
+      runnable.run();
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(oldInstance);
+    }
+  }
+
   @Before
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myTaskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project");
   }
 
-  @NotNull
-  protected static String[] fromFile(String resource) throws IOException {
-    try (InputStream stream = ResourceUtil.getResource(MavenBuildToolLogTestUtils.class, "", resource).openStream();
+  protected static String @NotNull [] fromFile(String resource) throws IOException {
+    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();
       while (scanner.hasNextLine()) {
         result.add(scanner.nextLine());
       }
-      return ArrayUtil.toStringArray(result);
+      return ArrayUtilRt.toStringArray(result);
     }
   }
 
@@ -68,7 +90,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     public TestCaseBuider withLines(String... lines) {
       List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
-      ContainerUtil.addAll(myLines, joinedAndSplitted);
+      myLines.addAll(joinedAndSplitted);
       return this;
     }
 
@@ -139,7 +161,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       Map<Object, String> result = new LinkedHashMap<>();
       for (BuildEvent event : events) {
         if (event instanceof FinishEvent) {
-          Integer value = levelMap.remove(event.getId());
+          Integer value = levelMap.get(event.getId());
           if (value == null) {
             fail("Finish event for non-registered start event" + event);
           }
@@ -150,7 +172,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
           result.computeIfPresent(event.getId(), (id, s) -> "error:" + s);
         }
         else {
-          int level = -1;
+          int level;
           if (event.getId() instanceof ExternalSystemTaskId) {
             level = 0;
           }
@@ -172,7 +194,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
       StringBuilder builder = new StringBuilder();
       for (Map.Entry<Object, String> entry : result.entrySet()) {
-        builder.append(StringUtil.repeatSymbol(' ', levelMap.get(entry.getKey()))).append(entry.getValue());
+        Integer indent = levelMap.get(entry.getKey());
+        builder.append(StringUtil.repeatSymbol(' ', indent == null ? 0 : indent.intValue())).append(entry.getValue());
         if(!entry.getValue().endsWith("\n")) {
           builder.append("\n");
         }
@@ -321,10 +344,11 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     private List<String> myLines;
     private int myPosition = -1;
 
-    public StubBuildOutputReader(List<String> lines) {
+    StubBuildOutputReader(List<String> lines) {
       myLines = lines;
     }
 
+    @NotNull
     @Override
     public Object getParentEventId() {
       throw new UnsupportedOperationException();
@@ -347,8 +371,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       throw new UnsupportedOperationException();
     }
 
-    @Override
-    public String getCurrentLine() {
+    public String getCurrentLine() { // FIXME-ank: made public (should be private)
       if (myPosition >= myLines.size() || myPosition < 0) {
         return null;
       }

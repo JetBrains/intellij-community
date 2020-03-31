@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryStateSplitter;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -67,7 +67,7 @@ public class CoreProjectLoader {
     if (libraries != null) {
       Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
       Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new LibraryStateSplitter()), Element.class, null);
-      ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
+      ((LibraryTableBase) LibraryTablesRegistrar.getInstance().getLibraryTable(project)).loadState(libraryTable);
     }
 
     moduleManager.loadModules();

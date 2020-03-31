@@ -26,19 +26,18 @@ import javax.swing.event.DocumentEvent;
  * @author yole
  */
 public class CreateFormAction extends AbstractCreateFormAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateFormAction");
+  private static final Logger LOG = Logger.getInstance(CreateFormAction.class);
 
   private String myLastClassName = null;
   private String myLastLayoutManager = null;
 
   public CreateFormAction() {
-    super(UIDesignerBundle.message("action.gui.form.text"),
-          UIDesignerBundle.message("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
+    super(UIDesignerBundle.messagePointer("action.gui.form.text"),
+          UIDesignerBundle.messagePointer("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final DialogWrapper dialog = new MyDialog(project, validator);
@@ -48,8 +47,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     PsiElement createdFile;
     PsiClass newClass = null;
     try {
@@ -89,11 +87,6 @@ public class CreateFormAction extends AbstractCreateFormAction {
   @Override
   protected String getErrorTitle() {
     return UIDesignerBundle.message("error.cannot.create.form");
-  }
-
-  @Override
-  protected String getCommandName() {
-    return UIDesignerBundle.message("command.create.form");
   }
 
   private class MyDialog extends DialogWrapper {

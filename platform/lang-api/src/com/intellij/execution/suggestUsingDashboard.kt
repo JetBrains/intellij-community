@@ -20,7 +20,8 @@ fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection
       it.id !in currentTypes
     }
     if (typesToAdd.isNotEmpty()) {
-      Notifications.Bus.notify(SuggestDashboardNotification(project, typesToAdd.toSet()), project)
+      Notifications.Bus.notify(
+        SuggestDashboardNotification(project, typesToAdd.toSet(), RunDashboardManager.getInstance(project).toolWindowId), project)
     }
   }
 }
@@ -29,14 +30,15 @@ private const val suggestRunDashboardId = "Suggest Run Dashboard"
 
 private class SuggestDashboardNotification(
   private val project: Project,
-  private val types: Set<ConfigurationType>
+  private val types: Set<ConfigurationType>,
+  toolWindowId: String
 ) : Notification(
   suggestRunDashboardId,
   AllIcons.RunConfigurations.TestState.Run,
-  "Use Run Dashboard?",
+  "Use $toolWindowId?",
   null,
-  "Run Dashboard is convenient for viewing results of multiple run configuration at once. " +
-  "Add the following configuration types to Run Dashboard:<br>" +
+  "$toolWindowId is convenient for viewing results of multiple run configuration at once. " +
+  "Add the following configuration types to $toolWindowId:<br>" +
   types.joinToString(prefix = "<b>", postfix = "</b>", separator = "<br>") { it.configurationTypeDescription } + "<br>?",
   NotificationType.INFORMATION,
   { _, _ -> }

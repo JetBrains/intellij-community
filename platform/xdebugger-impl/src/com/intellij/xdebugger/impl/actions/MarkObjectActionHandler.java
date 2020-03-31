@@ -19,9 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class MarkObjectActionHandler extends DebuggerActionHandler {
   public abstract boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event);
 }

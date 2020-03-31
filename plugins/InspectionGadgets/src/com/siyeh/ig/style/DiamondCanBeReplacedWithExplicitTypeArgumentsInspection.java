@@ -33,12 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.name");
-  }
 
   @NotNull
   @Override

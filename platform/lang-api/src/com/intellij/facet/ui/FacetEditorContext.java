@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,12 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public interface FacetEditorContext extends UserDataHolder {
 
   @NotNull
@@ -44,6 +43,9 @@ public interface FacetEditorContext extends UserDataHolder {
   @Nullable
   Library findLibrary(@NotNull String name);
 
+  /**
+   * @deprecated always {@code null}
+   */
   @Deprecated
   @Nullable
   ModuleBuilder getModuleBuilder();
@@ -73,6 +75,9 @@ public interface FacetEditorContext extends UserDataHolder {
 
   Library[] getLibraries();
 
+  /**
+   * @deprecated always {@code null}
+   */
   @Deprecated
   @Nullable
   WizardContext getWizardContext();

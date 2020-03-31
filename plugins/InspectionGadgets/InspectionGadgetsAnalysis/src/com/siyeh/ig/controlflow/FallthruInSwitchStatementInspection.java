@@ -35,12 +35,6 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("fallthru.in.switch.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "fallthrough";
   }

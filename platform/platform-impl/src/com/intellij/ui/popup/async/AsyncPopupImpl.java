@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.async;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -81,7 +82,7 @@ public class AsyncPopupImpl extends WizardPopup implements Runnable {
     if (myPanel != null) return myPanel;
     myPanel = new JPanel(new BorderLayout());
     //myPanel.add(new AsyncProcessIcon("Async Popup Step"), BorderLayout.WEST);
-    JBLabel label = new JBLabel("Loading...");
+    JBLabel label = new JBLabel(CommonBundle.getLoadingTreeNodeText());
     label.setForeground(UIUtil.getLabelDisabledForeground());
     myPanel.add(label, BorderLayout.CENTER);
     myPanel.setBorder(new EmptyBorder(UIUtil.getListCellPadding()));

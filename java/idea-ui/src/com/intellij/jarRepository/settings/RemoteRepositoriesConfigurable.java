@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -13,10 +14,13 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +47,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private JButton myRemoveRepoButton;
   private JButton myResetToDefaultReposButton;
   private JButton myResetToDefaultServicesButton;
+  private JPanel myMavenPanel;
+  private JPanel myServiceListPanel;
 
   private final Project myProject;
   private final CollectionListModel<String> myServicesModel = new CollectionListModel<>();
@@ -68,13 +74,20 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   private void configControls() {
+    myMavenPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message("settings.remote.repo.maven.jar.repositories"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message(
+      "settings.remote.repo.artifactory.nexus.or.bintray.service.urls"), false, JBUI.insetsTop(8)).setShowLine(false));
+
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
-      "Artifactory, Nexus or Bintray Service URLs", "Service URL", "No services", DataAdapter.STRING_ADAPTER
+      JavaUiBundle.message("settings.remote.repo.artifactory.nexus.or.bintray"), JavaUiBundle.message("settings.remote.repo.service.url"),
+      JavaUiBundle.message("settings.remote.repo.no.services"), DataAdapter.STRING_ADAPTER
     );
     setupListControls(
       myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton, myRemoveRepoButton,
-      "Maven Repository URL", "maven Repository URL", "No remote repositories", DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
+      JavaUiBundle.message("settings.remote.repo.maven.repository.url"),
+      JavaUiBundle.message("settings.remote.repo.Maven.Repository.URL"),
+      JavaUiBundle.message("settings.remote.repo.no.remote.repositories"), DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
     );
 
     ListUtil.disableWhenNoSelection(myTestServiceButton, myServiceList);
@@ -87,7 +100,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
           JarRepositoryManager.searchRepositories(myProject, Collections.singletonList(value), infos -> {
             myTestServiceButton.setEnabled(true);
             if (infos.isEmpty()) {
-              Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
+              Messages.showMessageDialog(JavaUiBundle.message("settings.remote.repo.no.repositories.found"),
+                                         JavaUiBundle.message("settings.remote.repo.service.connection.failed"), Messages.getWarningIcon());
             }
             else {
               final StringBuilder sb = new StringBuilder();
@@ -96,7 +110,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
               //  sb.append("\n  ");
               //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
               //}
-              Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
+              Messages.showMessageDialog(sb.toString(), JavaUiBundle.message("settings.remote.repo.service.connection.successful"),
+                                         Messages.getInformationIcon());
             }
             return true;
           });
@@ -172,8 +187,11 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       @Override
       public void actionPerformed(ActionEvent e) {
         final T value = list.getSelectedValue();
+        @NonNls String defaultValue = "https://";
+        String initialValue = value == null ? defaultValue : adapter.toPresentation(value);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Add" + " " + modificationDialogHint, Messages.getQuestionIcon(), value == null ? "https://" : adapter.toPresentation(value), new URLInputVaslidator()
+          modificationDialogTitle, JavaUiBundle.message("dialog.title.add.repository.0", modificationDialogHint), Messages.getQuestionIcon(),
+          initialValue, new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.add(adapter.create(text));
@@ -187,7 +205,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         final int index = list.getSelectedIndex();
         final T element = model.getElementAt(index);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Edit" + " " + modificationDialogHint, Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
+          modificationDialogTitle, JavaUiBundle.message("dialog.title.edit.repository.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.setElementAt(adapter.change(element, text), index);
@@ -202,7 +220,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
 
   @Override
   public String getDisplayName() {
-    return "Remote Jar Repositories";
+    return JavaUiBundle.message("configurable.RemoteRepositoriesConfigurable.display.name");
   }
 
   @Override

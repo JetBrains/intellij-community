@@ -6,11 +6,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("ALL")
-public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
+public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCase {
   
   public void testSingleImportConflictingWith2Others() throws Exception {
     

@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -50,7 +51,7 @@ import java.util.*;
  * @author peter
  */
 public class InvokeCompletion extends ActionOnFile {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
+  private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
   private final CompletionPolicy myPolicy;
 
   public InvokeCompletion(@NotNull PsiFile file, @NotNull CompletionPolicy policy) {
@@ -155,7 +156,8 @@ public class InvokeCompletion extends ActionOnFile {
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {
-      EditorActionManager.getInstance().getTypedAction().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
+      EditorActionManager.getInstance();
+      TypedAction.getInstance().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
     }
   }
 

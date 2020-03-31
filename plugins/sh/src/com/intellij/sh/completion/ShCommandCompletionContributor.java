@@ -19,7 +19,10 @@ import com.intellij.sh.psi.ShCommandsList;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +42,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         if (endsWithDot(parameters)) return;
 
-        Collection<String> kws = ContainerUtil.newSmartList();
+        Collection<String> kws = new SmartList<>();
         PsiElement original = parameters.getOriginalPosition();
         if (original == null || !original.getText().contains("/")) {
           result.addAllElements(ContainerUtil.map(BUILTIN,
@@ -63,7 +66,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         }
 
         CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
-        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, ContainerUtil.newTroveSet(kws));
+        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, new THashSet<>(kws));
       }
     });
   }
@@ -101,12 +104,9 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         insideComment()));
   }
 
-  private static final List<String> BUILTIN = ContainerUtil.newSmartList(
-      "alias", "bg", "bind", "break", "builtin", "caller", "cd", "command",
-      "compgen", "complete", "continue", "declare", "dirs", "disown", "echo",
-      "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts",
-      "hash", "help", "history", "jobs", "kill", "let", "local", "logout", "popd",
-      "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",
-      "source", "suspend", "test", "times", "trap", "true", "type", "typeset", "ulimit",
-      "umask", "unalias", "unset", "wait");
+  @NonNls private static final List<String> BUILTIN =
+    new SmartList<>("alias", "bg", "bind", "break", "builtin", "caller", "cd", "command", "compgen", "complete", "continue", "declare",
+      "dirs", "disown", "echo", "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts", "hash", "help", "history",
+      "jobs", "kill", "let", "local", "logout", "popd", "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",
+      "source", "suspend", "test", "times", "trap", "true", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait");
 }

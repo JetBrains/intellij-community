@@ -25,8 +25,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * &nbsp;&nbsp;&lt;moduleConfigurationEditorProvider implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public interface ModuleConfigurationEditorProvider {
   ExtensionPointName<ModuleConfigurationEditorProvider> EP_NAME = ExtensionPointName.create("com.intellij.moduleConfigurationEditorProvider"); 

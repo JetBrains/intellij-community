@@ -1,5 +1,25 @@
+<fold text='/.../'>/*
+file header comment
+ */</fold>
+
+package test;
+  <fold text='/*...*/'>/*
+outer class comment
+ */</fold>
+
+<fold text='//...'>//outer class
+//consequent EOL comments</fold>
+
+import java.util.List;
 <fold text='/*...*/'>/*
 outer class comment
+ */</fold>
+
+<fold text='//...'>//outer class
+//consequent EOL comments</fold>
+
+<fold text='/*...*/'>/*
+before class comment
  */</fold>
 class Test {
   <fold text='/*...*/'>/*
@@ -42,3 +62,8 @@ class Test {
     }</fold>
   }</fold>
 }
+<fold text='/*...*/'>/*
+after class comment
+ */</fold>
+<fold text='//...'>// after class
+//consequent EOL comments</fold>

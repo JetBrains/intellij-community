@@ -18,29 +18,29 @@ package com.intellij.roots;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.Assume;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
-public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
+public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
     assertOrderedEquals(pathsList.getRootDirs(), files);
   }
@@ -141,5 +141,9 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected VirtualFile getAsmJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
+  }
+
+  protected static void ignoreTestUnderWorkspaceModel() {
+    Assume.assumeFalse("Not applicable to workspace model", Registry.is("ide.new.project.model"));
   }
 }

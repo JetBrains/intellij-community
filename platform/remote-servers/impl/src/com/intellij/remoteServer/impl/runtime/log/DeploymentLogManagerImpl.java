@@ -22,6 +22,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,9 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class DeploymentLogManagerImpl implements DeploymentLogManager {
   private final LoggingHandlerImpl myMainLoggingHandler;
   private final Project myProject;
@@ -56,6 +54,12 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     });
   }
 
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
   public DeploymentLogManagerImpl withMainHandlerVisible(boolean mainHandlerVisible) {
     myMainHandlerVisible = mainHandlerVisible;
     return this;
@@ -74,9 +78,15 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   @NotNull
   @Override
   public LoggingHandler addAdditionalLog(@NotNull String presentableName) {
-    LoggingHandlerImpl handler = new LoggingHandlerImpl.Colored(presentableName, myProject);
-    addAdditionalLoggingHandler(handler);
-    return handler;
+    synchronized (myLogsDisposed) {
+      if (myLogsDisposed.get()) {
+        throw new IllegalStateException("Already disposed, can't add " + presentableName);
+      }
+
+      LoggingHandlerImpl handler = new LoggingHandlerImpl.Colored(presentableName, myProject);
+      addAdditionalLoggingHandler(handler);
+      return handler;
+    }
   }
 
   @Override
@@ -100,11 +110,17 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   }
 
   @Override
+  @Nullable
   public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
-    TerminalHandlerBase handler = CloudTerminalProvider.getInstance().createTerminal(presentableName, myProject, terminalOutput,
-                                                                                     terminalInput);
-    addAdditionalLoggingHandler(handler);
-    return handler;
+    synchronized (myLogsDisposed) {
+      if (myLogsDisposed.get()) {
+        return null;
+      }
+      TerminalHandlerBase handler = CloudTerminalProvider.getInstance().createTerminal(presentableName, myProject, terminalOutput,
+                                                                                       terminalInput);
+      addAdditionalLoggingHandler(handler);
+      return handler;
+    }
   }
   //
   //private static CloudTerminalProvider getTerminalProvider() {
@@ -137,8 +153,10 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   }
 
   public void disposeLogs() {
-    if (!myLogsDisposed.getAndSet(true)) {
-      Disposer.dispose(myLogsDisposable);
+    synchronized (myLogsDisposed) {
+      if (!myLogsDisposed.getAndSet(true)) {
+        Disposer.dispose(myLogsDisposable);
+      }
     }
   }
 }

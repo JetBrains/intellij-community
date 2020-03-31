@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -26,29 +12,27 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangesDependentIndex {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangeDependentIndex {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
-  
-  private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
 
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+  private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
 
   private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     @Override
@@ -61,7 +45,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
       return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
     }
   };
-  
+
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
     @Override
     public IdIndexEntry fromInt(int n) {
@@ -73,23 +57,10 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
       return idIndexEntry.getWordHashCode();
     }
   };
-  
-  private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
-    @Override
-    @NotNull
-    public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      final IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
-      if (indexer != null) {
-        return indexer.map(inputData);
-      }
-
-      return Collections.emptyMap();
-    }
-  };
 
   @Override
   public int getVersion() {
-    return 16 + (ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 16;
   }
 
   @Override
@@ -106,7 +77,31 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @NotNull
   @Override
   public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
-    return myIndexer;
+    return new CompositeDataIndexer<IdIndexEntry, Integer, IdIndexer, String>() {
+      @Nullable
+      @Override
+      public IdIndexer calculateSubIndexer(@NotNull IndexedFile file) {
+        return IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      }
+
+      @NotNull
+      @Override
+      public String getSubIndexerVersion(@NotNull IdIndexer indexer) {
+        return indexer.getClass().getName() + ":" + indexer.getVersion();
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<String> getSubIndexerVersionDescriptor() {
+        return EnumeratorStringDescriptor.INSTANCE;
+      }
+
+      @NotNull
+      @Override
+      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull IdIndexer indexer) {
+        return indexer.map(inputData);
+      }
+    };
   }
 
   @NotNull
@@ -126,7 +121,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
-  
+
   public static boolean isIndexable(FileType fileType) {
     return fileType instanceof LanguageFileType ||
            fileType instanceof CustomSyntaxTableFileType ||
@@ -137,6 +132,11 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
   }
 
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {

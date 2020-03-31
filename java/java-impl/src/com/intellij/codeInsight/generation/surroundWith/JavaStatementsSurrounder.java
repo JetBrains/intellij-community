@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -22,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -30,14 +17,14 @@ import org.jetbrains.annotations.Nullable;
 
 abstract class JavaStatementsSurrounder implements Surrounder {
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
   }
 
   @Override
   @Nullable public TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
-                                              @NotNull PsiElement[] elements) throws IncorrectOperationException {
+                                              PsiElement @NotNull [] elements) throws IncorrectOperationException {
     PsiElement container = elements[0].getParent();
     if (container == null) return null;
     return surroundStatements (project, editor, container, elements);
@@ -66,7 +53,7 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     if (container instanceof PsiSwitchLabeledRuleStatement && statements.length == 1) {
       PsiElement statement = statements[0];
       if (statement instanceof PsiExpressionStatement && canBreak) {
-        addBreakWithValue(codeBlock, (PsiExpressionStatement)statement);
+        addYield(codeBlock, (PsiExpressionStatement)statement);
         return;
       }
       if (statement instanceof PsiBlockStatement) {
@@ -78,22 +65,22 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     codeBlock.addRange(statements[0], statements[statements.length - 1]);
   }
 
-  private static void addBreakWithValue(PsiCodeBlock codeBlock, PsiExpressionStatement statement) {
+  private static void addYield(PsiCodeBlock codeBlock, PsiExpressionStatement statement) {
     PsiExpressionStatement wrappedStatement = (PsiExpressionStatement)codeBlock.add(statement);
     CommentTracker tracker = new CommentTracker();
     tracker.markUnchanged(wrappedStatement.getExpression());
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(codeBlock.getProject());
-    PsiBreakStatement breakStatement = (PsiBreakStatement)factory.createStatementFromText("break 0;", null);
-    breakStatement = (PsiBreakStatement)tracker.replaceAndRestoreComments(wrappedStatement, breakStatement);
+    PsiYieldStatement yieldStatement = (PsiYieldStatement)factory.createStatementFromText("yield 0;", statement);
+    yieldStatement = (PsiYieldStatement)tracker.replaceAndRestoreComments(wrappedStatement, yieldStatement);
 
-    PsiExpression breakExpression = breakStatement.getExpression();
-    assert breakExpression != null : "breakExpression";
-    breakExpression.replace(statement.getExpression());
+    PsiExpression yieldExpression = yieldStatement.getExpression();
+    assert yieldExpression != null : DebugUtil.psiToString(yieldStatement, false);
+    yieldExpression.replace(statement.getExpression());
   }
 
   protected static void addCodeBlockContents(PsiCodeBlock codeBlock, PsiBlockStatement statement) {
-    // could just replace one code block with the other but then we lose some comments and formatting
+    // could just replace one code block with the other, but then we lose some comments and formatting
     PsiBlockStatement tempStatement = (PsiBlockStatement)codeBlock.add(statement);
     PsiCodeBlock tempBlock = tempStatement.getCodeBlock();
     PsiJavaToken lBrace = tempBlock.getLBrace();

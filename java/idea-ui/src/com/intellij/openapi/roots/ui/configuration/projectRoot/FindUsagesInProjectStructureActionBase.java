@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -42,9 +42,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
   private final JComponent myParentComponent;
   private final Project myProject;
@@ -70,7 +67,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
 
     final Collection<ProjectStructureElementUsage> usages = getContext().getDaemonAnalyzer().getUsages(selected);
     if (usages.isEmpty()) {
-      Messages.showInfoMessage(myParentComponent, FindBundle.message("find.usage.view.no.usages.text"), FindBundle.message("find.pointcut.applications.not.found.title"));
+      Messages.showInfoMessage(myParentComponent, JavaUiBundle.message("find.usage.view.no.usages.text"), JavaUiBundle.message("find.pointcut.applications.not.found.title"));
       return;
     }
 
@@ -79,7 +76,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     Arrays.sort(usagesArray, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
 
     BaseListPopupStep<ProjectStructureElementUsage> step =
-      new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
+      new BaseListPopupStep<ProjectStructureElementUsage>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
         @Override
         public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
           PlaceInProjectStructure place = selected.getPlace();

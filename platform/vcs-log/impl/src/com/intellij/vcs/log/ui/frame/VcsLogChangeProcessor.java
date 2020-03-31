@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
@@ -10,18 +11,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.List;
+import java.util.stream.Stream;
 
-class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
+public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
   VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,
@@ -35,6 +36,11 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     myBrowser.getViewer().addSelectionListener(this::updatePreviewLater, this);
   }
 
+  @Override
+  protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
+    return false;
+  }
+
   @NotNull
   public com.intellij.ui.components.panels.Wrapper getToolbarWrapper() {
     return myToolbarWrapper;
@@ -42,16 +48,22 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   @Override
-  protected List<Wrapper> getSelectedChanges() {
+  protected Stream<Wrapper> getSelectedChanges() {
     boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
-    List<Change> changes = hasSelection ? myBrowser.getSelectedChanges() : myBrowser.getAllChanges();
-    return ContainerUtil.map(changes, MyChangeWrapper::new);
+    return wrap(hasSelection ? VcsTreeModelData.selected(myBrowser.getViewer())
+                             : VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
   @NotNull
   @Override
-  protected List<Wrapper> getAllChanges() {
-    return ContainerUtil.map(myBrowser.getAllChanges(), MyChangeWrapper::new);
+  protected Stream<Wrapper> getAllChanges() {
+    return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
+  }
+
+
+  @NotNull
+  private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
+    return modelData.userObjectsStream(Change.class).map(MyChangeWrapper::new);
   }
 
   @Override
@@ -74,23 +86,15 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     updatePreview(state, false);
   }
 
-  private class MyChangeWrapper extends Wrapper {
-    @NotNull private final Change myChange;
-
+  private class MyChangeWrapper extends ChangeWrapper {
     MyChangeWrapper(@NotNull Change change) {
-      myChange = change;
-    }
-
-    @NotNull
-    @Override
-    public Object getUserObject() {
-      return myChange;
+      super(change);
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return myBrowser.getDiffRequestProducer(myChange, true);
+      return myBrowser.getDiffRequestProducer(change, true);
     }
   }
 }

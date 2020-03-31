@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.converters.PathReferenceConverter;
@@ -68,9 +67,9 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
         private boolean isAlreadyUsed(final XmlFile xmlFile) {
           final PsiFile file = getContainingFile();
           if (!(file instanceof XmlFile)) return false;
-          final DomFileElement<IdeaPlugin> ideaPlugin = DescriptorUtil.getIdeaPlugin((XmlFile)file);
+          final IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin((XmlFile)file);
           if (ideaPlugin == null) return false;
-          return !ContainerUtil.process(ideaPlugin.getRootElement().getDependencies(), dependency -> {
+          return !ContainerUtil.process(ideaPlugin.getDependencies(), dependency -> {
             final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
             if (!DomUtil.hasXml(configFileAttribute)) return true;
             final PathReference pathReference = configFileAttribute.getValue();
@@ -127,9 +126,8 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
     return PathReferenceManager.getInstance().getCustomPathReference(s, module, element, ourProvider);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, boolean soft) {
     return PathReferenceManager.getInstance().createCustomReferences(psiElement,
                                                                      soft,
                                                                      ourProvider);

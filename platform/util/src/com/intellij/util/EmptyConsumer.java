@@ -18,7 +18,7 @@ package com.intellij.util;
 public class EmptyConsumer {
 
   public static <T> Consumer<T> getInstance() {
-    //noinspection unchecked
-    return Consumer.EMPTY_CONSUMER;
+    //noinspection unchecked,deprecation
+    return (Consumer<T>)Consumer.EMPTY_CONSUMER;
   }
 }

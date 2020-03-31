@@ -16,8 +16,9 @@
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.JavaAnalysisScope;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -41,9 +42,9 @@ public class CyclicDependenciesAction extends AnAction{
   private final String myTitle;
 
   public CyclicDependenciesAction() {
-    myAnalysisVerb = AnalysisScopeBundle.message("action.analyze.verb");
-    myAnalysisNoun = AnalysisScopeBundle.message("action.analysis.noun");
-    myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
+    myAnalysisVerb = CodeInsightBundle.message("action.analyze.verb");
+    myAnalysisNoun = CodeInsightBundle.message("action.analysis.noun");
+    myTitle = JavaBundle.message("action.cyclic.dependency.title");
   }
 
   @Override
@@ -58,35 +59,34 @@ public class CyclicDependenciesAction extends AnAction{
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
     final Module module = LangDataKeys.MODULE.getData(dataContext);
-    if (project != null) {
-      AnalysisScope scope = getInspectionScope(dataContext);
-      if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
-        ProjectModuleOrPackageDialog dlg = null;
-        if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(
-            ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
-          if (!dlg.showAndGet()) {
-            return;
-          }
-        }
-        if (dlg == null || dlg.isProjectScopeSelected()) {
-          scope = getProjectScope(dataContext);
-        }
-        else {
-          if (dlg.isModuleScopeSelected()) {
-            scope = getModuleScope(dataContext);
-          }
-        }
-        if (scope != null) {
-          scope.setIncludeTestSource(dlg != null && dlg.isIncludeTestSources());
+    AnalysisScope scope = getInspectionScope(dataContext);
+    if (scope == null || scope.getScopeType() != AnalysisScope.MODULES) {
+      ProjectModuleOrPackageDialog dlg = null;
+      if (module != null) {
+        dlg = new ProjectModuleOrPackageDialog(
+          ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
+        if (!dlg.showAndGet()) {
+          return;
         }
       }
-
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      new CyclicDependenciesHandler(project, scope).analyze();
+      if (dlg == null || dlg.isProjectScopeSelected()) {
+        scope = getProjectScope(dataContext);
+      }
+      else if (dlg.isModuleScopeSelected()) {
+        scope = getModuleScope(dataContext);
+      }
+      if (scope != null) {
+        scope.setIncludeTestSource(dlg != null && dlg.isIncludeTestSources());
+      }
     }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    new CyclicDependenciesHandler(project, scope).analyze();
   }
 
 
@@ -124,7 +124,7 @@ public class CyclicDependenciesAction extends AnAction{
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
     }
-    else if (psiTarget instanceof PsiPackage) {
+    if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
@@ -135,7 +135,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   @Nullable
-  private static AnalysisScope getProjectScope(DataContext dataContext) {
+  private static AnalysisScope getProjectScope(@NotNull DataContext dataContext) {
     final Project data = CommonDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
       return null;
@@ -169,23 +169,23 @@ public class CyclicDependenciesAction extends AnAction{
       myModuleName = moduleName;
       mySelectedScope = selectedScope;
       init();
-      setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
+      setTitle(JavaBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
     }
 
-    public boolean isIncludeTestSources() {
+    boolean isIncludeTestSources() {
       return myIncludeTestSourcesCb.isSelected();
     }
 
     @Override
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
-        AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun), true));
-      myProjectButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
+        CodeInsightBundle.message("analysis.scope.title", myAnalysisNoun)));
+      myProjectButton.setText(JavaBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
       if (myModuleName != null) {
-        myModuleButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
+        myModuleButton.setText(JavaBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
         group.add(myModuleButton);
       }
       myModuleButton.setVisible(myModuleName != null);
@@ -196,9 +196,11 @@ public class CyclicDependenciesAction extends AnAction{
       }
       if (mySelectedScope != null) {
         mySelectedScopeButton.setSelected(true);
-      } else if (myModuleName != null) {
+      }
+      else if (myModuleName != null) {
         myModuleButton.setSelected(true);
-      } else {
+      }
+      else {
         myProjectButton.setSelected(true);
       }
       return myWholePanel;
@@ -209,7 +211,7 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     public boolean isModuleScopeSelected() {
-      return myModuleButton != null ? myModuleButton.isSelected() : false;
+      return myModuleButton != null && myModuleButton.isSelected();
     }
 
   }

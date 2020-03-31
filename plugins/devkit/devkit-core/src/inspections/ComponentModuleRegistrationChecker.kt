@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -13,7 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.AtomicClearableLazyValue
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
@@ -35,19 +35,13 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
+class ComponentModuleRegistrationChecker(private val moduleToModuleSet: ClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
                                          private val ignoredClasses: MutableList<String>,
                                          private val annotationHolder: DomElementAnnotationHolder) {
-
   fun checkProperModule(extensionPoint: ExtensionPoint) {
-    val interfacePsiClass = extensionPoint.`interface`.value
-    if (shouldCheckExtensionPointClassAttribute(interfacePsiClass) &&
-        checkProperXmlFileForClass(extensionPoint, interfacePsiClass)) {
-      return
-    }
-    val beanClassPsiClass = extensionPoint.beanClass.value
-    if (shouldCheckExtensionPointClassAttribute(beanClassPsiClass) &&
-        checkProperXmlFileForClass(extensionPoint, beanClassPsiClass)) {
+    val effectiveEpClass = extensionPoint.effectiveClass
+    if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
+        checkProperXmlFileForClass(extensionPoint, effectiveEpClass)) {
       return
     }
 
@@ -189,7 +183,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
   }
 
   private fun findModulePluginXmlFile(module: Module): XmlFile? {
-    for (sourceRoot in ModuleRootManager.getInstance(module).sourceRoots) {
+    for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
       val metaInf = sourceRoot.findChild("META-INF")
       if (metaInf != null && metaInf.isDirectory) {
         for (file in metaInf.children) {

@@ -45946,6 +45946,8 @@ checkroom
 checkroom's
 checkrooms
 checks
+checksum
+checksums
 checkup
 checkup's
 checkups
@@ -51126,6 +51128,8 @@ coroners
 coronet
 coronet's
 coronets
+coroutine
+coroutines
 corpora
 corpora's
 corporal
@@ -55429,6 +55433,8 @@ denominator
 denominator's
 denominators
 denormalize
+denormalized
+denormalizes
 denotation
 denotation's
 denotational
@@ -55933,6 +55939,8 @@ desensitize
 desensitized
 desensitizes
 desensitizing
+deserialize
+deserializes
 desert
 desert's
 deserted
@@ -63720,6 +63728,7 @@ expectation's
 expectational
 expectations
 expected
+expectedly
 expecting
 expectorant
 expectorants
@@ -89275,7 +89284,6 @@ monopoly's
 monorail
 monorail's
 monorails
-monorepo
 monostable
 monosyllabic
 monosyllable
@@ -95992,6 +96000,7 @@ paralleling
 parallelism
 parallelism's
 parallelisms
+parallelization
 parallelize
 parallelled
 parallelling
@@ -101348,6 +101357,9 @@ prelims
 preliterate
 preliterates
 preload
+preloaded
+preloading
+preloads
 prelude
 prelude's
 preludes
@@ -101439,6 +101451,10 @@ prepayment
 prepayment's
 prepayments
 prepays
+prepend
+prepended
+prepending
+prepends
 preplanned
 preponderance
 preponderance's
@@ -112123,6 +112139,7 @@ screenplay
 screenplay's
 screenplays
 screens
+screenshot
 screenwriter
 screenwriters
 screenwriting
@@ -120125,6 +120142,8 @@ stringer's
 stringers
 stringier
 stringiest
+stringify
+stringifies
 stringiness
 stringiness's
 stringing
@@ -126182,6 +126201,7 @@ transfusing
 transfusion
 transfusion's
 transfusions
+transgender
 transgendered
 transgenic
 transgress
@@ -129498,7 +129518,10 @@ unmanned
 unmannerly
 unmanning
 unmans
+unmap
+unmaps
 unmapped
+unmapping
 unmarked
 unmarketable
 unmarred

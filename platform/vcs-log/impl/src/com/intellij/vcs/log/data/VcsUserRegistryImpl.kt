@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.HashSetInterner
 import com.intellij.util.containers.Interner
 import com.intellij.util.io.*
 import com.intellij.vcs.log.VcsUser
@@ -30,14 +31,14 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
 
   init {
     initEnumerator()
-    interner = Interner()
+    interner = HashSetInterner()
   }
 
   private fun initEnumerator(): Boolean {
     try {
       val enumerator = IOUtil.openCleanOrResetBroken({
-                                                       PersistentBTreeEnumerator(mapFile, VcsUserKeyDescriptor(this), Page.PAGE_SIZE, null,
-                                                                                 STORAGE_VERSION)
+                                                       PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this),
+                                                                                 Page.PAGE_SIZE, null, STORAGE_VERSION)
                                                      }, mapFile)
       val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
       if (!wasSet) {
@@ -89,6 +90,24 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     catch (t: Throwable) {
       LOG.error(t)
       emptySet()
+    }
+  }
+
+  fun all(condition: (t: VcsUser) -> Boolean): Boolean {
+    return try {
+      persistentEnumerator?.iterateData(condition) ?: false
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      rebuild()
+      false
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (t: Throwable) {
+      LOG.error(t)
+      false
     }
   }
 

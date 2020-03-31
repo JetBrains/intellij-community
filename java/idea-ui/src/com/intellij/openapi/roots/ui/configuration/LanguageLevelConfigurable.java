@@ -16,10 +16,10 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,7 +36,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
   public LanguageLevelConfigurable(final Project project, Runnable onChange) {
-    myLanguageLevelCombo = new LanguageLevelCombo(ProjectBundle.message("project.language.level.combo.item")) {
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaUiBundle.message("project.language.level.combo.item")) {
       @Override
       protected LanguageLevel getDefaultLevel() {
         return LanguageLevelProjectExtensionImpl.getInstanceImpl(project).getCurrentLevel();
@@ -51,7 +51,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
       }
     });
 
-    JLabel label = new JLabel(ProjectBundle.message("module.module.language.level"));
+    JLabel label = new JLabel(JavaUiBundle.message("module.module.language.level"));
     label.setLabelFor(myLanguageLevelCombo);
     myPanel.add(label,
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(12, 6, 12, 0), 0, 0));
@@ -71,9 +71,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    getLanguageLevelExtension().commit();
-  }
+  public void apply() throws ConfigurationException {}
 
   @Override
   public void reset() {

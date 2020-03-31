@@ -24,8 +24,7 @@ import javax.swing.*;
 
 /**
  * @author peter
- * @deprecated
- * @see com.intellij.ide.presentation.Presentation
+ * @deprecated use {@link com.intellij.ide.presentation.Presentation}
  */
 @Deprecated
 public abstract class DomIconProvider extends PomIconProvider {

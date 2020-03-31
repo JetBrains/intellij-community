@@ -64,11 +64,11 @@ public class PyLiveTemplatesContextTest extends PyTestCase {
     doTest(PythonTemplateContextType.Class.class, PythonTemplateContextType.General.class);
   }
 
-  private void doTest(@NotNull Class<? extends PythonTemplateContextType>... expectedContextTypes) {
+  private void doTest(Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
     doTest("py", expectedContextTypes);
   }
 
-  private void doTest(@NotNull String extension, @NotNull Class<? extends PythonTemplateContextType>... expectedContextTypes) {
+  private void doTest(@NotNull String extension, Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
     myFixture.configureByFile(getTestName(true) + "." + extension);
 
     final List<Class<? extends PythonTemplateContextType>> actualContextTypes = calculateEnabledContextTypes(getRegisteredContextTypes());

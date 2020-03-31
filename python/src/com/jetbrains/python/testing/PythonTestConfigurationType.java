@@ -58,9 +58,8 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
           NotNullLazyValue.createValue(() -> PythonIcons.Python.PythonTests));
   }
 
-  @NotNull
   @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
+  public ConfigurationFactory @NotNull [] getConfigurationFactories() {
     return myFactories.getValue();
   }
 
@@ -73,6 +72,11 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
   @Override
   public String getTag() {
     return "pythonTest";
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 
   private static class PythonLegacyUnitTestConfigurationFactory extends PythonConfigurationFactoryBase {
@@ -91,6 +95,12 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     public String getName() {
       //noinspection SpellCheckingInspection
       return PyBundle.message("runcfg.unittest.display_name");
+    }
+
+    @Override
+    public @NotNull String getId() {
+      //noinspection SpellCheckingInspection
+      return "Unittests";
     }
   }
 
@@ -111,6 +121,12 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
       //noinspection SpellCheckingInspection
       return PyBundle.message("runcfg.doctest.display_name");
     }
+
+    @Override
+    public @NotNull String getId() {
+      //noinspection SpellCheckingInspection
+      return "Doctests";
+    }
   }
 
   private static class PythonLegacyPyTestConfigurationFactory extends PythonConfigurationFactoryBase {
@@ -130,6 +146,12 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
       //noinspection SpellCheckingInspection
       return PyBundle.message("runcfg.pytest.display_name");
     }
+
+    @Override
+    public @NotNull String getId() {
+      //noinspection SpellCheckingInspection
+      return "pytest";
+    }
   }
 
   private static class PythonLegacyNoseTestConfigurationFactory extends PythonConfigurationFactoryBase {
@@ -148,6 +170,12 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     public String getName() {
       //noinspection SpellCheckingInspection
       return PyBundle.message("runcfg.nosetests.display_name");
+    }
+
+    @Override
+    public @NotNull String getId() {
+      //noinspection SpellCheckingInspection
+      return "Nosetests";
     }
   }
 }

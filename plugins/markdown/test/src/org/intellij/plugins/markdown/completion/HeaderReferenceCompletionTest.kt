@@ -1,9 +1,9 @@
 package org.intellij.plugins.markdown.completion
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
-class HeaderReferenceCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
+class HeaderReferenceCompletionTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/completion/headerAnchor/"
 
   fun testHeader1() {

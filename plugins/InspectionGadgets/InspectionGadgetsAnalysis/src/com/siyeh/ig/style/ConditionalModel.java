@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,8 @@ public class ConditionalModel {
    */
   @Nullable
   public static ConditionalModel from(@NotNull PsiConditionalExpression conditional) {
-    PsiExpression condition = conditional.getCondition();
+    PsiExpression condition = ParenthesesUtils.stripParentheses(conditional.getCondition());
+    if (condition == null) return null;
     PsiExpression thenExpression = conditional.getThenExpression();
     if (thenExpression == null) return null;
     PsiExpression elseExpression = conditional.getElseExpression();

@@ -15,11 +15,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 
-public class XmlCodeEditUtilTest extends LightCodeInsightTestCase {
+public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
   public void testXHTML() {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText("a.xhtml", StdFileTypes.XHTML,
@@ -89,7 +89,7 @@ public class XmlCodeEditUtilTest extends LightCodeInsightTestCase {
     assertEquals("<html><body><p/><p/></body></html>", htmlTag.getText());
   }
 
-  private static void execute(Runnable runnable) {
+  private void execute(Runnable runnable) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
       .executeCommand(getProject(), runnable, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION));
   }

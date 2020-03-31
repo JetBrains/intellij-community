@@ -19,4 +19,4 @@ public RegisteredPerson createRegisteredPerson(String username,
     return null;
 }
 
-createRe<ref>gisteredPerson('username', 'pswd', 'email', 'ip', 'role', 'name', 'family', null, 'bio', 'page')
+createRe<caret>gisteredPerson('username', 'pswd', 'email', 'ip', 'role', 'name', 'family', null, 'bio', 'page')

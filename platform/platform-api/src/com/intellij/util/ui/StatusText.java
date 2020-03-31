@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.ui;
 
@@ -21,8 +7,10 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +21,11 @@ import java.util.List;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
-  public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
+  /**
+   * @deprecated Use {@link #getDefaultEmptyText()} instead
+   */
+  @Deprecated
+  public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int Y_GAP = 2;
 
@@ -96,7 +88,7 @@ public abstract class StatusText {
 
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
-    setText(DEFAULT_EMPTY_TEXT, DEFAULT_ATTRIBUTES);
+    setText(getDefaultEmptyText(), DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
 
     mySecondaryComponent.setOpaque(false);
@@ -187,11 +179,11 @@ public abstract class StatusText {
     return myText;
   }
 
-  public StatusText setText(String text) {
+  public StatusText setText(@NlsContexts.StatusText String text) {
     return setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText setText(String text, SimpleTextAttributes attrs) {
+  public StatusText setText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs) {
     return clear().appendText(text, attrs);
   }
 
@@ -210,15 +202,15 @@ public abstract class StatusText {
     if (myOwner != null && isStatusVisible()) myOwner.repaint();
   }
 
-  public StatusText appendText(String text) {
+  public StatusText appendText(@NlsContexts.StatusText String text) {
     return appendText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs) {
+  public StatusText appendText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs) {
     return appendText(text, attrs, null);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
     if (myIsDefaultText) {
       clear();
       myIsDefaultText = false;
@@ -239,7 +231,7 @@ public abstract class StatusText {
   }
 
   @NotNull
-  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+  public StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {
@@ -286,7 +278,7 @@ public abstract class StatusText {
       Rectangle primaryBounds = adjustComponentBounds(myComponent, bounds);
       Rectangle secondaryBounds = adjustComponentBounds(mySecondaryComponent, bounds);
       if (myVerticalFlow) {
-        secondaryBounds.y += primaryBounds.height + JBUI.scale(Y_GAP);
+        secondaryBounds.y += primaryBounds.height + JBUIScale.scale(Y_GAP);
       }
 
       paintComponentInBounds(myComponent, g, primaryBounds);
@@ -336,7 +328,7 @@ public abstract class StatusText {
 
     if (myVerticalFlow) {
       return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
-                           componentSize.height + secondaryComponentSize.height + JBUI.scale(Y_GAP));
+                           componentSize.height + secondaryComponentSize.height + JBUIScale.scale(Y_GAP));
     }
     else {
       return new Dimension(componentSize.width + secondaryComponentSize.width,
@@ -346,5 +338,9 @@ public abstract class StatusText {
 
   public boolean isVerticalFlow() {
     return myVerticalFlow;
+  }
+
+  public static String getDefaultEmptyText() {
+    return UIBundle.message("message.nothingToShow");
   }
 }

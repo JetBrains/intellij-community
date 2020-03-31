@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +32,6 @@ public class AssertMessageNotStringInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnOnBoolean = true;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assert.message.not.string.display.name");
-  }
 
   @NotNull
   @Override

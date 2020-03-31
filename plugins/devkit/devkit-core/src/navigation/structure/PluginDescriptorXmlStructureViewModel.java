@@ -52,9 +52,8 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
     return false;
   }
 
-  @NotNull
   @Override
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return new Sorter[] {
       new Sorter() {
         @Override
@@ -97,7 +96,7 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
 
   @NotNull
   @Override
-  protected Class[] getSuitableClasses() {
+  protected Class @NotNull [] getSuitableClasses() {
     return new Class[]{XmlTag.class};
   }
 }

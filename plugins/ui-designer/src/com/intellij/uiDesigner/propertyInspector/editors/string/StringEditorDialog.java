@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
@@ -37,7 +37,7 @@ import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class StringEditorDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
+  private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 
   @NonNls private static final String CARD_STRING = "string";
   @NonNls private static final String CARD_BUNDLE = "bundle";
@@ -324,7 +324,7 @@ public final class StringEditorDialog extends DialogWrapper{
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
               if (bundleNames.size() > 0) {
-                myTfBundleName.setText(ArrayUtil.toStringArray(bundleNames)[0]);
+                myTfBundleName.setText(ArrayUtilRt.toStringArray(bundleNames)[0]);
               }
             }
             CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
@@ -367,7 +367,8 @@ public final class StringEditorDialog extends DialogWrapper{
               }
             });
             fileChooser.showDialog();
-            PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
+            PsiFile selectedFile = fileChooser.getSelectedFile();
+            PropertiesFile propertiesFile = selectedFile instanceof PropertiesFile ? (PropertiesFile)selectedFile : null;
             if (propertiesFile == null) {
               return;
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.frame;
 
@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a frame of execution stack. The selected frame is shown in 'Variables' panel of 'Debug' tool window.
  * Override {@link XValueContainer#computeChildren} to show local variable, parameters, fields available in the frame
- *
- * @author nik
  */
 public abstract class XStackFrame extends XValueContainer {
 
@@ -44,12 +42,6 @@ public abstract class XStackFrame extends XValueContainer {
   @Nullable
   public XSourcePosition getSourcePosition() {
     return null;
-  }
-
-  /**
-   * Update info about stack frame
-   */
-  public void refresh() {
   }
 
   /**

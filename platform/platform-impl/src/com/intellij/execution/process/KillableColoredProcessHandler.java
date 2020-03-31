@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.util.io.BaseOutputReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * This process handler supports both ANSI coloring (see {@link ColoredProcessHandler})
@@ -40,7 +31,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
@@ -48,16 +39,44 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
-    super(process, commandLine, charset);
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/
+                                       String commandLine,
+                                       @NotNull Charset charset) {
+    this(process, commandLine, charset, null);
+  }
+
+  /**
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
+   */
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine,
+                                       @NotNull Charset charset,
+                                       @Nullable Set<? extends File> filesToDelete) {
+    super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }
 
-  /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableColoredProcessHandler(commandLine, true);
+  }
+
+  public static class Silent extends KillableColoredProcessHandler {
+    public Silent(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDetele) {
+      super(process, commandLine, charset, filesToDetele);
+    }
+
+    @NotNull
+    @Override
+    protected BaseOutputReader.Options readerOptions() {
+      return BaseOutputReader.Options.forMostlySilentProcess();
+    }
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -34,8 +34,8 @@ import java.io.File;
 /**
  * @author dsl
  */
-@PlatformTestCase.WrapInCommand
-public class BindToElementTest extends CodeInsightTestCase {
+@HeavyPlatformTestCase.WrapInCommand
+public class BindToElementTest extends JavaCodeInsightTestCase {
   public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
 
   @Override

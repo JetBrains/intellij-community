@@ -1,9 +1,9 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class TooBroadScopeInspectionTest extends LightInspectionTestCase {
+public class TooBroadScopeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTooBroadScope() {
     doTest();

@@ -126,18 +126,18 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
 
     @NotNull
     @Override
-    protected String getItemText(String s) {
+    protected String getItemText(@NotNull String s) {
       return s;
     }
 
     @Override
-    protected boolean hasChildren(String s) {
+    protected boolean hasChildren(@NotNull String s) {
       return true;
     }
 
     @Nullable
     @Override
-    protected JComponent createRightComponent(String s) {
+    protected JComponent createRightComponent(@NotNull String s) {
       return myRightComponent;
     }
 

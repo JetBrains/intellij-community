@@ -56,10 +56,10 @@ public class ExistingTemplatesComponent {
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
+    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
     for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
       getOrCreateCategoryNode(root, SPLIT.split(info.getCategory())).add(new DefaultMutableTreeNode(info, false));
     }
-    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
     TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
@@ -92,7 +92,7 @@ public class ExistingTemplatesComponent {
               SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
               SSRBundle.message("template.in.use.title", configurationName),
               CommonBundle.message("button.remove"),
-              Messages.CANCEL_BUTTON,
+              Messages.getCancelButton(),
               AllIcons.General.WarningDialog
             )) {
               return;
@@ -113,8 +113,6 @@ public class ExistingTemplatesComponent {
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
       .createPanel();
-
-    new JPanel(new BorderLayout());
 
     configureSelectTemplateAction(patternTree);
 
@@ -199,7 +197,7 @@ public class ExistingTemplatesComponent {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         if (patternTree.isVisible() && getSelectedConfiguration() != null) {
           owner.close(DialogWrapper.OK_EXIT_CODE);
         }
@@ -273,9 +271,8 @@ public class ExistingTemplatesComponent {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Configuration value, int index, boolean selected, boolean focus) {
-      final Color background = (selected && !focus) ?
-                               UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
-      final Color foreground = UIUtil.getListForeground(selected);
+      final Color background = UIUtil.getListBackground(selected, focus);
+      final Color foreground = UIUtil.getListForeground(selected, focus);
       setPaintFocusBorder(false);
       SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.getName(), SimpleTextAttributes.STYLE_PLAIN,
                                  foreground, background, this);
@@ -308,8 +305,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      Color background = UIUtil.getTreeBackground(selected, hasFocus);
-      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      final Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;

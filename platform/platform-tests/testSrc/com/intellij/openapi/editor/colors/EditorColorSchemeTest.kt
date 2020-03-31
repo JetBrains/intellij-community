@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
+import com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -24,9 +25,14 @@ class EditorColorSchemeTest {
 
   @JvmField
   @Rule
+  val disposableRule = DisposableRule()
+
+  @JvmField
+  @Rule
   val fsRule = InMemoryFsRule()
 
-  @Test fun loadSchemes() {
+  @Test
+  fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
     <scheme name="Foo" version="142" parent_scheme="Default">
@@ -36,7 +42,7 @@ class EditorColorSchemeTest {
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val manager = EditorColorsManagerImpl(DefaultColorSchemesManager.getInstance(), schemeManagerFactory)
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
     val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
@@ -61,6 +67,74 @@ class EditorColorSchemeTest {
       it.reload()
     }
 
-    assertThat(manager.schemeManager.allSchemes.map { it.name }).isEqualTo(schemeNamesBeforeReload)
+    assertThat(manager.schemeManager.allSchemes
+      .map { it.name })
+      .isEqualTo(schemeNamesBeforeReload)
+  }
+
+  @Test
+  fun optimizeBundledSchemes() {
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
+    val schemeData = """
+    <scheme name="Foo" version="142" parent_scheme="Darcula">
+      <metaInfo>
+        <property name="forceOptimize">true</property>
+      </metaInfo>
+      <attributes>
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+      </attributes>
+    </scheme>""".trimIndent()
+    schemeFile.write(schemeData)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
+
+    val scheme = manager.getScheme("Foo")
+    assertThat(scheme.name).isEqualTo("Foo")
+
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
+
+    schemeManagerFactory.save()
+
+    // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in parent scheme
+    assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
+      <scheme name="Foo" version="142" parent_scheme="Darcula">
+      </scheme>""".trimIndent())
+  }
+
+  @Test
+  fun loadAdditionalAttributesBeforeOptimization() {
+    val ep = AdditionalTextAttributesEP()
+    ep.scheme = "Darcula"
+    ep.file = "com/intellij/openapi/editor/colors/foregroundForGoBuiltinTypeReference.xml"
+    AdditionalTextAttributesEP.EP_NAME.getPoint(null).registerExtension(ep, disposableRule.disposable)
+
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
+    val schemeData = """
+    <scheme name="Foo" version="142" parent_scheme="Darcula">
+      <metaInfo>
+        <property name="forceOptimize">true</property>
+      </metaInfo>
+      <attributes>
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+      </attributes>
+    </scheme>""".trimIndent()
+    schemeFile.write(schemeData)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
+
+    val scheme = manager.getScheme("Foo")
+    assertThat(scheme.name).isEqualTo("Foo")
+
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
+
+    schemeManagerFactory.save()
+
+    // GO_BUILTIN_TYPE_REFERENCE should not be removed as it's not the same as defined in foregroundForGoBuiltinTypeReference
+    assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
+      <scheme name="Foo" version="142" parent_scheme="Darcula">
+        <attributes>
+          <option name="GO_BUILTIN_TYPE_REFERENCE" baseAttributes="" />
+        </attributes>
+      </scheme>""".trimIndent())
   }
 }

@@ -39,8 +39,8 @@ public class CompareRevisionsAction implements AnActionExtensionProvider {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText(VcsBundle.message("action.name.compare"));
-    e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
+    e.getPresentation().setText(VcsBundle.messagePointer("action.name.compare"));
+    e.getPresentation().setDescription(VcsBundle.messagePointer("action.description.compare"));
 
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   private final StructureConfigurableContext myContext;
   private final NewLibraryEditor myLibraryEditor;
@@ -72,7 +70,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
 
   @Override
   protected void addNorthComponents(FormBuilder formBuilder) {
-    formBuilder.addLabeledComponent("&Level:", myLibraryLevelCombobox);
+    formBuilder.addLabeledComponent(JavaUiBundle.message("label.library.level"), myLibraryLevelCombobox);
   }
 
   @Override

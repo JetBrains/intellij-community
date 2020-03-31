@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,25 +29,18 @@ import org.jetbrains.annotations.NotNull;
 public class LambdaInliner implements CallInliner {
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
-    PsiMethod method = call.resolveMethod();
+    PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+    if (qualifier == null) return false;
+    JavaResolveResult result = call.getMethodExpression().advancedResolve(false);
+    PsiMethod method = (PsiMethod)result.getElement();
     if (method == null || method != LambdaUtil.getFunctionalInterfaceMethod(method.getContainingClass())) return false;
-    PsiTypeCastExpression typeCastExpression = ObjectUtils
-      .tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiTypeCastExpression.class);
-    if (typeCastExpression == null) return false;
-    PsiLambdaExpression lambda =
-      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand()), PsiLambdaExpression.class);
-    if (lambda == null || lambda.getBody() == null) return false;
     if (method.isVarArgs()) return false; // TODO: support varargs
     PsiExpression[] args = call.getArgumentList().getExpressions();
-    PsiParameter[] parameters = lambda.getParameterList().getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     if (args.length != parameters.length) return false;
-    EntryStream.zip(args, parameters).forKeyValue(
-      (arg, parameter) -> builder.pushForWrite(builder.getFactory().getVarFactory().createVariableValue(parameter))
-                                 .pushExpression(arg)
-                                 .boxUnbox(arg, parameter.getType())
-                                 .assign()
-                                 .pop());
-    builder.inlineLambda(lambda, Nullability.UNKNOWN);
-    return true;
+    PsiSubstitutor substitutor = result.getSubstitutor();
+    return builder.tryInlineLambda(args.length, qualifier, DfaPsiUtil.getTypeNullability(substitutor.substitute(method.getReturnType())),
+                                   () -> EntryStream.zip(args, parameters)
+                                     .forKeyValue((arg, parameter) -> builder.pushExpression(arg).boxUnbox(arg, parameter.getType())));
   }
 }

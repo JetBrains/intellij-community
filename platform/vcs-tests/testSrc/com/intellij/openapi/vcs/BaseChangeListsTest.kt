@@ -3,8 +3,11 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.DocumentReferenceProvider
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -20,12 +23,20 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.mockito.Mockito
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
   companion object {
-    val DEFAULT = LocalChangeList.DEFAULT_NAME
+    val DEFAULT = LocalChangeList.getDefaultName()
+
+    fun createMockFileEditor(document: Document): FileEditor {
+      val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+      val references = listOf(DocumentReferenceManager.getInstance().create(document))
+      Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
+      return editor
+    }
   }
 
   protected lateinit var vcs: MyMockVcs
@@ -43,18 +54,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     testRoot = runWriteAction {
-      VfsUtil.markDirtyAndRefresh(false, false, true, ourProject.baseDir)
-      VfsUtil.createDirectoryIfMissing(ourProject.baseDir, getTestName(true))
+      VfsUtil.markDirtyAndRefresh(false, false, true, this.project.baseDir)
+      VfsUtil.createDirectoryIfMissing(this.project.baseDir, getTestName(true))
     }
 
-    vcs = MyMockVcs(ourProject)
+    vcs = MyMockVcs(this.project)
     changeProvider = MyMockChangeProvider()
     vcs.changeProvider = changeProvider
 
-    clm = ChangeListManagerImpl.getInstanceImpl(ourProject)
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(ourProject) as VcsDirtyScopeManagerImpl
+    clm = ChangeListManagerImpl.getInstanceImpl(this.project)
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(this.project) as VcsDirtyScopeManagerImpl
 
-    vcsManager = ProjectLevelVcsManager.getInstance(ourProject) as ProjectLevelVcsManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(this.project) as ProjectLevelVcsManagerImpl
     vcsManager.registerVcs(vcs)
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
@@ -75,7 +86,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       .append(ThrowableRunnable { resetChanges() })
       .append(ThrowableRunnable { resetChangelists() })
       .append(ThrowableRunnable { vcsManager.directoryMappings = emptyList() })
-      .append(ThrowableRunnable { AllVcses.getInstance(ourProject).unregisterManually(vcs) })
+      .append(ThrowableRunnable { AllVcses.getInstance(getProject()).unregisterManually(vcs) })
       .append(ThrowableRunnable { runWriteAction { testRoot.delete(this) } })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
@@ -104,10 +115,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   private fun resetChangelists() {
-    clm.addChangeList(LocalChangeList.DEFAULT_NAME, null)
-    clm.setDefaultChangeList(LocalChangeList.DEFAULT_NAME)
+    clm.addChangeList(LocalChangeList.getDefaultName(), null)
+    clm.setDefaultChangeList(LocalChangeList.getDefaultName())
     for (changeListName in clm.changeLists.map { it.name }) {
-      if (changeListName != LocalChangeList.DEFAULT_NAME) clm.removeChangeList(changeListName)
+      if (changeListName != LocalChangeList.getDefaultName()) clm.removeChangeList(changeListName)
     }
     clm.waitUntilRefreshed()
   }
@@ -186,12 +197,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onFreeze()
+    BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
+      BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

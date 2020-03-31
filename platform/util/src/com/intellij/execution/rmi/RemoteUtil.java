@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.ClassLoaderUtil;
@@ -30,6 +16,7 @@ import java.rmi.ServerError;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -46,10 +33,10 @@ public class RemoteUtil {
         Method m = null;
         main:
         for (Method candidate : key.first.getMethods()) {
+          if (candidate.getParameterCount() != method.getParameterCount()) continue;
           if (!candidate.getName().equals(method.getName())) continue;
           Class<?>[] cpts = candidate.getParameterTypes();
           Class<?>[] mpts = method.getParameterTypes();
-          if (cpts.length != mpts.length) continue;
           for (int i = 0; i < mpts.length; i++) {
             Class<?> mpt = mpts[i];
             Class<?> cpt = castArgumentClassToLocal(cpts[i]);
@@ -66,12 +53,13 @@ public class RemoteUtil {
 
   @NotNull
   public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {
-    return ObjectUtils.notNull(castToRemote(object, clazz));
+    return Objects.requireNonNull(castToRemote(object, clazz));
   }
 
   @Nullable
-  public static <T> T castToRemote(Object object, Class<T> clazz) {
-    if (!Proxy.isProxyClass(object.getClass())) return null;
+  public static <T> T castToRemote(@Nullable Object object, @NotNull Class<T> clazz) {
+    if (object == null || !Proxy.isProxyClass(object.getClass())) return null;
+    if (clazz.isInstance(object)) return (T)object;
     final InvocationHandler handler = Proxy.getInvocationHandler(object);
     if (handler instanceof RemoteInvocationHandler) {
       final RemoteInvocationHandler rih = (RemoteInvocationHandler)handler;
@@ -83,7 +71,8 @@ public class RemoteUtil {
   }
 
   @NotNull
-  public static <T> T castToLocal(Object remote, Class<T> clazz) {
+  public static <T> T castToLocal(@Nullable Object remote, @NotNull Class<T> clazz) {
+    if (clazz.isInstance(remote)) return (T)remote;
     ClassLoader loader = clazz.getClassLoader();
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));
@@ -114,13 +103,12 @@ public class RemoteUtil {
     return remote;
   }
 
-  @Nullable
-  private static Object[] fixArgs(@Nullable Object[] args, @NotNull Method method) {
+  private static Object @Nullable [] fixArgs(Object @Nullable [] args, @NotNull Method method) {
     if (args == null) return null;
+    if (method.getParameterCount() != args.length) return args;
     Object[] result = new Object[args.length];
     try {
       Class<?>[] methodArgs = method.getParameterTypes();
-      if (methodArgs.length != args.length) return args;
       for (int i = 0; i < args.length; i++) {
         result[i] = fixArg(args[i], methodArgs[i]);
       }
@@ -144,29 +132,21 @@ public class RemoteUtil {
   }
 
   public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
-    return executeWithClassLoader(new ThrowableComputable<T, Exception>() {
-      @Override
-      public T compute() {
-        Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
-          @Override
-          public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-            return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
-              @Override
-              public Object compute() throws Exception {
-                return invokeRemote(method, method, remote, args, classLoader, true);
-              }
-            }, classLoader);
-          }
-        });
-        return (T)proxy;
-      }
+    return executeWithClassLoader(() -> {
+      Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
+        @Override
+        public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+          return executeWithClassLoader(() -> invokeRemote(method, method, remote, args, classLoader, true), classLoader);
+        }
+      });
+      return (T)proxy;
     }, classLoader);
   }
 
   private static Object invokeRemote(@NotNull Method localMethod,
                                      @NotNull Method remoteMethod,
                                      @NotNull Object remoteObj,
-                                     @Nullable Object[] args,
+                                     Object @Nullable [] args,
                                      @Nullable ClassLoader loader,
                                      boolean substituteClassLoader)
     throws Exception {
@@ -223,8 +203,8 @@ public class RemoteUtil {
     return false;
   }
 
-  public static <T> T executeWithClassLoader(ThrowableComputable<T, Exception> action, ClassLoader classLoader) throws Exception {
-    return ClassLoaderUtil.runWithClassLoader(classLoader, action);
+  public static <T> T executeWithClassLoader(ThrowableComputable<T, ? extends Exception> action, ClassLoader classLoader) throws Exception {
+    return ClassLoaderUtil.computeWithClassLoader(classLoader, action);
   }
 
   /**
@@ -232,7 +212,7 @@ public class RemoteUtil {
    * levels then - {@link InvocationTargetException}, {@link UndeclaredThrowableException} etc.
    * <p/>
    * This method tries to extract the 'real exception' from the given potentially wrapped one.
-   * 
+   *
    * @param e  exception to process
    * @return   extracted 'real exception' if any; given exception otherwise
    */

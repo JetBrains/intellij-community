@@ -23,9 +23,9 @@ public enum ConflictAction {
   }
 
   @NotNull private final String myKey;
-  @NotNull private final String[] myOtherKeys;
+  private final String @NotNull [] myOtherKeys;
 
-  ConflictAction(@NotNull String key, @NotNull String... otherKeys) {
+  ConflictAction(@NotNull String key, String @NotNull ... otherKeys) {
     myKey = key;
     myOtherKeys = otherKeys;
   }

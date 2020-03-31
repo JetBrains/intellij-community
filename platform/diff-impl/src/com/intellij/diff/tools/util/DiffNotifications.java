@@ -15,11 +15,11 @@
  */
 package com.intellij.diff.tools.util;
 
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.HyperlinkLabel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +29,12 @@ import java.awt.*;
 public class DiffNotifications {
   @NotNull
   public static JPanel createInsertedContent() {
-    return createNotification("Content added", TextDiffType.INSERTED.getColor(null));
+    return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null));
   }
 
   @NotNull
   public static JPanel createRemovedContent() {
-    return createNotification("Content removed", TextDiffType.DELETED.getColor(null));
+    return createNotification(DiffBundle.message("notification.status.content.removed"), TextDiffType.DELETED.getColor(null));
   }
 
   @NotNull
@@ -58,17 +58,17 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createError() {
-    return createNotification("Can not calculate diff");
+    return createNotification(DiffBundle.message("diff.cant.calculate.diff"));
   }
 
   @NotNull
   public static JPanel createOperationCanceled() {
-    return createNotification("Can not calculate diff. Operation canceled.");
+    return createNotification(DiffBundle.message("error.can.not.calculate.diff.operation.canceled"));
   }
 
   @NotNull
   public static JPanel createDiffTooBig() {
-    return createNotification("Can not calculate diff. " + DiffTooBigException.MESSAGE);
+    return createNotification(DiffBundle.message("error.can.not.calculate.diff.file.too.big"));
   }
 
   //
@@ -76,22 +76,22 @@ public class DiffNotifications {
   //
 
   @NotNull
-  public static JPanel createNotification(@NotNull String text) {
+  public static JPanel createNotification(@NotNull @Nls String text) {
     return createNotification(text, null);
   }
 
   @NotNull
-  public static JPanel createNotification(@NotNull String text, @Nullable final Color background) {
+  public static JPanel createNotification(@NotNull @Nls String text, @Nullable final Color background) {
     return createNotification(text, background, true);
   }
 
   @NotNull
-  public static JPanel createNotification(@NotNull String text, @Nullable final Color background, boolean showHideAction) {
+  public static JPanel createNotification(@NotNull @Nls String text, @Nullable final Color background, boolean showHideAction) {
     final EditorNotificationPanel panel = new EditorNotificationPanel(background);
     panel.text(text);
     if (showHideAction) {
-      HyperlinkLabel link = panel.createActionLabel("Hide", () -> panel.setVisible(false));
-      link.setToolTipText("Hide this notification");
+      HyperlinkLabel link = panel.createActionLabel(DiffBundle.message("button.hide.notification"), () -> panel.setVisible(false));
+      link.setToolTipText(DiffBundle.message("hide.this.notification"));
     }
     return panel;
   }

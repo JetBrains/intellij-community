@@ -4,11 +4,10 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
-import com.intellij.notification.NotificationsAdapter
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -48,7 +47,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 
   fun registerListeners(project: Project) {
-    project.messageBus.connect().subscribe(Notifications.TOPIC, object : NotificationsAdapter() {
+    project.messageBus.connect().subscribe(Notifications.TOPIC, object : Notifications {
       override fun notify(notification: Notification) {
         if (!icsManager.isActive) {
           return
@@ -66,15 +65,13 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
           else -> false
         }) {
-          runBlocking {
-            autoSync()
-          }
+          autoSync()
         }
       }
     })
   }
 
-  suspend fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
+  fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
     if (!enabled || !icsManager.isActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
@@ -85,13 +82,15 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       }
     }
 
-    val app = ApplicationManagerEx.getApplicationEx() as ApplicationImpl
+    val app = ApplicationManager.getApplication()
 
     if (onAppExit) {
-      sync(app, onAppExit)
+      runBlocking {
+        sync(app, onAppExit)
+      }
       return
     }
-    else if (app.isDisposeInProgress) {
+    else if (app.isDisposed) {
       // will be handled by applicationExiting listener
       return
     }
@@ -111,7 +110,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
   }
 
-  private suspend fun sync(app: ApplicationImpl, onAppExit: Boolean) {
+  private suspend fun sync(app: Application, onAppExit: Boolean) {
     catchAndLog {
       icsManager.runInAutoCommitDisabledMode {
         doSync(app, onAppExit)
@@ -119,7 +118,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
   }
 
-  private suspend fun doSync(app: ApplicationImpl, onAppExit: Boolean) {
+  private suspend fun doSync(app: Application, onAppExit: Boolean) {
     val repositoryManager = icsManager.repositoryManager
     val hasUpstream = repositoryManager.hasUpstream()
     if (hasUpstream && !repositoryManager.canCommit()) {
@@ -149,7 +148,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         catchAndLog {
           val updateResult = updater.merge()
           if (!onAppExit &&
-              !app.isDisposeInProgress &&
+              !app.isDisposed &&
               updateResult != null &&
               updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult,
                                                app.messageBus)) {

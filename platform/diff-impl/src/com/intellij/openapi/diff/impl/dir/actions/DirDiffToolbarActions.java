@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffModelHolder;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
   private final AnAction[] myActions;  
 
   public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
-    super("Directory Diff Actions", false);
+    super(DiffBundle.message("directory.diff.actions"), false);
     final List<AnAction> actions = new ArrayList<>(Arrays.asList(
       new RefreshDirDiffAction(model),
       Separator.getInstance(),
@@ -48,7 +49,7 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
       new ChangeCompareModeGroup(model),
       Separator.getInstance()));
 
-    if (model.isOperationsEnabled()) {
+    if (model.getSettings().enableSyncActions && model.isOperationsEnabled()) {
       actions.add(new SynchronizeDiff(model, true));
       actions.add(new SynchronizeDiff(model, false));
     }
@@ -72,9 +73,8 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
     myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myActions;
   }
 }

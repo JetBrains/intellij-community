@@ -1,10 +1,14 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -17,24 +21,29 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalInspectionTool {
-  // Fields are left for the compatibility
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_FILE_HEADER = true;
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_TRY_CATCH_SECTION = true;
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_METHOD_BODY = true;
 
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GENERAL_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("default.file.template.display.name");
+    return getGeneralGroupName();
   }
 
   @Override
@@ -45,8 +54,7 @@ public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalIns
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     ProblemDescriptor descriptor = FileHeaderChecker.checkFileHeader(file, manager, isOnTheFly);
     return descriptor == null ? null : new ProblemDescriptor[]{descriptor};
   }
@@ -72,7 +80,7 @@ public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalIns
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("default.file.template.edit.template");
+      return JavaBundle.message("default.file.template.edit.template");
     }
 
     @Override

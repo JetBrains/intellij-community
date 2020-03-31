@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setTitle(String title) {
+  public ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
@@ -127,14 +128,14 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setCancelOnMouseOutCallback(final MouseChecker shouldCancel) {
+  public ComponentPopupBuilder setCancelOnMouseOutCallback(@NotNull final MouseChecker shouldCancel) {
     myCancelOnMouseOutCallback = shouldCancel;
     return this;
   }
 
   @Override
   @NotNull
-  public ComponentPopupBuilder addListener(final JBPopupListener listener) {
+  public ComponentPopupBuilder addListener(@NotNull final JBPopupListener listener) {
     myListeners.add(listener);
     return this;
   }
@@ -164,7 +165,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed) {
+  public ComponentPopupBuilder setCancelCallback(@NotNull final Computable<Boolean> shouldProceed) {
     myCallback = shouldProceed;
     return this;
   }
@@ -254,7 +255,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition) {
+  public ComponentPopupBuilder setRequestFocusCondition(@NotNull Project project, @NotNull Condition<? super Project> condition) {
     myRequestFocus = condition.value(project);
     return this;
   }
@@ -334,7 +335,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setFocusOwners(@NotNull final Component[] focusOwners) {
+  public ComponentPopupBuilder setFocusOwners(final Component @NotNull [] focusOwners) {
     myFocusOwners = focusOwners;
     return this;
   }

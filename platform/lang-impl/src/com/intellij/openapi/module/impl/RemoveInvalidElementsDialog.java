@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,16 +35,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JPanel myContentPanel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
   private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<>();
 
-  private RemoveInvalidElementsDialog(final String title,
+  private RemoveInvalidElementsDialog(@NlsContexts.DialogTitle String title,
                                       ConfigurationErrorType type,
                                       String invalidElements,
                                       final Project project,
@@ -77,7 +75,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
   /**
    * @return {@code true} if the problems are resolved
    */
-  public static boolean showDialog(@NotNull Project project, @NotNull String title, ConfigurationErrorType type,
+  public static boolean showDialog(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, ConfigurationErrorType type,
                                    @NotNull String invalidElements, @NotNull List<? extends ConfigurationErrorDescription> errors) {
     if (errors.isEmpty()) {
       return true;

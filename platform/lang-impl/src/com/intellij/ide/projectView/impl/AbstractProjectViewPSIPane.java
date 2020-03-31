@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -90,7 +90,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       setTreeBuilder(treeBuilder);
     }
     else {
-      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTree, myTreeStructure, createComparator());
+      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+      myAsyncSupport.setModelTo(myTree);
     }
 
     initTree();
@@ -118,8 +119,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
-    if (myAsyncSupport != null) myAsyncSupport.setComparator(comparator);
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+    if (myAsyncSupport != null) {
+      myAsyncSupport.setComparator(comparator);
+    }
     super.installComparator(builder, comparator);
   }
 
@@ -132,7 +135,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   private void initTree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
@@ -182,7 +184,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       TreeBuilderUtil.storePaths(builder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
       afterUpdate = () -> {
         if (myTree != null && !builder.isDisposed()) {
-          myTree.setSelectionPaths(new TreePath[0]);
+          myTree.clearSelection();
           TreeBuilderUtil.restorePaths(builder, pathsToExpand, selectionPaths, true);
         }
         cb.setDone();
@@ -196,6 +198,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
     else if (myAsyncSupport != null) {
       myAsyncSupport.updateAll(afterUpdate);
+    }
+    else {
+      return ActionCallback.REJECTED;
     }
     return cb;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -18,7 +18,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
 
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
-  private final String myPlaceholderText;
+  private String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
@@ -129,23 +129,23 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
     }
     super.changedUpdateImpl(e);
     if (isValid()) {
-      alignToSurrogateBoundaries();
+      alignToValidBoundaries();
     }
   }
 
   @Override
-  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
-    alignToSurrogateBoundaries();
+  protected void onReTarget(@NotNull DocumentEvent e) {
+    alignToValidBoundaries();
   }
 
-  private void alignToSurrogateBoundaries() {
+  private void alignToValidBoundaries() {
     Document document = getDocument();
     int start = intervalStart();
     int end = intervalEnd();
-    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
+    if (DocumentUtil.isInsideCharacterPair(document, start)) {
       setIntervalStart(start - 1);
     }
-    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
+    if (DocumentUtil.isInsideCharacterPair(document, end)) {
       setIntervalEnd(end - 1);
     }
   }
@@ -171,6 +171,12 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
   @Override
   public boolean isGutterMarkEnabledForSingleLine() {
     return Boolean.TRUE.equals(getUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE));
+  }
+
+  @Override
+  public void setPlaceholderText(@NotNull String text) {
+    myPlaceholderText = text;
+    myEditor.getFoldingModel().onPlaceholderTextChanged(this);
   }
 
   @Override

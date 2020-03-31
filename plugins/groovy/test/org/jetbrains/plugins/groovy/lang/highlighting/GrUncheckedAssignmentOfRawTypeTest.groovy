@@ -1,44 +1,47 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.LocalInspectionTool
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.util.HighlightingTest
+import org.junit.Test
 
-/**
- * @author Max Medvedev
- */
-class GrUncheckedAssignmentOfRawTypeTest extends GrHighlightingTestBase {
-  @Override
-  InspectionProfileEntry[] getCustomInspections() {
-    [new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()] as InspectionProfileEntry[]
+import static java.util.Collections.singletonList
+
+@CompileStatic
+class GrUncheckedAssignmentOfRawTypeTest extends GroovyLatestTest implements HighlightingTest {
+
+  GrUncheckedAssignmentOfRawTypeTest() {
+    super('highlighting')
   }
 
-  void testRawMethodAccess() { doTest() }
+  @Override
+  String getTestName() {
+    return super.getTestName().capitalize()
+  }
 
-  void testRawFieldAccess() { doTest() }
+  final Collection<Class<? extends LocalInspectionTool>> inspections = singletonList(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
 
-  void testRawArrayStyleAccess() { doTest() }
+  @Test
+  void rawMethodAccess() { fileHighlightingTest() }
 
-  void testRawArrayStyleAccessToMap() { doTest() }
+  @Test
+  void rawFieldAccess() { fileHighlightingTest() }
 
-  void testRawArrayStyleAccessToList() { doTest() }
+  @Test
+  void rawArrayStyleAccess() { fileHighlightingTest() }
 
-  void testRawClosureReturnType() {
-    testHighlighting('''\
+  @Test
+  void rawArrayStyleAccessToMap() { fileHighlightingTest() }
+
+  @Test
+  void rawArrayStyleAccessToList() { fileHighlightingTest() }
+
+  @Test
+  void rawClosureReturnType() {
+    highlightingTest '''\
 class A<T> {
   A(T t) {this.t = t}
 
@@ -51,7 +54,6 @@ class A<T> {
 
 def a = new A(new Date())
 Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
-''')
+'''
   }
-
 }

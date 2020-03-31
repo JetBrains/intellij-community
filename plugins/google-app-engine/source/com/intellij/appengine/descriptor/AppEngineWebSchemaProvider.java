@@ -25,23 +25,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
-  private static final Set<String> FILE_NAMES = new HashSet<>(Arrays.asList(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
-                                                                            AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,
-                                                                            AppEngineUtil.JDO_CONFIG_XML_NAME));
+  private static final Set<String> FILE_NAMES = ContainerUtil.set(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
+                                                                  AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,
+                                                                  AppEngineUtil.JDO_CONFIG_XML_NAME);
 
   @Override
   public boolean isAvailable(@NotNull XmlFile file) {

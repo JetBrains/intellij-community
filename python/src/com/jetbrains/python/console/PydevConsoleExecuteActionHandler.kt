@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -31,9 +18,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStatementList
 import java.awt.Font
 
-/**
- * @author traff
- */
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
                                             processHandler: ProcessHandler,
                                             final override val consoleCommunication: ConsoleCommunication) : PythonConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {
@@ -116,6 +100,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private fun ordinaryPrompt() {
     if (PyConsoleUtil.ORDINARY_PROMPT != myConsoleView.prompt) {
       myConsoleView.prompt = PyConsoleUtil.ORDINARY_PROMPT
+      myConsoleView.indentPrompt = PyConsoleUtil.INDENT_PROMPT
       PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
     }
   }
@@ -124,7 +109,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     get() = PyConsoleUtil.getOrCreateIPythonData(myConsoleView.virtualFile).isIPythonEnabled
 
   private fun ipythonInPrompt() {
-    myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", ConsoleViewContentType.USER_INPUT_KEY) {
+    myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", USER_INPUT_KEY) {
       override fun getAttributes(): TextAttributes {
         val attrs = super.getAttributes()
         attrs.fontType = Font.PLAIN
@@ -132,17 +117,22 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     })
 
-    myConsoleView.prompt = "In[$myIpythonInputPromptCount]:"
+    val prompt = "In[$myIpythonInputPromptCount]:"
+    val indentPrompt = PyConsoleUtil.IPYTHON_INDENT_PROMPT.padStart(prompt.length)
+    myConsoleView.prompt = prompt
+    myConsoleView.indentPrompt = indentPrompt
     PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
   }
 
   private fun executingPrompt() {
     myConsoleView.prompt = PyConsoleUtil.EXECUTING_PROMPT
+    myConsoleView.indentPrompt = PyConsoleUtil.EXECUTING_PROMPT
   }
 
   private fun waitingForInputPrompt() {
     if (PyConsoleUtil.INPUT_PROMPT != myConsoleView.prompt && PyConsoleUtil.HELP_PROMPT != myConsoleView.prompt) {
       myConsoleView.prompt = PyConsoleUtil.INPUT_PROMPT
+      myConsoleView.indentPrompt = PyConsoleUtil.INPUT_PROMPT
       PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
     }
   }
@@ -156,6 +146,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
     if (prompt != myConsoleView.prompt) {
       myConsoleView.prompt = prompt
+      myConsoleView.indentPrompt = prompt
       PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
     }
   }
@@ -237,3 +228,11 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
   }
 }
+
+private var LanguageConsoleView.indentPrompt: String
+  get() {
+    return (this as? LanguageConsoleImpl)?.consolePromptDecorator?.indentPrompt ?: ""
+  }
+  set(value) {
+    (this as? LanguageConsoleImpl)?.consolePromptDecorator?.indentPrompt = value
+  }

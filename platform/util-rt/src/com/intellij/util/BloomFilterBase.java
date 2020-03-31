@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -50,7 +51,7 @@ public class BloomFilterBase {
     return true;
   }
 
-  protected BloomFilterBase(DataInput input) throws IOException {
+  protected BloomFilterBase(@NotNull DataInput input) throws IOException {
     myHashFunctionCount = DataInputOutputUtilRt.readINT(input);
     myBitsCount = DataInputOutputUtilRt.readINT(input);
     myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
@@ -58,7 +59,7 @@ public class BloomFilterBase {
     for(int i = 0; i < myElementsSet.length; ++i) myElementsSet[i] = input.readLong();
   }
   
-  protected void save(DataOutput output) throws IOException {
+  protected void save(@NotNull DataOutput output) throws IOException {
     DataInputOutputUtilRt.writeINT(output, myHashFunctionCount);
     DataInputOutputUtilRt.writeINT(output, myBitsCount);
     for(long l:myElementsSet) output.writeLong(l);

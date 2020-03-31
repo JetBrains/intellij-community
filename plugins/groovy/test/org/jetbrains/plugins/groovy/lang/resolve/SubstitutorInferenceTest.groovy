@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.LightProjectTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -17,7 +18,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.*
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
@@ -49,6 +50,9 @@ class IdCallable {
 class GenericPropertyContainer {
   def <T> I<T> getGenericProperty() {}
   def <T> void setGenericProperty(I<T> c) {}
+  
+  def <T> List<T> getGenericList() {}
+  def <T> void setGenericList(List<T> l) {}
 }
 
 class Files {
@@ -172,6 +176,12 @@ static <T> T ppp(Producer<T> p) {}
   }
 
   @Test
+  void 'non-closure safe cast'() {
+    def expression = elementUnderCaret '"hi" <caret>as Number', GrSafeCastExpression
+    assertSubstitutor(expression.reference.advancedResolve(), JAVA_LANG_NUMBER)
+  }
+
+  @Test
   void 'implicit call in variable initializer'() {
     typingTest('String s = <caret>new IdCallable()()', GrMethodCall, 'java.lang.String')
   }
@@ -237,6 +247,38 @@ static <T> T ppp(Producer<T> p) {}
   }
 
   @Test
+  void 'plus assignment generic property r-value'() {
+    def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericList += new ArrayList<String>()', GrReferenceExpression)
+    assertSubstitutor(ref.RValueReference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Test
+  void 'plus assignment generic property'() {
+    def op = elementUnderCaret('new GenericPropertyContainer().genericList <caret>+= new ArrayList<String>()', GrAssignmentExpression)
+    assertSubstitutor(op.reference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Ignore("we don't yet infer l-value substitutors")
+  @Test
+  void 'plus assignment generic property l-value'() {
+    def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericList += new ArrayList<String>()', GrReferenceExpression)
+    assertSubstitutor(ref.LValueReference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Test
+  void 'plus assignment with index r-value'() {
+    def op = elementUnderCaret('Map<Number, String> mns; mns<caret>[42] += "foo"', GrIndexProperty)
+    assertSubstitutor(op.RValueReference.advancedResolve(), JAVA_LANG_NUMBER, JAVA_LANG_STRING)
+  }
+
+  @Ignore("we don't yet infer l-value substitutors")
+  @Test
+  void 'plus assignment with index l-value'() {
+    def op = elementUnderCaret('Map<Number, String> mns; mns<caret>[42] += "foo"', GrIndexProperty)
+    assertSubstitutor(op.LValueReference.advancedResolve(), JAVA_LANG_NUMBER, JAVA_LANG_STRING)
+  }
+
+  @Test
   void 'same method nested'() {
     def call = elementUnderCaret '''\
 static <T> T run(Closure<T> c) {}
@@ -261,6 +303,18 @@ static void testCode(java.util.stream.Stream<Integer> ss) {
 }
 ''', GrMethodCall
     assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
+  }
+
+  @Test
+  void 'static call with raw argument with left type'() {
+    def call = elementUnderCaret 'static <T> T lll(List<T> l) {}; List l; Date d = <caret>lll(l)', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_OBJECT)
+  }
+
+  @Test
+  void 'dgm call on raw receiver with left type'() {
+    def call = elementUnderCaret 'List l; Date d = l.<caret>getAt(0)', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_OBJECT)
   }
 
   private static void assertSubstitutor(GroovyResolveResult result, String... expectedTypes) {

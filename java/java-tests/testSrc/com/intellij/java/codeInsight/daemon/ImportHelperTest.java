@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +44,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
@@ -66,16 +65,23 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedImportInspection());
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+    //noinspection SuperTearDownInFinally
+    super.tearDown();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_1_7; // Java 8 mock does not have java.sql package used here
+    return LightJavaCodeInsightFixtureTestCase.JAVA_1_7; // Java 8 mock does not have java.sql package used here
   }
 
-  private static PsiJavaFile configureByText(String text) {
+  private PsiJavaFile configureByText(String text) {
     configureFromFileText("dummy.java", text);
-    assertTrue(myFile instanceof PsiJavaFile);
-    return (PsiJavaFile)myFile;
+    assertTrue(getFile() instanceof PsiJavaFile);
+    return (PsiJavaFile)getFile();
   }
 
   @Override
@@ -171,7 +177,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       }), "", "");
   }
 
-  private static void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
+  private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     ImportHelper importHelper = new ImportHelper(settings);
 
@@ -210,96 +216,70 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportCaretLocation() {
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-    try {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-      @Language("JAVA")
-      String text = "class X { ArrayList<caret> c; }";
-      configureByText(text);
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
-      type(" ");
-      backspace();
+    String text = "class X { ArrayList<caret> c; }";
+    configureByText(text);
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    type(" ");
+    backspace();
 
-      assertOneElement(highlightErrors());
+    assertOneElement(highlightErrors());
 
-      int offset = myEditor.getCaretModel().getOffset();
-      PsiReference ref = myFile.findReferenceAt(offset - 1);
-      assertTrue(ref instanceof PsiJavaCodeReferenceElement);
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiReference ref = getFile().findReferenceAt(offset - 1);
+    assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-      ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
-      assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
-      UIUtil.dispatchAllInvocationEvents();
+    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
+    UIUtil.dispatchAllInvocationEvents();
 
-      myEditor.getCaretModel().moveToOffset(offset - 1);
-      result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
-      UIUtil.dispatchAllInvocationEvents();
+    getEditor().getCaretModel().moveToOffset(offset - 1);
+    result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
+    UIUtil.dispatchAllInvocationEvents();
 
-      assertEmpty(highlightErrors());
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertEmpty(highlightErrors());
   }
 
   public void testAutoImportCaretLocation2() {
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-    try {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-      @Language("JAVA")
-      String text = "class X { <caret>ArrayList c = new ArrayList(); }";
-      configureByText(text);
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
-      type(" ");
-      backspace();
+    String text = "class X { <caret>ArrayList c = new ArrayList(); }";
+    configureByText(text);
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    type(" ");
+    backspace();
 
-      assertEquals(2, highlightErrors().size());
-      UIUtil.dispatchAllInvocationEvents();
+    assertEquals(2, highlightErrors().size());
+    UIUtil.dispatchAllInvocationEvents();
 
-      int offset = myEditor.getCaretModel().getOffset();
-      PsiReference ref = myFile.findReferenceAt(offset);
-      assertTrue(ref instanceof PsiJavaCodeReferenceElement);
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiReference ref = getFile().findReferenceAt(offset);
+    assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-      ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
-      UIUtil.dispatchAllInvocationEvents();
+    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
+    UIUtil.dispatchAllInvocationEvents();
 
-      assertEmpty(highlightErrors());
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertEmpty(highlightErrors());
   }
 
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() {
-    @Language("JAVA")
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(text);
 
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      doHighlighting();
-      //caret is too close
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    doHighlighting();
+    //caret is too close
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      type(" ");
+    type(" ");
 
-      PsiJavaCodeReferenceElement element =
-        (PsiJavaCodeReferenceElement)getFile().findReferenceAt(getEditor().getCaretModel().getOffset() - 2);
-      ImportClassFix fix = new ImportClassFix(element);
-      ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false);
-      assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
+    PsiJavaCodeReferenceElement element =
+      (PsiJavaCodeReferenceElement)getFile().findReferenceAt(getEditor().getCaretModel().getOffset() - 2);
+    ImportClassFix fix = new ImportClassFix(element);
+    ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false);
+    assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
 
-      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
   public void testAutoImportAfterUncomment() {
@@ -307,31 +287,24 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(text);
 
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      doHighlighting();
+    doHighlighting();
 
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
+    EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
-      doHighlighting();
-      UIUtil.dispatchAllInvocationEvents();
+    doHighlighting();
+    UIUtil.dispatchAllInvocationEvents();
 
-      assertEmpty(highlightErrors());
+    assertEmpty(highlightErrors());
 
-      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() {
-    @Language("JAVA")
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(text);
     //ensure error will be provided by a local inspection
@@ -357,9 +330,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     };
     tool.setEnabled(true, ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
     enableInspectionTool(tool);
-    
+
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     List<HighlightInfo> errs = highlightErrors();
     //error corresponding to too short class name
@@ -374,12 +346,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportWorks() {
-    @Language("JAVA")
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(text);
-    UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(getProject());
-    undoManager.flushCurrentCommandMerger();
-    undoManager.clearUndoRedoQueueInTests(getFile().getVirtualFile());
     assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
 
 
@@ -389,45 +357,34 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     type(" ");
     assertTrue(DaemonListeners.canChangeFileSilently(getFile()));
 
-    undoManager.undo(TextEditorProvider.getInstance().getTextEditor(getEditor()));
+    UndoManager.getInstance(getProject()).undo(TextEditorProvider.getInstance().getTextEditor(getEditor()));
 
-    assertFalse(
-      DaemonListeners.canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
   }
 
 
   public void testAutoImportOfGenericReference() {
-    @Language("JAVA")
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(text);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // make sure editor is visible - auto-import works only for visible area
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // make sure editor is visible - auto-import works only for visible area
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    try {
-      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
-      type(" ");
-      backspace();
+    type(" ");
+    backspace();
 
-      doHighlighting();
-      //caret is too close
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    doHighlighting();
+    //caret is too close
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      caretRight();
+    caretRight();
 
-      doHighlighting();
+    doHighlighting();
 
-      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
   public void testAutoOptimizeUnresolvedImports() {
-    @Language("JAVA")
     @NonNls String text = "import xxx.yyy; class S { } <caret> ";
     configureByText(text);
 
@@ -449,7 +406,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() {
-    @Language("JAVA")
     @NonNls String text = "package x; " +
                           "import java.util.ArrayList; " +
                           "class S {{ <caret> ArrayList l;\n" +
@@ -457,7 +413,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     configureByText(text);
 
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     List<HighlightInfo> errs = highlightErrors();
 
@@ -482,94 +437,63 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoInsertImportForInnerClass() {
-    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(text);
 
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      List<HighlightInfo> errs = highlightErrors();
-      assertEquals(1, errs.size());
+    List<HighlightInfo> errs = highlightErrors();
+    assertEquals(1, errs.size());
 
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-      type("/* */");
-      doHighlighting();
-      UIUtil.dispatchAllInvocationEvents();
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    type("/* */");
+    doHighlighting();
+    UIUtil.dispatchAllInvocationEvents();
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testAutoInsertImportForInnerClassAllowInnerClassImports() {
-    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(text);
 
     JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getFile()).getCustomSettings(JavaCodeStyleSettings.class);
     javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      List<HighlightInfo> errs = highlightErrors();
-      assertEmpty(errs);
+    type(" ");
+    List<HighlightInfo> errs = highlightErrors();
+    assertEmpty(errs);
 
-      assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testAutoImportSkipsClassReferenceInMethodPosition() {
-    @Language("JAVA")
     @NonNls String text =
       "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
     configureByText(text);
 
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      List<HighlightInfo> errs = highlightErrors();
-      assertTrue(errs.size() > 1);
+    List<HighlightInfo> errs = highlightErrors();
+    assertTrue(errs.size() > 1);
 
-      PsiJavaFile javaFile = (PsiJavaFile)getFile();
-      assertEquals(1, javaFile.getImportList().getAllImportStatements().length);
+    PsiJavaFile javaFile = (PsiJavaFile)getFile();
+    assertEquals(1, javaFile.getImportList().getAllImportStatements().length);
 
-      PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
-      ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
-      assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
+    ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+    assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
   }
 
   public void testAutoImportDoNotBreakCode() {
-    @Language("JAVA")
     @NonNls String text = "package x; class S {{ S.<caret>\n Runnable r; }}";
     configureByText(text);
 
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    try {
-      List<HighlightInfo> errs = highlightErrors();
-      assertEquals(1, errs.size());
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    assertEquals(1, highlightErrors().size());
   }
 
   public void testAutoImportIgnoresUnresolvedImportReferences() {

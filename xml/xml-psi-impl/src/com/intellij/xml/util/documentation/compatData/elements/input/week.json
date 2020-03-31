@@ -16,9 +16,6 @@
               "edge": {
                 "version_added": "12"
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": false,
                 "notes": "See <a href='https://bugzil.la/888320'>bug 888320</a>."
@@ -36,7 +33,8 @@
                 "version_added": true
               },
               "safari": {
-                "version_added": false
+                "version_added": false,
+                "notes": "See <a href='https://webkit.org/b/200416'>bug 200416</a>."
               },
               "safari_ios": {
                 "version_added": true

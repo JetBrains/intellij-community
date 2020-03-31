@@ -29,12 +29,14 @@ public class ExternalAnnotation {
   /**
    * Annotation content
    */
-  @Nullable
-  private final PsiNameValuePair[] values;
+  private final PsiNameValuePair @Nullable [] values;
 
   public ExternalAnnotation(@NotNull PsiModifierListOwner owner,
                             @NotNull String annotationFQName,
-                            @Nullable PsiNameValuePair[] values) {
+                            PsiNameValuePair @Nullable [] values) {
+    if (BaseExternalAnnotationsManager.getExternalName(owner) == null) {
+      throw new IllegalArgumentException("Unable to annotate externally element of type " + owner.getClass());
+    }
     this.owner = owner;
     this.annotationFQName = annotationFQName;
     this.values = values;

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,6 @@ import org.jetbrains.idea.svn.SvnConfigurationState;
 import java.util.List;
 
 import static com.intellij.execution.CommandLineUtil.toCommandLine;
-import static com.intellij.openapi.util.io.FileUtil.getNameWithoutExtension;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -58,7 +58,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
   @NotNull
   private GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
     GeneralCommandLine result = new GeneralCommandLine(sshPath);
-    boolean isPuttyLinkClient = endsWithIgnoreCase(getNameWithoutExtension(sshPath), "plink");
+    boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), "plink");
     SvnConfigurationState state = getState();
 
     // quiet mode

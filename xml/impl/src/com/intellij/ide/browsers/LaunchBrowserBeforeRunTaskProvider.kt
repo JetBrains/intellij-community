@@ -18,20 +18,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.xml.XmlBundle
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
-import javax.swing.border.EmptyBorder
 
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>() {
   companion object {
     val ID = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
   }
 
-  override fun getName() = "Launch Web Browser"
+  override fun getName() = XmlBundle.message("task.browser.launch")
 
   override fun getId() = ID
 
@@ -47,9 +45,6 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
     val browserSelector = BrowserSelector()
     val browserComboBox = browserSelector.mainComponent
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      browserComboBox.border = EmptyBorder(3, 0, 0, 0)
-    }
     state.browser?.let {
       browserSelector.selected = it
     }
@@ -64,15 +59,15 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     val startJavaScriptDebuggerCheckBox = if (JavaScriptDebuggerStarter.Util.hasStarters()) CheckBox(XmlBundle.message("start.browser.with.js.debugger"), state.withDebugger) else null
 
     val panel = panel {
-      row("Browser:") {
+      row(XmlBundle.message("task.browser.label")) {
         browserComboBox()
         startJavaScriptDebuggerCheckBox?.invoke()
       }
-      row("Url:") {
+      row(XmlBundle.message("task.browser.url")) {
         url(growPolicy = GrowPolicy.MEDIUM_TEXT)
       }
     }
-    dialog("Launch Web Browser", panel = panel, resizable = true, focusedComponent = url)
+    dialog(XmlBundle.message("task.browser.launch"), panel = panel, resizable = true, focusedComponent = url)
       .show()
 
     state.browser = browserSelector.selected

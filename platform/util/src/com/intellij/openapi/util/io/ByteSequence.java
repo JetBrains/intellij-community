@@ -28,6 +28,5 @@ public interface ByteSequence {
   @NotNull
   ByteSequence subSequence(int start, int end);
 
-  @NotNull
-  byte[] toBytes();
+  byte @NotNull [] toBytes();
 }

@@ -28,7 +28,7 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
     return expression;
   }
 
-  protected static PsiLocalVariable getLocalVariableFromEditor() {
+  protected PsiLocalVariable getLocalVariableFromEditor() {
     final PsiLocalVariable localVariable = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()),
                                                                        PsiLocalVariable.class);
     assertNotNull(localVariable);

@@ -34,7 +34,7 @@ class IndentRangesCalculatorTest: LightPlatformCodeInsightTestCase() {
 }
 """)
     
-    val document = myEditor.document
+    val document = editor.document
     val calculator = IndentRangesCalculator(document, TextRange(32, 67))
     val ranges = calculator.calcIndentRanges()
     

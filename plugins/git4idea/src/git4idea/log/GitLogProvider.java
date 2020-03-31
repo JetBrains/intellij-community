@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -30,13 +30,14 @@ import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.commands.Git;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
+import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -44,6 +45,7 @@ import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +89,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     if (!isRepositoryReady(root)) {
       return LogDataImpl.empty();
     }
-    GitRepository repository = ObjectUtils.assertNotNull(myRepositoryManager.getRepositoryForRoot(root));
+    GitRepository repository = Objects.requireNonNull(myRepositoryManager.getRepositoryForRoot(root));
 
     // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
     int commitCount = requirements.getCommitCount() * 2;
@@ -259,7 +261,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   }
 
   @NotNull
-  private static <T> Set<T> remove(@NotNull Set<? extends T> original, @NotNull Set<T>... toRemove) {
+  private static <T> Set<T> remove(@NotNull Set<? extends T> original, Set<T> @NotNull ... toRemove) {
     Set<T> result = newHashSet(original);
     for (Set<T> set : toRemove) {
       result.removeAll(set);
@@ -286,7 +288,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     Set<VcsRef> refs = new HashSet<>();
     Set<VcsCommitMetadata> commits = new HashSet<>();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-      String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
+      String[] parameters = ArrayUtilRt.toStringArray(ContainerUtil.concat(params, tagsChunk));
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
@@ -560,8 +562,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @Nullable
   @Override
+  @CalledInAny
   public String getCurrentBranch(@NotNull VirtualFile root) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
     if (repository == null) return null;
     String currentBranchName = repository.getCurrentBranchName();
     if (currentBranchName == null && repository.getCurrentRevision() != null) {
@@ -578,10 +581,23 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @Nullable
   @Override
-  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
+  public VcsLogFileHistoryHandler getFileHistoryHandler() {
+    return new GitLogHistoryHandler(myProject);
+  }
+
+  @Nullable
+  @Override
+  public Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return null;
+    return Git.getInstance().resolveReference(repository, ref);
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
+    if (detectedRoot.equals(path.getVirtualFile())) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
@@ -589,7 +605,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
         }
       }
     }
-    return VcsUtil.getVcsRootFor(project, path);
+    return detectedRoot;
   }
 
   @SuppressWarnings("unchecked")
@@ -603,6 +619,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       return (T)Boolean.valueOf(isIndexingOn());
     }
     else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
+      return (T)Boolean.TRUE;
+    }
+    else if (property == VcsLogProperties.HAS_COMMITTER) {
       return (T)Boolean.TRUE;
     }
     return null;

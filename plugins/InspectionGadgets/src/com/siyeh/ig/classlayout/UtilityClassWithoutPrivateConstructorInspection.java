@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ import java.util.List;
 
 public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClassesWithOnlyMain = false;
 
   @Override
@@ -64,14 +64,16 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
+    final boolean isOnTheFly = (boolean)infos[1];
     if (constructor == null) {
-      fixes.add(new CreateEmptyPrivateConstructor());
+      if (isOnTheFly || !hasImplicitConstructorUsage(aClass)) {
+        fixes.add(new CreateEmptyPrivateConstructor());
+      }
     }
     else {
       final Query<PsiReference> query = ReferencesSearch.search(constructor, constructor.getUseScope());
@@ -86,12 +88,6 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
   }
@@ -99,6 +95,19 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UtilityClassWithoutPrivateConstructorVisitor();
+  }
+
+  private static boolean hasImplicitConstructorUsage(PsiClass aClass) {
+    final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
+    for (PsiReference reference : query) {
+      if (reference == null) continue;
+      final PsiElement element = reference.getElement();
+      final PsiElement context = element.getParent();
+      if (context instanceof PsiNewExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -129,19 +138,11 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         return;
       }
       final PsiClass aClass = (PsiClass)parent;
-      final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
-      for (PsiReference reference : query) {
-        if (reference == null) {
-          continue;
-        }
-        final PsiElement element = reference.getElement();
-        final PsiElement context = element.getParent();
-        if (context instanceof PsiNewExpression) {
-          SwingUtilities.invokeLater(() -> Messages.showInfoMessage(aClass.getProject(),
-                                                                    "Utility class has instantiations, private constructor will not be created",
-                                                                    "Can't generate constructor"));
-          return;
-        }
+      if (isOnTheFly() && hasImplicitConstructorUsage(aClass)) {
+        SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
+          aClass.getProject(),
+          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"),
+          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.title")));
       }
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -212,7 +213,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       if (subclass != null) {
         return;
       }
-      registerClassError(aClass, aClass);
+      registerClassError(aClass, aClass, isOnTheFly());
     }
 
     private boolean hasOnlyMain(PsiClass aClass) {

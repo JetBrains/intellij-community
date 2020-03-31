@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -24,13 +24,13 @@ public class MockChangeListManager extends ChangeListManagerEx {
   private final MockChangeList myDefaultChangeList;
 
   public MockChangeListManager() {
-    myDefaultChangeList = new MockChangeList(LocalChangeList.DEFAULT_NAME);
-    myChangeLists.put(LocalChangeList.DEFAULT_NAME, myDefaultChangeList);
+    myDefaultChangeList = new MockChangeList(LocalChangeList.getDefaultName());
+    myChangeLists.put(LocalChangeList.getDefaultName(), myDefaultChangeList);
     myActiveChangeList = myDefaultChangeList;
   }
 
   public void addChanges(Change... changes) {
-    MockChangeList changeList = myChangeLists.get(LocalChangeList.DEFAULT_NAME);
+    MockChangeList changeList = myChangeLists.get(LocalChangeList.getDefaultName());
     for (Change change : changes) {
       changeList.add(change);
     }
@@ -112,8 +112,9 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  public LocalChangeList getChangeList(String id) {
+  public LocalChangeList getChangeList(@Nullable String id) {
     throw new UnsupportedOperationException();
   }
 
@@ -257,7 +258,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles) {
+  public void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
 
@@ -272,18 +273,22 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles) {
+  public void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public IgnoredFileBean[] getFilesToIgnore() {
+  public IgnoredFileBean @NotNull [] getFilesToIgnore() {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isIgnoredFile(@NotNull FilePath file) {
     throw new UnsupportedOperationException();
   }
 
@@ -363,7 +368,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
   }
 
   @Override

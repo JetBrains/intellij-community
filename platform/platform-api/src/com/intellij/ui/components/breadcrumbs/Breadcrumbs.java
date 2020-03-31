@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -9,10 +9,10 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 import org.jetbrains.annotations.NotNull;
@@ -28,15 +28,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
-import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
 import static java.util.stream.Collectors.toList;
 import static javax.swing.SwingConstants.*;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
-/**
- * @author Sergey.Malenkov
- */
 public class Breadcrumbs extends JBPanelWithEmptyText {
   private static final int LEFT_RIGHT = 5;
   private static final int TOP_BOTTOM = 3;
@@ -46,8 +42,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-  private Crumb hovered;
-  private Crumb selected;
+  protected Crumb hovered;
+  protected Crumb selected;
 
   public Breadcrumbs() {
     MouseHandler handler = new MouseHandler();
@@ -232,19 +228,6 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private void layout(boolean update) {
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    int scale = getScale();
-    for (CrumbView view : views) {
-      if (view.crumb != null) {
-        if (update || view.font == null) view.update();
-        view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
-        bounds.x += view.preferred.width;
-      }
-    }
-  }
-
   private void updatePreferredSize(Dimension size, int scale) {
     for (CrumbView view : views) {
       if (view.crumb != null) {
@@ -274,7 +257,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   }
 
   private static float getFontSize(Font font) {
-    return font == null ? DEF_SYSTEM_FONT_SIZE : font.getSize2D();
+    return font == null ? JBUIScale.DEF_SYSTEM_FONT_SIZE : font.getSize2D();
   }
 
   private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
@@ -293,7 +276,16 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     public void layoutContainer(Container container) {
       if (container instanceof Breadcrumbs) {
         Breadcrumbs breadcrumbs = (Breadcrumbs)container;
-        breadcrumbs.layout(false);
+        Rectangle bounds = new Rectangle(breadcrumbs.getWidth(), breadcrumbs.getHeight());
+        JBInsets.removeFrom(bounds, breadcrumbs.getInsets());
+        int scale = breadcrumbs.getScale();
+        for (CrumbView view : breadcrumbs.views) {
+          if (view.crumb != null) {
+            view.update();
+            view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
+            bounds.x += view.preferred.width;
+          }
+        }
       }
     }
   };
@@ -340,7 +332,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         if (consumer != null) {
           consumer.accept(crumb, event);
           event.consume();
-          layout(true);
+          revalidate();
           repaint();
         }
       }
@@ -354,6 +346,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     private final CrumbView parent;
     private Crumb crumb;
     private Icon icon;
+    private int crumbIconWidth;
+    private int crumbIconHeight;
     private String text;
     private Path2D path;
     private Font font;
@@ -369,6 +363,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     void initialize(Crumb crumb) {
       this.crumb = crumb;
+      crumbIconWidth = 0;
+      crumbIconHeight = 0;
       icon = null;
       text = null;
       path = null;
@@ -380,6 +376,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void update() {
       icon = crumb.getIcon();
+      if (icon != null) {
+        crumbIconWidth = icon.getIconWidth();
+        crumbIconHeight = icon.getIconHeight();
+      }
+      else {
+        crumbIconWidth = 0;
+        crumbIconHeight = 0;
+      }
       text = crumb.getText();
       font = getFont(crumb);
       foreground = getForeground(crumb);
@@ -414,7 +418,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private String layout(FontMetrics fm, Rectangle iconR, Rectangle textR, Rectangle viewR) {
-      int gap = icon == null ? 0 : icon.getIconWidth() / 4;
+      int gap = icon == null ? 0 : Math.min(icon.getIconHeight(), icon.getIconWidth()) / 4; // an icon can have two or more images: [][]
       return layoutCompoundLabel(fm, text, icon, CENTER, LEFT, CENTER, RIGHT, viewR, iconR, textR, gap);
     }
 
@@ -457,6 +461,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private void paint(Graphics2D g) {
+      final Icon crumbIcon = crumb.getIcon();
+      if (crumbIcon != null
+          && (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight)) {
+        // process size change for IconDeferrer (lazy calculated on pool thread)
+        Breadcrumbs.this.revalidate();
+        Breadcrumbs.this.repaint();
+        return;
+      }
       int scale = getScale();
       if (path != null) {
         if (background != null) {
@@ -465,7 +477,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
-          float stroke = JBUI.getFontScale(getFontSize(getFont()));
+          float stroke = JBUIScale.getFontScale(getFontSize(getFont()));
           // calculate a visible width of separator (30% of a whole path)
           int delta = (int)(scale * (.3 * getRightGap() + getLeftGap()));
           g2.clipRect(bounds.x - delta, bounds.y, Short.MAX_VALUE, bounds.height);

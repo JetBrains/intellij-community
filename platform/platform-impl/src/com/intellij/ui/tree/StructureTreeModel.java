@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -7,18 +7,18 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -27,14 +27,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.enumeration;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.*;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-/**
- * @author Sergey.Malenkov
- */
 public class StructureTreeModel<Structure extends AbstractTreeStructure>
   extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
 
@@ -46,54 +41,36 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  private StructureTreeModel(@NotNull Structure structure, boolean background, @NotNull Disposable parentDisposable) {
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
+    this(structure, null, parent);
+  }
+
+  public StructureTreeModel(@NotNull Structure structure,
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Disposable parent) {
+    this(structure, comparator, Invoker.forBackgroundThreadWithReadAction(parent), parent);
+  }
+
+  public StructureTreeModel(@NotNull Structure structure,
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Invoker invoker,
+                            @NotNull Disposable parent) {
     this.structure = structure;
-    description = format(structure.toString());
-    invoker = background
-              ? new Invoker.BackgroundThread(this)
-              : new Invoker.EDT(this);
-    Disposer.register(parentDisposable, this);
-  }
-
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public StructureTreeModel(@NotNull Structure structure) {
-    this(structure, Disposer.newDisposable());
-  }
-
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Comparator, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator) {
-    this(structure, comparator, Disposer.newDisposable());
-  }
-
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parentDisposable) {
-    this(structure, true, parentDisposable);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator,
-                            @NotNull Disposable parentDisposable) {
-    this(structure, parentDisposable);
-    this.comparator = wrapToNodeComparator(comparator);
+    this.description = format(structure.toString());
+    this.invoker = invoker;
+    this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(parent, this);
   }
 
   @NotNull
-  private static Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+  private static Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
   }
 
   /**
    * @param comparator a comparator to sort tree nodes or {@code null} to disable sorting
    */
-  public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
+  public final void setComparator(@Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     if (disposed) return;
     if (comparator != null) {
       this.comparator = wrapToNodeComparator(comparator);
@@ -134,7 +111,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
-    invoker.runOrInvokeLater(() -> {
+    invoker.invoke(() -> {
       if (!disposed) {
         Result result = function.apply(structure);
         if (result != null) promise.setResult(result);
@@ -279,7 +256,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param consumer a path consumer called on EDT if path is found and selected
    */
   public final void select(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
-    promiseVisitor(element).onSuccess(visitor -> TreeUtil.select(tree, visitor, consumer));
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.promiseSelect(tree, visitor).onSuccess(consumer));
   }
 
   /**
@@ -362,10 +339,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return object instanceof Node && child instanceof Node ? ((Node)object).getIndex((TreeNode)child) : -1;
   }
 
-  @Override
-  public void valueForPathChanged(TreePath path, Object value) {
-  }
-
   private boolean isValid(@NotNull Node node) {
     return isValid(structure, node.getElement());
   }
@@ -373,8 +346,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private static boolean isValid(@NotNull AbstractTreeStructure structure, Object element) {
     if (element == null) return false;
     if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)element;
-      if (null == node.getValue()) return false;
+      AbstractTreeNode<?> node = (AbstractTreeNode<?>)element;
+      if (null == node.getValue()) {
+        return false;
+      }
     }
     if (element instanceof ValidateableNode) {
       ValidateableNode node = (ValidateableNode)element;
@@ -398,8 +373,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
-    NodeDescriptor descriptor = node.getDescriptor();
-    if (descriptor == null) return null;
+    NodeDescriptor<?> descriptor = node.getDescriptor();
+    if (descriptor == null) {
+      return null;
+    }
 
     Object parent = descriptor.getElement();
     if (!isValid(structure, parent)) return null;
@@ -409,6 +386,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     List<Node> list = new ArrayList<>(elements.length);
     for (Object element : elements) {
+      ProgressManager.checkCanceled();
       if (isValid(structure, element)) {
         list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
       }
@@ -440,12 +418,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return list;
   }
 
-  private static final class Node extends DefaultMutableTreeNode {
+  private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
     private final Reference<List<Node>> children = new Reference<>();
     private final LeafState leafState;
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor parent) {
+    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
@@ -471,7 +449,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     private boolean update() {
-      NodeDescriptor descriptor = getDescriptor();
+      NodeDescriptor<?> descriptor = getDescriptor();
       return descriptor != null && descriptor.update();
     }
 
@@ -513,13 +491,13 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return list != null ? list : emptyList();
     }
 
-    private NodeDescriptor getDescriptor() {
+    private NodeDescriptor<?> getDescriptor() {
       Object object = getUserObject();
-      return object instanceof NodeDescriptor ? (NodeDescriptor)object : null;
+      return object instanceof NodeDescriptor ? (NodeDescriptor<?>)object : null;
     }
 
     private Object getElement() {
-      NodeDescriptor descriptor = getDescriptor();
+      NodeDescriptor<?> descriptor = getDescriptor();
       return descriptor == null ? null : descriptor.getElement();
     }
 
@@ -549,7 +527,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     @Override
-    public Enumeration children() {
+    public Enumeration<?> children() {
       return enumeration(getChildren());
     }
 
@@ -583,6 +561,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     public int getIndex(@NotNull TreeNode child) {
       return child instanceof Node && isNodeChild(child) ? getChildren().indexOf(child) : -1;
     }
+
+    @NotNull
+    @Override
+    public LeafState getLeafState() {
+      return leafState;
+    }
   }
 
   /**
@@ -598,7 +582,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   /**
    * @return a descriptive name for the instance to help a tree identification
-   * @see Invoker#Invoker(String, Disposable)
+   * @see Invoker#Invoker(String, Disposable, com.intellij.util.ThreeState)
    */
   @Override
   public String toString() {

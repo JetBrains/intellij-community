@@ -17,18 +17,18 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 
 public abstract class CloseTabToolbarAction extends AnAction implements DumbAware {
   public CloseTabToolbarAction() {
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_CLOSE_ACTIVE_TAB);
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(AllIcons.Actions.Cancel);
     presentation.setText(CommonBundle.getCloseButtonText());
-    presentation.setDescription(null);
+    presentation.setDescription(Presentation.NULL_STRING);
   }
 }

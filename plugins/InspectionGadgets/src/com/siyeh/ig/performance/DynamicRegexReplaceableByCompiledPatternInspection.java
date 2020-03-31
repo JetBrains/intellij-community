@@ -30,7 +30,6 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,14 +51,6 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new DynamicRegexReplaceableByCompiledPatternFix();
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "dynamic.regex.replaceable.by.compiled.pattern.display.name");
   }
 
   @Override

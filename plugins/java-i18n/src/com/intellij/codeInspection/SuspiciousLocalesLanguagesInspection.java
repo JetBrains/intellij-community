@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -16,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +32,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionTool {
+public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
   private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
     @NotNull
@@ -76,9 +79,8 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     return new MyOptions().getComponent();
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
     if (propertiesFile == null) {
       return null;
@@ -97,7 +99,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
       return null;
     }
     final ProblemDescriptor descriptor = manager.createProblemDescriptor(file,
-                                                                         PropertiesBundle.message(
+                                                                         JavaI18nBundle.message(
                                                                            "resource.bundle.contains.locales.with.suspicious.locale.languages.desciptor"),
                                                                          new DissociateResourceBundleQuickFix(resourceBundle),
                                                                          ProblemHighlightType.WEAK_WARNING,
@@ -115,7 +117,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     @NotNull
     @Override
     public String getFamilyName() {
-      return PropertiesBundle.message("dissociate.resource.bundle.quick.fix.name");
+      return JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.name");
     }
 
     @Override
@@ -130,23 +132,23 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   }
 
   private class MyOptions {
-    private final JBList myAdditionalLocalesList;
+    private final JBList<String> myAdditionalLocalesList;
 
     MyOptions() {
-      myAdditionalLocalesList = new JBList(new MyListModel());
+      myAdditionalLocalesList = new JBList<>(new CollectionListModel<>(myAdditionalLanguages, true));
       myAdditionalLocalesList.setCellRenderer(new DefaultListCellRenderer());
     }
 
     public JPanel getComponent() {
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(new JLabel(PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.label")), BorderLayout.NORTH);
+      panel.add(new JLabel(JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label")), BorderLayout.NORTH);
       panel.add(
         ToolbarDecorator.createDecorator(myAdditionalLocalesList)
           .setAddAction(new AnActionButtonRunnable() {
             @Override
             public void run(AnActionButton button) {
-              Messages.showInputDialog(panel, PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.input.text"),
-                                       PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.input.title"), null, "", new InputValidator() {
+              Messages.showInputDialog(panel, JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.text"),
+                                       JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.title"), null, "", new InputValidator() {
                 @Override
                 public boolean checkInput(String inputString) {
                   return 1 < inputString.length() && inputString.length() < 9 && !myAdditionalLanguages.contains(inputString);
@@ -156,7 +158,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
                 public boolean canClose(String inputString) {
                   if (inputString != null) {
                     myAdditionalLanguages.add(inputString);
-                    ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                    ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
                   }
                   return true;
                 }
@@ -169,7 +171,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
               final int index = myAdditionalLocalesList.getSelectedIndex();
               if (index > -1 && index < myAdditionalLanguages.size()) {
                 myAdditionalLanguages.remove(index);
-                ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
               }
             }
           })
@@ -178,22 +180,6 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
           .createPanel(),
         BorderLayout.CENTER);
       return panel;
-    }
-
-    private class MyListModel extends AbstractListModel {
-      @Override
-      public int getSize() {
-        return myAdditionalLanguages.size();
-      }
-
-      @Override
-      public Object getElementAt(int index) {
-        return myAdditionalLanguages.get(index);
-      }
-
-      public void fireContentsChanged() {
-        fireContentsChanged(myAdditionalLanguages, -1, -1);
-      }
     }
   }
 }

@@ -20,7 +20,7 @@ import java.util.Collection;
 
 public class TagsPanel extends JPanel implements TableCellRenderer{
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel");
+  private static final Logger LOG = Logger.getInstance(TagsPanel.class);
 
   private final JLabel myTextLabel = new JLabel();
 

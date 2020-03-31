@@ -47,9 +47,9 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 class GrChageSignatureUsageSearcher {
+  private static final Logger LOG = Logger.getInstance(GrChageSignatureUsageSearcher.class);
+
   private final JavaChangeInfo myChangeInfo;
-  private static final Logger LOG =
-    Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChageSignatureUsageSearcher");
 
   GrChageSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;
@@ -271,9 +271,6 @@ class GrChageSignatureUsageSearcher {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
-    }
-    if (info.getName() != parameter.getName()) {
-      
     }
   }
 

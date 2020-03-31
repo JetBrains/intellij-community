@@ -29,9 +29,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class BuildTargetRegistryImpl implements BuildTargetRegistry {
   private final List<BuildTarget<?>> myAllTargets;
   private final Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;

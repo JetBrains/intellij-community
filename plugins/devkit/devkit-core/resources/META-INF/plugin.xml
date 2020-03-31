@@ -9,20 +9,25 @@
     <a href="http://www.jetbrains.org/intellij/sdk/docs/">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
-  <category>inspection</category>
+  <category>Plugin Development</category>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
+  <depends config-file="i18n-devkit.xml" optional="true">com.intellij.java-i18n</depends>
+  <depends config-file="images-devkit.xml" optional="true">com.intellij.platform.images</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
+  <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>
+  <depends config-file="intellilang-devkit.xml" optional="true">org.intellij.intelliLang</depends>
 
-  <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
+  <resource-bundle>messages.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider"/>
+    <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
@@ -35,7 +40,6 @@
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
-    <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
@@ -45,7 +49,7 @@
                       rootTagName="idea-plugin"
                       stubVersion="12"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
-                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForAction"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Group"
@@ -60,9 +64,16 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
+    <searchScopesProvider
+        order="last"
+        implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileSearchScopeProvider"/>
+
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
@@ -84,6 +95,15 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"/>
+    <localInspection language="XML" displayName="Plugin.xml dynamic plugin verification" applyToDialects="false"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"/>
+    <localInspection language="XML" displayName="Plugin.xml i18n verification" applyToDialects="false"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"/>
+
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      groupPath="Plugin DevKit"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
@@ -110,6 +130,11 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
+    <localInspection language="JAVA" displayName="Java 5 nullability annotation on array"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
+                     enabledByDefault="false"
+                     level="WARNING" isInternal="true"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.OldJetBrainsAnnotationInspection"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
@@ -177,7 +202,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
+    <localInspection shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
@@ -193,7 +218,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
-    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for extension class"
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non-default constructors for service and extension class"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
@@ -209,6 +234,11 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"/>
+    <localInspection language="JAVA" shortName="SerializableCtor"
+                     displayName="Non-default constructor in serializable class"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -222,6 +252,7 @@
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
     <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.FlushQueue"/>
     <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
     <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
@@ -240,7 +271,7 @@
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
@@ -253,14 +284,15 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML"
+                                    implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
+    <psi.referenceContributor
+      language="Properties"
+      implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
-
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
@@ -268,6 +300,7 @@
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+    <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
@@ -282,13 +315,17 @@
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <!--cached value profiler-->
-    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
+    <fileType extensions="cvp" name="CVP"
+              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
     <!-- themes -->
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
+    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
@@ -297,6 +334,7 @@
     <lang.documentationProvider language="JSON"
                                 order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
+    <notificationWhitelist groupIds="Update from Sources;IntelliJ API Annotations;Plugin DevKit Deployment;testdata;DevKit Errors"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
@@ -314,12 +352,6 @@
     </extensionPoint>
   </extensionPoints>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <group id="PluginDeployActions">
       <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction"/>
@@ -328,67 +360,53 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <group id="DevkitNewActions" text="Plugin DevKit" icon="AllIcons.Nodes.Plugin" popup="true"
-           class="com.intellij.ide.actions.NonTrivialActionGroup">
-      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
+    <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
       <separator/>
-      <action text="Application Service" id="NewApplicationService"
-              class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action text="Project Service" id="NewProjectService"
-              class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
-      <action text="Module Service" id="NewModuleService"
-              class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <action id="NewApplicationService" class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
+      <action id="NewProjectService" class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <action id="NewModuleService" class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
       <separator/>
-      <action text="Theme" id="DevKit.NewTheme"
-              class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
+      <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
-
-    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
-            id="GenerateExternalization">
+    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
-    <group id="Internal.DevKit" internal="true" text="DevKit" popup="true">
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction"
-              text="Toggle Expected Highlighting Markup"
-              id="ToggleHighlightingMarkup"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
-              id="ShuffleNamesAction"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
-              id="ShowSerializedXml"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" text="Generate DOM Model..."
-              id="GenerateDomModel"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" text="Show Help Page by ID"
-              id="ShowHelpPageById"/>
-
+    <group id="Internal.DevKit" internal="true" popup="true">
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" id="ToggleHighlightingMarkup"/>
+      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" id="ShuffleNamesAction"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" id="GenerateDomModel"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
+      <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
+      <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"/>
+      <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
-
     </group>
-    <action id="TestData.Navigate"
-            class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
+
+    <action id="TestData.Navigate" class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
-            text="Dump Highlighting-Markup-Free Data">
-      <add-to-group group-id="Internal.Dump"/>
+    <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
+    <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
 
-    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
-      <add-to-group group-id="FindMenuGroup" anchor="last"/>
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
     </action>
 
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
-      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Preview Theme" icon="AllIcons.Actions.Execute"/>
-      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Stop Theme Preview" icon="AllIcons.Actions.Suspend"/>
-      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" text="Edit Editor Color Scheme" icon="AllIcons.Actions.EditScheme"/>
+      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
+      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" icon="AllIcons.Actions.Suspend"/>
+      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" icon="AllIcons.Actions.EditScheme"/>
+      <separator/>
+      <action class="org.jetbrains.idea.devkit.themes.OpenThemeReferenceDocsAction" id="DevKit.OpenThemeReferenceDocs" icon="AllIcons.Actions.Help"/>
     </group>
 
   </actions>

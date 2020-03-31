@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.smart.YAMLEditorOptions;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -17,7 +18,7 @@ import java.awt.datatransfer.StringSelection;
  * <p/>
  * Note: some tests have different insert string to check regexp pattern
  */
-public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLKeyPasteTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
@@ -135,6 +136,17 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   // It is disputable behaviour
   public void testPasteKeysWithLeadingDot() {
     doTest(".leading.subKey");
+  }
+
+  public void testDoNotPasteWithOptionDisabled() {
+    assert YAMLEditorOptions.getInstance().isUseSmartPaste();
+    try {
+      YAMLEditorOptions.getInstance().setUseSmartPaste(false);
+      doTest("next.subKey");
+    }
+    finally {
+      YAMLEditorOptions.getInstance().setUseSmartPaste(true);
+    }
   }
 
   private void doTest(@NotNull String pasteText) {

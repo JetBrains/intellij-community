@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -25,12 +11,18 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
@@ -39,7 +31,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
     myBuilder = new JavaLightStubBuilder();
   }
 
@@ -47,6 +39,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   protected void tearDown() throws Exception {
     myBuilder = null;
     super.tearDown();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 
   public void testEmpty() {
@@ -527,13 +524,164 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      PROVIDES_WITH_LIST:PsiRefListStub[PROVIDES_WITH_LIST:x.Y]\n");
   }
 
+  public void testRecord() {
+    doTest("record A(int x, String y) {}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[record name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    RECORD_HEADER:PsiRecordHeaderStub\n" +
+           "      RECORD_COMPONENT:PsiRecordComponentStub[x:int]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      RECORD_COMPONENT:PsiRecordComponentStub[y:String]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+  public void testLocalRecord() {
+    doTest("class A {\n" +
+           "  void test() {\n" +
+           "    record A(String s) { }\n" +
+           "  }\n" +
+           "}\n",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[test:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=A fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
+           "          RECORD_COMPONENT:PsiRecordComponentStub[s:String]\n" +
+           "            MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+
+  public void testLocalRecordIncorrect() {
+    doTest("class A {\n" +
+           "  void test() {\n" +
+           "    record A { }\n" +
+           "  }\n" +
+           "}\n",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[test:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+  public void testLocalRecordLikeIncompleteCode() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record turn getTitle();\n" +
+           "  }\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+
+  public void testLocalRecordLikeIncompleteCodeWithTypeParameters() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record turn<A>" +
+           "  }\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=turn fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          TYPE_PARAMETER:PsiTypeParameter[A]\n" +
+           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+  public void testLocalRecordWithTypeParameters() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record R<String>(){}\n" +
+           "  " +
+           "}\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=R fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          TYPE_PARAMETER:PsiTypeParameter[String]\n" +
+           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
   public void testSOEProof() {
     StringBuilder sb = new StringBuilder();
     SecureRandom random = new SecureRandom();
     sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
     int i;
     for (i = 0; i < 100000; i++) {
-      sb.append("  \"").append(Math.abs(random.nextInt())).append("\" +\n");
+      sb.append("  \"").append(random.nextInt(Integer.MAX_VALUE)).append("\" +\n");
     }
     sb.append("  \"\");\n}");
 
@@ -562,8 +710,9 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     PlatformTestUtil.startPerformanceTest(message, 700, () -> myBuilder.buildStubTree(file)).assertTiming();
   }
 
-  private void doTest(String source, String expected) {
+  private void doTest(@Language("JAVA") String source, @Language("TEXT") String expected) {
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());

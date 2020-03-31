@@ -26,12 +26,14 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,16 +56,18 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 
 /**
  * @author MYakovlev
@@ -85,7 +89,30 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     super.tearDown();
   }
 
-  public void testFindString() throws InterruptedException {
+  public void testFindInDirectoryCorrectlyFindVirtualFileForJars() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+    VirtualFile[] files = getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile rtJar = null;
+    for(VirtualFile file:files) {
+      if (file.getPath().contains("rt.jar")) {
+        rtJar = JarFileSystem.getInstance().getLocalVirtualFileFor(file);
+        break;
+      }
+    }
+
+    assertNotNull(rtJar);
+    findModel.setProjectScope(false);
+    findModel.setDirectoryName(rtJar.getPath());
+    assertNotNull(FindInProjectUtil.getDirectory(findModel));
+
+    VirtualFile jarRootForLocalFile = JarFileSystem.getInstance().getJarRootForLocalFile(rtJar);
+    VirtualFile jarPackageInRtJar = jarRootForLocalFile.findChild("java");
+    assertNotNull(jarPackageInRtJar);
+    findModel.setDirectoryName(jarPackageInRtJar.getPath());
+    assertNotNull(FindInProjectUtil.getDirectory(findModel));
+  }
+
+  public void testFindString() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
@@ -135,7 +162,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    Thread thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Future<?> thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -144,23 +171,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.assertCompleted();
 
     assertFalse(findResultArr[0].isStringFound());
-    thread.join();
+    thread.get();
   }
 
-  private static Thread findInNewThread(final FindModel model,
-                                  final FindManager findManager,
-                                  final CharSequence text,
-                                  final int offset,
-                                  final FindResult[] op_result){
+  private static Future<?> findInNewThread(final FindModel model,
+                                           final FindManager findManager,
+                                           final CharSequence text,
+                                           final int offset,
+                                           final FindResult[] op_result){
     op_result[0] = null;
-    Thread findThread = new Thread("find man test"){
-      @Override
-      public void run(){
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
         op_result[0] = findManager.findString(text, offset, model);
       }
-    };
-    findThread.start();
-    return findThread;
+    );
   }
 
   public void testFindUsages() {
@@ -197,9 +220,8 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   private List<UsageInfo> findInProject(@NotNull FindModel findModel) {
     List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
-    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
-    FindInProjectUtil
-      .findUsages(findModel, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
+    FindUsagesProcessPresentation presentation = new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel));
+    FindInProjectUtil.findUsages(findModel, myProject, new CommonProcessors.CollectProcessor<>(result), presentation);
     return result;
   }
 
@@ -533,7 +555,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInFileUnderLibraryUnderProject() {
     initProject("libUnderProject", "src");
     String libDir = JavaTestUtil.getJavaTestDataPath() + "/find/libUnderProject/lib";
-    PsiTestUtil.addLibrary(myModule, "lib", libDir, new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+    PsiTestUtil.addLibrary(myModule, "lib", libDir, new String[]{""}, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     FindModel findModel = new FindModel();
     findModel.setStringToFind("TargetWord");
@@ -1008,7 +1030,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(replacement, myFindManager.getStringToReplace(findResult.substring(text), findModel, 0, text));
   }
 
-  public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
+  public void testRegExpSearchDoesCheckCancelled() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("(x+x+)+y");
     findModel.setRegularExpressions(true);
 
@@ -1033,11 +1055,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       "// foo\n// \n// \n");
   }
 
-  private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {
+  private void runAsyncTest(String text, FindModel findModel) throws InterruptedException, ExecutionException {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);
     final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-    final Thread thread = new Thread(() -> ProgressManager.getInstance().runProcess(() -> {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
       try {
         progressStarted.countDown();
         result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
@@ -1045,16 +1067,24 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       catch (ProcessCanceledException ex) {
         result.set(new FindResultImpl());
       }
-    }, progressIndicatorBase), "runAsyncTest");
-    thread.start();
+    }, progressIndicatorBase));
 
     progressStarted.await();
-    thread.join(100);
+    try {
+      thread.get(100, TimeUnit.MILLISECONDS);
+    }
+    catch (TimeoutException ignored) {
+    }
     progressIndicatorBase.cancel();
-    thread.join(500);
+    try {
+      thread.get(500, TimeUnit.MILLISECONDS);
+    }
+    catch (TimeoutException ignored) {
+
+    }
     assertNotNull(result.get());
-    assertTrue(!result.get().isStringFound());
-    thread.join();
+    assertFalse(result.get().isStringFound());
+    thread.get();
   }
 
   private void doTestRegexpReplace(String initialText, String searchString, String replaceString, String expectedResult) {
@@ -1125,4 +1155,29 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(1, findInProject(findModel));
   }
 
+  public void testFindInPathDoesStopAtOneHundredUsagesWhenAskedTo() throws Exception {
+    createFile(myModule, "A.txt", StringUtil.repeat("foo ", 200));
+
+    FindModel findModel = new FindModel();
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setProjectScope(true);
+
+    findModel.setStringToFind("foo");
+
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
+    Processor<UsageInfo> collector = info -> {
+      if (info.equals(ContainerUtil.getLastItem(result))) {
+        throw new RuntimeException("duplicate elements found");
+      }
+      result.add(info);
+      return result.size() < 100;
+    };
+    FindUsagesProcessPresentation presentation = new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel));
+    FindInProjectUtil.findUsages(findModel, myProject, collector, presentation);
+
+    assertEquals(100, result.size());
+  }
 }

@@ -15,8 +15,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return {@code null} if no problems found or not applicable at method level.
    */
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -28,8 +27,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return {@code null} if no problems found or not applicable at class level.
    */
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -41,8 +39,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return {@code null} if no problems found or not applicable at field level.
    */
-  @Nullable
-  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -66,7 +63,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
       }
 
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 

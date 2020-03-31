@@ -5,9 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class JpsUiDesignerExtensionService {
   public static JpsUiDesignerExtensionService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsUiDesignerExtensionService.class);

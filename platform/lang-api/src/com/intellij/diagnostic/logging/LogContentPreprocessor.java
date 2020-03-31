@@ -16,11 +16,16 @@
 
 package com.intellij.diagnostic.logging;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.List;
 
 /**
- * @author yole
+ * @deprecated customize log entry in {@link LogFilterModel#processLine(String)}
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public interface LogContentPreprocessor {
   List<LogFragment> parseLogLine(String text);
 }

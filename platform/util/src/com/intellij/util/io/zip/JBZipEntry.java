@@ -7,7 +7,7 @@ package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -32,7 +32,7 @@ public class JBZipEntry implements Cloneable {
   private long size = -1;     // uncompressed size of entry data
   private long csize = -1;    // compressed size of entry data
   private int method = -1;    // compression method
-  private byte[] extra = ArrayUtil.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
+  private byte[] extra = ArrayUtilRt.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
   private String comment;     // optional comment string for entry
 
   private int internalAttributes = 0;
@@ -114,7 +114,7 @@ public class JBZipEntry implements Cloneable {
    * @param mode an {@code int} value
    */
   public void setUnixMode(int mode) {
-    setExternalAttributes((mode << 16)
+    setExternalAttributes(((long)(mode & SHORT_MASK) << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
@@ -457,7 +457,7 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
-  private long calcDataOffset() throws IOException {
+  public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
     myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
@@ -483,7 +483,7 @@ public class JBZipEntry implements Cloneable {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       if (remaining <= 0) {
         if (addDummyByte) {
           addDummyByte = false;

@@ -28,13 +28,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class IntroduceFieldWithSetUpInitializationTest extends LightCodeInsightTestCase {
+public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsightTestCase {
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -97,7 +97,7 @@ public class IntroduceFieldWithSetUpInitializationTest extends LightCodeInsightT
                                                          PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
                                                          false);
       }
-    }.convertLocalToField(local, myEditor);
+    }.convertLocalToField(local, getEditor());
     checkResultByFile("after" + getTestName(false)+ ".java");
   }
 

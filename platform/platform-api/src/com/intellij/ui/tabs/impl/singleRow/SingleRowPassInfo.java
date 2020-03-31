@@ -25,12 +25,6 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
 
-  public Rectangle firstGhost;
-  public boolean firstGhostVisible;
-
-  public Rectangle lastGhost;
-  public boolean lastGhostVisible;
-
   public Insets insets;
 
   public WeakReference<JComponent> comp;
@@ -49,26 +43,19 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     scrollOffset = layout.getScrollOffset();
   }
 
-  @Override
-  public TabInfo getPreviousFor(final TabInfo info) {
-    return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
-  @Override
-  public TabInfo getNextFor(final TabInfo info) {
-    return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
+  @Deprecated
   @Override
   public int getRowCount() {
     return 1;
   }
 
+  @Deprecated
   @Override
   public int getColumnCount(final int row) {
     return myVisibleInfos.size();
   }
 
+  @Deprecated
   @Override
   public TabInfo getTabAt(final int row, final int column) {
     return myVisibleInfos.get(column);
@@ -77,10 +64,5 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
-  }
-
-  @Override
-  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
-    return true;
   }
 }

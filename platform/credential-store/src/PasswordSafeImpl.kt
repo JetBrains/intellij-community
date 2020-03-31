@@ -13,19 +13,24 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
+import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
-open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
-                                                      provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
+open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSafeSettings, provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
+  @Suppress("unused")
+  constructor() : this(service<PasswordSafeSettings>(), null)
+
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
     set(value) {
@@ -60,6 +65,9 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
       catch (e: Exception) {
         LOG.warn(e)
       }
+    }
+    else if (store is Closeable) {
+      store.close()
     }
   }
 
@@ -139,7 +147,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
   }
 }
 
-class PasswordSafeImpl(settings: PasswordSafeSettings /* public - backward compatibility */) : BasePasswordSafe(settings), SettingsSavingComponent {
+class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
   private val saveAlarm = pooledThreadSingleAlarm(delay = 0) {
     val currentThread = Thread.currentThread()

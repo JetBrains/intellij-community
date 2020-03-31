@@ -30,10 +30,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.resolve.DefinitionResolver;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
@@ -63,8 +64,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final RngGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -96,15 +96,14 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final RngGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
 
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
-    if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (map == null || map.size() == 0) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
     return ContainerUtil.mapNotNull(map.values(), defines -> {
       final Define define = defines.iterator().next();
@@ -140,6 +139,6 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Unresolved pattern reference ''{0}''";
+    return RelaxngBundle.message("unresolved.pattern.reference.0");
   }
 }

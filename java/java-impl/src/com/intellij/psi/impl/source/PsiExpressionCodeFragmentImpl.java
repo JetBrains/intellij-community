@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiExpressionCodeFragment {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl");
+  private static final Logger LOG = Logger.getInstance(PsiExpressionCodeFragmentImpl.class);
   private PsiType myExpectedType;
 
   public PsiExpressionCodeFragmentImpl(@NotNull Project project,

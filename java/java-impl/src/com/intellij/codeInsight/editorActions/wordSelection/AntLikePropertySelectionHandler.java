@@ -17,8 +17,8 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -35,8 +35,7 @@ public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerB
   public boolean canSelect(@NotNull PsiElement e) {
     Language l = e.getLanguage();
     if (!(l.equals(JavaLanguage.INSTANCE)
-          || l.equals(StdLanguages.XML)
-          || l.equals(StdLanguages.ANT))) {
+          || l.equals(XMLLanguage.INSTANCE))) {
       return false;
     }
 

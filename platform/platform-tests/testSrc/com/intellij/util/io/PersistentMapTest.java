@@ -17,11 +17,10 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.IntObjectCache;
-import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,30 +95,36 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals("AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(new HashSet<>(Arrays.asList("AAA")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(1, myMap.getSize());
 
     myMap.put("BBB", "BBB_VALUE");
     assertEquals("BBB_VALUE", myMap.get("BBB"));
-    assertEquals(new HashSet<>(Arrays.asList("AAA", "BBB")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(2, myMap.getSize());
 
     myMap.put("AAA", "ANOTHER_AAA_VALUE");
     assertEquals("ANOTHER_AAA_VALUE", myMap.get("AAA"));
-    assertEquals(new HashSet<>(Arrays.asList("AAA", "BBB")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(2, myMap.getSize());
 
     myMap.remove("AAA");
+    assertEquals(1, myMap.getSize());
     assertNull(myMap.get("AAA"));
     assertEquals("BBB_VALUE", myMap.get("BBB"));
-    assertEquals(new HashSet<>(Arrays.asList("BBB")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
 
     myMap.remove("BBB");
     assertNull(myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
     assertEquals(new HashSet<>(), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(0, myMap.getSize());
 
     myMap.put("AAA", "FINAL_AAA_VALUE");
     assertEquals("FINAL_AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(new HashSet<>(Arrays.asList("AAA")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(1, myMap.getSize());
   }
 
   public void testOpeningClosing() throws IOException {
@@ -324,13 +329,17 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     myMap.close();
 
-    final int garbageSizeOnClose = myMap.getGarbageSize();
+    int garbageSizeOnClose = myMap.getGarbageSize();
+    int sizeOnClose = myMap.getSize();
 
     myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
 
     final int garbageSizeOnOpen = myMap.getGarbageSize();
+    int sizeOnOpen = myMap.getSize();
 
     assertEquals(garbageSizeOnClose, garbageSizeOnOpen);
+    assertEquals(sizeOnClose, sizeOnOpen);
+    assertEquals(sizeOnOpen, myMap.getAllKeysWithExistingMapping().size());
 
     { // before compact
       final Collection<String> allKeys = new HashSet<>(myMap.getAllKeysWithExistingMapping());
@@ -350,6 +359,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     final int garbageSizeAfterCompact = myMap.getGarbageSize();
     assertEquals(0, garbageSizeAfterCompact);
+    assertEquals(sizeOnOpen, myMap.getAllKeysWithExistingMapping().size());
 
     { // after compact
       final Collection<String> allKeys = new HashSet<>(myMap.getAllKeysWithExistingMapping());
@@ -401,85 +411,6 @@ public class PersistentMapTest extends PersistentMapTestBase {
     }
   }
 
-  public void testPerformance() throws IOException {
-    final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
-      try {
-        final String _mapKey = (String)mapKey;
-        assertEquals(myMap.enumerate(_mapKey), key);
-
-        final String expectedMapValue = _mapKey == null ? null : _mapKey + "_value";
-        final String actual = myMap.get(_mapKey);
-        assertEquals(expectedMapValue, actual);
-
-        myMap.remove(_mapKey);
-
-        assertNull(myMap.get(_mapKey));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    };
-
-    PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
-      try {
-        stringCache.addDeletedPairsListener(listener);
-        for (int i = 0; i < 100000; ++i) {
-          final String string = createRandomString();
-          final int id = myMap.enumerate(string);
-          stringCache.put(id, string);
-          myMap.put(string, string + "_value");
-        }
-        stringCache.removeDeletedPairsListener(listener);
-        for (String key : stringCache) {
-          myMap.remove(key);
-        }
-        stringCache.removeAll();
-        myMap.compact();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }).ioBound().assertTiming();
-
-    myMap.close();
-    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
-    LOG.debug(String.format("Data file size = %d bytes\n",
-                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
-  }
-
-  public void testPerformance1() throws IOException {
-    final List<String> strings = new ArrayList<>(2000);
-    for (int i = 0; i < 100000; ++i) {
-      strings.add(createRandomString());
-    }
-
-    PlatformTestUtil.startPerformanceTest("put/remove", 1500, () -> {
-      for (int i = 0; i < 100000; ++i) {
-        final String string = strings.get(i);
-        myMap.put(string, string);
-      }
-
-      for (int i = 0; i < 100000; ++i) {
-        final String string = createRandomString();
-        myMap.get(string);
-      }
-
-      for (int i = 0; i < 100000; ++i) {
-        final String string = createRandomString();
-        myMap.remove(string);
-      }
-
-      for (String string : strings) {
-        myMap.remove(string);
-      }
-    }).assertTiming();
-    myMap.close();
-    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
-    LOG.debug(String.format("Data file size = %d bytes\n",
-                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
-  }
-
   public void testReadonlyMap() throws IOException {
     myMap.put("AAA", "AAA_VALUE");
 
@@ -503,7 +434,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals("AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(new HashSet<>(Arrays.asList("AAA")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
 
     try {
       myMap.remove("AAA");
@@ -525,7 +456,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put("Foo", "Bar");
       assertTrue(myMap.containsMapping("Foo"));
       myMap.close();
-      assertEquals(55,PersistentHashMap.getDataFile(myFile).length());
+      assertEquals(55,PersistentHashMap.getDataFile(myFile.toPath()).toFile().length());
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);
@@ -555,6 +486,21 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     runIteration(mapConstructorWithBrokenKeyDescriptor);
     runIteration(mapConstructorWithBrokenValueDescriptor);
+  }
+
+  public void testExistingKeys() throws IOException {
+    myMap.put("key", "_value");
+    myMap.put("key", "value");
+    myMap.put("key2", "value2");
+    myMap.remove("key2");
+
+    HashSet<String> allKeys = new HashSet<>();
+    myMap.processKeys(new CommonProcessors.CollectProcessor<>(allKeys));
+    HashSet<String> existingKeys = new HashSet<>();
+    myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(existingKeys));
+
+    assertEquals(ContainerUtil.newHashSet("key", "key2"), allKeys);
+    assertEquals(ContainerUtil.newHashSet("key"), existingKeys);
   }
 
   private void runIteration(PersistentMapPerformanceTest.MapConstructor<String, String> brokenMapDescritor) throws IOException {

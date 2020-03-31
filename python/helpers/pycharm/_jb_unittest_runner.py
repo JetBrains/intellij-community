@@ -3,7 +3,7 @@ import os
 import sys
 from unittest import main
 
-from _jb_runner_tools import jb_start_tests, jb_doc_args, JB_DISABLE_BUFFERING
+from _jb_runner_tools import jb_start_tests, jb_doc_args, JB_DISABLE_BUFFERING, PROJECT_DIR
 from teamcity import unittestpy
 
 if __name__ == '__main__':
@@ -24,12 +24,12 @@ if __name__ == '__main__':
                 discovery_args += [os.path.dirname(path), "-p", os.path.basename(path)]
             else:
                 discovery_args.append(path)
-            discovery_args += ["-t", os.getcwd()]  # To force unit calculate path relative to this folder
+            discovery_args += ["-t", PROJECT_DIR]  # To force unit calculate path relative to this folder
             additional_args = discovery_args + additional_args
     elif targets:
         additional_args += targets
     args += additional_args
     jb_doc_args("unittests", args)
     # Working dir should be on path, that is how unittest work when launched from command line
-    sys.path.insert(0, os.getcwd())
-    main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner, buffer=not JB_DISABLE_BUFFERING)
+    sys.path.insert(0, PROJECT_DIR)
+    sys.exit(main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner, buffer=not JB_DISABLE_BUFFERING))

@@ -46,8 +46,8 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
   private fun callsOnlyPureMethods(currentMethod: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     if (singleCall == null) return true
 
-    val psiCall = singleCall.restoreExpression(body()) as PsiCall
-    val method = psiCall.resolveMethod()
+    val psiCall = singleCall.restoreExpression(body()) as? PsiCall
+    val method = psiCall?.resolveMethod()
     if (method != null) {
       return method == currentMethod || JavaMethodContractUtil.isPure(method)
     } else if (psiCall is PsiNewExpression && psiCall.argumentList?.expressionCount == 0) {
@@ -103,7 +103,7 @@ interface MethodReturnInferenceResult {
     override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
       return when {
         value == Nullability.NULLABLE -> Nullability.NULLABLE 
-        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullability.NOT_NULL
+        delegateCalls.all { range -> isNotNullCall(method, range, body()) } -> Nullability.NOT_NULL
         else -> Nullability.UNKNOWN
       }
     }
@@ -112,27 +112,27 @@ interface MethodReturnInferenceResult {
       if (value == Nullability.NOT_NULL) {
         return Mutability.UNKNOWN
       }
-      return delegateCalls.stream().map { range -> getDelegateMutability(range, body()) }.reduce(
+      return delegateCalls.stream().map { range -> getDelegateMutability(method, range, body()) }.reduce(
         Mutability::unite).orElse(
         Mutability.UNKNOWN)
     }
 
-    private fun getDelegateMutability(delegate: ExpressionRange, body: PsiCodeBlock): Mutability {
+    private fun getDelegateMutability(caller: PsiMethod, delegate: ExpressionRange, body: PsiCodeBlock): Mutability {
       val call = delegate.restoreExpression(body) as PsiMethodCallExpression
       val target = call.resolveMethod()
       return when {
-        target == null -> Mutability.UNKNOWN
+        target == null || target == caller -> Mutability.UNKNOWN
         ClassUtils.isImmutable(target.returnType, false) -> Mutability.UNMODIFIABLE
         else -> Mutability.getMutability(target)
       }
     }
 
-    private fun isNotNullCall(delegate: ExpressionRange, body: PsiCodeBlock): Boolean {
+    private fun isNotNullCall(caller: PsiMethod, delegate: ExpressionRange, body: PsiCodeBlock): Boolean {
       val call = delegate.restoreExpression(body) as PsiMethodCallExpression
       if (call.type is PsiPrimitiveType) return true
 
       val target = call.resolveMethod()
-      return target != null && NullableNotNullManager.isNotNull(target)
+      return target == caller || target != null && NullableNotNullManager.isNotNull(target)
     }
   }
 }

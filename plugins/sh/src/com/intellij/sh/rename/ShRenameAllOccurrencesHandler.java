@@ -2,20 +2,27 @@
 package com.intellij.sh.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.MissingResourceException;
 
-public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
+class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
+  static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 
   private ShRenameAllOccurrencesHandler() {
   }
@@ -30,18 +37,42 @@ public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = caret.hasSelection();
-    TextRange caretTextRange = hasSelection
+    TextRange occurrenceAtCaret = hasSelection
         ? new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
         : ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
-    if (caretTextRange == null) return;
+    if (occurrenceAtCaret == null) return;
     CharSequence documentText = editor.getDocument().getImmutableCharSequence();
-    CharSequence textToFind = caretTextRange.subSequence(documentText);
+    CharSequence textToFind = occurrenceAtCaret.subSequence(documentText);
     Collection<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, !hasSelection);
     Project project = editor.getProject();
     assert project != null;
-    ShTextRenameRefactoring rename = ShTextRenameRefactoring.create(editor, project, textToFind.toString(), occurrences, caretTextRange);
-    if (rename != null) {
-      rename.start();
+    if (occurrences.size() < getMaxInplaceRenameSegments() && documentText.length() < FileUtilRt.MEGABYTE) {
+      ShTextRenameRefactoring rename = ShTextRenameRefactoring.create(editor, project, textToFind.toString(), occurrences, occurrenceAtCaret);
+      if (rename != null) {
+        rename.start();
+        return;
+      }
+    }
+    TextOccurrencesRenamer renamer = new TextOccurrencesRenamer(editor, textToFind.toString(), occurrences, occurrenceAtCaret);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      editor.putUserData(RENAMER_KEY, renamer);
+    }
+    else {
+      new ShRenameDialog(project, renamer).show();
+    }
+  }
+
+  @NotNull
+  static RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
+    return Registry.get("inplace.rename.segments.limit");
+  }
+
+  private static int getMaxInplaceRenameSegments() {
+    try {
+      return getMaxInplaceRenameSegmentsRegistryValue().asInteger();
+    }
+    catch (MissingResourceException e) {
+      return -1;
     }
   }
 }

@@ -128,7 +128,8 @@ public class StringHash {
   }
 
   /**
-   * Calculates hash value of string
+   * Calculates hash value of string using buzhash algorithm.
+   * See http://www.serve.net/buz/hash.adt/java.008.html for details.
    *
    * @param arg string to calculate hash value upon
    * @return calculated hash value
@@ -142,6 +143,13 @@ public class StringHash {
     return h;
   }
 
+  /**
+   * Calculates hash value of byte array buzhash algorithm.
+   * See http://www.serve.net/buz/hash.adt/java.008.html for details.
+   *
+   * @param arg byte arrayg to calculate hash value upon
+   * @return calculated hash value
+   */
   public static long calc(byte[] arg) {
     if (arg == null) return 0;
     long h = initialHash;

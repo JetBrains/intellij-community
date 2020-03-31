@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
@@ -69,8 +69,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[] {getOKAction(), getCancelAction()};
   }
   @Override
@@ -87,7 +86,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   @Override
   protected JPopupMenu createPopup(boolean toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
     newGroup.add(new AddLocationAction(browser));
     newGroup.add(new MkDirAction(browser));

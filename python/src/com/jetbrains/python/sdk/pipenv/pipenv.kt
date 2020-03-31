@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.pipenv
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
+import com.intellij.CommonBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.execution.ExecutionException
@@ -15,7 +16,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runInEdt
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
@@ -55,10 +57,6 @@ import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import javax.swing.Icon
-
-/**
- * @author vlan
- */
 
 const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
@@ -146,11 +144,11 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
                     module?.basePath ?:
                     project?.basePath ?:
                     return null
-  val task = object : Task.WithResult<String, ExecutionException>(project, "Setting Up Pipenv Environment", true) {
+  val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.setting.up.pipenv.title"), true) {
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
-      return PythonSdkType.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
+      return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
   val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
@@ -204,7 +202,7 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
   val result = with(handler) {
     when {
       indicator != null -> {
-        addProcessListener(PyPackageManagerImpl.IndicatedProcessOutputListener(indicator))
+        addProcessListener(IndicatedProcessOutputListener(indicator))
         runProcessWithProgressIndicator(indicator)
       }
       else ->
@@ -307,7 +305,7 @@ class PipEnvInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = "Install requirements from Pipfile.lock"
+  override fun getFamilyName() = PyBundle.message("python.sdk.install.requirements.from.pipenv.lock")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
@@ -329,7 +327,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
         if (!isPipFileEditor(event.editor)) return
         val listener = object : DocumentListener {
           override fun documentChanged(event: DocumentEvent) {
-            val document = event?.document ?: return
+            val document = event.document
             val module = document.virtualFile?.getModule(project) ?: return
             if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
               notifyPipFileChanged(module)
@@ -355,8 +353,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
         }
         val title = "$PIP_FILE_LOCK is $what"
         val content = "Run <a href='#lock'>pipenv lock</a> or <a href='#update'>pipenv update</a>"
-        val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, null, content,
-                                                                      NotificationType.INFORMATION) { notification, event ->
+        val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content, listener = NotificationListener { notification, event ->
           notification.expire()
           module.putUserData(notificationActive, null)
           FileDocumentManager.getInstance().saveAllDocuments()
@@ -366,7 +363,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
             "#update" ->
               runPipEnvInBackground(module, listOf("update", "--dev"), "Updating Pipenv environment")
           }
-        }
+        })
         module.putUserData(notificationActive, true)
         notification.whenExpired {
           module.putUserData(notificationActive, null)
@@ -385,10 +382,11 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
             catch (e: RunCanceledByUserException) {}
             catch (e: ExecutionException) {
               runInEdt {
-                Messages.showErrorDialog(project, e.toString(), "Error Running Pipenv")
+                Messages.showErrorDialog(project, e.toString(), CommonBundle.message("title.error"))
               }
             }
             finally {
+              PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
               sdk.associatedModule?.baseDir?.refresh(true, false)
             }
           }
@@ -454,7 +452,7 @@ private fun parsePipFileLock(virtualFile: VirtualFile): PipFileLock? {
   }
 }
 
-private val Sdk.pipFileLock: VirtualFile?
+val Sdk.pipFileLock: VirtualFile?
   get() =
     associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
 

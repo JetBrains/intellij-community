@@ -15,6 +15,7 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -48,6 +49,6 @@ public final class ToggleGridAction extends ToggleAction implements DumbAware {
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);
-    e.getPresentation().setText(isSelected(e) ? "Hide Grid" : "Show Grid");
+    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.grid") : IdeBundle.message("action.text.show.grid"));
   }
 }

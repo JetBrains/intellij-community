@@ -1,15 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LazyRangeMarkerFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -29,21 +35,18 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
+import java.util.Objects;
+import javax.swing.Icon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
+public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
-  @Nullable private RangeHighlighter myHighlighter;
+  @Nullable private RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
 
@@ -61,15 +64,37 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     myType = type;
   }
 
-  public void updateUI() {
+  public final void updateUI() {
     if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
-    Document document = getDocument();
-    if (document == null) {
+    VirtualFile file = getFile();
+    if (file == null) {
       return;
     }
+
+    // do not decompile files here
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document == null) {
+      // currently LazyRangeMarkerFactory creates document for non binary files
+      if (file.getFileType().isBinary()) {
+        if (myHighlighter == null) {
+          myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
+        }
+        return;
+      }
+      document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) {
+        return;
+      }
+    }
+
+    if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
+      removeHighlighter();
+      myHighlighter = null;
+    }
+
     if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
@@ -82,7 +107,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       attributes.setBackgroundColor(null);
     }
 
-    RangeHighlighter highlighter = myHighlighter;
+    RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
          || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
@@ -134,13 +159,6 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Nullable
-  private Document getDocument() {
-    VirtualFile file = getFile();
-    if (file == null) return null;
-    return FileDocumentManager.getInstance().getDocument(file);
-  }
-
-  @Nullable
   public VirtualFile getFile() {
     return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
@@ -179,7 +197,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Nullable
   public RangeHighlighter getHighlighter() {
-    return myHighlighter;
+    return myHighlighter instanceof RangeHighlighter ? (RangeHighlighter)myHighlighter : null;
   }
 
   @Override
@@ -271,7 +289,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public void setFileUrl(final String newUrl) {
-    if (!Comparing.equal(getFileUrl(), newUrl)) {
+    if (!Objects.equals(getFileUrl(), newUrl)) {
       myState.setFileUrl(newUrl);
       mySourcePosition = null;
       removeHighlighter();

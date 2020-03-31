@@ -1,18 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="PyCharm" type="Application" factoryName="Application">
-    <log_file path="$PROJECT_DIR$/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <log_file alias="idea.log" path="$PROJECT_DIR$/system/pycharm/log/idea.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <option name="VM_PARAMETERS" value=" -ea  -Xmx192m -Didea.is.internal=true -Didea.platform.prefix=PyCharmCore" />
-    <option name="PROGRAM_PARAMETERS" value="" />
-    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
-    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-    <option name="ALTERNATIVE_JRE_PATH" value="" />
-    <option name="ENABLE_SWING_INSPECTOR" value="false" />
-    <option name="ENV_VARIABLES" />
-    <option name="PASS_PARENT_ENVS" value="true" />
     <module name="intellij.pycharm.community.main" />
-    <envs />
+    <shortenClasspath name="CLASSPATH_FILE" />
+    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -XX:CICompilerCount=2 -ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Djdk.attach.allowAttachSelf -Dfus.internal.test.mode=true -Dkotlinx.coroutines.debug=off -Djdk.module.illegalAccess.silent=true -Didea.platform.prefix=PyCharmCore -Didea.config.path=../config/pycharm -Didea.system.path=../system/pycharm" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="" />
       <option name="TRANSPORT" value="0" />
@@ -22,6 +15,8 @@
       <option name="myExternalizedOptions" />
     </RunnerSettings>
     <ConfigurationWrapper RunnerId="Debug" />
-    <method />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
   </configuration>
 </component>

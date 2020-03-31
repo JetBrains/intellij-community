@@ -178,9 +178,6 @@ public class BlockUtils {
         }
         final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
         final String variableName = localVariable.getName();
-        if (variableName == null) {
-          continue;
-        }
         for (PsiCodeBlock codeBlock : affectedBlocks) {
           final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
           if (target instanceof PsiLocalVariable) {

@@ -62,9 +62,8 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
   }
 
-  @Nullable
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
     try {
       if (myUseBaseRevision) {
         return ContentRevisionCache.getOrLoadCurrentAsBytes(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),

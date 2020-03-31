@@ -16,6 +16,7 @@ import javax.lang.model.util.Types;
  */
 @SuppressWarnings("unused")
 public class Javac8RefScanner extends JavacTreeRefScanner {
+
   @Override
   public Tree visitLambdaExpression(LambdaExpressionTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final TypeMirror type = refCollector.getType(node);
@@ -23,7 +24,7 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     if (types != null && type != null) {
       final Element element = types.asElement(type);
       if (element != null) {
-        final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
+        final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(getCurrentEnclosingTypeElement(), element);
         if (ref != null) {
           refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(ref));
         }
@@ -36,14 +37,14 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
   public Tree visitMemberReference(MemberReferenceTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null) {
-      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(getCurrentEnclosingTypeElement(), element);
       if (ref != null) {
         refCollector.sinkReference(ref);
       }
     }
     final TypeMirror type = refCollector.getType(node);
     if (type != null) {
-      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(type));
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(getCurrentEnclosingTypeElement(), refCollector.getTypeUtility().asElement(type));
       if (ref != null) {
         refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(ref));
       }

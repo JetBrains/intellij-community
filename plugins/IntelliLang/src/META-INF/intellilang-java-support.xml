@@ -1,21 +1,21 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="JAVA" shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language injection" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.UnknownLanguageID"/>
-    <localInspection language="JAVA" shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="LanguageMismatch" displayName="Language mismatch" groupName="Language injection" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.LanguageMismatch"/>
-    <localInspection language="JAVA" shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language Injection"
+    <localInspection language="JAVA" shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language injection"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.InjectionNotApplicable"/>
 
-    <localInspection language="JAVA" shortName="PatternValidation" displayName="Validate Annotated Patterns" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternValidation" displayName="Validate annotated patterns" groupName="Pattern validation"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternValidator"/>
-    <localInspection language="JAVA" shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern validation"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternAnnotationNotApplicable"/>
     <localInspection language="JAVA" shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"
-                     groupName="Pattern Validation" enabledByDefault="true" level="WARNING"
+                     groupName="Pattern validation" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternOverriddenByNonAnnotatedMethod"/>
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
@@ -31,6 +31,6 @@
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
-    <injectionConfig config="resources/xmlInjections-java.xml"/>
+    <injectionConfig config="resources/assertJ.xml"/>
   </extensions>
 </idea-plugin>

@@ -33,14 +33,11 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public interface IdeModelsProvider {
-  @NotNull
-  Module[] getModules();
+  Module @NotNull [] getModules();
 
-  @NotNull
-  Module[] getModules(@NotNull ProjectData projectData);
+  Module @NotNull [] getModules(@NotNull ProjectData projectData);
 
-  @NotNull
-  OrderEntry[] getOrderEntries(@NotNull Module module);
+  OrderEntry @NotNull [] getOrderEntries(@NotNull Module module);
 
   @Nullable
   Module findIdeModule(@NotNull ModuleData module);
@@ -48,7 +45,6 @@ public interface IdeModelsProvider {
   @Nullable
   Module findIdeModule(@NotNull String ideModuleName);
 
-  @ApiStatus.Experimental
   @Nullable
   UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData);
 
@@ -61,23 +57,18 @@ public interface IdeModelsProvider {
   @Nullable
   OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data);
 
-  @NotNull
-  VirtualFile[] getContentRoots(Module module);
+  VirtualFile @NotNull [] getContentRoots(Module module);
 
-  @NotNull
-  VirtualFile[] getSourceRoots(Module module);
+  VirtualFile @NotNull [] getSourceRoots(Module module);
 
-  @NotNull
-  VirtualFile[] getSourceRoots(Module module, boolean includingTests);
+  VirtualFile @NotNull [] getSourceRoots(Module module, boolean includingTests);
 
-  @NotNull
-  Library[] getAllLibraries();
+  Library @NotNull [] getAllLibraries();
 
   @Nullable
   Library getLibraryByName(String name);
 
-  @NotNull
-  String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
+  String @NotNull [] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
 
   @NotNull
   List<Module> getAllDependentModules(@NotNull Module module);

@@ -288,10 +288,10 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
              "<selection>three<caret></selection>\n" +
              "<selection>four<caret></selection>");
     copy();
-    myEditor.getCaretModel().setCaretsAndSelections(Arrays.asList(new CaretState(new LogicalPosition(0, 0),
-                                                                                 new LogicalPosition(0, 0),
-                                                                                 new LogicalPosition(0, 0)),
-                                                                  new CaretState(new LogicalPosition(1, 0),
+    getEditor().getCaretModel().setCaretsAndSelections(Arrays.asList(new CaretState(new LogicalPosition(0, 0),
+                                                                                    new LogicalPosition(0, 0),
+                                                                                    new LogicalPosition(0, 0)),
+                                                                     new CaretState(new LogicalPosition(1, 0),
                                                                                  new LogicalPosition(1, 0),
                                                                                  new LogicalPosition(1, 0))));
     paste();
@@ -368,7 +368,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     initText("\n" +
              "<selection><caret>word</selection>\n" +
              "some long prefix <selection><caret>word</selection>-suffix");
-    EditorTestUtil.configureSoftWraps(myEditor, 17); // wrapping right before 'word-suffix'
+    EditorTestUtil.configureSoftWraps(getEditor(), 17); // wrapping right before 'word-suffix'
 
     delete();
 
@@ -422,7 +422,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   public void testAddingMultipleSelectionsUsingMouseInColumnSelectionMode() {
     initText("s<selection>om<caret></selection>e text\nother text");
     setEditorVisibleSize(1000, 1000);
-    ((EditorEx)myEditor).setColumnMode(true);
+    ((EditorEx)getEditor()).setColumnMode(true);
     mouse().alt().shift().pressAt(0, 5).dragTo(1, 2).release();
     checkResultByText("s<selection>om<caret></selection>e <selection>text\not<caret></selection>her text");
   }
@@ -455,14 +455,14 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     initText("word\n" +
              "<caret>word word\n" +
              "");
-    myEditor.getCaretModel().addCaret(new VisualPosition(0, 0));
-    myEditor.getCaretModel().addCaret(new VisualPosition(1, 5));
-    assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getPrimaryCaret().getVisualPosition());
+    getEditor().getCaretModel().addCaret(new VisualPosition(0, 0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(1, 5));
+    assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getPrimaryCaret().getVisualPosition());
     down();
     checkResultByText("word\n" +
                       "<caret>word word\n" +
                       "<caret>");
-    assertEquals(new VisualPosition(2, 0), myEditor.getCaretModel().getPrimaryCaret().getVisualPosition());
+    assertEquals(new VisualPosition(2, 0), getEditor().getCaretModel().getPrimaryCaret().getVisualPosition());
   }
 
   private static void doWithAltClickShortcut(ThrowableRunnable runnable) throws Throwable {

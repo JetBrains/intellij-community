@@ -38,8 +38,8 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
 
   @Nullable
   @Override
-  protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
-    CodeStylePropertyAccessor accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
+  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    CodeStylePropertyAccessor<?> accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
     if (accessor != null) {
       return accessor;
     }
@@ -47,11 +47,11 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   }
 
   @Override
-  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
     accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), myLanguage));
     if (mySettingsProvider != null) {
       for (CustomCodeStyleSettings customSettings :  myCustomSettings) {
-        for (CodeStylePropertyAccessor accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
+        for (CodeStylePropertyAccessor<?> accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
           accessorMap.put(accessor.getPropertyName(), accessor);
         }
       }
@@ -87,7 +87,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private List<CustomCodeStyleSettings> getCustomSettings() {
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
     addCustomSettings(customSettingsList, getRootSettings(), CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
-    addCustomSettings(customSettingsList, getRootSettings(), LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    addCustomSettings(customSettingsList, getRootSettings(), new ArrayList<>(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()));
     return customSettingsList;
   }
 
@@ -114,16 +114,19 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private Set<String> getSupportedIndentOptions() {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
     if (provider == null) return Collections.emptySet();
-    Set<String> indentOptions = new HashSet<>();
-    IndentOptionsEditor editor = provider.getIndentOptionsEditor();
-    if (editor != null) {
-      indentOptions.add("TAB_SIZE");
-      indentOptions.add("USE_TAB_CHARACTER");
-      indentOptions.add("INDENT_SIZE");
-      if (editor instanceof SmartIndentOptionsEditor) {
-        indentOptions.add("CONTINUATION_INDENT_SIZE");
-        indentOptions.add("SMART_TABS");
-        indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");
+    Set<String> indentOptions =
+      new HashSet<>(provider.getSupportedFields(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS));
+    if (indentOptions.isEmpty()) {
+      IndentOptionsEditor editor = provider.getIndentOptionsEditor();
+      if (editor != null) {
+        indentOptions.add("TAB_SIZE");
+        indentOptions.add("USE_TAB_CHARACTER");
+        indentOptions.add("INDENT_SIZE");
+        if (editor instanceof SmartIndentOptionsEditor) {
+          indentOptions.add("CONTINUATION_INDENT_SIZE");
+          indentOptions.add("SMART_TABS");
+          indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");
+        }
       }
     }
     return indentOptions;
@@ -137,6 +140,6 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @Override
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message(key) : null;
+    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message(key) : null;
   }
 }

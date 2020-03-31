@@ -90,6 +90,7 @@ public class LauncherGenerator {
     saveVersionInfo();
 
     myReader.resetOffsets(0);
+    myReader.sectionVirtualAddressFixup();
 
     myExePath.getParentFile().mkdirs();
     myExePath.createNewFile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,16 +12,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author mike
- */
 public class ValidateXmlAction extends AnAction {
   private static final Key<String> runningValidationKey = Key.create("xml.running.validation.indicator");
 
   public ValidateXmlAction() {
   }
 
-  private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
+  private ValidateXmlHandler getHandler(final @NotNull PsiFile file) {
+    for (ValidateXmlHandler handler : ValidateXmlHandler.EP_NAME.getExtensionList()) {
+      if (handler.isAvailable((XmlFile)file)) {
+        return handler;
+      }
+    }
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
     handler.setErrorReporter(new StdErrorReporter(handler, file, () -> doRunAction(file)));
     return handler;

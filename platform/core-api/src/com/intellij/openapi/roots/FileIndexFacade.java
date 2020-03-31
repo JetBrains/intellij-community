@@ -64,8 +64,13 @@ public abstract class FileIndexFacade {
    */
   public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
 
+  /**
+   * @deprecated always returns true, just remove the calls
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public boolean shouldBeFound(@NotNull GlobalSearchScope scope, @NotNull VirtualFile virtualFile) {
-    return scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile);
+    return true;
   }
 
   @NotNull public abstract ModificationTracker getRootModificationTracker();

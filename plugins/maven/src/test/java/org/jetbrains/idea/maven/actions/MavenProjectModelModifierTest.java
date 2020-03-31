@@ -19,9 +19,6 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author nik
- */
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
@@ -188,6 +185,12 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
     waitUntilImported(result);
     assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+
+    getExtension().changeLanguageLevel(module, LanguageLevel.JDK_13_PREVIEW);
+    assertEquals("--enable-preview",
+                 findTag("project.build.plugins.plugin")
+                   .findFirstSubTag("configuration")
+                   .getSubTagText("compilerArgs"));
   }
 
   private void createTwoModulesPom(final String m1, final String m2) {

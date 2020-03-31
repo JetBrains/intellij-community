@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,12 +20,24 @@ import org.jetbrains.annotations.NotNull;
  * @see IndexPatternProvider
  * @see com.intellij.psi.search.PsiTodoSearchHelper#findFilesWithTodoItems()
  */
-public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
-  private static class Holder {
-    private static final IndexPatternSearch INDEX_PATTERN_SEARCH_INSTANCE = ServiceManager.getService(IndexPatternSearch.class);
+public abstract class IndexPatternSearch extends ExtensibleQueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+  public static final ExtensionPointName<QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternSearch");
+  private static IndexPatternSearch ourInstance;
+
+  protected IndexPatternSearch() {
+    super(EP_NAME);
   }
 
-  public static class SearchParameters {
+  private static IndexPatternSearch getInstance() {
+    IndexPatternSearch result = ourInstance;
+    if (result == null) {
+      result = ApplicationManager.getApplication().getService(IndexPatternSearch.class);
+      ourInstance = result;
+    }
+    return result;
+  }
+
+  public static final class SearchParameters {
     private final PsiFile myFile;
     private final IndexPattern myPattern;
     private final IndexPatternProvider myPatternProvider;
@@ -83,9 +95,6 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
     }
   }
 
-  protected IndexPatternSearch() {
-  }
-
   /**
    * Returns a query which can be used to process occurrences of the specified pattern
    * in the specified file. The query is executed by parsing the contents of the file.
@@ -97,7 +106,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPattern pattern) {
     final SearchParameters parameters = new SearchParameters(file, pattern);
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+    return getInstance().createQuery(parameters);
   }
 
   /**
@@ -116,7 +125,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
                                                      int startOffset,
                                                      int endOffset) {
     final SearchParameters parameters = new SearchParameters(file, pattern, new TextRange(startOffset, endOffset));
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+    return getInstance().createQuery(parameters);
   }
 
   /**
@@ -131,7 +140,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider);
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+    return getInstance().createQuery(parameters);
   }
 
   /**
@@ -149,7 +158,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider,
                                                      boolean multiLineOccurrences) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider, multiLineOccurrences);
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+    return getInstance().createQuery(parameters);
   }
 
   /**
@@ -167,7 +176,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider,
                                                      int startOffset, int endOffset) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider, new TextRange(startOffset, endOffset));
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+    return getInstance().createQuery(parameters);
   }
 
   /**
@@ -180,7 +189,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @return the number of pattern occurrences.
    */
   public static int getOccurrencesCount(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider) {
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.getOccurrencesCountImpl(file, patternProvider);
+    return getInstance().getOccurrencesCountImpl(file, patternProvider);
   }
 
   /**
@@ -193,7 +202,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @return the number of pattern occurrences.
    */
   public static int getOccurrencesCount(@NotNull PsiFile file, @NotNull IndexPattern pattern) {
-    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.getOccurrencesCountImpl(file, pattern);
+    return getInstance().getOccurrencesCountImpl(file, pattern);
   }
 
   protected abstract int getOccurrencesCountImpl(@NotNull PsiFile file, @NotNull IndexPatternProvider provider);

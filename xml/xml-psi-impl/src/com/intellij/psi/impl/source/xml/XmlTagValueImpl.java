@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class XmlTagValueImpl implements XmlTagValue{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagValueImpl");
+  private static final Logger LOG = Logger.getInstance(XmlTagValueImpl.class);
 
   private final XmlTag myTag;
   private final XmlTagChild[] myElements;
@@ -40,20 +40,18 @@ public class XmlTagValueImpl implements XmlTagValue{
   private volatile String myText;
   private volatile String myTrimmedText;
 
-  public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
+  public XmlTagValueImpl(XmlTagChild @NotNull [] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
     myElements = bodyElements;
   }
 
   @Override
-  @NotNull
-  public XmlTagChild[] getChildren() {
+  public XmlTagChild @NotNull [] getChildren() {
     return myElements;
   }
 
   @Override
-  @NotNull
-  public XmlText[] getTextElements() {
+  public XmlText @NotNull [] getTextElements() {
     XmlText[] textElements = myTextElements;
     if (textElements == null) {
       textElements = Arrays.stream(myElements)
@@ -82,7 +80,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   @NotNull
   public TextRange getTextRange() {
     if(myElements.length == 0){
-      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild( (ASTNode)myTag);
+      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(myTag.getNode());
       if(child != null)
         return new TextRange(child.getStartOffset() + 1, child.getStartOffset() + 1);
       return new TextRange(myTag.getTextRange().getEndOffset(), myTag.getTextRange().getEndOffset());

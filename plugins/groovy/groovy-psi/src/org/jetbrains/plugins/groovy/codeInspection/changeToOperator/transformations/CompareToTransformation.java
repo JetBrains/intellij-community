@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
@@ -29,6 +15,7 @@ import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.repla
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt.isZero;
 
 class CompareToTransformation extends BinaryTransformation {
   @Override
@@ -47,7 +34,7 @@ class CompareToTransformation extends BinaryTransformation {
   @Nullable
   private static IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
     PsiElement parent = call.getParent();
-    if (isComparison(parent)) {
+    if (isComparison(parent) && isZero(((GrBinaryExpression)parent).getRightOperand())) {
       IElementType token = ((GrBinaryExpression)parent).getOperationTokenType();
       if (isEquality(token) && !options.shouldChangeCompareToEqualityToEquals()) {
         return null;
@@ -55,7 +42,6 @@ class CompareToTransformation extends BinaryTransformation {
       return token;
     }
     return mCOMPARE_TO;
-
   }
 
   private static boolean isEquality(IElementType comparison) {

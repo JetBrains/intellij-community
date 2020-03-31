@@ -2,10 +2,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class SimplifiableIfStatementInspectionTest extends LightInspectionTestCase {
+public class SimplifiableIfStatementInspectionTest extends LightJavaInspectionTestCase {
   public void testSimplifiableIfStatement() {
+    doTest();
+  }
+  public void testIfMayBeConditional() {
     doTest();
   }
 

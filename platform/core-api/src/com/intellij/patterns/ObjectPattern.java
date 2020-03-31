@@ -18,6 +18,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     myConditions = null;
   }
 
-  protected ObjectPattern(final Class<T> aClass) {
+  protected ObjectPattern(@NotNull Class<T> aClass) {
     this(new InitialPatternCondition<T>(aClass) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -91,7 +92,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self andOr(@NotNull ElementPattern... patterns) {
+  public Self andOr(ElementPattern @NotNull ... patterns) {
     ElementPattern or = StandardPatterns.or(patterns);
     return and(or);
   }
@@ -130,7 +131,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       list = Collections.singletonList(values[0]);
     }
     else if (length >= 11) {
-      list = new HashSet<>(Arrays.asList(values));
+      list = ContainerUtil.set(values);
     }
     else {
       list = Arrays.asList(values);
@@ -189,7 +190,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self save(final Key<? super T> key) {
+  public Self save(@NotNull Key<? super T> key) {
     return with(new PatternCondition<T>("save") {
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
@@ -211,13 +212,13 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self with(final PatternCondition<? super T> pattern) {
+  public Self with(@NotNull PatternCondition<? super T> pattern) {
     final ElementPatternCondition<T> condition = getCondition().append(pattern);
     return adapt(condition);
   }
 
   @NotNull
-  private Self adapt(final ElementPatternCondition<T> condition) {
+  private Self adapt(@NotNull ElementPatternCondition<T> condition) {
     try {
       final ObjectPattern s = (ObjectPattern)clone();
       s.myInitialCondition = condition.getInitialCondition();
@@ -247,7 +248,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   public static class Capture<T> extends ObjectPattern<T,Capture<T>> {
 
-    public Capture(final Class<T> aClass) {
+    public Capture(@NotNull Class<T> aClass) {
       super(aClass);
     }
 

@@ -15,51 +15,37 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import icons.XpathIcons;
+import java.util.Objects;
 import org.intellij.lang.xpath.context.functions.Function;
 
-import javax.swing.*;
+public class FunctionLookup extends AbstractLookup {
+  private final String type;
+  private final boolean hasParameters;
 
-public class FunctionLookup extends AbstractLookup implements Iconable {
-    private final String type;
-    private final boolean hasParameters;
+  FunctionLookup(String name, String _presentation) {
+    this(name, _presentation, null, false);
+  }
 
-    FunctionLookup(String name, String _presentation) {
-        this(name, _presentation, null, false);
-    }
+  FunctionLookup(String name, String _presentation, String type, boolean hasParams) {
+    super(name, _presentation);
+    this.type = type;
+    this.hasParameters = hasParams;
+  }
 
-    FunctionLookup(String name, String _presentation, String type, boolean hasParams) {
-        super(name, _presentation);
-        this.type = type;
-        this.hasParameters = hasParams;
-    }
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    super.renderElement(presentation);
+    presentation.setTypeText(type);
+    presentation.setIcon(XpathIcons.Function);
+    presentation.setItemTextBold(type == null);
+  }
 
-    @Override
-    public String getTypeHint() {
-        return type == null ? "" : type;
-    }
-
-    @Override
-    public boolean isFunction() {
-        return true;
-    }
-
-    @Override
-    public boolean hasParameters() {
-        return hasParameters;
-    }
-
-    @Override
-    public boolean isKeyword() {
-        return type == null;
-    }
-
-    @Override
-    public Icon getIcon(int flags) {
-        return XpathIcons.Function;
-    }
+  boolean hasParameters() {
+    return hasParameters;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -69,7 +55,7 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
 
     final FunctionLookup that = (FunctionLookup)o;
 
-    if (!Comparing.equal(myPresentation, that.myPresentation)) return false;
+    if (!Objects.equals(myPresentation, that.myPresentation)) return false;
 
     return true;
   }
@@ -81,10 +67,10 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
     return result;
   }
 
-  public static Lookup newFunctionLookup(String name, Function functionDecl) {
-        final String presentation = functionDecl.buildSignature();
-        final String returnType = functionDecl.getReturnType().getName();
-        final boolean hasParams = functionDecl.getParameters().length > 0;
-        return new FunctionLookup(name, presentation, returnType, hasParams);
-    }
+  public static LookupElement newFunctionLookup(String name, Function functionDecl) {
+    final String presentation = functionDecl.buildSignature();
+    final String returnType = functionDecl.getReturnType().getName();
+    final boolean hasParams = functionDecl.getParameters().length > 0;
+    return new FunctionLookup(name, presentation, returnType, hasParams);
+  }
 }

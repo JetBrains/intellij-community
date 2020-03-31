@@ -17,11 +17,6 @@ package jetbrains.antlayout.datatypes;
 
 import org.apache.tools.ant.types.ZipFileSet;
 
-import java.io.File;
-
-/**
- * @author nik
- */
 public class IdeaModuleTests extends IdeaModuleBase {
   public IdeaModuleTests() {
   }

@@ -12,12 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -49,7 +51,12 @@ public class HgTagCreateCommand {
       arguments.add("--rev");
       arguments.add(revisionNumberOrHash);
     }
-    new HgCommandExecutor(project).execute(repo, "tag", arguments, resultHandler);
+    BackgroundTaskUtil.executeOnPooledThread(project, () -> {
+      HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "tag", arguments);
+      if (resultHandler != null) {
+        resultHandler.process(result);
+      }
+    });
     if (!project.isDisposed()) {
       HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
       manager.updateRepository(repo);

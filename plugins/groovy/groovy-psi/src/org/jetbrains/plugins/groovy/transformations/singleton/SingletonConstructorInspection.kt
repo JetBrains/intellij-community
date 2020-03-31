@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.codeInspection.fixes.RemoveElementQuickFix
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.impl.booleanValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
-import org.jetbrains.plugins.groovy.transformations.message
+import org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle.message
 
 class SingletonConstructorInspection : LocalInspectionTool() {
 

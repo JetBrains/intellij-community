@@ -16,6 +16,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -29,9 +30,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class PushDownConflicts {
   private final PsiClass myClass;
@@ -84,7 +83,7 @@ public class PushDownConflicts {
 
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
     if (annotation != null && myMovedMembers.contains(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
-      myConflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+      myConflicts.putValue(annotation, JavaRefactoringBundle.message("functional.interface.broken"));
     }
     boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
     for (PsiMember member : myMovedMembers) {
@@ -118,8 +117,10 @@ public class PushDownConflicts {
           if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
             unrelatedDefaults.add(superMethod.getContainingClass());
             if (unrelatedDefaults.size() > 1) {
+              List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
+              supers.sort(Comparator.comparing(PsiClass::getName));
               myConflicts.putValue(member, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
-                                                                            StringUtil.join(unrelatedDefaults, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
+                                                                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
               break;
             }
           }
@@ -130,7 +131,7 @@ public class PushDownConflicts {
 
   public void checkTargetClassConflicts(final PsiElement targetElement, final PsiElement context) {
     if (targetElement instanceof PsiFunctionalExpression) {
-      myConflicts.putValue(targetElement, RefactoringBundle.message("functional.interface.broken"));
+      myConflicts.putValue(targetElement, JavaRefactoringBundle.message("functional.interface.broken"));
       return;
     }
 
@@ -182,7 +183,7 @@ public class PushDownConflicts {
       String name = movedMember.getName();
       final PsiField field = targetClass.findFieldByName(name, false);
       if (field != null) {
-        String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
+        String message = JavaRefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
         myConflicts.putValue(field, CommonRefactoringUtil.capitalize(message));
       }
     }
@@ -207,7 +208,7 @@ public class PushDownConflicts {
         if (innerClass.equals(movedMember)) continue;
 
         if (name.equals(innerClass.getName())) {
-          String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
+          String message = JavaRefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
                                                 CommonRefactoringUtil.htmlEmphasize(name));
           myConflicts.putValue(innerClass, message);
         }

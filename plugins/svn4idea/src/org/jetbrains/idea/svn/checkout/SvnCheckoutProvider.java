@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -31,6 +32,7 @@ import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.dialogs.SvnCloneDialogExtension;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 
 import java.io.File;
@@ -338,5 +340,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       return result;
     }
+  }
+
+  @NotNull
+  @Override
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
+    return new SvnCloneDialogExtension(project);
   }
 }

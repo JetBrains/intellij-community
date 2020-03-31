@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -65,7 +51,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.AbstractFileViewProvider");
+  private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
   public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
   private static final Key<Set<AbstractFileViewProvider>> KNOWN_COPIES = Key.create("KNOWN_COPIES");
   @NotNull
@@ -76,14 +62,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private final boolean myPhysical;
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
-  @NotNull
-  private final FileType myFileType;
   private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
                                      @NotNull VirtualFile virtualFile,
-                                     boolean eventSystemEnabled,
-                                     @NotNull FileType type) {
+                                     boolean eventSystemEnabled) {
     myManager = (PsiManagerEx)manager;
     myVirtualFile = virtualFile;
     myEventSystemEnabled = eventSystemEnabled;
@@ -92,20 +75,19 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
     virtualFile.putUserData(FREE_THREADED, isFreeThreaded(this));
-    myFileType = type;
-    if (virtualFile instanceof VirtualFileWindow && !(this instanceof FreeThreadedFileViewProvider)) {
+    if (virtualFile instanceof VirtualFileWindow && !(this instanceof FreeThreadedFileViewProvider) && !isFreeThreaded(this)) {
       throw new IllegalArgumentException("Must not create "+getClass()+" for injected file "+virtualFile+"; InjectedFileViewProvider must be used instead");
     }
   }
 
-  final boolean shouldCreatePsi() {
+  protected boolean shouldCreatePsi() {
     if (isIgnored()) return false;
 
     VirtualFile vFile = getVirtualFile();
     if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
       VirtualFile parent = vFile.getParent();
       if (parent == null) return false;
-      
+
       PsiDirectory psiDir = getManager().findDirectory(parent);
       if (psiDir == null) {
         FileIndexFacade indexFacade = FileIndexFacade.getInstance(getManager().getProject());
@@ -220,7 +202,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @Override
   public FileViewProvider clone() {
     VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), myFileType, getContents(), origFile.getCharset(), getModificationStamp());
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
     origFile.copyCopyableDataTo(copy);
     copy.setOriginalFile(origFile);
     copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -403,7 +385,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NonNls
   @Override
   public String toString() {
-    return getClass().getName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
+    return getClass().getName() + "{vFile=" + myVirtualFile + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);
@@ -549,6 +531,6 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NotNull
   @Override
   public final FileType getFileType() {
-    return myFileType;
+    return myVirtualFile.getFileType();
   }
 }

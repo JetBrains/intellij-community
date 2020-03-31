@@ -15,24 +15,27 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
-  @NotNull private static final String EXPAND = "Expand";
 
   public ExpandGraphAction() {
-    super(EXPAND);
+    super(VcsLogBundle.messagePointer("action.title.expand.linear.branches"),
+          VcsLogBundle.messagePointer("action.description.expand.linear.branches"),
+          VcsLogBundle.messagePointer("action.title.expand.merges"),
+          VcsLogBundle.messagePointer("action.description.expand.merges"));
   }
 
   @Override
-  protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
-    vcsLogUi.expandAll();
-  }
-
-  @NotNull
-  @Override
-  protected String getPrefix() {
-    return EXPAND + " ";
+  protected void executeAction(@NotNull MainVcsLogUi vcsLogUi) {
+    String title = vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                   ? VcsLogBundle.message("action.process.expanding.merges")
+                   : VcsLogBundle.message("action.process.expanding.linear.branches");
+    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), title);
   }
 }

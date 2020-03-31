@@ -39,8 +39,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * @return the array of expressions for the dimensions, or an empty array if the
    *         {@code new} expression is not an array creation expression.
    */
-  @NotNull
-  PsiExpression[] getArrayDimensions();
+  PsiExpression @NotNull [] getArrayDimensions();
 
   /**
    * Returns the expression specifying the initializer for the created array in

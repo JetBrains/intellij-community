@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.rmi.RemoteException;
 import java.util.List;
 
 /**
@@ -42,10 +41,10 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
                            @NotNull final List<String> taskNames,
                            @NotNull final String projectPath,
                            @Nullable final S settings,
-                           @Nullable final String jvmAgentSetup) throws ExternalSystemException {
+                           @Nullable final String jvmParametersSetup) throws ExternalSystemException {
     execute(id, () -> {
       myDelegate.executeTasks(
-        id, taskNames, projectPath, settings, jvmAgentSetup, getNotificationListener());
+        id, taskNames, projectPath, settings, jvmParametersSetup, getNotificationListener());
       return null;
     });
   }

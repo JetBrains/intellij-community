@@ -20,7 +20,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     }
 
     if (!UpdateSettings.getInstance().isPlatformUpdateEnabled()) {
-      e.getPresentation().setDescription(ActionsBundle.message("action.CheckForUpdate.description.plugins"));
+      e.getPresentation().setDescription(ActionsBundle.messagePointer("action.CheckForUpdate.description.plugins"));
     }
   }
 

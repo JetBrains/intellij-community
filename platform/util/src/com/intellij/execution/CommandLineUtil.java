@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +23,8 @@ public class CommandLineUtil {
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
+
+  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
@@ -493,11 +495,25 @@ public class CommandLineUtil {
   }
 
   /**
-   * If {@code stringToQuote} is unquoted, quotes it with single quotes, according to the bash rules, replacing single quotes
-   * with badly readable but recursion safe {@code '"'"'}
+   * When necessary, quotes the specified argument with single quotes, according to the POSIX shell rules,
+   * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
    */
-  @NotNull
-  public static String posixQuote(@NotNull String stringToQuote) {
-    return isQuotedString(stringToQuote) ? stringToQuote : "'" + replace(stringToQuote, "'", "'\"'\"'") + "'";
+  public static @NotNull String posixQuote(@NotNull String argument) {
+    return shouldWrapWithQuotes(argument) ? "'" + replace(argument, "'", "'\"'\"'") + "'" : argument;
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+    if (argument.length() == 0) {
+      return true;
+    }
+    for (int i = 0; i < argument.length(); i++) {
+      char c = argument.charAt(i);
+      if (!Character.isAlphabetic(c) &&
+          !Character.isDigit(c) &&
+          !containsChar(SHELL_WHITELIST_CHARACTERS, c)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

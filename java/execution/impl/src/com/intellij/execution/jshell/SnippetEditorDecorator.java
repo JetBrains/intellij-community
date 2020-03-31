@@ -3,10 +3,10 @@ package com.intellij.execution.jshell;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
-import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
@@ -50,14 +50,14 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 
       myJreEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
-      myJreEditor.setToolTipText("Alternative JRE to run JShell");
+      myJreEditor.setToolTipText(ExecutionBundle.message("alternative.jre.to.run.jshell"));
       myJreEditor.setPathOrName(null, true);
 
       LabeledComponent<ModulesComboBox> modulePane = new LabeledComponent<>();
       ModulesComboBox modulesCombo = new ModulesComboBox();
       modulePane.setComponent(modulesCombo);
       modulePane.setLabelLocation(BorderLayout.WEST);
-      modulePane.setText("Use classpath of:");
+      modulePane.setText(ExecutionBundle.message("use.classpath.of"));
       myModuleSelector = new ConfigurationModuleSelector(project, modulesCombo, "<whole project>");
 
       JPanel mainPane = new JPanel(new GridBagLayout());
@@ -144,10 +144,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
   @Nullable
   @Override
   public ConfigurationPane createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    final RootType root = ScratchFileService.getInstance().getRootType(file);
-    if (!(root instanceof JShellRootType)) {
-      return null;
-    }
+    if (!(ScratchFileService.findRootType(file) instanceof JShellRootType)) return null;
     return new ConfigurationPane(project);
   }
 

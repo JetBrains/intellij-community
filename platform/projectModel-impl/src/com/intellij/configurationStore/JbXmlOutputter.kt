@@ -10,7 +10,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
@@ -20,7 +20,7 @@ import org.jdom.output.Format
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
-import java.util.Collections
+import java.util.*
 import javax.xml.transform.Result
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -38,8 +38,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     @JvmStatic
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
+      createOutputter(project).output(element, writer)
+    }
+
+    @JvmStatic
+    fun createOutputter(project: ComponentManager): JbXmlOutputter {
       val macroManager = PathMacroManager.getInstance(project)
-      JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter).output(element, writer)
+      return JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter)
     }
 
     @JvmStatic
@@ -206,17 +211,17 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * trims interior whitespace, etc. if necessary.
    */
   @Throws(IOException::class)
-  private fun printString(out: Writer, str: String?) {
+  private fun printString(out: Writer, str: String) {
     var normalizedString = str
     if (format.textMode == Format.TextMode.NORMALIZE) {
       normalizedString = Text.normalizeString(normalizedString)
     }
     else if (format.textMode == Format.TextMode.TRIM) {
-      normalizedString = normalizedString!!.trim()
+      normalizedString = normalizedString.trim()
     }
 
     if (macroMap != null) {
-      normalizedString = macroMap.substitute(normalizedString, SystemInfoRt.isFileSystemCaseSensitive)
+      normalizedString = macroMap.substitute(normalizedString, SystemInfo.isFileSystemCaseSensitive)
     }
     out.write(escapeElementEntities(normalizedString))
   }
@@ -420,7 +425,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       out.write('"'.toInt())
 
       val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
-        macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
+        macroMap.getAttributeValue(attribute, macroFilter, SystemInfo.isFileSystemCaseSensitive, false)
       }
       else {
         attribute.value
@@ -597,16 +602,9 @@ private fun printComment(out: Writer, comment: Comment) {
 }
 
 private fun isAllWhitespace(obj: Content): Boolean {
-  val str: String
-  if (obj is Text) {
-    str = obj.text
-  }
-  else {
-    return false
-  }
-
-  for (i in 0 until str.length) {
-    if (!Verifier.isXMLWhitespace(str[i])) {
+  val str = (obj as? Text ?: return false).text
+  for (element in str) {
+    if (!Verifier.isXMLWhitespace(element)) {
       return false
     }
   }

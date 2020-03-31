@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.testFramework.FileBasedTestCaseHelperEx;
 import com.intellij.testFramework.Parameterized;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +34,13 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
   public String getFileSuffix(String fileName) {
     if (!fileName.startsWith(BEFORE_PREFIX)) return null;
     return fileName.substring(BEFORE_PREFIX.length());
+  }
+
+  @Nullable
+  @Override
+  public String getBaseName(@NotNull String fileAfterSuffix) {
+    if (!fileAfterSuffix.startsWith(AFTER_PREFIX)) return null;
+    return fileAfterSuffix.substring(AFTER_PREFIX.length());
   }
 
   @Test

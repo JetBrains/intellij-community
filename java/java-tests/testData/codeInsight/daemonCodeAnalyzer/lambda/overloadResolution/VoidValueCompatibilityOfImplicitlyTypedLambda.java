@@ -14,10 +14,10 @@ abstract class Test {
     foo(x -> {
       return x += 1;
     });
-    <error descr="Ambiguous method call: both 'Test.foo(A)' and 'Test.foo(B)' match">foo</error>(x -> x += 1);
+    <error descr="Ambiguous method call: both 'Test.foo(A)' and 'Test.foo(B)' match">foo</error>(x -> <error descr="Incompatible types. Found: 'int', required: '<lambda parameter>'">x += 1</error>);
     foo(x -> 1);
     foo(x -> <error descr="Operator '!' cannot be applied to 'int'">!x</error>);
-    <error descr="Ambiguous method call: both 'Test.foo(A)' and 'Test.foo(B)' match">foo</error>(x -> ++x);
+    <error descr="Ambiguous method call: both 'Test.foo(A)' and 'Test.foo(B)' match">foo</error>(x -> <error descr="Operator '++' cannot be applied to '<lambda parameter>'">++x</error>);
     foo(x -> o instanceof String ? 1 : 0);
   }
 }

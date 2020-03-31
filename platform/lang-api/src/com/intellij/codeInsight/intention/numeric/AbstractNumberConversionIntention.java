@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.numeric;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +38,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert number";
+    return CodeInsightBundle.message("intention.family.convert.number");
   }
 
   @Override
@@ -98,8 +99,8 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
         myResult = result;
       }
 
-      void convert() {
-        WriteCommandAction.runWriteCommandAction(project, getName(), null, () -> {
+      void convert(NumberConversionContext context) {
+        WriteCommandAction.runWriteCommandAction(context.getProject(), getName(), null, () -> {
           PsiElement element = context.getElement();
           if (element != null) {
             replace(element, myResult);
@@ -121,7 +122,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       .filter(conversion -> conversion.myResult != null)
       .collect(Collectors.toList());
     if (myText != null) {
-      list.stream().filter(c -> c.getName().equals(myText)).findFirst().ifPresent(Conversion::convert);
+      list.stream().filter(c -> c.getName().equals(myText)).findFirst().ifPresent(conversion -> conversion.convert(context));
       // For some reason preselected conversion is not available anymore: do nothing
       return;
     }
@@ -132,7 +133,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback(Conversion::convert)
+      .setItemChosenCallback(conversion -> conversion.convert(context))
       .createPopup();
     popup.showInBestPositionFor(editor);
   }
@@ -197,9 +198,15 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       myText = text;
       myNegated = negated;
     }
-    
+
+    @Nullable
     PsiElement getElement() {
       return myElement.getElement();
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myElement.getProject();
     }
   }
 }

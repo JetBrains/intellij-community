@@ -16,13 +16,13 @@
 package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestCase {
+public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNoProblem() {
     doTest("Manifest-Version: 1.0", 0);
   }

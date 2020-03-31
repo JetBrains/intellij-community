@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -51,11 +52,12 @@ class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(final Editor editor, final PsiFile file) {
+  public final void move(@NotNull Editor editor, @Nullable PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
-    final Project project = file.getProject();
+    final Project project = editor.getProject();
+    assert project != null;
     if (!myInfo.toMove.equals(myInfo.toMove2)) { // some movers (e.g. PyStatementMover) perform actual moving inside beforeMove/afterMove
       final int start = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.startLine);
       final int end = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.endLine);
@@ -86,7 +88,9 @@ class MoverWrapper {
       TextRange range2 = new TextRange(start2, end2);
       if (!range.equals(range2)) {
         if (range.intersectsStrict(range2)) {
-          LOGGER.error("Wrong move ranges requested by " + myMover + " " + start + ":" + end + " vs " + start2 + ":" + end2,
+          LOGGER.error("Cannot perform move",
+                       PluginException.createByClass("Wrong move ranges requested by " + myMover + " " +
+                                                     start + ":" + end + " vs " + start2 + ":" + end2, null, myMover.getClass()),
                        new Attachment("ranges.txt",
                                       start + ":" + end + "(" + textToInsert + ")\n" + start2 + ":" + end2 + "(" + textToInsert2 + ")"));
           return;
@@ -167,13 +171,15 @@ class MoverWrapper {
         caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
       }
     }
-    myMover.afterMove(editor, file, myInfo, myIsDown);
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    if (myInfo.indentTarget) {
-      indentLinesIn(editor, file, document, project, myInfo.range2);
-    }
-    if (myInfo.indentSource) {
-      indentLinesIn(editor, file, document, project, myInfo.range1);
+    if (file != null) {
+      myMover.afterMove(editor, file, myInfo, myIsDown);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      if (myInfo.indentTarget) {
+        indentLinesIn(editor, file, document, project, myInfo.range2);
+      }
+      if (myInfo.indentSource) {
+        indentLinesIn(editor, file, document, project, myInfo.range1);
+      }
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

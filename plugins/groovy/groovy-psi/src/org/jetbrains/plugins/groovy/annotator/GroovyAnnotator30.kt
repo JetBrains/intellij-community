@@ -2,7 +2,9 @@
 
 package org.jetbrains.plugins.groovy.annotator
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
@@ -34,8 +36,13 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
 
     val parentClass = PsiTreeUtil.getParentOfType(modifier, PsiClass::class.java) ?: return
     if (!parentClass.isInterface || (parentClass as? GrTypeDefinition)?.isTrait == true) {
-      val annotation = holder.createWarningAnnotation(modifier, GroovyBundle.message("illegal.default.modifier"))
-      registerFix(annotation, GrRemoveModifierFix(PsiModifier.DEFAULT, GroovyBundle.message("illegal.default.modifier.fix")), modifier)
+      val message = GroovyBundle.message("illegal.default.modifier")
+      var builder = holder.newAnnotation(HighlightSeverity.WARNING, message).range(modifier)
+      builder = registerLocalFix(builder, GrRemoveModifierFix(PsiModifier.DEFAULT, GroovyBundle.message("illegal.default.modifier.fix")), modifier,
+                       message,
+                       ProblemHighlightType.WARNING,
+                       modifier.textRange)
+      builder.create()
     }
   }
 
@@ -53,9 +60,9 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
       is GrArgumentList -> if (parent.parent is GrMethodCallExpression) return
     }
 
-    holder.createErrorAnnotation(parameterList, GroovyBundle.message("illegal.single.argument.lambda")).apply {
-      registerFix(AddParenthesisToLambdaParameterAction(lambda))
-    }
+    holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("illegal.single.argument.lambda")).range(parameterList)
+      .withFix(AddParenthesisToLambdaParameterAction(lambda))
+      .create()
   }
 }
 

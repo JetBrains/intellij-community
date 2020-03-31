@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +42,12 @@ public interface PyRemoteProcessStarterManager {
   @NotNull
   ProcessHandler startRemoteProcess(@Nullable Project project,
                                     @NotNull GeneralCommandLine commandLine,
-                                    @NotNull PythonRemoteInterpreterManager manager,
                                     @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                     @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
 
   @NotNull
   ProcessOutput executeRemoteProcess(@Nullable Project project,
-                                     @NotNull String[] command,
+                                     String @NotNull [] command,
                                      @Nullable String workingDir,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;

@@ -1,21 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -56,8 +54,6 @@ import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfig
 
 public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
                                                                               Configurable.NoMargin, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable");
-
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   protected final UIState myUiState = new UIState();
@@ -99,28 +95,24 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
-                                                     SwingConstants.CENTER);
+  private final JLabel myEmptySelection = new JLabel(
+    JavaUiBundle.message("project.structure.empty.text"),
+    SwingConstants.CENTER);
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
-  public ProjectStructureConfigurable(final Project project,
-                                      final ProjectLibrariesConfigurable projectLibrariesConfigurable,
-                                      final GlobalLibrariesConfigurable globalLibrariesConfigurable,
-                                      final ModuleStructureConfigurable moduleStructureConfigurable,
-                                      FacetStructureConfigurable facetStructureConfigurable,
-                                      ArtifactsStructureConfigurable artifactsStructureConfigurable) {
+  public ProjectStructureConfigurable(@NotNull Project project) {
     myProject = project;
-    myFacetStructureConfigurable = facetStructureConfigurable;
-    myArtifactsStructureConfigurable = artifactsStructureConfigurable;
+    myFacetStructureConfigurable = FacetStructureConfigurable.getInstance(project);
+    myArtifactsStructureConfigurable = project.getService(ArtifactsStructureConfigurable.class);
 
     myModuleConfigurator = new ModulesConfigurator(myProject);
     myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
-    myProjectLibrariesConfig = projectLibrariesConfigurable;
-    myGlobalLibrariesConfig = globalLibrariesConfigurable;
-    myModulesConfig = moduleStructureConfigurable;
+    myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(project);
+    myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(project);
+    myModulesConfig = ModuleStructureConfigurable.getInstance(project);
 
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
@@ -149,7 +141,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("project.settings.display.name");
+    return JavaUiBundle.message("project.settings.display.name");
   }
 
   @Override
@@ -202,7 +194,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
 
     mySidePanel = new SidePanel(this);
-    mySidePanel.addSeparator("Project Settings");
+    mySidePanel.addSeparator(JavaUiBundle.message("project.settings.title"));
     addProjectConfig();
     if (!isDefaultProject) {
       addModulesConfig();
@@ -221,7 +213,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
       }
     }
 
-    mySidePanel.addSeparator("Platform Settings");
+    mySidePanel.addSeparator(JavaUiBundle.message("project.structure.platform.title"));
     addJdkListConfig();
     addGlobalLibrariesConfig();
 
@@ -303,8 +295,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void apply() throws ConfigurationException {
-    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Project Structure should be shown in a transaction, see AnAction#startInTransaction");
-
     for (Configurable each : myName2Config) {
       if (each instanceof BaseStructureConfigurable && each.isModified()) {
         ((BaseStructureConfigurable)each).checkCanApply();

@@ -48,13 +48,6 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "pointless.bitwise.expression.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final String replacementExpression = calculateReplacementExpression(expression, new CommentTracker());
@@ -176,7 +169,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                                 @NotNull @NonNls String replacement, CommentTracker ct) {
     final StringBuilder result = new StringBuilder();
     boolean stop = false;
-    for (PsiElement child : expression.getChildren()) {
+    for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child == fromTarget) {
         stop = true;
         result.append(replacement);

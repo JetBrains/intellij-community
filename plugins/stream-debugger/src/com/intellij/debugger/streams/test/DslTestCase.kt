@@ -5,12 +5,12 @@ import com.intellij.debugger.streams.trace.dsl.CodeContext
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class DslTestCase(private val dsl: Dsl) : LightCodeInsightFixtureTestCase() {
+abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTestCase() {
   fun testCall() {
     doTest {
       call("this".expr, "method")

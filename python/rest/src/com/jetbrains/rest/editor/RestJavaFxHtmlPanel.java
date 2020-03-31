@@ -2,10 +2,6 @@
 package com.jetbrains.rest.editor;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.javafx.JavaFxHtmlPanel;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -32,7 +28,6 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
 
     runInPlatformWhenAvailable(() -> {
       final WebView webView = getWebViewGuaranteed();
-      webView.fontSmoothingTypeProperty().setValue(FontSmoothingType.LCD);
 
       webView.getEngine().getLoadWorker().stateProperty().addListener(new HyperlinkRedirectListener(webView));
 

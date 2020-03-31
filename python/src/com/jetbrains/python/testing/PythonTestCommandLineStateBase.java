@@ -37,7 +37,7 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
       final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
                                                                                           consoleProperties);
       final ConsoleView consoleView =
-        new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()),
+        new PythonDebugLanguageConsoleView(project, PythonSdkUtil.findSdkByPath(myConfiguration.getInterpreterPath()),
                                            testsOutputConsoleView, true);
       consoleView.attachToProcess(processHandler);
       addTracebackFilter(project, consoleView, processHandler);

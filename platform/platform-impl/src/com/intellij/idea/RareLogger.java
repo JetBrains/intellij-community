@@ -28,18 +28,18 @@ import java.util.List;
 public class RareLogger extends Logger {
   // key to last log time for key
   private final SLRUMap<Object, Long> myCache;
-  private final List<LogFilter> myConvertors;
+  private final List<LogFilter> myConverters = new LinkedList<>();
   private final LogFilter myProxy;
   private final Logger myLogger;
 
-  private RareLogger(final Logger logger, final boolean fairSynch) {
+  private RareLogger(final Logger logger, final boolean fairSync) {
     myLogger = logger;
 
     final Object lock = new Object();
     myCache = new SLRUMap<Object, Long>(64, 32) {
       @Override
       public Long get(Object key) {
-        if (fairSynch) {
+        if (fairSync) {
           synchronized (lock) {
             return super.get(key);
           }
@@ -49,7 +49,7 @@ public class RareLogger extends Logger {
 
       @Override
       public void put(Object key, @NotNull Long value) {
-        if (fairSynch) {
+        if (fairSync) {
           synchronized (lock) {
             super.put(key, value);
             return;
@@ -60,7 +60,7 @@ public class RareLogger extends Logger {
 
       @Override
       public boolean remove(Object key) {
-        if (fairSynch) {
+        if (fairSync) {
           synchronized (lock) {
             return super.remove(key);
           }
@@ -68,7 +68,6 @@ public class RareLogger extends Logger {
         return super.remove(key);
       }
     };
-    myConvertors = new LinkedList<>();
 
     // just passes to parent logger
     myProxy = new LogFilter() {
@@ -97,15 +96,15 @@ public class RareLogger extends Logger {
   }
 
   public void addFilter(final LogFilter logFilter) {
-    myConvertors.add(logFilter);
+    myConverters.add(logFilter);
   }
 
-  public static Logger wrap(final Logger logger, final boolean fairSynch) {
-    return new RareLogger(logger, fairSynch);
+  public static Logger wrap(final Logger logger, final boolean fairSync) {
+    return new RareLogger(logger, fairSync);
   }
 
-  public static Logger wrap(final Logger logger, final boolean fairSynch, final LogFilter... filters) {
-    final RareLogger rareLogger = new RareLogger(logger, fairSynch);
+  public static Logger wrap(final Logger logger, final boolean fairSync, final LogFilter... filters) {
+    final RareLogger rareLogger = new RareLogger(logger, fairSync);
     for (LogFilter filter : filters) {
       rareLogger.addFilter(filter);
     }
@@ -148,7 +147,7 @@ public class RareLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
     process(Level.ERROR, message, t, details);
   }
 
@@ -174,7 +173,7 @@ public class RareLogger extends Logger {
 
   private void process(@NotNull final Level level, @NonNls @Nullable final String message, @Nullable final Throwable t, @NonNls final String... details) {
     if (! Level.ERROR.equals(level)) {
-      for (LogFilter convertor : myConvertors) {
+      for (LogFilter convertor : myConverters) {
         final Object key = convertor.getKey(level, message, t, details);
         if (key != null) {
           final Long latestMoment = myCache.get(key);

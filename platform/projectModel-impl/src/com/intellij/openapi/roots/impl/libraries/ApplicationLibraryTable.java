@@ -17,32 +17,34 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.projectModel.ProjectModelBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *  @author dsl
+ * This class is for internal use, in order to get instance of the application-level library table, use {@link LibraryTablesRegistrar#getLibraryTable()}
  */
+@ApiStatus.Internal
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     @NotNull
     @Override
     public String getDisplayName(boolean plural) {
-      return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
+      return ProjectModelBundle.message("global.library.display.name", plural ? 2 : 1);
     }
 
     @NotNull
     @Override
     public String getDescription() {
-      return ProjectBundle.message("libraries.node.text.ide");
+      return ProjectModelBundle.message("libraries.node.text.ide");
     }
 
     @NotNull
     @Override
     public String getLibraryTableEditorTitle() {
-      return ProjectBundle.message("library.configure.global.title");
+      return ProjectModelBundle.message("library.configure.global.title");
     }
   };
 

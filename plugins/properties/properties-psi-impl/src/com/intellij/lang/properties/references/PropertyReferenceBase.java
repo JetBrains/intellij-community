@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -22,7 +8,6 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTargetPsiElement;
@@ -38,11 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-  private static final Logger LOG = Logger.getInstance(PropertyReferenceBase.class);
+
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
@@ -104,20 +86,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    /*PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
-
-    if (myElement instanceof PsiLiteralExpression) {
-      PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
-      return myElement.replace(newExpression);
-    }
-    else {*/
-      ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
-      if (manipulator == null) {
-        LOG.error("Cannot find manipulator for " + myElement + " of class " + myElement.getClass());
-        throw new NullPointerException();
-      }
-      return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
-    /*}*/
+    return ElementManipulators.handleContentChange(myElement, getRangeInElement(), newElementName);
   }
 
   @Override
@@ -155,8 +124,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     final String key = getKeyText();
 
     List<IProperty> properties;
@@ -179,8 +147,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return getResolveResults(properties);
   }
 
-  @NotNull
-  private static ResolveResult[] getResolveResults(List<? extends IProperty> properties) {
+  private static ResolveResult @NotNull [] getResolveResults(List<? extends IProperty> properties) {
     if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     final ResolveResult[] results = new ResolveResult[properties.size()];

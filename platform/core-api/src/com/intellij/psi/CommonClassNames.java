@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author peter
  */
@@ -12,6 +14,7 @@ public interface CommonClassNames {
   String JAVA_LANG_CLASS = "java.lang.Class";
   String JAVA_LANG_OVERRIDE = "java.lang.Override";
   String JAVA_LANG_ENUM = "java.lang.Enum";
+  String JAVA_LANG_RECORD = "java.lang.Record";
   String JAVA_LANG_VOID = "java.lang.Void";
 
   String JAVA_UTIL_OBJECTS = "java.util.Objects";
@@ -47,8 +50,13 @@ public interface CommonClassNames {
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
+  String JAVA_UTIL_LINKED_LIST = "java.util.LinkedList";
   String JAVA_UTIL_SET = "java.util.Set";
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
+  String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
+  String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_QUEUE = "java.util.Queue";
+  String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   String JAVA_UTIL_DATE = "java.util.Date";
@@ -92,6 +100,8 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
+  String JAVA_UTIL_CONCURRENT_COMPLETABLE_FUTURE = "java.util.concurrent.CompletableFuture";
+  String JAVA_UTIL_CONCURRENT_COMPLETION_STAGE = "java.util.concurrent.CompletionStage";
 
   String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
   String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";
@@ -103,9 +113,11 @@ public interface CommonClassNames {
   String JAVA_UTIL_FUNCTION_CONSUMER = "java.util.function.Consumer";
   String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
   String JAVA_UTIL_FUNCTION_BI_FUNCTION = "java.util.function.BiFunction";
+  String JAVA_UTIL_FUNCTION_SUPPLIER = "java.util.function.Supplier";
 
   String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   String CLASS_FILE_EXTENSION = ".class";
 
+  @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
 }

@@ -36,6 +36,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     return "GrDocComment";
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();
@@ -64,8 +65,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public GrDocTag[] getTags() {
+  public GrDocTag @NotNull [] getTags() {
     final GrDocTag[] tags = PsiTreeUtil.getChildrenOfType(this, GrDocTag.class);
     return tags == null ? GrDocTag.EMPTY_ARRAY : tags;
   }
@@ -83,8 +83,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public GrDocTag[] findTagsByName(@NonNls String name) {
+  public GrDocTag @NotNull [] findTagsByName(@NonNls String name) {
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
     ArrayList<GrDocTag> list = new ArrayList<>();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
@@ -96,8 +95,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDescriptionElements() {
+  public PsiElement @NotNull [] getDescriptionElements() {
     ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       final ASTNode node = child.getNode();
@@ -111,9 +109,8 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     return PsiUtilCore.toPsiElementArray(array);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

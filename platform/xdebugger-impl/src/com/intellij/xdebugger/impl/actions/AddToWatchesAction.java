@@ -22,7 +22,9 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 
 final class AddToWatchesAction extends XDebuggerActionBase {
-  private static final XAddToWatchesTreeAction TREE_ACTION = new XAddToWatchesTreeAction();
+  private static class Holder {
+    private static final XAddToWatchesTreeAction TREE_ACTION = new XAddToWatchesTreeAction();
+  }
 
   AddToWatchesAction() {
     super(true);
@@ -37,7 +39,7 @@ final class AddToWatchesAction extends XDebuggerActionBase {
   @Override
   public void update(@NotNull AnActionEvent event) {
     if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
-      TREE_ACTION.update(event);
+      Holder.TREE_ACTION.update(event);
     }
     else {
       super.update(event);
@@ -47,7 +49,7 @@ final class AddToWatchesAction extends XDebuggerActionBase {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
-      TREE_ACTION.actionPerformed(event);
+      Holder.TREE_ACTION.actionPerformed(event);
     }
     else {
       super.actionPerformed(event);

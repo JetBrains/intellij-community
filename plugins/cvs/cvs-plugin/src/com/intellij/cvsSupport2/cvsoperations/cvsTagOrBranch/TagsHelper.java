@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.CvsBundle;
@@ -35,7 +35,7 @@ import java.util.*;
  * author: lesya
  */
 public class TagsHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper");
+  private static final Logger LOG = Logger.getInstance(TagsHelper.class);
 
   private TagsHelper() {
   }
@@ -160,7 +160,7 @@ public class TagsHelper {
   private static Collection<String> collectSortedRevisionsNames(Collection<CvsRevisionNumber> revisions) {
     if (revisions == null) return new ArrayList<>();
     final ArrayList<CvsRevisionNumber> list = new ArrayList<>(revisions);
-    Collections.sort(list, (o, o1) -> o.compareTo(o1));
+    list.sort((o, o1) -> o.compareTo(o1));
     final ArrayList<String> result = new ArrayList<>();
     for (final CvsRevisionNumber aList : list) {
       result.add(aList.toString());

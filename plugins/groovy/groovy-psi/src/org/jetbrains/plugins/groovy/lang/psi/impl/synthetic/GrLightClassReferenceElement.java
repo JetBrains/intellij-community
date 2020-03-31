@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.TextRange;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -59,9 +60,8 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementResolveResult<>(clazz));
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return PsiType.EMPTY_ARRAY;
   }
 
@@ -153,5 +153,10 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   @Override
   public CodeReferenceKind getKind() {
     return CodeReferenceKind.REFERENCE;
+  }
+
+  @Override
+  public GrAnnotation @NotNull [] getAnnotations() {
+    return GrAnnotation.EMPTY_ARRAY;
   }
 }

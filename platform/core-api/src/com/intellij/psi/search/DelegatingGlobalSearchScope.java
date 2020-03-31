@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,10 +20,10 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   private final Object myEquality;
 
   public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
-    this(baseScope, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    this(baseScope, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
-  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull Object... equality) {
+  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, Object @NotNull ... equality) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
     myEquality = Arrays.asList(equality);
@@ -52,11 +52,6 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   @Override
   public boolean isSearchInLibraries() {
     return myBaseScope.isSearchInLibraries();
-  }
-
-  @Override
-  public boolean isSearchOutsideRootModel() {
-    return myBaseScope.isSearchOutsideRootModel();
   }
 
   @NotNull

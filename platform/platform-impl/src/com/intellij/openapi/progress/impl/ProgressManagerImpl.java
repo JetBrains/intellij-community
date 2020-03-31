@@ -13,9 +13,8 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.PlainEdtExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,39 +22,15 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+  private final CheckCanceledHook mySleepHook = __ -> sleepIfNeededToGivePriorityToAnotherThread();
 
   public ProgressManagerImpl() {
-    HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
-      private final CheckCanceledHook sleepHook = indicator -> sleepIfNeededToGivePriorityToAnotherThread();
-      private final AtomicBoolean scheduled = new AtomicBoolean();
-      private final Runnable addHookLater = () -> {
-        scheduled.set(false);
-        if (HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
-          addCheckCanceledHook(sleepHook);
-        }
-      };
-
-      @Override
-      public void processStarted() {
-        if (scheduled.compareAndSet(false, true)) {
-          AppExecutorUtil.getAppScheduledExecutorService().schedule(addHookLater, 5, TimeUnit.MILLISECONDS);
-        }
-      }
-
-      @Override
-      public void processFinished() {
-        removeCheckCanceledHook(sleepHook);
-      }
-
-    }, this);
     ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
   }
 
@@ -128,10 +103,11 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isHeadlessEnvironment() ?
-                                          new EmptyProgressIndicator() :
-                                          new BackgroundableProcessIndicator(task);
-    return runProcessWithProgressAsynchronously(task, progressIndicator, null);
+    CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
+      () -> ApplicationManager.getApplication().isHeadlessEnvironment() ?
+            new EmptyProgressIndicator() :
+            new BackgroundableProcessIndicator(task), PlainEdtExecutor.INSTANCE);
+    return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
 
   @Override
@@ -183,11 +159,13 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     };
   }
 
-  private static boolean sleepIfNeededToGivePriorityToAnotherThread() {
-    if (HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
-      LockSupport.parkNanos(1_000_000);
-      return true;
-    }
-    return false;
+  @Override
+  protected void prioritizingStarted() {
+    addCheckCanceledHook(mySleepHook);
+  }
+
+  @Override
+  protected void prioritizingFinished() {
+    removeCheckCanceledHook(mySleepHook);
   }
 }

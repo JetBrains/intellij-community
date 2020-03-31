@@ -15,8 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +42,12 @@ public abstract class Converter<T> {
    */
   @Nullable
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.cannot.convert.default.message", s);
+    return XmlDomBundle.message("error.cannot.convert.default.message", s);
   }
 
 
   /**
-   * @deprecated {@link com.intellij.util.xml.converters.values.NumberValueConverter}
+   * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
   @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
@@ -71,10 +69,13 @@ public abstract class Converter<T> {
 
     @Override
     public String getErrorMessage(final String s, final ConvertContext context) {
-      return IdeBundle.message("value.should.be.integer");
+      return XmlDomBundle.message("value.should.be.integer");
     }
   };
 
+  /**
+   * @deprecated unnecessary
+   */
   @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
     @Override

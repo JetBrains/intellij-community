@@ -1,8 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <component>
-      <interface-class>com.intellij.execution.ExecutorRegistry</interface-class>
-      <implementation-class>com.intellij.execution.ExecutorRegistryImpl</implementation-class>
-    </component>
-  </application-components>
-</idea-plugin>

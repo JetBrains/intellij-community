@@ -27,6 +27,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -61,11 +62,11 @@ public class AddWithTagFix implements LocalQuickFix {
         with.getTag().setStringValue(tagName);
       }
       else {
-        String attributeName = PluginFieldNameConverter.getAttributeAnnotationValue(field);
+        String attributeName = PluginFieldNameConverter.getAnnotationValue(field, Attribute.class);
         if (attributeName == null) {
           attributeName = field.getName();
         }
-        if (attributeName.equals("forClass")) {
+        if ("forClass".equals(attributeName)) {
           continue;
         }
         with.getAttribute().setStringValue(attributeName);

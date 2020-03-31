@@ -19,37 +19,55 @@ import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.ThreeDiffSplitter;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ThreesideContentPanel extends JPanel {
   @NotNull private final ThreeDiffSplitter mySplitter;
-  @Nullable private final EditorEx myBaseEditor;
+  @NotNull private final List<DiffContentPanel> myPanels;
 
-  public ThreesideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
+  public ThreesideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
-    assert holders.size() == 3;
-    assert titleComponents.size() == 3;
+    assert contents.size() == 3;
 
-    EditorHolder baseHolder = ThreeSide.BASE.select(holders);
-    myBaseEditor = baseHolder instanceof TextEditorHolder ? ((TextEditorHolder)baseHolder).getEditor() : null;
+    myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
 
-    ArrayList<JComponent> components = new ArrayList<>(3);
-    for (int i = 0; i < 3; i++) {
-      components.add(new HolderPanel(holders.get(i), titleComponents.get(i)));
-    }
-
-    mySplitter = new ThreeDiffSplitter(components);
+    mySplitter = new ThreeDiffSplitter(myPanels);
     add(mySplitter, BorderLayout.CENTER);
+  }
+
+  public void setTitles(@NotNull List<JComponent> titleComponents) {
+    for (ThreeSide side : ThreeSide.values()) {
+      DiffContentPanel panel = side.select(myPanels);
+      JComponent title = side.select(titleComponents);
+      panel.setTitle(title);
+    }
+  }
+
+  public void setBreadcrumbs(@NotNull ThreeSide side, @Nullable DiffBreadcrumbsPanel breadcrumbs, @NotNull TextDiffSettings settings) {
+    if (breadcrumbs != null) {
+      DiffContentPanel panel = side.select(myPanels);
+      panel.setBreadcrumbs(breadcrumbs);
+      panel.updateBreadcrumbsPlacement(settings.getBreadcrumbsPlacement());
+      settings.addListener(new TextDiffSettings.Listener.Adapter() {
+        @Override
+        public void breadcrumbsPlacementChanged() {
+          panel.updateBreadcrumbsPlacement(settings.getBreadcrumbsPlacement());
+          repaintDividers();
+        }
+      }, breadcrumbs);
+    }
   }
 
   @CalledInAwt
@@ -58,12 +76,31 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   public void repaintDividers() {
-    if (myBaseEditor != null) myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
-    mySplitter.repaintDividers();
+    repaintDivider(Side.LEFT);
+    repaintDivider(Side.RIGHT);
   }
 
   public void repaintDivider(@NotNull Side side) {
-    if (side == Side.RIGHT && myBaseEditor != null) myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
     mySplitter.repaintDivider(side);
+  }
+
+  public static class Holders extends ThreesideContentPanel {
+    @Nullable private final EditorEx myBaseEditor;
+
+    public Holders(@NotNull List<? extends EditorHolder> holders) {
+      super(ContainerUtil.map(holders, holder -> holder.getComponent()));
+
+
+      EditorHolder baseHolder = ThreeSide.BASE.select(holders);
+      myBaseEditor = baseHolder instanceof TextEditorHolder ? ((TextEditorHolder)baseHolder).getEditor() : null;
+    }
+
+    @Override
+    public void repaintDivider(@NotNull Side side) {
+      if (side == Side.RIGHT && myBaseEditor != null) {
+        myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
+      }
+      super.repaintDivider(side);
+    }
   }
 }

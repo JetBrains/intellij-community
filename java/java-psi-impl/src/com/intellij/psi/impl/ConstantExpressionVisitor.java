@@ -21,6 +21,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
 @SuppressWarnings("UnnecessaryBoxing")
 class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   
-  private final StringInterner myInterner = new StringInterner();
+  private final Interner<String> myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
   private final Map<PsiElement, Object> myCachedValues = new HashMap<>();
@@ -140,8 +142,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
-        String l = lOperandValue.toString();
-        String r = rOperandValue.toString();
+        String l = computeValueToString(lOperandValue);
+        String r = computeValueToString(rOperandValue);
         value = l + r;
       }
       else {
@@ -393,6 +395,21 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     return value;
   }
 
+  private static String computeValueToString(Object value) {
+    if (value instanceof PsiType) {
+      if (value instanceof PsiArrayType) {
+        return "class " + ClassUtil.getClassObjectPresentation((PsiType)value);
+      }
+
+      PsiClass psiClass = PsiUtil.resolveClassInType((PsiType)value);
+      String prefix = psiClass == null ? "" : psiClass.isInterface() ? "interface " : "class ";
+      return prefix + ((PsiType)value).getCanonicalText();
+    }
+    else {
+      return value.toString();
+    }
+  }
+
   @Nullable
   private static Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
     if (lOperandValue instanceof String && rOperandValue instanceof String ||
@@ -544,7 +561,6 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     PsiElement resolvedExpression = expression.resolve();
     if (resolvedExpression instanceof PsiEnumConstant) {
       String constant = ((PsiEnumConstant)resolvedExpression).getName();
-      if (constant == null) return;
       PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
       if (qualifier == null) return;
       PsiElement element = qualifier.resolve();

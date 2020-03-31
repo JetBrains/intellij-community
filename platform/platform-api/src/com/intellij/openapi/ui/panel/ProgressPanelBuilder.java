@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +17,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
-  private static final Color SEPARATOR_COLOR = new JBColor(Gray.xC9, Gray.x55);
+  private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
   private final JProgressBar myProgressBar;
   private String initialLabelText;
@@ -156,7 +157,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
-    addToPanel(panel, gc);
+    addToPanel(panel, gc, false);
     return panel;
   }
 
@@ -166,7 +167,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   }
 
   @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc) {
+  public void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns) {
     if (constrainsValid()) {
       new LabeledPanelImpl().addToPanel(panel, gc);
     }
@@ -199,7 +200,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       label = new JLabel(StringUtil.isNotEmpty(initialLabelText) ? initialLabelText : "");
 
       comment = new JLabel(myCommentText);
-      comment.setForeground(Gray.x78);
+      comment.setForeground(UIUtil.getContextHelpForeground());
       if (SystemInfo.isMac) {
         Font font = comment.getFont();
         float size = font.getSize2D();
@@ -334,13 +335,13 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           if (state == State.PLAYING) {
             button.setIcons(resumeIcon);
             state = State.PAUSED;
-            setCommentText("Paused", true);
+            setCommentText(IdeBundle.message("comment.text.paused"), true);
             pauseAction.run();
           }
           else {
             button.setIcons(pauseIcon);
             state = State.PLAYING;
-            setCommentText("Pause", true);
+            setCommentText(IdeBundle.message("comment.text.pause"), true);
             resumeAction.run();
           }
         }).setFillBg(false);
@@ -378,7 +379,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           setCommentText(cancelText, true);
         }
         else if (resumeAction != null && pauseAction != null) {
-          setCommentText(state == State.PLAYING ? "Pause" : "Resume", true);
+          setCommentText(state == State.PLAYING ? IdeBundle.message("comment.text.pause") : IdeBundle.message("comment.text.resume"), true);
         }
         else {
           setCommentText(null, true);
@@ -387,7 +388,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(state != State.PAUSED ? null : "Paused", true);
+        setCommentText(state != State.PAUSED ? null : IdeBundle.message("comment.text.paused"), true);
       }
     }
   }

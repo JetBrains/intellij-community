@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +10,6 @@ import com.intellij.util.Matrix;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,19 +17,21 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageFilter;
+import java.awt.image.RGBImageFilter;
 import java.io.File;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static final class ColorDialog extends DialogWrapper {
     private final ColorView myView = new ColorView();
     private final JComboBox myCombo = new ComboBox<>(FilterItem.ALL);
@@ -154,9 +141,8 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getCancelAction()};
     }
   }
@@ -235,7 +221,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
             array[i] = Color.HSBtoRGB(w / width, saturation, brightness);
           }
         }
-        BufferedImage image = UIUtil.createImage(g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = ImageUtil.createImage(g, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
         image.setRGB(0, 0, bounds.width, bounds.height, array, 0, bounds.width);
         myImage = ImageUtil.filter(image, myFilter);
       }

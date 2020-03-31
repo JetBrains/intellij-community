@@ -17,7 +17,7 @@ package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
-import com.intellij.rt.execution.junit.IdeaTestRunner;
+import com.intellij.rt.junit.IdeaTestRunner;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;

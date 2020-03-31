@@ -3,7 +3,7 @@ package com.resources;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import com.siyeh.ig.resources.IOResourceInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexey
  */
-public class IOResourceInspectionTest extends LightInspectionTestCase {
+public class IOResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIOResource() {
     doTest();
@@ -40,7 +40,7 @@ public class IOResourceInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Override

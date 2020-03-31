@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -31,11 +17,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
 public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDoctypeImpl");
+  private static final Logger LOG = Logger.getInstance(XmlDoctypeImpl.class);
 
   public XmlDoctypeImpl() {
     super(XmlElementType.XML_DOCTYPE);
@@ -64,7 +47,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     }
     return null;
   }
-  
+
   @Override
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
@@ -93,7 +76,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   private static String extractValue(PsiElement element) {
     String text = element.getText();
-    
+
     if (!text.startsWith("\"") && !text.startsWith("\'")) {
       if (hasInjectedEscapingQuotes(element, text)) return stripInjectedEscapingQuotes(text);
     }
@@ -110,9 +93,9 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       char escapedChar = text.charAt(1);
       PsiElement context =
         InjectedLanguageManager.getInstance(element.getContainingFile().getProject()).getInjectionHost(element.getContainingFile());
-      
-      if (context != null && 
-          context.textContains(escapedChar) && 
+
+      if (context != null &&
+          context.textContains(escapedChar) &&
           context.getText().startsWith(String.valueOf(escapedChar)) &&
           text.endsWith("\\"+escapedChar)
         ) {
@@ -224,8 +207,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final PsiElement dtdUrlElement = getDtdUrlElement();
 
     PsiReference uriRef = null;

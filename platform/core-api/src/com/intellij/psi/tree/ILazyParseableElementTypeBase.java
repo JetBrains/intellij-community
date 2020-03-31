@@ -33,4 +33,8 @@ public interface ILazyParseableElementTypeBase {
    * @return the parsed contents of the node.
    */
   ASTNode parseContents(@NotNull ASTNode chameleon);
+
+  default boolean reuseCollapsedTokens() {
+    return false;
+  }
 }

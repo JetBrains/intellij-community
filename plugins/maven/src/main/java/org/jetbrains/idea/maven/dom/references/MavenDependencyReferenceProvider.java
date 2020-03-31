@@ -1,9 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +21,9 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
 
   private boolean myCanHasVersion = true;
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    TextRange range = manipulator.getRangeInElement(element);
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    TextRange range = ElementManipulators.getValueTextRange(element);
 
     String text = range.substring(element.getText());
 
@@ -48,7 +47,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       };
     }
 
-    int lastDelim = text.indexOf(secondDelim + 1);
+    int lastDelim = text.indexOf(':',secondDelim + 1);
     if (lastDelim == -1) {
       lastDelim = text.length();
     }
@@ -89,9 +88,8 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       return null;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return MavenProjectIndicesManager.getInstance(getElement().getProject()).getGroupIds().toArray();
     }
   }
@@ -111,10 +109,9 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       return null;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
-      if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    public Object @NotNull [] getVariants() {
+      if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());
       return manager.getArtifactIds(myGroupId).toArray();
@@ -138,11 +135,10 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       return null;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       if (StringUtil.isEmptyOrSpaces(myGroupId) || StringUtil.isEmptyOrSpaces(myArtifactId)) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());

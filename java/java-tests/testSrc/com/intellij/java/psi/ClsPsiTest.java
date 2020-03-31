@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -31,15 +17,17 @@ import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class ClsPsiTest extends LightIdeaTestCase {
   private static final String TEST_DATA_PATH = "/psi/cls/repo";
@@ -68,8 +56,9 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
+    vFile.refresh(false, false);
+    assertEquals(FileUtil.loadFileBytes(file1).length, vFile.contentsToByteArray().length);
     assertNotNull(testFile.getPath(), vFile);
-    FileBasedIndex.getInstance().requestReindex(vFile);
     PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(file);
 
@@ -313,6 +302,20 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals(type, field.getType());
   }
 
+  public void testSyntheticEnumMethodsWhereApplicable() {
+    PsiClass aClass = getJavaFacade().findClass(TimeUnit.class.getName());
+    assertTrue(aClass.isEnum());
+    assertSize(1, aClass.findMethodsByName("valueOf", false));
+    assertSize(1, aClass.findMethodsByName("values", false));
+
+    Collection<PsiClass> constants = DirectClassInheritorsSearch.search(aClass).findAll();
+    assertSize(7, constants);
+    for (PsiClass constant : constants) {
+      assertSize(0, constant.findMethodsByName("valueOf", false));
+      assertSize(0, constant.findMethodsByName("values", false));
+    }
+  }
+
   public void testAnnotations() {
     PsiClass aClass = getFile("Annotated").getClasses()[0];
 
@@ -420,7 +423,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("java.lang.@pkg.TypeAnnotations.MixA(\"field and type\") String", f2.getType().getCanonicalText(true));
 
     PsiMethod m1 = cls.findMethodsByName("m1", false)[0];
-    assertEquals("@pkg.TypeAnnotations.TA(\"return type\") int", ObjectUtils.assertNotNull(m1.getReturnType()).getCanonicalText(true));
+    assertEquals("@pkg.TypeAnnotations.TA(\"return type\") int", Objects.requireNonNull(m1.getReturnType()).getCanonicalText(true));
 
     PsiParameter p1 = cls.findMethodsByName("m2", false)[0].getParameterList().getParameters()[0];
     assertEquals("@pkg.TypeAnnotations.TA(\"parameter\") int", p1.getType().getCanonicalText(true));
@@ -443,7 +446,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     return getFile(getTestName(false));
   }
 
-  private static PsiJavaFile getFile(String name) {
+  private PsiJavaFile getFile(String name) {
     String path = PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/pack/" + name + ".class";
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull(path, file);
@@ -457,7 +460,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertNotNull(dbl);
     assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
 
-    GCWatcher.tracking(((ClsClassImpl)dbl).getMirror()).tryGc();
+    GCWatcher.tracking(((ClsClassImpl)dbl).getMirror()).ensureCollected();
     LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
   }
 
@@ -466,7 +469,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile copyVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
-    
+
     ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);
     PsiElement mirror = clsFile.getMirror();
 

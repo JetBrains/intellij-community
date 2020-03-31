@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.intelliLang.InjectionsSettingsUI;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Edit Injection Settings";
+    return IntelliLangBundle.message("intention.family.name.edit.injection.settings");
   }
 
   @Override

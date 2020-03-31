@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   private final String myDeclarationTagName;
 
   CreateXmlElementIntentionAction(
-    @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
+    @PropertyKey(resourceBundle = XmlAnalysisBundle.BUNDLE) String messageKey,
     @NonNls @NotNull String declarationTagName,
     TypeOrElementOrAttributeReference ref) {
 
@@ -54,7 +55,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return XmlBundle.message(myMessageKey, XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()));
+    return XmlAnalysisBundle.message(myMessageKey, XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()));
   }
 
   @Override

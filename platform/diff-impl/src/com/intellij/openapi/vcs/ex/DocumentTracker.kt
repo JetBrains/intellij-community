@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.comparison.ComparisonUtil
+import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -15,15 +16,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
-import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
+import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.CalledInAwt
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.math.max
 
 class DocumentTracker : Disposable {
   private val handler: Handler
@@ -49,16 +49,17 @@ class DocumentTracker : Disposable {
     this.document2 = document2
     this.handler = handler
 
-    val changes = compareLines(document1.immutableCharSequence,
-                               document2.immutableCharSequence,
-                               document1.lineOffsets,
-                               document2.lineOffsets).iterateChanges().toList()
+    val changes = when {
+      document1.immutableCharSequence === document2.immutableCharSequence -> emptyList()
+      else -> compareLines(document1.immutableCharSequence,
+                           document2.immutableCharSequence,
+                           document1.lineOffsets,
+                           document2.lineOffsets).iterateChanges().toList()
+    }
     tracker = LineTracker(this.handler, changes)
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
-    application.messageBus.connect(this)
-      .subscribe(DocumentBulkUpdateListener.TOPIC, MyDocumentBulkUpdateListener())
 
     document1.addDocumentListener(MyDocumentListener(Side.LEFT), this)
     document2.addDocumentListener(MyDocumentListener(Side.RIGHT), this)
@@ -139,7 +140,8 @@ class DocumentTracker : Disposable {
     if (!forceInFrozen && freezeHelper.isFrozen()) return
 
     LOCK.write {
-      if (!blocks.isEmpty() &&
+      if (tracker.isDirty &&
+          blocks.isNotEmpty() &&
           StringUtil.equals(document1.immutableCharSequence, document2.immutableCharSequence)) {
         tracker.setRanges(emptyList(), false)
         return
@@ -159,13 +161,9 @@ class DocumentTracker : Disposable {
 
     val newText = side[document1, document2]
 
-    var shift = 0
     val iterable = compareLines(oldText, newText.immutableCharSequence, oldText.lineOffsets, newText.lineOffsets)
-    for (range in iterable.changes()) {
-      val beforeLength = range.end1 - range.start1
-      val afterLength = range.end2 - range.start2
-      tracker.rangeChanged(side, range.start1 + shift, beforeLength, afterLength)
-      shift += afterLength - beforeLength
+    if (iterable.changes().hasNext()) {
+      tracker.rangesChanged(side, iterable)
     }
   }
 
@@ -244,7 +242,7 @@ class DocumentTracker : Disposable {
     if (isDisposed) return false
 
     LOCK.write {
-      if (!isValidState(content1, content2, lineRanges)) return false
+      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       freezeHelper.setFrozenContent(Side.LEFT, content1)
       freezeHelper.setFrozenContent(Side.RIGHT, content2)
@@ -262,53 +260,11 @@ class DocumentTracker : Disposable {
     LOCK.write {
       val content1 = getContent(Side.LEFT)
       val content2 = getContent(Side.RIGHT)
-      if (!isValidState(content1, content2, lineRanges)) return false
+      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       tracker.setRanges(lineRanges, true)
 
       return true
-    }
-  }
-
-  private fun isValidState(content1: CharSequence,
-                           content2: CharSequence,
-                           lineRanges: List<Range>): Boolean {
-    val lineOffset1 = content1.lineOffsets
-    val lineOffset2 = content2.lineOffsets
-
-    if (lineRanges.any { !isValidLineRange(lineOffset1, it.start1, it.end1) ||
-                         !isValidLineRange(lineOffset2, it.start2, it.end2) }) {
-      return false
-    }
-
-    val iterable = DiffIterableUtil.create(lineRanges, lineOffset1.lineCount, lineOffset2.lineCount)
-    for (range in iterable.unchanged()) {
-      val lines1 = DiffUtil.getLines(content1, lineOffset1, range.start1, range.end1)
-      val lines2 = DiffUtil.getLines(content2, lineOffset2, range.start2, range.end2)
-      if (lines1 != lines2) return false
-    }
-    return true
-  }
-
-  private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
-    return start >= 0 && start <= end && end <= lineOffsets.lineCount
-  }
-
-
-  private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {
-    init {
-      if ((document1 as DocumentEx).isInBulkUpdate) freeze(Side.LEFT)
-      if ((document2 as DocumentEx).isInBulkUpdate) freeze(Side.RIGHT)
-    }
-
-    override fun updateStarted(doc: Document) {
-      if (document1 == doc) freeze(Side.LEFT)
-      if (document2 == doc) freeze(Side.RIGHT)
-    }
-
-    override fun updateFinished(doc: Document) {
-      if (document1 == doc) unfreeze(Side.LEFT)
-      if (document2 == doc) unfreeze(Side.RIGHT)
     }
   }
 
@@ -323,6 +279,10 @@ class DocumentTracker : Disposable {
 
     private var line1: Int = 0
     private var line2: Int = 0
+
+    init {
+      if (document.isInBulkUpdate) freeze(side)
+    }
 
     override fun beforeDocumentChange(e: DocumentEvent) {
       if (isDisposed || freezeHelper.isFrozen(side)) return
@@ -352,6 +312,14 @@ class DocumentTracker : Disposable {
       LOCK.write {
         tracker.rangeChanged(side, startLine, beforeLength, afterLength)
       }
+    }
+
+    override fun bulkUpdateStarting(document: Document) {
+      freeze(side)
+    }
+
+    override fun bulkUpdateFinished(document: Document) {
+      unfreeze(side)
     }
 
     private fun getAffectedRange(line1: Int, oldLine2: Int, newLine2: Int, e: DocumentEvent): Triple<Int, Int, Int> {
@@ -504,7 +472,8 @@ private class LineTracker(private val handler: Handler,
   var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
     private set
 
-  private var isDirty: Boolean = false
+  var isDirty: Boolean = false
+    private set
 
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
@@ -545,6 +514,15 @@ private class LineTracker(private val handler: Handler,
     isDirty = true
 
     handler.afterRangeChange()
+  }
+
+  fun rangesChanged(side: Side, iterable: DiffIterable) {
+    val newBlocks = BulkRangeChangeHandler(handler, blocks, side).run(iterable)
+
+    blocks = newBlocks
+    isDirty = true
+
+    handler.afterBulkRangeChange()
   }
 
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
@@ -686,14 +664,146 @@ private class RangeChangeHandler {
     return Block(range, true, isTooBig)
   }
 
-  private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
-    return Range(side[start, otherStart], side[end, otherEnd],
-                 side[otherStart, start], side[otherEnd, end])
-  }
-
   data class Result(val beforeBlocks: List<Block>, val newBlocks: List<Block>,
                     val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
                     val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
+}
+
+/**
+ * We use line numbers in 3 documents:
+ * A: Line number in unchanged document
+ * B: Line number in changed document <before> the change
+ * C: Line number in changed document <after> the change
+ *
+ * Algorithm is similar to building ranges for a merge conflict,
+ * see [com.intellij.diff.comparison.ComparisonMergeUtil.FairMergeBuilder].
+ * ie: B is the "Base" and A/C are "Left"/"Right". Old blocks hold the differences "A -> B",
+ * changes from iterable hold the differences "B -> C". We want to construct new blocks with differences "A -> C.
+ *
+ * We iterate all differences in 'B' order, collecting interleaving groups of differences. Each group becomes a single newBlock.
+ * [blockShift]/[changeShift] indicate how 'B' line is mapped to the 'A'/'C' lines at the start of current group.
+ * [dirtyBlockShift]/[dirtyChangeShift] accumulate differences from the current group.
+ *
+ * block(otherSide -> side): A -> B
+ * newBlock(otherSide -> side): A -> C
+ * iterable: B -> C
+ * dirtyStart, dirtyEnd: B
+ * blockShift: delta B -> A
+ * changeShift: delta B -> C
+ */
+private class BulkRangeChangeHandler(private val handler: Handler,
+                                     private val blocks: List<Block>,
+                                     private val side: Side) {
+  private val newBlocks: MutableList<Block> = mutableListOf()
+
+  private var dirtyStart = -1
+  private var dirtyEnd = -1
+  private val dirtyBlocks: MutableList<Block> = mutableListOf()
+  private var dirtyBlocksModified = false
+
+  private var blockShift: Int = 0
+  private var changeShift: Int = 0
+  private var dirtyBlockShift: Int = 0
+  private var dirtyChangeShift: Int = 0
+
+  fun run(iterable: DiffIterable): List<Block> {
+    val it1 = PeekableIteratorWrapper(blocks.iterator())
+    val it2 = PeekableIteratorWrapper(iterable.changes())
+
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it2.hasNext()) {
+        handleBlock(it1.next())
+        continue
+      }
+      if (!it1.hasNext()) {
+        handleChange(it2.next())
+        continue
+      }
+
+      val block = it1.peek()
+      val range1 = block.range
+      val range2 = it2.peek()
+
+      if (range1.start(side) <= range2.start1) {
+        handleBlock(it1.next())
+      }
+      else {
+        handleChange(it2.next())
+      }
+    }
+    flush(Int.MAX_VALUE)
+
+    return newBlocks
+  }
+
+  private fun handleBlock(block: Block) {
+    val range = block.range
+    flush(range.start(side))
+
+    dirtyBlockShift += getRangeDelta(range, side)
+
+    markDirtyRange(range.start(side), range.end(side))
+
+    dirtyBlocks.add(block)
+  }
+
+  private fun handleChange(range: Range) {
+    flush(range.start1)
+
+    dirtyChangeShift += getRangeDelta(range, Side.LEFT)
+
+    markDirtyRange(range.start1, range.end1)
+
+    dirtyBlocksModified = true
+  }
+
+  private fun markDirtyRange(start: Int, end: Int) {
+    if (dirtyEnd == -1) {
+      dirtyStart = start
+      dirtyEnd = end
+    }
+    else {
+      dirtyEnd = max(dirtyEnd, end)
+    }
+  }
+
+  private fun flush(nextLine: Int) {
+    if (dirtyEnd != -1 && dirtyEnd < nextLine) {
+      if (dirtyBlocksModified) {
+        val isTooBig = dirtyBlocks.any { it.isTooBig }
+        val isDirty = true
+        val range = createRange(side,
+                                dirtyStart + changeShift, dirtyEnd + changeShift + dirtyChangeShift,
+                                dirtyStart + blockShift, dirtyEnd + blockShift + dirtyBlockShift)
+        val newBlock = Block(range, isDirty, isTooBig)
+        handler.onRangesChanged(dirtyBlocks, newBlock)
+        newBlocks.add(newBlock)
+      }
+      else {
+        assert(dirtyBlocks.size == 1)
+        if (changeShift != 0) {
+          for (oldBlock in dirtyBlocks) {
+            val newBlock = oldBlock.shift(side, changeShift)
+            handler.onRangeShifted(oldBlock, newBlock)
+            newBlocks.add(newBlock)
+          }
+        }
+        else {
+          newBlocks.addAll(dirtyBlocks)
+        }
+      }
+
+      dirtyStart = -1
+      dirtyEnd = -1
+      dirtyBlocks.clear()
+      dirtyBlocksModified = false
+
+      blockShift += dirtyBlockShift
+      changeShift += dirtyChangeShift
+      dirtyBlockShift = 0
+      dirtyChangeShift = 0
+    }
+  }
 }
 
 private class BlocksRefresher(val handler: Handler,
@@ -822,9 +932,17 @@ private fun getRangeDelta(range: Range, side: Side): Int {
 private fun Block.shift(side: Side, delta: Int) = Block(
   shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
 
-private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(range, side[shift, 0], side[0, shift])
+private fun shiftRange(range: Range, side: Side, shift: Int) = when {
+  side.isLeft -> shiftRange(range, shift, 0)
+  else -> shiftRange(range, 0, shift)
+}
 
 private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
                                                                        range.end1 + shift1,
                                                                        range.start2 + shift2,
                                                                        range.end2 + shift2)
+
+private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range = when {
+  side.isLeft -> Range(start, end, otherStart, otherEnd)
+  else -> Range(otherStart, otherEnd, start, end)
+}

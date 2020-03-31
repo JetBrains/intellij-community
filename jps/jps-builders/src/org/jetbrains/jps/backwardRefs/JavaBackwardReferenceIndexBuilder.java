@@ -59,9 +59,10 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
       myCompiledTargets.clear();
     }
 
-    JavaBackwardReferenceIndexWriter.closeIfNeed(false);
+    JavaBackwardReferenceIndexWriter.closeIfNeeded(false);
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
@@ -77,7 +78,7 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
       final Throwable cause = writer.getRebuildRequestCause();
       if (cause != null) {
         LOG.error("compiler reference index will be deleted", cause);
-        JavaBackwardReferenceIndexWriter.closeIfNeed(true);
+        JavaBackwardReferenceIndexWriter.closeIfNeeded(true);
       }
 
       if (dirtyFilesHolder.hasRemovedFiles()) {

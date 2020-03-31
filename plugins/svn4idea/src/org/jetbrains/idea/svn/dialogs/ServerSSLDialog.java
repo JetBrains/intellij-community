@@ -43,8 +43,7 @@ public class ServerSSLDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getTempAction(), getCancelAction()};
   }
 

@@ -32,7 +32,7 @@ public class FileFinder {
     // TODO locate pom files using maven embedder?
 
     for (VirtualFile f : roots) {
-      VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile f) {
           try {

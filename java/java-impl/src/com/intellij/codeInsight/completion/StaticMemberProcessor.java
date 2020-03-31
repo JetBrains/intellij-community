@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ public abstract class StaticMemberProcessor {
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
-    for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
+    for (final String memberName : matcher.sortMatching(memberNames)) {
       Set<PsiClass> classes = new THashSet<>();
       for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
         if (isStaticallyImportable(member)) {
@@ -87,7 +88,8 @@ public abstract class StaticMemberProcessor {
     if (!myHintShown && !shouldImport) {
       final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (StringUtil.isNotEmpty(shortcut)) {
-        CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
+        CompletionService.getCompletionService().setAdvertisementText(
+          JavaBundle.message("to.import.a.method.statically.press.0", shortcut));
       }
       myHintShown = true;
     }

@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -12,15 +13,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImportTestsFromFileAction extends AbstractImportTestsAction {
-  public ImportTestsFromFileAction(SMTRunnerConsoleProperties properties) {
-    super(properties, (properties == null ? "" : "Import ") + "From File ...", "Import tests from file", null);
+  public ImportTestsFromFileAction() {
+    super(null, "Import Tests from File...", 
+          "Import the results of a test execution from an XML file", 
+          AllIcons.ToolbarDecorator.Import);
   }
 
   @Nullable
   @Override
-  public VirtualFile getFile(@NotNull Project project) {
+  protected VirtualFile getFile(@NotNull Project project) {
     final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
-    xmlDescriptor.setTitle("Choose a File with Tests Result");
+    xmlDescriptor.setTitle(SmRunnerBundle.message("sm.test.runner.import.test.choose.test.file.title"));
     return FileChooser.chooseFile(xmlDescriptor, project, null);
   }
 }

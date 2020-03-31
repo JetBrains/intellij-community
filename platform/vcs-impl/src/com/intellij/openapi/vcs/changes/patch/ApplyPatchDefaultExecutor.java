@@ -1,14 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -39,23 +41,28 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   public void apply(@NotNull List<? extends FilePatch> remaining, @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    PatchApplier.executePatchGroup(appliers, localList);
+    new Task.Backgroundable(myProject, VcsBundle.getString("patch.apply.progress.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        PatchApplier.executePatchGroup(appliers, localList);
+      }
+    }.queue();
   }
 
   @NotNull
   protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
                                                       @Nullable LocalChangeList localList,
                                                       @NotNull CommitContext commitContext) {
-    final Collection<PatchApplier> appliers = new LinkedList<>();
+    final Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
-      appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
-                                                     ContainerUtil
-                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
-                                                     commitContext));
+      appliers.add(new PatchApplier(myProject, base,
+                                    ContainerUtil
+                                      .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
+                                    commitContext));
     }
     return appliers;
   }
@@ -82,7 +89,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     }
     catch (PatchSyntaxException e) {
       VcsBalloonProblemNotifier
-        .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
+        .showOverChangesView(project, VcsBundle.message("patch.apply.can.not.apply.additional.info.error", e.getMessage()), MessageType.ERROR);
     }
   }
 

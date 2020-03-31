@@ -342,6 +342,43 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "assert issubclass(A, <error descr=\"'Generic' cannot be used with instance and class checks\">C</error>)");
   }
 
+  // PY-34945
+  public void testInstanceAndClassChecksOnFinal() {
+    doTestByText("from typing import TypeVar\n" +
+                 "from typing_extensions import Final\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Final' cannot be used with instance and class checks\">Final</error>)\n" +
+                 "B = Final\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Final' cannot be used with instance and class checks\">Final[T]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">B[T]</error>)\n" +
+                 "C = B[T]\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-35235
+  public void testInstanceAndClassChecksOnLiteral() {
+    doTestByText("from typing_extensions import Literal\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Literal' cannot be used with instance and class checks\">Literal</error>)\n" +
+                 "B = Literal\n" +
+                 "assert issubclass(A, <error descr=\"'Literal' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Literal' cannot be used with instance and class checks\">Literal[1]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Literal' cannot be used with instance and class checks\">B[1]</error>)\n" +
+                 "C = B[1]\n" +
+                 "assert issubclass(A, <error descr=\"'Literal' cannot be used with instance and class checks\">C</error>)");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnGenericInheritor() {
     doTestByText("from typing import TypeVar, List\n" +
@@ -825,6 +862,62 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("def foo(a: str):  # type: ignore\n" +
                          "    pass")
+    );
+  }
+
+  public void testAnnotatingNonSelfAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def method(self, b):\n" +
+                         "        <warning descr=\"Non-self attribute could not be type hinted\">b.a</warning>: int = 1\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "<warning descr=\"Non-self attribute could not be type hinted\">B.a</warning>: str = \"2\"\n" +
+                         "\n" +
+                         "def func(a):\n" +
+                         "    <warning descr=\"Non-self attribute could not be type hinted\">a.xxx</warning>: str = \"2\"")
+    );
+  }
+
+  // PY-35235
+  public void testLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Literal\n" +
+                         "\n" +
+                         "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">1 + 2</warning>]\n" +
+                         "b: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">4j</warning>]\n" +
+                         "c: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">3.14</warning>]\n" +
+                         "d: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">...</warning>]\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "e: Literal[Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]]\n" +
+                         "f = Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]\n" +
+                         "g: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f</warning>]")
+    );
+  }
+
+  // PY-35235
+  public void testLiteralWithoutArguments() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import Literal\n" +
+                         "a: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning> = 1\n" +
+                         "b = 2  # type: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning>")
+    );
+  }
+
+  // PY-35235
+  public void testNonPlainStringAsTypingLiteralIndex() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import Literal\n" +
+                         "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f\"1\"</warning>] = \"1\"")
     );
   }
 

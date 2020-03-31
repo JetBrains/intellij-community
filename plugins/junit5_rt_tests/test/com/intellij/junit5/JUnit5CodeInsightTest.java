@@ -44,6 +44,7 @@ abstract class JUnit5CodeInsightTest {
     TestRunnerUtil.replaceIdeEventQueueSafely();
     //init junit 5 framework
     EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable {}");
       myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}");
       myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
       myFixture.addClass("package org.junit.jupiter.api; public @interface TestFactory {}");

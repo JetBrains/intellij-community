@@ -16,11 +16,6 @@ public abstract class JsonStandardComplianceProvider {
   public abstract boolean isCommentAllowed(@NotNull PsiComment comment);
 
   public static boolean shouldWarnAboutComment(@NotNull PsiComment comment) {
-    for (JsonStandardComplianceProvider provider : EP_NAME.getIterable(null)) {
-      if (provider.isCommentAllowed(comment)) {
-        return false;
-      }
-    }
-    return true;
+    return EP_NAME.findFirstSafe(provider -> provider.isCommentAllowed(comment)) == null;
   }
 }

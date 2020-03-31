@@ -39,7 +39,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private final JavaCodeStyleSettings myJavaSettings;
   private final Wrap myWrap;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SyntheticCodeBlock");
+  private static final Logger LOG = Logger.getInstance(SyntheticCodeBlock.class);
 
   private final TextRange myTextRange;
 

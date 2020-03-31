@@ -1,6 +1,9 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in the Python plugin,
        both Community and Professional versions. -->
+
+  <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
@@ -12,6 +15,8 @@
     <!-- Console folding for Jython only, thus it's located in intellij.python.plugin only -->
     <stacktrace.fold substring="*sys-package-mgr*:"/>
     <sdkEditorAdditionalOptionsProvider implementation="com.jetbrains.python.PythonSdkEditorAdditionalOptionsProvider"/>
+
+    <commandLineInspectionProjectConfigurator implementation="com.jetbrains.python.inspections.PythonPluginCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

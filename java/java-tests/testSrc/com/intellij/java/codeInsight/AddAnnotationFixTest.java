@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -35,9 +35,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,8 +43,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.psi.impl.DebugUtil.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -100,7 +98,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     addLibrary("/content/anno");
   }
 
-  private void addLibrary(@NotNull final String... annotationsDirs) {
+  private void addLibrary(final String @NotNull ... annotationsDirs) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
       final LibraryTable libraryTable = model.getModuleLibraryTable();
@@ -118,7 +116,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   @NotNull
   private PsiModifierListOwner getOwner() {
-    return ObjectUtils.assertNotNull(AddAnnotationPsiFix.getContainer(myFixture.getFile(), myFixture.getCaretOffset()));
+    return Objects.requireNonNull(AddAnnotationPsiFix.getContainer(myFixture.getFile(), myFixture.getCaretOffset()));
   }
 
   private void startListening(@NotNull final List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence) {
@@ -175,7 +173,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   public void testAnnotateLibrary() {
-
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
@@ -231,6 +228,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("Nullable");
   }
 
+  public void testAvailableFixesOnReference() {
+    myFixture.configureByText("Foo.java", "public class Foo {" +
+                                          " {\"\".sub<caret>string(1);} " +
+                                          "}");
+    assertNotAvailable("Deprecated");
+    assertNotAvailable("NonNls");
+  }
+
   private void assertNotAvailable(String shortName) {
     AnnotateIntentionAction action = new AnnotateIntentionAction();
     assertThat(action.selectSingle(myFixture.getEditor(), myFixture.getFile(), shortName)).isFalse();
@@ -273,7 +278,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
     assertTrue(deannotateFix.isAvailable(myFixture.getProject(), editor, file));
 
-    final PsiModifierListOwner container = DeannotateIntentionAction.getContainer(editor, file);
+    final PsiModifierListOwner container = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     assertNotNull(container);
     startListening(container, AnnotationUtil.NOT_NULL, true);
     ExternalAnnotationsManager.getInstance(myFixture.getProject()).deannotate(container, AnnotationUtil.NOT_NULL);
@@ -306,8 +311,8 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   public void testEditingMultiRootAnnotations() {
     addLibrary("/content/annoMultiRoot/root1", "/content/annoMultiRoot/root2");
-    myFixture.configureByFiles("/content/annoMultiRoot/root1/multiRoot/annotations.xml",
-                               "/content/annoMultiRoot/root2/multiRoot/annotations.xml");
+    myFixture.configureByFiles("content/annoMultiRoot/root1/multiRoot/annotations.xml",
+                               "content/annoMultiRoot/root2/multiRoot/annotations.xml");
     myFixture.configureByFiles("lib/multiRoot/Test.java");
 
     final ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
@@ -359,7 +364,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   public void testListenerNotifiedOnExternalChanges() throws IOException {
     addDefaultLibrary();
-    myFixture.configureByFiles("/content/anno/p/annotations.xml");
+    myFixture.configureByFiles("content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
 
     ExternalAnnotationsManager.getInstance(myFixture.getProject()).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
@@ -375,10 +380,9 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     stopListeningAndCheckEvents();
   }
 
-
   public void testAnnotationsUpdatedWhenFileEdited() {
     addDefaultLibrary();
-    final PsiFile[] files = myFixture.configureByFiles("/content/anno/edit/annotations.xml", "lib/edit/Foo.java");
+    final PsiFile[] files = myFixture.configureByFiles("content/anno/edit/annotations.xml", "lib/edit/Foo.java");
     final PsiClass fooJava = ((PsiClassOwner)files[1]).getClasses()[0];
     ExternalAnnotationsManager.getInstance(myFixture.getProject());
 
@@ -388,8 +392,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
     startListeningForExternalChanges();
     myFixture.testAction(new CommentByLineCommentAction()); // comment out a line in annotations file
-    sleep(150);
-    UIUtil.dispatchAllInvocationEvents();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     annotation = AnnotationUtil.findAnnotation(fooJava, "java.lang.Deprecated");
     assertNull(annotation);
   }

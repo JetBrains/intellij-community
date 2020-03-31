@@ -15,35 +15,36 @@
  */
 package com.intellij.diff.editor
 
-import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NonNls
 
-class DiffEditorProvider : AsyncFileEditorProvider, DumbAware {
+class DiffEditorProvider : FileEditorProvider, DumbAware {
+  companion object {
+    @NonNls
+    const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
+  }
+
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return file is DiffVirtualFile
   }
 
-  override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val builder = (file as DiffVirtualFile).createProcessorAsync(project)
-    return object : AsyncFileEditorProvider.Builder() {
-      override fun build() = DiffRequestProcessorEditor(file, builder.build())
-    }
-  }
-
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val builder = (file as DiffVirtualFile).createProcessorAsync(project)
-    return DiffRequestProcessorEditor(file, builder.build())
+    val processor = (file as DiffVirtualFile).createProcessor(project)
+    processor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR, true)
+    return DiffRequestProcessorEditor(file, processor)
   }
 
   override fun disposeEditor(editor: FileEditor) {
     Disposer.dispose(editor)
   }
 
-  override fun getEditorTypeId(): String = "DiffEditor"
+  override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }

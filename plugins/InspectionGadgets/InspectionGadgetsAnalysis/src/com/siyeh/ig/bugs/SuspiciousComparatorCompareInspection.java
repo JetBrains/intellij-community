@@ -17,7 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -30,19 +30,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SuspiciousComparatorCompareInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.comparator.compare.display.name");
-  }
 
   @NotNull
   @Override
@@ -118,15 +113,14 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
+      DataFlowRunner runner = new DataFlowRunner(owner.getProject(), body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
           DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
           DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
-          DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
-          state.applyCondition(condition);
+          state.applyCondition(var1.eq(var2));
           return state;
         }
       };
@@ -171,8 +165,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                       @NotNull DfaMemoryState state) {
         if (owner != myOwner) return;
         myContexts.add(expression);
-        LongRangeSet range = state.getValueFact(value, DfaFactType.RANGE);
-        myRange = range == null ? LongRangeSet.all() : myRange.unite(range);
+        myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
       }
     }
 
@@ -180,8 +173,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
 
       private final Set<PsiParameter> parameters;
 
-      private ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
-        this.parameters = new HashSet<>(Arrays.asList(parameters));
+      private ParameterAccessVisitor(PsiParameter @NotNull [] parameters) {
+        this.parameters = ContainerUtil.set(parameters);
       }
 
       @Override

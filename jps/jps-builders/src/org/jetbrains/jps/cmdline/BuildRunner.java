@@ -36,10 +36,11 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -51,14 +52,10 @@ import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-/**
- * @author nik
- */
 public class BuildRunner {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildRunner");
+  private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
-  private static final boolean STORE_TEMP_CACHES_IN_MEMORY = true;
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
   private Map<String, String> myBuilderParams = Collections.emptyMap();
@@ -86,11 +83,13 @@ public class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
-    ProjectTimestamps projectTimestamps = null;
+    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject());
+
+    ProjectTimestamps projectStamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -99,8 +98,8 @@ public class BuildRunner {
     catch (Exception e) {
       // second try
       LOG.info(e);
-      if (projectTimestamps != null) {
-        projectTimestamps.close();
+      if (projectStamps != null) {
+        projectStamps.close();
       }
       if (dataManager != null) {
         dataManager.close();
@@ -108,13 +107,13 @@ public class BuildRunner {
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
+    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
                                  targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
@@ -131,7 +130,7 @@ public class BuildRunner {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch, Utils.IS_TEST_MODE);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, Utils.IS_TEST_MODE);
       builder.addMessageHandler(msgHandler);
       try {
         switch (buildType) {
@@ -198,7 +197,7 @@ public class BuildRunner {
       includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
     }
 
-    final Timestamps timestamps = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     if (!paths.isEmpty()) {
       boolean forceBuildAllModuleBasedTargets = false;
       for (BuildTargetType<?> type : targetTypesToForceBuild) {
@@ -221,7 +220,7 @@ public class BuildRunner {
           if (added) {
             final BuildTargetType<?> targetType = descriptor.getTarget().getTargetType();
             if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleBasedBuildTargetType)) {
-              pd.fsState.markDirty(null, file, descriptor, timestamps, false);
+              pd.fsState.markDirty(null, file, descriptor, stampsStorage, false);
             }
           }
         }

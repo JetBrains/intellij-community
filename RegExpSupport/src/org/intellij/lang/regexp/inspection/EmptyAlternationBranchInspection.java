@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpPattern;
@@ -15,13 +16,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class EmptyAlternationBranchInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Empty branch in alternation";
-  }
 
   @NotNull
   @Override
@@ -58,7 +52,8 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
           // empty branch at end allowed, if no empty branch at beginning
           continue;
         }
-        myHolder.registerProblem(branch.getPrevSibling(), "Empty branch in alternation", new EmptyAlternationBranchFix());
+        myHolder.registerProblem(branch.getPrevSibling(), RegExpBundle.message("inspection.warning.empty.branch.in.alternation"),
+                                 new EmptyAlternationBranchFix());
       }
     }
   }
@@ -69,7 +64,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove empty branch";
+      return RegExpBundle.message("inspection.quick.fix.remove.empty.branch");
     }
 
     @Override

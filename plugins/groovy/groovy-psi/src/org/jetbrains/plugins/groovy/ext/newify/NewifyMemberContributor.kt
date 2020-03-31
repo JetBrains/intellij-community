@@ -5,13 +5,20 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsWithSelf
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.processUnqualified
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
+import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
+import java.util.regex.PatternSyntaxException
 
 internal const val newifyAnnotationFqn = "groovy.lang.Newify"
 internal const val newifyOriginInfo = "by @Newify"
@@ -24,6 +31,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
                                       state: ResolveState) {
     if (!processor.shouldProcessMethods()) return
     if (place !is GrReferenceExpression) return
+    val referenceName = place.referenceName ?: return
     val newifyAnnotations = place.listNewifyAnnotations()
     if (newifyAnnotations.isEmpty()) return
 
@@ -31,10 +39,19 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     val type = (qualifier as? GrReferenceExpression)?.resolve() as? PsiClass
 
     for (annotation in newifyAnnotations) {
-      val newifiedClasses = getClassArrayValue(annotation, "value", true)
 
-      qualifier ?: newifiedClasses.flatMap { buildConstructors(it, it.name) }.forEach {
-        ResolveUtil.processElement(processor, it, state)
+      if (qualifier == null) {
+        val patternClasses = getClassesForPatternAttribute(annotation, referenceName, place)
+        val newifiedClasses = getClassArrayValue(annotation, "value", true)
+        val staticClassFilter: (PsiClass) -> Boolean = if (place.parents.find { it is GrMethod && it.isStatic() } != null) {
+          { if (it.containingClass != null) it.isStatic() else true }
+        }
+        else {
+          { true }
+        }
+        (patternClasses + newifiedClasses).filter(staticClassFilter).flatMap { buildConstructors(it, it.name) }.forEach {
+          ResolveUtil.processElement(processor, it, state)
+        }
       }
 
       val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
@@ -46,7 +63,25 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun PsiElement.listNewifyAnnotations() = parents().flatMap {
+  private fun getClassesForPatternAttribute(annotation: PsiAnnotation, referenceName: String, place: PsiElement): List<PsiClass> {
+    val regex = try {
+      val pattern = GrAnnotationUtil.inferStringAttribute(annotation, "pattern") ?: ""
+      Regex(pattern)
+    }
+    catch (e: PatternSyntaxException) {
+      Regex("")
+    }
+    return if (regex matches referenceName) {
+      val classProcessor = ClassProcessor(referenceName, place)
+      place.processUnqualified(classProcessor, ResolveState.initial())
+      classProcessor.results.mapNotNull(GroovyResolveResult::getElement).filterIsInstance<PsiClass>()
+    }
+    else {
+      emptyList()
+    }
+  }
+
+  private fun PsiElement.listNewifyAnnotations() = parentsWithSelf.flatMap {
     val owner = it as? PsiModifierListOwner
     val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
     return@flatMap seq ?: emptySequence()

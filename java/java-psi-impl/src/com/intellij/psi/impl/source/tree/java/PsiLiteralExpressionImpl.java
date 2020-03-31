@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -11,25 +10,21 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.text.LiteralFormatUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
-       implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
-  @NonNls private static final String QUOT = "&quot;";
+  implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
-  public static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
-  public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
-  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
+  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -40,8 +35,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -63,11 +57,9 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.RAW_STRING_LITERAL) {
+    if (ElementType.STRING_LITERALS.contains(type)) {
       PsiFile file = getContainingFile();
-      PsiManager manager = file.getManager();
-      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(file);
-      return PsiType.getJavaLangString(manager, resolveScope);
+      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file));
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
@@ -76,6 +68,11 @@ public class PsiLiteralExpressionImpl
       return PsiType.NULL;
     }
     return null;
+  }
+
+  @Override
+  public boolean isTextBlock() {
+    return getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
   }
 
   public IElementType getLiteralElementType() {
@@ -107,13 +104,12 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
-    if (type == JavaTokenType.STRING_LITERAL) {
-      String innerText = getInnerText();
-      return innerText == null ? null : internedParseStringCharacters(innerText);
-    }
 
-    if (type == JavaTokenType.RAW_STRING_LITERAL) {
-      return getRawString();
+    if (type == JavaTokenType.STRING_LITERAL) {
+      return internedParseStringCharacters(getInnerText());
+    }
+    if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      return internedParseStringCharacters(PsiLiteralUtil.getTextBlockText(this));
     }
 
     String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
@@ -131,6 +127,7 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.DOUBLE_LITERAL) {
       return PsiLiteralUtil.parseDouble(text);
     }
+
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       if (textLength == 1 || !StringUtil.endsWithChar(text, '\'')) {
         return null;
@@ -148,35 +145,18 @@ public class PsiLiteralExpressionImpl
 
   @Nullable
   public String getInnerText() {
-    String text = getCanonicalText();
-    int textLength = text.length();
-    if (StringUtil.endsWithChar(text, '\"')) {
-      if (textLength == 1) return null;
-      text = text.substring(1, textLength - 1);
-    }
-    else {
-      if (text.startsWith(QUOT) && text.endsWith(QUOT) && textLength > QUOT.length()) {
-        text = text.substring(QUOT.length(), textLength - QUOT.length());
-      }
-      else {
-        return null;
-      }
-    }
-    return text;
-  }
-
-  public String getRawString() {
-    return StringUtil.nullize(StringUtil.trimLeading(StringUtil.trimTrailing(getCanonicalText(), '`'), '`'));
+    return PsiLiteralUtil.getInnerText(this);
   }
 
   @Nullable
   private static String internedParseStringCharacters(final String chars) {
+    if (chars == null) return null;
     final StringBuilder outChars = new StringBuilder(chars.length());
     final boolean success = parseStringCharacters(chars, outChars, null);
     return success ? outChars.toString() : null;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     return CodeInsightUtilCore.parseStringCharacters(chars, outChars, sourceOffsets);
   }
 
@@ -197,20 +177,15 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    IElementType elementType = getLiteralElementType();
-    return elementType == JavaTokenType.STRING_LITERAL
-           || elementType == JavaTokenType.RAW_STRING_LITERAL
-           || elementType == JavaTokenType.CHARACTER_LITERAL;
+    return ElementType.TEXT_LITERALS.contains(getLiteralElementType());
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     IElementType type = getLiteralElementType();
-    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.RAW_STRING_LITERAL && type != JavaTokenType.INTEGER_LITERAL) {
-      return PsiReference.EMPTY_ARRAY; // there are references in int literals in SQL API parameters
-    }
-    return PsiReferenceService.getService().getContributedReferences(this);
+    return ElementType.STRING_LITERALS.contains(type) || type == JavaTokenType.INTEGER_LITERAL  // int literals could refer to SQL parameters
+           ? PsiReferenceService.getService().getContributedReferences(this)
+           : PsiReference.EMPTY_ARRAY;
   }
 
   @Override
@@ -221,28 +196,9 @@ public class PsiLiteralExpressionImpl
     return this;
   }
 
-  @Override
   @NotNull
+  @Override
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
-    if (getLiteralElementType() == JavaTokenType.RAW_STRING_LITERAL) {
-      return new LiteralTextEscaper<PsiLiteralExpressionImpl>(this) {
-        @Override
-        public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-          outChars.append(rangeInsideHost.substring(myHost.getText()));
-          return true;
-        }
-
-        @Override
-        public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-          return offsetInDecoded + rangeInsideHost.getStartOffset();
-        }
-
-        @Override
-        public boolean isOneLine() {
-          return false;
-        }
-      };
-    }
     return new StringLiteralEscaper<>(this);
   }
 }

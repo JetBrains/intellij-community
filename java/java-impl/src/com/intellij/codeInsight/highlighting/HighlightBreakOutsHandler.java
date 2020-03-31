@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
@@ -21,17 +21,17 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiElement> targets, @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(List<PsiElement> targets) {
+  public void computeUsages(@NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (parent instanceof PsiContinueStatement) {
       PsiElement statement = ((PsiContinueStatement)parent).findContinuedStatement();
@@ -40,13 +40,20 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
       }
     }
     else if (parent instanceof PsiBreakStatement) {
-      PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-      if (exitedElement instanceof PsiLoopStatement) {
-        processLoop((PsiStatement)parent, (PsiLoopStatement)exitedElement);
+      PsiStatement exitedStatement = ((PsiBreakStatement)parent).findExitedStatement();
+      if (exitedStatement instanceof PsiLoopStatement) {
+        processLoop((PsiStatement)parent, (PsiLoopStatement)exitedStatement);
       }
-      else if (exitedElement instanceof PsiSwitchBlock) {
-        addOccurrence(exitedElement.getFirstChild());
-        collectSiblings((PsiStatement)parent, exitedElement, exitedElement);
+      else if (exitedStatement instanceof PsiSwitchStatement) {
+        addOccurrence(exitedStatement.getFirstChild());
+        collectSiblings((PsiStatement)parent, exitedStatement, exitedStatement);
+      }
+    }
+    else if (parent instanceof PsiYieldStatement) {
+      PsiSwitchExpression enclosingExpression = ((PsiYieldStatement)parent).findEnclosingExpression();
+      if (enclosingExpression != null) {
+        addOccurrence(enclosingExpression.getFirstChild());
+        collectSiblings((PsiStatement)parent, enclosingExpression, enclosingExpression);
       }
     }
     addOccurrence(myTarget);
@@ -69,7 +76,8 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
       for (PsiStatement psiStatement: statements) {
         if (currentStatement == psiStatement) continue;
         if (psiStatement instanceof PsiContinueStatement && ((PsiContinueStatement)psiStatement).findContinuedStatement() == container ||
-            psiStatement instanceof PsiBreakStatement && ((PsiBreakStatement)psiStatement).findExitedElement() == container) {
+            psiStatement instanceof PsiBreakStatement && ((PsiBreakStatement)psiStatement).findExitedStatement() == container ||
+            psiStatement instanceof PsiYieldStatement && ((PsiYieldStatement)psiStatement).findEnclosingExpression() == container) {
           addOccurrence(psiStatement.getFirstChild());
         }
       }
@@ -78,7 +86,7 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
   }
 
   private void highlightLoopDeclaration(PsiLoopStatement statement) {
-    
+
     if (statement instanceof PsiDoWhileStatement) {
       PsiKeyword whileKeyword = ((PsiDoWhileStatement)statement).getWhileKeyword();
       if (whileKeyword != null) {

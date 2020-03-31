@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.changes.patch.AbstractFilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.MatchPatchPaths;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
 import java.io.File;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.PatchAutoInitTest.create;
 
-public class PatchMatcherTest extends PlatformTestCase {
+public class PatchMatcherTest extends HeavyPlatformTestCase {
   public void testMatchPathAboveProject() {
     final VirtualFile root = myProject.getBaseDir();
     VirtualFile vf = createChildData(root.getParent(), "file.txt");

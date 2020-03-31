@@ -17,7 +17,10 @@ package com.intellij.util.containers;
 
 import java.util.Map;
 
-/** Use {@link java.util.HashMap} */
+/**
+ * @deprecated Use {@link java.util.HashMap}
+ * todo: TBR in 2020.1
+ */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 @Deprecated
 public class HashMap<K, V> extends java.util.HashMap<K, V> {

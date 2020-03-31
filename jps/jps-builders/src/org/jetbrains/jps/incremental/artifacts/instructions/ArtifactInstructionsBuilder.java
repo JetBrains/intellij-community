@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface ArtifactInstructionsBuilder {
   @NotNull
   List<ArtifactRootDescriptor> getDescriptors();

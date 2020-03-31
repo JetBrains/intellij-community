@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,19 +31,11 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.requires.statement.name");
-  }
-
-  @Nullable
-  @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefJavaModule) {
       RefJavaModule refJavaModule = (RefJavaModule)refEntity;
 
@@ -64,7 +57,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
                 if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {
                   CommonProblemDescriptor descriptor = manager.createProblemDescriptor(
                     requiresStatement,
-                    InspectionsBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),
+                    JavaAnalysisBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),
                     new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
                   descriptors.add(descriptor);
@@ -116,14 +109,14 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.requires.statement.fix.family");
+      return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.family");
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.redundant.requires.statement.fix.name", myRequiredModuleName);
+      return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.name", myRequiredModuleName);
     }
 
     @Override

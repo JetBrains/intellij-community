@@ -16,40 +16,32 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Representation of a Mercurial repository for tests purposes.
- * @author Kirill Likhodedov
  */
 public class HgTestRepository {
   @NotNull private final HgTest myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
   private VirtualFile myDir;
-  @Nullable private final HgTestRepository myParent; // cloned from
 
-  public HgTestRepository(@NotNull HgTest test, @NotNull TempDirTestFixture dir) {
-    this(test, dir, null);
-  }
 
   /**
-   * @param test   test instance
-   * @param dir    repository root
-   * @param parent parent repository where this repository is cloned from, if one exists.
+   * @param test test instance
+   * @param dir  repository root
    */
-  public HgTestRepository(@NotNull HgTest test, @NotNull TempDirTestFixture dir, @Nullable HgTestRepository parent) {
+  public HgTestRepository(@NotNull HgTest test, @NotNull TempDirTestFixture dir) {
     myTest = test;
     myDirFixture = dir;
-    myParent = parent;
   }
 
   /**
@@ -90,77 +82,8 @@ public class HgTestRepository {
   @Nullable
   public VirtualFile getDir() {
     if (myDir == null) {
-      myDir = VcsUtil.getVirtualFile(myDirFixture.getTempDirPath());
+      myDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDirFixture.getTempDirPath()));
     }
     return myDir;
   }
-
-  /**
-   * Creates a file in this repository.
-   * @param filename relative path to the file.
-   * @return The created file.
-   */
-  public VirtualFile createFile(String filename) {
-    return createFile(filename, "initial content");
-  }
-
-  /**
-   * Creates a file in this repository and fills it with the given content.
-   * @param filename relative path to the file.
-   * @param content  initial content for the file.
-   * @return The created file.
-   */
-  public VirtualFile createFile(String filename, String content) {
-    return myTest.createFileInCommand(filename, content);
-  }
-
-  /**
-   * Natively executes the given mercurial command.
-   * @param commandWithParameters Mercurial command with parameters. E.g. ["status", "-a"]
-   */
-  public void execute(String... commandWithParameters) throws IOException {
-    myTest.runHg(new File(myDirFixture.getTempDirPath()), commandWithParameters);
-  }
-
-  public void add() throws IOException {
-    execute("add");
-  }
-
-  public void commit() throws IOException {
-    execute("commit", "-m", "Sample commit message");
-  }
-
-  public void merge() throws IOException {
-    execute("merge");
-  }
-
-  public void pull() throws IOException {
-    execute("pull");
-  }
-
-  public void push() throws IOException {
-    execute("push");
-  }
-
-  public void update() throws IOException {
-    execute("update");
-  }
-
-  /**
-   * Calls add() and then commit(). A shorthand for usual test situations when a file is added and then immediately committed.
-   */
-  public void addCommit() throws IOException {
-    add();
-    commit();
-  }
-
-  /**
-   * Calls pull, update and merge on this repository. Common for merge testing.
-   */
-  public void pullUpdateMerge() throws IOException {
-    pull();
-    update();
-    merge();
-  }
-
 }

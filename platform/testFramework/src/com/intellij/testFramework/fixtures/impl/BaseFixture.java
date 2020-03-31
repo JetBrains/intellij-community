@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -17,9 +17,6 @@ import org.junit.Assert;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author max
- */
 public class BaseFixture implements IdeaTestFixture {
   private boolean myInitialized;
   private boolean myDisposed;
@@ -38,7 +35,10 @@ public class BaseFixture implements IdeaTestFixture {
 
   @Override
   public void tearDown() throws Exception {
-    Assert.assertTrue("setUp() has not been called", myInitialized);
+    if (!myInitialized) {
+      return;
+    }
+
     Assert.assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
       () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),

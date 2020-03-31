@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.NotIgnored
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
@@ -62,10 +63,10 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return content.toString()
   }
 
-  private fun getUntrackedFiles(ignoreFileVcsRoot: VirtualFile): Set<VirtualFile> {
+  private fun getUntrackedFiles(ignoreFileVcsRoot: VirtualFile): Set<FilePath> {
     try {
       val repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(ignoreFileVcsRoot) ?: return emptySet()
-      return repo.untrackedFilesHolder.retrieveUntrackedFiles().toSet()
+      return repo.untrackedFilesHolder.retrieveUntrackedFilePaths().toSet()
     }
     catch (e: VcsException) {
       LOG.warn("Cannot get untracked files: ", e)
@@ -73,7 +74,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     }
   }
 
-  private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileVcsRoot: VirtualFile, ignoreFileRoot: VirtualFile, untrackedFiles: Set<VirtualFile>): List<String> {
+  private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileVcsRoot: VirtualFile, ignoreFileRoot: VirtualFile, untrackedFiles: Set<FilePath>): List<String> {
     val vcsContextFactory = VcsContextFactory.SERVICE.getInstance()
     return filter { ignoredBean ->
       when (ignoredBean.type) {
@@ -84,14 +85,14 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     }.map { ignoredBean ->
       when (ignoredBean.type) {
         MASK -> ignoredBean.mask!!
-        UNDER_DIR -> "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!}"
-        FILE -> "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!}"
+        UNDER_DIR -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
+        FILE -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
       }
     }
   }
 
   private fun shouldIgnoreUnderDir(ignoredBean: IgnoredFileDescriptor,
-                                   untrackedFiles: Set<VirtualFile>,
+                                   untrackedFiles: Set<FilePath>,
                                    ignoreFileRoot: VirtualFile,
                                    ignoreFileVcsRoot: VirtualFile,
                                    vcsContextFactory: VcsContextFactory) =
@@ -103,7 +104,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
 
   private fun shouldIgnoreFile(ignoredBean: IgnoredFileDescriptor,
-                               untrackedFiles: Set<VirtualFile>,
+                               untrackedFiles: Set<FilePath>,
                                ignoreFileRoot: VirtualFile,
                                ignoreFileVcsRoot: VirtualFile,
                                vcsContextFactory: VcsContextFactory) =
@@ -113,7 +114,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     && Comparing.equal(ignoreFileVcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, false)))
     && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
 
-  private fun shouldIgnoreByMask(ignoredBean: IgnoredFileDescriptor, untrackedFiles: Set<VirtualFile>) =
+  private fun shouldIgnoreByMask(ignoredBean: IgnoredFileDescriptor, untrackedFiles: Set<FilePath>) =
     untrackedFiles.any { ignoredBean.matchesFile(it) }
 
   private fun shouldNotConsiderInternalIgnoreFile(ignoredBean: IgnoredFileDescriptor, ignoreFileRoot: VirtualFile): Boolean {
@@ -134,6 +135,15 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
   override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
     prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
 
+  override fun buildIgnoreEntryContent(ignoreEntryRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
+    "/${FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
+
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"
+
+  /**
+   * Disable creating a new .idea/.gitignore for [com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl].
+   * This ignore file will be generated automatically by [GitIgnoreInStoreDirGenerator]
+   */
+  override fun canCreateIgnoreFileInStateStoreDir() = false
 }

@@ -37,19 +37,12 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[]{
       new ConvertOctalLiteralsToDecimalsFix(),
       new RemoveLeadingZeroesFix()

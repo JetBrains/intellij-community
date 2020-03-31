@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +31,7 @@ public interface Extensions extends DomElement {
   XmlTag getXmlTag();
 
   @NonNls
-  String DEFAULT_PREFIX = "com.intellij";
+  String DEFAULT_PREFIX = PluginManagerCore.CORE_PLUGIN_ID;
 
   @NotNull
   @Attribute("defaultExtensionNs")
@@ -48,6 +49,15 @@ public interface Extensions extends DomElement {
   @Deprecated
   GenericAttributeValue<IdeaPlugin> getXmlns();
 
+  /**
+   * Returns all present extensions.
+   */
+  List<Extension> collectExtensions();
+
+  /**
+   * @deprecated dummy method for DOM, use {@link #collectExtensions()}.
+   */
+  @Deprecated
   List<Extension> getExtensions();
 
   Extension addExtension();

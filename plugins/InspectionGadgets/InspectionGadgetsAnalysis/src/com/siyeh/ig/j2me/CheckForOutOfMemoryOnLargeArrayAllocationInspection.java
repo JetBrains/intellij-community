@@ -36,13 +36,6 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "large.array.allocation.no.outofmemoryerror.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "large.array.allocation.no.outofmemoryerror.problem.descriptor");

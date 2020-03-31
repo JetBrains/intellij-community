@@ -18,16 +18,18 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class ChangeNullableDefaultsFix implements LocalQuickFix {
   private final NullableNotNullManager myManager;
   private final String myNotNullName;
   private final String myNullableName;
 
-  ChangeNullableDefaultsFix(PsiAnnotation notNull, PsiAnnotation nullable, NullableNotNullManager manager) {
+  ChangeNullableDefaultsFix(@Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, @NotNull NullableNotNullManager manager) {
     myNotNullName = notNull != null ? notNull.getQualifiedName() : null;
     myNullableName = nullable != null ? nullable.getQualifiedName() : null;
     myManager = manager;
@@ -42,7 +44,7 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make \"" + (myNotNullName != null ? myNotNullName : myNullableName) + "\" default annotation";
+    return JavaAnalysisBundle.message("make.0.default.annotation", myNotNullName != null ? myNotNullName : myNullableName);
   }
 
   @Override

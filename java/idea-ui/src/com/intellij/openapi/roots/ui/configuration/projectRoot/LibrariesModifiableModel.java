@@ -19,7 +19,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModel {
+public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   //todo[nik] remove LibraryImpl#equals method instead of using identity maps
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap =
     ContainerUtil.newIdentityTroveMap();
@@ -106,8 +105,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
   }
 
   @Override
-  @NotNull
-  public Library[] getLibraries() {
+  public Library @NotNull [] getLibraries() {
     return getLibrariesModifiableModel().getLibraries();
   }
 

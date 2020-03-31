@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,8 @@ import java.util.zip.ZipFile;
 // JarHandler that keeps limited LRU number of ZipFile references opened for a while after they were used
 // Once the inactivity time passed the ZipFile is closed.
 public class BasicJarHandler extends ZipHandlerBase {
-  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.vfs.impl.jar.BasicJarHandler");
+  private static final Logger LOG = Logger.getInstance(BasicJarHandler.class);
+
   private static final boolean doTracing = LOG.isTraceEnabled();
   private final ZipResourceHandle myHandle;
   private final JarFileSystemImpl myFileSystem;
@@ -51,7 +53,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     myHandle = new ZipResourceHandle();
   }
  
-  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
+  private static final Map<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
   
   static {
     final int maxSize = 30;
@@ -86,7 +88,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     return myHandle;
   }
   
-  private static void trace(String msg) {
+  private static void trace(@NonNls String msg) {
     //System.out.println(msg);
     LOG.trace(msg);
   }
@@ -143,14 +145,10 @@ public class BasicJarHandler extends ZipHandlerBase {
             long openedFor = System.nanoTime() - started;
             int opened = ourOpenCount.incrementAndGet();
             long openTime = ourOpenTime.addAndGet(openedFor);
-  
-            trace("Opened for " +
-                  (openedFor / 1000000) +
-                  "ms, times opened:" +
-                  opened +
-                  ", open time:" +
-                  (openTime / 1000000) +
-                  "ms, reference will be cached for " + cacheInvalidationTime() + "ms");
+
+            trace("Opened for " + TimeUnit.NANOSECONDS.toMillis(openedFor) + "ms, times opened:" + opened +
+                  ", open time:" + TimeUnit.NANOSECONDS.toMillis(openTime) + "ms" +
+                  ", reference will be cached for " + cacheInvalidationTime() + "ms");
           }
   
           myFile = file;
@@ -219,11 +217,12 @@ public class BasicJarHandler extends ZipHandlerBase {
           int closed = ourCloseCount.incrementAndGet();
           long totalCloseTime = ourCloseTime.addAndGet(closeTime);
 
-          trace("Disposed:" + getFile() + " " + (closeTime / 1000000) + "ms, times closed:" + closed +
-                ", closed time:" + (totalCloseTime / 1000000) + "ms");
+          trace("Disposed:" + getFile() + " " + TimeUnit.NANOSECONDS.toMillis(closeTime) + "ms, times closed:" + closed +
+                ", closed time:" + TimeUnit.NANOSECONDS.toMillis(totalCloseTime) + "ms");
         }
         myFile = null;
-      } finally {
+      }
+      finally {
         myLock.unlock();
       }
     }

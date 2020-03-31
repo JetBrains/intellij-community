@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -20,7 +20,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"ConstantConditions"})
-public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
+public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
 

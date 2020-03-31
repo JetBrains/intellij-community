@@ -25,9 +25,10 @@ public interface NullableFunction<Param, Result> extends Function<Param, Result>
   Result fun(final Param param);
 
   /**
-   * @see FunctionUtil#nullConstant()
+   * @deprecated use {@link FunctionUtil#nullConstant()} instead
    */
-  NullableFunction NULL = new NullableFunction() {
+  @Deprecated
+  NullableFunction<?,?> NULL = new NullableFunction<Object,Object>() {
     public Object fun(final Object o) {
       return null;
     }

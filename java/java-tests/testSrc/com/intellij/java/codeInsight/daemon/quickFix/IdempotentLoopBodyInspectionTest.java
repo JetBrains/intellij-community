@@ -3,10 +3,10 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.IdempotentLoopBodyInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 
-public class IdempotentLoopBodyInspectionTest extends LightCodeInsightFixtureTestCase {
+public class IdempotentLoopBodyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testIdempotentLoopBody() { doTest(); }
 
   private void doTest() {

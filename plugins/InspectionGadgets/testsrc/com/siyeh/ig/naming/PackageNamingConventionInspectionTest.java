@@ -16,12 +16,12 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class PackageNamingConventionInspectionTest extends LightInspectionTestCase {
+public class PackageNamingConventionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSharedLocalInspection() {
     doTest("package /*Package name 'a' is too short*/a/**/./*Package name 'bbbbbbbbbbbbbbbbbbbb' is too long*/bbbbbbbbbbbbbbbbbbbb/**/;" +

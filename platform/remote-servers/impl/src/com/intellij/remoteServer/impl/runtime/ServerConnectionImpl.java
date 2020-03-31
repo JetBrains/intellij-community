@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
 public class ServerConnectionImpl<D extends DeploymentConfiguration> implements ServerConnection<D> {
   private static final Logger LOG = Logger.getInstance(ServerConnectionImpl.class);
   private final RemoteServer<?> myServer;
@@ -285,7 +282,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     disposeAllLogs(deployment.getName());
   }
 
-  private void disposeAllLogs(@NotNull String deploymentName) {
+  public void disposeAllLogs(@NotNull String deploymentName) {
     myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
   }
 

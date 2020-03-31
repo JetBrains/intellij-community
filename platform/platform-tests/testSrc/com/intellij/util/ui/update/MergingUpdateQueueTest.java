@@ -2,13 +2,13 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -220,7 +220,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     MyQueue queue = new MyQueue();
     queue.showNotify();
     AtomicReference<Object> executed = new AtomicReference<>();
-    AppExecutorUtil.getAppExecutorService().submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         queue.queue(new MyUpdate("update"));
         queue.flush();
@@ -293,7 +293,6 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
 
     private MyQueue(int mergingTimeSpan) {
       super("Test", mergingTimeSpan, false, null);
-      setPassThrough(false);
     }
 
     @Override
@@ -306,7 +305,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     }
 
     @Override
-    protected void execute(@NotNull final Update[] update) {
+    protected void execute(final Update @NotNull [] update) {
       super.execute(update);
       myExecuted = true;
     }
@@ -406,7 +405,6 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
   public void testAddRequestsInPooledThreadDoNotExecuteConcurrently() throws InterruptedException {
     int delay = 10;
     MergingUpdateQueue queue = new MergingUpdateQueue("x", delay, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
-    queue.setPassThrough(false);
     CountDownLatch startedExecuting1 = new CountDownLatch(1);
     CountDownLatch canContinue = new CountDownLatch(1);
     queue.queue(new Update("1") {

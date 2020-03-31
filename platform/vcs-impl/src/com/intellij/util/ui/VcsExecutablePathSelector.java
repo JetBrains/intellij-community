@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -14,39 +15,50 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
   private final TextFieldWithBrowseButton myPathSelector;
-  private final JButton myTestButton;
   private final JBCheckBox myProjectPathCheckbox;
+  private final BorderLayoutPanel myErrorComponent = new BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0);
 
   @Nullable private String mySavedPath;
   private String myAutoDetectedPath;
 
-  public VcsExecutablePathSelector(@NotNull Consumer<String> executableTester) {
+  public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
-    myPathSelector = new TextFieldWithBrowseButton(new JBTextField(10));
+    myPathSelector = new TextFieldWithBrowseButton();
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     panel.addToCenter(myPathSelector);
 
-    myTestButton = new JButton(VcsBundle.getString("executable.test"));
-    myTestButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
-    panel.addToRight(myTestButton);
+    JButton testButton = new JButton(VcsBundle.getString("executable.test"));
+    testButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
+    panel.addToRight(testButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
 
-    myMainPanel = UI.PanelFactory.grid()
-      .add(UI.PanelFactory.panel(panel).withLabel(VcsBundle.getString("executable.select.label")))
-      .add(UI.PanelFactory.panel(myProjectPathCheckbox))
-      .createPanel();
+    JLabel label = new JBLabel(VcsBundle.message("executable.select.label", vcsName));
+    label.setLabelFor(panel);
+
+    myMainPanel = new JPanel(new GridBagLayout());
+    GridBag gb = new GridBag().setDefaultAnchor(GridBagConstraints.WEST);
+    myMainPanel.add(label, gb.nextLine().next().insets(JBUI.insetsRight(UIUtil.DEFAULT_HGAP)));
+    myMainPanel.add(panel, gb.next().fillCellHorizontally().weightx(1.0));
+    myMainPanel.add(myProjectPathCheckbox, gb.nextLine().next().next());
+    myMainPanel.add(myErrorComponent, gb.nextLine().next().next().insets(JBUI.insets(4, 4, 0, 0)));
+  }
+
+  @NotNull
+  public BorderLayoutPanel getErrorComponent() {
+    return myErrorComponent;
   }
 
   private void handleProjectOverrideStateChanged() {
@@ -60,7 +72,7 @@ public class VcsExecutablePathSelector {
                                              VcsBundle.getString("executable.project.override.reset.title"),
                                              VcsBundle.getString("executable.project.override.reset.globalize"),
                                              VcsBundle.getString("executable.project.override.reset.revert"),
-                                             Messages.CANCEL_BUTTON,
+                                             Messages.getCancelButton(),
                                              null)) {
         case Messages.NO:
           myPathSelector.setText(mySavedPath);
@@ -86,7 +98,7 @@ public class VcsExecutablePathSelector {
                     @Nullable String projectPath,
                     @NotNull String autoDetectedPath) {
     myAutoDetectedPath = autoDetectedPath;
-    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText("Auto-detected: " + myAutoDetectedPath);
+    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + myAutoDetectedPath);
 
     myProjectPathCheckbox.setSelected(pathOverriddenForProject);
     if (pathOverriddenForProject) {

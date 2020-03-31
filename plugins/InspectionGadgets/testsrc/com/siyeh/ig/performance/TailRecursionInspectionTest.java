@@ -16,9 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class TailRecursionInspectionTest extends LightInspectionTestCase {
+public class TailRecursionInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -38,7 +38,13 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
     registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
     registrar.registerReferenceProvider(xmlTag(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
 
-    final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
+    final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, boolean soft) {
+        PsiReference[] references = super.getReferencesByElement(element, text, offset, soft);
+        return references.length > 100 ? PsiReference.EMPTY_ARRAY : references;
+      }
+    };
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class).and(new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {

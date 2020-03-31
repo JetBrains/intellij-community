@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -17,18 +16,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
  *
- * @author lesya
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
-public interface CheckinEnvironment extends VcsProviderMarker {
+public interface CheckinEnvironment {
 
   @Nullable
   default RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
@@ -36,6 +33,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
   }
 
+  /**
+   * @deprecated use {@link #createCommitOptions(CheckinProjectPanel, CommitContext)}
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @Nullable
@@ -43,13 +43,13 @@ public interface CheckinEnvironment extends VcsProviderMarker {
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     // for compatibility with external plugins
     if (additionalDataConsumer instanceof PseudoMap) {
-      return createCommitOptions(panel, ((PseudoMap)additionalDataConsumer).getCommitContext());
+      return createCommitOptions(panel, ((PseudoMap<?, ?>)additionalDataConsumer).getCommitContext());
     }
     return null;
   }
 
   @Nullable
-  default String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+  default String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }
 
@@ -61,7 +61,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
 
   @Nullable
   default List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, new CommitContext(), newHashSet());
+    return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
   }
 
   @Nullable
@@ -73,6 +73,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
 
+  /**
+   * @deprecated use {@link #commit(List, String, CommitContext, Set)}
+   */
   @SuppressWarnings("unused")
   @Deprecated
   @Nullable

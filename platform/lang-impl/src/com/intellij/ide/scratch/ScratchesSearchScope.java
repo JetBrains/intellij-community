@@ -15,35 +15,26 @@ public class ScratchesSearchScope extends GlobalSearchScope {
 
   private static final NotNullLazyKey<GlobalSearchScope, Project> SCRATCHES_SCOPE_KEY = NotNullLazyKey.create(
     "SCRATCHES_SCOPE_KEY",
-    project -> new ScratchesSearchScope(project, ScratchFileService.getInstance()));
+    project -> new ScratchesSearchScope(project));
   
   @NotNull
   public static GlobalSearchScope getScratchesScope(@NotNull Project project) {
     return SCRATCHES_SCOPE_KEY.getValue(project);
   }
 
-  private final ScratchFileService myService;
-
-  private ScratchesSearchScope(@NotNull Project project, @NotNull ScratchFileService service) {
+  private ScratchesSearchScope(@NotNull Project project) {
     super(project);
-    myService = service;
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return ScratchesNamedScope.NAME;
+    return ScratchesNamedScope.scratchesAndConsoles();
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    RootType rootType = myService.getRootType(file);
-    return rootType != null && !rootType.isHidden();
-  }
-
-  @Override
-  public boolean isSearchOutsideRootModel() {
-    return true;
+    return ScratchUtil.isScratch(file);
   }
 
   @Override

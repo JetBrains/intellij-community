@@ -12,12 +12,19 @@ import kotlinx.coroutines.Job
 class ExpirationTest : LightPlatformTestCase() {
 
   private fun createTestDisposable(): Disposable {
-    return Disposable { }.also { Disposer.register(testRootDisposable, it) }
+    return Disposer.newDisposable(name).also { Disposer.register(testRootDisposable, it) }
   }
 
   private fun createCompositeExpiration(vararg expiration: Expiration): Expiration {
     assertTrue(expiration.isNotEmpty())
     return Expiration.composeExpiration(expiration.toList())!!
+  }
+
+  fun `test isExpired for already disposed Disposable`() {
+    val disposable = createTestDisposable()
+    Disposer.dispose(disposable)
+    val expiration = DisposableExpiration(disposable)
+    assertTrue("Expiration.isExpired must be true", expiration.isExpired)
   }
 
   fun `test isExpired for JobExpiration`() {

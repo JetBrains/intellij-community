@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import java.util.HashMap;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -51,7 +51,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil
  * @author Maxim.Medvedev
  */
 public class GenerationUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
+  private static final Logger LOG = Logger.getInstance(GenerationUtil.class);
 
   private GenerationUtil() {
   }
@@ -118,9 +118,9 @@ public class GenerationUtil {
 
   public static void invokeMethodByName(@Nullable GrExpression caller,
                                         @NotNull String methodName,
-                                        @NotNull GrExpression[] exprs,
-                                        @NotNull GrNamedArgument[] namedArgs,
-                                        @NotNull GrClosableBlock[] closureArgs,
+                                        GrExpression @NotNull [] exprs,
+                                        GrNamedArgument @NotNull [] namedArgs,
+                                        GrClosableBlock @NotNull [] closureArgs,
                                         @NotNull ExpressionGenerator expressionGenerator,
                                         @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
@@ -130,9 +130,9 @@ public class GenerationUtil {
   @NotNull
   public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
                                                    @NotNull String methodName,
-                                                   @NotNull GrExpression[] exprs,
-                                                   @NotNull GrNamedArgument[] namedArgs,
-                                                   @NotNull GrClosableBlock[] closureArgs,
+                                                   GrExpression @NotNull [] exprs,
+                                                   GrNamedArgument @NotNull [] namedArgs,
+                                                   GrClosableBlock @NotNull [] closureArgs,
                                                    @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
@@ -154,9 +154,9 @@ public class GenerationUtil {
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
                                                  @NotNull GroovyResolveResult resolveResult,
                                                  @NotNull String methodName,
-                                                 @NotNull GrExpression[] exprs,
-                                                 @NotNull GrNamedArgument[] namedArgs,
-                                                 @NotNull GrClosableBlock[] closureArgs,
+                                                 GrExpression @NotNull [] exprs,
+                                                 GrNamedArgument @NotNull [] namedArgs,
+                                                 GrClosableBlock @NotNull [] closureArgs,
                                                  @NotNull ExpressionGenerator expressionGenerator,
                                                  @NotNull GroovyPsiElement psiContext) {
     final PsiElement resolved = resolveResult.getElement();
@@ -258,7 +258,7 @@ public class GenerationUtil {
   }
 
   static void writeParameterList(@NotNull StringBuilder text,
-                                 @NotNull PsiParameter[] parameters,
+                                 PsiParameter @NotNull [] parameters,
                                  @NotNull final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
     Set<String> usedNames = new HashSet<>();
@@ -518,6 +518,17 @@ public class GenerationUtil {
         myResult = true;
         return false;
       }
+
+      if (myMember instanceof PsiMethod) {
+        PsiMethod[] methods = ((PsiMethod)myMember).findSuperMethods();
+        for (PsiMethod method: methods) {
+          if (myManager.areElementsEquivalent(element, method)) {
+            myResult = true;
+            return false;
+          }
+        }
+      }
+
       return true;
     }
 

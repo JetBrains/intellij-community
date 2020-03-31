@@ -5,15 +5,20 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,21 +40,42 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final FileAnnotation myAnnotation;
 
     MyGroup(@NotNull FileAnnotation annotation) {
-      super("Options", true);
+      super(GitBundle.message("annotations.options.group"), true);
       myAnnotation = annotation;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),
           new ToggleInnerMovementsWhitespaces(myAnnotation.getProject()),
           new ToggleOuterMovementsWhitespaces(myAnnotation.getProject()),
+          new ToggleCommitDate()
         };
       }
       return AnAction.EMPTY_ARRAY;
+    }
+  }
+
+  private static class ToggleCommitDate extends ToggleAction implements DumbAware {
+    private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+
+    private ToggleCommitDate() {
+      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
+            VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return mySettings != null && Boolean.TRUE.equals(mySettings.get(CommonUiProperties.PREFER_COMMIT_DATE));
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      if (mySettings != null) {
+        mySettings.set(CommonUiProperties.PREFER_COMMIT_DATE, state);
+      }
     }
   }
 
@@ -57,7 +83,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleIgnoreWhitespaces(@NotNull Project project) {
-      super("Ignore Whitespaces");
+      super(GitBundle.message("annotations.options.ignore.whitespaces"));
       myProject = project;
     }
 
@@ -77,7 +103,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Within File");
+      super(GitBundle.message("annotations.options.detect.movements.within.file"));
       myProject = project;
     }
 
@@ -103,7 +129,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Across Files");
+      super(GitBundle.message("annotations.options.detect.movements.across.files"));
       myProject = project;
     }
 

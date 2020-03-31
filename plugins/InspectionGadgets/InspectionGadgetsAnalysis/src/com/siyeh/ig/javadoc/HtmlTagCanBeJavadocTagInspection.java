@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,13 +41,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.display.name");
-  }
 
   @NotNull
   @Override
@@ -65,7 +58,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
     }
 
     @Override

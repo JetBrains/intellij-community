@@ -22,14 +22,20 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class ResizeableMappedFile implements Forceable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ResizeableMappedFile");
+  private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
+  private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;
   private long myLastWrittenLogicalSize;
   private final PagedFileStorage myStorage;
@@ -38,28 +44,20 @@ public class ResizeableMappedFile implements Forceable {
   static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
   private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
-  public ResizeableMappedFile(@NotNull File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
-                              boolean valuesAreBufferAligned) throws IOException {
+  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+                              boolean valuesAreBufferAligned) {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
-  public ResizeableMappedFile(@NotNull File file,
+  public ResizeableMappedFile(@NotNull Path file,
                               int initialSize,
                               @Nullable PagedFileStorage.StorageLockContext lockContext,
                               int pageSize,
                               boolean valuesAreBufferAligned,
-                              boolean nativeBytesOrder) throws IOException {
+                              boolean nativeBytesOrder) {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
-  }
-
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
-    this(file, initialSize, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
-  }
-
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, -1, false);
   }
 
   public long length() {
@@ -118,12 +116,13 @@ public class ResizeableMappedFile implements Forceable {
     return suggestedSize;
   }
 
-  private File getLengthFile() {
-    return new File(myStorage.getFile().getPath() + ".len");
+  private Path getLengthFile() {
+    Path file = myStorage.getFile();
+    return file.resolveSibling(file.getFileName() + ".len");
   }
 
   private void writeLength(final long len) {
-    final File lengthFile = getLengthFile();
+    final Path lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
       stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
@@ -133,14 +132,13 @@ public class ResizeableMappedFile implements Forceable {
         @Override
         public DataOutputStream execute(boolean lastAttempt) throws IOException {
           try {
-            return new DataOutputStream(new FileOutputStream(lengthFile));
+            return new DataOutputStream(Files.newOutputStream(lengthFile));
           }
-          catch (FileNotFoundException ex) {
-            final File parentFile = lengthFile.getParentFile();
-            
-            if (!parentFile.exists()) {
+          catch (NoSuchFileException ex) {
+            Path parent = lengthFile.getParent();
+            if (!Files.exists(parent)) {
               if (!parentWasCreated) {
-                parentFile.mkdirs();
+                Files.createDirectories(parent);
                 parentWasCreated = true;
               }
               else {
@@ -186,13 +184,12 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   private long readLength() {
-    File lengthFile = getLengthFile();
+    Path lengthFile = getLengthFile();
     DataInputStream stream = null;
+    if (!Files.exists(lengthFile)) return 0;
     try {
-      stream = new DataInputStream(new FileInputStream(lengthFile));
+      stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ));
       return stream.readLong();
-    } catch (FileNotFoundException ignore) {
-      return 0;
     }
     catch (IOException e) {
       long realSize = realSize();
@@ -259,6 +256,12 @@ public class ResizeableMappedFile implements Forceable {
   public void close() {
     try {
       force();
+      if (truncateOnClose && myLogicalSize < myStorage.length()) {
+        myStorage.resize(myLogicalSize);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
     finally {
       myStorage.close();

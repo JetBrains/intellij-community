@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.Application;
@@ -40,9 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
@@ -57,7 +41,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
-    setOKButtonText("Add Selected");
+    setOKButtonText(JavaUiBundle.message("button.add.selected"));
     init();
   }
 
@@ -89,9 +73,8 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     super.collectChildren(element, result);
   }
 
-  @NotNull
   @Override
-  protected Library[] getLibraries(@NotNull LibraryTable table) {
+  protected Library @NotNull [] getLibraries(@NotNull LibraryTable table) {
     if (table.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
       return myCreatedModuleLibraries.toArray(Library.EMPTY_ARRAY);
     }
@@ -125,9 +108,8 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     return library.getName();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (SystemInfo.isMac) {
       return new Action[]{getCancelAction(), new CreateNewLibraryAction(), getOKAction()};
     }
@@ -163,7 +145,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private class CreateNewLibraryAction extends DialogWrapperAction {
     private CreateNewLibraryAction() {
-      super("New Library...");
+      super(JavaUiBundle.message("dialog.title.new.library"));
       putValue(MNEMONIC_KEY, KeyEvent.VK_N);
     }
 

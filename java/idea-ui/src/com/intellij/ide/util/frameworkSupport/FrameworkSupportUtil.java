@@ -20,11 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class FrameworkSupportUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil");
+  private static final Logger LOG = Logger.getInstance(FrameworkSupportUtil.class);
 
   private FrameworkSupportUtil() {
   }

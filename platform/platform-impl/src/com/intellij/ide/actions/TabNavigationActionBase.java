@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class TabNavigationActionBase extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.TabNavigationActionBase");
+  private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
 
   enum NavigationType {NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9, PREV, NEXT, LAST}
 
@@ -55,8 +55,8 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     if (project == null || project.isDisposed()) {
       return;
     }
-    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    if (windowManager.isEditorComponentActive()) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager != null && toolWindowManager.isEditorComponentActive()) {
       final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
       EditorWindow currentWindow = EditorWindow.DATA_KEY.getData(dataContext);
       if (currentWindow == null){
@@ -147,11 +147,11 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     protected GoToTabAction(@NotNull NavigationType navigationType) {
       super(navigationType);
       if (navigationType == NavigationType.LAST) {
-        getTemplatePresentation().setText(ActionsBundle.message("action.GoToLastTab.text"));
-        getTemplatePresentation().setDescription(ActionsBundle.message("action.GoToLastTab.description"));
+        getTemplatePresentation().setText(ActionsBundle.messagePointer("action.GoToLastTab.text"));
+        getTemplatePresentation().setDescription(ActionsBundle.messagePointer("action.GoToLastTab.description"));
       } else {
-        getTemplatePresentation().setText(ActionsBundle.message("action.GoToTab.text", navigationType.ordinal() + 1));
-        getTemplatePresentation().setDescription(ActionsBundle.message("action.GoToTab.description", navigationType.ordinal() + 1));
+        getTemplatePresentation().setText(ActionsBundle.messagePointer("action.GoToTab.text", navigationType.ordinal() + 1));
+        getTemplatePresentation().setDescription(ActionsBundle.messagePointer("action.GoToTab.description", navigationType.ordinal() + 1));
       }
     }
 

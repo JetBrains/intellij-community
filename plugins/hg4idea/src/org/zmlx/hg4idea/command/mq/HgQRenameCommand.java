@@ -16,17 +16,16 @@
 package org.zmlx.hg4idea.command.mq;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgPatchReferenceValidator;
@@ -58,21 +57,19 @@ public class HgQRenameCommand {
     }
   }
 
-  public static void performPatchRename(@NotNull final HgRepository repository,
-                                        @NotNull final String oldName,
-                                        @NotNull final String newName) {
+  public static void performPatchRename(@NotNull HgRepository repository,
+                                        @NotNull String oldName,
+                                        @NotNull String newName) {
     if (oldName.equals(newName)) return;
-    final Project project = repository.getProject();
-    new HgCommandExecutor(project)
-      .execute(repository.getRoot(), "qrename", Arrays.asList(oldName, newName), new HgCommandResultHandler() {
-        @Override
-        public void process(@Nullable HgCommandResult result) {
-          if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-            new HgCommandResultNotifier(project)
-              .notifyError(result, "Qrename command failed", "Could not rename patch " + oldName + " to " + newName);
-          }
-          repository.update();
-        }
-      });
+    Project project = repository.getProject();
+    BackgroundTaskUtil.executeOnPooledThread(project, () -> {
+      HgCommandExecutor executor = new HgCommandExecutor(project);
+      HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qrename", Arrays.asList(oldName, newName));
+      if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+        new HgCommandResultNotifier(project).notifyError(result, "Qrename command failed",
+                                                         "Could not rename patch " + oldName + " to " + newName);
+      }
+      repository.update();
+    });
   }
 }

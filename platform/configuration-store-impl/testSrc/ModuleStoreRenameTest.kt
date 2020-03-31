@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.inWriteAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -17,8 +17,8 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.impl.ModuleRootManagerComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -102,7 +102,7 @@ internal class ModuleStoreRenameTest {
   // project structure
   @Test
   fun `rename module using model`() = runBlocking<Unit> {
-    saveModules()
+    saveProjectState()
 
     val storage = module.storage
     val oldFile = storage.file
@@ -125,7 +125,7 @@ internal class ModuleStoreRenameTest {
   }
 
   private suspend fun testRenameModule() {
-    saveModules()
+    saveProjectState()
     val storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isRegularFile
@@ -152,16 +152,16 @@ internal class ModuleStoreRenameTest {
     // ensure that macro value updated
     assertThat(module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
 
-    dependentModule.stateStore.save()
+    saveProjectState()
     assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
   }
 
   @Test
   fun `rename module parent virtual dir`() = runBlocking {
-    saveModules()
+    saveProjectState()
     val storage = module.storage
     val oldFile = storage.file
-    val parentVirtualDir = storage.virtualFile!!.parent
+    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
     withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
       parentVirtualDir.rename(null, UUID.randomUUID().toString())
     }
@@ -183,27 +183,26 @@ internal class ModuleStoreRenameTest {
 
   @Test
   fun `rename module source root`() = runBlocking<Unit>(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-    saveModules()
+    saveProjectState()
     val storage = module.storage
-    val parentVirtualDir = storage.virtualFile!!.parent
+    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
     withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
       PsiTestUtil.addSourceContentToRoots(module, src, false)
     }
-    module.stateStore.save()
+    saveProjectState()
 
-    val rootManager = module.rootManager as ModuleRootManagerComponent
-    val stateModificationCount = rootManager.stateModificationCount
+    val rootManager = module.rootManager as ModuleRootManagerEx
+    val stateModificationCount = rootManager.modificationCountForTests
 
     withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
       src.rename(null, "bar.dot")
     }
 
-    assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
+    assertThat(stateModificationCount).isLessThan(rootManager.modificationCountForTests)
   }
 
-  private suspend fun saveModules() {
-    module.stateStore.save()
-    dependentModule.stateStore.save()
+  private suspend fun saveProjectState() {
+    projectRule.project.stateStore.save()
   }
 }

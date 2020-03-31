@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 /**
- * Represents version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain version of an {@code Sdk}.
- *
- * @author nik
+ * Represents a version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain a version of an {@code Sdk}.
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {
@@ -27,7 +25,10 @@ public enum JavaSdkVersion {
   JDK_1_9(LanguageLevel.JDK_1_9),
   JDK_10(LanguageLevel.JDK_10),
   JDK_11(LanguageLevel.JDK_11),
-  JDK_12(LanguageLevel.JDK_12);
+  JDK_12(LanguageLevel.JDK_12),
+  JDK_13(LanguageLevel.JDK_13),
+  JDK_14(LanguageLevel.JDK_14),
+  JDK_15(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 

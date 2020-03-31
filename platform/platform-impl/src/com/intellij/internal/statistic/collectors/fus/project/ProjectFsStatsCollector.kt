@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.project
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -16,8 +16,7 @@ object ProjectFsStatsCollector {
       .addProject(project)
       .addData("cs-project", value)
       .addData("cs-system", SystemInfo.isFileSystemCaseSensitive)
-      .addData("cs-implicit", System.getProperty("idea.case.sensitive.fs") == null)
-      .addOS())
+      .addData("cs-implicit", System.getProperty("idea.case.sensitive.fs") == null))
   }
 
   @JvmStatic

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -11,35 +11,31 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static com.intellij.ide.plugins.PluginsMetaLoader.parsePluginList;
+import static java.util.Collections.singletonMap;
 
 /**
  * @author stathik
  */
-public class RepositoryHelper {
+public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
-  @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
+
+  private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
+  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
   /**
    * Returns a list of configured plugin hosts.
@@ -59,18 +55,19 @@ public class RepositoryHelper {
   @NotNull
   public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
-    Set<String> addedPluginIds = new HashSet<>();
+    Set<PluginId> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
       try {
         List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
         for (IdeaPluginDescriptor plugin : plugins) {
-          if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+          if (addedPluginIds.add(plugin.getPluginId())) {
             result.add(plugin);
           }
         }
       }
       catch (IOException e) {
-        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host), e);
+        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host) + ": " + e);
+        LOG.debug(e);
       }
     }
     return result;
@@ -93,105 +90,34 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber build,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
-    String eTag;
     File pluginListFile;
     Url url;
     if (repositoryUrl == null) {
-      url = Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
-      url = url.addParameters(Collections.singletonMap("uuid", PermanentInstallationID.get()));
+      String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
+      url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));
       pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-      eTag = loadPluginListETag(pluginListFile);
     }
     else {
       url = Urls.newFromEncoded(repositoryUrl);
       pluginListFile = null;
-      eTag = "";
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(Collections.singletonMap("build", build != null ? build.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests()));
     }
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    Url finalUrl = url;
-    List<PluginNode> descriptors = HttpRequests.request(url)
-      .tuner(connection -> connection.setRequestProperty("If-None-Match", eTag))
-      .productNameAsUserAgent()
-      .connect(request -> {
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
-
-        URLConnection connection = request.getConnection();
-        if (pluginListFile != null &&
-            pluginListFile.length() > 0 &&
-            connection instanceof HttpURLConnection &&
-            ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-          LOG.info("using cached plugin list (updated at " + DateFormatUtil.formatDateTime(pluginListFile.lastModified()) + ")");
-          return loadPluginList(pluginListFile);
-        }
-
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins", finalUrl.getAuthority()));
-        }
-
-        if (pluginListFile != null) {
-          synchronized (PLUGIN_LIST_FILE) {
-            FileUtil.ensureExists(pluginListFile.getParentFile());
-            request.saveToFile(pluginListFile, indicator);
-            savePluginListETag(pluginListFile, connection.getHeaderField("ETag"));
-            return loadPluginList(pluginListFile);
-          }
-        }
-        else {
-          try (BufferedReader reader = request.getReader()) {
-            return parsePluginList(reader);
-          }
-        }
-      });
-
-    return process(descriptors, repositoryUrl);
-  }
-
-  private static String loadPluginListETag(File pluginListFile) {
-    File file = getPluginListETagFile(pluginListFile);
-    if (file.length() > 0) {
-      try {
-        List<String> lines = FileUtil.loadLines(file);
-        if (lines.size() != 1) {
-          LOG.warn("Can't load plugin list ETag from '" + file.getAbsolutePath() + "'. Unexpected number of lines: " + lines.size());
-          FileUtil.delete(file);
-        }
-        else {
-          return lines.get(0);
-        }
-      }
-      catch (IOException e) {
-        LOG.warn("Can't load plugin list ETag from '" + file.getAbsolutePath() + "'", e);
-      }
-    }
-
-    return "";
-  }
-
-  private static void savePluginListETag(File pluginListFile, String eTag) {
-    if (eTag != null) {
-      File file = getPluginListETagFile(pluginListFile);
-      try {
-        FileUtil.writeToFile(file, eTag);
-      }
-      catch (IOException e) {
-        LOG.warn("Can't save plugin list ETag to '" + file.getAbsolutePath() + "'", e);
-      }
-    }
-  }
-
-  private static File getPluginListETagFile(File pluginListFile) {
-    return new File(pluginListFile.getParentFile(), pluginListFile.getName() + TAG_EXT);
+    List<PluginNode> descriptors = PluginsMetaLoader.readOrUpdateFile(
+      pluginListFile,
+      url.toExternalForm(),
+      indicator,
+      IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority()),
+      reader -> parsePluginList(reader)
+    );
+    return process(descriptors, repositoryUrl, build);
   }
 
   /**
@@ -200,7 +126,7 @@ public class RepositoryHelper {
   @Nullable
   public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-    return file.length() > 0 ? process(loadPluginList(file), null) : null;
+    return file.length() > 0 ? process(loadPluginList(file), null, null) : null;
   }
 
   private static List<PluginNode> loadPluginList(File file) throws IOException {
@@ -209,20 +135,15 @@ public class RepositoryHelper {
     }
   }
 
-  private static List<PluginNode> parsePluginList(Reader reader) throws IOException {
-    try {
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      RepositoryContentHandler handler = new RepositoryContentHandler();
-      parser.parse(new InputSource(reader), handler);
-      return handler.getPluginsList();
-    }
-    catch (ParserConfigurationException | SAXException | RuntimeException e) {
-      throw new IOException(e);
-    }
-  }
-
-  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl) {
+  private static @NotNull List<IdeaPluginDescriptor> process(@NotNull List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
+    if (build == null) {
+      build = PluginManagerCore.getBuildNumber();
+    }
+
+    boolean isCommunityIDE = !ideContainsUltimateModule();
+    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    boolean isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
 
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
@@ -231,8 +152,9 @@ public class RepositoryHelper {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
-      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node)) {
-        LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
+
+      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
+        LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
@@ -241,15 +163,27 @@ public class RepositoryHelper {
       }
       if (node.getName() == null) {
         String url = node.getDownloadUrl();
-        node.setName(FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+        node.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
       }
 
       IdeaPluginDescriptor previous = result.get(pluginId);
       if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
         result.put(pluginId, node);
       }
+
+      //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+      if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
+        node.addDepends(MARKETPLACE_PLUGIN_ID);
+      }
     }
 
     return new ArrayList<>(result.values());
   }
+
+  private static boolean ideContainsUltimateModule() {
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
+    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+  }
+
 }

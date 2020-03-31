@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -21,11 +7,13 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * @author Eugene Zhuravlev
  */
 public class LowMemoryWatcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
+  private static final Logger LOG = Logger.getInstance(LowMemoryWatcher.class);
 
   public enum LowMemoryWatcherType {
     ALWAYS,
@@ -35,12 +23,26 @@ public class LowMemoryWatcher {
   private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<>();
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
+  private static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
 
-  static void onLowMemorySignalReceived(boolean afterGc) {
+  public static <T> T runWithNotificationsSuppressed(Computable<T> runnable) {
+    if (ourNotificationsSuppressed.getAndSet(true)) {
+      throw new IllegalStateException("runWithNotificationsSuppressed does not support reentrancy");
+    }
+    try {
+      return runnable.compute();
+    }
+    finally {
+      ourNotificationsSuppressed.set(false);
+    }
+  }
+
+  public static void onLowMemorySignalReceived(boolean afterGc) {
     LOG.info("Low memory signal received: afterGc=" + afterGc);
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
-        if (watcher.myType == LowMemoryWatcherType.ALWAYS || (watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc)) {
+        if (watcher.myType == LowMemoryWatcherType.ALWAYS
+            || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc) {
           watcher.myRunnable.run();
         }
       }
@@ -48,6 +50,10 @@ public class LowMemoryWatcher {
         LOG.info(e);
       }
     }
+  }
+
+  static boolean notificationsSuppressed() {
+    return ourNotificationsSuppressed.get();
   }
 
   /**
@@ -78,12 +84,7 @@ public class LowMemoryWatcher {
   public static void register(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType notificationType,
                               @NotNull Disposable parentDisposable) {
     final LowMemoryWatcher watcher = new LowMemoryWatcher(runnable, notificationType);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        watcher.stop();
-      }
-    });
+    Disposer.register(parentDisposable, () -> watcher.stop());
   }
 
   public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {

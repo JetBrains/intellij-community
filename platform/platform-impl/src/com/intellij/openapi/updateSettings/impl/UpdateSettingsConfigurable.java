@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.DataManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,16 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author pti
- */
 public class UpdateSettingsConfigurable implements SearchableConfigurable {
   private final UpdateSettings mySettings;
   private final boolean myCheckNowEnabled;
   private UpdatesSettingsPanel myPanel;
 
   @SuppressWarnings("unused")
-  public UpdateSettingsConfigurable() {
+  UpdateSettingsConfigurable() {
     this(true);
   }
 
@@ -73,7 +69,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
-      UpdateCheckerComponent checker = ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
+      UpdateCheckerComponent checker = UpdateCheckerComponent.getInstance();
       if (checker != null) {
         if (wasEnabled) {
           checker.cancelChecks();

@@ -12,7 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author yole
  */
 public class EditorTypedHandlerBean extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean");
+  private static final Logger LOG = Logger.getInstance(EditorActionHandlerBean.class);
 
   public static final ExtensionPointName<EditorTypedHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.editorTypedHandler");
   public static final ExtensionPointName<EditorTypedHandlerBean> RAW_EP_NAME = ExtensionPointName.create("com.intellij.rawEditorTypedHandler");
@@ -28,7 +28,7 @@ public class EditorTypedHandlerBean extends AbstractExtensionPointBean {
       try {
         DefaultPicoContainer container = new DefaultPicoContainer(ApplicationManager.getApplication().getPicoContainer());
         container.registerComponentInstance(originalHandler);
-        myHandler = instantiate(implementationClass, container);
+        myHandler = instantiateClass(implementationClass, container);
       }
       catch(Exception e) {
         LOG.error(e);

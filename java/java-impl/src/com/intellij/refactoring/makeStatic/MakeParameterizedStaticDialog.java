@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -13,6 +14,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +47,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     myNameSuggestions = nameSuggestions;
 
     String type = UsageViewUtil.getType(myMember);
-    setTitle(RefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
+    setTitle(JavaRefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
     myAnyNonFieldMembersUsed = buildVariableData(internalUsages);
     init();
   }
@@ -113,7 +115,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
     JPanel panel = new JPanel(new GridBagLayout());
 
-    gbConstraints.insets = JBUI.insets(4, 8);
+    gbConstraints.insets = JBInsets.create(4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 0;
@@ -128,7 +130,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    String text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.object.as.a.parameter.with.name") : RefactoringBundle.message("add.object.as.a.parameter.to.constructors.with.name");
+    String text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.object.as.a.parameter.with.name") : JavaRefactoringBundle.message("add.object.as.a.parameter.to.constructors.with.name");
     myMakeClassParameter.setText(text);
     panel.add(myMakeClassParameter, gbConstraints);
     myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
@@ -158,13 +160,13 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
 
     if(myVariableData.length > 0) {
-      gbConstraints.insets = JBUI.insets(4, 8);
+      gbConstraints.insets = JBInsets.create(4, 8);
       gbConstraints.weighty = 0;
       gbConstraints.weightx = 0;
       gbConstraints.gridheight = 1;
       gbConstraints.fill = GridBagConstraints.NONE;
       gbConstraints.anchor = GridBagConstraints.WEST;
-      text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.parameters.for.fields") : RefactoringBundle.message("add.parameters.for.fields.to.constructors");
+      text = myMember instanceof PsiMethod ? JavaRefactoringBundle.message("add.parameters.for.fields") : JavaRefactoringBundle.message("add.parameters.for.fields.to.constructors");
       myMakeFieldParameters.setText(text);
       panel.add(myMakeFieldParameters, gbConstraints);
       myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
@@ -223,9 +225,9 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     if (isMakeClassParameter()) {
       final PsiMethod methodWithParameter = checkParameterDoesNotExist();
       if (methodWithParameter != null) {
-        String who = methodWithParameter == myMember ? RefactoringBundle.message("this.method") : DescriptiveNameUtil
+        String who = methodWithParameter == myMember ? JavaRefactoringBundle.message("this.method") : DescriptiveNameUtil
           .getDescriptiveName(methodWithParameter);
-        String message = RefactoringBundle.message("0.already.has.parameter.named.1.use.this.name.anyway", who, getClassParameterName());
+        String message = JavaRefactoringBundle.message("0.already.has.parameter.named.1.use.this.name.anyway", who, getClassParameterName());
         ret = Messages.showYesNoDialog(myProject, message, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
         myClassParameterNameInputField.requestFocusInWindow();
       }

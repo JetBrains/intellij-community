@@ -37,10 +37,11 @@ public class LineMarkerInfo<T extends PsiElement> {
   public RangeHighlighter highlighter;
 
   public final int updatePass;
-  @Nullable private final Function<? super T, String> myTooltipProvider;
+  private final Function<? super T, String> myTooltipProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
-  @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
-  @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
+  @NotNull
+  private final GutterIconRenderer.Alignment myIconAlignment;
+  private final GutterIconNavigationHandler<T> myNavigationHandler;
 
   /**
    * Creates a line marker info for the element.
@@ -55,7 +56,7 @@ public class LineMarkerInfo<T extends PsiElement> {
    */
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
-                        Icon icon,
+                        @Nullable Icon icon,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
@@ -64,14 +65,15 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIconAlignment = alignment;
     PsiFile containingFile = element.getContainingFile();
     Project project = containingFile.getProject();
-    if (!InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange().contains(range)) {
-      throw new IllegalArgumentException("Range must be inside file offsets ("+containingFile.getTextRange()+") but got: "+range);
+    TextRange topLevelRange = InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange();
+    if (!topLevelRange.contains(range)) {
+      throw new IllegalArgumentException("Range must be inside file offsets "+topLevelRange+" but got: "+range);
     }
     elementRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
-    this.updatePass = 11; //Pass.LINE_MARKERS;
+    updatePass = 11; //Pass.LINE_MARKERS;
     PsiElement firstChild;
     if (!(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
       String msg = "Performance warning: LineMarker is supposed to be registered for leaf elements only, but got: " +
@@ -112,7 +114,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
-    this(element, new TextRange(startOffset, startOffset), icon, updatePass, tooltipProvider, navHandler, alignment);
+    this(element, new TextRange(startOffset, startOffset), icon, tooltipProvider, navHandler, alignment);
   }
 
   /**
@@ -125,21 +127,18 @@ public class LineMarkerInfo<T extends PsiElement> {
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
-    this(element, startOffset, icon, updatePass, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
+    this(element, new TextRange(startOffset, startOffset), icon, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
   }
 
-  @Nullable
   public Icon getIcon() {
     return myIcon;
   }
 
-  @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
     return new LineMarkerGutterIconRenderer<>(this);
   }
 
-  @Nullable
   public String getLineMarkerTooltip() {
     if (myTooltipProvider == null) return null;
     T element = getElement();
@@ -151,7 +150,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return elementRef.getElement();
   }
 
-  void setNavigateAction(@NotNull  AnAction navigateAction) {
+  void setNavigateAction(@NotNull AnAction navigateAction) {
     myNavigateAction = navigateAction;
   }
 
@@ -160,7 +159,6 @@ public class LineMarkerInfo<T extends PsiElement> {
     return MarkupEditorFilter.EMPTY;
   }
 
-  @Nullable
   public GutterIconNavigationHandler<T> getNavigationHandler() {
     return myNavigationHandler;
   }
@@ -169,9 +167,13 @@ public class LineMarkerInfo<T extends PsiElement> {
     private final LineMarkerInfo<T> myInfo;
 
     public LineMarkerGutterIconRenderer(@NotNull LineMarkerInfo<T> info) {
+      if (info.myIcon == null) {
+        throw new IllegalArgumentException("Must supply not-null icon for the gutter, but got: " + info);
+      }
       myInfo = info;
     }
 
+    @NotNull
     public LineMarkerInfo<T> getLineMarkerInfo() {
       return myInfo;
     }
@@ -208,7 +210,7 @@ public class LineMarkerInfo<T extends PsiElement> {
       return myInfo.myIconAlignment;
     }
 
-    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer<?> renderer) {
       return
         myInfo.getElement() != null &&
         renderer.myInfo.getElement() != null &&
@@ -219,7 +221,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof LineMarkerGutterIconRenderer && looksTheSameAs((LineMarkerGutterIconRenderer)obj);
+      return obj instanceof LineMarkerGutterIconRenderer && looksTheSameAs((LineMarkerGutterIconRenderer<?>)obj);
     }
 
     @Override
@@ -231,6 +233,6 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Override
   public String toString() {
-    return "("+startOffset+","+endOffset+") -> "+elementRef;
+    return "("+startOffset+","+endOffset+") -> "+elementRef +" (icon: "+myIcon+")";
   }
 }

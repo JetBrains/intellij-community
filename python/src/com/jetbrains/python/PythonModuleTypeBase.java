@@ -6,7 +6,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -18,33 +17,32 @@ import javax.swing.*;
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   public static ModuleType getInstance() {
-    return ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
+    return ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
   }
 
-  @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-
   protected PythonModuleTypeBase() {
-    super(PYTHON_MODULE);
+    super(PyNames.PYTHON_MODULE_ID);
   }
 
   @Override
   @NotNull
   public String getName() {
-    return "Python Module";
+    return PyBundle.message("python.module.name");
   }
 
   @Override
   @NotNull
   public String getDescription() {
-    String basicDescription = "Python modules are used for developing <b>Python</b> applications.";
+    String basicDescription = PyBundle.message("python.module.description");
     for (FacetType type : FacetType.EP_NAME.getExtensionList()) {
       if (type.getId().toString().equalsIgnoreCase("django")) {
-        return basicDescription + " Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
+        return basicDescription + " " + PyBundle.message("python.module.description.extended");
       }
     }
     return basicDescription;
   }
 
+  @NotNull
   @Override
   public Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;

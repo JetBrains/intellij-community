@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -22,8 +24,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public class AnnotationsPanel {
   private final Project myProject;
@@ -37,13 +41,13 @@ public class AnnotationsPanel {
                           String name,
                           String defaultAnnotation,
                           List<String> annotations,
-                          String[] defaultAnnotations,
+                          List<String> defaultAnnotations,
                           Set<String> checkedAnnotations,
                           boolean showInstrumentationOptions,
                           boolean showDefaultActions) {
     myProject = project;
     myDefaultAnnotation = defaultAnnotation;
-    myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
+    myDefaultAnnotations = new HashSet<>(defaultAnnotations);
     myTableModel = new DefaultTableModel() {
       @Override
       public boolean isCellEditable(int row, int column) {
@@ -82,7 +86,7 @@ public class AnnotationsPanel {
     myTable = new JBTable(myTableModel, columnModel);
 
     if (showInstrumentationOptions) {
-      columnModel.getColumn(0).setHeaderValue("Annotation");
+      columnModel.getColumn(0).setHeaderValue(JavaPsiBundle.message("node.annotation.tooltip"));
 
       TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
       columnModel.addColumn(checkColumn);
@@ -101,7 +105,7 @@ public class AnnotationsPanel {
           Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (component instanceof JComponent) {
             ((JComponent)component)
-              .setToolTipText(column == 1 ? "Add runtime assertions for notnull-annotated methods and parameters" : null);
+              .setToolTipText(column == 1 ? JavaBundle.message("nullable.notnull.annotations.runtime.instrumentation.tooltip") : null);
           }
           return component;
         }
@@ -112,7 +116,8 @@ public class AnnotationsPanel {
     }
 
     final AnActionButton selectButton =
-      new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
+      new AnActionButton(JavaBundle.messagePointer("action.AnActionButton.text.select.annotation.used.for.code.generation"),
+                         AllIcons.Actions.Checked) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           String selectedValue = getSelectedAnnotation();
@@ -148,7 +153,7 @@ public class AnnotationsPanel {
     }
     final JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-    myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
+    myComponent.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("nullable.notnull.annotations.panel.title", name), false, JBUI.insetsTop(10)));
     myComponent.add(panel);
     myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 

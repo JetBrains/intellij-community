@@ -27,10 +27,10 @@ import javax.swing.text.JTextComponent;
 /**
  * @author yole
  */
-public class TextComponentDocument extends UserDataHolderBase implements com.intellij.openapi.editor.Document {
+class TextComponentDocument extends UserDataHolderBase implements com.intellij.openapi.editor.Document {
   private final JTextComponent myTextComponent;
 
-  public TextComponentDocument(final JTextComponent textComponent) {
+  TextComponentDocument(final JTextComponent textComponent) {
     myTextComponent = textComponent;
   }
 

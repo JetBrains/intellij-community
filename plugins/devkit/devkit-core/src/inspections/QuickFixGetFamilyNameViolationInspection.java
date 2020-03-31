@@ -42,9 +42,8 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
                                                                                          AreaInstance.class.getName(),
                                                                                          VirtualFile.class.getName());
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if ("getFamilyName".equals(method.getName()) &&
         method.getParameterList().isEmpty() &&
         !method.hasModifierProperty(PsiModifier.ABSTRACT)) {

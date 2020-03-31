@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +14,7 @@ public abstract class SmartPointerManager {
   public abstract SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range);
 
   public static SmartPointerManager getInstance(Project project) {
-    return ServiceManager.getService(project, SmartPointerManager.class);
+    return project.getService(SmartPointerManager.class);
   }
 
   /**
@@ -87,11 +72,11 @@ public abstract class SmartPointerManager {
    * @param pointer2 smart pointer to compare
    * @return true if both pointers point to the same PSI element.
    */
-  public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
+  public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer<?> pointer1, @NotNull SmartPsiElementPointer<?> pointer2);
 
   /**
    * Disposes a smart pointer and frees the resources associated with it. Calling this method is not obligatory: pointers are
    * freed correctly when they're not used anymore. But disposing the pointers explicitly might be beneficial for performance.
    */
-  public abstract void removePointer(@NotNull SmartPsiElementPointer pointer);
+  public abstract void removePointer(@NotNull SmartPsiElementPointer<?> pointer);
 }

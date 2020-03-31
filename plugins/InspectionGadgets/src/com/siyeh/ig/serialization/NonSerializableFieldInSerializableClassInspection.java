@@ -33,18 +33,10 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
-  @NotNull
   @Override
-  protected JComponent[] createAdditionalOptions() {
+  protected JComponent @NotNull [] createAdditionalOptions() {
     return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.display.name");
   }
 
   @Override
@@ -54,9 +46,8 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
       "non.serializable.field.in.serializable.class.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
   }

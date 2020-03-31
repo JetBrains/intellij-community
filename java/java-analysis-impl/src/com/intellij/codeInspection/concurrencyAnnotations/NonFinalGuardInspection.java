@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -15,14 +15,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Non-final @GuardedBy field";
+    return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override
@@ -71,7 +64,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
       if (member == null) {
         return;
       }
-      myHolder.registerProblem(member, "Non-final @GuardedBy field #ref #loc");
+      myHolder.registerProblem(member, JavaAnalysisBundle.message("non.final.guarded.by.field.ref.loc"));
     }
 
     @Override
@@ -95,7 +88,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
       if (guardField.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      myHolder.registerProblem(psiDocTag, "Non-final @GuardedBy field \"" + guardValue + "\" #loc");
+      myHolder.registerProblem(psiDocTag, JavaAnalysisBundle.message("non.final.guarded.by.field.0.loc", guardValue));
     }
   }
 }

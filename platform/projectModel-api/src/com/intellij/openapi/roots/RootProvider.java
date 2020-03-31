@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -25,9 +26,10 @@ import java.util.EventListener;
  *  Root provider for order entry
  *  @author dsl
  */
+@ApiStatus.NonExtendable
 public interface RootProvider {
-  @NotNull String[] getUrls(@NotNull OrderRootType rootType);
-  @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
   @FunctionalInterface
   interface RootSetChangedListener extends EventListener {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
@@ -32,7 +18,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +58,7 @@ import java.util.Collection;
 public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   private final GrMethod myMethod;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyMethodInliner");
+  private static final Logger LOG = Logger.getInstance(GroovyMethodInliner.class);
 
   public GroovyMethodInliner(GrMethod method) {
     myMethod = method;
@@ -183,7 +169,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           else if (!GroovyInlineMethodUtil.isSimpleReference(qualifier)) {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
-            qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
+            qualifierDeclaration = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, qualifier, null, qualName);
             innerQualifier = (GrReferenceExpression) factory.createExpressionFromText(qualName);
           } else {
             innerQualifier = (GrReferenceExpression) qualifier;
@@ -259,7 +245,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Process method return statements
       if (returnCount > 1 && !PsiType.VOID.equals(methodType) && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : methodType;
-        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, resultName);
+        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
         JavaCodeStyleManager.getInstance(statement.getProject()).shortenClassReferences(statement);
 

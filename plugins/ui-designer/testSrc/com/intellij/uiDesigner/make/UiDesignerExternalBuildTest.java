@@ -28,9 +28,6 @@ import com.intellij.uiDesigner.core.AbstractLayout;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
 
   //IDEA-94779

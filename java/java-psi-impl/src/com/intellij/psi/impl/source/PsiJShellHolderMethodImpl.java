@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -24,7 +10,7 @@ import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +23,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements PsiJShellHolderMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJShellHolderMethodImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJShellHolderMethodImpl.class);
 
   private final String myName;
   private PsiParameterList myParameterList;
@@ -48,9 +34,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     myName = "_$$jshell_holder_method$$" + index;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getStatements() {
+  public PsiElement @NotNull [] getStatements() {
     List<PsiElement> result = null;
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiStatement || child instanceof PsiExpression) {
@@ -89,7 +74,7 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     }
     try {
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
-      myParameterList = elementFactory.createParameterList(ArrayUtil.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY);
+      myParameterList = elementFactory.createParameterList(ArrayUtilRt.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY);
       return myParameterList;
     }
     catch (IncorrectOperationException e) {
@@ -146,21 +131,18 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -176,9 +158,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -221,9 +202,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 

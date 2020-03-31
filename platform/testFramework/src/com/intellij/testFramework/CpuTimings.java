@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.util.MathUtil;
 import com.intellij.util.TimeoutUtil;
 
 import javax.management.Attribute;
@@ -79,7 +80,7 @@ class CpuTimings {
     }
     int k = 241;
     for (int i = 0; i < 5_750_000; i++) {
-      k *= array[Math.abs(k) % array.length];
+      k *= array[MathUtil.nonNegativeAbs(k) % array.length];
     }
     ensureOdd(k);
   }

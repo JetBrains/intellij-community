@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -33,11 +34,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchCompilationSupport implements CompileTask {
-  public JavaScratchCompilationSupport(@NotNull Project project) {
-    CompilerManager.getInstance(project).addAfterTask(this);
-  }
-
+final class JavaScratchCompilationSupport implements CompileTask {
   @Nullable
   public static File getScratchOutputDirectory(Project project) {
     final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();
@@ -123,7 +120,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
               }
             }
           }
-          return FileUtil.getNameWithoutExtension(scratchFile);
+          return FileUtilRt.getNameWithoutExtension(scratchFile.getName());
         });
         srcFile = new File(srcDir, srcFileName + ".java");
         FileUtil.copy(scratchFile, srcFile);

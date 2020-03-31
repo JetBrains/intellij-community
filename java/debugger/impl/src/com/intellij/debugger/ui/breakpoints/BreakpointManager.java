@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class BreakpointManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
+  private static final Logger LOG = Logger.getInstance(BreakpointManager.class);
 
   @NonNls private static final String MASTER_BREAKPOINT_TAG_NAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAG_NAME = "slave_breakpoint";
@@ -104,7 +104,7 @@ public class BreakpointManager {
     XBreakpointProperties properties = breakpoint.getProperties();
     if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties && !((JavaMethodBreakpointProperties)properties).EMULATED) {
       XDebuggerManagerImpl.NOTIFICATION_GROUP
-        .createNotification(DebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
+        .createNotification(JavaDebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
         .notify(((XBreakpointBase)breakpoint).getProject());
       return true;
     }
@@ -339,11 +339,12 @@ public class BreakpointManager {
             if (breakpointElement != null) {
               XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
               JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
-              XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
-              Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
-              if (breakpoint != null) {
-                breakpoint.readExternal(breakpointElement);
-                addBreakpoint(breakpoint);
+              for (XBreakpoint<JavaExceptionBreakpointProperties> defaultBreakpoint : manager.getDefaultBreakpoints(type)) {
+                Breakpoint breakpoint = getJavaBreakpoint(defaultBreakpoint);
+                if (breakpoint != null) {
+                  breakpoint.readExternal(breakpointElement);
+                  addBreakpoint(breakpoint);
+                }
               }
             }
           }
@@ -437,11 +438,11 @@ public class BreakpointManager {
     final String url = breakpointNode.getAttributeValue("url");
     VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (vFile == null) {
-      throw new InvalidDataException(DebuggerBundle.message("error.breakpoint.file.not.found", url));
+      throw new InvalidDataException(JavaDebuggerBundle.message("error.breakpoint.file.not.found", url));
     }
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
     if (doc == null) {
-      throw new InvalidDataException(DebuggerBundle.message("error.cannot.load.breakpoint.file", url));
+      throw new InvalidDataException(JavaDebuggerBundle.message("error.cannot.load.breakpoint.file", url));
     }
 
     final int line;

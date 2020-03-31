@@ -20,7 +20,7 @@ import java.util.*;
  * @author: db
  */
 class ClassfileAnalyzer {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");
+  private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
 

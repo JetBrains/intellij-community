@@ -17,9 +17,9 @@ package com.intellij.java.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class FindLeafElementAtTest extends LightCodeInsightTestCase {
+public class FindLeafElementAtTest extends LightJavaCodeInsightTestCase {
   public void testFindLeafElementAtEof() {
     configureFromFileText("test.java", "class Foo {}");
     PsiFile file = getFile();

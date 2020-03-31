@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,11 +16,13 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +34,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author yole
  */
-public class CommittedChangesCacheTest extends PlatformTestCase {
+public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
   private MockAbstractVcs myVcs;
   private MockCommittedChangesProvider myProvider;
   private MockDiffProvider myDiffProvider;
@@ -338,17 +340,17 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     return MockCommittedChangesProvider.createMockChange(new File(myContentRoot.getPath(), path).toString(), revision);
   }
 
-  private static class MockListener extends CommittedChangesAdapter {
+  private static class MockListener implements CommittedChangesListener {
     private final List<CommittedChangeList> myLoadedChanges = new ArrayList<>();
     private final List<List<CommittedChangeList>> myIncomingChangesUpdates = new ArrayList<>();
 
     @Override
-    public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
+    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
       myLoadedChanges.addAll(changes);
     }
 
     @Override
-    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+    public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
       myIncomingChangesUpdates.add(receivedChanges);
     }
 

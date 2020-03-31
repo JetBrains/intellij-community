@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.editor.Editor
@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
+import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
 import java.util.*
 
 class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
@@ -15,7 +15,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
 
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { if (wasInit { editor }) EditorFactory.getInstance().releaseEditor(editor) })
+      .append(ThrowableRunnable { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

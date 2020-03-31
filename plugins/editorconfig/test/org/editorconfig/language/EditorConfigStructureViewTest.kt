@@ -3,11 +3,13 @@ package org.editorconfig.language
 
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 import com.intellij.testFramework.PlatformTestUtil.expandAll
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EditorConfigStructureViewTest : LightCodeInsightFixtureTestCase() {
+class EditorConfigStructureViewTest : BasePlatformTestCase() {
   override fun getBasePath() =
     "/plugins/editorconfig/testData/org/editorconfig/language/structureview/"
+
+  override fun isCommunity(): Boolean = true
 
   fun doTest(expected: String) {
     myFixture.configureByFile(getTestName(true) + "/.editorconfig")

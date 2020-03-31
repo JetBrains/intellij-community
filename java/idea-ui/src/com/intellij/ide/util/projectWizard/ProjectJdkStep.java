@@ -2,7 +2,7 @@
 
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -47,7 +47,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
   @Override
   public JComponent getComponent() {
-    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.project.jdk"));
+    final JLabel label = new JLabel(JavaUiBundle.message("prompt.please.select.project.jdk"));
     label.setUI(new MultiLineLabelUI());
     final JPanel panel = new JPanel(new GridBagLayout()){
       @Override
@@ -91,8 +91,8 @@ public class ProjectJdkStep extends ModuleWizardStep {
   public boolean validate() throws ConfigurationException {
     final Sdk jdk = myProjectJdksConfigurable.getSelectedJdk();
     if (jdk == null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
-                                               IdeBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());
+      int result = Messages.showOkCancelDialog(JavaUiBundle.message("prompt.confirm.project.no.jdk"),
+                                               JavaUiBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());
       if (result != Messages.OK) {
         return false;
       }

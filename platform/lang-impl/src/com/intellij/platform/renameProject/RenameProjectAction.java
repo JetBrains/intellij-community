@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
 public class RenameProjectAction extends DumbAwareAction {
 
   public RenameProjectAction() {
-    super(RefactoringBundle.message("rename.project.action.title"), RefactoringBundle.message("renames.project"), null);
+    super(RefactoringBundle.messagePointer("rename.project.action.title"),
+          RefactoringBundle.messagePointer("renames.project"), null);
   }
 
   private static final Logger LOG = Logger.getInstance(RenameProjectAction.class);

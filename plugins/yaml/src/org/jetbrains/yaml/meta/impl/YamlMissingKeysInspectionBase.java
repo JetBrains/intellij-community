@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+//Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,20 +16,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.meta.model.Field;
-import org.jetbrains.yaml.meta.model.YamlMetaClass;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
+import org.jetbrains.yaml.meta.model.YamlScalarType;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override
@@ -58,11 +54,11 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
       }
 
       final YamlMetaType metaType = meta.getMetaType();
-      if (!(metaType instanceof YamlMetaClass)) {
+      if (metaType instanceof YamlScalarType) {
         return;
       }
 
-      final Collection<String> missingKeys = getMissingKeys(mapping, (YamlMetaClass)metaType);
+      final Collection<String> missingKeys = getMissingKeys(mapping, metaType);
       if (!missingKeys.isEmpty()) {
         String msg = YAMLBundle.message("YamlMissingKeysInspectionBase.missing.keys", composeKeyList(missingKeys));
         myProblemsHolder.registerProblem(getElementToHighlight(mapping), msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -128,14 +124,8 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
   }
 
   @NotNull
-  private static Collection<String> getMissingKeys(@NotNull YAMLMapping mapping, @NotNull YamlMetaClass metaClass) {
-    final ArrayList<String> missingKeys = new ArrayList<>();
-    final Set<String> keySet = mapping.getKeyValues().stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet());
-    for (Field feature : metaClass.getFeatures()) {
-      if (feature.isRequired() && !keySet.contains(feature.getName())) {
-        missingKeys.add(feature.getName());
-      }
-    }
-    return missingKeys;
+  private static Collection<String> getMissingKeys(@NotNull YAMLMapping mapping, @NotNull YamlMetaType metaClass) {
+    Set<String> existingKeys = mapping.getKeyValues().stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet());
+    return metaClass.computeMissingFields(existingKeys);
   }
 }

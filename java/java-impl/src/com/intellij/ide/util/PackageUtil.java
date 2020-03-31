@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PackageUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PackageUtil");
+  private static final Logger LOG = Logger.getInstance(PackageUtil.class);
 
   @Nullable
   public static PsiDirectory findPossiblePackageDirectoryInModule(Module module, String packageName) {
@@ -78,7 +78,7 @@ public class PackageUtil {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link #findOrCreateDirectoryForPackage(Module, String, PsiDirectory, boolean)}
    */
   @Deprecated
   @Nullable
@@ -118,8 +118,8 @@ public class PackageUtil {
       if (foundExistingDirectory == null) {
         if (!askedToCreate && askUserToCreate) {
           int toCreate = Messages.showYesNoDialog(project,
-                                                  IdeBundle.message("prompt.create.non.existing.package", packageName),
-                                                  IdeBundle.message("title.package.not.found"),
+                                                  JavaBundle.message("prompt.create.non.existing.package", packageName),
+                                                  JavaBundle.message("title.package.not.found"),
                                                   Messages.getQuestionIcon());
           if (toCreate != Messages.YES) {
             return null;
@@ -141,9 +141,8 @@ public class PackageUtil {
     final PsiDirectory[] psiDirectory = new PsiDirectory[1];
     final IncorrectOperationException[] exception = new IncorrectOperationException[1];
 
-    CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
+    CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(
+      (Computable<PsiDirectory>)() -> {
         try {
           return oldDirectory.createSubdirectory(name);
         }
@@ -151,8 +150,7 @@ public class PackageUtil {
           exception[0] = e;
           return null;
         }
-      }
-    }), IdeBundle.message("command.create.new.subdirectory"), null);
+      }), JavaBundle.message("command.create.new.subdirectory"), null);
 
     if (exception[0] != null) throw exception[0];
 
@@ -218,8 +216,8 @@ public class PackageUtil {
         if (!askedToCreate && askUserToCreate) {
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             int toCreate = Messages.showYesNoDialog(project,
-                                                    IdeBundle.message("prompt.create.non.existing.package", packageName),
-                                                    IdeBundle.message("title.package.not.found"),
+                                                    JavaBundle.message("prompt.create.non.existing.package", packageName),
+                                                    JavaBundle.message("title.package.not.found"),
                                                     Messages.getQuestionIcon());
             if (toCreate != Messages.YES) {
               return null;
@@ -247,8 +245,7 @@ public class PackageUtil {
     return psiDirectory;
   }
 
-  @NotNull
-  private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, @NotNull PsiDirectory[] moduleDirectories) {
+  private static PsiDirectory @NotNull [] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory @NotNull [] moduleDirectories) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
       List<PsiDirectory> result = new ArrayList<>();
@@ -262,8 +259,7 @@ public class PackageUtil {
     return moduleDirectories;
   }
 
-  @NotNull
-  private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
+  private static PsiDirectory @NotNull [] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
     return rootPackage.getDirectories(GlobalSearchScope.moduleScope(module));
   }
 
@@ -295,7 +291,7 @@ public class PackageUtil {
 
   private static PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles, @NotNull Module module, PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
-      if (ModuleUtil.findModuleForFile(vFile, module.getProject()) != module) continue;
+      if (ModuleUtilCore.findModuleForFile(vFile, module.getProject()) != module) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
         return directory;
@@ -349,7 +345,7 @@ public class PackageUtil {
                                ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
                                ProjectBundle.message("module.source.roots.not.configured.title"));
 
-      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME);
+      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.getName());
 
       sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       if (sourceRoots.isEmpty()) {

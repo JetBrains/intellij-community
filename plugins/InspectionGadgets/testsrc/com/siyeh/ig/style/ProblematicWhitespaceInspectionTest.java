@@ -22,13 +22,13 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("InfiniteRecursion")
-public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase {
+public class ProblematicWhitespaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testHtml() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -19,7 +20,7 @@ public class TitledSeparator extends JPanel {
   public static final int TOP_INSET = 7;
   public static final int BOTTOM_INSET = 5;
   public static final int SEPARATOR_LEFT_INSET = 6;
-  public static final int SEPARATOR_RIGHT_INSET = 3;
+  public static final int SEPARATOR_RIGHT_INSET = 0;
 
   private static final Color ENABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51));
   private static final Color DISABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.disabledSeparatorColor", ENABLED_SEPARATOR_FOREGROUND);
@@ -29,12 +30,7 @@ public class TitledSeparator extends JPanel {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
   }
 
-  protected final JBLabel myLabel = new JBLabel() {
-    @Override
-    public Font getFont() {
-      return UIUtil.getTitledBorderFont();
-    }
-  };
+  protected final JBLabel myLabel = new JBLabel();
   protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
   private String originalText;
 
@@ -42,11 +38,11 @@ public class TitledSeparator extends JPanel {
     this("");
   }
 
-  public TitledSeparator(String text) {
+  public TitledSeparator(@NlsUI.Separator String text) {
     this(text, null);
   }
 
-  public TitledSeparator(String text, @Nullable JComponent labelFor) {
+  public TitledSeparator(@NlsUI.Separator String text, @Nullable JComponent labelFor) {
     mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
@@ -55,7 +51,6 @@ public class TitledSeparator extends JPanel {
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                JBUI.insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
     setBorder(createEmptyBorder());
-
     setText(text);
     setLabelFor(labelFor);
     setOpaque(false);
@@ -65,7 +60,7 @@ public class TitledSeparator extends JPanel {
     return originalText;
   }
 
-  public void setText(String text) {
+  public void setText(@NlsUI.Separator String text) {
     originalText = text;
     myLabel.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
   }

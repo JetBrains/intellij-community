@@ -3,13 +3,14 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseExtensionPointName {
+public abstract class BaseExtensionPointName<T> {
   private final String myName;
 
-  public BaseExtensionPointName(@NotNull String name) {
+  public BaseExtensionPointName(@NotNull @NonNls String name) {
     myName = name;
   }
 
@@ -23,9 +24,9 @@ public abstract class BaseExtensionPointName {
     return myName;
   }
 
-  @Nullable
-  protected static <T> T findExtension(@NotNull BaseExtensionPointName pointName, @NotNull Class<T> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
-    ExtensionPointImpl<T> point = ((ExtensionsAreaImpl)Extensions.getArea(areaInstance)).getExtensionPoint(pointName.getName());
-    return point.findExtension(instanceOf, isRequired);
+  @NotNull
+  protected final ExtensionPointImpl<T> getPointImpl(@Nullable AreaInstance areaInstance) {
+    ExtensionsAreaImpl area = (ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea());
+    return area.getExtensionPoint(getName());
   }
 }

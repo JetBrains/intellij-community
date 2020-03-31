@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +11,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,19 +24,19 @@ import java.util.Map;
  * @author yole
  */
 public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final String ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
   @NotNull
   @Override
   public String getId() {
-    return ID;
+    return PythonDocumentationProvider.DOCUMENTATION_CONFIGURABLE_ID;
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return PlatformUtils.isPyCharm() ? "External Documentation" : "Python External Documentation";
+    return PlatformUtils.isPyCharm() ? PyBundle.message("external.documentation.pycharm")
+                                     : PyBundle.message("external.documentation.python.plugin");
   }
 
   @Override

@@ -36,7 +36,7 @@ from . import http_client
 from . import email_mime_text
 # import email.MIMEBase as email_mime_base
 from . import BaseHTTPServer
-# import CGIHTTPServer as CGIHTTPServer
+from . import CGIHTTPServer
 from . import SimpleHTTPServer
 from . import cPickle
 from . import queue

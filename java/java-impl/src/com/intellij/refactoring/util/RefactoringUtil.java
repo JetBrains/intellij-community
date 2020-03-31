@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class RefactoringUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
+  private static final Logger LOG = Logger.getInstance(RefactoringUtil.class);
   public static final int EXPR_COPY_SAFE = 0;
   public static final int EXPR_COPY_UNSAFE = 1;
   public static final int EXPR_COPY_PROHIBITED = 2;
@@ -67,6 +68,9 @@ public class RefactoringUtil {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
+  /**
+   * @deprecated use {@link PsiTypesUtil#hasUnresolvedComponents(PsiType)}
+   */
   @Deprecated
   public static boolean isResolvableType(PsiType type) {
     return !PsiTypesUtil.hasUnresolvedComponents(type);
@@ -381,7 +385,8 @@ public class RefactoringUtil {
       if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType) {
-          type = ((PsiPrimitiveType)type).getBoxedType(expr);
+          type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType()
+                                                                                       : ((PsiPrimitiveType)type).getBoxedType(expr);
         }
       }
       else {
@@ -407,7 +412,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiElement getAnchorElementForMultipleExpressions(@NotNull PsiExpression[] occurrences, PsiElement scope) {
+  public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression @NotNull [] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
@@ -993,35 +998,11 @@ public class RefactoringUtil {
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
-  /**
-   * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
-   * which is located inside the code block). If not, tries to create a code block.
-   *
-   * <p>
-   * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
-   * {@link PsiIfStatement}, etc.
-   * </p>
-   *
-   * <p>
-   * This method works if {@link com.siyeh.ig.psiutils.ControlFlowUtils#canExtractStatement(PsiExpression)}
-   * returns true on the same expression.
-   * </p>
-   *
-   * @param expression an expression which should be located inside the code block
-   * @return a passed expression if it's already surrounded by code block and no changes are necessary;
-   *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
-   *         {@code null} if the expression cannot be surrounded with code block.
-   */
-  @Nullable
-  public static <T extends PsiExpression> T ensureCodeBlock(@NotNull T expression) {
-    return EnsureCodeBlockImpl.ensureCodeBlock(expression);
-  }
-
   public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
-        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
+        return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
       }
     }
     return null;
@@ -1133,11 +1114,18 @@ public class RefactoringUtil {
     fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
-  public static void fixJavadocsForParams(PsiMethod method,
-                                          Set<? extends PsiParameter> newParameters,
-                                          Condition<? super Pair<PsiParameter, String>> eqCondition,
-                                          Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
-    final PsiDocComment docComment = method.getDocComment();
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
+    fixJavadocsForParams(method, method.getDocComment(), newParameters, eqCondition, matchedToOldParam);
+  }
+
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @Nullable PsiDocComment docComment,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");
@@ -1201,15 +1189,17 @@ public class RefactoringUtil {
     }
   }
 
-  private static PsiDocTag createParamTag(PsiParameter parameter) {
+  @NotNull
+  private static PsiDocTag createParamTag(@NotNull PsiParameter parameter) {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createParamTag(parameter.getName(), "");
   }
 
-  public static PsiDirectory createPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot)
+  @NotNull
+  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
     throws IncorrectOperationException {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
-      if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
+      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
     }
@@ -1251,7 +1241,7 @@ public class RefactoringUtil {
   public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
-      if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
+      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
     }
@@ -1315,20 +1305,20 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@NotNull final PsiElement... elements) {
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(null, elements);
   }
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
-                                                                                   @NotNull final PsiElement... elements) {
+                                                                                   final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.alwaysTrue(), elements);
   }
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    Condition<? super PsiTypeParameter> filter,
-                                                                                   @NotNull final PsiElement... elements) {
+                                                                                   final PsiElement @NotNull ... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<>();
     for (final PsiElement element : elements) {

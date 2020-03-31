@@ -4,12 +4,13 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
+public class TaskCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public TaskCompletionTest() {
     //    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
@@ -89,7 +90,9 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     TextFieldWithAutoCompletion.installCompletion(document, project,
                                                   new TaskAutoCompletionListProvider(project),
                                                   false);
-    document.putUserData(CommitMessage.DATA_KEY, new CommitMessage(project));
+    CommitMessage commitMessage = new CommitMessage(project);
+    Disposer.register(getTestRootDisposable(), commitMessage);
+    document.putUserData(CommitMessage.DATA_KEY, commitMessage);
   }
 
   private TestRepository configureRepository(LocalTaskImpl... tasks) {

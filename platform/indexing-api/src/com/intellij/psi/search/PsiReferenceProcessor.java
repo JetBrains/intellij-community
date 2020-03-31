@@ -36,13 +36,11 @@ public interface PsiReferenceProcessor {
       this(new ArrayList<>());
     }
 
-    @NotNull
-    public PsiReference[] toArray() {
+    public PsiReference @NotNull [] toArray() {
       return myCollection.toArray(PsiReference.EMPTY_ARRAY);
     }
 
-    @NotNull
-    public PsiReference[] toArray(PsiReference[] array) {
+    public PsiReference @NotNull [] toArray(PsiReference[] array) {
       return myCollection.toArray(array);
     }
 

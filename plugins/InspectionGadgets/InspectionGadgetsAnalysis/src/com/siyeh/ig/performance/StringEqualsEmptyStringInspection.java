@@ -39,12 +39,6 @@ import javax.swing.*;
 public class StringEqualsEmptyStringInspection extends BaseInspection {
   public boolean SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = false;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.equals.empty.string.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
@@ -63,9 +57,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
     final boolean addNullCheck = ((Boolean)infos[1]).booleanValue();
     StringEqualsEmptyStringFix mainFix = new StringEqualsEmptyStringFix(useIsEmpty, addNullCheck);
@@ -125,7 +118,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify empty string check";
+      return InspectionGadgetsBundle.message("string.equals.empty.string.fix.family.name");
     }
 
     @Override

@@ -7,22 +7,41 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
 
 @ApiStatus.Experimental
 public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
   private final MavenBuildEventProcessor myEventParser;
+  private final boolean myProcessText;
   private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+  private final MavenExternalExecutor.MavenSpyEventsBuffer myMavenSpyEventsBuffer;
 
-  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser) {myEventParser = eventParser;}
+
+  /**
+   * @param eventParser
+   * @param processText to be removed after IDEA-216278
+   */
+  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser, @Deprecated boolean processText) {
+    myEventParser = eventParser;
+    myProcessText = processText;
+    if (processText) {
+      myMavenSpyEventsBuffer = new MavenExternalExecutor.MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myEventParser));
+    }
+    else {
+      myMavenSpyEventsBuffer = null;
+    }
+  }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
-    myEventParser.start(null, null);
+    myEventParser.start();
   }
 
   @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    myDecoder.escapeText(event.getText(), outputType, myEventParser);
+    if (myProcessText) {
+      myMavenSpyEventsBuffer.addText(event.getText(), outputType);
+    }
   }
 
   @Override

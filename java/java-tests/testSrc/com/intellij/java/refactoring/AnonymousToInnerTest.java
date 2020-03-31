@@ -18,7 +18,7 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.anonymousToInner.VariableInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/testData")
-public class AnonymousToInnerTest extends LightCodeInsightTestCase {
+public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/anonymousToInner/";
 
   @NotNull
@@ -65,7 +65,7 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
         return true;
       }
     };
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     assertFalse(handler.needsThis());
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
@@ -84,7 +84,7 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
         return true;
       }
     };
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
   
@@ -101,7 +101,7 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
     };
 
 
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
 }

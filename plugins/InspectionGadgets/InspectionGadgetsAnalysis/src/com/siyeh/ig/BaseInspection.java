@@ -61,11 +61,6 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return m_shortName;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public abstract String getDisplayName();
-
   @Override
   @Nls
   @NotNull
@@ -105,8 +100,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return an array of fixes (empty array if no fix is available).
    */
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl
 import org.jetbrains.java.generate.GenerateToStringContext
@@ -33,7 +33,7 @@ import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager
 /**
  * Created by Max Medvedev on 07/03/14
  */
-class ToStringGeneratingTest extends LightCodeInsightFixtureTestCase {
+class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase {
   void testDuplicateToStringAnInnerClass() throws Exception {
     doTest('''\
 public class Foobar  {

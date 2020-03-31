@@ -2,7 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -81,7 +81,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
       private void register(PsiJavaToken sign, boolean yodaCondition, RelationType relationType) {
         LocalQuickFix[] fixes =
           relationType == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{new ComparatorComparisonFix(yodaCondition, relationType)};
-        holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.problem.display.name"), fixes);
+        holder.registerProblem(sign, JavaBundle.message("inspection.comparator.result.comparison.problem.display.name"), fixes);
       }
     };
   }
@@ -111,7 +111,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.comparator.result.comparison.fix.family.name");
+      return JavaBundle.message("inspection.comparator.result.comparison.fix.family.name");
     }
 
     @Override

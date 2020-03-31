@@ -16,12 +16,11 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to support scrambling the product
  * JAR files.
- *
- * @author nik
  */
 @CompileStatic
 interface ScrambleTool {
@@ -34,6 +33,12 @@ interface ScrambleTool {
    * Scramble {@code mainJarName} in {@code "$buildContext.paths.distAll/lib"} directory
    */
   void scramble(String mainJarName, BuildContext buildContext)
+  
+  /**
+   * Scramble plugin's {@code jarsToScramble} jars
+   * Plugin's zkm script template is expected to be in "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub" file
+   */
+  void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, String targetDir)
 
   /**
    * @return list of names of JAR files which cannot be included into the product 'lib' directory in plain form

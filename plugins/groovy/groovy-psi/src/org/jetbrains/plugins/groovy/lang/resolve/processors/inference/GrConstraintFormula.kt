@@ -7,12 +7,12 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 
 abstract class GrConstraintFormula : ConstraintFormula {
 
-  final override fun reduce(session: InferenceSession?, constraints: MutableList<ConstraintFormula>): Boolean {
+  final override fun reduce(session: InferenceSession?, constraints: MutableList<in ConstraintFormula>): Boolean {
     if (session !is GroovyInferenceSession) return true
     return reduce(session, constraints)
   }
 
-  abstract fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean
+  abstract fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean
 
   override fun apply(substitutor: PsiSubstitutor, cache: Boolean) = Unit
 }

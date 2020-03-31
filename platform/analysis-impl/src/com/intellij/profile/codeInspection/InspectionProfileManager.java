@@ -49,6 +49,9 @@ public interface InspectionProfileManager {
   @NotNull
   SeverityRegistrar getSeverityRegistrar();
 
+  /**
+   * @deprecated use {@link #getSeverityRegistrar()}
+   */
   @NotNull
   @Deprecated
   default SeverityRegistrar getOwnSeverityRegistrar() {

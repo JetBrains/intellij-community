@@ -119,6 +119,7 @@ public abstract class AbstractTreeWalker<N> {
       }
       catch (Exception error) {
         setError(error);
+        return;
       }
     }
     update(null, State.FINISHED);

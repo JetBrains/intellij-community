@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,13 +37,6 @@ public class AssignmentToLambdaParameterInspection extends BaseAssignmentToParam
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ExtractParameterAsLocalVariableFix();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.to.lambda.parameter.display.name");
   }
 
   @NotNull

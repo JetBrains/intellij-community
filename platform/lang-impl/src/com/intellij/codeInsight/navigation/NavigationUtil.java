@@ -21,6 +21,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.INativeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -32,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
@@ -61,55 +63,52 @@ public final class NavigationUtil {
   }
 
   @NotNull
-  public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements, String title) {
+  public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements, String title) {
     return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title);
   }
 
   @NotNull
-  public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements,
+  public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
                                            @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
                                            final String title) {
-    return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
-      @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-        if (descriptor != null && descriptor.canNavigate()) {
-          descriptor.navigate(true);
-        }
-        return true;
+    return getPsiElementPopup(elements, renderer, title, element -> {
+      Navigatable descriptor = EditSourceUtil.getDescriptor(element);
+      if (descriptor != null && descriptor.canNavigate()) {
+        descriptor.navigate(true);
       }
+      return true;
     });
   }
 
   @NotNull
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
+                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
                                                                   final String title,
                                                                   @NotNull final PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
   @NotNull
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
+                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<? super T> processor,
-                                                                  @Nullable final T selection) {
+                                                                  @Nullable final T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
       .setRenderer(renderer)
       .setFont(EditorUtil.getEditorFont())
       .withHintUpdateSupply();
-    if (selection != null) {
-      builder.setSelectedValue(selection, true);
+    if (initialSelection != null) {
+      builder.setSelectedValue(initialSelection, true);
     }
     if (title != null) {
       builder.setTitle(title);
     }
     renderer.installSpeedSearch(builder, true);
 
-    JBPopup popup = builder.setItemsChosenCallback((selectedValues) -> {
+    JBPopup popup = builder.setItemsChosenCallback(selectedValues -> {
       for (T element : selectedValues) {
         if (element != null) {
           processor.execute(element);
@@ -118,7 +117,7 @@ public final class NavigationUtil {
     }).createPopup();
 
     if (builder instanceof PopupChooserBuilder) {
-      JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
+      JScrollPane pane = ((PopupChooserBuilder<?>)builder).getScrollPane();
       pane.setBorder(null);
       pane.setViewportBorder(null);
     }
@@ -152,7 +151,8 @@ public final class NavigationUtil {
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) {
-        openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
+        FileType type = virtualFile.getFileType();
+        openAsNative = type instanceof INativeFileType || type instanceof UnknownFileType;
       }
     }
 
@@ -255,12 +255,9 @@ public final class NavigationUtil {
 
   /**
    * Returns navigation popup that shows list of related items from {@code items} list
-   * @param items
-   * @param title
    * @param showContainingModules Whether the popup should show additional information that aligned at the right side of the dialog.<br>
    *                              It's usually a module name or library name of corresponding navigation item.<br>
    *                              {@code false} by default
-   * @return
    */
   @NotNull
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
@@ -301,7 +298,7 @@ public final class NavigationUtil {
       @Override
       public String getElementText(PsiElement element) {
         String customName = itemsMap.get(element).getCustomName();
-        return (customName != null ? customName : super.getElementText(element));
+        return customName != null ? customName : super.getElementText(element);
       }
 
       @Override

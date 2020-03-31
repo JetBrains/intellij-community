@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class Breakpoint
@@ -194,7 +194,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected String getStackTrace(LocatableEvent event) {
     StringBuilder builder = new StringBuilder(
-      DebuggerBundle.message("status.line.breakpoint.reached.full.trace"));
+      JavaDebuggerBundle.message("status.line.breakpoint.reached.full.trace"));
     try {
       event.thread().frames().forEach(f -> builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(f.location())));
     }
@@ -244,14 +244,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   @Override
-  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
     SuspendContextImpl context = action.getSuspendContext();
     if (!isValid()) {
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
       return false;
     }
 
-    String title = DebuggerBundle.message("title.error.evaluating.breakpoint.condition");
+    String title = JavaDebuggerBundle.message("title.error.evaluating.breakpoint.condition");
 
     try {
       StackFrameProxyImpl frameProxy = context.getThread().frame(0);
@@ -266,7 +266,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return false;
       }
 
-      title = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
+      title = JavaDebuggerBundle.message("title.error.evaluating.breakpoint.action");
       runAction(evaluationContext, event);
     }
     catch (final EvaluateException ex) {
@@ -315,7 +315,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
         }
         catch (EvaluateException e) {
-          buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"))
+          buf.append(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"))
             .append(" \"").append(logMessage).append("\"")
             .append(" : ").append(e.getMessage());
         }
@@ -411,7 +411,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           return false;
         }
         throw EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", condition, ex.getMessage())
+          JavaDebuggerBundle.message("error.failed.evaluating.breakpoint.condition", condition, ex.getMessage())
         );
       }
     }

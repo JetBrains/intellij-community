@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -24,6 +10,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,13 +28,14 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author anna
- */
-public class ShowByteCodeAction extends AnAction {
+import javax.swing.*;
+import java.awt.*;
+
+final class ShowByteCodeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
@@ -73,7 +62,8 @@ public class ShowByteCodeAction extends AnAction {
     if (psiElement == null) return;
 
     if (ByteCodeViewerManager.getContainingClass(psiElement) == null) {
-      Messages.showWarningDialog(project, "The selection should contain a class", "Unable to Find Class to Show Bytecode");
+      Messages.showWarningDialog(project, JavaByteCodeViewerBundle.message("bytecode.class.in.selection.message"),
+                                 JavaByteCodeViewerBundle.message("bytecode.not.found.message"));
       return;
     }
 
@@ -85,30 +75,24 @@ public class ShowByteCodeAction extends AnAction {
     final RelativePoint bestPopupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Looking for Bytecode...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaByteCodeViewerBundle.message("looking.for.bytecode.progress")) {
       private String myByteCode;
       private String myErrorMessage;
       private String myErrorTitle;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && isMarkedForCompilation(project, virtualFile)) {
-          myErrorMessage = "Unable to show bytecode for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
-          myErrorTitle = "Class File Out-Of-Date";
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
+            isMarkedForCompilation(project, virtualFile)) {
+          myErrorTitle = "Class File May Be Out-of-Date";
         }
-        else {
-          myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
-        }
+        myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
       }
 
       @Override
       public void onSuccess() {
         if (project.isDisposed()) return;
 
-        if (myErrorMessage != null && myTitle != null) {
-          Messages.showWarningDialog(project, myErrorMessage, myErrorTitle);
-          return;
-        }
         final PsiElement targetElement = element.getElement();
         if (targetElement == null) return;
 
@@ -118,9 +102,11 @@ public class ShowByteCodeAction extends AnAction {
         }
         else {
           if (myByteCode == null) {
-            Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Bytecode not Found");
+            Messages.showErrorDialog(project, JavaByteCodeViewerBundle.message("bytecode.parser.failure.message", psiElementTitle),
+                                     JavaByteCodeViewerBundle.message("bytecode.not.found.title"));
             return;
           }
+
           final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project);
           component.setText(myByteCode, targetElement);
           Processor<JBPopup> pinCallback = popup -> {
@@ -128,6 +114,17 @@ public class ShowByteCodeAction extends AnAction {
             popup.cancel();
             return false;
           };
+
+          if (myErrorTitle != null) {
+            JLabel errorLabel = new JLabel(myErrorTitle);
+            Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND);
+            if (color != null) {
+              errorLabel.setBorder(new JBEmptyBorder(2));
+              errorLabel.setBackground(color);
+              errorLabel.setOpaque(true);
+            }
+            component.add(errorLabel, BorderLayout.NORTH);
+          }
 
           final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getEditorComponent())
             .setProject(project)

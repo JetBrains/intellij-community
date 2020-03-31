@@ -67,7 +67,7 @@ public class MemoryDumpHelper {
       dumpHeap = mxBean.getClass().getMethod("dumpHeap", String.class, boolean.class);
     }
     catch (Throwable t) {
-      Logger.getInstance("#com.intellij.util.MemoryDumpHelper").info(t.getMessage());
+      Logger.getInstance(MemoryDumpHelper.class).info(t.getMessage());
       mxBean = null;
       dumpHeap = null;
     }

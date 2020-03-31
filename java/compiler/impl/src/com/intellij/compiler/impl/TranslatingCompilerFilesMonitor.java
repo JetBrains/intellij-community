@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
@@ -27,10 +13,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -52,14 +37,7 @@ import java.util.Set;
  * 1. corresponding source file has been scheduled for recompilation (see above)
  * 2. corresponding source file has been deleted
  */
-public class TranslatingCompilerFilesMonitor implements BulkFileListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
-  private final BuildManager myBuildManager;
-
-  public TranslatingCompilerFilesMonitor(MessageBus bus, BuildManager buildManager) {
-    myBuildManager = buildManager;
-    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
-  }
+public class TranslatingCompilerFilesMonitor implements AsyncFileListener {
 
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
@@ -75,9 +53,10 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
       return;
     }
 
-    VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor<Void>() {
       @NotNull @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
+        ProgressManager.checkCanceled();
         if (isIgnoredByBuild(file)) {
           return SKIP_CHILDREN;
         }
@@ -117,37 +96,37 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-        final VirtualFile file = event.getFile();
-        if (file != null) {
-          collectPaths(file, filesDeleted);
-        }
+        collectPaths(event.getFile(), filesDeleted);
+      }
+      else if (event instanceof VFileContentChangeEvent) {
+        collectPaths(event.getFile(), filesChanged);
       }
     }
-    notifyFilesDeleted(filesDeleted);
+    return new ChangeApplier() {
+      @Override
+      public void afterVfsChange() {
+        after(events, filesDeleted, filesChanged);
+      }
+    };
   }
 
-  @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
-    final Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-    final Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
     for (VFileEvent event : events) {
       if (event instanceof VFilePropertyChangeEvent) {
         handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
       }
-      else if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent || event instanceof VFileContentChangeEvent || event instanceof VFileCopyEvent) {
-        VirtualFile file = event.getFile();
-        if (file != null) {
-          collectPaths(file, filesChanged);
-        }
+      else if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent || event instanceof VFileCopyEvent) {
+        collectPaths(event.getFile(), filesChanged);
       }
     }
 
     // If a file name differs ony in case, on case-insensitive file systems such name still denotes the same file.
-    // In this situation filesDeleted and filesChanged sets will contain paths wchich are different only in case.
+    // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
     // Thus the order in which BuildManager is notified, is important:
     // first deleted paths notification and only then changed paths notification
     notifyFilesDeleted(filesDeleted);
@@ -160,7 +139,7 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       final String oldName = (String)event.getOldValue();
       final String newName = (String)event.getNewValue();
-      if (Comparing.equal(oldName, newName)) {
+      if (Objects.equals(oldName, newName)) {
         // Old and new names may actually be the same: sometimes such events are sent by VFS
         return;
       }
@@ -170,7 +149,7 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         if (parent != null) {
           final String root = parent.getPath() + "/" + oldName;
           if (eventFile.isDirectory()) {
-            VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
+            VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor<Void>() {
               private final StringBuilder filePath = new StringBuilder(root);
 
               @Override
@@ -207,8 +186,8 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
     }
   }
 
-  private static void collectPaths(@NotNull VirtualFile file, @NotNull Collection<? super File> outFiles) {
-    if (!isIgnoredOrUnderIgnoredDirectory(file)) {
+  private static void collectPaths(@Nullable VirtualFile file, @NotNull Collection<? super File> outFiles) {
+    if (file != null && !isIgnoredOrUnderIgnoredDirectory(file)) {
       processRecursively(file, !isInContentOfOpenedProject(file), f -> outFiles.add(new File(f.getPath())));
     }
   }
@@ -235,15 +214,15 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
   }
 
-  private void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
+  private static void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
-      myBuildManager.notifyFilesChanged(paths);
+      BuildManager.getInstance().notifyFilesChanged(paths);
     }
   }
 
-  private void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
+  private static void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
-      myBuildManager.notifyFilesDeleted(paths);
+      BuildManager.getInstance().notifyFilesDeleted(paths);
     }
   }
 }

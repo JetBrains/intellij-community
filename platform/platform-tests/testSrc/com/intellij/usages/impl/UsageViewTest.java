@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -15,9 +15,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,10 +32,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.ProjectRule;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
@@ -48,7 +51,7 @@ import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
+public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
@@ -60,7 +63,9 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
-        System.err.println(project + " already leaking; its creation trace: " + PlatformTestCase.getCreationPlace(project));
+        if (alreadyLeaking.add(project)) {
+          System.err.println(project + " already leaking; its creation trace: " + ProjectRule.getCreationPlace(project));
+        }
       }
       alreadyLeaking.add(file);
       return false;
@@ -235,7 +240,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private UsageViewImpl createUsageView(@NotNull Usage... usages) {
+  private UsageViewImpl createUsageView(Usage @NotNull ... usages) {
     UsageViewImpl usageView =
       (UsageViewImpl)UsageViewManager.getInstance(getProject())
         .createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
@@ -303,7 +308,10 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     BinaryFileDecompiler decompiler = file -> {
       throw new IllegalStateException("oh no");
     };
-    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler, getTestRootDisposable());
+
+    ExtensionTestUtil.addExtension((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea(),
+                                   BinaryFileTypeDecompilers.getInstance(),
+                                   new FileTypeExtensionPoint<>(ArchiveFileType.INSTANCE.getName(), decompiler));
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

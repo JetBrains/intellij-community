@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface ProjectWideFacetListener<F extends Facet> extends EventListener {
 
   void firstFacetAdded();

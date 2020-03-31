@@ -10,7 +10,7 @@ public class AccessToPrivateClass {
     Stream.generate(() -> new MyClass()).mapToInt(x -> x.field).limit(10).count();
   }
 
-  private class MyClass {
+  private static class MyClass {
     private int field = 10;
 
     public MyClass() {

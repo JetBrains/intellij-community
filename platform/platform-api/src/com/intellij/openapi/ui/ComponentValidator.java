@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -9,8 +10,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -18,6 +22,7 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -72,7 +77,9 @@ public class ComponentValidator {
     this.parentDisposable = parentDisposable;
   }
 
-   // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
+  /**
+   * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
+   */
   @Deprecated
   public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {
@@ -123,7 +130,7 @@ public class ComponentValidator {
     };
 
     PropertyChangeListener ancestorListener = e -> {
-      Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
+      Window w = (Window)ComponentUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
       if (w != null) {
         if (e.getNewValue() != null) {
           w.addComponentListener(componentListener);
@@ -133,7 +140,7 @@ public class ComponentValidator {
       }
     };
 
-    Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
+    Window w = (Window)ComponentUtil.findParentByCondition(component, v -> v instanceof Window);
     if (w != null) {
       w.addComponentListener(componentListener);
     } else {
@@ -172,6 +179,16 @@ public class ComponentValidator {
     return this;
   }
 
+  public <T extends JComponent & EditorTextComponent> ComponentValidator andRegisterOnDocumentListener(@NotNull T textComponent) {
+    textComponent.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.@NotNull DocumentEvent event) {
+        getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
+      }
+    });
+    return this;
+  }
+
   public void revalidate() {
     if (validator != null) {
       updateInfo(validator.get());
@@ -196,6 +213,11 @@ public class ComponentValidator {
     popupLocation = null;
     popupSize = null;
     validationInfo = null;
+  }
+
+  @Nullable
+  public ValidationInfo getValidationInfo() {
+    return validationInfo;
   }
 
   public void updateInfo(@Nullable ValidationInfo info) {
@@ -238,8 +260,8 @@ public class ComponentValidator {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
     String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
-                  String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), info.message) :
-                  String.format("<html><div>%s</div></html>", info.message);
+                  String.format("<html><body><div width=%d>%s</div><body></html>", MAX_WIDTH.get(), trimMessage(info.message, tipComponent)) :
+                  String.format("<html><body><div>%s</div></body></html>", info.message);
 
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
@@ -274,7 +296,19 @@ public class ComponentValidator {
     return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
       setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
-      setShowShadow(false);
+      setShowShadow(true);
+  }
+
+  private static String trimMessage(String message, JComponent c) {
+    String[] words = message.split("\\s+");
+    StringBuilder result = new StringBuilder();
+
+    for(String word : words) {
+      word = SwingUtilities2.clipStringIfNecessary(c, c.getFontMetrics(c.getFont()), word, MAX_WIDTH.get());
+      result.append(word).append(" ");
+    }
+
+    return result.toString();
   }
 
   public static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
@@ -296,7 +330,7 @@ public class ComponentValidator {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
-      Point point = new Point(JBUI.scale(40), i.top - JBUI.scale(6) - popupSize.height);
+      Point point = new Point(JBUIScale.scale(40), i.top - JBUIScale.scale(6) - popupSize.height);
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);
@@ -349,10 +383,14 @@ public class ComponentValidator {
       if (info != null) {
         updateInfo(info);
       } else if (disableValidation) {
-        disableValidation = false;
+        enableValidation();
         revalidate();
       }
     }
+  }
+
+  public void enableValidation() {
+    disableValidation = false;
   }
 
   private class ValidationMouseListener extends MouseAdapter {

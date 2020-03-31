@@ -16,33 +16,14 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene Zhuravlev
- */
-public interface FileContent extends UserDataHolder {
-  @NotNull
-  FileType getFileType();
-
-  @NotNull
-  VirtualFile getFile();
-
-  @NotNull
-  String getFileName();
-
-  @NotNull
-  byte[] getContent();
+public interface FileContent extends IndexedFile {
+  byte @NotNull [] getContent();
 
   @NotNull
   CharSequence getContentAsText();
-
-  Project getProject();
 
   @NotNull
   PsiFile getPsiFile();

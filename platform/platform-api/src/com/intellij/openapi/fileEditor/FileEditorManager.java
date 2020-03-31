@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -22,24 +22,22 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @param file file to open. Parameter cannot be null. File should be valid.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @param file file to open. File should be valid.
+   *             Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    * @return array of opened editors
    */
-  @NotNull
-  public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
+  public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
 
   /**
    * Opens a file.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
-   * @param file file to open
+   * @param file        file to open
    * @param focusEditor {@code true} if need to focus
    * @return array of opened editors
    */
-  @NotNull
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -47,7 +45,7 @@ public abstract class FileEditorManager {
    * Closes all editors opened for the file.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
-   * @param file file to be closed. Cannot be null.
+   * @param file file to be closed.
    */
   public abstract void closeFile(@NotNull VirtualFile file);
 
@@ -62,10 +60,9 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
-   * Same as {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   * but potentially can be faster thanks to not checking for injected editor at the specified offset.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
    */
+  @Deprecated
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     openTextEditor(descriptor, focusEditor);
   }
@@ -86,21 +83,22 @@ public abstract class FileEditorManager {
   /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
-  @NotNull
-  public abstract VirtualFile[] getOpenFiles();
+  public abstract VirtualFile @NotNull [] getOpenFiles();
+
+  public boolean hasOpenFiles() {
+    return getOpenFiles().length > 0;
+  }
 
   /**
    * @return files currently selected. The method returns empty array if there are no selected files.
    * If more than one file is selected (split), the file with most recent focused editor is returned first.
    */
-  @NotNull
-  public abstract VirtualFile[] getSelectedFiles();
+  public abstract VirtualFile @NotNull [] getSelectedFiles();
 
   /**
    * @return editors currently selected. The method returns empty array if no editors are open.
    */
-  @NotNull
-  public abstract FileEditor[] getSelectedEditors();
+  public abstract FileEditor @NotNull [] getSelectedEditors();
 
   /**
    * @return currently selected file editor or {@code null} if there is no selected editor at all.
@@ -112,35 +110,26 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @param file cannot be null
-   *
-   * @return editor which is currently selected in the currently selected file.
+   * @return editor which is currently selected for given file.
    * The method returns {@code null} if {@code file} is not opened.
    */
   @Nullable
   public abstract FileEditor getSelectedEditor(@NotNull VirtualFile file);
 
   /**
-   * @param file cannot be null
-   *
    * @return current editors for the specified {@code file}
    */
-  @NotNull
-  public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
+  public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
 
   /**
-   * @param file cannot be null
-   *
    * @return all editors for the specified {@code file}
    */
-  @NotNull
-  public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
+  public abstract FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
    */
-  @NotNull
-  public abstract FileEditor[] getAllEditors();
+  public abstract FileEditor @NotNull [] getAllEditors();
 
   /**
    * Adds the specified component above the editor and paints a separator line below it.
@@ -155,7 +144,9 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
   public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+
   public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+
   /**
    * Adds the specified component below the editor and paints a separator line above it.
    * If a separator line is not needed, set the client property to {@code true}:
@@ -169,23 +160,27 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
   public abstract void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+
   public abstract void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
 
   /**
    * Adds specified {@code listener}
+   *
    * @param listener listener to be added
    * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
   @Deprecated
-  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
+  }
 
   /**
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
   @Deprecated
-  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * Removes specified {@code listener}
@@ -194,10 +189,12 @@ public abstract class FileEditorManager {
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
   @Deprecated
-  public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
+  public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
+  }
 
   /**
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   *
    * @return opened file editors
    */
   @NotNull
@@ -222,9 +219,10 @@ public abstract class FileEditorManager {
 
   /**
    * Selects a specified file editor tab for the specified editor.
-   * @param file a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
+   *
+   * @param file                 a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
    * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
-   * {@link FileEditorProvider#getEditorTypeId()}
+   *                             {@link FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
 

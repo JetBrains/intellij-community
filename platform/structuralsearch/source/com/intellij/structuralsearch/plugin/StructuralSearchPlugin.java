@@ -1,13 +1,14 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 public final class StructuralSearchPlugin {
   private boolean searchInProgress;
-  private boolean replaceInProgress;
-  private boolean myDialogVisible;
+  private DialogWrapper myDialog;
 
   public boolean isSearchInProgress() {
     return searchInProgress;
@@ -17,20 +18,12 @@ public final class StructuralSearchPlugin {
     this.searchInProgress = searchInProgress;
   }
 
-  public boolean isReplaceInProgress() {
-    return replaceInProgress;
+  public DialogWrapper getDialog() {
+    return myDialog;
   }
 
-  public void setReplaceInProgress(boolean replaceInProgress) {
-    this.replaceInProgress = replaceInProgress;
-  }
-
-  public boolean isDialogVisible() {
-    return myDialogVisible;
-  }
-
-  public void setDialogVisible(boolean dialogVisible) {
-    myDialogVisible = dialogVisible;
+  public void setDialog(DialogWrapper dialog) {
+    myDialog = dialog;
   }
 
   public static StructuralSearchPlugin getInstance(@NotNull Project project) {

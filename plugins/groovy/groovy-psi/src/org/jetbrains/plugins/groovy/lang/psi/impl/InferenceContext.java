@@ -36,9 +36,8 @@ public interface InferenceContext {
   <T extends PsiReference, R>
   R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete);
 
-  @NotNull
   default <T extends PsiPolyVariantReference>
-  GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull PolyVariantResolver<T> resolver) {
+  GroovyResolveResult @NotNull [] multiResolve(@NotNull T ref, boolean incomplete, @NotNull PolyVariantResolver<T> resolver) {
     ResolveResult[] results = resolveWithCaching(ref, resolver, incomplete);
     return results == null || results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
   }

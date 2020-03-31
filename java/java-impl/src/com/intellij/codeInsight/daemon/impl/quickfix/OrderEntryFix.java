@@ -22,10 +22,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiJavaModuleReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -112,13 +112,13 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     DependencyScope scope = fileIndex.isInTestSourceContent(refVFile) ? DependencyScope.TEST : DependencyScope.COMPILE;
 
     if (reference instanceof PsiJavaModuleReference) {
-      List<LocalQuickFix> result = ContainerUtil.newSmartList();
+      List<LocalQuickFix> result = new SmartList<>();
       createModuleFixes((PsiJavaModuleReference)reference, currentModule, scope, result);
       result.forEach(fix -> registrar.register((IntentionAction)fix));
       return result;
     }
 
-    List<LocalQuickFix> result = ContainerUtil.newSmartList();
+    List<LocalQuickFix> result = new SmartList<>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
 
     registerExternalFixes(reference, psiElement, shortReferenceName, facade, currentModule, scope, registrar, result);

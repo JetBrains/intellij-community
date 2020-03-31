@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
+import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   /**
    * @deprecated use {@link #UsageNode(Node, Usage)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
   // todo remove in 2018.1
   public UsageNode(@NotNull Usage usage, UsageViewTreeModelBuilder model) {
     this(null, usage);
+    DeprecatedMethodException.report("Use UsageNode(Node, Usage) instead");
   }
 
   public UsageNode(Node parent, @NotNull Usage usage) {

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class SelectAllAction extends OccurrenceAction {
   public SelectAllAction() {
     super(IdeActions.ACTION_SELECT_ALL_OCCURRENCES, AllIcons.Actions.CheckMulticaret);
@@ -18,6 +19,11 @@ public class SelectAllAction extends OccurrenceAction {
 
   @Override
   protected boolean availableForReplace() {
+    return true;
+  }
+
+  @Override
+  protected boolean availableForSelection() {
     return true;
   }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +33,15 @@ public abstract class ExecutionTarget {
   public abstract String getId();
 
   @NotNull
+  @Nls
   public abstract String getDisplayName();
 
   @Nullable
   public abstract Icon getIcon();
 
+  /**
+   * @deprecated implement {@link #canRun(RunConfiguration)} instead
+   */
   @Deprecated
   public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
     return canRun(configuration.getConfiguration());
@@ -55,6 +60,14 @@ public abstract class ExecutionTarget {
    */
   public boolean isReady() {
     return true;
+  }
+
+  /**
+   * Implementation-specific logic to determine if an external plugin is responsible for managing this target.
+   * @return true if the target is externally managed, or false for the platform to manage
+   */
+  public boolean isExternallyManaged() {
+    return false;
   }
 
   @Override

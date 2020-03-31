@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface ServiceEventListener {
@@ -17,22 +18,50 @@ public interface ServiceEventListener {
     public final Object target;
     public final Class<?> contributorClass;
 
-    public ServiceEvent(@NotNull Class<?> contributorClass) {
-      this(EventType.RESET, contributorClass, contributorClass);
+    public final Object parent;
+
+    private ServiceEvent(@NotNull EventType type,
+                         @NotNull Object target,
+                         @NotNull Class<?> contributorClass) {
+      this(type, target, contributorClass, null);
     }
 
-    public ServiceEvent(@NotNull EventType type,
-                        @NotNull Object target,
-                        @NotNull Class<?> contributorClass) {
+    private ServiceEvent(@NotNull EventType type,
+                         @NotNull Object target,
+                         @NotNull Class<?> contributorClass,
+                         @Nullable Object parent) {
       this.type = type;
       this.target = target;
       this.contributorClass = contributorClass;
+      this.parent = parent;
+    }
+
+    @Override
+    public String toString() {
+      return type + ": " + target.toString() + "; from contributor: " + contributorClass +
+             (parent == null ? "" : "; parent: " + parent);
+    }
+
+    public static ServiceEvent createEvent(@NotNull EventType type,
+                                           @NotNull Object target,
+                                           @NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(type, target, rootContributorClass);
+    }
+
+    public static ServiceEvent createResetEvent(@NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(EventType.RESET, rootContributorClass, rootContributorClass);
+    }
+
+    public static ServiceEvent createServiceAddedEvent(@NotNull Object target,
+                                                       @NotNull Class<?> contributorClass,
+                                                       @Nullable Object parent) {
+      return new ServiceEvent(EventType.SERVICE_ADDED, target, contributorClass, parent);
     }
   }
 
   enum EventType {
     RESET,
-    SERVICE_ADDED, SERVICE_REMOVED, SERVICE_CHANGED, SERVICE_STRUCTURE_CHANGED,
+    SERVICE_ADDED, SERVICE_REMOVED, SERVICE_CHANGED, SERVICE_STRUCTURE_CHANGED, SERVICE_GROUP_CHANGED,
     GROUP_CHANGED
   }
 }

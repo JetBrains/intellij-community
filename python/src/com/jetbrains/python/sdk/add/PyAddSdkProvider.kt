@@ -5,13 +5,18 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.UserDataHolder
 
 // TODO: Merge into a common Python SDK provider
 interface PyAddSdkProvider {
   /**
    * Returns [PyAddSdkView] if applicable.
    */
-  fun createView(project: Project?, module: Module?, newProjectPath: String?, existingSdks: List<Sdk>): PyAddSdkView?
+  fun createView(project: Project?,
+                 module: Module?,
+                 newProjectPath: String?,
+                 existingSdks: List<Sdk>,
+                 context: UserDataHolder): PyAddSdkView?
 
   companion object {
     val EP_NAME: ExtensionPointName<PyAddSdkProvider> = ExtensionPointName.create("Pythonid.pyAddSdkProvider")

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -23,8 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashSet;
 import icons.DevkitIcons;
 import org.jdom.Element;
@@ -62,7 +61,7 @@ import java.util.zip.ZipFile;
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
+  private static final Logger LOG = Logger.getInstance(IdeaJdk.class);
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String PLUGINS_DIR = "plugins";
@@ -168,6 +167,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     List<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
+    appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
@@ -180,7 +180,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static void appendIdeaLibrary(@NotNull String libDirPath,
                                         @NotNull List<VirtualFile> result,
-                                        @NotNull @NonNls final String... forbidden) {
+                                        @NonNls final String @NotNull ... forbidden) {
     Arrays.sort(forbidden);
     final String path = libDirPath + File.separator + LIB_DIR_NAME;
     final JarFileSystem jfs = JarFileSystem.getInstance();
@@ -234,10 +234,10 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       int choice = Messages.showChooseDialog(
         "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
         "Select Internal Java Platform",
-        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+        ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
-        Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));
+        Sdk internalJava = Objects.requireNonNull(sdkModel.findSdk(name));
         //roots from internal jre
         setInternalJdk(sdk, sdkModificator, internalJava);
       }
@@ -299,7 +299,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
-    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    String sdkHome = Objects.requireNonNull(sdk.getHomePath());
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) {
       try {
         ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
@@ -327,8 +327,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) throws IOException {
-    ProgressIndicator indicator = ObjectUtils.assertNotNull(ProgressManager.getInstance().getProgressIndicator());
-    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    ProgressIndicator indicator = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
+    String sdkHome = Objects.requireNonNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
     Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
@@ -362,7 +362,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
         ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        if (library == null) continue;
+        if (library == null || library.getName().equals("jps-build-script-dependencies-bootstrap")) continue;
 
         // do not check extension.getScope(), plugin projects need tests too
         //JpsLibraryType<?> libraryType = library == null ? null : library.getType();

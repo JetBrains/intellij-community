@@ -18,14 +18,14 @@ package com.intellij.xml.actions;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.File;
 
 /**
  * @author Dmitry Avdeev
  */
-public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase {
+public class GenerateXmlTagTest extends BasePlatformTestCase {
 
   public void testGenerate() {
     myFixture.configureByFile("web-app_2_5.xsd");

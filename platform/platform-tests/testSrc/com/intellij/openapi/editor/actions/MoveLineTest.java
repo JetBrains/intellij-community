@@ -29,8 +29,8 @@ public class MoveLineTest extends AbstractEditorTest {
     assertInlayPositions(4);
   }
 
-  private static void assertInlayPositions(int... offsets) {
-    int[] actualPositions = myEditor.getInlayModel().getInlineElementsInRange(0, myEditor.getDocument().getTextLength())
+  private void assertInlayPositions(int... offsets) {
+    int[] actualPositions = getEditor().getInlayModel().getInlineElementsInRange(0, getEditor().getDocument().getTextLength())
       .stream().mapToInt(i -> i.getOffset()).toArray();
     assertArrayEquals(offsets, actualPositions);
   }

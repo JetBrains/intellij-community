@@ -1,34 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
-@SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
-public class SystemInfo extends SystemInfoRt {
+@SuppressWarnings("unused")
+public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
-
-  /**
-   * @deprecated use {@link #is32Bit} or {@link #is64Bit} instead
-   */
-  @Deprecated public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
@@ -41,28 +36,20 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
-  public static final boolean isChromeOS = SystemInfoRt.isLinux && isCrostini();
+  public static final boolean isChromeOS = isLinux && isCrostini();
 
-  public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
-  public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
-  public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
-  public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
-  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
-  public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
+  public static final boolean isAppleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Apple");
+  public static final boolean isOracleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Oracle");
+  public static final boolean isSunJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Sun") && StringUtil
+    .containsIgnoreCase(JAVA_VENDOR, "Microsystems");
+  public static final boolean isIbmJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Azul");
+  public static final boolean isJetBrainsJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
-  public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
+  @ReviseWhenPortedToJDK("9")
+  public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
 
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  private static boolean isModularJava() {
-    try {
-      Class.class.getMethod("getModule");
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-  }
-
+  @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
     return new File("/dev/.cros_milestone").exists();
   }
@@ -87,6 +74,11 @@ public class SystemInfo extends SystemInfoRt {
                                          StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
+
+  public static final boolean isXfce = isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("xfce")) ||
+                                       StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("xfce");
+  public static final boolean isI3= isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("i3")) ||
+                                    StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("i3");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -118,6 +110,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
+  public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -171,20 +164,16 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static String getOsNameAndVersion() {
-    String osName = System.getProperty("os.name");
-    if (isMacOSSierra) {
-      osName = "macOS"; //JDK always returns Mac OS X
-    }
-    return osName + " " + System.getProperty("os.version");
+    return (isMacOSSierra ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {
-    return number > 9 ? 9 : number;
+    return Math.min(number, 9);
   }
 
   private static int toInt(String string) {
     try {
-      return Integer.valueOf(string);
+      return Integer.parseInt(string);
     }
     catch (NumberFormatException e) {
       return 0;
@@ -200,17 +189,15 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
+  /** @deprecated use {@link #isWinXpOrNewer} */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
-
-  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
-  @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
-
   //</editor-fold>
 }

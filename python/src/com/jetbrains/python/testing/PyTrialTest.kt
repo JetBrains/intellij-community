@@ -53,8 +53,10 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 }
 
 
-object PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
+class PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
   override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST)
+
+  override fun getId(): String = "Twisted Trial"
 }

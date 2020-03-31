@@ -78,16 +78,10 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
     panel.add(ignoredClassesPanel, BorderLayout.CENTER);
     panel.add(checkBox, BorderLayout.SOUTH);
     final JBTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-    tabs.add("Loggers", ScrollPaneFactory.createScrollPane(loggerPanel, true));
-    tabs.add("Ignored classes", ScrollPaneFactory.createScrollPane(panel, true));
-    tabs.add("Annotations", ScrollPaneFactory.createScrollPane(annotationsListControl, true));
+    tabs.add(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"), ScrollPaneFactory.createScrollPane(loggerPanel, true));
+    tabs.add(InspectionGadgetsBundle.message("class.without.logger.ignored.classes.tab"), ScrollPaneFactory.createScrollPane(panel, true));
+    tabs.add(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"), ScrollPaneFactory.createScrollPane(annotationsListControl, true));
     return tabs;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("no.logger.display.name");
   }
 
   @Override

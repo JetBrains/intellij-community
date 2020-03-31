@@ -44,3 +44,9 @@ public class ParameterHidingMemberVariable
         void a(int i) {}
     }
 }
+
+record R(int i) {
+    public R( int i){
+        this.i = i;
+    }
+}

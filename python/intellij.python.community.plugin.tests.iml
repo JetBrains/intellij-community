@@ -14,6 +14,5 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.plugin.resources" scope="RUNTIME" />
   </component>
 </module>

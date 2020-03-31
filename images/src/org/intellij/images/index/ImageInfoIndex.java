@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -27,15 +13,13 @@ import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.intellij.images.util.ImageInfo;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * @author spleaner
- */
-public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
+public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
 
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
@@ -74,9 +58,9 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
     return myDataIndexer;
   }
 
-  public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<? super ImageInfo> processor, Project project) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, getFileKey(virtualFile), virtualFile, processor, GlobalSearchScope
-        .fileScope(project, virtualFile));
+  @Nullable
+  public static ImageInfo getInfo(@NotNull VirtualFile file, @NotNull Project project) {
+    return ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project).values());
   }
 
   @NotNull
@@ -94,6 +78,11 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
         return file.isInLocalFileSystem() && file.getLength() < ourMaxImageSize;
       }
     };
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @Override

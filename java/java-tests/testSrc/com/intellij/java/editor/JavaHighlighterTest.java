@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -14,15 +14,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 
 import java.util.ArrayList;
 
-/**
- * @author mike
- */
-public class JavaHighlighterTest extends LightCodeInsightTestCase {
+public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   private EditorHighlighter myHighlighter;
   private Document myDocument;
   private final ArrayList<Editor> myEditorsToRelease = new ArrayList<>();

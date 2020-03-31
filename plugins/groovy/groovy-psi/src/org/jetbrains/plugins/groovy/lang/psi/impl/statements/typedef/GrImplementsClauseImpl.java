@@ -40,9 +40,8 @@ public class GrImplementsClauseImpl extends GrReferenceListImpl implements GrImp
     return "Implements clause";
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 

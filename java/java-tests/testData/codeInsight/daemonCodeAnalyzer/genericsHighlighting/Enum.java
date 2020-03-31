@@ -41,7 +41,7 @@ enum Operation {
 enum enumWithTypeParameterInValueOf {
   ;
 
-  <error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error> {}
+  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure"><error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error></error> {}
 }
 
 <error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
@@ -123,6 +123,8 @@ class X extends <error descr="Classes cannot directly extend 'java.lang.Enum'">E
     public X(String name, int ordinal) {
         super(name, ordinal);
     }
+
+    Enum e = new <error descr="Classes cannot directly extend 'java.lang.Enum'">Enum</error>("", 0) {};
 }
 
 enum StaticInEnumConstantInitializer {

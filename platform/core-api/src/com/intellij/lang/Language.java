@@ -7,11 +7,12 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * The base class for all programming language support implementations.
  * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@link com.intellij.openapi.fileTypes.FileTypeFactory} extension point.
+ * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
@@ -49,15 +50,15 @@ public abstract class Language extends UserDataHolderBase {
     }
   };
 
-  protected Language(@NotNull String ID) {
-    this(ID, ArrayUtil.EMPTY_STRING_ARRAY);
+  protected Language(@NonNls @NotNull String ID) {
+    this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -68,7 +69,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     myBaseLanguage = baseLanguage;
     myID = ID;
-    myMimeTypes = mimeTypes.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : mimeTypes;
+    myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
@@ -106,6 +107,35 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
+  public static void unregisterLanguages(ClassLoader classLoader) {
+    List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
+    for (Class<? extends Language> clazz : classes) {
+      if (clazz.getClassLoader() == classLoader) {
+        unregisterLanguage(ourRegisteredLanguages.get(clazz));
+      }
+    }
+    IElementType.unregisterElementTypes(classLoader);
+  }
+
+  public static void unregisterLanguage(@NotNull Language language) {
+    IElementType.unregisterElementTypes(language);
+    ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
+    ourRegisteredLanguages.remove(language.getClass());
+    ourRegisteredIDs.remove(language.getID());
+    for (String mimeType : language.getMimeTypes()) {
+      ourRegisteredMimeTypes.remove(mimeType);
+    }
+    final Language baseLanguage = language.getBaseLanguage();
+    if (baseLanguage != null) {
+      baseLanguage.unregisterDialect(language);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void unregisterDialect(Language language) {
+    myDialects.remove(language);
+  }
+
   /**
    * @param klass {@code java.lang.Class} of the particular language. Serves key purpose.
    * @return instance of the {@code klass} language registered if any.
@@ -136,8 +166,7 @@ public abstract class Language extends UserDataHolderBase {
    *
    * @return The list of MIME types.
    */
-  @NotNull
-  public String[] getMimeTypes() {
+  public String @NotNull [] getMimeTypes() {
     return myMimeTypes;
   }
 
@@ -153,19 +182,31 @@ public abstract class Language extends UserDataHolderBase {
 
   @Nullable
   public LanguageFileType getAssociatedFileType() {
-    final FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    return FileTypeRegistry.getInstance().findFileTypeByLanguage(this);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public LanguageFileType findMyFileType(FileType[] types) {
     for (final FileType fileType : types) {
-      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
-        return (LanguageFileType)fileType;
+      if (fileType instanceof LanguageFileType) {
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if (languageFileType.getLanguage() == this && !languageFileType.isSecondary()) {
+          return languageFileType;
+        }
       }
     }
     for (final FileType fileType : types) {
-      if (fileType instanceof LanguageFileType && isKindOf(((LanguageFileType)fileType).getLanguage())) {
-        return (LanguageFileType)fileType;
+      if (fileType instanceof LanguageFileType) {
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if (isKindOf(languageFileType.getLanguage()) && !languageFileType.isSecondary()) {
+          return languageFileType;
+        }
       }
     }
     return null;
   }
+
 
   @Nullable
   public Language getBaseLanguage() {

@@ -9,6 +9,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Intersection types arise in a process of computing least upper bound.
@@ -18,7 +19,7 @@ import java.util.*;
 public class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
-  private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
+  private PsiIntersectionType(PsiType @NotNull [] conjuncts) {
     super(TypeAnnotationProvider.EMPTY);
     if (NullUtils.hasNull((Object[])conjuncts)) throw new IllegalArgumentException("Null conjunct");
     myConjuncts = conjuncts;
@@ -35,7 +36,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   }
 
   @NotNull
-  public static PsiType createIntersection(boolean flatten, @NotNull PsiType... conjuncts) {
+  public static PsiType createIntersection(boolean flatten, PsiType @NotNull ... conjuncts) {
     assert conjuncts.length > 0;
     if (flatten) {
       conjuncts = flattenAndRemoveDuplicates(conjuncts);
@@ -44,8 +45,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     return new PsiIntersectionType(conjuncts);
   }
 
-  @NotNull
-  private static PsiType[] flattenAndRemoveDuplicates(@NotNull PsiType[] conjuncts) {
+  private static PsiType @NotNull [] flattenAndRemoveDuplicates(PsiType @NotNull [] conjuncts) {
     try {
       final Set<PsiType> flattenConjuncts = flatten(conjuncts, new LinkedHashSet<>());
       if (flattenConjuncts == null) {
@@ -90,8 +90,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     return types;
   }
 
-  @NotNull
-  public PsiType[] getConjuncts() {
+  public PsiType @NotNull [] getConjuncts() {
     return myConjuncts;
   }
 
@@ -137,8 +136,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return myConjuncts;
   }
 
@@ -169,12 +167,7 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("PsiIntersectionType: ");
-    for (int i = 0; i < myConjuncts.length; i++) {
-      if (i > 0) sb.append(", ");
-      sb.append(myConjuncts[i].getPresentableText());
-    }
-    return sb.toString();
+    return Arrays.stream(myConjuncts).map(PsiType::getPresentableText).collect(Collectors.joining(", ", "PsiIntersectionType: ", ""));
   }
 
   public String getConflictingConjunctsMessage() {

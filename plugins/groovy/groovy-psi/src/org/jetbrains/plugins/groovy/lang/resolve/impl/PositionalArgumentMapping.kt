@@ -1,39 +1,49 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
-class PositionalArgumentMapping(
-  method: PsiMethod,
+class PositionalArgumentMapping<out P : CallParameter>(
+  private val parameters: List<P>,
   override val arguments: Arguments,
   private val context: PsiElement
-) : ArgumentMapping {
+) : ArgumentMapping<P> {
 
-  private val parameterToArgument: Map<PsiParameter, Argument?>? by lazy {
-    mapByPosition(arguments, method.parameterList.parameters.toList(), PsiParameter::isOptional, false)
+  private val parameterToArgument: List<Pair<P, Argument?>>? by lazy {
+    mapByPosition(parameters, arguments, CallParameter::isOptional, false)
   }
 
-  private val argumentToParameter: Map<Argument, PsiParameter>? by lazy {
+  private val argumentToParameter: Map<Argument, P>? by lazy {
     parameterToArgument?.mapNotNull { (parameter, argument) ->
-      if (argument == null) null else Pair(argument, parameter)
+      argument?.let {
+        Pair(argument, parameter)
+      }
     }?.toMap()
   }
 
-  override fun targetParameter(argument: Argument): PsiParameter? = argumentToParameter?.get(argument)
+  override fun targetParameter(argument: Argument): P? = argumentToParameter?.get(argument)
 
   override fun expectedType(argument: Argument): PsiType? = targetParameter(argument)?.type
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
-    get() = argumentToParameter?.asSequence()
-              ?.mapNotNull { (argument, parameter) -> Pair(parameter.type, argument) }
-              ?.asIterable()
-            ?: emptyList()
+    get() {
+      return (parameterToArgument ?: return emptyList()).mapNotNull { (parameter, argument) ->
+        val expectedType = parameter.type
+        if (expectedType == null || argument == null) {
+          null
+        }
+        else {
+          Pair(expectedType, argument)
+        }
+      }
+    }
 
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
+  override fun applicability(): Applicability {
     val map = argumentToParameter ?: return Applicability.inapplicable
-    return mapApplicability(map, substitutor, erase, context)
+    return mapApplicability(map, context)
   }
 
   val distance: Long
@@ -44,9 +54,9 @@ class PositionalArgumentMapping(
       return positionalParametersDistance(map, context)
     }
 
-  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    val map = argumentToParameter ?: return emptyMap()
-    return highlightApplicabilities(map, substitutor, context)
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult {
+    val map = argumentToParameter ?: return ApplicabilityResult.Inapplicable
+    return ApplicabilityResultImpl(highlightApplicabilities(map, substitutor, context))
   }
 }
 
@@ -55,10 +65,10 @@ class PositionalArgumentMapping(
 // foo(1, 2, 3)       => 1:a, 2:b, 3:e
 // foo(1, 2, 3, 4)    => 1:a, 2:b, 3:c, 4:e
 // foo(1, 2, 3, 4, 5) => 1:a, 2:b, 3:c, 4:d, 5:e
-private fun <Arg, Param> mapByPosition(arguments: List<Arg>,
-                                       parameters: List<Param>,
+private fun <Arg, Param> mapByPosition(parameters: List<Param>,
+                                       arguments: List<Arg>,
                                        isOptional: (Param) -> Boolean,
-                                       @Suppress("SameParameterValue") partial: Boolean): Map<Param, Arg?>? {
+                                       @Suppress("SameParameterValue") partial: Boolean): List<Pair<Param, Arg?>>? {
   val argumentsCount = arguments.size
   val parameterCount = parameters.size
   val optionalParametersCount = parameters.count(isOptional)
@@ -100,5 +110,5 @@ private fun <Arg, Param> mapByPosition(arguments: List<Arg>,
     "argumentsCount > parametersCount. This should happen only in partial mode."
   }
 
-  return result.toMap(LinkedHashMap())
+  return result
 }

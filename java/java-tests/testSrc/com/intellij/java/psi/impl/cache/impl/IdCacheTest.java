@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -18,12 +18,12 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import java.io.File;
 import java.util.Arrays;
 
-public class IdCacheTest extends CodeInsightTestCase{
+public class IdCacheTest extends JavaCodeInsightTestCase {
 
   private VirtualFile myRootDir;
   private File myCacheFile;
@@ -89,8 +89,8 @@ public class IdCacheTest extends CodeInsightTestCase{
     final CacheManager cache2 = CacheManager.SERVICE.getInstance(myProject);
     final TodoCacheManager todocache2 = TodoCacheManager.SERVICE.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-    checkResult(ArrayUtil.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
-    checkResult(ArrayUtil.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("a", UsageSearchContext.ANY, scope, false)));
+    checkResult(ArrayUtilRt.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
+    checkResult(ArrayUtilRt.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("a", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"2.java"}, convert(cache2.getFilesWithWord("b", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"2.java", "3.java"}, convert(cache2.getFilesWithWord("c", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"2.java", "3.java"}, convert(cache2.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
@@ -205,7 +205,7 @@ public class IdCacheTest extends CodeInsightTestCase{
 
   private void checkCache(CacheManager cache, TodoCacheManager todocache) {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-    checkResult(ArrayUtil.EMPTY_STRING_ARRAY, convert(cache.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
+    checkResult(ArrayUtilRt.EMPTY_STRING_ARRAY, convert(cache.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"1.java"}, convert(cache.getFilesWithWord("a", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"1.java", "2.java"}, convert(cache.getFilesWithWord("b", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"1.java", "2.java", "3.java"}, convert(cache.getFilesWithWord("c", UsageSearchContext.ANY, scope, false)));
@@ -225,10 +225,10 @@ public class IdCacheTest extends CodeInsightTestCase{
     }
     return files;
   }
-  
+
   private static void checkResult(String[] expected, VirtualFile[] result){
     assertEquals(expected.length, result.length);
-    
+
     Arrays.sort(expected);
     Arrays.sort(result, (o1, o2) -> {
       VirtualFile file1 = o1;

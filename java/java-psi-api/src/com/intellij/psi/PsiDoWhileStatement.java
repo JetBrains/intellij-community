@@ -20,15 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java {@code do ... while} statement.
  */
-public interface PsiDoWhileStatement extends PsiLoopStatement {
-  /**
-   * Returns the expression representing the exit condition of the loop.
-   *
-   * @return the expression, or null if the statement is incomplete.
-   */
-  @Nullable
-  PsiExpression getCondition();
-
+public interface PsiDoWhileStatement extends PsiConditionalLoopStatement {
   /**
    * Returns the {@code while} keyword of the statement.
    *

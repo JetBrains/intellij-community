@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,9 +26,6 @@ import java.util.List;
 
 import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
 
-/**
- * @author traff
- */
 public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PyDebuggerOptionsProvider mySettings;
   private JPanel myMainPanel;
@@ -56,12 +54,12 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       }
     });
 
-    myAttachFilterLabel.setText("<html>For <b>Attach To Process</b> show processes with names containing:</html>");
+    myAttachFilterLabel.setText(PyBundle.message("debugger.attach.to.process.filter.names"));
   }
 
   @Override
   public String getDisplayName() {
-    return "Python Debugger";
+    return PyBundle.message("configurable.PyDebuggerConfigurable.display.name");
   }
 
   @Override
@@ -121,7 +119,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       new TooltipWithClickableLinks.ForBrowser(warningIcon,
                                                DEBUGGER_WARNING_MESSAGE));
 
-    myActionLink = new ActionLink("Clear caches", new AnAction() {
+    myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PySignatureCacheManager.getInstance(myProject).clearCache();

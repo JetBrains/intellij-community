@@ -18,7 +18,7 @@ import java.util.*;
  *
  * @author Pavel.Dolgov
  */
-public class ReusedLocalVariablesFinder {
+class ReusedLocalVariablesFinder {
   private final ControlFlow myControlFlow;
   private final PsiStatement myNextStatement;
   private final int myOffset;
@@ -31,10 +31,10 @@ public class ReusedLocalVariablesFinder {
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myNextStatement.getProject());
   }
 
-  public static List<ReusedLocalVariable> findReusedLocalVariables(@NotNull PsiElement fragmentStart,
-                                                                   @NotNull PsiElement fragmentEnd,
-                                                                   @NotNull Set<PsiLocalVariable> ignoreVariables,
-                                                                   @NotNull InputVariables inputVariables) {
+  static List<ReusedLocalVariable> findReusedLocalVariables(@NotNull PsiElement fragmentStart,
+                                                            @NotNull PsiElement fragmentEnd,
+                                                            @NotNull Set<PsiLocalVariable> ignoreVariables,
+                                                            @NotNull InputVariables inputVariables) {
     List<PsiLocalVariable> declaredVariables = getDeclaredVariables(fragmentStart, fragmentEnd, ignoreVariables);
     if (declaredVariables.isEmpty()) {
       return Collections.emptyList();
@@ -54,9 +54,6 @@ public class ReusedLocalVariablesFinder {
     Set<String> tempNames = new HashSet<>(ContainerUtil.map(inputVariables.getInputVariables(), data -> data.name));
     for (PsiLocalVariable variable : reusedVariables) {
       String name = variable.getName();
-      if (name == null) {
-        continue;
-      }
       String typeText = variable.getType().getCanonicalText();
       if (finder.isValueReused(variable)) {
         String suggestedName = finder.suggestUniqueVariableName(name);

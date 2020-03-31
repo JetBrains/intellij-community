@@ -31,7 +31,7 @@ CD "%DEV_IDEA_HOME%"
 
 SET ANT_HOME=%DEV_IDEA_HOME%\lib\ant
 SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Xmx512m -Dant.home="%ANT_HOME%" -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher
-%EXEC_ANT% -f build/update.xml -Dwork.idea.home="%WORK_IDEA_HOME%"
+%EXEC_ANT% -f build/update.xml -Dwork.idea.home="%WORK_IDEA_HOME%" -Dintellij.build.local.plugins.repository="%BUILD_LOCAL_PLUGINS_REPOSITORY%"
 IF NOT ERRORLEVEL 0 GOTO failed
 IF NOT EXIST "%DEV_IDEA_HOME%\out\deploy" GOTO failed
 
@@ -40,7 +40,7 @@ RMDIR /Q /S "%WORK_IDEA_HOME%\plugins"
 
 XCOPY "%DEV_IDEA_HOME%\bin\win\*.dll" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
 XCOPY "%DEV_IDEA_HOME%\bin\win\*.exe" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
-XCOPY "%DEV_IDEA_HOME%\out\deploy\*.*" "%WORK_IDEA_HOME%\" /Q /E /Y
+XCOPY "%DEV_IDEA_HOME%\out\deploy\dist\*.*" "%WORK_IDEA_HOME%\" /Q /E /Y
 GOTO done
 
 :failed

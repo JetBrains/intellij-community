@@ -3,13 +3,13 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnknownGuardInspectionTest extends LightCodeInsightFixtureTestCase {
+public class UnknownGuardInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testUnknownGuard() {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");

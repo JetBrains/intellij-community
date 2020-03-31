@@ -8,7 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_9;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9;
 
 public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -33,9 +33,8 @@ public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixP
     return JAVA_9;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new ImplicitDefaultCharsetUsageInspection()};
   }
 }

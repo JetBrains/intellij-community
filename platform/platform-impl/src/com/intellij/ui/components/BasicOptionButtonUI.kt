@@ -1,6 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
@@ -10,17 +8,16 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.OptionAction
-import com.intellij.openapi.ui.popup.JBPopupAdapter
+import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
-import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
@@ -101,6 +98,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     configureArrowButton()
 
     configureOptionButton()
+    updateTooltip()
   }
 
   protected open fun uninstallButtons() {
@@ -125,9 +123,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun configureMainButton() {
     mainButton.isFocusable = false
+    mainButton.action = optionButton.action
   }
 
   protected open fun unconfigureMainButton() {
+    mainButton.action = null
   }
 
   protected open fun createArrowButton(): JButton = ArrowButton().apply { icon = AllIcons.General.ArrowDown }
@@ -136,6 +136,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     arrowButton.isFocusable = false
     arrowButton.preferredSize = arrowButtonPreferredSize
     arrowButton.isVisible = !isSimpleButton
+    arrowButton.isEnabled = optionButton.isEnabled
 
     arrowButtonActionListener = createArrowButtonActionListener()?.apply(arrowButton::addActionListener)
     arrowButtonMouseListener = createArrowButtonMouseListener()?.apply(arrowButton::addMouseListener)
@@ -227,7 +228,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       popup = createPopup(toSelect, ensureSelection).apply {
         // use invokeLater() to update flag "after" popup is auto-closed - to ensure correct togglePopup() behaviour on arrow button press
         setFinalRunnable { getApplication().invokeLater { isPopupShowing = false } }
-        addListener(object : JBPopupAdapter() {
+        addListener(object : JBPopupListener {
           override fun beforeShown(event: LightweightWindowEvent) {
             val popup = event.asPopup()
             val screen = ScreenUtil.getScreenRectangle(optionButton.locationOnScreen)
@@ -272,7 +273,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
     val (actionGroup, mapping) = createActionMapping()
     val dataContext = createActionDataContext()
-    val actionItems = getActionItems(actionGroup, dataContext, false, false, true, true, ActionPlaces.UNKNOWN)
+    val actionItems = ActionPopupStep.createActionItems(actionGroup, dataContext, false, false, true, true, ActionPlaces.UNKNOWN, null)
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
 
     return OptionButtonPopup(OptionButtonPopupStep(actionItems, defaultSelection), dataContext, toSelect != null || ensureSelection)
@@ -308,6 +309,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
     override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
+    override fun getBackground(): Color? = optionButton.background
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
     open fun paintNotSimple(g: Graphics2D): Unit = super.paint(g)
@@ -359,7 +361,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, private val defaultSelection: Condition<AnAction>?)
     : ActionPopupStep(actions, null,
                       Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) },
-                      null, true, defaultSelection, false, true) {
+                      null, true, defaultSelection, false, true, null) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex(): Int = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

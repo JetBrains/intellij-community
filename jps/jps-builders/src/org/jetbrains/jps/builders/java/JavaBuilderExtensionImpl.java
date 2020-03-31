@@ -24,9 +24,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JavaBuilderExtensionImpl extends JavaBuilderExtension {
   @Override
   public boolean shouldHonorFileEncodingForCompilation(@NotNull File file) {

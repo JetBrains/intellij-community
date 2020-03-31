@@ -61,7 +61,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText(IdeBundle.message("goto.custom.region.menu.item"));
+    presentation.setText(IdeBundle.messagePointer("goto.custom.region.menu.item"));
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final Project project = e.getProject();
     boolean isAvailable = editor != null && project != null;
@@ -97,7 +97,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
   @Nullable
   private static CustomFoldingBuilder getCustomFoldingBuilder(FoldingBuilder builder, FoldingDescriptor descriptor) {
     if (builder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)builder;
-    FoldingBuilder originalBuilder = descriptor.getElement().getUserData(CompositeFoldingBuilder.FOLDING_BUILDER);
+    FoldingBuilder originalBuilder = CompositeFoldingBuilder.getOriginalBuilder(descriptor);
     if (originalBuilder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)originalBuilder;
     return null;
   }

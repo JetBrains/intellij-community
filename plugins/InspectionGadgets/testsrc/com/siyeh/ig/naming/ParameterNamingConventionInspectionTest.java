@@ -16,13 +16,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ParameterNamingConventionInspectionTest extends LightInspectionTestCase {
+public class ParameterNamingConventionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testParameterNamingConvention() {
     doTest();

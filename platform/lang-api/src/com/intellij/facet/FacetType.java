@@ -7,9 +7,12 @@ import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,29 +26,31 @@ import javax.swing.*;
  * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- * @author nik
  */
-public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
+public abstract class FacetType<F extends Facet, C extends FacetConfiguration> implements PluginAware {
   public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
+  private PluginDescriptor myPluginDescriptor;
 
   public static <T extends FacetType> T findInstance(Class<T> aClass) {
     return EP_NAME.findExtension(aClass);
   }
 
   /**
-   * @param id unique instance of {@link FacetTypeId}
-   * @param stringId unique string id of the facet type
-   * @param presentableName name of this facet type which will be shown in UI
+   * @param id                  unique instance of {@link FacetTypeId}
+   * @param stringId            unique string id of the facet type
+   * @param presentableName     name of this facet type which will be shown in UI
    * @param underlyingFacetType if this parameter is not {@code null} then you will be able to add facets of this type only as
-   * subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
-   * directly to a module
+   *                            subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
+   *                            directly to a module
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName,
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
                    final @Nullable FacetTypeId underlyingFacetType) {
     myId = id;
     myStringId = stringId;
@@ -54,11 +59,13 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   /**
-   * @param id unique instance of {@link FacetTypeId}
-   * @param stringId unique string id of the facet type
+   * @param id              unique instance of {@link FacetTypeId}
+   * @param stringId        unique string id of the facet type
    * @param presentableName name of this facet type which will be shown in UI
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName) {
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
     this(id, stringId, presentableName, null);
   }
 
@@ -78,10 +85,10 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   /**
-   * Default name which will be used then user creates a facet of this type
-   * @return
+   * Default name which will be used then user creates a facet of this type.
    */
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   public String getDefaultFacetName() {
     return myPresentableName;
   }
@@ -91,25 +98,35 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myUnderlyingFacetType;
   }
 
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
+
+  public final PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
+  }
+
   /**
-   * @deprecated this method is not called by IDEA core anymore. Use {@link com.intellij.framework.detection.FrameworkDetector} extension
+   * @deprecated this method is not called by IDE core anymore. Use {@link com.intellij.framework.detection.FrameworkDetector} extension
    * to provide automatic detection for facets
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public void registerDetectors(FacetDetectorRegistry<C> registry) {
   }
 
   /**
-   * Create default configuration of facet. See {@link FacetConfiguration} for details
-   * @return
+   * Create default configuration of facet. See {@link FacetConfiguration} for details.
    */
   public abstract C createDefaultConfiguration();
 
   /**
-   * Create a new facet instance
-   * @param module parent module for facet. Must be passed to {@link Facet} constructor
-   * @param name name of facet. Must be passed to {@link Facet} constructor
-   * @param configuration facet configuration. Must be passed to {@link Facet} constructor
+   * Create a new facet instance.
+   *
+   * @param module          parent module for facet. Must be passed to {@link Facet} constructor
+   * @param name            name of facet. Must be passed to {@link Facet} constructor
+   * @param configuration   facet configuration. Must be passed to {@link Facet} constructor
    * @param underlyingFacet underlying facet. Must be passed to {@link Facet} constructor
    * @return a created facet
    */
@@ -135,11 +152,12 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   /**
-   * Returns the topic in the help file which is shown when help for this facet type is requested
+   * Returns the topic in the help file which is shown when help for this facet type is requested.
    *
    * @return the help topic, or null if no help is available.
    */
-  @Nullable @NonNls
+  @Nullable
+  @NonNls
   public String getHelpTopic() {
     return null;
   }
@@ -150,13 +168,14 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   /**
-   * Override to allow editing several facets at once
+   * Override to allow editing several facets at once.
+   *
    * @param project project
    * @param editors editors of selected facets
    * @return editor
    */
   @Nullable
-  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
     return null;
   }
 }

@@ -1,39 +1,49 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.junit.Assert.assertArrayEquals;
-
 public class ContainerUtilTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
-    String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
+    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
+    String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
+  }
+
+  public void testConcatTwo() {
+    Iterable<Object> concat = ContainerUtil.concat(Collections.emptySet(), Collections.emptySet());
+    assertFalse(concat.iterator().hasNext());
+    Iterable<Object> foo = ContainerUtil.concat(Collections.emptySet(), Collections.singletonList("foo"));
+    Iterator<Object> iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertFalse(iterator.hasNext());
+    foo = ContainerUtil.concat(Collections.singletonList("foo"), Collections.emptySet());
+    iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertFalse(iterator.hasNext());
+    foo = ContainerUtil.concat(Collections.singletonList("foo"), Collections.singleton("bar"));
+    iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals("bar", iterator.next());
+    assertFalse(iterator.hasNext());
   }
 
   public void testConcatMulti() {
@@ -106,7 +116,7 @@ public class ContainerUtilTest extends TestCase {
       log.append(s);
     }
 
-    assertEquals("abc" + "cba", log.toString());
+    assertEquals("abccba", log.toString());
   }
 
   public void testLockFreeSingleThreadPerformance() {
@@ -120,7 +130,7 @@ public class ContainerUtilTest extends TestCase {
       long stockElapsed = measure(stock);
       long myElapsed = measure(my);
 
-      System.out.println("LockFree my: " + myElapsed + "; stock: " + stockElapsed);
+      LOG.debug("LockFree my: " + myElapsed + "; stock: " + stockElapsed);
       assertTrue("lockFree: " + myElapsed + "; stock: " + stockElapsed, (myElapsed - stockElapsed + 0.0) / myElapsed < 0.1);
     }
   }
@@ -143,7 +153,7 @@ public class ContainerUtilTest extends TestCase {
 
     for (int i = 0; i < 2; i++) {
       Object[] array = my.getArray();
-      assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, array);
+      assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
       assertReallyEmpty(my);
       my.add(this);
       my.remove(this);
@@ -178,10 +188,10 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(0, my.size());
 
     Object[] objects = my.toArray();
-    assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, objects);
+    assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, objects);
 
     Iterator<Object> iterator = my.iterator();
-    assertSame(EmptyIterator.getInstance(), iterator);
+    assertSame(Collections.emptyIterator(), iterator);
   }
 
   public void testIdenticalItemsInLockFreeCOW() {
@@ -307,9 +317,9 @@ public class ContainerUtilTest extends TestCase {
     int[] a1 = {0, 4};
     int[] a2 = {4};
     int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
-    assertArrayEquals(new int[]{0, 4}, m);
+    Assert.assertArrayEquals(new int[]{0, 4}, m);
     m = ArrayUtil.mergeSortedArrays(a2, a1, true);
-    assertArrayEquals(new int[]{0, 4}, m);
+    Assert.assertArrayEquals(new int[]{0, 4}, m);
   }
 
   public void testImmutableListSubList() {

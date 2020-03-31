@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -56,7 +57,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Pull up";
+    return CommonBundle.message("title.pull.up");
   }
 
   @Override

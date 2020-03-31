@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -34,6 +35,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,7 +43,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
   protected static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   protected static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   protected static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
-  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "Stop at a breakpoint to load the list of classes";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
   private static final int INITIAL_TIME = 0;
 
@@ -170,6 +172,10 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     addToCenter(scroll);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFilterTextField;
+  }
+
   @NotNull
   protected ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
     return new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,
@@ -190,8 +196,8 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
       if (!ref.canGetInstanceInfo()) {
         XDebuggerManagerImpl.NOTIFICATION_GROUP
-          .createNotification("Unable to get instances of class " + ref.name(),
-            NotificationType.INFORMATION).notify(debugSession.getProject());
+          .createNotification(XDebuggerBundle.message("memory.unable.to.get.instances.of.class", ref.name()),
+                              NotificationType.INFORMATION).notify(debugSession.getProject());
         return;
       }
 

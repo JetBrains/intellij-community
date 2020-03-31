@@ -95,7 +95,7 @@ public abstract class VcsTaskHandler {
 
   public abstract TaskInfo startNewTask(@NotNull String taskName);
 
-  public abstract void switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
+  public abstract boolean switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
 
   public abstract void closeTask(@NotNull TaskInfo taskInfo, @NotNull TaskInfo original);
 
@@ -104,8 +104,7 @@ public abstract class VcsTaskHandler {
   /**
    * @return currently active (checked out) tasks (branches)
    */
-  @NotNull
-  public abstract TaskInfo[] getCurrentTasks();
+  public abstract TaskInfo @NotNull [] getCurrentTasks();
 
   /**
    * @return all existing tasks (branches)

@@ -5,7 +5,7 @@ class ConditionalInBinaryExpression {
   public String foo(int num) {
       if (num == -1) return "string" +
               "z";
-      else return "string" +
+      return "string" +
               ((num == Integer.MAX_VALUE) ? "a" : "b");
   }
 }

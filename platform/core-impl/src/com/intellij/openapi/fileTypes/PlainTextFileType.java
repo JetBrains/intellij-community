@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PlainTextFileType extends LanguageFileType {
+public class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
 
   private PlainTextFileType() {
@@ -36,7 +37,7 @@ public class PlainTextFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return FileTypesBundle.message("filetype.plaintext.description");
+    return CoreBundle.message("filetype.plaintext.description");
   }
 
   @Override

@@ -30,7 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
 
@@ -75,8 +77,13 @@ public abstract class DiffElement<T> {
    * @return content byte array
    * @throws java.io.IOException when reading
    */
+  public abstract byte @Nullable [] getContent() throws IOException;
+
   @Nullable
-  public abstract byte[] getContent() throws IOException;
+  public InputStream getContentStream() throws IOException {
+    byte[] bytes = getContent();
+    return bytes != null ? new ByteArrayInputStream(bytes) : null;
+  }
 
   @NotNull
   public Charset getCharset() {

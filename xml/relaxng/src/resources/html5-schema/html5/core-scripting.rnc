@@ -17,8 +17,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.nomodule?
 		&	script.attrs.language? # restricted in Schematron
 		&	script.attrs.integrity?
-		&	script.attrs.nonce?
 		&	embedded.content.attrs.crossorigin?
+		&	referrerpolicy?
 		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?
@@ -35,8 +35,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.charset?
 		&	script.attrs.language? # restricted in Schematron
 		&	script.attrs.integrity?
-		&	script.attrs.nonce?
 		&	embedded.content.attrs.crossorigin?
+		&	referrerpolicy?
 		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?
@@ -72,10 +72,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		script.attrs.integrity =
 			attribute integrity {
 				common.data.integrity
-			}
-		script.attrs.nonce =
-			attribute nonce{
-				string
 			}
 	script.inner.embedded =
 		( common.inner.anything )

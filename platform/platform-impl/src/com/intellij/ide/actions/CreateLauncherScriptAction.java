@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -20,11 +21,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,34 +42,32 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
 public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateLauncherScriptAction.class);
 
-  private static final NullableLazyValue<String> INTERPRETER_NAME = NullableLazyValue.createValue(() -> {
-    File python = PathEnvironmentVariableUtil.findInPath("python");
-    if (python != null) return "python";
-    python = PathEnvironmentVariableUtil.findInPath("python3");
-    if (python != null) return "python3";
-    return null;
-  });
+  private static class Holder {
+    private static final String INTERPRETER_NAME =
+      PathEnvironmentVariableUtil.findInPath("python") != null ? "python" :
+      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" : null;
+  }
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix &&
-           (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
-           INTERPRETER_NAME.getValue() != null;
+    return SystemInfo.isUnix && !ExternalUpdateManager.isRoaming() && Holder.INTERPRETER_NAME != null;
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    boolean enabled = isAvailable();
+    boolean enabled = SystemInfo.isUnix &&
+                      (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
+                      Holder.INTERPRETER_NAME != null;
     event.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    if (!isAvailable()) return;
-
-    if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
-      String title = ApplicationBundle.message("launcher.script.title");
-      String message = ApplicationBundle.message("launcher.script.luke");
-      Messages.showInfoMessage(event.getProject(), message, title);
+    if (!isAvailable()) {
+      if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
+        String title = ApplicationBundle.message("launcher.script.title");
+        String message = ApplicationBundle.message("launcher.script.luke");
+        Messages.showInfoMessage(event.getProject(), message, title);
+      }
       return;
     }
 
@@ -97,12 +96,12 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
       String ok = ApplicationBundle.message("launcher.script.overwrite.button");
-      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.getCancelButton(), Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
 
-    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.title")) {
+    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -155,21 +154,21 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     LOG.warn(e);
     String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
     Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.launcher.script.creation.failed"), message, NotificationType.ERROR),
       project);
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), "/Contents") : CreateDesktopEntryAction.getLauncherScript();
-    if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
+    File starter = Restarter.getIdeStarter();
+    if (starter == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
     Map<String, String> variables = newHashMap(
-      pair("$PYTHON$", INTERPRETER_NAME.getValue()),
+      pair("$PYTHON$", Holder.INTERPRETER_NAME),
       pair("$CONFIG_PATH$", PathManager.getConfigPath()),
       pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
-      pair("$RUN_PATH$", runPath));
+      pair("$RUN_PATH$", starter.getPath()));
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
 
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);

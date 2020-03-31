@@ -48,7 +48,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
   @NotNull
-  private final List<T> array;
+  private final List<? extends T> array;
   @NotNull
   private final Processor<? super T> processor;
   private final int lo;
@@ -72,7 +72,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
                    boolean runInReadAction,
                    boolean failFastOnAcquireReadAction,
                    @NotNull ProgressIndicator progressIndicator,
-                   @NotNull List<T> array,
+                   @NotNull List<? extends T> array,
                    @NotNull Processor<? super T> processor,
                    int lo,
                    int hi,
@@ -107,13 +107,14 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         doComplete(throwable);
       }
     } : process;
-    ProgressIndicator existing = ProgressManager.getInstance().getProgressIndicator();
+    ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator existing = progressManager.getProgressIndicator();
     if (existing == progressIndicator) {
       // we are already wrapped in an indicator - most probably because we came here from helper which steals children tasks
       toRun.run();
     }
     else {
-      ProgressManager.getInstance().executeProcessUnderProgress(toRun, progressIndicator);
+      progressManager.executeProcessUnderProgress(toRun, progressIndicator);
     }
   }
 
@@ -123,20 +124,14 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   @Nullable
   private ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
-    long start = System.currentTimeMillis();
     ApplierCompleter<T> right = null;
     Throwable throwable = null;
 
     try {
       for (int i = lo; i < hi; ++i) {
         ProgressManager.checkCanceled();
-        if (!processor.process(array.get(i))) {
-          throw new ComputationAbortedException();
-        }
-        long finish = System.currentTimeMillis();
-        long elapsed = finish - start;
-        if (elapsed > 1 && hi - i >= 2) {
-          int availableParallelism = JobSchedulerImpl.getJobPoolParallelism() - getSurplusQueuedTaskCount();
+        if (hi - i >= 2) {
+          int availableParallelism = JobSchedulerImpl.getJobPoolParallelism() - Math.max(0,getSurplusQueuedTaskCount());
           if (availableParallelism > 1) {
             // fork off several sub-tasks at once to reduce rampup
             for (int n=0; n<availableParallelism; n++) {
@@ -149,14 +144,27 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
               right.fork();
               hi = mid;
             }
-            start = finish;
           }
+        }
+        if (!processor.process(array.get(i))) {
+          throw new ComputationAbortedException();
         }
       }
 
       // traverse the list looking for a task available for stealing
       if (right != null) {
-        throwable = right.tryToExecAllList();
+        // tries to unfork, execute and re-link subtasks
+        ApplierCompleter<T> cur = right;
+        Throwable result = right.throwable;
+        while (cur != null) {
+          ProgressManager.checkCanceled();
+          if (cur.tryUnfork()) {
+            cur.execAndForkSubTasks();
+            result = moreImportant(result, cur.throwable);
+          }
+          cur = cur.next;
+        }
+        throwable = result;
       }
     }
     catch (Throwable e) {
@@ -202,7 +210,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         //a.onExceptionalCompletion(throwable, child);
         child = a;
         //noinspection unchecked
-        a = (ApplierCompleter)a.getCompleter();
+        a = (ApplierCompleter<T>)a.getCompleter();
         if (a == null) {
           // currently avoid using completeExceptionally since it leaks exceptions via ForkJoinTask.exceptionTable
           child.quietlyComplete();
@@ -219,21 +227,6 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     if (!progressIndicator.isCanceled()) {
       progressIndicator.cancel();
     }
-  }
-
-  // tries to unfork, execute and re-link subtasks
-  private Throwable tryToExecAllList() {
-    ApplierCompleter<T> right = this;
-    Throwable result = throwable;
-    while (right != null) {
-      ProgressManager.checkCanceled();
-      if (right.tryUnfork()) {
-        right.execAndForkSubTasks();
-        result = moreImportant(result, right.throwable);
-      }
-      right = right.next;
-    }
-    return result;
   }
 
   boolean completeTaskWhichFailToAcquireReadAction() {

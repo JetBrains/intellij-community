@@ -15,6 +15,7 @@
  */
 package org.intellij.images.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.ui.ImageComponentDecorator;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * Show/hide background action.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
- * @see org.intellij.images.ui.ImageComponentDecorator#setTransparencyChessboardVisible
+ * @see ImageComponentDecorator#setTransparencyChessboardVisible
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
   @Override
@@ -46,6 +47,6 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
     super.update(e);
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-    e.getPresentation().setText(isSelected(e) ? "Hide Chessboard" : "Show Chessboard");
+    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.chessboard") : IdeBundle.message("action.text.show.chessboard"));
   }
 }

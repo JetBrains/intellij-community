@@ -15,8 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
  * so it contains classes that is really needed in order to speed up tests startup.
  */
 public abstract class LightIdeaTestCase extends LightPlatformTestCase {
-  public static JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(ourProject);
+  public JavaPsiFacadeEx getJavaFacade() {
+    return JavaPsiFacadeEx.getInstanceEx(getProject());
   }
 
   @Override
@@ -42,7 +41,7 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
 
   @NotNull
   @Override
-  protected ModuleType getModuleType() {
-    return StdModuleTypes.JAVA;
+  protected String getModuleTypeId() {
+    return ModuleTypeId.JAVA_MODULE;
   }
 }

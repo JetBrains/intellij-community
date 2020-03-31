@@ -6,13 +6,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * @deprecated needed for {@link IdeConfigurablesGroup}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
@@ -21,9 +23,8 @@ abstract class ConfigurablesGroupBase implements ConfigurableGroup {
     myConfigurablesExtensionPoint = configurablesExtensionPoint;
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myChildren == null) {
       if (ApplicationManager.getApplication().isDisposed()) {
         return new Configurable[0];

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.configurationStore.SerializableScheme;
@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
   private static final String DESCRIPTION_TAG = "description";
 
   private String myDescription;
-  private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String[] myActionIds = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private SchemeState schemeState;
 
   /**
@@ -54,7 +54,7 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     return myActionIds;
   }
 
-  public void setActionIds(@NotNull String[] value) {
+  public void setActionIds(String @NotNull [] value) {
     myActionIds = value;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

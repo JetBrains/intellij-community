@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.*;
 
@@ -58,7 +57,6 @@ public class CollectClassMembersUtil {
       PsiClass current = queue.remove();
       if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
-        if (TransformationUtilKt.isUnderTransformation(current)) return false;
         for (PsiClass superClass : getSupers(current, false)) {
           queue.offer(superClass);
         }
@@ -139,8 +137,7 @@ public class CollectClassMembersUtil {
     }
   }
 
-  @NotNull
-  private static PsiField[] filterProperties(PsiField[] fields) {
+  private static PsiField @NotNull [] filterProperties(PsiField[] fields) {
     if (fields.length == 0) return PsiField.EMPTY_ARRAY;
 
     final List<String> fieldNamesList = mapNotNull(fields, it -> hasExplicitVisibilityModifiers(it) ? it.getName() : null);
@@ -150,28 +147,24 @@ public class CollectClassMembersUtil {
     return filter(fields, it -> hasExplicitVisibilityModifiers(it) || !fieldNames.remove(it.getName())).toArray(PsiField.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  public static PsiField @NotNull [] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
     PsiField[] fields = includeSynthetic || !(aClass instanceof GrTypeDefinition)
                         ? aClass.getFields()
                         : ((GrTypeDefinition)aClass).getCodeFields();
     return filterProperties(fields);
   }
 
-  @NotNull
-  public static PsiMethod[] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  public static PsiMethod @NotNull [] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
   }
 
-  @NotNull
-  public static PsiClass[] getInnerClasses(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  public static PsiClass @NotNull [] getInnerClasses(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition)
            ? aClass.getInnerClasses()
            : ((GrTypeDefinition)aClass).getCodeInnerClasses();
   }
 
-  @NotNull
-  public static PsiClass[] getSupers(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  public static PsiClass @NotNull [] getSupers(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return aClass instanceof GrTypeDefinition
            ? ((GrTypeDefinition)aClass).getSupers(includeSynthetic)
            : aClass.getSupers();

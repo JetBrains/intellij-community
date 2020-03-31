@@ -1,23 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -26,12 +34,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -48,25 +60,32 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private final JEditorPane myNameComponent = createNameComponent();
   private final BaselinePanel myNameAndButtons = new BaselinePanel();
   private JButton myRestartButton;
-  private JButton myInstallButton;
+  private InstallButton myInstallButton;
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
-  private JButton myUninstallButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myVersionSize;
   private TagPanel myTagPanel;
+  private JLabel myDate;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel mySize;
   private LinkPanel myVendor;
+  private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
+  private JBScrollPane myBottomScrollPane;
   private JEditorPane myDescriptionComponent;
+  private String myDescription;
+  private ChangeNotesPanel myChangeNotesPanel;
   private OneLineProgressIndicator myIndicator;
 
   public IdeaPluginDescriptor myPlugin;
   private IdeaPluginDescriptor myUpdateDescriptor;
+  private AbstractAction myEnableDisableAction;
+
+  private ListPluginComponent myShowComponent;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -77,6 +96,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     setEmptyState(false);
   }
 
+  public boolean isShowingPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return myPlugin != null && myPlugin.getPluginId().equals(pluginDescriptor.getPluginId());
+  }
+
   @Override
   protected JComponent create(Integer key) {
     if (key == 0) {
@@ -84,16 +107,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     if (key == 1) {
       myEmptyPanel = new JBPanelWithEmptyText();
-      myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
+      myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
       myEmptyPanel.setOpaque(true);
-      myEmptyPanel.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      myEmptyPanel.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
       return myEmptyPanel;
     }
     return super.create(key);
   }
 
   private void createPluginPanel() {
-    myPanel = new OpaquePanel(new BorderLayout(0, JBUI.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurable.MAIN_BG_COLOR);
     myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
@@ -107,7 +130,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUI.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     myPanel.add(header, BorderLayout.NORTH);
 
@@ -121,10 +144,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createCenterPanel() {
-    int offset = PluginManagerConfigurableNew.offset5();
+    int offset = PluginManagerConfigurable.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
-    myNameAndButtons.setYOffset(JBUI.scale(3));
+    myNameAndButtons.setYOffset(JBUIScale.scale(3));
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
@@ -168,38 +191,41 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
     myNameAndButtons.addButtonComponent(myUpdateButton = new UpdateButton());
-    myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
+    myUpdateButton.addActionListener(
+      e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
 
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
-    myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
+    myInstallButton
+      .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
     myEnableDisableButton = new JButton();
-    myEnableDisableButton.addActionListener(e -> changeEnableDisable());
+    myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
     ColorButton.setWidth72(myEnableDisableButton);
     myNameAndButtons.addButtonComponent(myEnableDisableButton);
 
-    AbstractAction enableDisableAction = new AbstractAction() {
+    myEnableDisableAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        changeEnableDisable();
+        myPluginModel.changeEnableDisable(myPlugin);
       }
     };
-    AbstractAction uninstallAction = new AbstractAction("Uninstall") {
+    AbstractAction uninstallAction = new AbstractAction(IdeBundle.message("plugins.configurable.uninstall.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doUninstall();
       }
     };
-    myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
-
-    myUninstallButton = new JButton("Uninstall");
-    myUninstallButton.addActionListener(e -> doUninstall());
-    ColorButton.setWidth72(myUninstallButton);
-    myNameAndButtons.addButtonComponent(myUninstallButton);
+    myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(myEnableDisableAction, uninstallAction));
 
     for (Component component : myNameAndButtons.getButtonComponents()) {
-      component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
+  }
+
+  public void setOnlyUpdateMode() {
+    myNameAndButtons.removeButtons();
+    myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
+    myEmptyPanel.setBorder(null);
   }
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
@@ -208,10 +234,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     myVersion.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurableNew.installTiny(myVersion);
+    PluginManagerConfigurable.setTinyFont(myVersion);
     myVersion.setBorder(null);
     myVersion.setOpaque(false);
-    myVersion.setForeground(CellPluginComponent.GRAY_COLOR);
+    myVersion.setForeground(ListPluginComponent.GRAY_COLOR);
     myVersion.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -223,68 +249,73 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersionSize = new JLabel();
     myVersionSize.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurableNew.installTiny(myVersionSize);
+    PluginManagerConfigurable.setTinyFont(myVersionSize);
 
-    int offset = JBUI.scale(10);
+    int offset = JBUIScale.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
     if (myMarketplace) {
       myDownloads =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, false);
 
       myRating =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, false);
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUIScale.scale(7)) {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
         if (myTagPanel != null && myTagPanel.isVisible()) {
           int baseline = myTagPanel.getBaseline(-1, -1);
           if (baseline != -1) {
-            Rectangle bounds = myVersion.getBounds();
-            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
-            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
+            Rectangle versionBounds = myVersion.getBounds();
+            Dimension versionSize = myVersion.getPreferredSize();
+            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionSize.width, versionSize.height);
+            myVersion.setBounds(versionBounds.x, versionY, versionBounds.width, versionBounds.height);
+
+            if (myDate.isVisible()) {
+              Rectangle dateBounds = myDate.getBounds();
+              Dimension dateSize = myDate.getPreferredSize();
+              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateSize.width, dateSize.height);
+              myDate.setBounds(dateBounds.x - JBUIScale.scale(4), dateY, dateBounds.width, dateBounds.height);
+            }
           }
         }
       }
     });
-    if (myMarketplace) {
-      panel2.add(myTagPanel = new TagPanel(mySearchListener));
-    }
+    panel2.add(myTagPanel = new TagPanel(mySearchListener));
     panel2.add(myVersion);
+    myDate =
+      ListPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, ListPluginComponent.GRAY_COLOR, true);
     centerPanel.add(panel2);
   }
 
   private void createBottomPanel() {
     JPanel bottomPanel =
-      new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5()), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      new OpaquePanel(new VerticalLayout(PluginManagerConfigurable.offset5()), PluginManagerConfigurable.MAIN_BG_COLOR);
     bottomPanel.setBorder(JBUI.Borders.empty(0, 0, 15, 20));
 
-    JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
-    scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
-    myPanel.add(scrollPane);
+    myBottomScrollPane = new JBScrollPane(bottomPanel);
+    myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+    myBottomScrollPane.setBorder(null);
+    myPanel.add(myBottomScrollPane);
+
+    bottomPanel.add(myLicensePanel);
+    myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
 
     myHomePage = new LinkPanel(bottomPanel, true, null, null);
     bottomPanel.add(new JLabel());
 
-    myDescriptionComponent = new JEditorPane();
-    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
-    StyleSheet sheet = kit.getStyleSheet();
-    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
-    myDescriptionComponent.setEditable(false);
-    myDescriptionComponent.setOpaque(false);
-    myDescriptionComponent.setBorder(null);
-    myDescriptionComponent.setContentType("text/html");
-    myDescriptionComponent.setEditorKit(kit);
-    myDescriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-
-    bottomPanel.add(myDescriptionComponent, JBUI.scale(700), -1);
+    Object constraints = JBUIScale.scale(700);
+    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(view -> {
+      float width = view.getPreferredSpan(View.X_AXIS);
+      if (width < 0 || width > myBottomScrollPane.getWidth()) {
+        myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+      }
+    }), constraints);
+    myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints, myDescriptionComponent);
 
     JLabel separator = new JLabel();
     separator.setBorder(JBUI.Borders.emptyTop(20));
@@ -295,7 +326,53 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  public void showPlugin(@Nullable CellPluginComponent component, boolean multiSelection) {
+  @NotNull
+  public static JEditorPane createDescriptionComponent(@Nullable Consumer<View> imageViewHandler) {
+    JEditorPane editorPane = new JEditorPane();
+
+    HTMLEditorKit kit;
+    if (imageViewHandler == null) {
+      kit = UIUtil.getHTMLEditorKit();
+    }
+    else {
+      kit = new JBHtmlEditorKit() {
+        private final ViewFactory myFactory = new JBHtmlFactory() {
+          @Override
+          public View create(Element e) {
+            View view = super.create(e);
+            if (view instanceof javax.swing.text.html.ImageView) {
+              imageViewHandler.accept(view);
+            }
+            return view;
+          }
+        };
+
+        @Override
+        public ViewFactory getViewFactory() {
+          return myFactory;
+        }
+      };
+    }
+    StyleSheet sheet = kit.getStyleSheet();
+    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
+    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
+
+    editorPane.setEditable(false);
+    editorPane.setOpaque(false);
+    editorPane.setBorder(null);
+    editorPane.setContentType("text/html");
+    editorPane.setEditorKit(kit);
+    editorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+
+    return editorPane;
+  }
+
+  public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
+    if (myShowComponent == component) {
+      return;
+    }
+    myShowComponent = component;
+
     if (myIndicator != null) {
       MyPluginModel.removeProgress(myPlugin, myIndicator);
       hideProgress(false, false);
@@ -308,7 +385,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myPlugin = component.myPlugin;
-      myUpdateDescriptor = ((NewListPluginComponent)component).myUpdateDescriptor;
+      myUpdateDescriptor = component.myUpdateDescriptor;
       showPlugin();
       select(0, true);
     }
@@ -318,11 +395,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     StatusText text = myEmptyPanel.getEmptyText();
     text.clear();
     if (multiSelection) {
-      text.setText("Several plugins selected.");
-      text.appendSecondaryText("Select one plugin to preview plugin details.", StatusText.DEFAULT_ATTRIBUTES, null);
+      text.setText(IdeBundle.message("plugins.configurable.several.plugins"));
+      text.appendSecondaryText(IdeBundle.message("plugins.configurable.one.plugin.details"), StatusText.DEFAULT_ATTRIBUTES, null);
     }
     else {
-      text.setText("Select plugin to preview details");
+      text.setText(IdeBundle.message("plugins.configurable.plugin.details"));
     }
   }
 
@@ -330,82 +407,37 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameComponent.setText("<html><span>" + myPlugin.getName() + "</span></html>");
     updateIcon();
 
-    if (myMarketplace) {
-      boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
-      myRestartButton.setVisible(installed);
-
-      myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
-      myInstallButton.setVisible(!installed);
-
-      myUpdateButton.setVisible(false);
-      myEnableDisableButton.setVisible(false);
-      myEnableDisableUninstallButton.setVisible(false);
-      myUninstallButton.setVisible(false);
-    }
-    else {
-      myInstallButton.setVisible(false);
-
-      boolean restart = myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted();
-      if (!restart) {
-        InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
-        PluginId id = myPlugin.getPluginId();
-        restart = pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id);
-      }
-
-      if (restart) {
-        myRestartButton.setVisible(true);
-        myUpdateButton.setVisible(false);
-        myEnableDisableButton.setVisible(false);
-        myEnableDisableUninstallButton.setVisible(false);
-        myUninstallButton.setVisible(false);
-      }
-      else {
-        myRestartButton.setVisible(false);
-
-        boolean bundled = myPlugin.isBundled();
-        String title = myPluginModel.getEnabledTitle(myPlugin);
-        boolean errors = myPluginModel.hasErrors(myPlugin);
-
-        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-
-        myEnableDisableButton.setVisible(bundled && !errors);
-        myEnableDisableButton.setText(title);
-
-        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-        myEnableDisableUninstallButton.setText(title);
-
-        myUninstallButton.setVisible(!bundled && errors);
-      }
-
-      updateEnableForNameAndIcon();
-      updateErrors();
-    }
+    updateButtons();
 
     boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
-    String version = bundled ? "bundled" : myPlugin.getVersion();
+    String version = myPlugin.getVersion();
+    if (bundled) {
+      version = "bundled" + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
+    }
     if (myUpdateDescriptor != null) {
-      version = myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + myUpdateDescriptor.getVersion();
+      version = PluginManagerConfigurable.getVersion(myPlugin, myUpdateDescriptor);
     }
 
     myVersion.setText(version);
     myVersionSize.setText(version);
-    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUI.scale(4), myVersion.getPreferredSize().height));
+    myVersion
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
-    if (myMarketplace) {
-      myTagPanel.setTags(PluginManagerConfigurableNew.getTags(myPlugin));
+    myTagPanel.setTags(PluginManagerConfigurable.getTags(myPlugin));
 
-      String rating = PluginManagerConfigurableNew.getRating(myPlugin);
+    if (myMarketplace) {
+      String rating = PluginManagerConfigurable.getRating(myPlugin);
       myRating.setText(rating);
       myRating.setVisible(rating != null);
 
-      String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
+      String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
       myDownloads.setText(downloads);
       myDownloads.setVisible(downloads != null);
 
-      String size = PluginManagerConfigurableNew.getSize(myPlugin);
-      mySize.setText("Size: " + size);
+      String size = PluginManagerConfigurable.getSize(myPlugin);
+      mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
       mySize.setVisible(!StringUtil.isEmptyOrSpaces(size));
     }
 
@@ -418,22 +450,38 @@ public class PluginDetailsPageComponent extends MultiPanel {
         .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
+    showLicensePanel();
+
     if (bundled) {
       myHomePage.hide();
     }
     else {
-      myHomePage.show("Plugin homepage", () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                                  URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"), () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
-    String description = getDescriptionAndChangeNotes();
-    if (description != null) {
+    String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
+    myDate.setText(date);
+    myDate.setVisible(date != null);
+
+    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    String description = getDescription();
+    if (description != null && !description.equals(myDescription)) {
+      myDescription = description;
       myDescriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
       if (myDescriptionComponent.getCaret() != null) {
         myDescriptionComponent.setCaretPosition(0);
       }
     }
     myDescriptionComponent.setVisible(description != null);
+
+    myChangeNotesPanel.show(getChangeNotes());
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      IdeEventQueue.getInstance().flushQueue();
+      ((JBScrollBar)myBottomScrollPane.getVerticalScrollBar()).setCurrentValue(0);
+    }, ModalityState.any());
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress();
@@ -443,13 +491,113 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private void updateIcon() {
-    boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
-    boolean errors = myPluginModel.hasErrors(myPlugin);
+  private void showLicensePanel() {
+    String productCode = myPlugin.getProductCode();
+    if (productCode == null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setVisible(true);
+      }
+      else {
+        myLicensePanel.hideWithChildren();
+      }
+    }
+    else if (myMarketplace) {
+      myLicensePanel.setText(IdeBundle.message("label.use.the.trial.for.up.to.30.days.or"), false, false);
+      myLicensePanel.showBuyPlugin(() -> myPlugin);
+      myLicensePanel.setVisible(true);
+    }
+    else {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance == null) {
+        myLicensePanel.hideWithChildren();
+        return;
+      }
 
-    myIconLabel.setEnabled(myPlugin instanceof PluginNode || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
+      String stamp = instance.getConfirmationStamp(productCode);
+      if (stamp == null) {
+        if (ApplicationManager.getApplication().isEAP()) {
+          myTagPanel.setFirstTagTooltip("The license is not required for EAP version");
+          myLicensePanel.hideWithChildren();
+          return;
+        }
+        myLicensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
+      }
+      else {
+        myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
+      }
+
+      myTagPanel.setFirstTagTooltip(myLicensePanel.getMessage());
+      //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
+      myLicensePanel.setVisible(true);
+    }
+  }
+
+  public void updateButtons() {
+    boolean installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId());
+    if (myMarketplace) {
+      boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
+      myRestartButton.setVisible(installed);
+
+      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null && !installedWithoutRestart,
+                                 IdeBundle.message("plugins.configurable.installed"));
+      myInstallButton.setVisible(!installed);
+
+      myUpdateButton.setVisible(false);
+      myEnableDisableButton.setVisible(false);
+      myEnableDisableUninstallButton.setVisible(false);
+    }
+    else {
+      myInstallButton.setVisible(false);
+
+      boolean uninstalled = myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted();
+      boolean uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(myPlugin.getPluginId());
+      if (!uninstalled) {
+        InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
+        PluginId id = myPlugin.getPluginId();
+        uninstalled = pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id);
+      }
+
+      if (uninstalled) {
+        if (uninstalledWithoutRestart) {
+          myRestartButton.setVisible(false);
+          myInstallButton.setVisible(true);
+          myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+        }
+        else {
+          myRestartButton.setVisible(true);
+        }
+        myUpdateButton.setVisible(false);
+        myEnableDisableButton.setVisible(false);
+        myEnableDisableUninstallButton.setVisible(false);
+      }
+      else {
+        myRestartButton.setVisible(false);
+
+        boolean bundled = myPlugin.isBundled();
+        String title = myPluginModel.getEnabledTitle(myPlugin);
+
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !installedWithoutRestart);
+
+        myEnableDisableButton.setVisible(bundled);
+        myEnableDisableButton.setText(title);
+
+        myEnableDisableUninstallButton.setVisible(!bundled);
+        myEnableDisableAction.putValue(Action.NAME, title);
+      }
+
+      updateEnableForNameAndIcon();
+      updateErrors();
+    }
+  }
+
+  private void updateIcon() {
+    boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
+
+    myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
+    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, false, errors, false));
+    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, false, errors, true));
   }
 
   private void updateErrors() {
@@ -457,13 +605,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (errors) {
       Ref<String> enableAction = new Ref<>();
       String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
-      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : this::handleErrors);
+      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
     }
     myErrorComponent.setVisible(errors);
   }
 
   private void handleErrors() {
     myPluginModel.enableRequiredPlugins(myPlugin);
+
     updateIcon();
     updateEnabledState();
     fullRepaint();
@@ -471,7 +620,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void showProgress() {
     myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
+    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
     myNameAndButtons.setProgressComponent(null, myIndicator.createBaselineWrapper());
 
     MyPluginModel.addProgress(myPlugin, myIndicator);
@@ -494,16 +643,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.removeProgressComponent();
 
     if (success) {
-      enableRestart();
+      updateButtons();
     }
     if (repaint) {
       fullRepaint();
     }
-  }
-
-  private void changeEnableDisable() {
-    myPluginModel.changeEnableDisable(myPlugin);
-    updateEnabledState();
   }
 
   private void updateEnableForNameAndIcon() {
@@ -522,48 +666,38 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateErrors();
 
     boolean bundled = myPlugin.isBundled();
-    boolean errors = myPluginModel.hasErrors(myPlugin);
     String title = myPluginModel.getEnabledTitle(myPlugin);
 
     myEnableDisableButton.setText(title);
     myEnableDisableUninstallButton.setText(title);
-    myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-    myEnableDisableButton.setVisible(bundled && !errors);
-    myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-    myUninstallButton.setVisible(!bundled && errors);
+    myUpdateButton.setVisible(myUpdateDescriptor != null);
+    myEnableDisableButton.setVisible(bundled);
+    myEnableDisableUninstallButton.setVisible(!bundled);
 
     fullRepaint();
   }
 
   private void doUninstall() {
-    if (MyPluginModel.showUninstallDialog(myPlugin.getName(), 1)) {
-      myPluginModel.doUninstall(this, myPlugin, null);
+    if (MyPluginModel.showUninstallDialog(this, myPlugin.getName(), 1)) {
+      myPluginModel.uninstallAndUpdateUi(this, myPlugin);
     }
-  }
-
-  public void enableRestart() {
-    myInstallButton.setVisible(false);
-    myUpdateButton.setVisible(false);
-    myEnableDisableButton.setVisible(false);
-    myEnableDisableUninstallButton.setVisible(false);
-    myUninstallButton.setVisible(false);
-    myRestartButton.setVisible(true);
   }
 
   @Nullable
-  private String getDescriptionAndChangeNotes() {
-    StringBuilder result = new StringBuilder();
-
+  private String getDescription() {
     String description = myPlugin.getDescription();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      result.append(description);
-    }
+    return StringUtil.isEmptyOrSpaces(description) ? null : description;
+  }
 
+  @Nullable
+  private String getChangeNotes() {
+    if (myUpdateDescriptor != null) {
+      String notes = myUpdateDescriptor.getChangeNotes();
+      if (!StringUtil.isEmptyOrSpaces(notes)) {
+        return notes;
+      }
+    }
     String notes = myPlugin.getChangeNotes();
-    if (!StringUtil.isEmptyOrSpaces(notes)) {
-      result.append("<h4>Change Notes</h4>").append(notes);
-    }
-
-    return result.length() > 0 ? result.toString() : null;
+    return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 }

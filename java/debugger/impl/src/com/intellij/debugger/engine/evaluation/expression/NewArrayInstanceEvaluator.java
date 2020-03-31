@@ -2,7 +2,7 @@
 
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class NewArrayInstanceEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.NewArrayInstanceEvaluator");
+  private static final Logger LOG = Logger.getInstance(NewArrayInstanceEvaluator.class);
   private final Evaluator myArrayTypeEvaluator;
   private final Evaluator myDimensionEvaluator;
   private final Evaluator myInitializerEvaluator;
@@ -36,7 +36,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     Object obj = myArrayTypeEvaluator.evaluate(context);
     if (!(obj instanceof ArrayType)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.array.type.expected"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.type.expected"));
     }
     ArrayType arrayType = (ArrayType)obj;
     int dimension;
@@ -45,7 +45,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
       Object o = myDimensionEvaluator.evaluate(context);
       if (!(o instanceof Value && DebuggerUtils.isNumeric((Value)o))) {
         throw EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.array.dimention.numeric.value.expected")
+          JavaDebuggerBundle.message("evaluation.error.array.dimention.numeric.value.expected")
         );
       }
       PrimitiveValue value = (PrimitiveValue)o;
@@ -54,7 +54,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     else { // myInitializerEvaluator must not be null
       Object o = myInitializerEvaluator.evaluate(context);
       if (!(o instanceof Object[])) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.array.initializer"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.array.initializer"));
       }
       initialValues = (Object[])o;
       dimension = initialValues.length;
@@ -110,17 +110,17 @@ class NewArrayInstanceEvaluator implements Evaluator {
         setInitialValues(arrayReference, values, context);
       }
       else {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", ex.className()));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", ex.className()));
       }
     }
     catch (InvalidTypeException ex) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.array.initializer.type"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.array.initializer.type"));
     }
     catch (IndexOutOfBoundsException ex) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.array.size"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.array.size"));
     }
     catch (ClassCastException ex) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.initialize.array"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.initialize.array"));
     }
   }
 }

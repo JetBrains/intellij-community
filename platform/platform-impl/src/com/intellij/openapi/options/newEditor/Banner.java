@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
@@ -18,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
 final class Banner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
@@ -57,10 +53,9 @@ final class Banner extends SimpleBanner {
     }
     else {
       myProjectIcon.setVisible(true);
-      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
       myProjectIcon.setText(project.isDefault()
-                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
-                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
+                            ? IdeUICustomization.getInstance().projectMessage("configurable.default.project.tooltip")
+                            : IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip"));
     }
   }
 

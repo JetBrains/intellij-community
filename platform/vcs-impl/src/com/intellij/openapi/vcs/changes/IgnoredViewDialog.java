@@ -6,16 +6,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class IgnoredViewDialog extends SpecificFilesViewDialog {
   public IgnoredViewDialog(@NotNull Project project) {
-    super(project, "Ignored Files", ChangesListView.IGNORED_FILES_DATA_KEY,
-          ChangeListManagerImpl.getInstanceImpl(project).getIgnoredFiles());
+    super(project, "Ignored Files", ChangesListView.IGNORED_FILE_PATHS_DATA_KEY,
+          ChangeListManagerImpl.getInstanceImpl(project).getIgnoredFilePaths());
   }
 
   @Override
@@ -28,7 +28,7 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
 
   @NotNull
   @Override
-  protected List<VirtualFile> getFiles() {
-    return ChangeListManagerImpl.getInstanceImpl(myProject).getIgnoredFiles();
+  protected List<FilePath> getFiles() {
+    return ChangeListManagerImpl.getInstanceImpl(myProject).getIgnoredFilePaths();
   }
 }

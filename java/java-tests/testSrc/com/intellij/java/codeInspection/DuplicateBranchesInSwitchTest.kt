@@ -3,12 +3,12 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class DuplicateBranchesInSwitchTest : LightCodeInsightFixtureTestCase() {
+class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = DuplicateBranchesInSwitchInspection()
 
   override fun setUp() {

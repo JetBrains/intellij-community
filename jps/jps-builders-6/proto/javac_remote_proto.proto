@@ -44,6 +44,7 @@ message Message {
     repeated OutputGroup output = 7;
     repeated string module_path = 8;
     repeated string upgrade_module_path = 9;
+    map<string,string> module_names = 10;
   }
 
   message Response {
@@ -91,6 +92,7 @@ message Message {
      optional string class_name = 5;
      optional string source_uri = 6;
      optional bytes content = 7;
+     optional string location = 8;
     }
 
     message ClassData {

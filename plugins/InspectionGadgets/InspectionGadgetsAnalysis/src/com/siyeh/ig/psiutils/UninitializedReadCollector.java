@@ -33,8 +33,7 @@ public class UninitializedReadCollector {
     uninitializedReads = new HashSet<>();
   }
 
-  @NotNull
-  public PsiExpression[] getUninitializedReads() {
+  public PsiExpression @NotNull [] getUninitializedReads() {
     return uninitializedReads.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
@@ -157,6 +156,11 @@ public class UninitializedReadCollector {
       final PsiStatement body = switchLabeledRuleStatement.getBody();
       return statementAssignsVariable(body, variable, stamp, checkedMethods);
     }
+    else if (statement instanceof PsiYieldStatement) {
+      final PsiYieldStatement yieldStatement = (PsiYieldStatement)statement;
+      final PsiExpression expression = yieldStatement.getExpression();
+      return expressionAssignsVariable(expression, variable, stamp, checkedMethods);
+    }
     else {
       assert false : "unknown statement: " + statement;
       return false;
@@ -189,13 +193,19 @@ public class UninitializedReadCollector {
         assigns = false;
       }
       else if (statement instanceof PsiBreakStatement) {
-        final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        final PsiExpression valueExpression = breakStatement.getValueExpression();
-        if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
-          assigns = true;
-        }
-        if (breakStatement.getLabelIdentifier() != null || !assigns) {
+        if (((PsiBreakStatement)statement).getLabelIdentifier() != null || !assigns) {
           return false;
+        }
+      }
+      else if (statement instanceof PsiYieldStatement) {
+        PsiExpression valueExpression = ((PsiYieldStatement)statement).getExpression();
+        if (!assigns) {
+          if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
+            assigns = true;
+          }
+          else {
+            return false;
+          }
         }
       }
       else {

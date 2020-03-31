@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diff.util.Range
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -17,10 +20,7 @@ private typealias TrackerState = ChangelistsLocalLineStatusTracker.State
 private typealias FullTrackerState = ChangelistsLocalLineStatusTracker.FullState
 
 @State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
-class PartialLineStatusTrackerManagerState(
-  private val project: Project,
-  private val lineStatusTracker: LineStatusTrackerManager
-) : ProjectComponent, PersistentStateComponent<Element> {
+class PartialLineStatusTrackerManagerState(private val project: Project) : PersistentStateComponent<Element> {
   private val NODE_PARTIAL_FILE = "file"
   private val ATT_PATH = "path"
 
@@ -36,10 +36,9 @@ class PartialLineStatusTrackerManagerState(
   private val ATT_END_2 = "end2"
   private val ATT_CHANGELIST_ID = "changelist"
 
-
   override fun getState(): Element {
     val element = Element("state")
-    val fileStates = lineStatusTracker.collectPartiallyChangedFilesStates()
+    val fileStates = (LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager).collectPartiallyChangedFilesStates()
     for (state in fileStates) {
       element.addContent(writePartialFileState(state))
     }
@@ -57,7 +56,7 @@ class PartialLineStatusTrackerManagerState(
     if (fileStates.isNotEmpty()) {
       ChangeListManager.getInstance(project).invokeAfterUpdate(
         {
-          lineStatusTracker.restoreTrackersForPartiallyChangedFiles(fileStates)
+          (LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager).restoreTrackersForPartiallyChangedFiles(fileStates)
         }, InvokeAfterUpdateMode.SILENT, null, null)
     }
   }

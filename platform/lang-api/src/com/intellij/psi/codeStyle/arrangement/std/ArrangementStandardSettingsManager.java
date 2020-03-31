@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -8,7 +8,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,8 +207,8 @@ public class ArrangementStandardSettingsManager {
   }
 
   public List<ArrangementSettingsToken> sort(@NotNull Collection<? extends ArrangementSettingsToken> tokens) {
-    List<ArrangementSettingsToken> result = ContainerUtilRt.newArrayList(tokens);
-    Collections.sort(result, myComparator);
+    List<ArrangementSettingsToken> result = new ArrayList<>(tokens);
+    result.sort(myComparator);
     return result;
   }
 }

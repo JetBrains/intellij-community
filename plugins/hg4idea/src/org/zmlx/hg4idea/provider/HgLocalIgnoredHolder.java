@@ -5,7 +5,6 @@ import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgStatusCommand;
@@ -20,15 +19,15 @@ import java.util.Set;
 public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<HgRepository> {
 
   public HgLocalIgnoredHolder(@NotNull HgRepository repository, @NotNull HgRepositoryManager repositoryManager) {
-    super(repository, repositoryManager, "HgIgnoreUpdate", "hgRescanIgnored");
+    super(repository, repositoryManager);
   }
 
   @NotNull
   @Override
-  protected Set<VirtualFile> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
-    Set<VirtualFile> ignored = new HashSet<>();
+  protected Set<FilePath> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
+    Set<FilePath> ignored = new HashSet<>();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
-                     .getFiles(repository.getRoot(), paths != null ? new ArrayList<FilePath>(paths) : null));
+                     .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<FilePath>(paths) : null));
     return ignored;
   }
 

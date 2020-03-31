@@ -35,10 +35,6 @@ class UnsupportedFeatures {
     System.out.println(<error descr="'switch' expressions are not supported at language level '6'">switch (list.size()) {
       default -> "whoa!";
     }</error>);
-    switch (list.size()) {
-      case 0: break <error descr="'switch' expressions are not supported at language level '6'">null</error>;
-      case 1: break <error descr="Undefined label: 'boo'">boo</error>;
-    }
   }
 
   void f(<error descr="Receiver parameters are not supported at language level '6'">Object this</error>) { }

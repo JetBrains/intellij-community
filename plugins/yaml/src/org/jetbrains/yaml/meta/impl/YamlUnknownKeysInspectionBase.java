@@ -13,7 +13,7 @@ import org.jetbrains.yaml.meta.model.YamlScalarType;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override

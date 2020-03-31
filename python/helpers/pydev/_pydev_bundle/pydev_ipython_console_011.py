@@ -85,6 +85,32 @@ class PyDevIPCompleter(IPCompleter):
         if self.python_matches in self.matchers:
             # `self.python_matches` matches attributes or global python names
             self.matchers.remove(self.python_matches)
+            
+class PyDevIPCompleter6(IPCompleter):
+    _pydev_matchers = None
+
+    def __init__(self, *args, **kwargs):
+        """ Create a Completer that reuses the advanced completion support of PyDev
+            in addition to the completion support provided by IPython """
+        IPCompleter.__init__(self, *args, **kwargs)
+
+    @property
+    def matchers(self):
+        # To remove python_matches we now have to override it as it's now a property in the superclass.
+        if self._pydev_matchers is None:
+            self._pydev_matchers = self._remove_python_matches(IPCompleter.matchers.fget(self))
+        return self._pydev_matchers
+
+    @matchers.setter
+    def matchers(self, value):
+        # Provide a setter for an overridden property
+        self._pydev_matchers = self._remove_python_matches(value)
+
+    def _remove_python_matches(self, original_matchers):
+        # `self.python_matches` matches attributes or global python names
+        if self.python_matches in original_matchers:
+            original_matchers.remove(self.python_matches)
+        return original_matchers
 
 
 class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
@@ -198,6 +224,15 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                                      )
         return completer
 
+    def _new_completer_600(self):
+        completer = PyDevIPCompleter6(shell=self,
+                                     namespace=self.user_ns,
+                                     global_namespace=self.user_global_ns,
+                                     use_readline=False,
+                                     parent=self
+                                     )
+        return completer
+
     def add_completer_hooks(self):
         from IPython.core.completerlib import module_completer, magic_run_completer, cd_completer
         try:
@@ -231,7 +266,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         # extra information.
         # See getCompletions for where the two sets of results are merged
 
-        if IPythonRelease._version_major >= 5:
+        if IPythonRelease._version_major >= 6:
+            self.Completer = self._new_completer_600()
+        elif IPythonRelease._version_major >= 5:
             self.Completer = self._new_completer_500()
         elif IPythonRelease._version_major >= 2:
             self.Completer = self._new_completer_234()
@@ -325,10 +362,14 @@ class _PyDevFrontEnd:
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
-        self.ipython.user_ns = locals
+
+        # If `globals` and `locals` passed to the method are the same objects, we have to ensure that they are also
+        # the same in the IPython evaluation context to avoid troubles with some corner-cases such as generator expressions.
+        # See: `pydevd_console_integration.console_exec()`.
+        self.ipython.user_ns = self.ipython.user_global_ns if globals is locals else locals
 
         if hasattr(self.ipython, 'history_manager') and hasattr(self.ipython.history_manager, 'save_thread'):
-            self.ipython.history_manager.save_thread.pydev_do_not_trace = True #don't trace ipython history saving thread
+            self.ipython.history_manager.save_thread.pydev_do_not_trace = True  # don't trace ipython history saving thread
 
     def complete(self, string):
         try:

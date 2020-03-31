@@ -34,7 +34,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
+  private static final Logger LOG = Logger.getInstance(DomAnchorImpl.class);
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t) {
     return createAnchor(t, true);
@@ -121,13 +121,12 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
         for (XmlAttribute attribute : parentTag.getAttributes()) {
           diag.append(", attr: ").append(attribute.getName());
         }
-        diag.append("\n");
       } else {
         for (XmlTag tag : parentTag.getSubTags()) {
           diag.append("\n subtag: ").append(tag.getName());
         }
-        diag.append("\n");
       }
+      diag.append("\n");
     }
     diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
     LOG.error(diag);

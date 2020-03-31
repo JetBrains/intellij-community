@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
@@ -32,6 +32,6 @@ public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOpt
   @Override
   @NotNull
   public String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.ask");
+    return UIBundle.message("dialog.options.do.not.ask");
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -18,7 +17,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -26,6 +24,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
+import org.junit.Assume;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,15 +52,6 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     public Sdk getSdk() {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
-      if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
-        String home = jdk.getHomeDirectory().getParent().getPath();
-        VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
-        String toolsPath = home + "/lib/tools.jar!/";
-        VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
-        assertNotNull("tools.jar not found: " + toolsPath, toolsJar);
-
-        sdk = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
-      }
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
@@ -83,21 +74,23 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   };
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return myDescriptor;
   }
 
   public void testBundledAnnotationXmlSyntax() {
+    String version = getProjectDescriptor().getSdk().getVersionString();
+    Assume.assumeTrue("This test requires boot JDK 11; actual: "+version,
+                       version.startsWith("java version \"11"));
     String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
     findAnnotationsXmlAndCheckSyntax(root);
   }
 
-  private static void findAnnotationsXmlAndCheckSyntax(String root) {
+  private void findAnnotationsXmlAndCheckSyntax(String root) {
     VirtualFile jdkAnnoRoot = LocalFileSystem.getInstance().findFileByPath(root);
     VfsUtilCore.visitChildrenRecursively(
-      jdkAnnoRoot, new VirtualFileVisitor() {
+      jdkAnnoRoot, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (file.getName().equals("annotations.xml")) {
@@ -109,7 +102,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       });
   }
 
-  private static void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
+  private void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
     //System.out.println("file = " + file);
     ExternalAnnotationsManagerImpl manager = (ExternalAnnotationsManagerImpl)ExternalAnnotationsManager.getInstance(getProject());
     PsiFile psiFile = getPsiManager().findFile(file);
@@ -126,7 +119,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   }
 
-  private static PsiClass assertClassFqn(@NotNull String text,
+  private PsiClass assertClassFqn(@NotNull String text,
                                          @NotNull PsiFile psiFile,
                                          @NotNull String externalName,
                                          @Nullable("null means can be any") String assumedPackage) {
@@ -152,11 +145,14 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
   }
 
-  private static void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
+  private void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
     // 'item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0"' should have all FQNs
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
+    if (words.size() == 1 && JavaPsiFacade.getInstance(getProject()).findPackage(className) != null) {
+      return;
+    }
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
     if (words.size() == 1) return;
 

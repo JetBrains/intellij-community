@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -23,8 +9,10 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -36,19 +24,31 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
-public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
+
+public final class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
   public static final Comparator<GitRepository> DEPENDENCY_COMPARATOR =
-    (repo1, repo2) -> - VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
+    (repo1, repo2) -> -VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
 
-  @NotNull private final GitVcsSettings mySettings;
+  private final ExecutorService myUpdateExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("GitRepositoryManager");
+
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
-  public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    super(vcsRepositoryManager, GitVcs.getInstance(project), GitUtil.DOT_GIT);
-    mySettings = GitVcsSettings.getInstance(project);
+  public GitRepositoryManager(@NotNull Project project) {
+    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
+  }
+
+  /**
+   * @deprecated Use {@link #GitRepositoryManager(Project)}
+   */
+  @Deprecated
+  public GitRepositoryManager(@NotNull Project project, @SuppressWarnings("unused") @NotNull VcsRepositoryManager vcsRepositoryManager) {
+    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
   }
 
   @NotNull
@@ -58,7 +58,7 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @Override
   public boolean isSyncEnabled() {
-    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
+    return GitVcsSettings.getInstance(getVcs().getProject()).getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
   }
 
   @NotNull
@@ -107,6 +107,14 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
     });
   }
 
+  void notifyListenersAsync(@NotNull GitRepository repository) {
+    myUpdateExecutor.execute(() -> {
+      if (!Disposer.isDisposed(repository)) {
+        syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
+      }
+    });
+  }
+
   /**
    * <p>Sorts repositories "by dependency",
    * which means that if one repository "depends" on the other, it should be updated or pushed first.</p>
@@ -114,7 +122,7 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
    * <p>If repositories are independent of each other, they are sorted {@link DvcsUtil#REPOSITORY_COMPARATOR by path}.</p>
    */
   @NotNull
-  public List<GitRepository> sortByDependency(@NotNull Collection<GitRepository> repositories) {
+  public List<GitRepository> sortByDependency(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.sorted(repositories, DEPENDENCY_COMPARATOR);
   }
 }

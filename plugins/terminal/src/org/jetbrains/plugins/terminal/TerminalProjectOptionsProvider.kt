@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
@@ -8,14 +9,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.SystemInfo
-import java.io.File
+import com.intellij.util.xmlb.annotations.Property
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 
-/**
- * @author traff
- */
 @State(name = "TerminalProjectOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
@@ -27,10 +24,21 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   override fun loadState(state: State) {
     myState.myStartingDirectory = state.myStartingDirectory
+    myState.envDataOptions = state.envDataOptions
+  }
+
+  fun getEnvData(): EnvironmentVariablesData {
+    return myState.envDataOptions.get()
+  }
+
+  fun setEnvData(envData: EnvironmentVariablesData) {
+    myState.envDataOptions.set(envData)
   }
 
   class State {
     var myStartingDirectory: String? = null
+    @get:Property(surroundWithTag = false, flat = true)
+    var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
   var startingDirectory: String? by ValueWithDefault(State::myStartingDirectory, myState) { defaultStartingDirectory }
@@ -65,7 +73,13 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      return ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
+      val provider = ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
+      val appEnvData = TerminalOptionsProvider.instance.getEnvData()
+      if (provider.getEnvData() == EnvironmentVariablesData.DEFAULT && appEnvData != EnvironmentVariablesData.DEFAULT) {
+        provider.setEnvData(appEnvData)
+        TerminalOptionsProvider.instance.setEnvData(EnvironmentVariablesData.DEFAULT)
+      }
+      return provider
     }
   }
 

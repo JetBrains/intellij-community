@@ -8,12 +8,10 @@ class Test {
             } else {
                 result = 4;
             }
+        } else if (s.isEmpty()) {
+            result = 3;
         } else {
-            if (s.isEmpty()) {
-                result = 3;
-            } else {
-                System.out.println(s);
-            }
+            System.out.println(s);
         }
         return result;
     }

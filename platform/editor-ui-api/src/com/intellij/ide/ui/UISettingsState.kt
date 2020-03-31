@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 class UISettingsState : BaseState() {
   companion object {
@@ -18,9 +20,8 @@ class UISettingsState : BaseState() {
      */
     @JvmStatic
     val defFontSize: Int
-      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale)
+      get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale).roundToInt()
   }
-
 
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
@@ -34,9 +35,11 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
   var recentLocationsLimit by property(25)
 
@@ -47,6 +50,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB")
   var consoleCycleBufferSizeKb by property(1024)
 
+  @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
   var editorTabLimit by property(10)
 
@@ -70,32 +74,42 @@ class UISettingsState : BaseState() {
   var showEditorToolTip by property(true)
   @get:OptionTag("SHOW_MEMORY_INDICATOR")
   var showMemoryIndicator by property(false)
+  @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
+  var showWriteThreadIndicator by property(false)
   @get:OptionTag("ALLOW_MERGE_BUTTONS")
   var allowMergeButtons by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar by property(true)
+  @get:OptionTag("SHOW_MAIN_MENU")
+  var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
-  @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS")
-  var alwaysShowWindowsButton by property(false)
+  @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
+  var showMembersInNavigationBar by property(true)
   @get:OptionTag("CYCLE_SCROLLING")
   var cycleScrolling by property(true)
+  @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")
+  var selectedTabsLayoutInfoId by string(null)
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")
-  var hideTabsIfNeed by property(true)
+  var hideTabsIfNeeded by property(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON")
   var showCloseButton by property(true)
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")
   var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT")
   var editorTabPlacement: Int by property(SwingConstants.TOP)
+  @get:OptionTag("SHOW_FILE_ICONS_IN_TABS")
+  var showFileIconInTabs by property(true)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS")
   var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
+  var showTreeIndentGuides by property(false)
+  var compactTreeIndents by property(false)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
@@ -120,6 +134,9 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()
+  @get:OptionTag("CONTRAST_SCROLLBARS")
+  var useContrastScrollBars by property(false)
+
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON")
   var moveMouseOnDefaultButton by property(false)
   @get:OptionTag("ENABLE_ALPHA_MODE")
@@ -131,7 +148,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
-  var showIconsInMenus by property(!PlatformUtils.isAppCode())
+  var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics by property(SystemInfo.isMac)
@@ -149,7 +166,7 @@ class UISettingsState : BaseState() {
   var dndWithPressedAltOnly by property(false)
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource by property(false)
-  @Transient
+  @get:Transient
   var presentationMode: Boolean = false
   @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
   var presentationModeFontSize by property(24)
@@ -159,9 +176,27 @@ class UISettingsState : BaseState() {
   var showTabsTooltips by property(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES")
   var showDirectoryForNonUniqueFilenames by property(true)
-  var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
+  var smoothScrolling by property(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
+  @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
+  var fullPathsInWindowHeader by property(false)
+
+  var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
+  var animatedScrollingDuration by property(
+    when {
+      SystemInfo.isWindows -> 200
+      SystemInfo.isMac -> 50
+      else -> 150
+    }
+  )
+  var animatedScrollingCurvePoints by property(
+    when {
+      SystemInfo.isWindows -> 1684366536
+      SystemInfo.isMac -> 845374563
+      else -> 729434056
+    }
+  )
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
   var sortLookupElementsLexicographically by property(false)

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication.accounts
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -35,5 +36,12 @@ class GithubAccountInformationProvider {
   @Throws(IOException::class)
   fun getInformation(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount): GithubAuthenticatedUser {
     return informationCache.get(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)) }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): GithubAccountInformationProvider {
+      return service()
+    }
   }
 }

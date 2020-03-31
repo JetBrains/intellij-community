@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MakeClassInterfaceFix");
+  private static final Logger LOG = Logger.getInstance(MakeClassInterfaceFix.class);
 
   private final boolean myMakeInterface;
   private final String myName;
@@ -93,7 +93,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
   private static void convertPsiClass(PsiClass aClass, final boolean makeInterface) throws IncorrectOperationException {
     final IElementType lookFor = makeInterface? JavaTokenType.CLASS_KEYWORD : JavaTokenType.INTERFACE_KEYWORD;
     final PsiKeyword replaceWith = JavaPsiFacade.getElementFactory(aClass.getProject()).createKeyword(makeInterface? PsiKeyword.INTERFACE : PsiKeyword.CLASS);
-    for (PsiElement psiElement : aClass.getChildren()) {
+    for (PsiElement psiElement = aClass.getFirstChild(); psiElement != null; psiElement = psiElement.getNextSibling()) {
       if (psiElement instanceof PsiKeyword) {
         final PsiKeyword psiKeyword = (PsiKeyword)psiElement;
         if (psiKeyword.getTokenType() == lookFor) {

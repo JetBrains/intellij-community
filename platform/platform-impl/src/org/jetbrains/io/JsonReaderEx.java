@@ -109,7 +109,7 @@ public final class JsonReaderEx implements Closeable {
     stack[stackSize++] = JsonScope.EMPTY_DOCUMENT;
   }
 
-  private JsonReaderEx(@NotNull CharSequence in, int start, @NotNull int[] stack) {
+  private JsonReaderEx(@NotNull CharSequence in, int start, int @NotNull [] stack) {
     this.in = in;
     position = start;
     limit = in.length();

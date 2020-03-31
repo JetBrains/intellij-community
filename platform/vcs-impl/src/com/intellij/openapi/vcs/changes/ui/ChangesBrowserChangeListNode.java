@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.openapi.vcs.changes.ChangeListDataKt.getChangeListData;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static one.util.streamex.StreamEx.of;
 
@@ -24,15 +25,15 @@ import static one.util.streamex.StreamEx.of;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final List<ChangeListDecorator> myDecorators;
+  private final Project myProject;
   private final ChangeListManagerEx myClManager;
   private final ChangeListRemoteState myChangeListRemoteState;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject, final ChangeListRemoteState changeListRemoteState) {
     super(userObject);
+    myProject = project;
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = ServiceKt.getComponents(project, ChangeListDecorator.class);
   }
 
   @Override
@@ -41,18 +42,18 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       final LocalChangeList list = ((LocalChangeList)userObject);
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      if (list.getData() != null) {
+      if (getChangeListData(list) != null) {
         renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         renderer.setToolTipText(getTooltipText());
       }
       appendCount(renderer);
-      for (ChangeListDecorator decorator: myDecorators) {
+      for (ChangeListDecorator decorator : ChangeListDecorator.getDecorators(myProject)) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
       final String freezed = myClManager.isFreezed();
       if (freezed != null) {
         renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      } 
+      }
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }
@@ -70,9 +71,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   @Nullable
   private String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
-    Object data = ((LocalChangeList)userObject).getData();
-    if (!(data instanceof ChangeListData)) return null;
-    String dataInfo = XmlStringUtil.escapeString(((ChangeListData)data).getPresentation());
+    ChangeListData data = getChangeListData((LocalChangeList)userObject);
+    if (data == null) return null;
+
+    String dataInfo = XmlStringUtil.escapeString(data.getPresentation());
     String message = cropMessageIfNeeded(((LocalChangeList)userObject).getComment());
     return nullize(of(dataInfo, message).nonNull().joining("\n"));
   }
@@ -113,18 +115,18 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
 
-    final List<VirtualFile> toUpdate = new ArrayList<>();
+    final List<FilePath> toUpdate = new ArrayList<>();
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
     if (! toUpdate.isEmpty()) {
-      dragOwner.addUnversionedFiles(dropList, toUpdate);
+      dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
     }
   }
 
-  private static void addIfNotNull(final List<? super VirtualFile> unversionedFiles1, final List<? extends VirtualFile> ignoredFiles) {
+  private static void addIfNotNull(final List<? super FilePath> unversionedFiles, final List<? extends FilePath> ignoredFiles) {
     if (ignoredFiles != null) {
-      unversionedFiles1.addAll(ignoredFiles);
+      unversionedFiles.addAll(ignoredFiles);
     }
   }
 

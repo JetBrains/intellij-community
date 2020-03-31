@@ -2,7 +2,6 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
-import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;

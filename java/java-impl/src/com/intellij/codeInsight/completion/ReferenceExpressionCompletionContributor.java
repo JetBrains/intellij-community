@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,12 +14,12 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -27,7 +28,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class ReferenceExpressionCompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor");
+  private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
   @NotNull
   static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
@@ -145,6 +146,9 @@ public class ReferenceExpressionCompletionContributor {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (item != null) {
           item.setInferenceSubstitutorFromExpectedType(element, parameters.getExpectedType());
+          if (JavaCompletionSorting.isTooGeneric(lookupElement, item.getObject())) {
+            item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+          }
         }
       }
     }
@@ -155,7 +159,7 @@ public class ReferenceExpressionCompletionContributor {
   @NotNull
   public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
     return JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)
-           ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
+           ? findConstantsUsedInSwitch(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
            : Collections.emptySet();
   }
 

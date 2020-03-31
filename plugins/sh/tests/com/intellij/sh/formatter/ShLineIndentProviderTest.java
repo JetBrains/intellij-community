@@ -2,9 +2,9 @@
 package com.intellij.sh.formatter;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShLineIndentProviderTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ShLineIndentProviderTest extends BasePlatformTestCase {
   private static final String FILE_EXTENSION = ".sh";
   private static final String AFTER_FILE_EXTENSION = ".after.sh";
   private static final char KEY_ENTER = '\n';
@@ -29,6 +29,7 @@ public class ShLineIndentProviderTest extends LightPlatformCodeInsightFixtureTes
   public void testCaseEnd()               { doTest(); }
   public void testCasePattern()           { doTest(); }
   public void testIndentAtBeginOfFile()   { doTest(); }
+  public void testInternationalization()  { doTest(); }
 
   private void doTest() {
     String testName = getTestName(true);

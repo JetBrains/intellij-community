@@ -7,7 +7,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -29,7 +28,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class InplaceEditingLayer extends JComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InplaceEditingLayer");
+  private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 
   private final GuiEditor myEditor;
   /**
@@ -301,17 +300,7 @@ public final class InplaceEditingLayer extends JComponent{
   }
 
   private void removeInplaceEditorComponent() {
-    // [vova] before removing component from Swing tree we have to
-    // request component into glass layer. Otherwise focus from component being removed
-    // can go to some RadComponent.
-
-    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myEditor.getGlassLayer());
-    try {
-      remove(myInplaceEditorComponent);
-    }
-    finally {
-      LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-    }
+    remove(myInplaceEditorComponent);
   }
 
   /**

@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,7 +26,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "JUnit test cases";
+    return JUnitBundle.message("unused.declaration.junit.test.entry.point");
   }
 
   @Override
@@ -58,7 +59,8 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     else if (psiElement instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)psiElement;
       if (method.isConstructor() && method.getParameterList().isEmpty()) {
-        return JUnitUtil.isTestClass(method.getContainingClass());
+        final PsiClass aClass = method.getContainingClass();
+        return aClass != null && JUnitUtil.isTestClass(aClass);
       }
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }

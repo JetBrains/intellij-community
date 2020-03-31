@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,8 +36,7 @@ public final class PropertyAccessor implements MutableAccessor {
         myWriteMethod.setAccessible(true);
       }
     }
-    catch (SecurityException ignored) {
-    }
+    catch (SecurityException ignored) { }
   }
 
   @NotNull
@@ -91,6 +90,9 @@ public final class PropertyAccessor implements MutableAccessor {
 
   @Override
   public void set(@NotNull Object host, @Nullable Object value) {
+    if (myWriteMethod == null) {
+      throw new SerializationException(host.getClass().getName() + "::" + myName + " lacks a setter");
+    }
     try {
       myWriteMethod.invoke(host, value);
     }
@@ -100,8 +102,11 @@ public final class PropertyAccessor implements MutableAccessor {
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       // see KotlinXmlSerializerTest.nullInMap
-      if (cause instanceof IllegalArgumentException && myGenericType instanceof Class && ((Class)myGenericType).isEnum() && cause.getMessage().contains("Parameter specified as non-null is null:")) {
-        Object[] constants = ((Class)myGenericType).getEnumConstants();
+      if (cause instanceof IllegalArgumentException &&
+          myGenericType instanceof Class &&
+          ((Class<?>)myGenericType).isEnum() &&
+          cause.getMessage().contains("Parameter specified as non-null is null:")) {
+        Object[] constants = ((Class<?>)myGenericType).getEnumConstants();
         if (constants.length > 0) {
           try {
             LOG.warn("Cannot set enum value, will be set to first enum value", e);

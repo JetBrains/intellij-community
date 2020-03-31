@@ -17,14 +17,14 @@ package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test
-public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
+public class TestNGSuiteTest extends LightJavaCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
   protected void setUp() {

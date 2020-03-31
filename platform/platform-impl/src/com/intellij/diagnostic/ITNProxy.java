@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
-import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
@@ -25,6 +25,7 @@ import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.zip.GZIPOutputStream;
 
-/**
- * @author stathik
- */
-class ITNProxy {
+final class ITNProxy {
   private static final String DEFAULT_USER = "idea_anonymous";
   private static final String DEFAULT_PASS = "guest";
   private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.intellij.net/data?category=developers";
@@ -56,7 +54,7 @@ class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
-    Map<String, String> template = new LinkedHashMap<>();
+    @NonNls Map<String, String> template = new LinkedHashMap<>();
 
     template.put("protocol.version", "1.1");
     template.put("os.name", SystemInfo.OS_NAME);
@@ -81,7 +79,6 @@ class ITNProxy {
     template.put("app.version.minor", appInfo.getMinorVersion());
     template.put("app.build.date", format(appInfo.getBuildDate()));
     template.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
-    template.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
     template.put("app.product.code", build.getProductCode());
     template.put("app.build.number", buildNumberWithAllDetails);
 
@@ -196,11 +193,28 @@ class ITNProxy {
     }
   }
 
-  private static byte[] createRequest(String login, String password, ErrorBean error) throws UnsupportedEncodingException {
-    StringBuilder builder = new StringBuilder(8192);
+  static @NotNull String getAppInfoString() {
+    StringBuilder builder = new StringBuilder();
+    appendAppInfo(builder);
+    return builder.toString();
+  }
 
+  private static void appendAppInfo(StringBuilder builder) {
     for (Map.Entry<String, String> entry : TEMPLATE.getValue().entrySet()) {
       append(builder, entry.getKey(), entry.getValue());
+    }
+  }
+
+  private static StringBuilder createRequest(String login, String password, ErrorBean error) {
+    StringBuilder builder = new StringBuilder(8192);
+
+    Object eventData = error.event.getData();
+    String appInfo = eventData instanceof AbstractMessage ? ((AbstractMessage)eventData).getAppInfo() : null;
+    if (appInfo != null) {
+      builder.append(appInfo);
+    }
+    else {
+      appendAppInfo(builder);
     }
 
     append(builder, "user.login", login);
@@ -241,7 +255,6 @@ class ITNProxy {
       append(builder, "error.redacted", Boolean.toString(true));
     }
 
-    Object eventData = error.event.getData();
     if (eventData instanceof AbstractMessage) {
       AbstractMessage messageObj = (AbstractMessage)eventData;
       for (Attachment attachment : messageObj.getIncludedAttachments()) {
@@ -257,13 +270,17 @@ class ITNProxy {
       }
     }
 
-    return builder.toString().getBytes(StandardCharsets.UTF_8);
+    return builder;
   }
 
-  private static void append(StringBuilder builder, String key, @Nullable String value) throws UnsupportedEncodingException {
-    if (StringUtil.isEmpty(value)) return;
-    if (builder.length() > 0) builder.append('&');
-    builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
+  private static void append(StringBuilder builder, @NonNls String key, @NonNls @Nullable String value) {
+    if (!StringUtil.isEmpty(value)) {
+      String encoded;
+      try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
+      catch (UnsupportedEncodingException e) { throw new IllegalStateException(e); }  // not expected to happen
+      if (builder.length() > 0) builder.append('&');
+      builder.append(key).append('=').append(encoded);
+    }
   }
 
   private static String diff(String original, String redacted) {
@@ -274,7 +291,7 @@ class ITNProxy {
     return s.isEmpty() ? "-" : StringUtil.splitByLines(s).length + "/" + s.split("[^\\w']+").length + "/" + s.length();
   }
 
-  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
+  private static HttpURLConnection post(URL url, CharSequence formData) throws IOException {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
@@ -282,22 +299,22 @@ class ITNProxy {
       connection.setHostnameVerifier(new EaHostnameVerifier());
     }
 
-    ByteArrayOutputStream outputByteStream = new ByteArrayOutputStream(bytes.length);
-    try (GZIPOutputStream gzip = new GZIPOutputStream(outputByteStream)) {
-      gzip.write(bytes);
+    BufferExposingByteArrayOutputStream compressed = new BufferExposingByteArrayOutputStream(formData.length());
+    try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(compressed), StandardCharsets.UTF_8)) {
+      for (int i = 0; i < formData.length(); i++) {
+        writer.write(formData.charAt(i));
+      }
     }
-
-    byte[] compressedBytes = outputByteStream.toByteArray();
 
     connection.setRequestMethod("POST");
     connection.setDoInput(true);
     connection.setDoOutput(true);
     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name());
-    connection.setRequestProperty("Content-Length", Integer.toString(compressedBytes.length));
+    connection.setRequestProperty("Content-Length", Integer.toString(compressed.size()));
     connection.setRequestProperty("Content-Encoding", "gzip");
 
     try (OutputStream out = connection.getOutputStream()) {
-      out.write(compressedBytes);
+      out.write(compressed.getInternalBuffer(), 0, compressed.size());
     }
 
     return connection;
@@ -353,7 +370,7 @@ class ITNProxy {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String JB_CA_CERT =
+  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String JB_CA_CERT =
     "-----BEGIN CERTIFICATE-----\n" +
     "MIIFvjCCA6agAwIBAgIQMYHnK1dpIZVCoitWqBwhXjANBgkqhkiG9w0BAQsFADBn\n" +
     "MRMwEQYKCZImiZPyLGQBGRYDTmV0MRgwFgYKCZImiZPyLGQBGRYISW50ZWxsaUox\n" +

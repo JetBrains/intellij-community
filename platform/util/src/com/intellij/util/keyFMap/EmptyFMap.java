@@ -27,7 +27,7 @@ class EmptyFMap implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    return new OneElementFMap(key, value);
+    return new OneElementFMap<>(key, value);
   }
 
   @NotNull
@@ -46,9 +46,8 @@ class EmptyFMap implements KeyFMap {
     return 0;
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
+  public Key @NotNull [] getKeys() {
     return EMPTY_KEYS_ARRAY;
   }
 

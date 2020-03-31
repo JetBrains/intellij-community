@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,7 +12,7 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
@@ -32,6 +31,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +45,11 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
+public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
   private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
   @XCollection
   public List<ModulesSet> MODULES_SETS_LOADED_TOGETHER = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = AtomicClearableLazyValue.create(() -> {
+  private final ClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
     Map<String, ModulesSet> result = new HashMap<>();
     for (ModulesSet modulesSet : MODULES_SETS_LOADED_TOGETHER) {
       for (String module : modulesSet.modules) {
@@ -80,9 +80,19 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     @Override
     public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
       PsiClass accessObjectType = getAccessObjectType(qualifier);
-      if (target instanceof PsiMember) {
-        checkAccess(sourceNode, (PsiMember)target, accessObjectType);
+      if (target instanceof PsiJvmMember) {
+        checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
+        if (!(target instanceof PsiClass)) {
+          if (accessObjectType != null) {
+            checkAccess(sourceNode, accessObjectType, null);
+          }
+        }
       }
+    }
+
+    @Override
+    public void processMethodOverriding(@NotNull UMethod method, @NotNull PsiMethod targetElement) {
+      checkOverridePackageLocal(method, targetElement);
     }
 
     @Override
@@ -111,7 +121,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       return null;
     }
 
-    private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable PsiClass accessObjectType) {
+    private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiJvmMember target, @Nullable PsiClass accessObjectType) {
       if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
         checkPackageLocalAccess(sourceNode, target, "package-private");
       }
@@ -120,7 +130,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       }
     }
 
-    private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType) {
+    private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
         Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
@@ -133,8 +143,33 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
             StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          myProblemsHolder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
-                                                      + targetModule.getName() + "'",
+          myProblemsHolder.registerProblem(sourcePsi, InspectionGadgetsBundle
+                                             .message("inspection.suspicious.package.private.access.description", elementDescription, accessType, targetModule.getName()),
+                                           ArrayUtil.append(quickFixes,
+                                                            new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
+                                                                                               targetModule.getName())));
+        }
+      }
+    }
+
+    private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
+      PsiElement sourcePsi = sourceNode.getSourcePsi();
+      PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
+      if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
+        Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
+        Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
+        if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
+          List<IntentionAction> fixes =
+            JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
+          String elementDescription =
+            StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, false)));
+          final String classDescription =
+            StringUtil.removeHtmlTags(RefactoringUIUtil.getDescription(targetElement.getParent(), false));
+          LocalQuickFix[] quickFixes =
+            IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
+          String problem = InspectionGadgetsBundle
+            .message("inspection.suspicious.package.private.access.problem", elementDescription, classDescription, targetModule.getName());
+          myProblemsHolder.registerProblem(nameIdentifier, problem,
                                            ArrayUtil.append(quickFixes,
                                                             new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
                                                                                                targetModule.getName())));
@@ -156,43 +191,57 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     PsiClass memberClass = member.getContainingClass();
     if (memberClass == null) return false;
 
-    PsiElement sourcePsi = sourceNode.getSourcePsi();
-    UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
-    if (sourceClass == null) return false;
-    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC),
-                                    sourceClass);
+    PsiClass contextClass = getContextClass(sourceNode, member instanceof PsiClass);
+    if (contextClass == null) return false;
+
+    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC), contextClass);
   }
 
   /**
-   * The implementation was copied from {@link com.intellij.psi.impl.source.resolve.JavaResolveUtil#canAccessProtectedMember} but uses UAST
-   * to find outer class as a workaround for bugs in Kotlin Light PSI (KT-30759, KT-30752)
+   * Returns {@code true} if protected {@code member} can be accessed from {@code contextClass} at runtime if code compiles successfully.
    */
   private static boolean canAccessProtectedMember(@NotNull PsiMember member, @NotNull PsiClass memberClass,
-                                                  @Nullable PsiClass accessObjectClass, boolean isStatic, @Nullable UClass contextClass) {
-    while (contextClass != null) {
-      PsiClass javaPsiClass = contextClass.getJavaPsi();
-      if (InheritanceUtil.isInheritorOrSelf(javaPsiClass, memberClass, true)) {
-        if (member instanceof PsiClass || isStatic || accessObjectClass == null
-            || InheritanceUtil.isInheritorOrSelf(accessObjectClass, javaPsiClass, true)) {
-          return true;
-        }
-      }
+                                                  @Nullable PsiClass accessObjectClass, boolean isStatic, @NotNull PsiClass contextClass) {
+    if (!ClassUtils.inSamePackage(memberClass, contextClass)) {
+      //in this case if the code compiles ok javac will generate required bridge methods so there will be no problems at runtime
+      return true;
+    }
 
-      contextClass = getOuterClass(contextClass);
+    /*
+     since classes are located in the same package javac won't generate bridge methods for members inherited by enclosing class, so
+     local and inner classes won't have access to protected methods inherited by enclosing class and therefore we shouldn't check
+     enclosing classes here like JavaResolveUtil.canAccessProtectedMember does.
+    */
+    if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+      if (member instanceof PsiClass || isStatic || accessObjectClass == null
+          || InheritanceUtil.isInheritorOrSelf(accessObjectClass, contextClass, true)) {
+        return true;
+      }
     }
     return false;
   }
 
-  private static UClass getOuterClass(@NotNull UClass aClass) {
-    UElement uastParent = aClass.getUastParent();
-    if (uastParent == null) return null;
-    PsiElement sourcePsi = uastParent.getSourcePsi();
-    while (sourcePsi == null) {
-      uastParent = uastParent.getUastParent();
-      if (uastParent == null) return null;
-      sourcePsi = uastParent.getSourcePsi();
+  @Nullable
+  private static PsiClass getContextClass(@NotNull UElement sourceNode, boolean forClassReference) {
+    PsiElement sourcePsi = sourceNode.getSourcePsi();
+    UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
+    if (sourceClass == null) return null;
+    if (isReferenceBelongsToEnclosingClass(sourceNode, sourceClass, forClassReference)) {
+      UClass parentClass = UastUtils.getContainingUClass(sourceClass);
+      return parentClass != null ? parentClass.getJavaPsi() : null;
     }
-    return UastUtils.findContaining(sourcePsi, UClass.class);
+    return sourceClass.getJavaPsi();
+  }
+
+  private static boolean isReferenceBelongsToEnclosingClass(@NotNull UElement sourceNode, @NotNull UClass sourceClass,
+                                                            boolean forClassReference) {
+    UElement parent = sourceClass.getUastParent();
+    if (parent instanceof UObjectLiteralExpression) {
+      if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+        return true;
+      }
+    }
+    return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
   }
 
   @Tag("modules-set")
@@ -249,14 +298,14 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     @NotNull
     @Override
     public String getName() {
-      return "Mark '" + myModule1 + "' and '" + myModule2 + "' modules as loaded together";
+      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.text", myModule1, myModule2);
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Mark modules as loaded together";
+      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
     }
 
     @Override

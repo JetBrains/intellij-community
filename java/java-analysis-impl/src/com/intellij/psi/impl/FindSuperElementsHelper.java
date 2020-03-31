@@ -24,7 +24,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FindSuperElementsHelper {
-  @NotNull
-  public static PsiElement[] findSuperElements(@NotNull PsiElement element) {
+  public static PsiElement @NotNull [] findSuperElements(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass) element;
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));

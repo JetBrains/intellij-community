@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.*;
@@ -8,11 +8,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,10 @@ import java.util.Map;
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
-@State(name = "DimensionService", storages = @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED))
+@State(name = "DimensionService", storages = {
+  @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
+  @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+})
 public class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
@@ -63,8 +68,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
+    Point point = project == null ? null : WindowStateService.getInstance(project).getLocation(key);
+    if (point != null) return point;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Point point = myKey2Location.get(pair.first);
+    point = myKey2Location.get(pair.first);
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -89,6 +97,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
   }
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
+    getWindowStateService(project).putLocation(key, point);
     Pair<String, Float> pair = keyPair(key, project);
     if (point != null) {
       point = (Point)point.clone();
@@ -115,8 +124,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
+    Dimension size = project == null ? null : WindowStateService.getInstance(project).getSize(key);
+    if (size != null) return size;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Dimension size = myKey2Size.get(pair.first);
+    size = myKey2Size.get(pair.first);
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
@@ -138,6 +150,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
   }
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
+    getWindowStateService(project).putSize(key, size);
     Pair<String, Float> pair = keyPair(key, project);
     if (size != null) {
       size = (Dimension)size.clone();
@@ -220,14 +233,6 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     }
   }
 
-  /**
-   * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
-   */
-  @Deprecated
-  public int getExtendedState(String key) {
-    return myKey2ExtendedState.get(key);
-  }
-
   @Nullable
   private static Project guessProject() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -248,7 +253,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     JFrame frame = null;
     final Component owner = IdeFocusManager.findInstance().getFocusOwner();
     if (owner != null) {
-      frame = UIUtil.getParentOfType(JFrame.class, owner);
+      frame = ComponentUtil.getParentOfType((Class<? extends JFrame>)JFrame.class, owner);
     }
     if (frame == null) {
       frame = WindowManager.getInstance().findVisibleFrame();
@@ -275,8 +280,8 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       screen = gd.getDefaultConfiguration().getBounds();
     }
     float scale = 1f;
-    if (UIUtil.isJreHiDPIEnabled()) {
-      scale = JBUI.sysScale(gd.getDefaultConfiguration());
+    if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+      scale = JBUIScale.sysScale(gd.getDefaultConfiguration());
       // normalize screen bounds
       screen.setBounds((int)Math.floor(screen.x * scale), (int)Math.floor(screen.y * scale),
                        (int)Math.ceil(screen.width * scale), (int)Math.ceil(screen.height * scale));
@@ -287,5 +292,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       realKey += "@" + dpi + "dpi";
     }
     return new Pair<>(realKey, scale);
+  }
+
+  @NotNull
+  private static WindowStateService getWindowStateService(@Nullable Project project) {
+    return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }

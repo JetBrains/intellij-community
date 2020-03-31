@@ -11,95 +11,122 @@ EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
-HELP_DIR_NAME=$6
+JDK_ARCHIVE="$6"
+NOTARIZE=$7
+BUNDLE_ID=$8
 
-cd $(dirname $0)
+cd "$(dirname "$0")"
 
-echo "Deleting ${EXPLODED}..."
-test -d ${EXPLODED} && chmod -R u+wx ${EXPLODED}/*
-rm -rf ${EXPLODED}
-mkdir ${EXPLODED}
+function log() {
+  echo "$(date '+[%H:%M:%S]') $*"
+}
 
-echo "Unzipping ${INPUT_FILE} to ${EXPLODED}..."
-unzip -q ${INPUT_FILE} -d ${EXPLODED}/
-rm ${INPUT_FILE}
-BUILD_NAME=$(ls ${EXPLODED}/)
+log "Deleting $EXPLODED ..."
+if test -d "$EXPLODED"; then
+  find "$EXPLODED" -mindepth 1 -maxdepth 1 -exec chmod -R u+wx '{}' \;
+fi
+rm -rf "$EXPLODED"
+mkdir "$EXPLODED"
 
-if [ $# -eq 7 ] && [ -f $7 ]; then
-  archiveJDK="$7"
-  echo "Modifying Info.plist"
-  sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
-  jdk=jdk-bundled
-  if [[ $1 == *custom-jdk-bundled* ]]; then
-    jdk=custom-"$jdk"
-  fi
-  rm -f ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist-e
-  echo "Info.plist has been modified"
-  echo "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
-  tar xvf $archiveJDK -C ${EXPLODED}/"$BUILD_NAME"/Contents --exclude='._jdk'
-  chmod -R u+w ${EXPLODED}/"$BUILD_NAME"/Contents/*
-  echo "JDK has been copied"
-  rm -f $archiveJDK
+log "Unzipping $INPUT_FILE to $EXPLODED ..."
+unzip -q "$INPUT_FILE" -d "$EXPLODED"
+rm "$INPUT_FILE"
+BUILD_NAME="$(ls "$EXPLODED")"
+log "$INPUT_FILE unzipped and removed"
+
+APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
+
+if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
+  log "Copying JDK: $JDK_ARCHIVE to $APPLICATION_PATH/Contents"
+  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
+  find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
+  log "JDK has been copied"
+  rm -f "$JDK_ARCHIVE"
 fi
 
-if [ $HELP_DIR_NAME != "no-help" ]; then
-  HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
-  echo "Building help indices for $HELP_DIR"
-  hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
-fi
-
-#enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
-shopt -s nullglob
-
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.jnilib ; do
-  if [ -f "$f" ]; then
-    b="$(basename "$f" .jnilib)"
-    ln -sf "$b.jnilib" "$(dirname "$f")/$b.dylib"
-  fi
-done
-
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
-  if [ -f "$f" ]; then
-    echo "Moving $f"
-    mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
-  fi
-done
-
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/* ; do
-  if [ -f "$f" ] && [ $(basename -- "$f") != "Info.plist" ] ; then
-    echo "Only Info.plist file is allowed in Contents directory but $f is found"
-    exit 1
-  fi
-done
-shopt -u nullglob
-
-# Make sure *.p12 is imported into local KeyChain
-security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
-
-attempt=1
-limit=3
-set +e
-while [ $attempt -le $limit ]
-do
-  echo "signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME"
-  codesign -v --deep --force -s "${CODESIGN_STRING}" "${EXPLODED}/$BUILD_NAME"
-  if [ "$?" != "0" ]; then
-    let "attempt += 1"
-    if [ $attempt -eq $limit ]; then
-      set -e
+find "$APPLICATION_PATH/Contents/bin" \
+  -maxdepth 1 -type f -name '*.jnilib' -print0 |
+  while IFS= read -r -d $'\0' file; do
+    if [ -f "$file" ]; then
+      log "Linking $file"
+      b="$(basename "$file" .jnilib)"
+      ln -sf "$b.jnilib" "$(dirname "$file")/$b.dylib"
     fi
-    echo "wait for 30 sec and try to sign again"
-    sleep 30;
-  else
-    echo "signing done"
-    codesign -v ${EXPLODED}/"$BUILD_NAME" -vvvvv
-    echo "check sign done"
-    let "attempt += $limit"
-  fi
-done
+  done
 
-echo "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
-cd ${EXPLODED}
-ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../${INPUT_FILE}
-cd ..
-rm -rf ${EXPLODED}
+find "$APPLICATION_PATH/Contents/" \
+  -maxdepth 1 -type f -name '*.txt' -print0 |
+  while IFS= read -r -d $'\0' file; do
+    if [ -f "$file" ]; then
+      log "Moving $file"
+      mv "$file" "$APPLICATION_PATH/Contents/Resources"
+    fi
+  done
+
+non_plist=$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist' | wc -l)
+if [[ $non_plist -gt 0 ]]; then
+  log "Only Info.plist file is allowed in Contents directory but found $non_plist file(s):"
+  log "$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist')"
+  exit 1
+fi
+
+if [ "$CODESIGN_STRING" != "" ]; then
+  log "Unlocking keychain..."
+  # Make sure *.p12 is imported into local KeyChain
+  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+
+  attempt=1
+  limit=3
+  set +e
+  while [[ $attempt -le $limit ]]; do
+    log "Signing (attempt $attempt) $APPLICATION_PATH ..."
+    ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
+    ec=$?
+    if [[ $ec -ne 0 ]]; then
+      ((attempt += 1))
+      if [ $attempt -eq $limit ]; then
+        set -e
+      fi
+      log "Signing failed, wait for 30 sec and try to sign again"
+      sleep 30
+    else
+      log "Signing done"
+      codesign -v "$APPLICATION_PATH" -vvvvv
+      log "Check sign done"
+      ((attempt += limit))
+    fi
+  done
+else
+  log "Signing is disabled"
+fi
+
+set -e
+
+if [ "$NOTARIZE" = "yes" ]; then
+  log "Notarizing..."
+  # shellcheck disable=SC1090
+  source "$HOME/.notarize_token"
+  APP_NAME="${INPUT_FILE%.*}"
+  # Since notarization tool uses same file for upload token we have to trick it into using different folders, hence fake root
+  # Also it leaves copy of zip file in TMPDIR, so notarize.sh overrides it and uses FAKE_ROOT as location for temp TMPDIR
+  FAKE_ROOT="$(pwd)/fake-root"
+  mkdir -p "$FAKE_ROOT"
+  echo "Notarization will use fake root: $FAKE_ROOT"
+  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  rm -rf "$FAKE_ROOT"
+
+  log "Stapling..."
+  xcrun stapler staple "$APPLICATION_PATH"
+else
+  log "Notarization disabled"
+  log "Stapling disabled"
+fi
+
+log "Zipping $BUILD_NAME to $INPUT_FILE ..."
+(
+  cd "$EXPLODED"
+  ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+  log "Finished zipping"
+)
+rm -rf "$EXPLODED"
+log "Done"

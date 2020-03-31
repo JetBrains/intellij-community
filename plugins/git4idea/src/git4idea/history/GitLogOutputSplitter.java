@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import git4idea.GitFormatException;
+import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.i18n.GitBundle;
@@ -54,7 +55,7 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
   @Override
   public void onLineAvailable(String line, Key outputType) {
     if (outputType == ProcessOutputTypes.STDERR) {
-      myErrors.append(line).append("\n");
+      myErrors.append(GitUtil.cleanupErrorPrefixes(line)).append("\n");
     }
     else if (outputType == ProcessOutputTypes.STDOUT) {
       try {

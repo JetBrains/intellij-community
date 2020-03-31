@@ -25,6 +25,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GrAnnotationArrayInitializer extends GrAnnotationMemberValue, PsiArrayInitializerMemberValue {
   @Override
-  @NotNull
-  GrAnnotationMemberValue[] getInitializers();
+  GrAnnotationMemberValue @NotNull [] getInitializers();
 }

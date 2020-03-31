@@ -1,0 +1,10 @@
+fragment pullRequestReview on PullRequestReview {
+    ...nodeInfo
+    url
+    author {
+        ...actorInfo
+    }
+    bodyHTML
+    state
+    createdAt
+}

@@ -16,10 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ManualArrayToCollectionCopyInspectionTest extends LightInspectionTestCase {
+public class ManualArrayToCollectionCopyInspectionTest extends LightJavaInspectionTestCase {
 
   public void testManualArrayToCollectionCopy() {
     doTest();

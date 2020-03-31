@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -36,7 +35,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public void init() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    myProject.getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(Keymap keymap) {
         fireShortcutsUpdated();
@@ -49,6 +48,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
     });
   }
 
+  @NotNull
   public String getActionId(@Nullable String projectPath, @Nullable String taskName) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
@@ -56,7 +56,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
       File file = new File(portablePath);
-      result.append(file.isFile() && file.getParentFile() != null ? file.getParentFile().getName() : file.getName());
+      result.append(file.getParentFile() != null ? file.getParentFile().getName() : file.getName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (taskName != null) result.append(taskName);
@@ -76,14 +76,11 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public boolean hasShortcuts(@NotNull String actionId) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    return activeKeymap.getShortcuts(actionId).length > 0;
+    return KeymapUtil.getPrimaryShortcut(actionId) != null;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
+  private Shortcut @NotNull [] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
     String actionId = getActionId(projectPath, taskName);
-    if (actionId == null) return Shortcut.EMPTY_ARRAY;
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);
   }
@@ -98,20 +95,21 @@ public class ExternalSystemShortcutsManager implements Disposable {
     myListeners.add(listener);
   }
 
+  @FunctionalInterface
   public interface Listener {
     void shortcutsUpdated();
   }
 
-  public void scheduleKeymapUpdate(Collection<? extends DataNode<TaskData>> taskData) {
+  void scheduleKeymapUpdate(@NotNull Collection<? extends DataNode<TaskData>> taskData) {
     ExternalSystemKeymapExtension.updateActions(myProject, taskData);
   }
 
-  public void scheduleRunConfigurationKeymapUpdate(@NotNull ProjectSystemId externalSystemId) {
+  void scheduleRunConfigurationKeymapUpdate(@NotNull ProjectSystemId externalSystemId) {
     ExternalSystemKeymapExtension.updateRunConfigurationActions(myProject, externalSystemId);
   }
 
   @Override
   public void dispose() {
-    ExternalSystemKeymapExtension.clearActions(myProject);
+    ExternalSystemKeymapExtension.clearActions(this);
   }
 }

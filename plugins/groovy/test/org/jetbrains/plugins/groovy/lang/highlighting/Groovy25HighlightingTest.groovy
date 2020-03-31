@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -16,24 +16,30 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
   final String basePath = TestUtils.testDataPath + 'highlighting/v25/'
 
-  void 'test duplicating named params'() { highlightingTest() }
-  void 'test duplicating named params with setter'() { highlightingTest() }
-  void 'test two identical named delegates'() { highlightingTest() }
-  void 'test duplicating named delegates with usual parameter'() { highlightingTest() }
+  void 'test duplicating named params'() { fileHighlightingTest() }
+  void 'test duplicating named params with setter'() { fileHighlightingTest() }
+  void 'test two identical named delegates'() { fileHighlightingTest() }
+  void 'test duplicating named delegates with usual parameter'() { fileHighlightingTest() }
 
-  void 'test named params type check'() { highlightingTest() }
-  void 'test named params type check with setter'() { highlightingTest() }
+  void 'test named params type check'() { fileHighlightingTest() }
+  void 'test named params type check with setter'() { fileHighlightingTest() }
 
   void 'test named params unused check'() {
     fixture.enableInspections(new GroovyUnusedDeclarationInspection())
-    highlightingTest()
+    fileHighlightingTest()
   }
 
-  void 'test named delegate without properties'() { highlightingTest() }
+  void 'test named params required'() { fileHighlightingTest() }
 
-  void 'test immutable fields'() { highlightingTest() }
+  void 'test several absent required named params'() { fileHighlightingTest() }
 
-  void 'test immutable options absent field'() { highlightingTest() }
+  void 'test required named param in named variant'() { fileHighlightingTest() }
+
+  void 'test named delegate without properties'() { fileHighlightingTest() }
+
+  void 'test immutable fields'() { fileHighlightingTest() }
+
+  void 'test immutable options absent field'() { fileHighlightingTest() }
 
   void 'test immutable constructor'() {
     highlightingTest '''
@@ -106,5 +112,24 @@ def usage(CopyWith cw) {
     assert ref
     def resolved = ref.resolve()
     assert resolved instanceof GrField
+  }
+
+  void 'test IDEA-218376'() {
+    highlightingTest '''
+import groovy.transform.CompileStatic
+import groovy.transform.NamedParam
+
+@CompileStatic
+void namedParams(@NamedParam(value = 'last', type = Integer) Map args, int i) {
+  print args.last
+}
+
+@CompileStatic
+def m() {
+    namedParams(1, last: <error descr="Type of argument 'last' can not be 'String'">"1"</error>)
+}
+
+m()
+'''
   }
 }

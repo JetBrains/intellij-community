@@ -1,29 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +25,8 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 public class HeavyAwareExecutor implements Disposable {
   @NotNull private final Project myProject;
-  @NotNull private final ExecutingHeavyOrPowerSaveListener myListener;
+  @NotNull private final ListeningExecutorService myExecutorService;
+  private final int myDelayMs;
   private final int myLongActivityDurationMs;
 
   /**
@@ -45,8 +38,9 @@ public class HeavyAwareExecutor implements Disposable {
    */
   public HeavyAwareExecutor(@NotNull Project project, int delayMs, int longActivityDurationMs, @NotNull Disposable parent) {
     myProject = project;
+    myDelayMs = delayMs;
     myLongActivityDurationMs = longActivityDurationMs;
-    myListener = new ExecutingHeavyOrPowerSaveListener(project, delayMs, this);
+    myExecutorService = MoreExecutors.listeningDecorator(AppExecutorUtil.getAppExecutorService());
 
     Disposer.register(parent, this);
   }
@@ -60,42 +54,29 @@ public class HeavyAwareExecutor implements Disposable {
    * @param task      task to execute
    * @param indicator progress indicator for executing the task
    */
-  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task, @NotNull String title,
+  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task,
                                                 @NotNull ProgressIndicator indicator) {
-    return Futures.transformAsync(
-      myListener.addTask(() -> {
-        Disposable disposable = Disposer.newDisposable();
-        ListenableFuture<?> future = runAsync(myProject, task, title, indicator, () -> Disposer.dispose(disposable));
+    ExecutingHeavyOrPowerSaveListener executingListener = new ExecutingHeavyOrPowerSaveListener(myProject, myDelayMs, this, () -> {
+      ListenableFuture<?> future = runAsync(task, indicator);
 
-        new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
-        return future;
-      }), input -> input, directExecutor());
+      Disposable disposable = Disposer.newDisposable();
+      future.addListener(() -> Disposer.dispose(disposable), directExecutor());
+
+      new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
+      return future;
+    });
+    return Futures.transformAsync(executingListener.getFuture(), input -> input, directExecutor());
+  }
+
+  @NotNull
+  private ListenableFuture<?> runAsync(@NotNull Consumer<? super ProgressIndicator> task,
+                                       @NotNull ProgressIndicator indicator) {
+    Runnable taskWithProgress = () -> ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator);
+    return myExecutorService.submit(taskWithProgress);
   }
 
   @Override
   public void dispose() {
-  }
-
-  @NotNull
-  private static ListenableFuture<?> runAsync(@NotNull Project project,
-                                              @NotNull Consumer<? super ProgressIndicator> task,
-                                              @NotNull String title,
-                                              @NotNull ProgressIndicator indicator,
-                                              @NotNull Runnable continuation) {
-    SettableFuture<?> future = SettableFuture.create();
-    Task.Backgroundable wrapper = new Task.Backgroundable(project, title, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          task.consume(indicator);
-        }
-        finally {
-          future.set(null);
-        }
-      }
-    };
-    ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(wrapper, indicator, continuation);
-    return future;
   }
 
   /**
@@ -167,33 +148,26 @@ public class HeavyAwareExecutor implements Disposable {
     }
   }
 
-  private static class ExecutingHeavyOrPowerSaveListener implements PowerSaveMode.Listener {
-    @NotNull private final AtomicReference<List<Runnable>> myTasksToRun = new AtomicReference<>(new ArrayList<>());
+  private static class ExecutingHeavyOrPowerSaveListener implements PowerSaveMode.Listener, Disposable {
+    @NotNull private final AtomicReference<Computable<ListenableFuture<?>>> myTask = new AtomicReference<>(null);
     private final int myDelayMs;
+    private final SettableFuture<ListenableFuture<?>> myFuture;
 
-    ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent) {
+    ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent,
+                                      @NotNull Computable<ListenableFuture<?>> task) {
       myDelayMs = delayMs;
-      project.getMessageBus().connect(parent).subscribe(PowerSaveMode.TOPIC, this);
-    }
+      myFuture = SettableFuture.create();
+      myTask.set(task);
 
-    @NotNull
-    public <T> ListenableFuture<ListenableFuture<T>> addTask(@NotNull Computable<? extends ListenableFuture<T>> task) {
-      SettableFuture<ListenableFuture<T>> future = SettableFuture.create();
-      myTasksToRun.getAndUpdate(tasks -> ContainerUtil.concat(tasks, Collections.singletonList(wrap(task, future))));
+      project.getMessageBus().connect(this).subscribe(PowerSaveMode.TOPIC, this);
+      Disposer.register(parent, this);
+
       tryRun();
-      return future;
     }
 
     @NotNull
-    private static <T> Runnable wrap(@NotNull Computable<? extends ListenableFuture<T>> task, @NotNull SettableFuture<? super ListenableFuture<T>> future) {
-      return () -> {
-        try {
-          future.set(task.compute());
-        }
-        catch (Throwable t) {
-          future.setException(t);
-        }
-      };
+    public ListenableFuture<ListenableFuture<?>> getFuture() {
+      return myFuture;
     }
 
     @Override
@@ -205,14 +179,31 @@ public class HeavyAwareExecutor implements Disposable {
       if (!PowerSaveMode.isEnabled()) {
         HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
           if (!HeavyProcessLatch.INSTANCE.isRunning() && !PowerSaveMode.isEnabled()) {
-            List<Runnable> tasks = myTasksToRun.getAndSet(new ArrayList<>());
-            tasks.forEach(Runnable::run);
+            Disposer.dispose(this);
+
+            Computable<ListenableFuture<?>> task = myTask.getAndSet(null);
+            if (task != null) {
+              runTask(task);
+            }
           }
           else {
             tryRun();
           }
         }, myDelayMs, TimeUnit.MILLISECONDS));
       }
+    }
+
+    private void runTask(@NotNull Computable<ListenableFuture<?>> task) {
+      try {
+        myFuture.set(task.compute());
+      }
+      catch (Throwable t) {
+        myFuture.setException(t);
+      }
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }

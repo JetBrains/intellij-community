@@ -37,9 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModuleProvider {
   private final FrameworkSupportProvider myProvider;
   private final OldFrameworkSupportProviderWrapper.FrameworkSupportProviderBasedType myType;

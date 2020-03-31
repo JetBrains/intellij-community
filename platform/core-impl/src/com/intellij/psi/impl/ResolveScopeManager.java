@@ -30,12 +30,14 @@ public abstract class ResolveScopeManager {
   @NotNull
   public abstract GlobalSearchScope getResolveScope(@NotNull PsiElement element);
 
-  public abstract GlobalSearchScope getDefaultResolveScope(VirtualFile vFile);
+  @NotNull
+  public abstract GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile);
 
   @NotNull
   public abstract GlobalSearchScope getUseScope(@NotNull PsiElement element);
 
-  public static ResolveScopeManager getInstance(Project project) {
+  @NotNull
+  public static ResolveScopeManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ResolveScopeManager.class);
   }
 

@@ -157,9 +157,9 @@ public class SvnProtocolsTest extends SvnTestCase {
     final UpdateSession session =
       vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                    new Ref<>());
-    assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
-    assertTrue(!session.isCanceled());
-    assertTrue(!files.getGroupById(FileGroup.CREATED_ID).getFiles().isEmpty());
+    assertTrue(session.getExceptions().isEmpty());
+    assertFalse(session.isCanceled());
+    assertFalse(files.getGroupById(FileGroup.CREATED_ID).getFiles().isEmpty());
     final String path = files.getGroupById(FileGroup.CREATED_ID).getFiles().iterator().next();
     final String name = path.substring(path.lastIndexOf(File.separator) + 1);
     assertEquals(created.getName(), name);
@@ -194,8 +194,7 @@ public class SvnProtocolsTest extends SvnTestCase {
         public void checkoutCompleted() {
         }
       }, WorkingCopyFormat.ONE_DOT_SEVEN);
-    final int[] cnt = new int[1];
-    cnt[0] = 0;
+    final int[] cnt = {0};
     FileUtil.processFilesRecursively(root, file -> {
       ++ cnt[0];
       return ! (cnt[0] > 1);

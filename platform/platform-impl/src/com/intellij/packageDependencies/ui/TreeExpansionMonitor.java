@@ -14,6 +14,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+
 public abstract class TreeExpansionMonitor<T> {
 
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
@@ -75,7 +77,7 @@ public abstract class TreeExpansionMonitor<T> {
         if (myFrozen) return;
         TreePath path = event.getPath();
         if (path != null) {
-          TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[0]);
+          TreePath[] allPaths = toTreePathArray(myExpandedPaths);
           for (TreePath treePath : allPaths) {
             if (treePath.equals(path) || path.isDescendant(treePath)) {
               myExpandedPaths.remove(treePath);

@@ -24,7 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
@@ -41,25 +40,18 @@ import java.util.Set;
  * @author peter
  */
 class CachedValueLeakChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.CachedValueChecker");
+  private static final Logger LOG = Logger.getInstance(CachedValueLeakChecker.class);
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
 
-  static void checkProvider(@NotNull final CachedValueProvider provider,
-                            @NotNull final Key key,
-                            @NotNull final UserDataHolder userDataHolder) {
+  static void checkProvider(@NotNull CachedValueProvider<?> provider, @NotNull Key<?> key, @NotNull UserDataHolder userDataHolder) {
     if (!DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
     if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
-    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
-      findReferencedPsi(provider, key, userDataHolder, 5);
-    }
+    findReferencedPsi(provider, key, userDataHolder);
   }
 
-  private static synchronized void findReferencedPsi(@NotNull final Object root,
-                                                     @NotNull Key key,
-                                                     @NotNull final UserDataHolder toIgnore,
-                                                     int depth) {
+  private static synchronized void findReferencedPsi(@NotNull Object root, @NotNull Key<?> key, @NotNull UserDataHolder toIgnore) {
     Condition<Object> shouldExamineValue = value -> {
       if (value == toIgnore) return false;
       if (value instanceof ASTNode) {
@@ -77,7 +69,7 @@ class CachedValueLeakChecker {
       return true;
     };
     Map<Object, String> roots = Collections.singletonMap(root, "CachedValueProvider "+key);
-    DebugReflectionUtil.walkObjects(depth, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
+    DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
       if (value instanceof PsiElement) {
         LOG.error(
           "Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +

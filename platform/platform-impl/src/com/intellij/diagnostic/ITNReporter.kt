@@ -39,6 +39,12 @@ open class ITNReporter : ErrorReportSubmitter() {
     if (ErrorReportConfigurable.getCredentials().isFulfilled()) DiagnosticBundle.message("error.dialog.notice.named")
     else DiagnosticBundle.message("error.dialog.notice.anonymous")
 
+  override fun getReporterAccount(): String? = ErrorReportConfigurable.getCredentials()?.userName ?: ""
+
+  override fun changeReporterAccount(parentComponent: Component) {
+    askJBAccountCredentials(parentComponent, null)
+  }
+
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
                       parentComponent: Component,
@@ -97,7 +103,7 @@ private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<Submitt
     text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
     val content = XmlStringUtil.wrapInHtml(text)
     ReportMessages.GROUP
-      .createNotification(ReportMessages.ERROR_REPORT, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+      .createNotification(ReportMessages.getErrorReport(), content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
       .setImportant(false)
       .notify(project)
   }
@@ -125,7 +131,7 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
     }
     else {
       val message = DiagnosticBundle.message("error.report.posting.failed", e.message)
-      val result = MessageDialogBuilder.yesNo(ReportMessages.ERROR_REPORT, message).project(project).show()
+      val result = MessageDialogBuilder.yesNo(ReportMessages.getErrorReport(), message).project(project).show()
       if (result != Messages.YES || !submit(errorBean, callback, parentComponent, project)) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }

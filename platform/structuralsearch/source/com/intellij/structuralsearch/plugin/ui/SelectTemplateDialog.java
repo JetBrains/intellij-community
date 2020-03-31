@@ -1,16 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,39 +108,22 @@ public class SelectTemplateDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final JPanel centerPanel = new JPanel(new BorderLayout());
-    Splitter splitter;
+    final Splitter splitter = new Splitter(false, 0.3f);
 
-    centerPanel.add(BorderLayout.CENTER, splitter = new Splitter(false, 0.3f));
+    centerPanel.add(BorderLayout.CENTER, splitter);
     centerPanel.add(splitter);
 
-    splitter.setFirstComponent(
-      showHistory ?
-      existingTemplatesComponent.getHistoryPanel() :
-      existingTemplatesComponent.getTemplatesPanel()
-    );
+    splitter.setFirstComponent(showHistory ? existingTemplatesComponent.getHistoryPanel() : existingTemplatesComponent.getTemplatesPanel());
     final JPanel panel;
-    splitter.setSecondComponent(
-      panel = new JPanel(new BorderLayout())
-    );
+    splitter.setSecondComponent(panel = new JPanel(new BorderLayout()));
 
-    searchPatternEditor = UIUtil.createEditor(
-      EditorFactory.getInstance().createDocument(""),
-      project,
-      false,
-      true,
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), TemplateContextType.class)
-    );
+    searchPatternEditor = UIUtil.createEditor(EditorFactory.getInstance().createDocument(""), project, false, null);
+    SubstitutionShortInfoHandler.install(searchPatternEditor, myDisposable);
 
-    JComponent centerComponent;
-
+    final JComponent centerComponent;
     if (replace) {
-      replacePatternEditor = UIUtil.createEditor(
-        EditorFactory.getInstance().createDocument(""),
-        project,
-        false,
-        true,
-        ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), TemplateContextType.class)
-      );
+      replacePatternEditor = UIUtil.createEditor(EditorFactory.getInstance().createDocument(""), project, false, null);
+      SubstitutionShortInfoHandler.install(replacePatternEditor, myDisposable);
       centerComponent = new Splitter(true);
       ((Splitter)centerComponent).setFirstComponent(searchPatternEditor.getComponent());
       ((Splitter)centerComponent).setSecondComponent(replacePatternEditor.getComponent());
@@ -150,8 +135,8 @@ public class SelectTemplateDialog extends DialogWrapper {
     myCardLayout = new CardLayout();
     myPreviewPanel = new JPanel(myCardLayout);
     myPreviewPanel.add(centerComponent, PREVIEW_CARD);
-    JPanel selectPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gb =
+    final JPanel selectPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
     selectPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.label.please.select.template")), gb);
     myPreviewPanel.add(selectPanel, SELECT_TEMPLATE_CARD);
@@ -160,10 +145,12 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
     labelPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.preview")));
-    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> {
-      final Configuration[] configurations = getSelectedConfigurations();
-      return configurations.length != 1 ? null : configurations[0];
-    }));
+    if (!Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
+      labelPanel.add(UIUtil.createCompleteMatchInfo(() -> {
+        final Configuration[] configurations = getSelectedConfigurations();
+        return configurations.length != 1 ? null : configurations[0];
+      }));
+    }
     panel.add(BorderLayout.NORTH, labelPanel);
     return centerPanel;
   }
@@ -221,20 +208,28 @@ public class SelectTemplateDialog extends DialogWrapper {
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
-
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
+    if (profile != null) {
+      TemplateEditorUtil.setHighlighter(searchPatternEditor, UIUtil.getTemplateContextType(profile));
+    }
     searchPatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    SubstitutionShortInfoHandler.retrieve(searchPatternEditor).updateEditorInlays();
 
     if (replace) {
-      String replacement = configuration instanceof ReplaceConfiguration
-                    ? configuration.getReplaceOptions().getReplacement()
-                    : configuration.getMatchOptions().getSearchPattern();
+      final String replacement = configuration instanceof ReplaceConfiguration
+                                 ? configuration.getReplaceOptions().getReplacement()
+                                 : configuration.getMatchOptions().getSearchPattern();
 
       UIUtil.setContent(replacePatternEditor, replacement);
+      if (profile != null) {
+        TemplateEditorUtil.setHighlighter(replacePatternEditor, UIUtil.getTemplateContextType(profile));
+      }
       replacePatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+      SubstitutionShortInfoHandler.retrieve(replacePatternEditor).updateEditorInlays();
     }
   }
 
-  @NotNull public Configuration[] getSelectedConfigurations() {
+  public Configuration @NotNull [] getSelectedConfigurations() {
     if (showHistory) {
       final List<Configuration> selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValuesList();
       return selectedValues.toArray(Configuration.EMPTY_ARRAY);
@@ -255,9 +250,5 @@ public class SelectTemplateDialog extends DialogWrapper {
       }
       return configurations.toArray(Configuration.EMPTY_ARRAY);
     }
-  }
-
-  public void selectConfiguration(String name) {
-    existingTemplatesComponent.selectConfiguration(name);
   }
 }

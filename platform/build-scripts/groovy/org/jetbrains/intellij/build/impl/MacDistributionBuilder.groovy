@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDate
 
-/**
- * @author nik
- */
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
@@ -43,19 +41,22 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """ : "")
     def associations = ""
-    if (!customizer.fileAssociations.empty) {
-      associations = """<dict>
+    for (FileAssociation fileAssociation : customizer.fileAssociations) {
+        def iconFileName = targetIcnsFileName
+        def iconFile = fileAssociation.iconPath
+        if (!iconFile.isEmpty()) {
+          iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
+        }
+        associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-      customizer.fileAssociations.each {
-        associations += "          <string>${it}</string>\n"
-      }
-      associations +=  """        </array>
+          associations += "          <string>${fileAssociation.extension}</string>\n"
+          associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
-        <string>$targetIcnsFileName</string>        
+        <string>$iconFileName</string>        
       </dict>
 """
     }
@@ -63,9 +64,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
+  void copyFilesForOsDistribution(String macDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {
@@ -74,19 +74,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
-
-    if (customizer.helpId != null) {
-      def helpZip = customizer.getPathToHelpZip(buildContext)
-      if (helpZip == null) {
-        buildContext.messages.error("Path to zip archive with help files isn't specified")
-      }
-      if (!new File(helpZip).exists() && buildContext.options.isInDevelopmentMode) {
-        buildContext.messages.warning("Help won't be bundled with macOS distribution: $helpZip doesn't exist")
-      }
-      else {
-        buildContext.ant.unzip(src: helpZip, dest: "$macDistPath/Resources")
-      }
-    }
+    BuildTasksImpl.generateBuildTxt(buildContext, "$macDistPath/Resources")
 
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
@@ -100,28 +88,34 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
-    return macDistPath
   }
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
       def macZipPath = buildMacZip(osSpecificDistPath)
-      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
         buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")
         buildContext.notifyArtifactBuilt(macZipPath)
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
-          if (secondJreBuild != null) {
-            def secondJreVersion = buildContext.bundledJreManager.getSecondJreVersion()
-            def jreArchive = "jbr-${buildContext.bundledJreManager.jreArchiveSuffix(secondJreBuild, secondJreVersion, JvmArchitecture.x64, 'osx')}"
-            File archive = new File(buildContext.bundledJreManager.jreDir(), jreArchive)
-            if (archive.file) {
-              MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)
-            }
+          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
+                             !SystemProperties.getBooleanProperty("build.is.personal", false)
+          def jreManager = buildContext.bundledJreManager
+          // With JRE
+          File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
+          if (jreArchive.file) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
+          }
+          else {
+            buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
+          }
+          // Without JRE
+          if (buildContext.options.buildDmgWithoutBundledJre) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          null, false, "-no-jdk", notarize)
           }
           buildContext.ant.delete(file: macZipPath)
         }
@@ -145,10 +139,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
-    String helpId = macCustomizer.helpId
-    if (helpId != null) {
-      String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-      buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
+
+    customizer.fileAssociations.each {
+      if (!it.iconPath.empty) {
+        buildContext.ant.copy(file: it.iconPath, todir: "$target/Resources", overwrite: "true")
+      }
     }
 
     String fullName = buildContext.applicationInfo.productName
@@ -161,8 +156,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     //todo[nik] don't mix properties for idea.properties file with properties for Info.plist
     Map<String, String> properties = readIdeaProperties(ideaPropertiesFile, customIdeaProperties)
+    properties["idea.vendor.name"] = buildContext.applicationInfo.shortCompanyName
 
-    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
+    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable", "idea.vendor.name"]
 
     String coreProperties = submapToXml(properties, coreKeys)
 
@@ -174,8 +170,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof".trim()
-    new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
+    def ideaVmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
+                           ['-XX:+UseCompressedOops', '-Dfile.encoding=UTF-8'] +
+                           buildContext.productProperties.additionalIdeJvmArguments.split(' ').toList() +
+                           ["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"]
+    new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.join("\n")
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -210,19 +209,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </array>
 """
     }
-    String bundledHelpAttributes
-    if (helpId != null) {
-      bundledHelpAttributes = """
-        <key>CFBundleHelpBookName</key>
-        <string>JetBrains.${helpId}.help</string>
-        <key>CFBundleHelpBookFolder</key>
-        <string>${helpId}.help</string>
-"""
-    }
-    else {
-      bundledHelpAttributes = ""
-    }
-
     String todayYear = LocalDate.now().year
     buildContext.ant.replace(file: "$target/Info.plist") {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
@@ -239,11 +225,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@version@@", value: version)
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)
-      replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
-      replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
     buildContext.ant.copy(todir: "$target/bin") {
@@ -265,29 +249,34 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
+  @Override
+  List<String> generateExecutableFilesPatterns(boolean includeJre) {
+    [
+      "bin/*.sh",
+      "bin/*.py",
+      "bin/fsnotifier",
+      "bin/restarter",
+      "MacOS/*"
+    ] + customizer.extraExecutables
+  }
+
   private String buildMacZip(String macDistPath) {
     return buildContext.messages.block("Build .zip archive for macOS") {
-      def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = getZipRoot(buildContext, customizer)
-      def suffix = buildContext.bundledJreManager.jreSuffix()
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      def targetPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.mac.zip"
+      def targetPath = "${buildContext.paths.artifacts}/${baseName}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
       generateProductJson(buildContext, productJsonDir, null)
       allPaths += productJsonDir
 
+      def executableFilePatterns = generateExecutableFilesPatterns(false)
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
-            exclude(name: "bin/*.sh")
-            exclude(name: "bin/*.py")
-            exclude(name: "bin/fsnotifier")
-            exclude(name: "bin/restarter")
-            exclude(name: "MacOS/*")
-            extraBins.each {
+            executableFilePatterns.each {
               exclude(name: it)
             }
             exclude(name: "*.txt")
@@ -296,18 +285,15 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         allPaths.each {
           zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
-            include(name: "bin/*.sh")
-            include(name: "bin/*.py")
-            include(name: "bin/fsnotifier")
-            include(name: "bin/restarter")
-            include(name: "MacOS/*")
-            extraBins.each {
+            executableFilePatterns.each {
               include(name: it)
             }
           }
         }
 
-        // build.txt etc.
+        // the root directory must not have files other than Info.plist so files like NOTICE.TXT and LICENSE.txt are copied to Resources subfolder
+        //todo specify paths to such files in ProductProperties and put them to dist.mac/Resources to get rid of this exclusion
+        //todo remove code which does the same from tools/mac/scripts/signapp.sh
         zipfileset(dir: buildContext.paths.distAll, prefix: "$zipRoot/Resources") {
           include(name: "*.txt")
         }

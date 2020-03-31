@@ -35,7 +35,7 @@ import java.util.Arrays;
  * @author yole
  */
 public class GridBuildUtil {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.GridBuildUtil");
+  private static final Logger LOG = Logger.getInstance(GridBuildUtil.class);
 
   private final static int HORIZONTAL_GRID = 1;
   private final static int VERTICAL_GRID = 2;

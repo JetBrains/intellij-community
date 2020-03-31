@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -20,13 +21,13 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
@@ -87,10 +88,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(JBUI.scale(20));
+    severitiesColumn.setMaxWidth(JBUIScale.scale(20));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(JBUI.scale(22 + getAdditionalPadding()));
+    isEnabledColumn.setMaxWidth(JBUIScale.scale(22 + getAdditionalPadding()));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
     isEnabledColumn.setCellRenderer(boxRenderer);
@@ -131,7 +132,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
           final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
@@ -161,14 +162,21 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
     });
 
+    setTableHeader(new InvisibleResizableHeader() {
+      @Override
+      protected boolean canMoveOrResizeColumn(int modelIndex) {
+        return false;
+      }
+    });
     getTableHeader().setReorderingAllowed(false);
     getTableHeader().setResizingAllowed(false);
+
     registerKeyboardAction(__ -> {
       model.swapInspectionEnableState();
       updateUI();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
-    getEmptyText().setText("No enabled inspections available");
+    getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
   @Nullable
@@ -214,16 +222,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
     protected abstract void onChanged(@NotNull InspectionConfigTreeNode node);
 
     public abstract void updateRightPanel();
-  }
-
-  public static void setToolEnabled(boolean newState,
-                                    @NotNull InspectionProfileImpl profile,
-                                    @NotNull String toolId,
-                                    @NotNull Project project) {
-    profile.setToolEnabled(toolId, newState);
-    for (ScopeToolState scopeToolState : profile.getTools(toolId, project).getTools()) {
-      scopeToolState.setEnabled(newState);
-    }
   }
 
   private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
@@ -318,7 +316,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (final InspectionConfigTreeNode.Tool aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
-        setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
         mySettings.onChanged(aNode);
       }
       updateRightPanel();
@@ -353,7 +351,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (HighlightDisplayKey tool : tools) {
-        setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
       }
 
       for (InspectionConfigTreeNode node : nodes) {

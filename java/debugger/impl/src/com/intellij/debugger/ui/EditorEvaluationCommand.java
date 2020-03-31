@@ -16,7 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -24,8 +24,8 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,12 +53,12 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ReadAction.compute(myElement::getText)));
+    myProgressIndicator.setText(JavaDebuggerBundle.message("progress.evaluating", ReadAction.compute(myElement::getText)));
 
     try {
       T result = evaluate(getDebuggerContext().createEvaluationContext());
 
-      if (myProgressIndicator.isCanceled()) throw new ProcessCanceledException();
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
 
       return result;
     } catch (final EvaluateException e) {

@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 
@@ -31,7 +31,7 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.array.variable");
+    return JavaBundle.message("macro.array.variable");
   }
 
   @Override

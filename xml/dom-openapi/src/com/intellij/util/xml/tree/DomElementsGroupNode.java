@@ -16,7 +16,6 @@
 
 package com.intellij.util.xml.tree;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -24,6 +23,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ElementPresentationTemplate;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
@@ -49,9 +49,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     myRootDomElement = rootDomElement;
   }
 
-  @NotNull
   @Override
-  public SimpleNode[] getChildren() {
+  public SimpleNode @NotNull [] getChildren() {
     if (!myParentElement.isValid()) return NO_CHILDREN;
 
     final List<SimpleNode> simpleNodes = new ArrayList<>();
@@ -64,8 +63,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{myParentElement, myChildrenTagName};
   }
 
@@ -83,7 +81,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         showErrors ? getWavedAttributes(SimpleTextAttributes.STYLE_BOLD) :  new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
 
       addColoredFragment(getNodeName(), textAttributes);
-      addColoredFragment(" (" + childrenCount + ')', showErrors ? IdeBundle.message("dom.elements.tree.childs.contain.errors") : null,
+      addColoredFragment(" (" + childrenCount + ')', showErrors ? XmlDomBundle.message("dom.elements.tree.childs.contain.errors") : null,
                          SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
     else {

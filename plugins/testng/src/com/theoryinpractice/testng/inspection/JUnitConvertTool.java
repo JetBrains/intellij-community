@@ -9,11 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +46,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "TestNG";
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return DISPLAY_NAME;
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @NotNull
@@ -62,11 +56,10 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, TestngBundle.message("test.case.can.be.converted.to.testng"),
                                                                      new JUnitConverterQuickFix(),
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       return new ProblemDescriptor[]{descriptor};
@@ -239,25 +232,22 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     }
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
-      PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
-        @Override
-        public boolean isAccepted(@NotNull PsiElement element) {
-          if (!(element instanceof PsiMethodCallExpression)) return false;
-          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-          final PsiMethod method = methodCall.resolveMethod();
-          if (method != null) {
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass != null) {
-              final String qualifiedName = containingClass.getQualifiedName();
-              if ("junit.framework.Assert".equals(qualifiedName) ||
-                  "org.junit.Assert".equals(qualifiedName) ||
-                  "junit.framework.TestCase".equals(qualifiedName)) {
-                return true;
-              }
+      PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, element -> {
+        if (!(element instanceof PsiMethodCallExpression)) return false;
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+        final PsiMethod method1 = methodCall.resolveMethod();
+        if (method1 != null) {
+          final PsiClass containingClass = method1.getContainingClass();
+          if (containingClass != null) {
+            final String qualifiedName = containingClass.getQualifiedName();
+            if ("junit.framework.Assert".equals(qualifiedName) ||
+                "org.junit.Assert".equals(qualifiedName) ||
+                "junit.framework.TestCase".equals(qualifiedName)) {
+              return true;
             }
           }
-          return false;
         }
+        return false;
       });
       PsiMethodCallExpression[] expressions = new PsiMethodCallExpression[methodCalls.length];
       System.arraycopy(methodCalls, 0, expressions, 0, methodCalls.length);

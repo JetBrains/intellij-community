@@ -12,16 +12,13 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ModuleDeleteProviderTest extends PlatformTestCase {
+public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

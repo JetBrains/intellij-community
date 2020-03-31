@@ -117,3 +117,29 @@ private fun Iterable<Int>.minOrDefault(): Int {
 private fun Iterable<Int>.maxOrDefault(): Int {
   return max() ?: Int.MIN_VALUE
 }
+
+/**
+ * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
+ */
+fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
+  val result = TIntHashSet()
+  BfsWalk(headNode, this).walk { it ->
+    val upNodes = getNodes(it, LiteLinearGraph.NodeFilter.UP)
+    if ((upNodes.isEmpty() || upNodes.all { result.contains(it) }) &&
+        (it == headNode || !isHead(it))) {
+      result.add(it)
+      true
+    }
+    else {
+      false
+    }
+  }
+  return result
+}
+
+/**
+ * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
+ */
+fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
+  return LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode, isHead)
+}

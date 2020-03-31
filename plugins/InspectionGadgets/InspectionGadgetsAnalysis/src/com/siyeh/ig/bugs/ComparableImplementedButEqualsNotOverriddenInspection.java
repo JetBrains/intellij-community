@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,12 +40,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.display.name");
-  }
+  @VisibleForTesting
+  static final String ADD_NOTE_FIX_NAME = "Add 'ordering inconsistent with equals' JavaDoc note";
+  @VisibleForTesting
+  static final String GENERATE_EQUALS_FIX_NAME = "Generate 'equals()' method";
 
   @Override
   @NotNull
@@ -52,9 +51,12 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    if (infos[0] instanceof PsiAnonymousClass) {
+      return new InspectionGadgetsFix[] {new GenerateEqualsMethodFix()};
+    }
+
     return new InspectionGadgetsFix[] {
       new GenerateEqualsMethodFix(),
       new AddNoteFix()
@@ -66,7 +68,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Generate 'equals()' method";
+      return GENERATE_EQUALS_FIX_NAME;
     }
 
     @Override
@@ -97,7 +99,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add 'ordering inconsistent with equals' JavaDoc note";
+      return ADD_NOTE_FIX_NAME;
     }
 
     @Override

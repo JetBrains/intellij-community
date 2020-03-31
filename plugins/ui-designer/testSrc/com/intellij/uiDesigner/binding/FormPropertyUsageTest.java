@@ -12,9 +12,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -22,7 +23,7 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class FormPropertyUsageTest extends PsiTestCase {
+public class FormPropertyUsageTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
 
   @Override
@@ -47,22 +48,31 @@ public class FormPropertyUsageTest extends PsiTestCase {
   }
 
   public void testFormPropertyUsage() {
-    doPropertyUsageTest("test.properties");
+    doPropertyUsageTest("test.properties", 960);
+  }
+
+  public void testFormPropertyUsageForBundleInPackage() {
+    doPropertyUsageTest("messages/test.properties", 876);
   }
 
   public void testLocalizedPropertyUsage() {
-    doPropertyUsageTest("test_ru.properties");
+    doPropertyUsageTest("test_ru.properties", 960);
   }
 
-  private void doPropertyUsageTest(final String propertyFileName) {
-    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(propertyFileName));
+  private void doPropertyUsageTest(final String propertyFileName, int offset) {
+    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findFileByRelativePath(propertyFileName));
     assertNotNull(propFile);
     final Property prop = (Property)propFile.findPropertyByKey("key");
     assertNotNull(prop);
     final Query<PsiReference> query = ReferencesSearch.search(prop);
     final Collection<PsiReference> result = query.findAll();
     assertEquals(1, result.size());
-    verifyReference(result, 0, "form.form", 960);
+    PsiReference reference = ContainerUtil.getFirstItem(result);
+    assertTrue(reference.isReferenceTo(prop));
+    PsiElement resolved = reference.resolve();
+    assertNotNull(resolved);
+    assertTrue(prop.isEquivalentTo(resolved));
+    verifyReference(reference, "form.form", offset);
   }
 
   public void testPropertyFileUsage() {
@@ -79,11 +89,10 @@ public class FormPropertyUsageTest extends PsiTestCase {
     final Query<PsiReference> query = ReferencesSearch.search(propFile.getContainingFile());
     final Collection<PsiReference> result = query.findAll();
     assertEquals(1, result.size());
-    verifyReference(result, 0, "form.form", 949);
+    verifyReference(ContainerUtil.getFirstItem(result), "form.form", 949);
   }
 
-  private void verifyReference(final Collection<PsiReference> result, final int index, final String fileName, final int offset) {
-    PsiReference ref = result.toArray(PsiReference.EMPTY_ARRAY) [index];
+  private static void verifyReference(final PsiReference ref, final String fileName, final int offset) {
     final PsiElement element = ref.getElement();
     assertEquals(fileName, element.getContainingFile().getName());
     int startOffset = element.getTextOffset() + ref.getRangeInElement().getStartOffset();

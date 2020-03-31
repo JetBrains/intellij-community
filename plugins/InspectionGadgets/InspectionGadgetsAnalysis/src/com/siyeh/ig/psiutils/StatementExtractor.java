@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -21,6 +7,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -50,8 +37,7 @@ public class StatementExtractor {
    * @param root a root expression
    * @return an array of non-physical statements which represent the same logic as passed expressions
    */
-  @NotNull
-  public static PsiStatement[] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
+  public static PsiStatement @NotNull [] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
     String statementsCode = generateStatementsText(expressionsToKeep, root);
     if(statementsCode.isEmpty()) return PsiStatement.EMPTY_ARRAY;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(root.getProject());
@@ -77,12 +63,12 @@ public class StatementExtractor {
         PsiSwitchExpression switchExpression =
           PsiTreeUtil.getParentOfType(parentElement, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
         if (switchExpression != null && PsiTreeUtil.isAncestor(root, switchExpression, false)) {
-          boolean isBreak =
-            parentElement instanceof PsiBreakStatement && ((PsiBreakStatement)parentElement).findExitedElement() == switchExpression;
+          boolean isYield =
+            parentElement instanceof PsiYieldStatement && ((PsiYieldStatement)parentElement).findEnclosingExpression() == switchExpression;
           boolean isRuleExpression =
             parentElement instanceof PsiExpressionStatement && parentElement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)parentElement.getParent()).getEnclosingSwitchBlock() == switchExpression;
-          if (isBreak || isRuleExpression) {
+          if (isYield || isRuleExpression) {
             result = new Switch(switchExpression, Collections.singletonMap((PsiStatement)parentElement, result));
           }
           else {
@@ -222,6 +208,18 @@ public class StatementExtractor {
     }
 
     public String toString() {
+      if (myAnchor instanceof PsiInstanceOfExpression) {
+        List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(myAnchor);
+        StringBuilder sb = new StringBuilder();
+        for (PsiPatternVariable variable : variables) {
+          String initializer = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+          if (initializer != null) {
+            sb.append(variable.getTypeElement().getText()).append(" ").append(variable.getName()).append("=")
+              .append(initializer).append(";");
+          }
+        }
+        return sb.toString();
+      }
       return myAnchor.getText() + ";";
     }
   }
@@ -266,8 +264,8 @@ public class StatementExtractor {
         }
 
         @Override
-        public void visitBreakStatement(PsiBreakStatement statement) {
-          if (statement.getValueExpression() != null && statement.findExitedElement() == copy) {
+        public void visitYieldStatement(PsiYieldStatement statement) {
+          if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
             process(statement);
           }
         }
@@ -288,7 +286,7 @@ public class StatementExtractor {
         }
       });
       replacementMap.forEach((statement, replacements) -> {
-        boolean keep = statement instanceof PsiBreakStatement && shouldKeepBreak(statement);
+        boolean keep = statement instanceof PsiYieldStatement && shouldKeepBreak(statement);
         if (!keep && replacements.length == 1) {
           statement.replace(replacements[0]);
         }
@@ -302,11 +300,11 @@ public class StatementExtractor {
               parent.addBefore(replacement, statement);
             }
           }
-          if (keep) {
-            Objects.requireNonNull(((PsiBreakStatement)statement).getValueExpression()).delete();
+          if (!keep) {
+            statement.delete();
           }
           else {
-            statement.delete();
+            statement.replace(factory.createStatementFromText("break;", null));
           }
         }
       });
@@ -314,7 +312,9 @@ public class StatementExtractor {
     }
 
     public boolean shouldKeepBreak(PsiStatement statement) {
-      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) instanceof PsiStatement) return true;
+      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) instanceof PsiStatement) {
+        return true;
+      }
       PsiElement parent = statement.getParent();
       if (parent instanceof PsiCodeBlock) {
         PsiElement gParent = parent.getParent();

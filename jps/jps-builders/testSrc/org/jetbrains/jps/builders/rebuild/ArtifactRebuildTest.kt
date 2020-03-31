@@ -23,9 +23,6 @@ import java.io.FileInputStream
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 
-/**
- * @author nik
- */
 class ArtifactRebuildTest: JpsRebuildTestCase() {
   fun testArtifactIncludesArchiveArtifact() {
     val name = "artifactIncludesArchiveArtifact"

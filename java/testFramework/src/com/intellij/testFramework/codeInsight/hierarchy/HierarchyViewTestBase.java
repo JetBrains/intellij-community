@@ -15,10 +15,9 @@
  */
 package com.intellij.testFramework.codeInsight.hierarchy;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,30 +26,22 @@ import java.io.IOException;
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
-public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
-  private final HierarchyViewTestFixture myFixture = new HierarchyViewTestFixture();
+public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
 
   protected abstract String getBasePath();
 
   protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
-                                 @NotNull String... fileNames) throws Exception {
+                                 String @NotNull ... fileNames) throws IOException {
     configure(fileNames);
-    String expectedStructure = loadExpectedStructure();
-
-    myFixture.doHierarchyTest(treeStructureComputable.compute(), expectedStructure);
+    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
+    HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
   }
 
-  private void configure(@NotNull String[] fileNames) {
+  private void configure(String @NotNull [] fileNames) {
     final String[] relFilePaths = new String[fileNames.length];
     for (int i = 0; i < fileNames.length; i++) {
       relFilePaths[i] = "/" + getBasePath() + "/" + fileNames[i];
     }
     configureByFiles(null, relFilePaths);
-  }
-
-  @NotNull
-  private String loadExpectedStructure() throws IOException {
-    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
-    return FileUtil.loadFile(new File(verificationFilePath));
   }
 }

@@ -17,11 +17,11 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownTodoTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownTodoTest extends BasePlatformTestCase {
   public void testTodo() {
     doTest("[//]: #a (todo comment)", 1);
   }

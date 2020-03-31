@@ -41,9 +41,6 @@ import java.util.List;
 
 import static com.intellij.openapi.util.JDOMUtil.getChildren;
 
-/**
- * @author nik
- */
 public class JpsModuleRootModelSerializer {
   private static final Logger LOG = Logger.getInstance(JpsModuleRootModelSerializer.class);
   public static final String URL_ATTRIBUTE = "url";
@@ -196,6 +193,10 @@ public class JpsModuleRootModelSerializer {
   }
 
   public static void saveRootModel(JpsModule module, Element rootModelElement) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      extension.saveRootModel(module, rootModelElement);
+    }
+
     List<JpsModuleSourceRoot> sourceRoots = module.getSourceRoots();
     List<String> excludedUrls = getSortedList(module.getExcludeRootsList().getUrls());
     for (String url : getSortedList(module.getContentRootsList().getUrls())) {
@@ -265,10 +266,6 @@ public class JpsModuleRootModelSerializer {
         saveModuleDependencyProperties(dependency, element);
         rootModelElement.addContent(element);
       }
-    }
-
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      extension.saveRootModel(module, rootModelElement);
     }
   }
 

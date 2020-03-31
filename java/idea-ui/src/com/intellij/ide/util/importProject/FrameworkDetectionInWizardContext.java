@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
@@ -10,7 +10,7 @@ import com.intellij.framework.detection.impl.FrameworkDetectionContextBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkDetectionInWizardContext extends FrameworkDetectionContextBase {
   protected FrameworkDetectionInWizardContext() {
   }
@@ -33,7 +30,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
     final List<ModuleDescriptor> descriptors = getModuleDescriptors();
     MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<>();
     for (VirtualFile file : files) {
-      final File ioFile = VfsUtil.virtualToIoFile(file);
+      final File ioFile = VfsUtilCore.virtualToIoFile(file);
       ModuleDescriptor descriptor = findDescriptorByFile(descriptors, ioFile);
       if (descriptor != null) {
         filesByModule.putValue(descriptor, file);

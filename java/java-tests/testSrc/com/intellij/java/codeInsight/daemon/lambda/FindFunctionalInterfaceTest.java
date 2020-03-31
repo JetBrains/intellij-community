@@ -24,13 +24,13 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.function.Predicate;
 
-public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {
+public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTestCase {
   public void testMethodArgument() {
     doTestOneExpression();
   }

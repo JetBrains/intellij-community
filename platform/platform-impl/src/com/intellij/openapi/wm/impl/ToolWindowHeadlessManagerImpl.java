@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,8 +18,9 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +29,10 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -46,85 +46,20 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
+  public void notifyByBalloon(@NotNull String toolWindowId, @NotNull MessageType type, @NotNull String htmlBody) {
   }
 
-  private ToolWindow doRegisterToolWindow(final String id, @Nullable Disposable parentDisposable) {
-    MockToolWindow tw = new MockToolWindow(myProject);
-    myToolWindows.put(id, tw);
-    if (parentDisposable != null)  {
-      Disposer.register(parentDisposable, () -> unregisterToolWindow(id));
-    }
-    return tw;
+  @NotNull
+  public ToolWindow doRegisterToolWindow(@NotNull String id) {
+    MockToolWindow toolWindow = new MockToolWindow(myProject);
+    myToolWindows.put(id, toolWindow);
+    return toolWindow;
   }
 
   @NotNull
   @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode,
-                                       boolean canCloseContents) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent,
-                                       @NotNull final ToolWindowAnchor anchor,
-                                       final boolean secondary) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       @NotNull final Disposable parentDisposable, final boolean dumbAware) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       boolean canCloseContent,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode,
-                                       boolean secondary) {
-    return doRegisterToolWindow(id, parentDisposable);
+  public ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
+    return doRegisterToolWindow(task.getId());
   }
 
   @Override
@@ -144,10 +79,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return false;
   }
 
+  @Override
+  public String @NotNull [] getToolWindowIds() {
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+  }
+
   @NotNull
   @Override
-  public String[] getToolWindowIds() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public Set<String> getToolWindowIdSet() {
+    return Collections.emptySet();
   }
 
   @Override
@@ -179,7 +119,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public Balloon getToolWindowBalloon(String id) {
+  public Balloon getToolWindowBalloon(@NotNull String id) {
     return null;
   }
 
@@ -189,11 +129,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+  public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
   }
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
+  }
+
+  @Override
+  public void init(ProjectFrameHelper frameHelper) {
   }
 
   @Override
@@ -239,11 +183,40 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return new ArrayList<>();
   }
 
+  @NotNull
+  @Override
+  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
+    return fallbackIcon;
+  }
+
   public static class MockToolWindow implements ToolWindowEx {
     final ContentManager myContentManager = new MockContentManager();
+    private final Project project;
 
     public MockToolWindow(@NotNull Project project) {
+      this.project = project;
       Disposer.register(project, myContentManager);
+    }
+
+    @Override
+    public @NotNull Project getProject() {
+      return project;
+    }
+
+    @NotNull
+    @Override
+    public Disposable getDisposable() {
+      return myContentManager;
+    }
+
+    @Override
+    public void remove() {
+    }
+
+    @Override
+    @NotNull
+    public String getId() {
+      return "";
     }
 
     @Override
@@ -288,6 +261,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void hide(@Nullable Runnable runnable) {
     }
 
+    @NotNull
     @Override
     public ToolWindowAnchor getAnchor() {
       return ToolWindowAnchor.BOTTOM;
@@ -320,11 +294,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setToHideOnEmptyContent(final boolean hideOnEmpty) {
     }
 
-    @Override
-    public boolean isToHideOnEmptyContent() {
-      return false;
-    }
-
+    @NotNull
     @Override
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
@@ -334,13 +304,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     }
 
+    @Nullable
     @Override
     public Icon getIcon() {
       return null;
     }
 
     @Override
-    public void setIcon(Icon icon) {
+    public void setIcon(@NotNull Icon icon) {
     }
 
     @Override
@@ -386,17 +357,33 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setAvailable(boolean value) {
+    }
+
+    @Override
     public void installWatcher(ContentManager contentManager) {
     }
 
+    @NotNull
     @Override
     public JComponent getComponent() {
       return new JLabel();
     }
 
+    @NotNull
     @Override
     public ContentManager getContentManager() {
       return myContentManager;
+    }
+
+    @Override
+    @Nullable
+    public ContentManager getContentManagerIfCreated() {
+      return myContentManager;
+    }
+
+    @Override
+    public void addContentManagerListener(@NotNull ContentManagerListener listener) {
     }
 
     @Override
@@ -414,13 +401,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void showContentPopup(InputEvent inputEvent) {
+    public void showContentPopup(@NotNull InputEvent inputEvent) {
     }
 
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-    }
-
+    @NotNull
     @Override
     public ToolWindowType getInternalType() {
       return ToolWindowType.DOCKED;
@@ -434,9 +418,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void stretchHeight(int value) {
     }
 
+    @NotNull
     @Override
     public InternalDecorator getDecorator() {
-      return null;
+      throw new IncorrectOperationException();
     }
 
     @Override
@@ -444,20 +429,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setTitleActions(AnAction... actions) {
+    public void setTitleActions(@NotNull AnAction... actions) {
     }
 
     @Override
-    public void setTabActions(AnAction... actions) {
+    public void setTabActions(@NotNull AnAction... actions) {
     }
 
     @Override
-    public void setUseLastFocusedOnActivation(boolean focus) {
-    }
-
-    @Override
-    public boolean isUseLastFocusedOnActivation() {
-      return false;
+    public void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
     }
   }
 
@@ -581,8 +561,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public Content[] getContents() {
+    public Content @NotNull [] getContents() {
       return myContents.toArray(new Content[0]);
     }
 
@@ -598,8 +577,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public Content[] getSelectedContents() {
+    public Content @NotNull [] getSelectedContents() {
       return mySelected != null ? new Content[]{mySelected} : new Content[0];
     }
 

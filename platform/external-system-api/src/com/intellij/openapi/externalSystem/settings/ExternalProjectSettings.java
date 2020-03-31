@@ -1,14 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.util.PlatformUtils.getPlatformPrefix;
+import static com.intellij.util.PlatformUtils.isIntelliJ;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
@@ -17,7 +22,9 @@ import java.util.Set;
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
-  private String  myExternalProjectPath;
+  private static final Logger LOG = Logger.getInstance(ExternalProjectSettings.class);
+
+  private String myExternalProjectPath;
   @Nullable private Set<String> myModules = new HashSet<>();
 
   @NotNull
@@ -29,10 +36,13 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     this.myModules = modules;
   }
 
-  private boolean myUseAutoImport;
-  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde(); // backward-compatible defaults
+  private boolean myUseQualifiedModuleNames = !isIntelliJ() && !"AndroidStudio".equals(getPlatformPrefix()); // backward-compatible defaults
 
-  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated // left for settings backward-compatibility
+  /**
+   * @deprecated left for settings backward-compatibility
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   private boolean myCreateEmptyContentRootDirectories;
 
   // Used to gradually migrate new project to the new defaults.
@@ -48,20 +58,39 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     myExternalProjectPath = externalProjectPath;
   }
 
+  /**
+   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Transient
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public boolean isUseAutoImport() {
-    return myUseAutoImport;
+    return true;
   }
 
-  public void setUseAutoImport(boolean useAutoImport) {
-    myUseAutoImport = useAutoImport;
+  /**
+   * @deprecated Auto-import cannot be disabled
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
+   */
+  @Transient
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
+    LOG.warn(new Throwable("Auto-import cannot be disabled"));
   }
 
-  @Deprecated // left for settings backward-compatibility
+  /**
+   * @deprecated left for settings backward-compatibility
+   */
+  @Deprecated
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
 
-  @Deprecated // left for settings backward-compatibility
+  /**
+   * @deprecated left for settings backward-compatibility
+   */
+  @Deprecated
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }
@@ -106,7 +135,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
     receiver.myModules = myModules != null ? new HashSet<>(myModules) : new HashSet<>();
-    receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
     receiver.myUseQualifiedModuleNames = myUseQualifiedModuleNames;
   }

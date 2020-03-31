@@ -16,14 +16,13 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OctalAndDecimalIntegersMixedInspectionTest extends LightInspectionTestCase {
+public class OctalAndDecimalIntegersMixedInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("int[] is = /*Octal and decimal integers in the same array initializer*/{34, 987, (007), 661}/**/;");

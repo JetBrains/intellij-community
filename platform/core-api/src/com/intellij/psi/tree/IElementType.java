@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,7 +26,7 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
+  private static final Logger LOG = Logger.getInstance(IElementType.class);
 
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
@@ -54,9 +42,8 @@ public class IElementType {
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
-  @NotNull
-  private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @SuppressWarnings("RedundantStringConstructorCall")
+  private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
+  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
   private static final Object lock = new String("registry lock");
 
   static {
@@ -66,8 +53,7 @@ public class IElementType {
     push(init);
   }
 
-  @NotNull
-  static IElementType[] push(@NotNull IElementType[] types) {
+  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -76,7 +62,26 @@ public class IElementType {
     }
   }
 
+  public static void unregisterElementTypes(@NotNull ClassLoader loader) {
+    for (int i = 0; i < ourRegistry.length; i++) {
+      IElementType type = ourRegistry[i];
+      if (type != null && type.getClass().getClassLoader() == loader) {
+        ourRegistry[i] = null;
+      }
+    }
+  }
+
+  public static void unregisterElementTypes(@NotNull Language language) {
+    for (int i = 0; i < ourRegistry.length; i++) {
+      IElementType type = ourRegistry[i];
+      if (type != null && type.getLanguage().equals(language)) {
+        ourRegistry[i] = null;
+      }
+    }
+  }
+
   private final short myIndex;
+  @NonNls
   @NotNull
   private final String myDebugName;
   @NotNull
@@ -88,25 +93,27 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-  public IElementType(@NotNull String debugName, @Nullable Language language) {
+  public IElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
-  }
 
+    if (!(this instanceof IFileElementType)) {
+      LoadingState.COMPONENTS_LOADED.checkOccurred();
+    }
+  }
 
   /**
    * Allows to construct element types for some temporary purposes without registering them.
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
+  protected IElementType(@NonNls @NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       synchronized (lock) {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(i->i!=null).collect(Collectors.groupingBy(ie -> ie.myLanguage));
+          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
           Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
           List<IElementType> types = max.getValue();
           LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
@@ -115,6 +122,7 @@ public class IElementType {
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
         newRegistry[myIndex] = this;
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
     }
@@ -213,8 +221,7 @@ public class IElementType {
    * @param p the predicate which should be matched by the element types.
    * @return the array of matching element types.
    */
-  @NotNull
-  public static IElementType[] enumerate(@NotNull Predicate p) {
+  public static IElementType @NotNull [] enumerate(@NotNull Predicate p) {
     List<IElementType> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null && p.matches(value)) {

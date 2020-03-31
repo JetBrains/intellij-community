@@ -55,7 +55,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          stateChanged(new ChangeEvent(this));
+          panelStateChanged(new ChangeEvent(this));
         }
       }
     };
@@ -106,6 +106,9 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
     bg.add(myRbPublic);
   }
 
+  private void panelStateChanged(ChangeEvent event) {
+    stateChanged(event);
+  }
 
   @Override
   @Nullable

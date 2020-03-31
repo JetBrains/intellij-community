@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 public class AnnotationDocGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.AnnotationGenerator");
+  private static final Logger LOG = Logger.getInstance(AnnotationDocGenerator.class);
   @NotNull private final PsiAnnotation myAnnotation;
   @NotNull private final PsiJavaCodeReferenceElement myNameReference;
   @NotNull private final PsiModifierListOwner myOwner;
@@ -57,6 +57,10 @@ public class AnnotationDocGenerator {
     return AnnotationUtil.isExternalAnnotation(myAnnotation);
   }
 
+  public String getAnnotationQualifiedName() {
+    return myAnnotation.getQualifiedName();
+  }
+
   public boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
@@ -74,6 +78,8 @@ public class AnnotationDocGenerator {
 
     boolean red = type == null && !myResolveNotPossible && !isInferred() && !isExternal();
 
+    boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && (isInferred() || isExternal());
+    if (highlightNonCodeAnnotations) buffer.append("<b>");
     if (isInferred()) buffer.append("<i>");
     if (red) buffer.append("<font color=red>");
 
@@ -91,6 +97,7 @@ public class AnnotationDocGenerator {
 
     generateAnnotationAttributes(buffer, generateLink);
     if (isInferred()) buffer.append("</i>");
+    if (highlightNonCodeAnnotations) buffer.append("</b>");
   }
 
   private void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink) {

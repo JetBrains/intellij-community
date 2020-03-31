@@ -52,9 +52,9 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
     myHolders = createEditorHolders(factory);
 
-    List<JComponent> titlePanels = createTitles();
     myFocusTrackerSupport = new FocusTrackerSupport.Twoside(myHolders);
-    myContentPanel = new TwosideContentPanel(myHolders, titlePanels);
+    myContentPanel = TwosideContentPanel.createFromHolders(myHolders);
+    myContentPanel.setTitles(createTitles());
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }

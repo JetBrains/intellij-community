@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class UsagesPanel extends JPanel implements Disposable, DataProvider {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
+  protected static final Logger LOG = Logger.getInstance(UsagesPanel.class);
 
   private final Project myProject;
   ProgressIndicator myCurrentProgress;
@@ -55,9 +43,8 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     setToComponent(createLabel(getInitialPositionText()));
   }
 
-  public abstract String getInitialPositionText();
-  public abstract String getCodeUsagesString();
-
+  public abstract @Nls String getInitialPositionText();
+  public abstract @Nls String getCodeUsagesString();
 
   void cancelCurrentFindRequest() {
     if (myCurrentProgress != null) {
@@ -65,7 +52,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     }
   }
 
-  protected void showUsages(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
+  protected void showUsages(PsiElement @NotNull [] primaryElements, UsageInfo @NotNull [] usageInfos) {
     if (myCurrentUsageView != null) {
       Disposer.dispose(myCurrentUsageView);
     }
@@ -82,12 +69,11 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   }
 
   private void setToCanceled() {
-    setToComponent(createLabel(AnalysisScopeBundle.message("usage.view.canceled")));
+    setToComponent(createLabel(CodeInsightBundle.message("usage.view.canceled")));
   }
 
-  void setToComponent(final JComponent cmp) {
-    SwingUtilities.invokeLater(() -> {
-      if (myProject.isDisposed()) return;
+  final void setToComponent(@NotNull JComponent component) {
+    AppUIExecutor.onWriteThread(ModalityState.any()).expireWith(myProject).execute(() -> {
       if (myCurrentComponent != null) {
         if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
           Disposer.dispose(myCurrentUsageView);
@@ -95,15 +81,15 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
         }
         remove(myCurrentComponent);
       }
-      myCurrentComponent = cmp;
-      add(cmp, BorderLayout.CENTER);
+      myCurrentComponent = component;
+      add(component, BorderLayout.CENTER);
       revalidate();
     });
   }
 
   @Override
-  public void dispose(){
-    if (myCurrentUsageView != null){
+  public void dispose() {
+    if (myCurrentUsageView != null) {
       Disposer.dispose(myCurrentUsageView);
       myCurrentUsageView = null;
     }

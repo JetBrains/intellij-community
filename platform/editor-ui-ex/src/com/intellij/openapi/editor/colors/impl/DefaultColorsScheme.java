@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +118,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
   
   public String getEditableCopyName() {
-    return SchemeManager.EDITABLE_COPY_PREFIX + myName;
+    return EDITABLE_COPY_PREFIX + myName;
   }
 
   @Override

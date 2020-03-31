@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,6 +18,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -40,9 +42,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
 
@@ -103,7 +102,7 @@ public class XFramesView extends XDebugView {
         label.setIcon(value.getIcon());
       }
       else if (index >= 0) {
-        label.setText("Loading...");
+        label.setText(CommonBundle.getLoadingTreeNodeText());
       }
     }));
     myThreadComboBox.addItemListener(new ItemListener() {
@@ -167,6 +166,17 @@ public class XFramesView extends XDebugView {
     myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
+  }
+
+  private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return Arrays.asList(myFramesList,
+                           myThreadComboBox);
+    }
   }
 
   public JComponent getDefaultFocusedComponent() {

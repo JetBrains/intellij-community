@@ -1,4 +1,4 @@
-from typing import List, <warning descr="Unused import statement">Optional</warning>
+from typing import List, <warning descr="Unused import statement 'Optional'">Optional</warning>
 
 
 def f(x, y):

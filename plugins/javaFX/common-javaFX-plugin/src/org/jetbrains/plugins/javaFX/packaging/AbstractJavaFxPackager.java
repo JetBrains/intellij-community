@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.CommandLineUtil;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
@@ -88,7 +89,7 @@ public abstract class AbstractJavaFxPackager {
       tempUnzippedArtifactOutput = FileUtil.createTempDirectory("artifact", "unzipped");
       final File artifactOutputFile = new File(zipPath);
       ZipUtil.extract(artifactOutputFile, tempUnzippedArtifactOutput, null);
-      copyLibraries(FileUtil.getNameWithoutExtension(artifactOutputFile), tempUnzippedArtifactOutput);
+      copyLibraries(FileUtilRt.getNameWithoutExtension(artifactOutputFile.getName()), tempUnzippedArtifactOutput);
     }
     catch (IOException e) {
       registerJavaFxPackagerError(e);

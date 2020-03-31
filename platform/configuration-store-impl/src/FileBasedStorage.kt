@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -7,6 +7,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
@@ -37,7 +38,8 @@ open class FileBasedStorage(file: Path,
                             provider: StreamProvider? = null) :
   XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
 
-  @Volatile private var cachedVirtualFile: VirtualFile? = null
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   protected var lineSeparator: LineSeparator? = null
   protected var isBlockSavingTheContent = false
@@ -46,7 +48,8 @@ open class FileBasedStorage(file: Path,
   var file = file
     private set
 
-  protected open val configuration: FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
+  protected open val configuration: FileBasedStorageConfiguration
+    get() = defaultFileBasedStorageConfiguration
 
   init {
     val app = ApplicationManager.getApplication()
@@ -98,7 +101,7 @@ open class FileBasedStorage(file: Path,
       }
 
       val isUseVfs = storage.configuration.isUseVfsForWrite
-      val virtualFile = if (isUseVfs) storage.virtualFile else null
+      val virtualFile = if (isUseVfs) storage.getVirtualFile(StateStorageOperation.WRITE) else null
       when {
         dataWriter == null -> {
           if (isUseVfs && virtualFile == null) {
@@ -115,30 +118,27 @@ open class FileBasedStorage(file: Path,
           val file = storage.file
           LOG.debugOrInfoIfTestMode { "Save $file" }
           try {
-            dataWriter.writeTo(file, lineSeparator.separatorString)
+            dataWriter.writeTo(file, this, lineSeparator.separatorString)
           }
           catch (e: ReadOnlyModificationException) {
             throw e
           }
           catch (e: Throwable) {
-            throw RuntimeException("Cannot write ${file}", e)
+            throw RuntimeException("Cannot write $file", e)
           }
         }
       }
     }
   }
 
-  val virtualFile: VirtualFile?
-    get() {
-      var result = cachedVirtualFile
-      if (result == null) {
-        result = configuration.resolveVirtualFile(file.systemIndependentPath)
-        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
-        result?.charset = Charsets.UTF_8
-        cachedVirtualFile = result
-      }
-      return cachedVirtualFile
+  fun getVirtualFile(reasonOperation: StateStorageOperation): VirtualFile? {
+    var result = cachedVirtualFile
+    if (result == null) {
+      result = configuration.resolveVirtualFile(file.systemIndependentPath, reasonOperation)
+      cachedVirtualFile = result
     }
+    return result
+  }
 
   private inline fun <T> runAndHandleExceptions(task: () -> T): T? {
     try {
@@ -206,22 +206,23 @@ open class FileBasedStorage(file: Path,
   }
 
   private fun loadUsingVfs(): Element? {
-    val virtualFile = virtualFile
+    val virtualFile = getVirtualFile(StateStorageOperation.READ)
     if (virtualFile == null || !virtualFile.exists()) {
       // only on first load
       handleVirtualFileNotFound()
       return null
     }
 
-    if (virtualFile.length == 0L) {
-      processReadException(null)
-    }
-    else {
-      runAndHandleExceptions {
-        val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.load(charBuffer)
+    runAndHandleExceptions {
+      val byteArray = virtualFile.contentsToByteArray()
+      if (byteArray.isEmpty()) {
+        processReadException(null)
+        return null
       }
+
+      val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(byteArray))
+      lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+      return JDOMUtil.load(charBuffer)
     }
     return null
   }
@@ -255,32 +256,32 @@ open class FileBasedStorage(file: Path,
   override fun toString() = file.systemIndependentPath
 }
 
-internal fun writeFile(file: Path?,
+internal fun writeFile(cachedFile: Path?,
                        requestor: StorageManagerFileWriteRequestor,
                        virtualFile: VirtualFile?,
                        dataWriter: DataWriter,
                        lineSeparator: LineSeparator,
                        prependXmlProlog: Boolean): VirtualFile {
-  val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
-    getOrCreateVirtualFile(file, requestor)
+  val file = if (cachedFile != null && (virtualFile == null || !virtualFile.isValid)) {
+    getOrCreateVirtualFile(cachedFile, requestor)
   }
   else {
     virtualFile!!
   }
 
-  if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
+  if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(file.length)) {
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
-    if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
+    if (isEqualContent(file, lineSeparator, content, prependXmlProlog)) {
       val contentString = content.toByteArray().toString(Charsets.UTF_8)
-      LOG.warn("Content equals, but it must be handled not on this level: file ${result.name}, content:\n$contentString")
+      LOG.warn("Content equals, but it must be handled not on this level: file ${file.name}, content:\n$contentString")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
-      DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
+      DEBUG_LOG = "${file.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(file)}"
     }
   }
 
-  doWrite(requestor, result, dataWriter, lineSeparator, prependXmlProlog)
-  return result
+  doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
+  return file
 }
 
 internal val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()

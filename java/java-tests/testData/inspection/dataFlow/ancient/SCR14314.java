@@ -18,7 +18,7 @@ public class Finally {
         typePattern = parseTypePattern();
       } catch (FileNotFoundException followsFailure) {
         if (o != null) {
-          typePattern = followsFailure.<error descr="Cannot resolve method 'getParsingResult()'">getParsingResult</error>();
+          typePattern = followsFailure.<error descr="Cannot resolve method 'getParsingResult' in 'FileNotFoundException'">getParsingResult</error>();
         } else {
           throw followsFailure;
         }

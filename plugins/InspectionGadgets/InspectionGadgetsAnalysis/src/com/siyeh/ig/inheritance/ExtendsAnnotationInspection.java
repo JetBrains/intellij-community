@@ -32,13 +32,6 @@ public class ExtendsAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "extends.annotation.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

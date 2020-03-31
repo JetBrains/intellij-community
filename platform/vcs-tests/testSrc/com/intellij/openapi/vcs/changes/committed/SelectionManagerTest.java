@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
@@ -35,20 +35,14 @@ import java.util.Map;
 /**
  * @author irengrig
  */
-public class SelectionManagerTest extends PlatformTestCase {
+public class SelectionManagerTest extends HeavyPlatformTestCase {
   private FileStructure myFs;
   private SelectionManager myCm;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
-      @Override
-      public Void compute() throws IOException {
-        myFs = new FileStructure(getProject());
-        return null;
-      }
-    });
+    myFs = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<FileStructure, IOException>)() -> new FileStructure(getProject()));
     myCm = new SelectionManager(2, 10, MyConvertor.getInstance());
   }
 

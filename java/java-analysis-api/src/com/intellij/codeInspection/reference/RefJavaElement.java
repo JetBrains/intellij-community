@@ -2,11 +2,8 @@
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.lang.jvm.JvmElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
 

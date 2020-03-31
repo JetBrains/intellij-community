@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.patterns;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
@@ -74,7 +74,7 @@ public class PythonPatterns extends PlatformPatterns {
           .select(PyFunction.class)
           .map(ScopeUtil::getScopeOwner)
           .select(PyFile.class)
-          .anyMatch(file -> moduleName.equals(FileUtil.getNameWithoutExtension(file.getName())));
+          .anyMatch(file -> moduleName.equals(FileUtilRt.getNameWithoutExtension(file.getName())));
       }
     });
   }
@@ -106,7 +106,7 @@ public class PythonPatterns extends PlatformPatterns {
 
     // TODO is it better or worse to allow implicits here?
     final PyResolveContext context = PyResolveContext
-      .noImplicits()
+      .defaultContext()
       .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
 
     return call.multiResolveCalleeFunction(context);

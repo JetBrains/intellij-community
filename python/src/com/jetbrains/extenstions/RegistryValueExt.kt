@@ -16,9 +16,11 @@
 package com.jetbrains.extenstions
 
 import com.intellij.openapi.util.registry.RegistryValue
-
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * @return list of values in case they are comma separated
+ * @deprecated use [com.jetbrains.extensions]
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@Deprecated("Use com.jetbrains.extensions")
 fun RegistryValue.asList(): List<String> = this.asString().split(",")

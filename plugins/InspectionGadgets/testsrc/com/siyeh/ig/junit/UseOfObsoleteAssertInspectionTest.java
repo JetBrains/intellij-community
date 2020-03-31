@@ -16,12 +16,12 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfObsoleteAssertInspectionTest extends LightInspectionTestCase {
+public class UseOfObsoleteAssertInspectionTest extends LightJavaInspectionTestCase {
 
   public void testObsoleteAssert() { doTest(); }
 

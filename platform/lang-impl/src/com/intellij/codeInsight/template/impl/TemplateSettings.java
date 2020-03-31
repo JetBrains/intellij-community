@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -17,15 +19,26 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import kotlin.Lazy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -33,16 +46,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
-public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
+public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
 
   @NonNls public static final String USER_GROUP_NAME = "user";
@@ -126,7 +135,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
-  public static class TemplateKey {
+  public static final class TemplateKey {
     private String groupName;
     private String key;
 
@@ -147,7 +156,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       if (o == null || getClass() != o.getClass()) return false;
 
       TemplateKey that = (TemplateKey)o;
-      return Comparing.equal(groupName, that.groupName) && Comparing.equal(key, that.key);
+      return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
     public int hashCode() {
@@ -181,8 +190,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(@NotNull SchemeManagerFactory schemeManagerFactory) {
-    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
+  public TemplateSettings() {
+    this(SchemeManagerFactory.getInstance());
+  }
+
+  @NonInjectable
+  public TemplateSettings(@NotNull SchemeManagerFactory factory) {
+    mySchemeManager = factory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
@@ -266,6 +280,18 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     });
 
     doLoadTemplates(mySchemeManager.loadSchemes());
+
+    Macro.EP_NAME.addExtensionPointListener(() -> {
+      for (TemplateImpl template : myTemplates.values()) {
+        template.dropParsedData();
+      }
+      for (TemplateImpl template : myDefaultTemplates.values()) {
+        template.dropParsedData();
+      }
+    }, ApplicationManager.getApplication());
+
+    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener(mySchemeManager::reload,
+                                                            ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -460,20 +486,17 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private void loadDefaultLiveTemplates() {
     try {
+      myPredefinedTemplates.clear();
       for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
-        for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-          readDefTemplate(provider, defTemplate, true);
-        }
-        try {
-          String[] hidden = provider.getHiddenLiveTemplateFiles();
-          if (hidden != null) {
-            for (String s : hidden) {
-              readDefTemplate(provider, s, false);
-            }
-          }
-        }
-        catch (AbstractMethodError ignore) {
-        }
+        loadDefaultLiveTemplatesFromProvider(provider);
+      }
+
+      for (DefaultLiveTemplateEP ep : DefaultLiveTemplateEP.EP_NAME.getExtensionList()) {
+        String file = ep.getFile();
+        if (file == null) continue;
+        ClassLoader pluginClassLoader = ep.getPluginDescriptor().getPluginClassLoader();
+        readDefTemplate(pluginClassLoader, file, !ep.getHidden(), pluginClassLoader,
+                        PluginInfoDetectorKt.getPluginInfoByDescriptor(ep.getPluginDescriptor()));
       }
     }
     catch (ProcessCanceledException e) {
@@ -484,26 +507,49 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
-    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
-    if (inputStream != null) {
-      Element element = JDOMUtil.load(inputStream);
-      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), provider.getClass().getClassLoader());
-      if (defGroup != null) {
-        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(provider.getClass());
-        for (TemplateImpl template : defGroup.getElements()) {
-          String key = template.getKey();
-          String groupName = template.getGroupName();
-          if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
-            myPredefinedTemplates.put(Pair.create(key, groupName), info);
-          }
+  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException, IOException {
+    for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
+      readDefTemplate(provider, defTemplate, true, provider.getClass().getClassLoader(),
+                      PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+    }
+    try {
+      String[] hidden = provider.getHiddenLiveTemplateFiles();
+      if (hidden != null) {
+        for (String s : hidden) {
+          readDefTemplate(provider, s, false, provider.getClass().getClassLoader(),
+                          PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
         }
+      }
+    }
+    catch (AbstractMethodError ignore) {
+    }
+  }
 
-        TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
-        if (group != null && group.getReplace() != null) {
-          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-            removeTemplate(template);
-          }
+  private void readDefTemplate(@NotNull Object requestor,
+                               @NotNull String defTemplate,
+                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
+    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
+    if (inputStream == null) {
+      LOG.error("Unable to find template resource: " + defTemplate +
+                "; classLoader: " + loader +
+                "; plugin: " + info);
+      return;
+    }
+    Element element = JDOMUtil.load(inputStream);
+    TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
+    if (defGroup != null) {
+      for (TemplateImpl template : defGroup.getElements()) {
+        String key = template.getKey();
+        String groupName = template.getGroupName();
+        if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(Pair.create(key, groupName), info);
+        }
+      }
+
+      TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
+      if (group != null && group.getReplace() != null) {
+        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+          removeTemplate(template);
         }
       }
     }
@@ -604,7 +650,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundle, classLoader);
       description = bundle.getString(key);
     }
     else {

@@ -10,4 +10,4 @@ if (rand)
 else
     cl = {Base  p -> p}
 
-cl(new D()).<ref>foo()
+cl(new D()).<caret>foo()

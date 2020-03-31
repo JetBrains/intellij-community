@@ -16,12 +16,12 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TypeParameterHidesVisibleTypeInspectionTest extends LightInspectionTestCase {
+public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("import java.util.*;\n" +

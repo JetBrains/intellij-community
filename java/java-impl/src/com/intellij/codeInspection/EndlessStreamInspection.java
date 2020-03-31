@@ -1,19 +1,19 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Set<String> ALL_CONSUMING_OPERATIONS = new HashSet<>(Arrays.asList(
+  private static final Set<String> ALL_CONSUMING_OPERATIONS = ContainerUtil.set(
     "sorted",
     "count",
     "reduce",
@@ -25,9 +25,9 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "toArray",
     "forEach",
     "summaryStatistics"
-  ));
+  );
 
-  private static final Set<String> NON_LIMITING_OPERATIONS = new HashSet<>(Arrays.asList(
+  private static final Set<String> NON_LIMITING_OPERATIONS = ContainerUtil.set(
     "filter",
     "map",
     "distinct",
@@ -50,7 +50,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "unordered",
     "asLongStream",
     "asDoubleStream"
-  ));
+  );
 
   private static final CallMatcher INFINITE_SOURCE = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "generate").parameterCount(1),
@@ -81,7 +81,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
         if (allConsumingCall == null) return;
         PsiElement nameElement = allConsumingCall.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.endless.stream.description"));
+        holder.registerProblem(nameElement, JavaBundle.message("inspection.endless.stream.description"));
       }
     };
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
 import com.intellij.dvcs.DvcsUtil.guessVcsRoot
@@ -27,25 +13,25 @@ import com.intellij.vcs.log.VcsRef
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.branch.GitBranchUtil.getNewBranchNameFromUser
-import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.createOrCheckoutNewBranch
 
 internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val data = collectData(e)
-    when (data) {
-      is Data.WithCommit -> createBranchStartingFrom(data.repository, data.hash, data.name)
-      is Data.NoCommit -> createBranch(data.project, data.repositories)
+    when (val data = collectData(e)) {
+      is Data.WithCommit -> createOrCheckoutNewBranch(data.repository.project, listOf(data.repository), data.hash.toString(),
+                                                      GitBundle.message("action.Git.New.Branch.dialog.title", data.hash.toShortString()),
+                                                      data.name)
+      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD)
     }
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val data = collectData(e)
-    when (data) {
+    when (collectData(e)) {
       is Data.Invisible -> e.presentation.isEnabledAndVisible = false
       is Data.Disabled -> {
         e.presentation.isVisible = true
@@ -56,22 +42,22 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
   }
 
   private sealed class Data {
-    class Invisible : Data()
-    class Disabled : Data()
+    object Invisible : Data()
+    object Disabled : Data()
     class WithCommit(val repository: GitRepository, val hash: Hash, val name: String?) : Data()
     class NoCommit(val project: Project, val repositories: List<GitRepository>) : Data()
   }
 
   private fun collectData(e: AnActionEvent): Data {
-    val project = e.project ?: return Data.Invisible()
+    val project = e.project ?: return Data.Invisible
     val manager = getRepositoryManager(project)
-    if (manager.repositories.isEmpty()) return Data.Invisible()
+    if (manager.repositories.isEmpty()) return Data.Invisible
 
     val log = e.getData(VcsLogDataKeys.VCS_LOG)
     if (log != null) {
       val commits = log.selectedCommits
-      if (commits.isEmpty()) return Data.Invisible()
-      if (commits.size > 1) return Data.Disabled()
+      if (commits.isEmpty()) return Data.Invisible
+      if (commits.size > 1) return Data.Disabled
       val commit = commits.first()
       val repository = manager.getRepositoryForRootQuick(commit.root)
       if (repository != null) {
@@ -90,7 +76,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
       else listOf(manager.repositories.first())
 
-    if (repositories == null || repositories.any { it.isFresh }) return Data.Invisible()
+    if (repositories == null || repositories.any { it.isFresh }) return Data.Invisible
     return Data.NoCommit(project, repositories)
   }
 
@@ -106,32 +92,5 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
     }
     return suggestedNames.distinct().singleOrNull()
-  }
-
-  private fun createBranch(project: Project, repositories: List<GitRepository>) {
-    val options = getNewBranchNameFromUser(project, repositories, "Create New Branch", null)
-    if (options != null) {
-      val brancher = GitBrancher.getInstance(project)
-      if (options.checkout) {
-        brancher.checkoutNewBranch(options.name, repositories)
-      }
-      else {
-        brancher.createBranch(options.name, repositories.map { it to HEAD }.toMap())
-      }
-    }
-  }
-
-  private fun createBranchStartingFrom(repository: GitRepository, commit: Hash, initialName: String?) {
-    val project = repository.project
-    val options = getNewBranchNameFromUser(project, setOf(repository), "Create New Branch From ${commit.toShortString()}", initialName)
-    if (options != null) {
-      val brancher = GitBrancher.getInstance(project)
-      if (options.checkout) {
-        brancher.checkoutNewBranchStartingFrom(options.name, commit.asString(), listOf(repository), null)
-      }
-      else {
-        brancher.createBranch(options.name, mapOf(repository to commit.asString()))
-      }
-    }
   }
 }

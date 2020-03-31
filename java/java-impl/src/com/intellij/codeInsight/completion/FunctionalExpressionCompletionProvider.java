@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +98,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
               LookupElementBuilder.create(functionalInterfaceMethod, paramsString + " -> ")
                 .withPresentableText(paramsString + " -> {}")
                 .withTypeText(functionalInterfaceType.getPresentableText())
-                .withIcon(AllIcons.Nodes.Function);
+                .withIcon(AllIcons.Nodes.Lambda);
             builder.putUserData(LAMBDA_ITEM, true);
             result.consume(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
           }
@@ -124,7 +123,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
   private static String getParamName(PsiParameter param, PsiElement originalPosition) {
     return JavaCodeStyleManager.getInstance(originalPosition.getProject()).suggestUniqueVariableName(
-      ObjectUtils.assertNotNull(param.getName()), originalPosition, false);
+      param.getName(), originalPosition, false);
   }
 
 }

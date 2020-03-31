@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,15 +15,15 @@ import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
-import com.intellij.vcs.log.Hash;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
+import git4idea.commands.GitObjectType;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -38,9 +39,10 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProviderEx,
-                                           VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
-                                           VcsBaseRevisionAdviser {
+@Service
+public final class GitHistoryProvider implements VcsHistoryProviderEx,
+                                                 VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+                                                 VcsBaseRevisionAdviser {
   private static final Logger LOG = Logger.getInstance(GitHistoryProvider.class.getName());
 
   @NotNull private final Project myProject;
@@ -75,7 +77,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Override
   public VcsAbstractHistorySession createFromCachedData(Boolean aBoolean,
-                                                        @NotNull List<VcsFileRevision> revisions,
+                                                        @NotNull List<? extends VcsFileRevision> revisions,
                                                         @NotNull FilePath filePath,
                                                         VcsRevisionNumber currentRevision) {
     return createSession(filePath, revisions, currentRevision);
@@ -133,12 +135,10 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
-    Hash hash = GitChangeUtils.commitExists(myProject, repository.getRoot(), beforeVersionId, null, "HEAD");
-    if (hash == null) {
-      throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
-    }
+    GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
+    if (!GitObjectType.COMMIT.equals(objectType)) return false;
 
-    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(hash.asString()), myProject);
+    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
     return !processor.process(content.getContent());
   }
 
@@ -157,9 +157,9 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     String[] additionalArgs = vcsConfiguration.LIMIT_HISTORY ?
                               new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
-                              ArrayUtil.EMPTY_STRING_ARRAY;
+                              ArrayUtilRt.EMPTY_STRING_ARRAY;
 
-    GitFileHistory.loadHistory(myProject, path, null, startingRevision,
+    GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
                                exception -> partner.reportException(exception),
                                additionalArgs);

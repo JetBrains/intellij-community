@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.java
 
@@ -22,17 +22,23 @@ open class JavaUMethod(
 
   override val uastBody: UExpression? by lz {
     val body = sourcePsi.body ?: return@lz null
-    getLanguagePlugin().convertElement(body, this) as? UExpression
+    UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
-  override val annotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override val uastParameters: List<JavaUParameter> by lz {
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val uastAnchor: UIdentifier
-    get() = UIdentifier((sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier, this)
+  override val uastAnchor: UIdentifier?
+    get() {
+      val psiElement = (sourcePsi as? PsiNameIdentifierOwner)?.nameIdentifier // return elements of library sources, do not switch to binary
+                       ?: (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier
+                       ?: sourcePsi.nameIdentifier
+      if (psiElement?.isPhysical != true) return null // hah there is a Lombok and we have fake PsiElements even in Java (IDEA-216248)
+      return UIdentifier(psiElement, this)
+    }
 
   override fun equals(other: Any?): Boolean = other is JavaUMethod && sourcePsi == other.sourcePsi
   override fun hashCode(): Int = sourcePsi.hashCode()

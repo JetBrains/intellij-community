@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +14,11 @@ import javax.swing.*;
  *
  * @author Konstantin Bulenkov
  * @see DialogWrapper#doValidate()
+ * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
  */
 public final class ValidationInfo {
+  @Nls
+  @NlsContexts.ValidationInfo
   @NotNull
   public final String message;
 
@@ -44,7 +35,7 @@ public final class ValidationInfo {
    * @param message   the error message to display.
    * @param component the component containing the invalid data.
    */
-  public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
+  public ValidationInfo(@NlsContexts.ValidationInfo @NotNull String message, @Nullable JComponent component) {
     this.message = message;
     this.component = component;
   }
@@ -54,7 +45,7 @@ public final class ValidationInfo {
    *
    * @param message the error message to display.
    */
-  public ValidationInfo(@NotNull String message) {
+  public ValidationInfo(@NlsContexts.ValidationInfo @NotNull String message) {
     this(message, null);
   }
 
@@ -70,7 +61,9 @@ public final class ValidationInfo {
 
   public ValidationInfo forComponent(@Nullable JComponent component) {
     ValidationInfo result = new ValidationInfo(message, component);
-    return warning ? result.asWarning() : result;
+    result.warning = warning;
+    result.okEnabled = okEnabled;
+    return result;
   }
 
   @Override

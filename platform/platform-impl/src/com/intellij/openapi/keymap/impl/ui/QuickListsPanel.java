@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.options.ConfigurableBase;
@@ -24,7 +25,7 @@ import java.util.List;
 
 public class QuickListsPanel extends ConfigurableBase<QuickListsUi, List<QuickList>> {
   public QuickListsPanel() {
-    super("reference.idesettings.quicklists", "Quick Lists", "reference.idesettings.quicklists");
+    super("reference.idesettings.quicklists", IdeBundle.message("quick.lists.presentable.name"), "reference.idesettings.quicklists");
   }
 
   @NotNull

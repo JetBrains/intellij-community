@@ -1,19 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.growl.Growl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * @author mike
- */
 class GrowlNotifications implements SystemNotificationsImpl.Notifier {
   private static final Logger LOG = Logger.getInstance(GrowlNotifications.class);
 
@@ -36,8 +33,8 @@ class GrowlNotifications implements SystemNotificationsImpl.Notifier {
   }
 
   private void register() {
-    myGrowl.setAllowedNotifications(ArrayUtil.toStringArray(myNotifications));
-    myGrowl.setDefaultNotifications(ArrayUtil.toStringArray(myNotifications));
+    myGrowl.setAllowedNotifications(ArrayUtilRt.toStringArray(myNotifications));
+    myGrowl.setDefaultNotifications(ArrayUtilRt.toStringArray(myNotifications));
     myGrowl.register();
   }
 

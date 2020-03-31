@@ -3,8 +3,11 @@ package git4idea.tests
 
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import git4idea.repo.GitConflict.ConflictSide
+import git4idea.repo.GitConflict.Status
 import git4idea.test.add
 import git4idea.test.checkout
 import git4idea.test.commit
@@ -24,7 +27,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictMM() {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.MODIFIED))
   }
 
   /**
@@ -32,7 +36,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictMD() {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.DELETED))
   }
 
   /**
@@ -40,7 +45,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictDM() {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("a.txt", Status.DELETED, Status.MODIFIED))
   }
 
   /**
@@ -49,19 +55,32 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   fun testConflictCC() {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE)
     val zfile = projectRoot.findChild("z.txt")
-    assertChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("z.txt", Status.ADDED, Status.ADDED))
   }
 
   fun testConflictRD() {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE)
     val newfile = projectRoot.findChild("a.txt_master_new") // renamed in master
-    assertChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED))
   }
 
   fun testConflictDR() {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME)
     val newFile = projectRoot.findChild("a.txt_feature_new") // deleted in master, renamed in feature
-    assertChanges(newFile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(newFile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertManagerConflicts(Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED))
+  }
+
+  fun testConflictRR() {
+    modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.RENAME)
+    val newMasterFile = projectRoot.findChild("a.txt_master_new")!!
+    val newFeatureFile = projectRoot.findChild("a.txt_feature_new")!!
+    assertProviderChanges(listOf(newMasterFile, newFeatureFile), listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
+    assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED),
+                           Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED),
+                           Conflict("a.txt", Status.DELETED, Status.DELETED, false))
   }
   
   private fun modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
@@ -107,7 +126,37 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     }
   }
 
+  private fun assertManagerConflicts(vararg expectedConflicts: Conflict) {
+    updateChangeListManager()
+
+    val actualConflicts = repo.conflictsHolder.conflicts.map {
+      Conflict(it.filePath.name,
+               it.getStatus(ConflictSide.OURS),
+               it.getStatus(ConflictSide.THEIRS))
+    }
+    assertSameElements(actualConflicts, expectedConflicts.toList())
+
+    val actualLocalChangesConflicts = changeListManager.allChanges
+      .filter { it.fileStatus == FileStatus.MERGED_WITH_CONFLICTS }
+      .map { ChangesUtil.getFilePath(it).name }
+    val expectedLocalChangesConflicts = expectedConflicts.filter { it.visibleInLocalChanges }.map { it.name }
+    assertSameElements(actualLocalChangesConflicts, expectedLocalChangesConflicts)
+  }
+
   private enum class FileAction {
     CREATE, MODIFY, DELETE, RENAME
+  }
+
+  private class Conflict(val name: String,
+                         val ourStatus: Status,
+                         val theirsStatus: Status,
+                         val visibleInLocalChanges: Boolean = true) {
+    override fun hashCode(): Int = name.hashCode()
+    override fun equals(other: Any?): Boolean = other is Conflict &&
+                                                name == other.name &&
+                                                ourStatus == other.ourStatus &&
+                                                theirsStatus == other.theirsStatus
+
+    override fun toString(): String = "$name - $ourStatus - $theirsStatus"
   }
 }

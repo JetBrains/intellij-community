@@ -52,3 +52,28 @@ class StaticMethodInterfaceExample {
     }
   }
 }
+class StaticMethodInterfaceExample2 {
+  interface MyInterface {
+    static void m(int a) { }
+  }
+
+  class MyClass {
+    void m() { }
+
+    class MyInnerClass implements MyInterface {
+      {
+        m();
+      }
+    }
+  }
+}
+
+interface StaticMethodInterfaceExample3 {
+  static void m() { }
+
+  class MyClass implements StaticMethodInterfaceExample3 {
+      {
+          m();
+      }
+  }
+}

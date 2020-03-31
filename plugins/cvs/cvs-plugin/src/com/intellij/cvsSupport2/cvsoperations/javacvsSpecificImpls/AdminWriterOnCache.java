@@ -42,7 +42,7 @@ import java.io.InputStream;
  */
 public class AdminWriterOnCache implements IAdminWriter {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminWriterOnCache");
+  private static final Logger LOG = Logger.getInstance(AdminWriterOnCache.class);
 
   private final IAdminWriter myAdminWriter;
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();

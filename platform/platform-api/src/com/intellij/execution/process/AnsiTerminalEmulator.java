@@ -40,7 +40,7 @@ class AnsiTerminalEmulator {
   private static final int GRAY_MIN_INDEX = 232;
 
   @NotNull
-  private Font myFont = Font.DEFAULT;
+  private TerminalFont myFont = TerminalFont.DEFAULT;
   @NotNull
   private Weight myWeight = Weight.DEFAULT;
   @NotNull
@@ -72,7 +72,8 @@ class AnsiTerminalEmulator {
       https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-T.416-199303-I!!PDF-E&type=items
       uses ':' as separator characters instead       *
      */
-    List<String> sgrSequenceParts = StringUtil.split(sgrSequenceBody, StringUtil.containsChar(sgrSequenceBody, ':') ? ":" : ";");
+    String separator = StringUtil.containsChar(sgrSequenceBody, ':') ? ":" : ";";
+    List<String> sgrSequenceParts = StringUtil.split(sgrSequenceBody, separator, true, false);
     Iterator<Integer> sgrCodesIterator = ContainerUtil.map(sgrSequenceParts, it -> {
       try {
         return it.isEmpty() ? 0 : Integer.parseInt(it);
@@ -129,7 +130,7 @@ class AnsiTerminalEmulator {
         myIsCrossedOut = true;
         break;
       case SGR_COMMAND_PRIMARY_FONT:
-        myFont = Font.DEFAULT;
+        myFont = TerminalFont.DEFAULT;
         break;
       case SGR_COMMAND_FRAKTUR:
         myIsFraktur = true;
@@ -190,7 +191,7 @@ class AnsiTerminalEmulator {
         break;
       default:
         if (commandCode >= SGR_COMMAND_FONT1 && commandCode <= SGR_COMMAND_FONT9) {
-          myFont = Font.values()[commandCode - 10];
+          myFont = TerminalFont.values()[commandCode - 10];
         }
         else if (commandCode >= SGR_COMMAND_FG_COLOR0 && commandCode <= SGR_COMMAND_FG_COLOR7) {
           myForegroundColor = new EightBitColor(commandCode - SGR_COMMAND_FG_COLOR0);
@@ -232,7 +233,7 @@ class AnsiTerminalEmulator {
     IntConsumer codeConsumer = it -> state.add(Integer.toString(it));
 
     codeConsumer.accept(SGR_COMMAND_RESET);
-    if (myFont != Font.DEFAULT) {
+    if (myFont != TerminalFont.DEFAULT) {
       codeConsumer.accept(myFont.sgrCode);
     }
     if (myWeight != Weight.DEFAULT) {
@@ -241,7 +242,7 @@ class AnsiTerminalEmulator {
     if (myUnderline != Underline.DEFAULT) {
       codeConsumer.accept(myUnderline.sgrCode);
     }
-    if (myFont != Font.DEFAULT) {
+    if (myFont != TerminalFont.DEFAULT) {
       codeConsumer.accept(myFont.sgrCode);
     }
     if (myBlink != BlinkSpeed.DEFAULT) {
@@ -517,7 +518,7 @@ class AnsiTerminalEmulator {
     }
   }
 
-  public enum Font {
+  enum TerminalFont {
     DEFAULT(SGR_COMMAND_PRIMARY_FONT),
     ALT1(SGR_COMMAND_FONT1),
     ALT2(SGR_COMMAND_FONT2),
@@ -533,7 +534,7 @@ class AnsiTerminalEmulator {
      */
     public final int sgrCode;
 
-    Font(int sgrCode) {
+    TerminalFont(int sgrCode) {
       this.sgrCode = sgrCode;
     }
   }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLDocument;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface ModelAccess {
   @Nullable
   Field getRoot(@NotNull YAMLDocument document);

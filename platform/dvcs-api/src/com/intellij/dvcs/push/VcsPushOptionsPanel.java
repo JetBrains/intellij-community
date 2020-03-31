@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,4 +25,11 @@ public abstract class VcsPushOptionsPanel extends JPanel {
   @Nullable
   public abstract VcsPushOptionValue getValue();
 
+
+  @NotNull
+  public OptionsPanelPosition getPosition() {
+    return OptionsPanelPosition.DEFAULT;
+  }
+
+  public enum OptionsPanelPosition {DEFAULT, SOUTH}
 }

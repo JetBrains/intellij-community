@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -37,10 +38,12 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -48,12 +51,14 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
@@ -67,31 +72,28 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.LineSeparator;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -101,19 +103,26 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
-  @NotNull public static final String DIFF_CONFIG = "diff.xml";
-  public static final int TITLE_GAP = JBUI.scale(2);
+  @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
+  public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
-
+  public static class Lazy {
+    public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
+  }
 
   @NotNull
   private static List<Image> loadDiffFrameImages() {
@@ -147,7 +156,7 @@ public class DiffUtil {
   }
 
   @Nullable
-  private static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
+  public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
     FileType type = content.getContentType();
     VirtualFile file = content.getHighlightFile();
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
@@ -158,7 +167,7 @@ public class DiffUtil {
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, type) || file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
@@ -169,13 +178,16 @@ public class DiffUtil {
   }
 
   @NotNull
-  private static EditorHighlighter createEmptyEditorHighlighter() {
+  public static EditorHighlighter createEmptyEditorHighlighter() {
     return new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
   }
 
   public static void setEditorHighlighter(@Nullable Project project, @NotNull EditorEx editor, @NotNull DocumentContent content) {
     EditorHighlighter highlighter = createEditorHighlighter(project, content);
     if (highlighter != null) editor.setHighlighter(highlighter);
+    if (project != null) {
+      new DiffEditorHighlighterUpdater(project, ((EditorImpl) editor).getDisposable(), editor, content);
+    }
   }
 
   public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
@@ -187,6 +199,15 @@ public class DiffUtil {
       editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
       editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
+
+    Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
+    if (language != null) {
+      editor.getSettings().setLanguageSupplier(() -> language);
+    }
+    else if (editor.getProject() != null) {
+      editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.getDocumentLanguage(editor));
+    }
+
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
   }
@@ -226,7 +247,7 @@ public class DiffUtil {
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
-    if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
+    if (virtualFile != null) {
       editor.setFile(virtualFile);
     }
 
@@ -254,19 +275,21 @@ public class DiffUtil {
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
-    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
-    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
+    editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
+                                                                           : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+    TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
   }
 
   @Nullable
@@ -364,12 +387,17 @@ public class DiffUtil {
   // UI
   //
 
+  public static boolean isFromShortcut(@NotNull AnActionEvent e) {
+    String place = e.getPlace();
+    return ActionPlaces.KEYBOARD_SHORTCUT.equals(place) || ActionPlaces.MOUSE_SHORTCUT.equals(place);
+  }
+
   public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
   @NotNull
-  public static JPanel createMessagePanel(@NotNull String message) {
+  public static JPanel createMessagePanel(@NotNull @Nls String message) {
     String text = StringUtil.replace(message, "\n", "<br>");
     JLabel label = new JBLabel(text) {
       @Override
@@ -380,9 +408,27 @@ public class DiffUtil {
         return size;
       }
     }.setCopyable(true);
-    label.setForeground(UIUtil.getInactiveTextColor());
 
-    return new CenteredPanel(label, JBUI.Borders.empty(5));
+    return createMessagePanel(label);
+  }
+
+  @NotNull
+  public static JPanel createMessagePanel(@NotNull JComponent label) {
+    Color commentFg = new JBColor(() -> {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
+      if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
+        return commentAttributes.getForegroundColor();
+      }
+      else {
+        return scheme.getDefaultForeground();
+      }
+    });
+    label.setForeground(commentFg);
+
+    CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
+    panel.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+    return panel;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -404,14 +450,12 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
-      return "Preferences | Tools | Diff & Merge";
-    }
-    return "Settings | Tools | Diff & Merge";
+    return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
+                            : DiffBundle.message("label.diff.settings.path");
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -425,7 +469,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+  public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -471,13 +515,15 @@ public class DiffUtil {
     List<DiffContent> contents = request.getContents();
     List<String> titles = request.getContentTitles();
 
-    if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+    if (!ContainerUtil.exists(titles, Conditions.notNull())) {
       return Collections.nCopies(titles.size(), null);
     }
 
     List<JComponent> components = new ArrayList<>(titles.size());
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       components.add(title);
     }
@@ -495,12 +541,17 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<>(contents.size());
 
-    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Conditions.notNull())) {
       return Collections.nCopies(titles.size(), null);
     }
-
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     contents.get(i),
+                                     equalCharsets,
+                                     equalSeparators,
+                                     editors.get(i),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       result.add(title);
     }
@@ -516,7 +567,7 @@ public class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
@@ -533,7 +584,8 @@ public class DiffUtil {
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
-                                        @Nullable Editor editor) {
+                                        @Nullable Editor editor,
+                                        @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     if (content instanceof EmptyContent) return null;
     DocumentContent documentContent = (DocumentContent)content;
 
@@ -542,12 +594,17 @@ public class DiffUtil {
     LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, separator, charset, bom, isReadOnly);
+    return createTitle(title, separator, charset, bom, isReadOnly, titleCustomizer);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, null, false);
+    return createTitle(title, null, null, null, false, null);
+  }
+
+  @NotNull
+  public static JComponent createTitle(@NotNull String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+    return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
@@ -555,25 +612,29 @@ public class DiffUtil {
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
-                                       boolean readOnly) {
+                                       boolean readOnly,
+                                       @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
-    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
-    panel.add(titleLabel, BorderLayout.CENTER);
-    if (charset != null && separator != null) {
+    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
+    JComponent titleLabel = titleCustomizer == null ? new JBLabel(title).setCopyable(true) : titleCustomizer.getLabel();
+    labelWithIcon.addToCenter(titleLabel);
+    if (readOnly) {
+      labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
+    }
+    panel.add(labelWithIcon, BorderLayout.CENTER);
+    if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
-      panel2.add(createSeparatorPanel(separator));
+      if (charset != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createCharsetPanel(charset, bom));
+      }
+      if (separator != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createSeparatorPanel(separator));
+      }
       panel.add(panel2, BorderLayout.EAST);
-    }
-    else if (charset != null) {
-      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
-    }
-    else if (separator != null) {
-      panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
   }
@@ -587,10 +648,10 @@ public class DiffUtil {
 
     JLabel label = new JLabel(text);
     // TODO: specific colors for other charsets
-    if (charset.equals(Charset.forName("UTF-8"))) {
+    if (charset.equals(StandardCharsets.UTF_8)) {
       label.setForeground(JBColor.BLUE);
     }
-    else if (charset.equals(Charset.forName("ISO-8859-1"))) {
+    else if (charset.equals(StandardCharsets.ISO_8859_1)) {
       label.setForeground(JBColor.RED);
     }
     else {
@@ -621,7 +682,7 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
-    if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
+    if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
     List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
       result.add(new SyncHeightComponent(components, i));
@@ -635,11 +696,21 @@ public class DiffUtil {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     for (int i = 0; i < components.size(); i++) {
-      if (i != 0) panel.add(Box.createVerticalStrut(JBUI.scale(gap)));
+      if (i != 0) panel.add(Box.createVerticalStrut(JBUIScale.scale(gap)));
       panel.add(components.get(i));
     }
 
     return panel;
+  }
+
+  @NotNull
+  public static String getStatusText(int totalCount, int excludedCount, @NotNull ThreeState isContentsEqual) {
+    if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
+      return DiffBundle.message("diff.all.differences.ignored.text");
+    }
+    String message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount);
+    if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount);
+    return message;
   }
 
   //
@@ -668,7 +739,7 @@ public class DiffUtil {
 
   public static boolean isFocusedComponentInWindow(@Nullable Component component) {
     if (component == null) return false;
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window == null) return false;
     Component windowFocusOwner = window.getMostRecentFocusOwner();
     return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
@@ -789,8 +860,7 @@ public class DiffUtil {
     return ComparisonUtil.isEquals(chunk1, chunk2, comparisonPolicy);
   }
 
-  @NotNull
-  public static <T> int[] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
+  public static <T> int @NotNull [] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
     final List<Integer> indexes = new ArrayList<>(values.size());
     for (int i = 0; i < values.size(); i++) {
       indexes.add(i);
@@ -805,13 +875,44 @@ public class DiffUtil {
     return ArrayUtil.toIntArray(indexes);
   }
 
-  @NotNull
-  public static int[] invertIndexes(@NotNull int[] indexes) {
+  public static int @NotNull [] invertIndexes(int @NotNull [] indexes) {
     int[] inverted = new int[indexes.length];
     for (int i = 0; i < indexes.length; i++) {
       inverted[indexes[i]] = i;
     }
     return inverted;
+  }
+
+  public static boolean compareStreams(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream1,
+                                       @NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream2)
+    throws IOException {
+    int i = 0;
+    try (InputStream s1 = stream1.compute()) {
+      try (InputStream s2 = stream2.compute()) {
+        if (s1 == null && s2 == null) return true;
+        if (s1 == null || s2 == null) return false;
+
+        while (true) {
+          int b1 = s1.read();
+          int b2 = s2.read();
+          if (b1 != b2) return false;
+          if (b1 == -1) return true;
+
+          if (i++ % 10000 == 0) ProgressManager.checkCanceled();
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public static InputStream getFileInputStream(@NotNull VirtualFile file) throws IOException {
+    VirtualFileSystem fs = file.getFileSystem();
+    if (fs instanceof FileSystemInterface) {
+      return ((FileSystemInterface)fs).getInputStream(file);
+    }
+    // can't use VirtualFile.getInputStream here, as it will strip BOM
+    byte[] content = ReadAction.compute(() -> file.contentsToByteArray());
+    return new ByteArrayInputStream(content);
   }
 
   //
@@ -1376,7 +1477,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
-                                            @Nullable final String commandName,
+                                            @Nullable @Nls final String commandName,
                                             @NotNull final Runnable task) {
     return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
@@ -1423,7 +1524,7 @@ public class DiffUtil {
   /**
    * Difference with {@link VfsUtil#markDirtyAndRefresh} is that refresh from VfsUtil will be performed with ModalityState.NON_MODAL.
    */
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     ModalityState modalityState = ApplicationManager.getApplication().getDefaultModalityState();
     VfsUtil.markDirty(recursive, reloadChildren, files);
     RefreshQueue.getInstance().refresh(async, recursive, null, modalityState, files);
@@ -1474,8 +1575,9 @@ public class DiffUtil {
    * @return whether window was closed
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
-    if (window instanceof IdeFrameImpl) return false;
-    if (modalOnly && canBeHiddenBehind(window)) return false;
+    if (window instanceof IdeFrameImpl || (modalOnly && canBeHiddenBehind(window))) {
+      return false;
+    }
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
@@ -1494,8 +1596,8 @@ public class DiffUtil {
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
         Project project = ((IdeFrame)window).getProject();
         IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
-        if (projectFrame instanceof IdeFrameEx) {
-          return !((IdeFrameEx)projectFrame).isInFullScreen();
+        if (projectFrame != null) {
+          return !projectFrame.isInFullScreen();
         }
       }
     }

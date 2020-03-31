@@ -15,7 +15,11 @@
  */
 package com.intellij.internal.focus;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.internal.InternalActionsBundle;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -77,9 +81,9 @@ public class FocusTracesAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myActive) {
-      presentation.setText("Stop Focus Tracing");
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.stop.focus.tracing"));
     } else {
-      presentation.setText("Start Focus Tracing");
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.start.focus.tracing"));
     }
     presentation.setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }

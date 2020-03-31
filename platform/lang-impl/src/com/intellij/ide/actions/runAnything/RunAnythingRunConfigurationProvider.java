@@ -5,7 +5,9 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +21,12 @@ public class RunAnythingRunConfigurationProvider extends com.intellij.ide.action
     return getWrappers(dataContext);
   }
 
+  @Nullable
+  @Override
+  public String getHelpGroupTitle() {
+    return null;
+  }
+
   @NotNull
   @Override
   public String getCompletionGroupTitle() {
@@ -29,5 +37,11 @@ public class RunAnythingRunConfigurationProvider extends com.intellij.ide.action
   private static List<ChooseRunConfigurationPopup.ItemWrapper> getWrappers(@NotNull DataContext dataContext) {
     Project project = fetchProject(dataContext);
     return ChooseRunConfigurationPopup.createFlatSettingsList(project);
+  }
+
+  @NotNull
+  @Override
+  public List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+    return ContainerUtil.emptyList();
   }
 }

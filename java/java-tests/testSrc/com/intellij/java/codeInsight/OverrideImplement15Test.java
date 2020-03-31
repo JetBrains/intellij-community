@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -31,8 +32,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class OverrideImplement15Test extends LightCodeInsightTestCase {
+public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
 
   @Override
@@ -54,6 +56,29 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
 
   public void testSimple() { doTest(true); }
   public void testAnnotation() { doTest(true); }
+  public void testTransformJBAnnotations() {
+    NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(getProject());
+    String defaultNotNull = nullableNotNullManager.getDefaultNotNull();
+    List<String> notNulls = nullableNotNullManager.getNotNulls();
+    String defaultNullable = nullableNotNullManager.getDefaultNullable();
+    List<String> nullables = nullableNotNullManager.getNullables();
+    
+    try {
+      nullableNotNullManager.setNotNulls(ArrayUtil.append(ArrayUtil.toStringArray(notNulls),"p.NN"));
+      nullableNotNullManager.setDefaultNotNull("p.NN");
+      
+      nullableNotNullManager.setNullables(ArrayUtil.append(ArrayUtil.toStringArray(nullables),"p.N"));
+      nullableNotNullManager.setDefaultNullable("p.N");
+      doTest(true, true);
+    }
+    finally {
+      nullableNotNullManager.setDefaultNotNull(defaultNotNull);
+      nullableNotNullManager.setNotNulls(ArrayUtil.toStringArray(notNulls));
+      
+      nullableNotNullManager.setDefaultNullable(defaultNullable);
+      nullableNotNullManager.setNullables(ArrayUtil.toStringArray(nullables));
+    }
+  }
   public void testJavadocForChangedParamName() { doTest(true); }
   public void testThrowsListFromMethodHierarchy() { doTest(true); }
   public void testThrowsListUnrelatedMethods() { doTest(true); }

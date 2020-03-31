@@ -601,6 +601,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testVoidCast() { doAntiTest(); }
 
+  public void testNoGenericMethodAutoInsertion() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "valueOf");
+  }
+
+  public void testAutoInsertMethodReturningClassTypeParam() { doActionTest(); }
+
   public void testIntPlusLongNotDouble() { doTest(); }
 
   public void testNestedAssignments() { doTest(); }

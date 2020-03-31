@@ -10,21 +10,9 @@ import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShLiveTemplateTest extends LightCodeInsightFixtureTestCase {
-
-  public void testBashShebang() {
-    doTest("sh<caret>", "#!/usr/bin/env sh\n");
-  }
-
-  public void testShShebang() {
-    doTest("sh<caret>", "#!/usr/bin/env sh\n");
-  }
-
-  public void testZshShebang() {
-    doTest("zsh<caret>", "#!/usr/bin/env zsh\n");
-  }
+public class ShLiveTemplateTest extends BasePlatformTestCase {
 
   public void testForiExpression() {
     doTest("fori<caret>", "for i in {1..5} ; do\n    \ndone");

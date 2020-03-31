@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -28,12 +15,15 @@ import java.util.Calendar;
  * Provides IDE version/help and vendor information.
  */
 public abstract class ApplicationInfo {
-  
+  public static ApplicationInfo getInstance() {
+    return ApplicationManager.getApplication().getService(ApplicationInfo.class);
+  }
+
   public abstract Calendar getBuildDate();
 
-  public abstract BuildNumber getBuild();
+  public abstract @NotNull BuildNumber getBuild();
 
-  public abstract String getApiVersion();
+  public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
 
@@ -55,9 +45,6 @@ public abstract class ApplicationInfo {
     return ObjectUtils.notNull(StringUtil.substringBefore(getMinorVersion(), "."), getMinorVersion());
   }
 
-  @Nullable
-  public abstract String getHelpURL();
-
   /**
    * Use this method to refer to the company in official contexts where it may have any legal implications.
    *
@@ -76,7 +63,7 @@ public abstract class ApplicationInfo {
 
   public abstract String getCompanyURL();
 
-  public abstract String getJetbrainsTvUrl();
+  public abstract String getJetBrainsTvUrl();
 
   public abstract String getEvalLicenseUrl();
 
@@ -89,13 +76,11 @@ public abstract class ApplicationInfo {
 
   public abstract boolean hasContextHelp();
 
+  @NotNull
   public abstract String getFullVersion();
 
+  @NotNull
   public abstract String getStrictVersion();
-
-  public static ApplicationInfo getInstance() {
-    return ServiceManager.getService(ApplicationInfo.class);
-  }
 
   public static boolean helpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
@@ -105,12 +90,12 @@ public abstract class ApplicationInfo {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
   }
 
-  /**
-   * @deprecated use {@link #getBuild()} instead (to remove in IDEA 16)
-   */
+  /** @deprecated use {@link #getBuild()} */
   @Deprecated
-  @SuppressWarnings("UnusedDeclaration")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getBuildNumber() {
     return getBuild().asString();
   }
+
+  public abstract String getFullApplicationName();
 }

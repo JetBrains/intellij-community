@@ -2,12 +2,12 @@
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
-import com.intellij.CommonBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AppIcon
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
@@ -98,7 +98,7 @@ object RememberCheckBoxState {
 
   fun createCheckBox(toolTip: String?): JCheckBox {
     return CheckBox(
-      CommonBundle.message("checkbox.remember.password"),
+      UIBundle.message("auth.remember.cb"),
       selected = isSelected,
       toolTip = toolTip
     )

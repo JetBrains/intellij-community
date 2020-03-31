@@ -10,9 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -291,7 +290,6 @@ public final class LanguageConsoleBuilder {
       scrollPane.setViewportView(layeredPane);
 
       GutterUpdateScheduler gutterUpdateScheduler = new GutterUpdateScheduler(lineStartGutter, lineEndGutter);
-      getProject().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, gutterUpdateScheduler);
       editor.getDocument().addDocumentListener(gutterUpdateScheduler);
     }
 
@@ -314,7 +312,7 @@ public final class LanguageConsoleBuilder {
       super.scrollToEnd();
     }
 
-    private final class GutterUpdateScheduler implements DocumentBulkUpdateListener, DocumentListener {
+    private final class GutterUpdateScheduler implements BulkAwareDocumentListener {
       private final ConsoleGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 
@@ -360,7 +358,7 @@ public final class LanguageConsoleBuilder {
         });
       }
 
-      private void addLineSeparatorPainterIfNeed() {
+      private void addLineSeparatorPainterIfNeeded() {
         if (lineSeparatorPainter != null) {
           return;
         }
@@ -376,14 +374,10 @@ public final class LanguageConsoleBuilder {
       }
 
       @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
+      public void documentChangedNonBulk(@NotNull DocumentEvent event) {
         DocumentEx document = getDocument();
-        if (document.isInBulkUpdate()) {
-          return;
-        }
-
         if (document.getTextLength() > 0) {
-          addLineSeparatorPainterIfNeed();
+          addLineSeparatorPainterIfNeeded();
           int startDocLine = document.getLineNumber(event.getOffset());
           int endDocLine = document.getLineNumber(event.getOffset() + event.getNewLength());
           if (event.getOldLength() > event.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(event.getOldFragment(), '\n') != -1) {
@@ -402,16 +396,12 @@ public final class LanguageConsoleBuilder {
       }
 
       @Override
-      public void updateStarted(@NotNull Document document) {
-      }
-
-      @Override
-      public void updateFinished(@NotNull Document document) {
+      public void bulkUpdateFinished(@NotNull Document document) {
         if (getDocument().getTextLength() == 0) {
           documentCleared();
         }
         else {
-          addLineSeparatorPainterIfNeed();
+          addLineSeparatorPainterIfNeeded();
           updateGutterSize(0, Integer.MAX_VALUE);
         }
       }

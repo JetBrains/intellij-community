@@ -13,26 +13,31 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
-  public static final String SHORT_NAME = "ShellCheck";
-  private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
+  @NonNls public static final String SHORT_NAME = "ShellCheck";
+  @NonNls private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
   private static final String DELIMITER = ",";
   private final Set<String> myDisabledInspections = new TreeSet<>();
   private JComponent myOptionsPanel;
 
+  @Override
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
+    return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
   @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return SuppressQuickFix.EMPTY_ARRAY;
+  public String getShortName() {
+    return SHORT_NAME;
   }
 
   @Override
@@ -65,8 +70,8 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   }
 
   @NotNull
-  List<String> getDisabledInspections() {
-    return new ArrayList<>(myDisabledInspections);
+  Set<String> getDisabledInspections() {
+    return new HashSet<>(myDisabledInspections);
   }
 
   public void disableInspection(String inspectionCode) {

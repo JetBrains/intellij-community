@@ -24,7 +24,6 @@ class PurityInferenceVisitor {
   private final Map<String, LighterASTNode> myFieldModifiers;
   private final List<LighterASTNode> mutatedRefs = new ArrayList<>();
   private final boolean constructor;
-  private boolean hasReturns;
   private boolean hasVolatileReads;
   private final List<LighterASTNode> calls = new ArrayList<>();
 
@@ -39,9 +38,6 @@ class PurityInferenceVisitor {
     IElementType type = element.getTokenType();
     if (type == ASSIGNMENT_EXPRESSION) {
       addMutation(tree.getChildren(element).get(0));
-    }
-    else if (type == RETURN_STATEMENT && JavaLightTreeUtil.findExpressionChild(tree, element) != null) {
-      hasReturns = true;
     }
     else if ((type == PREFIX_EXPRESSION || type == POSTFIX_EXPRESSION) && isMutatingOperation(element)) {
       addMutation(JavaLightTreeUtil.findExpressionChild(tree, element));
@@ -100,7 +96,7 @@ class PurityInferenceVisitor {
 
   @Nullable
   PurityInferenceResult getResult() {
-    if (calls.size() > 1 || (!constructor && (!hasReturns || hasVolatileReads))) return null;
+    if (calls.size() > 1 || (!constructor && hasVolatileReads)) return null;
 
     int bodyStart = body.getStartOffset();
     return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),

@@ -1,19 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -25,31 +32,29 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.XDebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Stream;
 
-@State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;
   private final Map<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new SmartList<>();
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -169,14 +174,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myBreakpointManager.writeExternal(element);
   }
 
-  /**
-   * @deprecated to be removed with {@link DebuggerManager#registerPositionManagerFactory(Function)}
-   */
-  @Deprecated
-  public Stream<Function<DebugProcess, PositionManager>> getCustomPositionManagerFactories() {
-    return myCustomPositionManagerFactories.stream();
-  }
-
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
@@ -221,7 +218,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                 ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
                   ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
                   debugProcess.waitFor(10000);
-                }, "Waiting For Debugger Response", false, debugProcess.getProject());
+                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), false, debugProcess.getProject());
               }
               else {
                 debugProcess.waitFor(10000);
@@ -325,11 +322,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return myDebuggerStateManager;
   }
 
-  @Override
-  public void registerPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
-    myCustomPositionManagerFactories.add(factory);
-  }
-
   /**
    * @deprecated use {@link RemoteConnectionBuilder}
    */
@@ -393,6 +385,37 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       DebuggerSession removed = mySessions.remove(processHandler);
       LOG.assertTrue(removed != null);
       getEventPublisher().sessionRemoved(session);
+    }
+  }
+
+  public static class DebuggerRunContentWithExecutorListener implements RunContentWithExecutorListener {
+    private final Project myProject;
+
+    public DebuggerRunContentWithExecutorListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+      if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
+        DebuggerSession session = descriptor == null ? null : getSession(descriptor);
+        DebuggerStateManager manager = getInstanceEx(myProject).getContextManager();
+        if (session != null) {
+          manager.setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
+        }
+        else {
+          manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
+        }
+      }
+    }
+
+    private DebuggerSession getSession(RunContentDescriptor descriptor) {
+      for (JavaDebugProcess process : XDebuggerManager.getInstance(myProject).getDebugProcesses(JavaDebugProcess.class)) {
+        if (Comparing.equal(process.getProcessHandler(), descriptor.getProcessHandler())) {
+          return process.getDebuggerSession();
+        }
+      }
+      return null;
     }
   }
 }

@@ -31,9 +31,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class CompileScopeTestBuilder {
   private final boolean myForceBuild;
   private final Set<BuildTargetType<?>> myTargetTypes = new HashSet<>();

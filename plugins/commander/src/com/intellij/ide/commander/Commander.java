@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
@@ -11,6 +11,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -29,6 +30,7 @@ import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -70,15 +72,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   /**
-   * FOR USE IN TESTS ONLY!!!
    * @param project
-   * @param keymapManager
    */
-  public Commander(final Project project, KeymapManager keymapManager) {
-    this(project, keymapManager, null);
+  @TestOnly
+  public Commander(final Project project) {
+    this(project, null);
   }
 
-  public Commander(final Project project, KeymapManager keymapManager, final ToolWindowManager toolWindowManager) {
+  public Commander(final Project project, final ToolWindowManager toolWindowManager) {
     super(new BorderLayout());
 
     myProject = project;
@@ -96,6 +97,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         myHistory.forward();
       }
     };
+
+    KeymapManager keymapManager = KeymapManager.getInstance();
     final ActionMap actionMap = getActionMap();
     actionMap.put(ACTION_BACKCOMMAND, backAction);
     actionMap.put(ACTION_FORWARDCOMMAND, fwdAction);
@@ -266,7 +269,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
     };
-    backAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_BACK));
+    ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
 
     final AnAction forwardAction = new AnAction() {
@@ -280,7 +283,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
     };
-    forwardAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_FORWARD));
+    ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);
     group.add(forwardAction);
 
     group.add(actionManager.getAction("CommanderSwapPanels"));
@@ -338,26 +341,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       @Override
       public boolean isShowMembers() {
         return true;
-      }
-
-      @Override
-      public boolean isHideEmptyMiddlePackages() {
-        return false;
-      }
-
-      @Override
-      public boolean isFlattenPackages() {
-        return false;
-      }
-
-      @Override
-      public boolean isAbbreviatePackageNames() {
-        return false;
-      }
-
-      @Override
-      public boolean isShowLibraryContents() {
-        return false;
       }
 
       @Override

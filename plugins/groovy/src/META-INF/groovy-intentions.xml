@@ -1,5 +1,5 @@
 <idea-plugin>
-  <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
+  <resource-bundle>messages.GroovyBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <categoryKey>intention.category.groovy</categoryKey>
@@ -246,6 +246,10 @@
     <intentionAction>
       <categoryKey>intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix</className>
+    </intentionAction>
+    <intentionAction>
+      <categoryKey>intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.InferMethodParametersTypesIntention</className>
     </intentionAction>
     <intentionAction>
       <categoryKey>intention.category.groovy.style</categoryKey>

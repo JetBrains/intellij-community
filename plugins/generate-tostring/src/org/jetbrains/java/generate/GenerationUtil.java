@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.generate;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -45,20 +47,25 @@ public class GenerationUtil {
 
         if (e instanceof GenerateCodeException) {
             // code generation error - display velocity error in error dialog so user can identify problem quicker
-            Messages.showMessageDialog(project,
-                                       "Velocity error generating code - see IDEA log for more details (stacktrace should be in idea.log):\n" +
-                                       e.getMessage(), "Warning", Messages.getWarningIcon());
-        } else if (e instanceof PluginException) {
+          Messages.showMessageDialog(project,
+                                     JavaBundle.message("generate.tostring.handle.exception.velocity.error.message", e.getMessage()),
+                                     CommonBundle.message("title.warning"), Messages.getWarningIcon());
+        }
+        else if (e instanceof PluginException) {
             // plugin related error - could be recoverable.
-            Messages.showMessageDialog(project, "A PluginException was thrown while performing the action - see IDEA log for details (stacktrace should be in idea.log):\n" + e.getMessage(), "Warning", Messages.getWarningIcon());
-        } else if (e instanceof RuntimeException) {
-            // unknown error (such as NPE) - not recoverable
-            Messages.showMessageDialog(project, "An unrecoverable exception was thrown while performing the action - see IDEA log for details (stacktrace should be in idea.log):\n" + e.getMessage(), "Error", Messages.getErrorIcon());
+            Messages.showMessageDialog(project, JavaBundle
+              .message("generate.tostring.handle.exception.plugin.warning.message", e.getMessage()), CommonBundle.message("title.warning"), Messages.getWarningIcon());
+        }
+        else {
+          // unknown error (such as NPE) - not recoverable
+          Messages.showMessageDialog(project, JavaBundle.message("generate.tostring.handle.exception.error.message", e.getMessage()),
+                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+          if (e instanceof RuntimeException) {
             throw (RuntimeException) e; // throw to make IDEA alert user
-        } else {
+          } else {
             // unknown error (such as NPE) - not recoverable
-            Messages.showMessageDialog(project, "An unrecoverable exception was thrown while performing the action - see IDEA log for details (stacktrace should be in idea.log):\n" + e.getMessage(), "Error", Messages.getErrorIcon());
             throw new RuntimeException(e); // rethrow as runtime to make IDEA alert user
+          }
         }
     }
 
@@ -179,7 +186,7 @@ public class GenerationUtil {
       List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers, useAccessors);
       // sort elements if enabled and not using chooser dialog
       if (sortElements != 0 && sortElements < 3) {
-        Collections.sort(elements, new ElementComparator(sortElements));
+        elements.sort(new ElementComparator(sortElements));
       }
       vc.put("members", elements);
 

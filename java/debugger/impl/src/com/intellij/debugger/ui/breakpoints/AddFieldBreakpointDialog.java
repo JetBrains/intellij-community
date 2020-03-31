@@ -6,11 +6,10 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.codeInsight.generation.PsiFieldMember;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -36,7 +35,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
   public AddFieldBreakpointDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.title"));
+    setTitle(JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"));
     init();
   }
 
@@ -53,7 +52,8 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(DebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(
+          JavaDebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {
@@ -79,9 +79,9 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
           PsiField[] fields = selectedClass.getFields();
           MemberChooser<PsiFieldMember> chooser =
             new MemberChooser<>(ContainerUtil.map2Array(fields, PsiFieldMember.class, PsiFieldMember::new), false, false, myProject);
-          chooser.setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
+          chooser.setTitle(JavaDebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
           chooser.setCopyJavadocVisible(false);
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> chooser.show());
+          chooser.show();
           List<PsiFieldMember> selectedElements = chooser.getSelectedElements();
           if (selectedElements != null && selectedElements.size() == 1) {
             PsiField field = selectedElements.get(0).getElement();

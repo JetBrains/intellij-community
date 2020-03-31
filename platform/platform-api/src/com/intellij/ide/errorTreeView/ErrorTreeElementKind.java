@@ -15,27 +15,33 @@
  */
 package com.intellij.ide.errorTreeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public enum ErrorTreeElementKind {
-  INFO ("INFO", IdeBundle.message("errortree.information")),
-  ERROR ("ERROR", IdeBundle.message("errortree.error")),
-  WARNING ("WARNING", IdeBundle.message("errortree.warning")),
-  NOTE ("NOTE", IdeBundle.message("errortree.note")),
-  GENERIC ("GENERIC", "");
+  INFO ("INFO", IdeBundle.message("errortree.information"), AllIcons.General.Information),
+  ERROR ("ERROR", IdeBundle.message("errortree.error"), AllIcons.General.Error),
+  WARNING ("WARNING", IdeBundle.message("errortree.warning"), AllIcons.General.Warning),
+  NOTE ("NOTE", IdeBundle.message("errortree.note"), AllIcons.General.Note),
+  GENERIC ("GENERIC", "", null);
 
   private final String myText;
   private final String myPresentableText;
+  private final Icon myIcon;
 
-  ErrorTreeElementKind(@NonNls String text, String presentableText) {
+  ErrorTreeElementKind(@NonNls String text, @NotNull String presentableText, @Nullable Icon icon) {
     myText = text;
     myPresentableText = presentableText;
+    myIcon = icon;
   }
 
   public String toString() {
@@ -44,6 +50,11 @@ public enum ErrorTreeElementKind {
 
   public String getPresentableText() {
     return myPresentableText;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return myIcon;
   }
 
   @NotNull

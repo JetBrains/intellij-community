@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.json.JsonDialectUtil;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonTypedHandler extends TypedHandlerDelegate {
@@ -27,8 +29,61 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
       processPairedBracesComma(c, editor, file);
       addWhiteSpaceAfterColonIfNeeded(c, editor, file);
       removeRedundantWhitespaceIfAfterColon(c, editor, file);
+      handleMoveOutsideQuotes(c, editor, file);
     }
     return Result.CONTINUE;
+  }
+
+  private static void handleMoveOutsideQuotes(char c, Editor editor, PsiFile file) {
+    JsonEditorOptions options = JsonEditorOptions.getInstance();
+    if (c == ':' && options.COLON_MOVE_OUTSIDE_QUOTES || c == ',' && options.COMMA_MOVE_OUTSIDE_QUOTES) {
+      int offset = editor.getCaretModel().getOffset();
+      CharSequence sequence = editor.getDocument().getCharsSequence();
+      int length = sequence.length();
+      if (offset >= length || offset < 0) return;
+      char charAtOffset = sequence.charAt(offset);
+      if (charAtOffset != '"') return;
+      if (offset + 1 < length && sequence.charAt(offset + 1) == c) return;
+      final PsiElement element = file.findElementAt(offset);
+      if (element == null) return;
+      if (!validatePositionToMoveOutOfQuotes(c, element)) return;
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+      editor.getDocument().deleteString(offset - 1, offset);
+      editor.getDocument().insertString(offset, String.valueOf(c));
+      CharSequence newSequence = editor.getDocument().getCharsSequence();
+      int nextOffset = offset + 1;
+      if (c == ':' && options.AUTO_WHITESPACE_AFTER_COLON) {
+        char nextChar = nextOffset >= newSequence.length() ? 'a' : newSequence.charAt(nextOffset);
+        if (!Character.isWhitespace(nextChar) || nextChar == '\n') {
+          editor.getDocument().insertString(nextOffset, " ");
+          nextOffset++;
+        }
+      }
+      editor.getCaretModel().moveToOffset(nextOffset);
+    }
+  }
+
+  private static boolean validatePositionToMoveOutOfQuotes(char c, PsiElement element) {
+    // comma can be after the element, but only the comma
+    if (PsiUtilCore.getElementType(element) == JsonElementTypes.R_CURLY) {
+      return c == ',' && element.getPrevSibling() instanceof JsonProperty;
+    }
+    if (PsiUtilCore.getElementType(element) == JsonElementTypes.R_BRACKET) {
+      return c == ',' && element.getPrevSibling() instanceof JsonStringLiteral;
+    }
+
+    // we can have a whitespace in the position, but again - only for the comma
+    PsiElement parent = element.getParent();
+    if (element instanceof PsiWhiteSpace && c == ',') {
+      PsiElement sibling = element.getPrevSibling();
+      return sibling instanceof JsonProperty || sibling instanceof JsonStringLiteral;
+    }
+
+    // the most ordinary case - literal property key or value
+    PsiElement grandParent = parent instanceof JsonStringLiteral ? parent.getParent() : null;
+    return grandParent instanceof JsonProperty
+           && (c != ':' || ((JsonProperty)grandParent).getNameElement() == parent)
+           && (c != ',' || ((JsonProperty)grandParent).getValue() == parent);
   }
 
   private void removeRedundantWhitespaceIfAfterColon(char c, Editor editor, PsiFile file) {
@@ -119,9 +174,10 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return;
     PsiElement parent = element.getParent();
-    if (c == '[' && parent instanceof JsonArray
-        || c == '{' && parent instanceof JsonObject
-        || (c == '"' || c == '\'') && parent instanceof JsonStringLiteral) {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    if ((c == '[' && parent instanceof JsonArray
+         || c == '{' && parent instanceof JsonObject) && codeInsightSettings.AUTOINSERT_PAIR_BRACKET
+        || (c == '"' || c == '\'') && parent instanceof JsonStringLiteral && codeInsightSettings.AUTOINSERT_PAIR_QUOTE) {
       if (shouldAddCommaInParentContainer((JsonValue)parent)) {
         editor.getDocument().insertString(parent.getTextRange().getEndOffset(), ",");
       }

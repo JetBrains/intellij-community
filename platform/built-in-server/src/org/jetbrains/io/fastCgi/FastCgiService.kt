@@ -28,15 +28,18 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     bootstrap.handler {
       it.pipeline().addLast("fastCgiDecoder", FastCgiDecoder(errorOutputConsumer, this@FastCgiService))
       it.pipeline().addLast("exceptionHandler", ChannelExceptionHandler.getInstance())
+    }
+  }
 
-      it.closeFuture().addChannelListener {
-        requestIdCounter.set(0)
-        if (!requests.isEmpty) {
-          val waitingClients = requests.elements().toList()
-          requests.clear()
-          for (client in waitingClients) {
-            sendBadGateway(client.channel, client.extraHeaders)
-          }
+  override fun addCloseListener(it: Channel) {
+    super.addCloseListener(it)
+    it.closeFuture().addChannelListener {
+      requestIdCounter.set(0)
+      if (!requests.isEmpty) {
+        val waitingClients = requests.elements().toList()
+        requests.clear()
+        for (client in waitingClients) {
+          sendBadGateway(client.channel, client.extraHeaders)
         }
       }
     }

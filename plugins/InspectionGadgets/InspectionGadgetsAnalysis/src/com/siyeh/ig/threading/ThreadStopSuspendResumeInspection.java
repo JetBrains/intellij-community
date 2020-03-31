@@ -35,13 +35,6 @@ public class ThreadStopSuspendResumeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "thread.stop.suspend.resume.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.stop.suspend.resume.problem.descriptor");

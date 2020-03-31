@@ -51,6 +51,10 @@ public interface GroovyCommonClassNames {
   String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
   String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
   String GROOVY_TRANSFORM_STC_CLOSURE_PARAMS = "groovy.transform.stc.ClosureParams";
+  String GROOVY_TRANSFORM_STC_SIMPLE_TYPE = "groovy.transform.stc.SimpleType";
+  String GROOVY_TRANSFORM_STC_FROM_STRING = "groovy.transform.stc.FromString";
+  String GROOVY_TRANSFORM_STC_FROM_ABSTRACT_TYPE_METHODS = "groovy.transform.stc.FromAbstractTypeMethods";
+  String GROOVY_TRANSFORM_STC_MAP_ENTRY_OR_KEY_VALUE = "groovy.transform.stc.MapEntryOrKeyValue";
   String GROOVY_TRANSFORM_BASE_SCRIPT = "groovy.transform.BaseScript";
   String GROOVY_TRAIT = "groovy.transform.Trait";
   String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";

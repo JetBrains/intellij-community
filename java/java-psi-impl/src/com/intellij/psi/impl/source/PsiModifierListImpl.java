@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -119,6 +120,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
+      if (((PsiClass)parent).isRecord()) {
+        if (!(grandParent instanceof PsiFile)) {
+          implicitModifiers.add(STATIC);
+        }
+        implicitModifiers.add(FINAL);
+      }
       if (((PsiClass)parent).isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
@@ -153,6 +160,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       else if (aClass != null && aClass.isEnum() && ((PsiMethod)parent).isConstructor()) {
         implicitModifiers.add(PRIVATE);
       }
+    }
+    else if (parent instanceof PsiRecordComponent) {
+      implicitModifiers.add(FINAL);
     }
     else if (parent instanceof PsiField) {
       if (parent instanceof PsiEnumConstant) {
@@ -201,7 +211,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     // changes horizontal position of parameters list start, hence, we need to reformat them in order to preserve alignment.
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
+      ASTNode node = method.getParameterList().getNode();
+      if (node != null) { // could be a compact constructor parameter list
+        CodeEditUtil.markToReformat(node, true);
+      }
     }
 
     if (value) {
@@ -257,16 +270,14 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     final PsiAnnotation[] own = getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
     final List<PsiAnnotation> ext = PsiAugmentProvider.collectAugments(this, PsiAnnotation.class);
     return ArrayUtil.mergeArrayAndCollection(own, ext, PsiAnnotation.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), annotation -> {
       PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
@@ -303,7 +314,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private static class ModifierCache {
-    static final WeakInterner<List<String>> ourInterner = new WeakInterner<>();
+    static final Interner<List<String>> ourInterner = new WeakInterner<>();
     final PsiFile file;
     final List<String> modifiers;
     final long modCount;

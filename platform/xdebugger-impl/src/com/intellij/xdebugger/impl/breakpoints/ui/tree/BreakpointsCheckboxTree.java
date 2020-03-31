@@ -67,7 +67,7 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
         return ((BreakpointsGroupNode)node).getGroup().getName();
       }
       return "";
-    });
+    }, true);
   }
 
   @Override

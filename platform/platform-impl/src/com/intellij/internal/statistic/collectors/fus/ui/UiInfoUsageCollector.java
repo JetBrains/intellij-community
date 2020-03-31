@@ -1,21 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.jdkEx.JdkEx;
+import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanUsage;
+import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
+import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
 
 /**
  * @author Konstantin Bulenkov
@@ -24,78 +31,62 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
-    return getDescriptors();
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> getDescriptors() {
-    Set<UsageDescriptor> set = new THashSet<>();
-
-    add(set, "Nav.Bar.visible", navbar() ? 1 : 0);
-    add(set, "Nav.Bar.floating", navbar() ? 0 : 1);
-    add(set, "Toolbar.visible", toolbar() ? 1 : 0);
-    add(set, "Toolbar.hidden", toolbar() ? 0 : 1);
-    add(set, "Toolbar.and.NavBar", !toolbar() && navbar() ? 1 : 0);
-    add(set, "Toolbar.and.NavBar.hidden", !toolbar() && !navbar() ? 1 : 0);
-    add(set, "Status.bar.visible", status() ? 1 : 0);
-    add(set, "Status.bar.hidden", status() ? 0 : 1);
-    add(set, "Tool.Window.buttons.visible", stripes() ? 1 : 0);
-    add(set, "Tool.Window.buttons.hidden", stripes() ? 0 : 1);
-    add(set, "Recent.Files[15]", recent() == 15 ? 1 : 0);
-    add(set, "Recent.Files[15_30]", 15 < recent() && recent() < 31 ? 1 : 0);
-    add(set, "Recent.Files[30_50]", 30 < recent() && recent() < 51 ? 1 : 0);
-    add(set, "Recent.Files[more.than.50]", 50 < recent() ? 1 : 0);
-
-    set.add(new UsageDescriptor("recent.files", 1, new FeatureUsageData().addData("grouped", recentPeriod(recent()))));
-
-    add(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
-    add(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
-    add(set, "Gutter.Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown() ? 1 : 0);
-    add(set, "Soft.Wraps", EditorSettingsExternalizable.getInstance().isUseSoftWraps() ? 1 : 0);
-    add(set, "Tabs.None", tabPlace() == 0 ? 1 : 0);
-    add(set, "Tabs.Top", tabPlace() == SwingConstants.TOP ? 1 : 0);
-    add(set, "Tabs.Bottom", tabPlace() == SwingConstants.BOTTOM ? 1 : 0);
-    add(set, "Tabs.Left", tabPlace() == SwingConstants.LEFT ? 1 : 0);
-    add(set, "Tabs.Right", tabPlace() == SwingConstants.RIGHT ? 1 : 0);
-    add(set, "Retina", UIUtil.isRetina() ? 1 : 0);
-    add(set, "Show.tips.on.startup", GeneralSettings.getInstance().isShowTipsOnStartup() ? 1 : 0);
-    set.add(getBooleanUsage("Allow.merging.buttons", UISettings.getInstance().getAllowMergeButtons()));
-
-    return set;
-  }
-
-  private static String recentPeriod(int recent) {
-    if (recent < 15) return "less.than.15";
-    if (16 < recent && recent < 31) return "[15_30]";
-    if (30 < recent && recent < 51) return "[30_50]";
-    return "[more.than.50]";
-  }
-
-  @NotNull
-  @Override
   public String getGroupId() {
     return "ui.info.features";
   }
 
-  private static void add(Set<? super UsageDescriptor> set, String key, int value) {
-    set.add(new UsageDescriptor(key, value));
+  @Override
+  public int getVersion() {
+    return 5;
   }
 
-  private static int tabPlace() {
-    return UISettings.getInstance().getEditorTabPlacement();
+  @NotNull
+  @Override
+  public Set<MetricEvent> getMetrics() {
+    return getDescriptors();
   }
 
-  private static int recent() {
-    return UISettings.getInstance().getRecentFilesLimit();
+  @NotNull
+  public static Set<MetricEvent> getDescriptors() {
+    Set<MetricEvent> set = new THashSet<>();
+
+    addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
+    addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");
+    addValue(set, "Toolbar", toolbar() ? "visible" : "hidden");
+
+    addValue(set, "Toolbar.and.NavBar", new FeatureUsageData().
+      addData("toolbar", toolbar() ? "visible" : "hidden").
+      addData("navbar", navbar() ? "visible" : "hidden")
+    );
+
+    addEnabled(set, "Retina", UIUtil.isRetina());
+
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    addEnabled(set, "QuickDoc.Show.Toolwindow", properties.isTrueValue("ShowDocumentationInToolWindow"));
+    addEnabled(set, "QuickDoc.AutoUpdate", properties.getBoolean("DocumentationAutoUpdateEnabled", true));
+
+    UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    addValue(set, "Look.and.Feel", StringUtil.notNullize(laf != null ? laf.getName() : null, "unknown"));
+
+    addValue(set, "Hidpi.Mode", JreHiDpiUtil.isJreHiDPIEnabled() ? "per_monitor_dpi" : "system_dpi");
+    addEnabled(set, "Screen.Reader", ScreenReader.isActive());
+
+    set.add(newMetric("QuickListsCount", QuickListsManager.getInstance().getAllQuickLists().length));
+
+    addScreenScale(set);
+    return set;
   }
 
-  private static boolean stripes() {
-    return UISettings.getInstance().getHideToolStripes();
+  private static void addValue(Set<? super MetricEvent> set, String key, FeatureUsageData data) {
+    set.add(newMetric(key, data));
   }
 
-  private static boolean status() {
-    return UISettings.getInstance().getShowStatusBar();
+  private static void addValue(Set<? super MetricEvent> set, String key, String value) {
+    set.add(newMetric(key, new FeatureUsageData().addValue(value)));
+  }
+
+  private static void addEnabled(Set<? super MetricEvent> set, String key, boolean enabled) {
+    set.add(newBooleanMetric(key, enabled));
   }
 
   private static boolean toolbar() {
@@ -106,9 +97,27 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return UISettings.getInstance().getShowNavigationBar();
   }
 
-  @Nullable
-  @Override
-  public FeatureUsageData getData() {
-    return new FeatureUsageData().addOS();
+  private static void addScreenScale(Set<? super MetricEvent> set) {
+    float scale = JBUIScale.sysScale();
+
+    int scaleBase = (int)Math.floor(scale);
+    float scaleFract = scale - scaleBase;
+
+    if (scaleFract == 0.0f) scaleFract = 0.0f; // count integer scale on a precise match only
+    else if (scaleFract < 0.375f) scaleFract = 0.25f;
+    else if (scaleFract < 0.625f) scaleFract = 0.5f;
+    else scaleFract = 0.75f;
+
+    scale = scaleBase + scaleFract;
+
+    boolean isScaleMode = false;
+    if (!GraphicsEnvironment.isHeadless()) {
+      DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+      isScaleMode = JdkEx.getDisplayModeEx().isDefault(dm);
+    }
+
+    FeatureUsageData data = new FeatureUsageData().
+      addData("scale_mode", isScaleMode).addData("scale", scale);
+    set.add(newMetric("Screen.Scale", data));
   }
 }

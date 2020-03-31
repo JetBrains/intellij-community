@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -7,9 +7,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ReadAction;
@@ -28,7 +26,7 @@ public class RequestHint {
   public static final int STOP = 0;
   public static final int RESUME = -100;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
+  private static final Logger LOG = Logger.getInstance(RequestHint.class);
   @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   private final int mySize;
   @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
@@ -65,37 +63,9 @@ public class RequestHint {
     myDepth = depth;
     myMethodFilter = methodFilter;
 
-    int frameCount = 0;
-    SourcePosition position = null;
-    try {
-      frameCount = stepThread.frameCount();
-
-      position = ContextUtil.getSourcePosition(new StackFrameContext() {
-        @Override
-        public StackFrameProxy getFrameProxy() {
-          try {
-            return stepThread.frame(0);
-          }
-          catch (EvaluateException e) {
-            LOG.debug(e);
-            return null;
-          }
-        }
-
-        @Override
-        @NotNull
-        public DebugProcess getDebugProcess() {
-          return suspendContext.getDebugProcess();
-        }
-      });
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-    finally {
-      myFrameCount = frameCount;
-      myPosition = position;
-    }
+    myFrameCount = DebugProcessImpl.getFrameCount(stepThread, suspendContext);
+    myPosition =
+      suspendContext.getDebugProcess().getPositionManager().getSourcePosition(DebugProcessImpl.getLocation(stepThread, suspendContext));
   }
 
   public void setIgnoreFilters(boolean ignoreFilters) {
@@ -170,9 +140,9 @@ public class RequestHint {
     return mySteppedOut;
   }
 
-  public Integer checkCurrentPosition(SuspendContextImpl context) {
+  public Integer checkCurrentPosition(SuspendContextImpl context, Location location) {
     if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
-      SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+      SourcePosition locationPosition = context.getDebugProcess().getPositionManager().getSourcePosition(location);
       if (locationPosition != null) {
         return ReadAction.compute(() -> {
           if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
@@ -191,17 +161,19 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
-      final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+      Location location = context.getLocation();
 
       // smart step feature stop check
       if (myMethodFilter != null &&
-          frameProxy != null &&
+          location != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
           !isTheSameFrame(context)) {
-        if (isProxyMethod(frameProxy.location().method())) { // step into bridge and proxy methods
+        if (isProxyMethod(location.method())) { // step into bridge and proxy methods
           return StepRequest.STEP_INTO;
         }
-        if (myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy)) {
+        boolean proxyMatch =
+          (myMethodFilter instanceof BasicStepMethodFilter && ((BasicStepMethodFilter)myMethodFilter).proxyCheck(location, context, this));
+        if (proxyMatch || myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
           if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
             myTargetMethodMatched = true;
             return myMethodFilter.onReached(context, this);
@@ -209,7 +181,7 @@ public class RequestHint {
         }
       }
 
-      Integer resultDepth = checkCurrentPosition(context);
+      Integer resultDepth = checkCurrentPosition(context, location);
       if (resultDepth != null) {
         return resultDepth.intValue();
       }
@@ -218,13 +190,10 @@ public class RequestHint {
 
       final DebuggerSettings settings = DebuggerSettings.getInstance();
 
-      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters))&& frameProxy != null) {
-        final Location location = frameProxy.location();
-        if (location != null) {
-          if (DebuggerUtils.isSynthetic(location.method())) {
-            return myDepth;
-          }
-        }
+      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
+          location != null &&
+          DebuggerUtils.isSynthetic(location.method())) {
+        return myDepth;
       }
 
       if (!myIgnoreFilters) {
@@ -239,22 +208,16 @@ public class RequestHint {
           }
         }
 
-        if (frameProxy != null) {
+        if (location != null) {
           if (settings.SKIP_CONSTRUCTORS) {
-            final Location location = frameProxy.location();
-            if (location != null) {
-              final Method method = location.method();
-              if (method != null && method.isConstructor()) {
-                return StepRequest.STEP_OUT;
-              }
+            final Method method = location.method();
+            if (method != null && method.isConstructor()) {
+              return StepRequest.STEP_OUT;
             }
           }
 
-          if (settings.SKIP_CLASSLOADERS) {
-            final Location location = frameProxy.location();
-            if (location != null && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
-              return StepRequest.STEP_OUT;
-            }
+          if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+            return StepRequest.STEP_OUT;
           }
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.sphinx;
 
 import com.google.common.collect.Lists;
@@ -25,6 +25,8 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,13 +65,13 @@ public class SphinxBaseCommand {
     private AskForWorkDir(Project project) {
       super(project);
 
-      setTitle("Set Sphinx Working Directory: ");
+      setTitle(RestBundle.message("sphinx.set.working.directory.dialog.title"));
       init();
       VirtualFile baseDir =  project.getBaseDir();
       String path = baseDir != null? baseDir.getPath() : "";
       myInputFile.setText(path);
       myInputFile.setEditable(false);
-      myInputFile.addBrowseFolderListener("Choose Sphinx Working Directory (Containing Makefile): ", null, project,
+      myInputFile.addBrowseFolderListener(RestBundle.message("sphinx.choose.working.directory.browse.folder.title"), null, project,
                                           FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
       myPanel.setPreferredSize(new Dimension(600, 20));
@@ -99,7 +101,7 @@ public class SphinxBaseCommand {
         .run();
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), "ReStructuredText Error");
+      Messages.showErrorDialog(e.getMessage(), RestBundle.message("sphinx.restructured.text.error"));
     }
   }
 
@@ -119,7 +121,7 @@ public class SphinxBaseCommand {
   }
 
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) {
       throw new ExecutionException("No sdk specified");
     }
@@ -131,7 +133,7 @@ public class SphinxBaseCommand {
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
       final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
-      String executablePath = PythonSdkType.getExecutablePath(sdkHomePath, runnerName);
+      String executablePath = PythonSdkUtil.getExecutablePath(sdkHomePath, runnerName);
       if (executablePath != null) {
         cmd.setExePath(executablePath);
       }
@@ -165,7 +167,7 @@ public class SphinxBaseCommand {
 
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdkHomePath, true);
+    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
     BuildoutFacet facet = BuildoutFacet.getInstance(module);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.todo.nodes;
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,20 +30,20 @@ import java.util.Collections;
 import java.util.List;
 
 public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements HighlightedRegionProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.toDo.TodoItemNodeDescriptor");
+  private static final Logger LOG = Logger.getInstance(TodoItem.class);
 
-  private final ArrayList<HighlightedRegion> myHighlightedRegions;
+  private final List<HighlightedRegion> myHighlightedRegions;
   private final List<HighlightedRegionProvider> myAdditionalLines;
 
   public TodoItemNode(Project project,
                       @NotNull SmartTodoItemPointer value,
                       TodoTreeBuilder builder) {
     super(project, value, builder);
-    RangeMarker rangeMarker = getValue().getRangeMarker();
+    RangeMarker rangeMarker = value.getRangeMarker();
     LOG.assertTrue(rangeMarker.isValid());
 
-    myHighlightedRegions = new ArrayList<>();
-    myAdditionalLines = new ArrayList<>();
+    myHighlightedRegions = ContainerUtil.createConcurrentList();
+    myAdditionalLines = ContainerUtil.createConcurrentList();
   }
 
   @Override
@@ -68,13 +69,13 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
   }
 
   @Override
-  public ArrayList<HighlightedRegion> getHighlightedRegions() {
+  public List<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> getChildren() {
+  public Collection<AbstractTreeNode<?>> getChildren() {
     return Collections.emptyList();
   }
 

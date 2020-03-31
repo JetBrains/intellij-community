@@ -43,7 +43,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
     super(new BorderLayout());
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                                      AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
@@ -63,11 +63,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     actionGroup.addSeparator();
 
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.expand.test.action.name"));
+    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.expand.test.action.name"));
     actionGroup.add(action);
 
     action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
+    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.collapse.test.action.name"));
     actionGroup.add(action);
 
     actionGroup.addSeparator();
@@ -82,15 +82,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       actionGroup.add(toggleModelAction);
     }
 
+    final AnAction[] importActions = properties.createImportActions();
+    if (importActions != null) {
+      actionGroup.addAll(importActions);
+    }
+
     final RunProfile configuration = properties.getConfiguration();
     if (configuration instanceof RunConfiguration) {
       myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration, parent);
       actionGroup.addAction(myExportAction);
-    }
-
-    final AnAction importAction = properties.createImportAction();
-    if (importAction != null) {
-      actionGroup.addAction(importAction);
     }
 
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();

@@ -20,9 +20,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
@@ -33,6 +33,7 @@ const val NOTIFICATION_GROUP_ID = "Load Error"
 @TestOnly
 var DEBUG_LOG: String? = null
 
+@ApiStatus.Internal
 fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
   val productName = ApplicationNamesInfo.getInstance().productName
   val content = "<p><i>${macros.joinToString(", ")}</i> ${if (macros.size == 1) "is" else "are"} undefined. <a href=\"define\">Fix it</a></p>" +
@@ -45,6 +46,7 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
     .notify(project)
 }
 
+@ApiStatus.Internal
 fun checkUnknownMacros(project: Project, notify: Boolean) {
   // use linked set/map to get stable results
   val unknownMacros = LinkedHashSet<String>()
@@ -115,33 +117,35 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
+@ApiStatus.Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
-  if (virtualFile != null) {
-    return virtualFile
+  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
+  if (virtualFile == null) {
+    val parentFile = file.parent
+    parentFile.createDirectories()
+
+    // need refresh if the directory has just been created
+    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+                            ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+
+    virtualFile = runAsWriteActionIfNeeded {
+      parentVirtualFile.createChildData(requestor, file.fileName.toString())
+    }
   }
-
-  val parentFile = file.parent
-  parentFile.createDirectories()
-
-  // need refresh if the directory has just been created
-  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
-                          ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
-
-  return runAsWriteActionIfNeeded {
-    parentVirtualFile.createChildData(requestor, file.fileName.toString())
+  // internal .xml files written with BOM can cause problems, see IDEA-219913
+  // (e.g. unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
+  // so we forcibly remove BOM from storage .xmls
+  if (virtualFile.bom != null) {
+    virtualFile.bom = null
   }
+  return virtualFile
 }
 
 // runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+@ApiStatus.Internal
 inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
   return when {
     ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
     else -> runWriteAction(runnable)
   }
-}
-
-@Throws(IOException::class)
-fun readProjectNameFile(nameFile: Path): String? {
-  return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
 }

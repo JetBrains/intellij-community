@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -30,7 +30,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class ThreadsDebuggerTree extends DebuggerTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.ThreadsDebuggerTree");
+  private static final Logger LOG = Logger.getInstance(ThreadsDebuggerTree.class);
 
   public ThreadsDebuggerTree(Project project) {
     super(project);
@@ -67,7 +67,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       context.getDebugProcess().getManagerThread().schedule(command);
     }
     else {
-      showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
+      showMessage(session != null? session.getStateDescription() : JavaDebuggerBundle.message("status.debug.stopped"));
     }
   }
 

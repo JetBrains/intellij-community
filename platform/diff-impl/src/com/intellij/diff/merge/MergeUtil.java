@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
+import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
@@ -53,6 +56,7 @@ public class MergeUtil {
     };
   }
 
+  @Nls
   @NotNull
   public static String getResolveActionTitle(@NotNull MergeResult result, @Nullable MergeRequest request, @Nullable MergeContext context) {
     Function<MergeResult, String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);
@@ -61,13 +65,13 @@ public class MergeUtil {
 
     switch (result) {
       case CANCEL:
-        return "Abort";
+        return DiffBundle.message("button.merge.resolve.cancel");
       case LEFT:
-        return "Accept Left";
+        return DiffBundle.message("button.merge.resolve.accept.left");
       case RIGHT:
-        return "Accept Right";
+        return DiffBundle.message("button.merge.resolve.accept.right");
       case RESOLVED:
-        return "Apply";
+        return DiffBundle.message("button.merge.resolve.apply");
       default:
         throw new IllegalArgumentException(result.toString());
     }
@@ -136,22 +140,37 @@ public class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
-    String message = DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message");
-    String title = DiffBundle.message("cancel.visual.merge.dialog.title");
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
-      title = customMessage.first;
-      message = customMessage.second;
+      String title = customMessage.first;
+      String message = customMessage.second;
+      return Messages.showConfirmationDialog(component, message, title,
+                                             CommonBundle.message("button.without.mnemonic.yes"),
+                                             CommonBundle.message("button.without.mnemonic.no")) == Messages.YES;
     }
 
-    return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return showConfirmDiscardChangesDialog(component, DiffBundle.message("button.cancel.merge"), true);
+  }
+
+  public static boolean showConfirmDiscardChangesDialog(@NotNull JComponent parent,
+                                                        @NotNull @Nls String actionName,
+                                                        boolean contentWasModified) {
+    if (!contentWasModified) return true;
+    return Messages.showConfirmationDialog(
+      parent,
+      DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway", actionName.toLowerCase(Locale.ENGLISH)),
+      actionName,
+      DiffBundle.message("button.discard.changes.and.do", actionName),
+      DiffBundle.message("button.continue.merge")) == Messages.YES;
   }
 
   public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
     MergeCallback callback = MergeCallback.getCallback(request);
     if (callback.checkIsValid()) return true;
-    return Messages.showYesNoDialog("Merge conflict is outdated. Restore file content prior to conflict resolve start?",
-                                    DiffBundle.message("cancel.visual.merge.dialog.title"), "Restore", "Do nothing",
+    return Messages.showYesNoDialog(DiffBundle.message("merge.conflict.is.outdated"),
+                                    DiffBundle.message("cancel.visual.merge.dialog.title"),
+                                    CommonBundle.message("button.without.mnemonic.restore"),
+                                    CommonBundle.message("button.without.mnemonic.do.nothing"),
                                     Messages.getQuestionIcon()) == Messages.YES;
   }
 

@@ -61,13 +61,22 @@ public class PsiLambdaExpressionType extends PsiType {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return PsiType.EMPTY_ARRAY;
   }
 
   public PsiLambdaExpression getExpression() {
     return myExpression;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this || obj instanceof PsiLambdaExpressionType && myExpression.equals(((PsiLambdaExpressionType)obj).myExpression);
+  }
+
+  @Override
+  public int hashCode() {
+    return myExpression.hashCode();
   }
 }

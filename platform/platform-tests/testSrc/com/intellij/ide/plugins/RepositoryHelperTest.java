@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -137,10 +138,41 @@ public class RepositoryHelperTest {
     assertNotEquals(node1.getName(), node2.getName());
   }
 
+  @Test
+  public void testListFiltering() throws IOException {
+    int current = PluginManagerCore.getBuildNumber().getComponents()[0], next = current + 1;
+    List<IdeaPluginDescriptor> list = loadPlugins(
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<plugin-repository>\n" +
+      "  <category name=\"Test\">\n" +
+      "    <idea-plugin downloads=\"0\" size=\"1\" date=\"1563793797845\" url=\"\">\n" +
+      "      <name>Test Plugin</name>\n" +
+      "      <id>com.jetbrains.test.plugin</id>\n" +
+      "      <version>0.1</version>\n" +
+      "      <idea-version since-build=\"" + current + ".0\" until-build=\"" + current + ".*\"/>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
+      "    </idea-plugin>\n" +
+      "    <idea-plugin downloads=\"0\" size=\"1\" date=\"1563793797845\" url=\"\">\n" +
+      "      <name>Test Plugin</name>\n" +
+      "      <id>com.jetbrains.test.plugin</id>\n" +
+      "      <version>0.2</version>\n" +
+      "      <idea-version since-build=\"" + next + ".0\" until-build=\"" + next + ".*\"/>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
+      "    </idea-plugin>\n" +
+      "  </category>\n" +
+      "</plugin-repository>", BuildNumber.fromString(next + ".100"));
+    assertEquals(1, list.size());
+    assertEquals("0.2", list.get(0).getVersion());
+  }
+
   private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
+    return loadPlugins(data, null);
+  }
+
+  private List<IdeaPluginDescriptor> loadPlugins(String data, BuildNumber build) throws IOException {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);
     String url = tempFile.toURI().toURL().toString();
-    return RepositoryHelper.loadPlugins(url, null, null);
+    return RepositoryHelper.loadPlugins(url, build, null);
   }
 }

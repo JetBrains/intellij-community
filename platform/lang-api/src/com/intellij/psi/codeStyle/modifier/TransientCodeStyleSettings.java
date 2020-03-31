@@ -59,6 +59,20 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     return OTHER_INDENT_OPTIONS;
   }
 
+  public void applyIndentOptionsFromProviders() {
+    for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
+      if (provider.useOnFullReformat()) {
+        IndentOptions indentOptions = provider.getIndentOptions(this, myPsiFile);
+        if (indentOptions != null) {
+          IndentOptions targetOptions = getIndentOptions(myPsiFile.getFileType());
+          if (targetOptions != indentOptions) {
+            targetOptions.copyFrom(indentOptions);
+          }
+        }
+      }
+    }
+  }
+
   public void addDependency(@NotNull ModificationTracker dependency) {
     myDependencies.add(dependency);
   }

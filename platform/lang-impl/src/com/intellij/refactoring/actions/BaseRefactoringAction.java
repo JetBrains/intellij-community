@@ -7,9 +7,12 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -37,12 +40,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
 
   protected abstract boolean isAvailableInEditorOnly();
 
-  protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
-
-  @Override
-  public boolean startInTransaction() {
-    return true;
-  }
+  protected abstract boolean isEnabledOnElements(PsiElement @NotNull [] elements);
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
                                                         @NotNull Editor editor,
@@ -92,10 +90,13 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     if (project == null) return;
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
+    if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
+      return;
+    }
+    IdeEventQueue.getInstance().setEventCount(eventCount);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
-    int eventCount = IdeEventQueue.getInstance().getEventCount();
 
     RefactoringActionHandler handler;
     try {
@@ -122,13 +123,26 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
     IdeEventQueue.getInstance().setEventCount(eventCount);
+
+    final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
+    final Language language = file != null
+                              ? file.getLanguage()
+                              : (elements.length > 0 ? elements[0].getLanguage() : null);
+    FeatureUsageData data = new FeatureUsageData()
+      .addData("handler", handler.getClass().getName())
+      .addLanguage(language);
+    if (elements.length > 0) {
+      data.addData("element", elements[0].getClass().getName());
+    }
+
+    FUCounterUsageLogger.getInstance().logEvent(project, "refactoring", "handler.invoked", data);
+
     if (editor != null) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file);
       handler.invoke(project, editor, file, dataContext);
@@ -276,8 +290,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     return true;
   }
 
-  @NotNull
-  public static PsiElement[] getPsiElementArray(DataContext dataContext) {
+  public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements == null || psiElements.length == 0) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);

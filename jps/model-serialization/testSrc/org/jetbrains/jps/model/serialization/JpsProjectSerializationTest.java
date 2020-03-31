@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -38,21 +25,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
+  public static final String SAMPLE_PROJECT_IPR_PATH = "/jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr";
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    File baseDirPath = getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile();
-    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(myProject)));
     assertEquals("sampleProjectName", myProject.getName());
+    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile());
+  }
+
+  public void testLoadIprProject() {
+    loadProject(SAMPLE_PROJECT_IPR_PATH);
+    assertEquals("sampleProject", myProject.getName());
+    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_IPR_PATH).toFile().getParentFile());
+  }
+
+  private void checkSampleProjectConfiguration(File baseDirPath) {
+    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(myProject)));
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
@@ -186,6 +181,15 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadEncoding() {
     loadProject(SAMPLE_PROJECT_PATH);
+    checkEncodingConfigurationInSampleProject();
+  }
+
+  public void testLoadEncodingIpr() {
+    loadProject(SAMPLE_PROJECT_IPR_PATH);
+    checkEncodingConfigurationInSampleProject();
+  }
+
+  private void checkEncodingConfigurationInSampleProject() {
     JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();
     assertEquals("UTF-8", service.getProjectEncoding(myModel));
     JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);
@@ -236,7 +240,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     List<Path> libs = Files.list(getFileInSampleProject(".idea/libraries")).collect(Collectors.toList());
     assertNotNull(libs);
     for (Path libFile : libs) {
-      String libName = FileUtil.getNameWithoutExtension(libFile.getFileName().toString());
+      String libName = FileUtilRt.getNameWithoutExtension(libFile.getFileName().toString());
       JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
       assertNotNull(libName, library);
       doTestSaveLibrary(libFile, libName, library);
@@ -287,10 +291,10 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   }
 
   public void testLoadIdeaProject() {
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     loadProjectByAbsolutePath(PathManager.getHomePath());
     assertTrue(myProject.getModules().size() > 0);
     System.out.println("JpsProjectSerializationTest: " + myProject.getModules().size() + " modules, " + myProject.getLibraryCollection().getLibraries().size() + " libraries and " +
-                       JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + (System.currentTimeMillis() - start) + "ms");
+                       JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
   }
 }

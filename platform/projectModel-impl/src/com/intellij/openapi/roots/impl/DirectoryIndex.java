@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -23,8 +22,9 @@ import java.util.Set;
 @ApiStatus.Internal
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
-    assert !project.isDefault() : "Must not call DirectoryIndex for default project";
-    return ServiceManager.getService(project, DirectoryIndex.class);
+    // todo enable later when all usages will be fixed
+    //assert !project.isDefault() : "Must not call DirectoryIndex for default project";
+    return project.getService(DirectoryIndex.class);
   }
 
   @NotNull

@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 class ExtractedClassBuilder {
-  private static final Logger LOGGER = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractedClassBuilder");
+  private static final Logger LOGGER = Logger.getInstance(ExtractedClassBuilder.class);
 
   private String className;
   private String packageName;
@@ -384,7 +385,7 @@ class ExtractedClassBuilder {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
 
       super.visitElement(element);
       final PsiElement[] children = element.getChildren();

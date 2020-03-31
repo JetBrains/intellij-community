@@ -20,11 +20,13 @@ import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
+class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun tearDown() {
     val default = ParameterNameHintsSettings()
@@ -109,7 +111,7 @@ class Stream<T> {
 }
 """)
 
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Foo {
   void test() {
@@ -276,7 +278,7 @@ public class Test {
   }
 
   fun `test suppress for erroneous parameters`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(false)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -288,7 +290,7 @@ public class Test {
     }
 }
 """)
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -530,7 +532,7 @@ class Test {
 }
 """)
     
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Builder {
   void await(boolean value) {}
@@ -568,7 +570,7 @@ class Test {
 }
 """)
 
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Builder {
   Builder qwit(boolean value, String sValue) {}
@@ -701,7 +703,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -715,7 +717,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -729,7 +731,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -744,7 +746,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -758,7 +760,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -910,7 +912,7 @@ class Test {
 
 
   fun `test params with same type`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void test() {
@@ -952,7 +954,7 @@ public class Test {
   }
 
   fun `test one-char one-digit hints enabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
     check("""
 class Test {
   void main() {
@@ -964,7 +966,7 @@ class Test {
   }
 
   fun `test ordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -984,7 +986,7 @@ class Test {
   }
 
   fun `test unordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -998,7 +1000,7 @@ class Test {
   }
 
   fun `test ordered with varargs`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -1012,7 +1014,7 @@ class Test {
   }
 
   fun `test one-char one-digit hints disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1024,7 +1026,7 @@ class Test {
   }
 
   fun `test just some unparsable parameter name`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1139,7 +1141,7 @@ public class Test {
 
   fun `test constructor call with other features`() {
     JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 public class Test {
     static class A {
@@ -1150,6 +1152,29 @@ public class Test {
       new A(true, false);
     }
 }""")
+  }
+
+  fun `test undo after typing space`() {
+    check("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/>2); }
+}
+""")
+    EditorTestUtil.testUndoInEditor(myFixture.editor) {
+      myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(");"))
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
+      myFixture.type(' ')
+      myFixture.doHighlighting()
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_UNDO)
+      myFixture.doHighlighting()
+      myFixture.checkResultWithInlays("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/><caret>2); }
+}
+""")
+    }
   }
 
   fun getHints(): List<String> {
@@ -1163,7 +1188,11 @@ public class Test {
 
   
   fun assertSingleInlayWithText(expectedText: String) {
-    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+    val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
+      editor,
+      0,
+      editor.document.textLength
+    )
     assertThat(inlays).hasSize(1)
     val realText = getHintText(inlays[0])
     assertThat(realText).isEqualTo(expectedText)

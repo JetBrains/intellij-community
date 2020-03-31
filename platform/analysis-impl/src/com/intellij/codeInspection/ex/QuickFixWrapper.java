@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -20,11 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author max
- */
 public class QuickFixWrapper implements IntentionAction, PriorityAction {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ex.QuickFixWrapper");
+  private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
   private final LocalQuickFix myFix;
@@ -103,7 +100,7 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public ProblemHighlightType getHighlightType() {
     return myDescriptor.getHighlightType();
   }
-  
+
   @Nullable
   public PsiFile getFile() {
     PsiElement element = myDescriptor.getPsiElement();

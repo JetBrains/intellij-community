@@ -1,0 +1,8 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+dependencies {
+  compile 'com.android.tools:annotations:26.3.0'
+  compile 'com.android.tools:common:26.3.0'
+  compile 'com.android.tools.ddms:ddmlib:26.3.0'
+  compile 'com.google.guava:guava:25.1-jre'
+  compile 'org.jetbrains.intellij.deps:trove4j:1.0.20190514'
+}

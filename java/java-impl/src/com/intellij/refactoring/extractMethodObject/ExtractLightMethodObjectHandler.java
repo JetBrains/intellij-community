@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.extractMethodObject.reflect.CompositeReflectionAccessor;
+import com.intellij.refactoring.extractMethodObject.reflect.ReflectionAccessorToEverything;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
@@ -30,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ExtractLightMethodObjectHandler {
+  public static final Key<PsiMethod> REFERENCE_METHOD = Key.create("CompilingEvaluatorReferenceMethod");
+  public static final Key<PsiType> REFERENCED_TYPE = Key.create("CompilingEvaluatorReferencedType");
+
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
 
   public static class ExtractedData {
@@ -268,21 +272,49 @@ public class ExtractLightMethodObjectHandler {
 
     boolean useReflection = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9) ||
                             Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
+    PsiClass generatedClass = extractMethodObjectProcessor.getInnerClass();
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
-      LOG.info("Use reflection to evaluate inaccessible members");
-      CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
-                                 .accessThroughReflection(method);
+      PsiMethodCallExpression callExpression = findCallExpression(copy, method);
+      if (callExpression != null) {
+        LOG.info("Use reflection to evaluate inaccessible members");
+        new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
+        boolean isJdkAtLeast11 = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11);
+        if (isJdkAtLeast11 || Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
+          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor);
+        }
+      }
+      else {
+        LOG.warn("Generated method call expression not found");
+      }
     }
 
     final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
-                             (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
+                             (PsiClass)CodeStyleManager.getInstance(project).reformat(generatedClass),
                              originalAnchor, useMagicAccessor);
   }
 
   @Nullable
-  private static PsiElement[] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
+  private static PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
+    PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
+    copy.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        if (method.equals(expression.resolveMethod())) {
+          if (result[0] != null) {
+            LOG.error("To many generated method invocations found");
+          }
+          else {
+            result[0] = expression;
+          }
+        }
+      }
+    });
+    return result[0];
+  }
+
+  private static PsiElement @Nullable [] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
     PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     if (expression != null) {
       String completeExpressionText = null;

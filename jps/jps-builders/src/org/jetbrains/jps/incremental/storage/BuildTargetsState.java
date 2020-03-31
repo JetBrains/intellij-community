@@ -32,13 +32,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author nik
- */
 public class BuildTargetsState {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
+  private static final Logger LOG = Logger.getInstance(BuildTargetsState.class);
   private final BuildDataPaths myDataPaths;
   private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
+  private long myLastSuccessfulRebuildDuration = -1;
   private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
@@ -50,6 +48,7 @@ public class BuildTargetsState {
     File targetTypesFile = getTargetTypesFile();
     try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)))) {
       myMaxTargetId.set(input.readInt());
+      myLastSuccessfulRebuildDuration = input.readLong();
     }
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);
@@ -70,6 +69,7 @@ public class BuildTargetsState {
       FileUtil.createParentDirs(targetTypesFile);
       try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
+        output.writeLong(myLastSuccessfulRebuildDuration);
       }
     }
     catch (IOException e) {
@@ -84,6 +84,18 @@ public class BuildTargetsState {
     return getTypeState(target.getTargetType()).getTargetId(target);
   }
 
+  /**
+   * @return -1 if this information is not available
+   */
+  public long getLastSuccessfulRebuildDuration() {
+    return myLastSuccessfulRebuildDuration;
+  }
+
+  public void setLastSuccessfulRebuildDuration(long duration) {
+    myLastSuccessfulRebuildDuration = duration;
+  }
+
+  @NotNull
   public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
     return getTypeState(target.getTargetType()).getConfiguration(target);
   }

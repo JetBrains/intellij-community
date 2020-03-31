@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDebugSessionData extends UserDataHolderBase {
   public static final DataKey<XDebugSessionData> DATA_KEY = DataKey.create("XDebugSessionData");
 

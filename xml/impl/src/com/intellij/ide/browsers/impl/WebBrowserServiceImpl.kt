@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.impl
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
@@ -14,19 +14,18 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
+import java.util.*
+import java.util.stream.Stream
 
-private val URL_PROVIDER_EP: ExtensionPointName<WebBrowserUrlProvider> = ExtensionPointName.create<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
+private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
-    fun getProvider(request: OpenInBrowserRequest): WebBrowserUrlProvider? {
+    fun getProviders(request: OpenInBrowserRequest): Stream<WebBrowserUrlProvider> {
       val dumbService = DumbService.getInstance(request.project)
-      for (urlProvider in URL_PROVIDER_EP.extensionList) {
-        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
-          return urlProvider
-        }
+      return URL_PROVIDER_EP.extensions().filter {
+        (!dumbService.isDumb || DumbService.isDumbAware(it)) && it.canHandleElement(request)
       }
-      return null
     }
 
     fun getDebuggableUrls(context: PsiElement?): Collection<Url> {
@@ -38,7 +37,9 @@ class WebBrowserServiceImpl : WebBrowserService() {
         else {
           // it is client responsibility to set token
           request.isAppendAccessToken = false
-          return getUrls(getProvider(request), request)
+          return getProviders(request)
+            .map { getUrls(it, request) }
+            .filter(Collection<*>::isNotEmpty).findFirst().orElse(Collections.emptyList())
         }
       }
       catch (ignored: WebBrowserUrlProvider.BrowserException) {
@@ -51,7 +52,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
+    val isHtmlOrXml = isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in URL_PROVIDER_EP.extensionList) {

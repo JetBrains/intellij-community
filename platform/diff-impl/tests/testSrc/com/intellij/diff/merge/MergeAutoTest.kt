@@ -93,8 +93,12 @@ class MergeAutoTest : MergeTestBase() {
       index1 = RNG.nextInt(length)
       index2 = index1 + RNG.nextInt(length - index1)
     }
+    val oldText = document.charsSequence.subSequence(index1, index2).toString()
 
-    val newText = generateText(30)
+    var newText = generateText(30)
+
+    // Ensure non-identical modification
+    if (newText == oldText) newText += "?"
 
     write { document.replaceString(index1, index2, newText) }
   }

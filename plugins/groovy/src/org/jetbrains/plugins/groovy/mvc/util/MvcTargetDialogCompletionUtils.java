@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.mvc.util;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -175,7 +176,7 @@ public class MvcTargetDialogCompletionUtils {
     );
   }
 
-  public static class MyTailTypeEQ extends TailType.TailTypeEQ {
+  public static class MyTailTypeEQ extends EqTailType {
     public static final MyTailTypeEQ INSTANCE = new MyTailTypeEQ();
 
     @Override
@@ -187,5 +188,4 @@ public class MvcTargetDialogCompletionUtils {
       return "MvcTargetDialogCompletionUtils.TailTypeEQ";
     }
   }
-
 }

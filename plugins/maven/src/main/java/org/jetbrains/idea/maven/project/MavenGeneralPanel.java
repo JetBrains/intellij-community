@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
@@ -38,7 +39,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxProduceExceptionErrorMessages;
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
-  private JComboBox pluginUpdatePolicyCombo;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
@@ -56,8 +56,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     fillOutputLevelCombobox();
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
-    fillPluginUpdatePolicyCombobox();
-
     setAnchor(myMultiProjectBuildFailPolicyLabel);
   }
 
@@ -76,12 +74,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private void fillChecksumPolicyCombobox() {
     ComboBoxUtil.setModel(checksumPolicyCombo, checksumPolicyComboModel,
                           Arrays.asList(MavenExecutionOptions.ChecksumPolicy.values()),
-                          each -> Pair.create(each.getDisplayString(), each));
-  }
-
-  private void fillPluginUpdatePolicyCombobox() {
-    ComboBoxUtil.setModel(pluginUpdatePolicyCombo, pluginUpdatePolicyComboModel,
-                          Arrays.asList(MavenExecutionOptions.PluginUpdatePolicy.values()),
                           each -> Pair.create(each.getDisplayString(), each));
   }
 
@@ -131,7 +123,7 @@ public class MavenGeneralPanel implements PanelWithAnchor {
 
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.general");
+    return CommonBundle.message("tab.title.general");
   }
 
   @Override

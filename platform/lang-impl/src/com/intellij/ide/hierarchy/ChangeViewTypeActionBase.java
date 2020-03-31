@@ -17,14 +17,20 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author cdr
  */
 abstract class ChangeViewTypeActionBase extends ChangeHierarchyViewActionBase {
   ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
+    this(() -> shortDescription, () -> longDescription, icon);
+  }
+
+  ChangeViewTypeActionBase(@NotNull Supplier<String> shortDescription, @NotNull Supplier<String> longDescription, final Icon icon) {
     super(shortDescription, longDescription, icon);
   }
 

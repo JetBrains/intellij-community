@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenCoordinate;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor;
@@ -333,6 +334,7 @@ public class MavenDomUtil {
     return prop == null ? null : prop.getPsiElement().getFirstChild().getNextSibling().getNextSibling();
   }
 
+  @Nullable
   private static Set<VirtualFile> getFilteredResourcesRoots(@NotNull MavenProject mavenProject) {
     Pair<Long, Set<VirtualFile>> cachedValue = mavenProject.getCachedValue(FILTERED_RESOURCES_ROOTS_KEY);
 
@@ -342,7 +344,11 @@ public class MavenDomUtil {
       for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         if (!resource.isFiltered()) continue;
 
-        VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
+        String resourceDirectory = resource.getDirectory();
+        if (resourceDirectory == null) {
+          continue;
+        }
+        VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
 
         if (set == null) {
@@ -419,10 +425,23 @@ public class MavenDomUtil {
     return createDomDependency(model.getDependencies(), editor, id);
   }
 
+
+  /**
+   * @deprecated left for binary compatibility
+   */
+  @Deprecated
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
+
+    return createDomDependency(dependencies, editor, (MavenCoordinate)id);
+  }
+
+  @NotNull
+  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
+                                                       @Nullable Editor editor,
+                                                       @NotNull final MavenCoordinate id) {
     MavenDomDependency dep = createDomDependency(dependencies, editor);
 
     dep.getGroupId().setStringValue(id.getGroupId());

@@ -29,9 +29,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 
-/**
- * Lang data keys.
- */
 public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<Module> MODULE = DataKey.create("module");

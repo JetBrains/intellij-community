@@ -20,21 +20,29 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeAndWait(Runnable, ModalityState)} to specify
+ * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeLater} to specify
  * that the corresponding runnable is to be executed within the given modality state, i.e., when the same set modal dialogs is present, or its subset.<p/>
  *
- * Modality state is used to prevent the following scenario. Someone does SwingUtilities.invokeAndWait, but there are already other runnables in
- * Swing queue, so they are executed before and show a dialog (e.g., asking a yes/no question). While this dialog is shown, further events are pumped
- * from the queue, including the one scheduled before, which does something very dramatic, e.g., removes a module from the project, deletes some files,
- * invalidates PSI. It's executed, and only then the user closes the dialog. The code that invoked that dialog now has to deal with the completely
- * changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link com.intellij.openapi.project.DumbService})
- * might have unexpectedly begun, etc. But normally clients of yes/no question dialogs aren't prepared to this at all, so exceptions are likely to arise.
+ * The primary purpose of the modality state is to guarantee code model (PSI/VFS/etc) correctness during user interaction.
+ * Consider the following scenario:
+ * <ul>
+ *   <li>Some code invokes {@code SwingUtilities.invokeLater}</li>
+ *   <li>Before that, the user action is processed which shows a dialog (e.g., asking a yes/no question)</li>
+ *   <li>While this dialog is shown, the event scheduled before is processed and does something very dramatic, e.g., removes a module from the project, deletes some files,
+ *   invalidates PSI</li>
+ *   <li>The user closes the dialog</li>
+ *   <li>The code that invoked that dialog now has to deal with the completely
+ *   changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link com.intellij.openapi.project.DumbService})
+ *   might have unexpectedly begun, etc.</li>
+ * </ul>
+ *
+ * Normally clients of yes/no question dialogs aren't prepared for this at all, so exceptions are likely to arise.
  * Worse than that, there'll be no indication on why a particular change has occurred, because the runnable that was incorrectly invoked-later will
  * in many cases leave no trace of itself.<p/>
  *
- * For these reasons, it's strongly advised to use {@link Application#invokeAndWait(Runnable, ModalityState)} everywhere.
- * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} and {@link com.intellij.util.ui.UIUtil} convenience methods can be used in the
- * pure UI code, but not with anything that deals with PSI or VFS.
+ * For these reasons, it's strongly advised to use {@link Application#invokeLater} everywhere.
+ * {@link javax.swing.SwingUtilities#invokeLater(Runnable)}, {@link #any()} and {@link com.intellij.util.ui.UIUtil} convenience methods may be used in the
+ * purely UI-related code, but not with anything that deals with PSI or VFS.
  */
 public abstract class ModalityState {
   /**
@@ -90,6 +98,10 @@ public abstract class ModalityState {
     return ApplicationManager.getApplication().getDefaultModalityState();
   }
 
+  /**
+   * @return whether {@code this} modality state is strictly more specific than {@code anotherState},
+   * so that {@code invokeLater} runnables with {@code anotherState} won't be executed until {@code this} modality state ends.
+   */
   public abstract boolean dominates(@NotNull ModalityState anotherState);
 
   @Override

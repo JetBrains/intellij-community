@@ -57,9 +57,8 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
     return element instanceof PyClass;
   }
 
-  @NotNull
   @Override
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return new Filter[] {
       new PyInheritedMembersFilter(),
       new PyFieldsFilter(),

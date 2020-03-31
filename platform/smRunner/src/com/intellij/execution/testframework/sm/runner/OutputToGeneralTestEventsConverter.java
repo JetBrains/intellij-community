@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -9,8 +8,10 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,33 +31,39 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
-  private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
+  private final boolean myValidateServiceMessagesAttributes;
   private final OutputEventSplitter mySplitter;
 
   private volatile GeneralTestEventsProcessor myProcessor;
   private Runnable myTestingStartedHandler;
   private boolean myFirstTestingStartedEvent = true;
-  private static final String ELLIPSIS = "<...>";
-  private final int myCycleBufferSize = ConsoleBuffer.getCycleBufferSize();
+
 
   public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, @NotNull final TestConsoleProperties consoleProperties) {
     // If console is editable, user may want to see output before new line char.
     // stdout: "enter your name:"
     // There is no new line after it, but user still wants to see this message.
     // So, if console is editable, we enable "doNotBufferTextUntilNewLine".
-    this(testFrameworkName, consoleProperties.isEditable());
+    this(testFrameworkName, consoleProperties.isEditable(), ( consoleProperties instanceof SMTRunnerConsoleProperties && ((SMTRunnerConsoleProperties)consoleProperties).serviceMessageHasNewLinePrefix()),
+         !(consoleProperties instanceof SMTRunnerConsoleProperties) || !((SMTRunnerConsoleProperties)consoleProperties).isIdBasedTestTree());
   }
 
   /**
    * @param doNotBufferTextUntilNewLine opposite to {@link OutputEventSplitter} constructor
+   * @param cutNewLineBeforeServiceMessage see {@link OutputEventSplitter} constructor
+   * @param validateServiceMessagesAttributes whether ParseException should happen if message doesn't contain required attributes. see {@link ServiceMessagesParser#setValidateRequiredAttributes(boolean)}
    */
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, final boolean doNotBufferTextUntilNewLine) {
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+                                            boolean doNotBufferTextUntilNewLine,
+                                            boolean cutNewLineBeforeServiceMessage, 
+                                            boolean validateServiceMessagesAttributes) {
     myTestFrameworkName = testFrameworkName;
+    myValidateServiceMessagesAttributes = validateServiceMessagesAttributes;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputEventSplitter(! doNotBufferTextUntilNewLine) {
+    mySplitter = new OutputEventSplitter(!doNotBufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
       @Override
       public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
         processConsistentText(text, outputType);
@@ -93,6 +100,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    *
    * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   protected void processConsistentText(@NotNull final String text,
                                        final Key<?> outputType,
@@ -101,12 +109,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void processConsistentText(@NotNull String text, @NotNull final Key<?> outputType) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputEventSplitterKt.SM_MESSAGE_PREFIX) {
-      text = text.substring(0, myCycleBufferSize - OutputEventSplitterKt.SM_MESSAGE_PREFIX) +
-             ELLIPSIS +
-             text.substring(text.length() - OutputEventSplitterKt.SM_MESSAGE_PREFIX + ELLIPSIS.length());
-    }
-
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         //fire current output
@@ -122,19 +124,32 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   protected boolean processServiceMessages(final String text,
                                            final Key outputType,
                                            final ServiceMessageVisitor visitor) throws ParseException {
-    // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
-    final ServiceMessage message;
-    try {
-      message = ServiceMessage.parse(text.trim());
-    }
-    catch (ParseException e) {
-      LOG.error("Failed to parse service message", e, text);
+    String trimmedText = text.trim();
+    if (!trimmedText.startsWith(ServiceMessage.SERVICE_MESSAGE_START) || !trimmedText.endsWith(ServiceMessage.SERVICE_MESSAGE_END)) {
       return false;
     }
-    if (message != null) {
-      message.visit(visitor);
-    }
-    return message != null;
+    Ref<Boolean> success = Ref.create(false);
+    ServiceMessagesParser parser = new ServiceMessagesParser();
+    parser.setValidateRequiredAttributes(myValidateServiceMessagesAttributes);
+    parser.parse(trimmedText, new ServiceMessageParserCallback() {
+      @Override
+      public void regularText(@NotNull String text1) {
+        
+      }
+
+      @Override
+      public void serviceMessage(@NotNull ServiceMessage message) {
+        message.visit(visitor);
+        success.set(true);
+      }
+
+      @Override
+      public void parseException(@NotNull ParseException parseException, @NotNull String text1) {
+        LOG.error("Failed to parse service message", parseException, text1);
+        success.set(false);
+      }
+    });
+    return success.get();
   }
 
 
@@ -616,6 +631,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else {
         GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+        fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
       }
     }
 

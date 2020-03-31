@@ -99,8 +99,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
-  @NotNull
-  public RangeHighlighter[] getAllHighlighters() {
+  public RangeHighlighter @NotNull [] getAllHighlighters() {
     return myHostModel.getAllHighlighters();
   }
 
@@ -148,6 +147,15 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     // todo convert
     return myHostModel.overlappingIterator(startOffset, endOffset);
+  }
+
+  @NotNull
+  @Override
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                int endOffset,
+                                                                boolean onlyRenderedInGutter,
+                                                                boolean onlyRenderedInScrollBar) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

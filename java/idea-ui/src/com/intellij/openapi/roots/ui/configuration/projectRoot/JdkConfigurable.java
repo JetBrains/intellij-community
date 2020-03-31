@@ -4,9 +4,9 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -30,7 +30,8 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   public JdkConfigurable(@NotNull ProjectJdkImpl projectJdk,
                          @NotNull ProjectSdksModel sdksModel,
                          @NotNull Runnable updateTree,
-                         @NotNull History history, @NotNull Project project) {
+                         @NotNull History history,
+                         @NotNull Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);
@@ -38,7 +39,11 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
     myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
   }
 
-  protected SdkEditor createSdkEditor(@NotNull Project project, ProjectSdksModel sdksModel, History history, ProjectJdkImpl projectJdk) {
+  @NotNull
+  protected SdkEditor createSdkEditor(@NotNull Project project,
+                                      @NotNull ProjectSdksModel sdksModel,
+                                      @NotNull History history,
+                                      @NotNull ProjectJdkImpl projectJdk) {
     return new SdkEditor(project, sdksModel, history, projectJdk);
   }
 
@@ -59,7 +64,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("project.roots.jdk.banner.text", myProjectJdk.getName());
+    return JavaUiBundle.message("project.roots.jdk.banner.text", myProjectJdk.getName());
   }
 
   @Override

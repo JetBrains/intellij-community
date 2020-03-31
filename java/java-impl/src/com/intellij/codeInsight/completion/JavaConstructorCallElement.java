@@ -15,13 +15,13 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -119,7 +119,12 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
 
   @NotNull
   public PsiClass getConstructedClass() {
-    return Objects.requireNonNull(myConstructor.getContainingClass());
+    PsiClass aClass = myConstructor.getContainingClass();
+    if (aClass == null) {
+      PsiUtilCore.ensureValid(myConstructor);
+      throw new AssertionError(myConstructor + " of " + myConstructor.getClass() + " returns null containing class, file=" + myConstructor.getContainingFile());
+    }
+    return aClass;
   }
 
   static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {

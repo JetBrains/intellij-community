@@ -4,14 +4,14 @@ package org.jetbrains.yaml.meta.model;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class TypeFieldPair {
   @NotNull
   private final Field myField;
   @NotNull
-  private final YamlMetaClass myOwnerClass;
+  private final YamlMetaType myOwnerClass;
 
-  public TypeFieldPair(@NotNull YamlMetaClass ownerClass, @NotNull Field field) {
+  public TypeFieldPair(@NotNull YamlMetaType ownerClass, @NotNull Field field) {
     myField = field;
     myOwnerClass = ownerClass;
   }

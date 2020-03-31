@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
+    PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
     @Language("Java")
     String appClass = "package my;\n" +
                       "import java.util.Arrays;\n" +
@@ -99,7 +101,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
     for (String check : checks) {
-      assertTrue("App output should contain substring: " + check, output.contains(check));
+      assertTrue(String.format("App output should contain substring: %s, but was:\n%s", check, output), output.contains(check));
     }
   }
 
@@ -111,8 +113,21 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder out = new StringBuilder();
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+      private volatile ExternalSystemTaskId myId = null;
+
+      @Override
+      public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+        if (myId != null) {
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
+        }
+        myId = id;
+      }
+
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (!id.equals(myId)) {
+          return;
+        }
         if (StringUtil.isEmptyOrSpaces(text)) return;
         (stdOut ? System.out : System.err).print(text);
         out.append(text);
@@ -120,26 +135,34 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
       @Override
       public void onEnd(@NotNull ExternalSystemTaskId id) {
-        notificationManager.removeNotificationListener(this);
+        if (!id.equals(myId)) {
+          return;
+        }
         done.up();
       }
     };
-    notificationManager.addNotificationListener(listener);
-    edt(() -> {
-      try {
-        ExecutionEnvironment environment =
-          ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configurationSettings)
-            .contentToReuse(null)
-            .dataContext(null)
-            .activeTarget()
-            .build();
-        ProgramRunnerUtil.executeConfiguration(environment, false, true);
-      }
-      catch (ExecutionException e) {
-        fail(e.getMessage());
-      }
-    });
-    Assert.assertTrue(done.waitFor(30000));
+
+    try {
+      notificationManager.addNotificationListener(listener);
+      edt(() -> {
+        try {
+          ExecutionEnvironment environment =
+            ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configurationSettings)
+              .contentToReuse(null)
+              .dataContext(null)
+              .activeTarget()
+              .build();
+          ProgramRunnerUtil.executeConfiguration(environment, false, true);
+        }
+        catch (ExecutionException e) {
+          fail(e.getMessage());
+        }
+      });
+      Assert.assertTrue(done.waitFor(30000));
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener);
+    }
     return out.toString();
   }
 }

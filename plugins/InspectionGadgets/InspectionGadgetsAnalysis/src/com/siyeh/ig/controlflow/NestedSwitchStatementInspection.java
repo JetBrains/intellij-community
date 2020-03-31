@@ -28,13 +28,6 @@ public class NestedSwitchStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "nested.switch.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.switch.statement.problem.descriptor", infos[0] instanceof PsiSwitchStatement ? "statement" : "expression");

@@ -16,7 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public final class LanguageUtil {
   public static Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
     Language language = getFileLanguage(file);
     if (language == null) return null;
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+    return LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
   }
 
   @Nullable
@@ -70,9 +70,17 @@ public final class LanguageUtil {
   }
 
   @NotNull
-  public static Language[] getLanguageDialects(@NotNull final Language base) {
-    final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
-    return list.toArray(new Language[0]);
+  public static Set<Language> getAllDerivedLanguages(@NotNull Language base) {
+    Set<Language> result = new HashSet<>();
+    getAllDerivedLanguages(base, result);
+    return result;
+  }
+
+  private static void getAllDerivedLanguages(Language base, Set<? super Language> result) {
+    result.add(base);
+    for (Language dialect : base.getDialects()) {
+      getAllDerivedLanguages(dialect, result);
+    }
   }
 
   public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {
@@ -98,10 +106,7 @@ public final class LanguageUtil {
     if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
       return false;
     }
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      return false;
-    }
-    return true;
+    return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
   }
 
   public static boolean isFileLanguage(@NotNull Language language) {
@@ -152,5 +157,10 @@ public final class LanguageUtil {
     }
     Set<MetaLanguage> result = MetaLanguage.getAllMatchingMetaLanguages(language).collect(Collectors.toSet());
     return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
+  }
+
+  @NotNull
+  static JBIterable<Language> hierarchy(@NotNull Language language) {
+    return JBIterable.generate(language, Language::getBaseLanguage);
   }
 }

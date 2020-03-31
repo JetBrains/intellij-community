@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
-*/
 public class MockFacetEditorTab extends FacetEditorTab {
   private String myDataTextField = "";
   private final MockFacetConfiguration myConfiguration;

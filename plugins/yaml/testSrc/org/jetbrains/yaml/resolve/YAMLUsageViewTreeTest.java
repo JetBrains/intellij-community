@@ -7,14 +7,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTextUtil;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class YAMLUsageViewTreeTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLUsageViewTreeTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/resolve/data/";
@@ -68,7 +68,7 @@ public class YAMLUsageViewTreeTest extends LightPlatformCodeInsightFixtureTestCa
 
     file.accept(new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         referencesList.addAll(Arrays.asList(element.getReferences()));
         element.acceptChildren(this);
       }

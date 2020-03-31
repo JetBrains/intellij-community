@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler");
+  private static final Logger LOG = Logger.getInstance(HgDeleteModifyPromptHandler.class);
 
   private static final Pattern LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN = Pattern.compile(
     "remote\\schanged(.+)which\\slocal\\sdeleted\\s.+");
@@ -26,7 +26,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
   @Override
   public HgPromptChoice promptUser(@NotNull final String message,
-                                   @NotNull final HgPromptChoice[] choices,
+                                   final HgPromptChoice @NotNull [] choices,
                                    @NotNull final HgPromptChoice defaultChoice) {
 
     Matcher localDelMatcher = LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);

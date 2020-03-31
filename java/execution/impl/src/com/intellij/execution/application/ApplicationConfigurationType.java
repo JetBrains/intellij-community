@@ -37,6 +37,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return ApplicationConfigurationType.this.getId();
+      }
     };
   }
 

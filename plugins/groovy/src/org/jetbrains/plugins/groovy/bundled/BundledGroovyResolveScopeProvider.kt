@@ -8,12 +8,15 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.ResolveScopeEnlarger
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 
-class BundledGroovyResolveScopeProvider : ResolveScopeProvider() {
+class BundledGroovyResolveScopeProvider : ResolveScopeEnlarger() {
 
-  override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
+  override fun getAdditionalResolveScope(file: VirtualFile, project: Project?): SearchScope? {
+    if (project == null) return null
     val index = ProjectFileIndex.SERVICE.getInstance(project)
     if (index.getModuleForFile(file) != null) {
       return null

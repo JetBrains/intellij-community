@@ -7,5 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface ISettingsTreeViewFactory {
-  SettingsTreeView createTreeView(SettingsFilter filter, @NotNull List<ConfigurableGroup> groups);
+  @NotNull
+  SettingsTreeView createTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups);
 }

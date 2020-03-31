@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.openapi.util.TextRange;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
+public abstract class DomHardCoreTestCase extends JavaCodeInsightTestCase {
   private CallRegistry<DomEvent> myCallRegistry;
 
   @Override

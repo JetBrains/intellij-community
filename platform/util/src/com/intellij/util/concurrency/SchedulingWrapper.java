@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -20,12 +18,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper");
   private final AtomicBoolean shutdown = new AtomicBoolean();
   @NotNull final ExecutorService backendExecutorService;
   final AppDelayQueue delayQueue;
 
-  SchedulingWrapper(@NotNull final ExecutorService backendExecutorService, @NotNull AppDelayQueue delayQueue) {
+  SchedulingWrapper(@NotNull ExecutorService backendExecutorService, @NotNull AppDelayQueue delayQueue) {
     this.delayQueue = delayQueue;
     if (backendExecutorService instanceof ScheduledExecutorService) {
       throw new IllegalArgumentException("backendExecutorService: "+backendExecutorService+" is already ScheduledExecutorService");
@@ -58,18 +55,20 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   List<Runnable> cancelAndRemoveTasksFromQueue() {
-    List<MyScheduledFutureTask> result = ContainerUtil.filter(delayQueue, task -> {
+    List<MyScheduledFutureTask<?>> result = new ArrayList<>();
+    for (MyScheduledFutureTask<?> task : delayQueue) {
       if (task.getBackendExecutorService() == backendExecutorService) {
         task.cancel(false);
-        return true;
+        result.add(task);
       }
-      return false;
-    });
-    delayQueue.removeAll(new HashSet<>(result));
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Shutdown. Drained tasks: "+result);
     }
-    //noinspection unchecked
+
+    if (result.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    delayQueue.removeAll(result);
+    //noinspection unchecked,rawtypes
     return (List)result;
   }
 
@@ -86,8 +85,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
     if (!isShutdown()) throw new IllegalStateException("must await termination after shutdown() or shutdownNow() only");
-    List<MyScheduledFutureTask> tasks = new ArrayList<>(delayQueue);
-    for (MyScheduledFutureTask task : tasks) {
+    List<MyScheduledFutureTask<?>> tasks = new ArrayList<>(delayQueue);
+    for (MyScheduledFutureTask<?> task : tasks) {
       if (task.getBackendExecutorService() != backendExecutorService) {
         continue;
       }
@@ -216,12 +215,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
      */
     @Override
     public void run() {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Executing " + BoundedTaskExecutor.info(this));
-      }
       boolean periodic = isPeriodic();
       if (!periodic) {
         super.run();
+        futureDone(this);
       }
       else if (runAndReset()) {
         setNextRunTime();
@@ -243,6 +240,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
     void executeMeInBackendExecutor() {
       backendExecutorService.execute(this);
     }
+  }
+
+  void futureDone(@NotNull Future<?> task) {
+
   }
 
   /**
@@ -298,9 +299,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Submit at delay " + t.getDelay(TimeUnit.MILLISECONDS) + "ms " + BoundedTaskExecutor.info(t));
-    }
     if (isShutdown()) {
       throw new RejectedExecutionException("Already shutdown");
     }

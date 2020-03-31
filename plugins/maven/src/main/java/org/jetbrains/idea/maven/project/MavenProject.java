@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -37,6 +23,9 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
@@ -44,8 +33,8 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -750,7 +739,7 @@ public class MavenProject {
 
     for (Map.Entry<String, String> each : state.myModulesPathsAndNames.entrySet()) {
       if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
-        result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.moduleNotFound", each.getValue())));
+        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound", each.getValue())));
       }
     }
 
@@ -763,27 +752,27 @@ public class MavenProject {
 
   private static void validateParent(VirtualFile file, State state, List<MavenProjectProblem> result) {
     if (!isParentResolved(state)) {
-      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId)));
+      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId)));
     }
   }
 
   private static void validateDependencies(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedDependencies(state)) {
-      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedDependency",
-                                                                     each.getDisplayStringWithType())));
+      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedDependency",
+                                                                          each.getDisplayStringWithType())));
     }
   }
 
   private static void validateExtensions(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedExtensions(state)) {
-      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedExtension",
-                                                                     each.getDisplayStringSimple())));
+      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedExtension",
+                                                                          each.getDisplayStringSimple())));
     }
   }
 
   private static void validatePlugins(VirtualFile file, State state, List<MavenProjectProblem> result) {
     for (MavenPlugin each : getUnresolvedPlugins(state)) {
-      result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.unresolvedPlugin", each)));
+      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedPlugin", each)));
     }
   }
 
@@ -913,7 +902,7 @@ public class MavenProject {
     }
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Module module = projectsManager.findModule(this);
+    Module module =  projectsManager.findModule(this);
     if (module != null) {
       MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
       for (String moduleName : apService.getAnnotationProcessorModules()) {
@@ -959,11 +948,11 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedDependencyScopes() {
-    Set<String> result = new THashSet<>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
-                                                      MavenConstants.SCOPE_PROVIDED,
-                                                      MavenConstants.SCOPE_RUNTIME,
-                                                      MavenConstants.SCOPE_TEST,
-                                                      MavenConstants.SCOPE_SYSTEM));
+    Set<String> result = ContainerUtil.set(MavenConstants.SCOPE_COMPILE,
+                                           MavenConstants.SCOPE_PROVIDED,
+                                           MavenConstants.SCOPE_RUNTIME,
+                                           MavenConstants.SCOPE_TEST,
+                                           MavenConstants.SCOPE_SYSTEM);
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedDependencyScopes(result);
     }
@@ -1065,16 +1054,35 @@ public class MavenProject {
   }
 
   @Nullable
-  public String getEncoding() {
-    String encoding = myState.myProperties.getProperty("project.build.sourceEncoding");
-    if (encoding != null) return encoding;
+  public String getSourceEncoding() {
+    return myState.myProperties.getProperty("project.build.sourceEncoding");
+  }
 
+  @Nullable
+  public String getResourceEncoding(Project project) {
     Element pluginConfiguration = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
     if (pluginConfiguration != null) {
-      return pluginConfiguration.getChildTextTrim("encoding");
-    }
 
-    return null;
+      String encoding = pluginConfiguration.getChildTextTrim("encoding");
+      if (encoding == null) {
+        return null;
+      }
+
+      if (encoding.startsWith("$")) {
+        MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(project, this.getFile());
+        if (domModel == null) {
+          MavenLog.LOG.warn("cannot get MavenDomProjectModel to find encoding");
+          return getSourceEncoding();
+        }
+        else {
+          MavenPropertyResolver.resolve(encoding, domModel);
+        }
+      }
+      else {
+        return encoding;
+      }
+    }
+    return getSourceEncoding();
   }
 
   @Nullable
@@ -1292,12 +1300,12 @@ public class MavenProject {
 
       MavenProjectChanges result = new MavenProjectChanges();
 
-      result.packaging = !Comparing.equal(myPackaging, other.myPackaging);
+      result.packaging = !Objects.equals(myPackaging, other.myPackaging);
 
-      result.output = !Comparing.equal(myFinalName, other.myFinalName)
-                      || !Comparing.equal(myBuildDirectory, other.myBuildDirectory)
-                      || !Comparing.equal(myOutputDirectory, other.myOutputDirectory)
-                      || !Comparing.equal(myTestOutputDirectory, other.myTestOutputDirectory);
+      result.output = !Objects.equals(myFinalName, other.myFinalName)
+                      || !Objects.equals(myBuildDirectory, other.myBuildDirectory)
+                      || !Objects.equals(myOutputDirectory, other.myOutputDirectory)
+                      || !Objects.equals(myTestOutputDirectory, other.myTestOutputDirectory);
 
       result.sources = !Comparing.equal(mySources, other.mySources)
                        || !Comparing.equal(myTestSources, other.myTestSources)

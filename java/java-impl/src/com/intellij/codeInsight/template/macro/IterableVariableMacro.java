@@ -15,15 +15,14 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,7 @@ import java.util.List;
  * @author ven
  */
 public class IterableVariableMacro extends VariableTypeMacroBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.IterableVariableMacro");
+  private static final Logger LOG = Logger.getInstance(IterableVariableMacro.class);
 
   @Override
   public String getName() {
@@ -44,12 +43,11 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.iterable.variable");
+    return JavaBundle.message("macro.iterable.variable");
   }
 
   @Override
-  @Nullable
-  protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
+  protected PsiElement @Nullable [] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final List<PsiElement> result = new ArrayList<>();

@@ -16,7 +16,7 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.google.common.collect.Lists;
-import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -68,7 +68,7 @@ public class PyStaticCallHierarchyUtil {
         super.visitPyCallExpression(node);
 
         StreamEx
-          .of(node.multiResolveCalleeFunction(PyResolveContext.defaultContext()))
+          .of(node.multiResolveCalleeFunction(PyResolveContext.implicitContext()))
           .select(PyFunction.class)
           .forEach(callees::add);
       }
@@ -118,7 +118,7 @@ public class PyStaticCallHierarchyUtil {
   }
 
   private static Collection<UsageInfo> findUsages(@NotNull final PsiElement element) {
-    final FindUsagesHandler handler = createFindUsageHandler(element);
+    final FindUsagesHandlerBase handler = createFindUsageHandler(element);
     if (handler == null) {
       return Lists.newArrayList();
     }
@@ -135,7 +135,7 @@ public class PyStaticCallHierarchyUtil {
    * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(PsiElement, boolean)
    */
   @Nullable
-  private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
+  private static FindUsagesHandlerBase createFindUsageHandler(@NotNull final PsiElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
       final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();

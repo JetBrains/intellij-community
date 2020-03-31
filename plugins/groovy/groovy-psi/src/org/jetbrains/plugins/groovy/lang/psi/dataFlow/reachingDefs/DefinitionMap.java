@@ -74,8 +74,7 @@ public class DefinitionMap {
     myMap.put(toIndex, defs);
   }
 
-  @Nullable
-  public int[] getDefinitions(int varId) {
+  public int @Nullable [] getDefinitions(int varId) {
     TIntHashSet set = myMap.get(varId);
     return set == null ? null : set.toArray();
   }

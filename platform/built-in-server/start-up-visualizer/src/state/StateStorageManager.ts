@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {DataManager} from "@/state/DataManager"
 import {InputData} from "@/state/data"
+import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 
 export interface AppState {
   data: DataManager | null
   recentlyUsedIdePort: number
+
+  chartSettings: ChartSettings
 }
 
 export const mainModuleName = "app"
@@ -43,6 +46,7 @@ export class StateStorageManager {
     const state: AppState = {
       data: null,
       recentlyUsedIdePort: defaultIdePort,
+      chartSettings: new ChartSettings(),
     }
     if (rawState == null) {
       return {

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package net.sf.cglib.proxy;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.core.CodeGenerationException;
@@ -19,7 +20,7 @@ import java.util.Map;
  * @author peter
  */
 public class AdvancedProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AdvancedProxy");
+  private static final Logger LOG = Logger.getInstance(AdvancedProxy.class);
   public static Method FINALIZE_METHOD;
   public static Method EQUALS_METHOD;
   public static Method HASHCODE_METHOD;
@@ -77,7 +78,7 @@ public class AdvancedProxy {
   }
 
   public static <T> T createProxy(final InvocationHandler handler, final Class<T> superClass, final Class... otherInterfaces) {
-    return createProxy(superClass, otherInterfaces, handler, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return createProxy(superClass, otherInterfaces, handler, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   public static <T> T createProxy(final Class<T> superClass, final Class... otherInterfaces) {
@@ -86,7 +87,7 @@ public class AdvancedProxy {
       public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
         throw new AbstractMethodError(method.toString());
       }
-    }, false, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }, false, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   public static <T> T createProxy(final Class<T> superClass,
@@ -146,8 +147,8 @@ public class AdvancedProxy {
     if (constructorArgs.length == 0) return ArrayUtil.EMPTY_CLASS_ARRAY;
 
     loop: for (final Constructor constructor : aClass.getDeclaredConstructors()) {
-      final Class[] parameterTypes = constructor.getParameterTypes();
-      if (parameterTypes.length == constructorArgs.length) {
+      if (constructor.getParameterCount() == constructorArgs.length) {
+        final Class[] parameterTypes = constructor.getParameterTypes();
         for (int i = 0; i < parameterTypes.length; i++) {
           Class parameterType = parameterTypes[i];
           final Object constructorArg = constructorArgs[i];
@@ -155,7 +156,7 @@ public class AdvancedProxy {
             continue loop;
           }
         }
-        return constructor.getParameterTypes();
+        return parameterTypes;
       }
     }
     throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));

@@ -1,16 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.jdi.JNITypeParser;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author egor
- */
 public interface ClassesByNameProvider {
   List<ReferenceType> get(@NotNull String s);
 
@@ -28,11 +25,7 @@ public interface ClassesByNameProvider {
 
     @Override
     public List<ReferenceType> get(@NotNull String s) {
-      String signature = VirtualMachineProxyImpl.JNITypeParserReflect.typeNameToSignature(s);
-      if (signature != null) {
-        return (List<ReferenceType>)myCache.get(signature);
-      }
-      return Collections.emptyList();
+      return (List<ReferenceType>)myCache.get(JNITypeParser.typeNameToSignature(s));
     }
   }
 }

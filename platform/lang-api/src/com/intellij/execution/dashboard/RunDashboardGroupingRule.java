@@ -16,33 +16,14 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.TreeAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-
 /**
- * Action for grouping items in a run dashboard tree.
+ * Action for grouping items in a run dashboard (services) tree.
  * Grouping rules are applied to dashboard nodes according to their order defined in plug-in configuration.
- *
- * @author konstantin.aleev
  */
-public interface RunDashboardGroupingRule extends TreeAction {
-  ExtensionPointName<RunDashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
-
-  Comparator<RunDashboardGroup> GROUP_NAME_COMPARATOR = Comparator.comparing(RunDashboardGroup::getName);
-
-  /**
-   * @return {@code true} if grouping rule should always be applied to dashboard nodes.
-   */
-  boolean isAlwaysEnabled();
-
-  /**
-   * @return {@code false} if groups with single node should not added to the dashboard tree keeping such nodes ungrouped.
-   */
-  boolean shouldGroupSingleNodes();
-
+public interface RunDashboardGroupingRule {
   /**
    * @param node node which should be grouped by this grouping rule.
    * @return a group which node belongs to or {@code null} if node could not be grouped by this rule.
@@ -50,7 +31,11 @@ public interface RunDashboardGroupingRule extends TreeAction {
   @Nullable
   RunDashboardGroup getGroup(AbstractTreeNode<?> node);
 
-  default Comparator<RunDashboardGroup> getGroupComparator() {
-    return GROUP_NAME_COMPARATOR;
-  }
+  /**
+   * Returns a unique identifier for the rule.
+   *
+   * @return the rule identifier.
+   */
+  @NotNull
+  String getName();
 }

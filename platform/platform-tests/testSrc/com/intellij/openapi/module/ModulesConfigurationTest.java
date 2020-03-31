@@ -10,7 +10,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,20 +21,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ModulesConfigurationTest extends PlatformTestCase {
+public class ModulesConfigurationTest extends HeavyPlatformTestCase {
   public void testAddRemoveModule() throws IOException, JDOMException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();
 
     ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    Project reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
     closeProject(reloaded, true);
 
-    reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
     closeProject(reloaded, false);
@@ -51,7 +51,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
     ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    Project reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);
@@ -59,7 +59,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     closeProject(reloaded, true);
     errors.clear();
 
-    reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     assertEmpty(errors);
     closeProject(reloaded, false);
@@ -80,6 +80,6 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     if (isSave) {
       StateStorageManagerKt.saveComponentManager(project, true);
     }
-    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
+    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project);
   }
 }

@@ -22,7 +22,7 @@ public class YAMLFormattingModelBuilder implements FormattingModelBuilder {
   @Override
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     PsiFile file = element.getContainingFile();
-    Block rootBlock = createBlock(new YAMLFormattingContext(settings), element.getNode());
+    Block rootBlock = createBlock(new YAMLFormattingContext(settings, file), element.getNode());
     return new DocumentBasedFormattingModel(rootBlock, settings, file);
   }
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -101,7 +100,7 @@ public abstract class CoverageEngine {
   public CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                           @Nullable final String[] filters,
+                                           final String @Nullable [] filters,
                                            final long lastCoverageTimeStamp,
                                            @Nullable final String suiteToMerge,
                                            final boolean coverageByTestEnabled,
@@ -131,7 +130,7 @@ public abstract class CoverageEngine {
   public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
                                                     @NotNull final String name,
                                                     @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    @Nullable final String[] filters,
+                                                    final String @Nullable [] filters,
                                                     final long lastCoverageTimeStamp,
                                                     @Nullable final String suiteToMerge,
                                                     final boolean coverageByTestEnabled,
@@ -220,10 +219,6 @@ public abstract class CoverageEngine {
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
                                  @NotNull final PsiFile sourceFile) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
-    if (virtualFile != null) {
-      return null;
-    }
     return null;
   }
 
@@ -251,10 +246,6 @@ public abstract class CoverageEngine {
                                                 @NotNull final File outputFile,
                                                 @NotNull final PsiFile sourceFile,
                                                 @NotNull final CoverageSuitesBundle suite) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
-    if (virtualFile != null) {
-      return false;
-    }
     return false;
   }
 
@@ -267,10 +258,6 @@ public abstract class CoverageEngine {
   @Nullable
   public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
                                                        @NotNull final CoverageSuitesBundle suite) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(classFile);
-    if (virtualFile != null) {
-      return null;
-    }
     return null;
   }
 
@@ -295,7 +282,7 @@ public abstract class CoverageEngine {
     return "Hits: " + hits;
   }
 
-  public abstract List<PsiElement> findTestsByNames(@NotNull final String[] testNames, @NotNull final Project project);
+  public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);
 
   /**
    * To support per test coverage. Return file name which contain traces for given test 
@@ -322,7 +309,7 @@ public abstract class CoverageEngine {
                                                        @NotNull final DataContext dataContext,
                                                        @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
-    dialog.setTitle("Generate Coverage Report for: \'" + currentSuite.getPresentableName() + "\'");
+    dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
 
     return dialog;
   }
@@ -333,8 +320,7 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  @NotNull
-  public Object[] postProcessExecutableLines(@NotNull Object[] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
     return lines;
   }
 
@@ -363,7 +349,7 @@ public abstract class CoverageEngine {
   }
 
   public static String getEditorTitle() {
-    return "Code Coverage";
+    return CoverageBundle.message("coverage.tab.title");
   }
 
   public CoverageViewExtension createCoverageViewExtension(Project project,
@@ -376,5 +362,11 @@ public abstract class CoverageEngine {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
+  }
+
+  public boolean isInLibrarySource(Project project, VirtualFile file) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+    return projectFileIndex.isInLibrarySource(file);
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -900,8 +901,8 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
-    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.platform.buildScripts", "commons-cli").classesPaths)
+    ModuleRootModificationUtil.addDependency(anotherModule, LibraryTablesRegistrar.instance.getLibraryTable(project).getLibraryByName("cli"))
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -1006,7 +1007,7 @@ class BuildContextImpl extends BuildContext {
     myFixture.addFileToProject('b.java', 'class Bar implements Foo { Foo f; }')
     assertEmpty(make())
 
-    CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
+    CompilerConfiguration.getInstance(project).buildProcessVMOptions += " -D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
     assertEmpty(rebuild())
   }
 

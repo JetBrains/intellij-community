@@ -17,6 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,15 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
 
-  private static final Set<String> LITERAL_TYPES = new HashSet<>(Arrays.asList(
+  private static final Set<String> LITERAL_TYPES = ContainerUtil.set(
     CommonClassNames.JAVA_LANG_STRING,
     CommonClassNames.JAVA_LANG_BOOLEAN,
     CommonClassNames.JAVA_LANG_CHARACTER,
@@ -41,13 +40,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
     CommonClassNames.JAVA_LANG_SHORT,
     CommonClassNames.JAVA_LANG_INTEGER,
     CommonClassNames.JAVA_LANG_LONG
-  ));
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("synchronized.on.literal.object.name");
-  }
+  );
 
   @Override
   @NotNull

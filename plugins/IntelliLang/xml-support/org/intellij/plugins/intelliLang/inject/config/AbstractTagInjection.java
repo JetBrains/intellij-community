@@ -16,6 +16,8 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
@@ -41,11 +43,11 @@ import java.util.TreeSet;
  * and an optional XPath expression (only valid if XPathView is installed) and
  * the appropriate logic to determine if a tag matches those properties.
  *
- * @see org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy
+ * @see XPathSupportProxy
  */
 public abstract class AbstractTagInjection extends BaseInjection {
 
-  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection");
+  private static final Logger LOG = Logger.getInstance(AbstractTagInjection.class);
 
   @NotNull @NonNls
   private StringMatcher myTagName = StringMatcher.ANY;
@@ -55,7 +57,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
   @NotNull @NonNls
   private String myXPathCondition = "";
 
-  private XPath myCompiledXPathCondition;
+  private volatile Condition<XmlElement> myCompiledXPathCondition;
   private boolean myApplyToSubTags;
 
   public AbstractTagInjection() {
@@ -91,31 +93,34 @@ public abstract class AbstractTagInjection extends BaseInjection {
     return myXPathCondition;
   }
 
-  @Nullable
-  public XPath getCompiledXPathCondition() {
-    return myCompiledXPathCondition;
+  public void setXPathCondition(@Nullable String condition) {
+    myXPathCondition = StringUtil.notNullize(condition);
+    myCompiledXPathCondition = null;
   }
 
-  public void setXPathCondition(@Nullable String condition) {
-    myXPathCondition = condition != null ? condition : "";
-    if (StringUtil.isNotEmpty(myXPathCondition)) {
-      try {
-        final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
-        if (xPathSupport != null) {
-          myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition);
-        }
-        else {
-          myCompiledXPathCondition = null;
-        }
-      }
-      catch (JaxenException e) {
-        myCompiledXPathCondition = null;
-        LOG.warn("Invalid XPath expression", e);
+  private Condition<XmlElement> compileXPath() {
+    if (StringUtil.isEmptyOrSpaces(myXPathCondition)) return Conditions.alwaysTrue();
+
+    try {
+      XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
+      if (xPathSupport != null) {
+        XPath path = xPathSupport.createXPath(myXPathCondition);
+        return context -> {
+          try {
+            return path.booleanValueOf(context);
+          }
+          catch (JaxenException e) {
+            LOG.warn(e);
+            myCompiledXPathCondition = Conditions.alwaysFalse();
+            return false;
+          }
+        };
       }
     }
-    else {
-      myCompiledXPathCondition = null;
+    catch (JaxenException e) {
+      LOG.warn("Invalid XPath expression", e);
     }
+    return Conditions.alwaysFalse();
   }
 
   @SuppressWarnings({"RedundantIfStatement"})
@@ -191,19 +196,12 @@ public abstract class AbstractTagInjection extends BaseInjection {
     return result;
   }
 
-  protected boolean matchXPath(XmlElement context) {
-    final XPath condition = getCompiledXPathCondition();
-    if (condition != null) {
-      try {
-        return condition.booleanValueOf(context);
-      }
-      catch (JaxenException e) {
-        LOG.warn(e);
-        myCompiledXPathCondition = null;
-        return false;
-      }
+  boolean matchXPath(XmlElement context) {
+    Condition<XmlElement> compiled = myCompiledXPathCondition;
+    if (compiled == null) {
+      myCompiledXPathCondition = compiled = compileXPath();
     }
-    return myXPathCondition.length() == 0;
+    return compiled.value(context);
   }
 
   public boolean isApplyToSubTags() {

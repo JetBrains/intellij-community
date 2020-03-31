@@ -25,27 +25,20 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
-  private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
-
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   private final int myIndex;
   @NotNull private final MergeLineFragment myFragment;
@@ -68,13 +61,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myFragment = fragment;
 
     reinstallHighlighters();
-  }
-
-  @CalledInAwt
-  public void destroy() {
-    destroyHighlighters();
-    destroyOperations();
-    destroyInnerHighlighters();
   }
 
   @CalledInAwt
@@ -196,126 +182,76 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Gutter actions
   //
 
+  @Override
   @CalledInAwt
-  private void installOperations() {
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.BASE, OperationType.RESOLVE));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.IGNORE));
-  }
-
-  @CalledInAwt
-  private void destroyOperations() {
-    for (MyGutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
+  protected void installOperations() {
+    ContainerUtil.addIfNotNull(myOperations, createResolveOperation());
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
   }
 
   @Nullable
-  private MyGutterOperation createOperation(@NotNull ThreeSide side, @NotNull OperationType type) {
+  private DiffGutterOperation createOperation(@NotNull ThreeSide side, @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
     if (isResolved(side)) return null;
 
     EditorEx editor = myViewer.getEditor(side);
-    Document document = editor.getDocument();
+    int offset = DiffGutterOperation.lineToOffset(editor, getStartLine(side));
 
-    int line = getStartLine(side);
-    int offset = line == DiffUtil.getLineCount(document) ? document.getTextLength() : document.getLineStartOffset(line);
-
-    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                               null,
-                                                                               HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter, type);
+    return new DiffGutterOperation.WithModifiers(editor, offset, myViewer.getModifierProvider(), builder);
   }
 
-  public void updateGutterActions(boolean force) {
-    for (MyGutterOperation operation : myOperations) {
-      operation.update(force);
-    }
+  @Nullable
+  private DiffGutterOperation createResolveOperation() {
+    return createOperation(ThreeSide.BASE, (ctrlPressed, shiftPressed, altPressed) -> {
+      return createResolveRenderer();
+    });
   }
 
-  private class MyGutterOperation {
-    @NotNull private final ThreeSide mySide;
-    @NotNull private final RangeHighlighter myHighlighter;
-    @NotNull private final OperationType myType;
+  @Nullable
+  private DiffGutterOperation createAcceptOperation(@NotNull Side versionSide, @NotNull OperationType type) {
+    ThreeSide side = versionSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+    return createOperation(side, (ctrlPressed, shiftPressed, altPressed) -> {
+      if (!isChange(versionSide)) return null;
 
-    private boolean myCtrlPressed;
-    private boolean myShiftPressed;
-
-    private MyGutterOperation(@NotNull ThreeSide side, @NotNull RangeHighlighter highlighter, @NotNull OperationType type) {
-      mySide = side;
-      myHighlighter = highlighter;
-      myType = type;
-
-      update(true);
-    }
-
-    public void dispose() {
-      myHighlighter.dispose();
-    }
-
-    public void update(boolean force) {
-      if (!force && !areModifiersChanged()) {
-        return;
-      }
-      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-    }
-
-    private boolean areModifiersChanged() {
-      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed() ||
-             myShiftPressed != myViewer.getModifierProvider().isShiftPressed();
-    }
-
-    @Nullable
-    public GutterIconRenderer createRenderer() {
-      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-      myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
-
-      if (mySide == ThreeSide.BASE) {
-        if (myType == OperationType.RESOLVE) {
-          if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
-          return createResolveRenderer();
-        }
-        throw new IllegalArgumentException(myType.name());
+      if (type == OperationType.APPLY) {
+        return createApplyRenderer(versionSide, ctrlPressed);
       }
       else {
-        Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
-        assert versionSide != null;
-
-        if (!isChange(versionSide)) return null;
-
-        switch (myType) {
-          case APPLY:
-            return createApplyRenderer(versionSide, myCtrlPressed);
-          case IGNORE:
-            return createIgnoreRenderer(versionSide, myCtrlPressed);
-          default:
-            throw new IllegalArgumentException(myType.name());
-        }
+        return createIgnoreRenderer(versionSide, ctrlPressed);
       }
-    }
+    });
   }
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> myViewer.replaceChange(this, side, modifier)));
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict(), () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
+                                   Collections.singletonList(this),
+                                   () -> myViewer.replaceChange(this, side, modifier));
+    });
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> myViewer.ignoreChange(this, side, modifier)));
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, isConflict(), () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.ignore.change.command"), Collections.singletonList(this),
+                                   () -> myViewer.ignoreChange(this, side, modifier));
+    });
   }
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
     if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
-    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE)));
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.resolve.conflict.command"), Collections.singletonList(this),
+                                   () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE));
+    });
   }
 
   @NotNull
@@ -323,7 +259,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
                                                        @NotNull final Icon icon,
                                                        boolean ctrlClickVisible,
                                                        @NotNull final Runnable perform) {
-    final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
+    @Nls String appendix = ctrlClickVisible ? DiffBundle.message("tooltip.merge.ctrl.click.to.resolve.conflict") : null;
+    final String tooltipText = DiffUtil.createTooltipText(text, appendix);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {
@@ -333,7 +270,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   private enum OperationType {
-    APPLY, IGNORE, RESOLVE
+    APPLY, IGNORE
   }
 
   //

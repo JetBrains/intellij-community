@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.execution;
 
 import java.io.*;
@@ -27,8 +13,10 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
+ * Do not use this command-line method on Java 9+ - use @argfile instead.
+ *
  * @author anna
- * @noinspection SSBasedInspection
+ * @noinspection SSBasedInspection, UseOfSystemOutOrSystemErr
  */
 public class CommandLineWrapper {
   private static class AppData {
@@ -44,6 +32,16 @@ public class CommandLineWrapper {
   }
 
   public static void main(String[] args) throws Exception {
+    try {
+      Class.forName("java.lang.Module");
+      System.err.println(
+        "`CommandLineWrapper` is ill-suited for launching apps on Java 9+.\n" +
+        "If the run configuration uses \"classpath file\", please change it to \"@argfile\".\n" +
+        "Otherwise, please contact support.");
+      System.exit(1);
+    }
+    catch (ClassNotFoundException ignored) { }
+
     File file = new File(args[0]);
     AppData appData = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(file, args) : loadMainClassWithCustomLoader(file, args);
 
@@ -98,7 +96,7 @@ public class CommandLineWrapper {
   }
 
   /**
-   * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   * The implementation is copied from com.intellij.util.execution.ParametersListUtil#parse and adapted to old Java versions.
    */
   private static List splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
@@ -196,7 +194,7 @@ public class CommandLineWrapper {
     return new AppData(properties, mainClass, mainArgs);
   }
 
-  /** @noinspection ResultOfMethodCallIgnored*/
+  /** @noinspection ResultOfMethodCallIgnored */
   private static List readLinesAndDeleteFile(File file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {

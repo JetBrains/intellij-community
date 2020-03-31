@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.intellij.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Major difference between the parent class and {@code JBSplitter} is an ability to save proportion
+ * Major difference between the parent class and {@code JBSplitter} is an ability to save proportion.
  *
  * @author Konstantin Bulenkov
  * @see Splitter
@@ -41,11 +42,11 @@ public class JBSplitter extends Splitter {
     myDefaultProportion = 0.5f;
   }
 
-  public JBSplitter(@NotNull String proportionKey, float defaultProportion) {
+  public JBSplitter(@NotNull @NonNls String proportionKey, float defaultProportion) {
     this(false, proportionKey, defaultProportion);
   }
 
-  public JBSplitter(boolean vertical, @NotNull String proportionKey, float defaultProportion) {
+  public JBSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float defaultProportion) {
     super(vertical, defaultProportion);
 
     mySplitterProportionKey = proportionKey;
@@ -77,7 +78,7 @@ public class JBSplitter extends Splitter {
   }
 
   /**
-   * Splitter proportion unique key
+   * Splitter proportion unique key.
    *
    * @return non empty unique String or {@code null} if splitter does not require proportion saving
    */
@@ -87,7 +88,7 @@ public class JBSplitter extends Splitter {
   }
 
   /**
-   * Sets proportion key
+   * Sets proportion key.
    *
    * @param key non empty unique String or {@code null} if splitter does not require proportion saving
    */
@@ -97,7 +98,8 @@ public class JBSplitter extends Splitter {
 
   /**
    * Sets proportion key and load from settings.
-   * @param key
+   *
+   * @see #setSplitterProportionKey(String)
    */
   public final void setAndLoadSplitterProportionKey(@NotNull String key) {
     setSplitterProportionKey(key);

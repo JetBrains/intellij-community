@@ -1,18 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.google.common.annotations.VisibleForTesting;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
 
 /**
  * @author Konstantin Bulenkov
@@ -20,74 +19,82 @@ import java.util.Set;
 public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
+  public Set<MetricEvent> getMetrics() {
     if (SystemInfo.isLinux) {
-      String wmName = System.getenv("XDG_CURRENT_DESKTOP");
-
-      return Collections.singleton(new UsageDescriptor(clearUserData(wmName)));
+      Set<MetricEvent> result = new HashSet<>();
+      result.add(newMetric("xdg.current.desktop", toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
+      return result;
     }
-
     return Collections.emptySet();
   }
 
   static class Lazy {
-    private static final Map<String, String> WINDOW_MANAGERS = new HashMap<>();
+    private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
+
+    private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
     static {
-      WINDOW_MANAGERS.put("ubuntu_GNOME", "Ubuntu Gnome");
-      WINDOW_MANAGERS.put("ubuntu-communitheme_ubuntu_GNOME", "Ubuntu Gnome");
-      WINDOW_MANAGERS.put("communitheme_ubuntu_GNOME", "Ubuntu Gnome");
-      WINDOW_MANAGERS.put("THEMENAME_ubuntu_GNOME", "Ubuntu Gnome");
-      WINDOW_MANAGERS.put("gnome", "Gnome");
-      WINDOW_MANAGERS.put("GNOME", "Gnome");
-      WINDOW_MANAGERS.put("Gnome", "Gnome");
-      WINDOW_MANAGERS.put("GNOME-Classic_GNOME", "Gnome");
-      WINDOW_MANAGERS.put("Budgie_GNOME", "Budgie Gnome");
-      WINDOW_MANAGERS.put("X-Budgie_GNOME", "Budgie Gnome");
-      WINDOW_MANAGERS.put("GNOME-Flashback_Unity", "GNOME Flashback Unity");
-      WINDOW_MANAGERS.put("GNOME-Flashback_GNOME", "GNOME Flashback Gnome");
-      WINDOW_MANAGERS.put("pop_GNOME", "pop_GNOME");
-      WINDOW_MANAGERS.put("Awesome_GNOME", "Awesome_GNOME");
+      GNOME_WINDOW_MANAGERS.put("shell", "Gnome Shell");
+      GNOME_WINDOW_MANAGERS.put("ubuntu", "Ubuntu Gnome");
+      GNOME_WINDOW_MANAGERS.put("budgie", "Budgie Gnome");
+      GNOME_WINDOW_MANAGERS.put("classic", "Gnome Classic");
+      GNOME_WINDOW_MANAGERS.put("flashback:unity", "GNOME Flashback Unity");
+      GNOME_WINDOW_MANAGERS.put("flashback_unity", "GNOME Flashback Unity");
+      GNOME_WINDOW_MANAGERS.put("flashback:gnome", "GNOME Flashback Gnome");
+      GNOME_WINDOW_MANAGERS.put("flashback_gnome", "GNOME Flashback Gnome");
+      GNOME_WINDOW_MANAGERS.put("flashback", "GNOME Flashback");
+      GNOME_WINDOW_MANAGERS.put("pop", "pop_GNOME");
+      GNOME_WINDOW_MANAGERS.put("awesome", "Awesome_GNOME");
+      GNOME_WINDOW_MANAGERS.put("gnome", "Gnome");
 
-      WINDOW_MANAGERS.put("X-Cinnamon", "X-Cinnamon");
-      WINDOW_MANAGERS.put("XFCE", "XFCE");
-      WINDOW_MANAGERS.put("Deepin", "Deepin");
-      WINDOW_MANAGERS.put("Unity", "Unity");
-      WINDOW_MANAGERS.put("Pantheon", "Pantheon");
+      WINDOW_MANAGERS.put("unity7", "Unity7");
+      WINDOW_MANAGERS.put("x-cinnamon", "X-Cinnamon");
+      WINDOW_MANAGERS.put("xfce", "XFCE");
+      WINDOW_MANAGERS.put("deepin", "Deepin");
+      WINDOW_MANAGERS.put("unity", "Unity");
+      WINDOW_MANAGERS.put("pantheon", "Pantheon");
       WINDOW_MANAGERS.put("i3", "i3");
-      WINDOW_MANAGERS.put("KDE", "KDE");
-      WINDOW_MANAGERS.put("LXDE", "LXDE");
-      WINDOW_MANAGERS.put("MATE", "MATE");
-
-      WINDOW_MANAGERS.put("Unity_Unity7_ubuntu", "Unity7");
-      WINDOW_MANAGERS.put("Unity_Unity7", "Unity7");
-
-      WINDOW_MANAGERS.put("LXQt", "LXQt");
-      WINDOW_MANAGERS.put("X-LXQt", "LXQt");
-
-      WINDOW_MANAGERS.put("X-Generic", "X-Generic");
-      WINDOW_MANAGERS.put("ICEWM", "ICEWM");
-      WINDOW_MANAGERS.put("UKUI", "UKUI");
-      WINDOW_MANAGERS.put("Fluxbox", "Fluxbox");
-      WINDOW_MANAGERS.put("Enlightenment", "Enlightenment");
+      WINDOW_MANAGERS.put("kde", "KDE");
+      WINDOW_MANAGERS.put("lxde", "LXDE");
+      WINDOW_MANAGERS.put("mate", "MATE");
+      WINDOW_MANAGERS.put("lxqt", "LXQt");
+      WINDOW_MANAGERS.put("x-generic", "X-Generic");
+      WINDOW_MANAGERS.put("icewm", "ICEWM");
+      WINDOW_MANAGERS.put("ukui", "UKUI");
+      WINDOW_MANAGERS.put("fluxbox", "Fluxbox");
+      WINDOW_MANAGERS.put("lg3d", "LG3D");
+      WINDOW_MANAGERS.put("enlightenment", "Enlightenment");
       WINDOW_MANAGERS.put("default.desktop", "default.desktop");
     }
   }
-  private static String clearUserData(String windowManger) {
+
+  @VisibleForTesting
+  @NotNull
+  public static String toReportedName(@Nullable String windowManger) {
     if (windowManger == null) {
-      return "XDG_CURRENT_DESKTOP is empty";
+      return "empty";
     }
 
-    String value = Lazy.WINDOW_MANAGERS.get(windowManger);
-    return StringUtil.isEmpty(value) ? "Unknown" : value;
+    windowManger = StringUtil.toLowerCase(windowManger);
+    final boolean isGnome = windowManger.contains("gnome");
+    return isGnome ? findReportedName(windowManger, Lazy.GNOME_WINDOW_MANAGERS) : findReportedName(windowManger, Lazy.WINDOW_MANAGERS);
+  }
+
+  @NotNull
+  private static String findReportedName(@NotNull String original, @NotNull Map<String, String> keywordToName) {
+    for (Map.Entry<String, String> entry : keywordToName.entrySet()) {
+      if (original.contains(entry.getKey())) {
+        return entry.getValue();
+      }
+    }
+    return original;
   }
 
   @NotNull
   @Override
   public String getGroupId() { return "os.linux.wm"; }
 
-  @Nullable
   @Override
-  public FeatureUsageData getData() {
-    return new FeatureUsageData().addOS();
+  public int getVersion() {
+    return 3;
   }
 }

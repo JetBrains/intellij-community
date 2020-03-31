@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.scratch;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
@@ -22,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,12 +52,12 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   public JavaScratchConfigurable(final Project project) {
     myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
-    myMainClass.setText("Main &class:");
+    myMainClass.setText(ExecutionBundle.message("main.class"));
     myMainClass.setComponent(new JTextField());
 
     myScratchPathField = new LabeledComponent<>();
     myScratchPathField.setLabelLocation(BorderLayout.WEST);
-    myScratchPathField.setText("&Path to scratch file:");
+    myScratchPathField.setText(ExecutionBundle.message("path.to.scratch.file"));
     myScratchPathField.setComponent(new TextFieldWithBrowseButton(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -79,7 +77,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myModule = new LabeledComponent<>();
     myModule.setLabelLocation(BorderLayout.WEST);
     myModule.setComponent(new ModuleDescriptionsComboBox());
-    myModule.setText("Use classpath of &module:");
+    myModule.setText(ExecutionBundle.message("use.classpath.of.module"));
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
 
     myCommonProgramParameters = new CommonJavaParametersPanel();
@@ -103,7 +101,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.add(myMainClass, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myScratchPathField, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
-    myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(RELATIVE, 2, 1, 1, 1.0, 1.0, NORTHWEST, BOTH, JBUI.insets(12, 0), 0, 0 ));
+    myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(RELATIVE, 2, 1, 1, 1.0, 1.0, NORTHWEST, BOTH, JBInsets.create(12, 0), 0, 0 ));
     myWholePanel.add(myModule, new GridBagConstraints(RELATIVE, 3, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0 ));
     myWholePanel.add(myIncludeProvidedDeps, new GridBagConstraints(RELATIVE, 4, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myJrePathEditor, new GridBagConstraints(RELATIVE, 5, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(12), 0, 0 ));

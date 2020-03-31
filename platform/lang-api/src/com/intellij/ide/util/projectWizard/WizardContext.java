@@ -63,6 +63,10 @@ public class WizardContext extends UserDataHolderBase {
     myProjectStorageFormat = format;
   }
 
+  /**
+   * @deprecated useless
+   */
+  @Deprecated
   public boolean isNewWizard() {
     return true;
   }
@@ -164,6 +168,7 @@ public class WizardContext extends UserDataHolderBase {
     return myProject == null;
   }
 
+  @Nullable
   public Icon getStepIcon() {
     return null;
   }

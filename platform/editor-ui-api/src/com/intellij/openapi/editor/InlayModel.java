@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,13 @@ public interface InlayModel {
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
    *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @param showAbove whether element will be displayed above or below corresponding visual line
+   * @param priority if multiple elements are requested to be displayed for the same visual line, this parameter defines the relative
+   *                 positioning of such elements (larger priority value means the element will be rendered closer to the text)
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
+   *
+   * @see BlockInlayPriority
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
@@ -75,7 +81,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getInlineElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -90,7 +96,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getBlockElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -150,6 +156,17 @@ public interface InlayModel {
   Inlay getElementAt(@NotNull Point point);
 
   /**
+   * Return a custom visual element with renderer of given type at given coordinates in editor's coordinate space,
+   * or {@code null} if there's no such element at given point.
+   */
+  @Nullable
+  default <T> Inlay<? extends T> getElementAt(@NotNull Point point, @NotNull Class<T> type) {
+    Inlay inlay = getElementAt(point);
+    //noinspection unchecked
+    return inlay != null && type.isInstance(inlay.getRenderer()) ? inlay : null;
+  }
+
+  /**
    * Returns a list of after-line-end elements for a given offset range (both limits are inclusive).
    * Returned list is sorted by offset. Both visible and invisible (due to folding) elements are returned.
    *
@@ -162,7 +179,7 @@ public interface InlayModel {
    * Same as {@link #getAfterLineEndElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
   @NotNull
-  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getAfterLineEndElementsInRange(startOffset, endOffset),
                                       inlay -> type.isInstance(inlay.getRenderer()));
@@ -186,16 +203,56 @@ public interface InlayModel {
   void setConsiderCaretPositionOnDocumentUpdates(boolean enabled);
 
   /**
+   * Allows to perform a group of inlay operations (adding, disposing, updating) in a batch mode. For large number of operations, this
+   * decreases the total time taken by the operations. Batch mode introduces an additional overhead though (roughly proportional to the file
+   * size), so for a small number of operations in a big file, using it will result in the larger total execution time.  Using batch mode
+   * can also change certain outcomes of the applied changes. In particular, resulting caret's visual position might be different in batch
+   * mode (due to simplified update logic), if inlays are added or removed at caret offset. The number of changes which justifies using
+   * batch mode can be determined empirically, but usually it's around hundred(s).
+   * <p>
+   * Executed code should not perform document- or editor-related operations other than those operating on inlays. In particular, modifying
+   * document, querying or updating folding, soft-wrap or caret state, as well as performing editor coordinate transformations (e.g. visual
+   * to logical position conversions) might lead to incorrect results or throw an exception.
+   *
+   * @param batchMode whether to enable batch mode for executed inlay operations
+   */
+  void execute(boolean batchMode, @NotNull Runnable operation);
+
+  /**
+   * Tells whether the current code is executing as part of a batch inlay update operation.
+   *
+   * @see #execute(boolean, Runnable)
+   */
+  boolean isInBatchMode();
+
+  /**
    * Adds a listener that will be notified after adding, updating and removal of custom visual elements.
    */
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
   interface Listener extends EventListener {
-    void onAdded(@NotNull Inlay inlay);
+    default void onAdded(@NotNull Inlay inlay) {}
 
-    void onUpdated(@NotNull Inlay inlay);
+    default void onUpdated(@NotNull Inlay inlay) {}
 
-    void onRemoved(@NotNull Inlay inlay);
+    /**
+     * @param changeFlags see {@link ChangeFlags}
+     */
+    default void onUpdated(@NotNull Inlay inlay, @MagicConstant(flagsFromClass = ChangeFlags.class) int changeFlags) {
+      onUpdated(inlay);
+    }
+
+    default void onRemoved(@NotNull Inlay inlay) {}
+
+    /**
+     * @see #execute(boolean, Runnable)
+     */
+    default void onBatchModeStart(@NotNull Editor editor) {}
+
+    /**
+     * @see #execute(boolean, Runnable)
+     */
+    default void onBatchModeFinish(@NotNull Editor editor) {}
   }
 
   /**
@@ -204,15 +261,25 @@ public interface InlayModel {
   abstract class SimpleAdapter implements Listener {
     @Override
     public void onAdded(@NotNull Inlay inlay) {
-      onUpdated(inlay);
+      onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
+                       ChangeFlags.HEIGHT_CHANGED |
+                       (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
-
-    @Override
-    public void onUpdated(@NotNull Inlay inlay) {}
 
     @Override
     public void onRemoved(@NotNull Inlay inlay) {
-      onUpdated(inlay);
+      onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
+                       ChangeFlags.HEIGHT_CHANGED |
+                       (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
+  }
+
+  /**
+   * Flags provided by {@link Listener#onUpdated(Inlay, int)}.
+   */
+  interface ChangeFlags {
+    int WIDTH_CHANGED = 0x1;
+    int HEIGHT_CHANGED = 0x2;
+    int GUTTER_ICON_PROVIDER_CHANGED = 0x4;
   }
 }

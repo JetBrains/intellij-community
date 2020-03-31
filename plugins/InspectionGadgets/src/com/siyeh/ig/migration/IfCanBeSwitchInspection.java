@@ -1,22 +1,8 @@
-/*
- * Copyright 2011-2019 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -24,9 +10,11 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
@@ -37,7 +25,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +36,9 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
@@ -68,13 +57,6 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("if.can.be.switch.display.name");
   }
 
   @NotNull
@@ -186,7 +168,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
-    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0, false, true);
+    final PsiExpression switchExpression = SwitchUtils.getSwitchSelectorExpression(ifStatement.getCondition());
     if (switchExpression == null) {
       return;
     }
@@ -238,7 +220,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
-    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(replacement)) {
+    if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
@@ -256,7 +238,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
-                                                              @NotNull Class<? extends PsiElement>... stopAt) {
+                                                              Class<? extends PsiElement> @NotNull ... stopAt) {
     if (element == null) {
       return null;
     }
@@ -409,7 +391,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         appendElement(child, renameBreaks, breakLabelName, switchStatementText);
       }
     }
-    else {
+    else if (bodyStatement != null) {
       appendElement(bodyStatement, renameBreaks, breakLabelName, switchStatementText);
     }
     if (ControlFlowUtils.statementMayCompleteNormally(bodyStatement)) {
@@ -420,16 +402,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString,
-                                    @NonNls StringBuilder switchStatementText) {
+  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString, StringBuilder switchStatementText) {
     final String text = element.getText();
     if (!renameBreakElements) {
       switchStatementText.append(text);
     }
     else if (element instanceof PsiBreakStatement) {
-      final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
-      final PsiExpression labelExpression = breakStatement.getLabelExpression();
-      if (labelExpression == null) {
+      final PsiIdentifier labelIdentifier = ((PsiBreakStatement)element).getLabelIdentifier();
+      if (labelIdentifier == null) {
         switchStatementText.append("break ").append(breakLabelString).append(';');
       }
       else {
@@ -480,19 +460,36 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         return;
       }
-      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, false, true);
+      final PsiExpression condition = statement.getCondition();
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(statement);
+      final PsiExpression switchExpression = SwitchUtils.getSwitchSelectorExpression(condition);
       if (switchExpression == null) {
         return;
       }
+      int branchCount = 0;
+      final Set<Object> switchCaseValues = new HashSet<>();
+      PsiIfStatement branch = statement;
+      while (true) {
+        branchCount++;
+        if (!SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues)) {
+          return;
+        }
+        final PsiStatement elseBranch = branch.getElseBranch();
+        if (!(elseBranch instanceof PsiIfStatement)) {
+          break;
+        }
+        branch = (PsiIfStatement)elseBranch;
+      }
+
       final ProblemHighlightType highlightType;
-      if (shouldHighlight(switchExpression)) {
+      if (shouldHighlight(switchExpression) && branchCount >= minimumBranches) {
         highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
       else {
         if (!isOnTheFly()) return;
         highlightType = ProblemHighlightType.INFORMATION;
       }
-      registerError(statement.getFirstChild(), highlightType, switchExpression);
+      registerError(statement.getFirstChild(), highlightType);
     }
 
     private boolean shouldHighlight(PsiExpression switchExpression) {

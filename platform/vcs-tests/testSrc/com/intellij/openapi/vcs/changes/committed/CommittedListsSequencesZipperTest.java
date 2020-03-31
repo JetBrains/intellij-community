@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.Pair;
@@ -21,7 +7,6 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.util.*;
@@ -72,8 +57,8 @@ public class CommittedListsSequencesZipperTest {
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 7, 11, 111), list(1, 7, 11, 111));
   }
 
-  private static void check(@NotNull long[][] expected, @NotNull List<CommittedChangeList>... lists) {
-    CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(Convertor.ourInstance);
+  private static void check(long[] @NotNull [] expected, List<CommittedChangeList> @NotNull ... lists) {
+    CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(ConvertorZipper.ourInstance);
     int id = 0;
 
     for (List<CommittedChangeList> list : lists) {
@@ -83,7 +68,7 @@ public class CommittedListsSequencesZipperTest {
     checkResult(zipper.execute(), expected);
   }
 
-  private static void checkResult(@NotNull List<CommittedChangeList> result, @NotNull long[]... numbers) {
+  private static void checkResult(@NotNull List<CommittedChangeList> result, long[] @NotNull ... numbers) {
     final Set<Long> nums = new HashSet<>();
     final Map<Long, Integer> zipped = new HashMap<>();
     for (long[] pair : numbers) {
@@ -109,8 +94,8 @@ public class CommittedListsSequencesZipperTest {
     }
   }
 
-  private static class Convertor implements VcsCommittedListsZipper {
-    private final static Convertor ourInstance = new Convertor();
+  private static class ConvertorZipper implements VcsCommittedListsZipper {
+    private final static ConvertorZipper ourInstance = new ConvertorZipper();
 
     @Override
     @NotNull
@@ -126,7 +111,7 @@ public class CommittedListsSequencesZipperTest {
 
     @Override
     @NotNull
-    public CommittedChangeList zip(@Nullable RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
+    public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
       return create(lists.get(0).getNumber(), String.valueOf(lists.size()));
     }
 
@@ -137,7 +122,7 @@ public class CommittedListsSequencesZipperTest {
   }
 
   @NotNull
-  private static List<CommittedChangeList> list(@NotNull long... numbers) {
+  private static List<CommittedChangeList> list(long @NotNull ... numbers) {
     List<CommittedChangeList> result = new ArrayList<>(numbers.length);
 
     for (long number : numbers) {

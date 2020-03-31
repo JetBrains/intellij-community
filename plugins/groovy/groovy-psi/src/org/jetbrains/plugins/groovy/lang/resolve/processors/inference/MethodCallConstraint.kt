@@ -5,15 +5,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class MethodCallConstraint(
-  private val leftType: PsiType?,
+  private val expectedType: ExpectedType?,
   private val result: GroovyMethodResult,
   private val context: PsiElement
 ) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val candidate = result.candidate ?: return true
     val method = candidate.method
     val contextSubstitutor = result.contextSubstitutor
@@ -21,15 +22,11 @@ class MethodCallConstraint(
       nested.initArgumentConstraints(candidate.argumentMapping)
       nested.repeatInferencePhases()
 
-      if (leftType != null) {
-        val left = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(leftType))
-        if (left != null) {
-          val rt = PsiUtil.getSmartReturnType(method)
-          val right = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
-          if (right != null && right != PsiType.VOID) {
-            nested.addConstraint(TypeConstraint(left, right, context))
-            nested.repeatInferencePhases()
-          }
+      if (expectedType != null) {
+        val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
+        if (rt != null && rt != PsiType.VOID) {
+          nested.registerReturnTypeConstraints(expectedType, rt, context)
+          nested.repeatInferencePhases()
         }
       }
     }

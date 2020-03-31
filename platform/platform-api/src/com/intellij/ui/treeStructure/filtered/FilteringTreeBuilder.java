@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -14,6 +14,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -28,6 +29,11 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
+ */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@Deprecated
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private Object myLastSuccessfulSelect;
@@ -36,9 +42,9 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   private MergingUpdateQueue myRefilterQueue;
 
   public FilteringTreeBuilder(Tree tree,
-                              ElementFilter filter,
+                              ElementFilter<?> filter,
                               AbstractTreeStructure structure,
-                              @Nullable Comparator<? super NodeDescriptor> comparator) {
+                              @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     super(tree,
           (DefaultTreeModel)tree.getModel(),
           structure instanceof FilteringTreeStructure ? structure
@@ -107,11 +113,13 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
+  /**
+   * @deprecated use {@link #refilter(Object, boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public ActionCallback refilter() {
-    //noinspection unchecked
-    return Promises.toActionCallback((Promise<Object>)refilter(null, true, false));
+    return Promises.toActionCallback(refilter(null, true, false));
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -272,5 +280,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @Nullable
   public Object getElementFor(Object node) {
     return getUi().getElementFor(node);
+  }
+
+  @Override
+  public void cleanUp() {
+    super.cleanUp();
+    myLastSuccessfulSelect = null;
+    myRefilterQueue.cancelAllUpdates();
   }
 }

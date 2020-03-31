@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
@@ -11,11 +12,11 @@ import java.util.Map;
  * A wrapper around map, allowing to put and get values by keys in a type-safe way. Used in various extension implementations
  * to manage temporary state. For example:
  * <ul>
- * <li/>When creating ElementPattern, processing context may be used to cache some intermediate data
- * to be shared between pattern parts.  
- * <li/> Some extensions (e.g, PsiReferenceProvider, CompletionContributors) use per-pattern registration. That allows to use
+ * <li>When creating ElementPattern, processing context may be used to cache some intermediate data
+ * to be shared between pattern parts.</li>
+ * <li>Some extensions (e.g, PsiReferenceProvider, CompletionContributors) use per-pattern registration. That allows to use
  * ElementPattern#save to put matched objects into processing contexts and then retrieve those objects inside extension implementation
- * after the matching is complete.
+ * after the matching is complete.</li>
  * </ul>
  * 
  * Simple processing context can contain a shared processing context inside, which should be used when iterating over several patterns 

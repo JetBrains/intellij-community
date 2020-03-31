@@ -15,10 +15,12 @@
  */
 package com.intellij.spellchecker.settings;
 
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -26,8 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
 
-public class SpellCheckerSettingsManager implements SearchableConfigurable, Configurable.NoScroll {
+public class SpellCheckerSettingsManager implements SearchableConfigurable, Configurable.NoScroll, Configurable.WithEpDependencies {
   private SpellCheckerSettingsPane settingsPane;
   private final SpellCheckerSettings settings;
   private final Project project;
@@ -86,5 +90,10 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
   @Override
   public void disposeUIResources() {
     settingsPane = null;
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singleton(CustomDictionaryProvider.EP_NAME);
   }
 }

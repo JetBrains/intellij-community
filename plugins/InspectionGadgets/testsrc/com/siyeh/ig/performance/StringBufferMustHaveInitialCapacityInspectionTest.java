@@ -16,12 +16,12 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StringBufferMustHaveInitialCapacityInspectionTest extends LightInspectionTestCase {
+public class StringBufferMustHaveInitialCapacityInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {

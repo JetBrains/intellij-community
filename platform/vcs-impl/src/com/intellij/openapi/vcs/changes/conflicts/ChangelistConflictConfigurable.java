@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,9 +12,10 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,6 +42,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   private JBList myIgnoredFiles;
   private JButton myClearButton;
   private JCheckBox myEnablePartialChangelists;
+  private JPanel myIgnoredFilesPanel;
   private boolean myIgnoredFilesCleared;
 
   private final ChangelistConflictTracker myConflictTracker;
@@ -61,6 +63,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
       }
     });
 
+    myIgnoredFilesPanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("settings.files.with.ignored.conflicts.list.title"), false,
+                                                                      JBUI.insetsTop(8)).setShowLine(false));
     myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
   }
 
@@ -76,7 +80,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     myEnablePartialChangelists.setSelected(myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS);
 
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
-    myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
+    myIgnoredFiles.setListData(ArrayUtilRt.toStringArray(conflicts));
     myClearButton.setEnabled(!conflicts.isEmpty());
   }
 
@@ -103,9 +107,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Changelists";
+    return VcsBundle.message("configurable.ChangelistConflictConfigurable.display.name");
   }
 
   @Override

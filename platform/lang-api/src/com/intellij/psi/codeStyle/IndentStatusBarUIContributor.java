@@ -2,12 +2,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,6 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   public IndentOptions getIndentOptions() {
     return myIndentOptions;
   }
-
 
   /**
    * Returns a short, usually one-word, string to indicate the source of the given indent options.
@@ -37,17 +38,12 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
     return createTooltip(getIndentInfo(myIndentOptions), getHint());
   }
 
+  @Nls
   @NotNull
   public static String getIndentInfo(@NotNull IndentOptions indentOptions) {
-    StringBuilder sb = new StringBuilder();
-    if (indentOptions.USE_TAB_CHARACTER) {
-      sb.append("Tab");
-    }
-    else {
-      int indent = indentOptions.INDENT_SIZE;
-      sb.append(indentOptions.INDENT_SIZE).append(indent > 1 ? " spaces" : " space");
-    }
-    return sb.toString();
+    return indentOptions.USE_TAB_CHARACTER
+           ? CodeInsightBundle.message("indent.status.bar.tab")
+           : CodeInsightBundle.message("indent.status.bar.spaces", indentOptions.INDENT_SIZE);
   }
 
   /**
@@ -61,13 +57,13 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @NotNull
   public static String createTooltip(String indentInfo, String hint) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<html>").append("Indent: ").append(indentInfo);
+    sb.append("<html>").append(CodeInsightBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
     if (hint != null) {
       sb.append("&nbsp;&nbsp;").append("<span style=\"color:#").append(ColorUtil.toHex(JBColor.GRAY)).append("\">");
       sb.append(StringUtil.capitalize(hint));
       sb.append("</span>");
     }
-    return sb.toString();
+    return sb.append("</html>").toString();
   }
 
   @NotNull

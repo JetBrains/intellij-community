@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.diagnostic.MessagePool
@@ -38,7 +38,6 @@ import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.JdkBundle
-import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -150,7 +149,7 @@ object GuiTestUtil {
   fun doesIdeHaveFatalErrors(): Boolean {
     val messagePool = MessagePool.getInstance()
     val fatalErrors = messagePool.getFatalErrors(true, true)
-    return !fatalErrors.isEmpty()
+    return fatalErrors.isNotEmpty()
   }
 
   // Called by GuiTestPaths via reflection.
@@ -179,7 +178,7 @@ object GuiTestUtil {
   }
 
   fun setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(GuiTestOptions.projectsDir.path)
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(GuiTestOptions.projectsDir)
   }
 
   // Called by GuiTestPaths via reflection.
@@ -284,19 +283,6 @@ object GuiTestUtil {
     }
     catch (we: WaitTimedOutError) {
       LOG.warn("Timed out waiting for \"$policyAgreement\" JDialog. Continue...")
-    }
-
-  }
-
-  private fun completeInstallation(robot: Robot) {
-    val dialogName = ApplicationBundle.message("title.complete.installation")
-    try {
-      val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(Timeouts.seconds30.duration()).using(robot)
-      completeInstallationDialog.button("OK").click()
-    }
-    catch (we: WaitTimedOutError) {
-      LOG.warn("Timed out waiting for \"$dialogName\" JDialog. Continue...")
     }
 
   }

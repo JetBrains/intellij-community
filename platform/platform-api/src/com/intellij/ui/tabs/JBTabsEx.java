@@ -3,26 +3,21 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
 /**
  * @author yole
  */
 public interface JBTabsEx extends JBTabs {
-  public static final DataKey<JBTabsEx> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  DataKey<JBTabsEx> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   boolean isEditorTabs();
 
   void updateTabActions(boolean validateNow);
-
-  boolean canShowMorePopup();
-
-  void showMorePopup(@Nullable MouseEvent e);
 
   TabInfo addTabSilently(TabInfo info, int index);
 
@@ -38,4 +33,5 @@ public interface JBTabsEx extends JBTabs {
 
   boolean isEmptyVisible();
 
+  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo);
 }

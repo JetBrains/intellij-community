@@ -13,36 +13,38 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
-public class LoadProjectTest extends PlatformTestCase {
+import static com.intellij.testFramework.RunAll.runAll;
+
+public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
     myProject = ProjectManager.getInstance().loadAndOpenProject(projectPath);
-    ((ProjectImpl)getProject()).registerComponentImplementation(FileEditorManager.class, FileEditorManagerImpl.class);
+    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
   }
 
   @Override
   protected void tearDown() {
-    Project project = getProject();
+    Project project = myProject;
     myProject = null;
 
-    new RunAll(
+    runAll(
       () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
-      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, true),
-      () -> checkNoPsiFilesInProjectReachable(project),
-      () -> super.tearDown()).run();
+      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project),
+      () -> super.tearDown(),
+      () -> checkNoPsiFilesInProjectReachable(project)
+    );
   }
 
   private static void checkNoPsiFilesInProjectReachable(Project project) {

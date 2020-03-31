@@ -23,8 +23,8 @@ public interface UsageViewFactory {
    * @return the usage view instance or null if this factory does not handle this type of usages.
    */
   @Nullable
-  UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
-                              @NotNull Usage[] usages,
+  UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
+                              Usage @NotNull [] usages,
                               @NotNull UsageViewPresentation presentation,
                               Factory<? extends UsageSearcher> usageSearcherFactory);
 }

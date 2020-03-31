@@ -4,7 +4,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -519,10 +519,11 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (qualifier instanceof PsiMethodCallExpression) {
           call = (PsiMethodCallExpression)qualifier;
         }
+        else if (ExpressionUtils.isReferenceTo(qualifier, target)) {
+          return new AppendChain(call, topCall);
+        }
         else {
-          if (ExpressionUtils.isReferenceTo(qualifier, target)) {
-            return new AppendChain(call, topCall);
-          }
+          return null;
         }
       }
     }
@@ -613,7 +614,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
 
       PsiExpression lOperand = condition.getLOperand();
-      DfaRelationValue.RelationType relation = DfaRelationValue.RelationType.fromElementType(condition.getOperationTokenType());
+      RelationType relation = RelationType.fromElementType(condition.getOperationTokenType());
       if (relation == null) return null;
       int lSize = computeConstantIntExpression(lOperand);
       if (lSize >= 0) {
@@ -627,7 +628,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
     @Nullable
     private static Integer extractLength(PsiExpression rOperand,
-                                         DfaRelationValue.RelationType relation,
+                                         RelationType relation,
                                          int size,
                                          PsiVariable targetBuilder) {
       if (!isStringBuilderLengthCall(rOperand, targetBuilder)) return null;

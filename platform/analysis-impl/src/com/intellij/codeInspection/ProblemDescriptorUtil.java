@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -13,14 +14,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.*;
 
 public class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
@@ -76,36 +77,47 @@ public class ProblemDescriptorUtil {
         message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
-        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
+        message = StringUtil.replace(message, "#loc", "(" + AnalysisBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
     message = unescapeTags(message);
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
+
+    if ((flags & TRIM_AT_TREE_END) != 0) {
+      if (XmlStringUtil.isWrappedInHtml(message)) {
+        message = StringUtil.removeHtmlTags(message, true);
+      }
+
+      final int endIndex = message.indexOf("#treeend");
+      if (endIndex > 0) {
+        message = message.substring(0, endIndex);
+      }
+    }
+
     if (message.contains("#ref")) {
       String ref = extractHighlightedText(descriptor, element);
       message = StringUtil.replace(message, "#ref", ref);
     }
 
-    final int endIndex = (flags & TRIM_AT_TREE_END) != 0 ? message.indexOf("#treeend") : -1;
-    if (endIndex > 0) {
-      message = message.substring(0, endIndex);
-    }
     message = StringUtil.replace(message, "#end", "");
     message = StringUtil.replace(message, "#treeend", "");
 
     return message.trim();
   }
 
-  public static String unescapeTags(String message) {
+  @NotNull
+  public static String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
-    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : StringUtil.unescapeXmlEntities(message);
+    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : 
+              !XmlStringUtil.isWrappedInHtml(message) ? StringUtil.unescapeXmlEntities(message) : message;
     return message;
   }
 
-  private static String unescapeXmlCode(final String message) {
+  @NotNull
+  private static String unescapeXmlCode(@NotNull String message) {
     List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
@@ -119,7 +131,8 @@ public class ProblemDescriptorUtil {
     for (String string : strings) {
       if (string.contains(XML_CODE_MARKER.second)) {
         builder.append(string.replace(XML_CODE_MARKER.second, ""));
-      } else {
+      }
+      else {
         builder.append(StringUtil.unescapeXmlEntities(string));
       }
     }
@@ -127,7 +140,7 @@ public class ProblemDescriptorUtil {
   }
 
   @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
 
@@ -138,6 +151,7 @@ public class ProblemDescriptorUtil {
     return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
+  @NotNull
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
                                                        @NotNull HighlightSeverity severity,
                                                        @NotNull SeverityRegistrar severityRegistrar) {
@@ -173,8 +187,7 @@ public class ProblemDescriptorUtil {
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }
-  @NotNull
-  public static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
+  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
@@ -182,43 +195,61 @@ public class ProblemDescriptorUtil {
     List<ProblemDescriptor> problems = new ArrayList<>(annotations.size());
     IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
     for (Annotation annotation : annotations) {
-      if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
-          annotation.getStartOffset() == annotation.getEndOffset() && !annotation.isAfterEndOfLine()) {
-        continue;
-      }
+      HighlightSeverity severity = annotation.getSeverity();
+      int startOffset = annotation.getStartOffset();
+      int endOffset = annotation.getEndOffset();
 
-      final PsiElement startElement;
-      final PsiElement endElement;
-      if (annotation.getStartOffset() == annotation.getEndOffset() && annotation.isAfterEndOfLine()) {
-        startElement = endElement = file.findElementAt(annotation.getEndOffset() - 1);
-      }
-      else {
-        startElement = file.findElementAt(annotation.getStartOffset());
-        endElement = file.findElementAt(annotation.getEndOffset() - 1);
-      }
-      if (startElement == null || endElement == null) {
-        continue;
-      }
-
+      String message = annotation.getMessage();
+      boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
-      ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(annotation.getSeverity());
-      ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
-                                                               endElement,
-                                                               annotation.getMessage(),
-                                                               quickFixes,
-                                                               highlightType,
-                                                               annotation.isAfterEndOfLine(),
-                                                               null,
-                                                               true,
-                                                               false);
-      problems.add(descriptor);
+
+      ProblemDescriptor descriptor = convertToDescriptor(file, severity, startOffset, endOffset, message, isAfterEndOfLine, quickFixes);
+      if (descriptor != null) {
+        problems.add(descriptor);
+      }
     }
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static ProblemDescriptor convertToDescriptor(@NotNull PsiFile file,
+                                                       @NotNull HighlightSeverity severity,
+                                                       int startOffset,
+                                                       int endOffset,
+                                                       @NotNull String message,
+                                                       boolean isAfterEndOfLine,
+                                                       LocalQuickFix @NotNull [] quickFixes) {
+    if (severity == HighlightSeverity.INFORMATION ||
+        startOffset == endOffset && !isAfterEndOfLine) {
+      return null;
+    }
+
+    final PsiElement startElement;
+    final PsiElement endElement;
+    if (startOffset == endOffset) {
+      startElement = endElement = file.findElementAt(endOffset - 1);
+    }
+    else {
+      startElement = file.findElementAt(startOffset);
+      endElement = file.findElementAt(endOffset - 1);
+    }
+    if (startElement == null || endElement == null) {
+      return null;
+    }
+
+    ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(severity);
+    return new ProblemDescriptorBase(startElement,
+                                     endElement,
+                                     message,
+                                     quickFixes,
+                                     highlightType,
+                                     isAfterEndOfLine,
+                                     null,
+                                     true,
+                                     false);
+  }
+
+  private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+                                                             @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
@@ -241,5 +272,18 @@ public class ProblemDescriptorUtil {
       result[i++] = fix;
     }
     return result;
+  }
+
+  public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
+    List<LocalQuickFix> quickFixes =
+      ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> {
+        IntentionAction intention = p.first.getAction();
+        if (intention instanceof LocalQuickFix) return (LocalQuickFix)intention;
+        if (intention instanceof LocalQuickFixAsIntentionAdapter) {
+          return ((LocalQuickFixAsIntentionAdapter)intention).getFix();
+        }
+        return null;
+      });
+    return convertToDescriptor(file, info.getSeverity(), info.getStartOffset(), info.getEndOffset(), info.getDescription(), info.isAfterEndOfLine(), quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 }

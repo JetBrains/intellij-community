@@ -21,18 +21,17 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 import static java.lang.Character.*;
 
@@ -109,102 +108,10 @@ public class EditorActionUtil {
   // This method avoid moving caret directly, so it's suitable for invocation in bulk mode.
   // It does calculate (and returns) target caret position. 
   public static int indentLine(Project project, @NotNull Editor editor, int lineNumber, int indent, int caretOffset) {
-    EditorSettings editorSettings = editor.getSettings();
-    int tabSize = editorSettings.getTabSize(project);
-    Document document = editor.getDocument();
-    CharSequence text = document.getImmutableCharSequence();
-    int spacesEnd = 0;
-    int lineStart = 0;
-    int lineEnd = 0;
-    int tabsEnd = 0;
-    if (lineNumber < document.getLineCount()) {
-      lineStart = document.getLineStartOffset(lineNumber);
-      lineEnd = document.getLineEndOffset(lineNumber);
-      spacesEnd = lineStart;
-      boolean inTabs = true;
-      for (; spacesEnd <= lineEnd; spacesEnd++) {
-        if (spacesEnd == lineEnd) {
-          break;
-        }
-        char c = text.charAt(spacesEnd);
-        if (c != '\t') {
-          if (inTabs) {
-            inTabs = false;
-            tabsEnd = spacesEnd;
-          }
-          if (c != ' ') break;
-        }
-      }
-      if (inTabs) {
-        tabsEnd = lineEnd;
-      } 
-    }
-    int newCaretOffset = caretOffset;
-    if (newCaretOffset >= lineStart && newCaretOffset < lineEnd && spacesEnd == lineEnd) {
-      spacesEnd = newCaretOffset;
-      tabsEnd = Math.min(spacesEnd, tabsEnd);
-    }
-    int oldLength = getSpaceWidthInColumns(text, lineStart, spacesEnd, tabSize);
-    tabsEnd = getSpaceWidthInColumns(text, lineStart, tabsEnd, tabSize);
-
-    int newLength = oldLength + indent;
-    if (newLength < 0) {
-      newLength = 0;
-    }
-    tabsEnd += indent;
-    if (tabsEnd < 0) tabsEnd = 0;
-    if (!shouldUseSmartTabs(project, editor)) tabsEnd = newLength;
-    StringBuilder buf = new StringBuilder(newLength);
-    for (int i = 0; i < newLength;) {
-      if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= tabsEnd) {
-        buf.append('\t');
-        i += tabSize;
-      }
-      else {
-        buf.append(' ');
-        i++;
-      }
-    }
-
-    int newSpacesEnd = lineStart + buf.length();
-    if (newCaretOffset >= spacesEnd) {
-      newCaretOffset += buf.length() - (spacesEnd - lineStart);
-    }
-    else if (newCaretOffset >= lineStart && newCaretOffset > newSpacesEnd) {
-      newCaretOffset = newSpacesEnd;
-    }
-
-    if (buf.length() > 0) {
-      if (spacesEnd > lineStart) {
-        document.replaceString(lineStart, spacesEnd, buf.toString());
-      }
-      else {
-        document.insertString(lineStart, buf.toString());
-      }
-    }
-    else {
-      if (spacesEnd > lineStart) {
-        document.deleteString(lineStart, spacesEnd);
-      }
-    }
-
-    return newCaretOffset;
+    return EditorCoreUtil.indentLine(project, editor, lineNumber, indent, caretOffset, shouldUseSmartTabs(project, editor));
   }
 
-  private static int getSpaceWidthInColumns(CharSequence seq, int startOffset, int endOffset, int tabSize) {
-    int result = 0;
-    for (int i = startOffset; i < endOffset; i++) {
-      if (seq.charAt(i) == '\t') {
-        result = (result / tabSize + 1) * tabSize;
-      }
-      else {
-        result++;
-      }
-    }
-    return result;
-  }
-
-  private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
+  public static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
   }
@@ -352,12 +259,10 @@ public class EditorActionUtil {
            isQuotedToken(tokenIterator, text);
   }
 
-  @Contract("null, _ -> false")
   private static boolean isTokenStart(@NotNull HighlighterIterator tokenIterator, int offset) {
     return offset == tokenIterator.getStart();
   }
 
-  @Contract("null, _ -> false")
   private static boolean isTokenEnd(@NotNull HighlighterIterator tokenIterator, int offset) {
     return offset == tokenIterator.getEnd();
   }
@@ -538,7 +443,7 @@ public class EditorActionUtil {
         int line = logLineEndVis.line;
         int column = 0;
         if (currentVisCaret.column > 0) {
-          int firstNonSpaceColumnOnTheLine = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
+          int firstNonSpaceColumnOnTheLine = Math.max(0, findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line));
           if (firstNonSpaceColumnOnTheLine < currentVisCaret.column) {
             column = firstNonSpaceColumnOnTheLine;
           }
@@ -553,8 +458,7 @@ public class EditorActionUtil {
 
   private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual) {
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition startLineLogical = editor.visualToLogicalPosition(new VisualPosition(currentVisual.line, 0));
-    int startLineOffset = editor.logicalPositionToOffset(startLineLogical);
+    int startLineOffset = editor.visualPositionToOffset(new VisualPosition(currentVisual.line, 0));
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     SoftWrap softWrap = softWrapModel.getSoftWrap(startLineOffset);
     if (softWrap == null) {
@@ -578,7 +482,7 @@ public class EditorActionUtil {
       // We assume that caret is already located at zero visual column of soft-wrapped line if control flow reaches this place.
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, startLineOffset);
       int visualLine = editor.offsetToVisualPosition(lineStartOffset).line;
-      caretModel.moveToVisualPosition(new VisualPosition(visualLine, findFirstNonSpaceColumnOnTheLine(editor, visualLine)));
+      caretModel.moveToVisualPosition(new VisualPosition(visualLine, Math.max(0, findFirstNonSpaceColumnOnTheLine(editor, visualLine))));
     }
   }
 
@@ -601,80 +505,12 @@ public class EditorActionUtil {
    *                            {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
-    Document document = editor.getDocument();
-    VisualPosition visLine = new VisualPosition(visualLineNumber, 0);
-    int logLine = editor.visualToLogicalPosition(visLine).line;
-    int logLineStartOffset = document.getLineStartOffset(logLine);
-    int logLineEndOffset = document.getLineEndOffset(logLine);
-    LogicalPosition logLineStart = editor.offsetToLogicalPosition(logLineStartOffset);
-    VisualPosition visLineStart = editor.logicalToVisualPosition(logLineStart);
-    boolean newRendering = editor instanceof EditorImpl;
-
-    boolean softWrapIntroducedLine = visLineStart.line != visualLineNumber;
-    if (!softWrapIntroducedLine) {
-      int offset = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), logLineStartOffset, logLineEndOffset);
-      if (offset >= 0) {
-        return newRendering ? editor.offsetToVisualPosition(offset).column : 
-               EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), logLineStartOffset, offset);
-      }
-      else {
-        return -1;
-      }
-    }
-
-    int lineFeedsToSkip = visualLineNumber - visLineStart.line;
-    List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
-    for (SoftWrap softWrap : softWraps) {
-      CharSequence softWrapText = softWrap.getText();
-      int softWrapLineFeedsNumber = StringUtil.countNewLines(softWrapText);
-
-      if (softWrapLineFeedsNumber < lineFeedsToSkip) {
-        lineFeedsToSkip -= softWrapLineFeedsNumber;
-        continue;
-      }
-
-      // Point to the first non-white space symbol at the target soft wrap visual line or to the first non-white space symbol
-      // of document line that follows it if possible.
-      int softWrapTextLength = softWrapText.length();
-      boolean skip = true;
-      for (int j = 0; j < softWrapTextLength; j++) {
-        if (softWrapText.charAt(j) == '\n') {
-          skip = --lineFeedsToSkip > 0;
-          continue;
-        }
-        if (skip) {
-          continue;
-        }
-
-        int nextSoftWrapLineFeedOffset = StringUtil.indexOf(softWrapText, '\n', j, softWrapTextLength);
-
-        int end = findFirstNonSpaceOffsetInRange(softWrapText, j, softWrapTextLength);
-        if (end >= 0) {
-          assert !newRendering : "Unexpected soft wrap text";
-          // Non space symbol is contained at soft wrap text after offset that corresponds to the target visual line start.
-          if (nextSoftWrapLineFeedOffset < 0 || end < nextSoftWrapLineFeedOffset) {
-            return EditorUtil.calcColumnNumber(editor, softWrapText, j, end);
-          }
-          else {
-            return -1;
-          }
-        }
-
-        if (nextSoftWrapLineFeedOffset >= 0) {
-          // There are soft wrap-introduced visual lines after the target one
-          return -1;
-        }
-      }
-      int end = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), softWrap.getStart(), logLineEndOffset);
-      if (end >= 0) {
-        return newRendering ? editor.offsetToVisualPosition(end).column : 
-               EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
-      }
-      else {
-        return -1;
-      }
-    }
-    return -1;
+    int startOffset = editor.visualPositionToOffset(new VisualPosition(visualLineNumber, 0));
+    int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, startOffset);
+    int offset = findFirstNonSpaceOffsetInRange(editor.getDocument().getImmutableCharSequence(), startOffset, endOffset);
+    if (offset == -1) return -1;
+    VisualPosition targetPosition = editor.offsetToVisualPosition(offset, true, false);
+    return targetPosition.line == visualLineNumber ? targetPosition.column : -1;
   }
 
   public static int findFirstNonSpaceOffsetOnTheLine(@NotNull Document document, int lineNumber) {
@@ -696,7 +532,7 @@ public class EditorActionUtil {
   public static int findFirstNonSpaceOffsetInRange(@NotNull CharSequence text, int start, int end) {
     for (; start < end; start++) {
       char c = text.charAt(start);
-      if (c != ' ' && c != '\t') {
+      if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
         return start;
       }
     }
@@ -738,8 +574,7 @@ public class EditorActionUtil {
     // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
     // We want to move the caret to the end of the logical line then.
     if (currentVisualCaret.equals(visualEndOfLineWithCaret)) {
-      LogicalPosition logical = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
-      int offset = editor.logicalPositionToOffset(logical);
+      int offset = editor.visualPositionToOffset(visualEndOfLineWithCaret);
       if (offset < editor.getDocument().getTextLength()) {
         int logicalLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, offset);
         visualEndOfLineWithCaret = editor.offsetToVisualPosition(logicalLineEndOffset, true, false);
@@ -980,6 +815,7 @@ public class EditorActionUtil {
    * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
     return new EditorPopupHandler() {
       @Override
@@ -997,6 +833,7 @@ public class EditorActionUtil {
    * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
     return new EditorPopupHandler() {
       @Override

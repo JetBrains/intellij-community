@@ -1,10 +1,16 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.json.editor.JsonTypedHandler;
+import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -33,7 +39,18 @@ public class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   }
 
   @Override
-  public void insertClosingQuote(@NotNull Editor editor, int offset, PsiFile file, @NotNull CharSequence closingQuote) {
+  public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
+    PsiElement element = file.findElementAt(offset - 1);
+    PsiElement parent = element == null ? null : element.getParent();
+    if (parent instanceof JsonStringLiteral) {
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+      TextRange range = parent.getTextRange();
+      if (offset - 1 != range.getStartOffset() || !"\"".contentEquals(closingQuote)) {
+        int endOffset = range.getEndOffset();
+        if (offset < endOffset) return;
+        if (offset == endOffset && !StringUtil.isEmpty(((JsonStringLiteral)parent).getValue())) return;
+      }
+    }
     editor.getDocument().insertString(offset, closingQuote);
     JsonTypedHandler.processPairedBracesComma(closingQuote.charAt(0), editor, file);
   }

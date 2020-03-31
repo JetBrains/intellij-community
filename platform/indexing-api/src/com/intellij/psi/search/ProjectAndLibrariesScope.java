@@ -22,7 +22,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
+import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,17 +34,19 @@ import java.util.List;
  */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
-  protected final boolean mySearchOutsideRootModel;
-  private String myDisplayName = PsiBundle.message("psi.search.scope.project.and.libraries");
+  private String myDisplayName;
 
-  public ProjectAndLibrariesScope(Project project) {
-    this(project, false);
-  }
-
-  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
+  public ProjectAndLibrariesScope(@NotNull Project project) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    mySearchOutsideRootModel = searchOutsideRootModel;
+  }
+
+  /**
+   * @deprecated use {@link #ProjectAndLibrariesScope(Project)}
+   */
+  @Deprecated
+  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
+    this(project);
   }
 
   @Override
@@ -82,11 +84,6 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean isSearchOutsideRootModel() {
-    return mySearchOutsideRootModel;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
@@ -106,31 +103,11 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
   @Override
   @NotNull
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayName == null ? IndexingBundle.message("psi.search.scope.project.and.libraries") : myDisplayName;
   }
 
   public void setDisplayName(@NotNull String displayName) {
     myDisplayName = displayName;
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
-    if (scope.isSearchOutsideRootModel()) {
-      return super.intersectWith(scope);
-    }
-
-    return scope;
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
-    if (scope.isSearchOutsideRootModel()) {
-      return super.uniteWith(scope);
-    }
-
-    return this;
   }
 
   @Override

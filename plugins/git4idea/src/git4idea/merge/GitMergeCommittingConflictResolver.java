@@ -27,14 +27,14 @@ import java.util.Collection;
  * Conflict resolver that makes a merge commit after all conflicts are resolved.
  */
 public class GitMergeCommittingConflictResolver extends GitConflictResolver {
-  private final Collection<VirtualFile> myMergingRoots;
+  private final Collection<? extends VirtualFile> myMergingRoots;
   private final boolean myRefreshAfterCommit;
   private final GitMerger myMerger;
 
   public GitMergeCommittingConflictResolver(@NotNull Project project,
                                             @NotNull Git git,
                                             @NotNull GitMerger merger,
-                                            @NotNull Collection<VirtualFile> mergingRoots,
+                                            @NotNull Collection<? extends VirtualFile> mergingRoots,
                                             @NotNull Params params,
                                             boolean refreshAfterCommit) {
     super(project, mergingRoots, params);

@@ -4,12 +4,12 @@ package org.intellij.plugins.markdown.wrap;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownWrapTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownWrapTest extends BasePlatformTestCase {
   private boolean myOldWrap;
   private int myOldMargin;
 
@@ -62,6 +62,15 @@ public class MarkdownWrapTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testWrapInCodeFenceInList() {
+    doTest("synchronization");
+  }
+
+  public void testWrapInHeader() {
+    doTest("synchronization");
+  }
+
+
+  public void testWrapInTable() {
     doTest("synchronization");
   }
 

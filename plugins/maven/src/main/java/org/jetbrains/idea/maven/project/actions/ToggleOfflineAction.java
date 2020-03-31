@@ -15,14 +15,29 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 public class ToggleOfflineAction extends MavenToggleAction {
+  private static final Logger LOG = Logger.getInstance(ToggleOfflineAction.class);
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      Presentation p = e.getPresentation();
+      p.setText(MavenProjectBundle.message("maven.toggle.offline.search.title"));
+    }
+  }
+
   @Override
   protected boolean doIsSelected(AnActionEvent e) {
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
@@ -31,7 +46,6 @@ public class ToggleOfflineAction extends MavenToggleAction {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if (projectsManager != null) {
       projectsManager.getGeneralSettings().setWorkOffline(state);

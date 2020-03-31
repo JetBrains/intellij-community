@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderRootType.CLASSES
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PlatformIcons
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 
 /**
@@ -53,7 +54,7 @@ class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : 
   override fun contains(file: VirtualFile): Boolean = PyTypeShed.isInside(file)
 
   override fun update(presentation: PresentationData) {
-    presentation.presentableText = "Typeshed Stubs"
+    presentation.presentableText = PyBundle.message("python.project.view.typeshed.stubs")
     presentation.setIcon(PlatformIcons.LIBRARY_ICON)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -7,6 +7,7 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -19,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -29,8 +29,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -58,18 +59,20 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Nullable
   protected abstract PsiElement extractPsiFromValue();
+
   @Nullable
-  protected abstract Collection<AbstractTreeNode> getChildrenImpl();
+  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
+
   protected abstract void updateImpl(@NotNull PresentationData data);
 
   @Override
   @NotNull
-  public final Collection<AbstractTreeNode> getChildren() {
+  public final Collection<? extends AbstractTreeNode<?>> getChildren() {
     return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
   @NotNull
-  private Collection<AbstractTreeNode> doGetChildren() {
+  private Collection<? extends AbstractTreeNode<?>> doGetChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
       return new ArrayList<>();
@@ -81,7 +84,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       return Collections.emptyList();
     }
 
-    final Collection<AbstractTreeNode> children = getChildrenImpl();
+    Collection<AbstractTreeNode<?>> children = getChildrenImpl();
     return children != null ? children : Collections.emptyList();
   }
 
@@ -92,12 +95,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   protected boolean isMarkReadOnly() {
-    final AbstractTreeNode parent = getParent();
+    final AbstractTreeNode<?> parent = getParent();
     if (parent == null) {
       return false;
     }
     if (parent instanceof AbstractPsiBasedNode) {
-      final PsiElement psiElement = ((AbstractPsiBasedNode)parent).extractPsiFromValue();
+      final PsiElement psiElement = ((AbstractPsiBasedNode<?>)parent).extractPsiFromValue();
       return psiElement instanceof PsiDirectory;
     }
 
@@ -168,7 +171,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Iconable.IconFlags
   protected int getIconableFlags() {
-    int flags = Registry.is("ide.projectView.show.visibility") ? Iconable.ICON_FLAG_VISIBILITY : 0;
+    int flags = 0;
+    ViewSettings settings = getSettings();
+    if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowVisibilityIcons()) {
+      flags |= Iconable.ICON_FLAG_VISIBILITY;
+    }
     if (isMarkReadOnly()) {
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
@@ -178,12 +185,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Nullable
   public static Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
     if (file == null || original == null) return original;
-    
+
     Icon icon = original;
 
     final Bookmark bookmarkAtFile = BookmarkManager.getInstance(project).findFileBookmark(file);
     if (bookmarkAtFile != null) {
-      final RowIcon composite = new RowIcon(2, RowIcon.Alignment.CENTER);
+      final RowIcon composite = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER);
       composite.setIcon(icon, 0);
       composite.setIcon(bookmarkAtFile.getIcon(), 1);
       icon = composite;
@@ -199,7 +206,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
     return icon;
   }
-  
+
   protected boolean isDeprecated() {
     return false;
   }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowToInstruction extends BranchingInstruction {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ThrowToInstruction");
+  private static final Logger LOG = Logger.getInstance(ThrowToInstruction.class);
 
   ThrowToInstruction(int offset) {
     super(offset, Role.END);

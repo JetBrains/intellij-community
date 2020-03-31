@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface ArtifactInstructionsBuilderContext {
 
   boolean enterArtifact(JpsArtifact artifact);

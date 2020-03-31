@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -20,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ import java.util.List;
 
 
 /**
- * Runner to run python configurations. You only need to provide factory.
+ * Runner to run python configurations. You only need to provide {@link PyConfigurationProducerForRunner} (see it's inheritors for useful defaults)
  * Some methods are overridible to allow customization.
  * <p/>
  * This class allows configuration to <strong>rerun</strong> (using {@link #shouldRunAgain()},
@@ -45,15 +46,15 @@ import java.util.List;
  * @param <CONF_T> configuration class this runner supports
  * @author Ilya.Kazakevich
  */
-public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPythonRunConfigurationParams>
+public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPythonRunConfiguration<?>>
   extends ProcessWithConsoleRunner {
-  @NotNull
-  private final ConfigurationFactory myConfigurationFactory;
   @NotNull
   private final Class<CONF_T> myExpectedConfigurationType;
 
   @NotNull
   private final List<ProgramRunner<?>> myAvailableRunnersForLastRun = new ArrayList<>();
+  @NotNull
+  private final PyConfigurationProducerForRunner<CONF_T> myConfigurationProducer;
 
   /**
    * Environment to be used to run instead of factory. Used to rerun
@@ -65,14 +66,12 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    */
   protected RunContentDescriptor myLastProcessDescriptor;
 
-  /**
-   * @param configurationFactory      factory tp create configurations
-   * @param expectedConfigurationType configuration type class
-   */
-  protected ConfigurationBasedProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
-                                            @NotNull final Class<CONF_T> expectedConfigurationType) {
-    myConfigurationFactory = configurationFactory;
+
+  protected ConfigurationBasedProcessRunner(
+    @NotNull Class<CONF_T> expectedConfigurationType,
+    @NotNull final PyConfigurationProducerForRunner<CONF_T> configurationProducer) {
     myExpectedConfigurationType = expectedConfigurationType;
+    myConfigurationProducer = configurationProducer;
   }
 
   @Override
@@ -90,7 +89,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         (sdkPath, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
-    final ProcessListener consolePostprocessor = new ProcessAdapter() {
+    ProcessListener consolePostprocessor = new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         super.processTerminated(event);
@@ -98,18 +97,17 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       }
     };
 
-
     /// Find all available runners to report them to the test
     myAvailableRunnersForLastRun.clear();
-    for (final ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
-      for (final Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+    for (ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
+      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (runner.canRun(executor.getId(), executionEnvironment.getRunProfile())) {
           myAvailableRunnersForLastRun.add(runner);
         }
       }
     }
 
-    executionEnvironment.getRunner().execute(executionEnvironment, new ProgramRunner.Callback() {
+    executionEnvironment.setCallback(new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         final ProcessHandler handler = descriptor.getProcessHandler();
@@ -124,6 +122,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         myLastProcessDescriptor = descriptor;
       }
     });
+    executionEnvironment.getRunner().execute(executionEnvironment);
   }
 
   /**
@@ -141,25 +140,32 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     }
   }
 
+  /**
+   * @return descriptor of last run
+   */
+  @Nullable
+  public RunContentDescriptor getLastProcessDescriptor() {
+    return myLastProcessDescriptor;
+  }
+
   @NotNull
-  private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final String workingDir)
+  private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath,
+                                                          @NotNull final Project project,
+                                                          @NotNull final String workingDir)
     throws ExecutionException {
-    final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createConfiguration("test", myConfigurationFactory);
 
-    final AbstractPythonRunConfigurationParams config = (AbstractPythonRunConfigurationParams)settings.getConfiguration();
+    CONF_T configuration = myConfigurationProducer.createConfiguration(project, myExpectedConfigurationType);
+    RunnerAndConfigurationSettings settings =
+      new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), configuration);
+    assert myExpectedConfigurationType.isInstance(configuration) :
+      String.format("Expected configuration %s, but got %s", myExpectedConfigurationType, configuration.getClass());
 
-    assert myExpectedConfigurationType.isInstance(config) :
-      String.format("Expected configuration %s, but got %s", myExpectedConfigurationType, config.getClass());
-
-    @SuppressWarnings("unchecked") // Checked by assert
-    final CONF_T castedConfiguration = (CONF_T)config;
-    castedConfiguration.setSdkHome(sdkPath);
-    castedConfiguration.setWorkingDirectory(workingDir);
+    configuration.setSdkHome(sdkPath);
+    configuration.setWorkingDirectory(workingDir);
 
     try {
       WriteAction.run(() -> {
-        configurationCreatedAndWillLaunch(castedConfiguration);
+        configurationCreatedAndWillLaunch(configuration);
 
         RunManager runManager = RunManager.getInstance(project);
         runManager.addConfiguration(settings);
@@ -181,7 +187,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    * Prepares console to be tested after process end. Always call super if override.
    */
   protected void prepareConsoleAfterProcessEnd() {
-    myConsole.flushDeferredText(); // Console may have deffered text, lets flush it
+    myConsole.flushDeferredText(); // Console may have deferred text, lets flush it
   }
 
   /**

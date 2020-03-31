@@ -21,8 +21,10 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.Collection;
@@ -60,8 +62,13 @@ public class CompilerReferenceIndex<Input> {
   });
   private volatile Throwable myRebuildRequestCause;
 
-  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
-                                File buildDir, boolean readOnly, int version) {
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir, boolean readOnly,
+                                int version) {
+    this(indices, buildDir, null, readOnly, version);
+  }
+
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
+                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version) {
     myBuildDir = buildDir;
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
@@ -71,10 +78,29 @@ public class CompilerReferenceIndex<Input> {
       if (versionDiffers(buildDir, version)) {
         saveVersion(buildDir, version);
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
+      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
         @Override
-        public int enumerate(String value) throws IOException {
-          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : StringUtil.toLowerCase(value));
+        public int enumerate(String path) throws IOException {
+          String caseAwarePath = convertToCaseAwarePath(path);
+          if (relativizer != null) {
+            return super.enumerate(relativizer.toRelative(caseAwarePath));
+          }
+          return super.enumerate(caseAwarePath);
+        }
+
+        @Nullable
+        @Override
+        public String valueOf(int idx) throws IOException {
+          String path = super.valueOf(idx);
+          if (relativizer != null && path != null) {
+            return convertToCaseAwarePath(relativizer.toFull(path));
+          }
+          return path;
+        }
+
+        @NotNull
+        private String convertToCaseAwarePath(@NotNull String path) {
+          return SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path);
         }
       };
 
@@ -163,7 +189,7 @@ public class CompilerReferenceIndex<Input> {
   private static File getIndexDir(@NotNull File buildDir) {
     return new File(buildDir, "backward-refs");
   }
-  
+
   public static boolean exists(@NotNull File buildDir) {
     return getIndexDir(buildDir).exists();
   }
@@ -210,7 +236,7 @@ public class CompilerReferenceIndex<Input> {
   public File getIndicesDir() {
     return myIndicesDir;
   }
-  
+
   public void setRebuildRequestCause(Throwable e) {
     myRebuildRequestCause = e;
     LOG.error(e);
@@ -247,7 +273,7 @@ public class CompilerReferenceIndex<Input> {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs")),
+            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs").toPath(), false),
             readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
     }
 
@@ -267,13 +293,14 @@ public class CompilerReferenceIndex<Input> {
                                                                           @NotNull IndexId<Key, Value> indexId,
                                                                           @NotNull File indexDir,
                                                                           boolean readOnly) throws IOException {
-    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()),
+    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()).toPath(),
                                            keyDescriptor,
                                            valueExternalizer,
                                            16 * 1024,
                                            false,
                                            true,
-                                           readOnly) {
+                                           readOnly,
+                                           null) {
       @Override
       public void checkCanceled() {
         //TODO

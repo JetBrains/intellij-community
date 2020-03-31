@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.errorreport.bean;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.List;
 
-/** @deprecated trivial and not particularly helpful, could be replaced with {@link java.util.Map} (to be removed in IDEA 2020) */
+/** @deprecated trivial and not particularly helpful, could be replaced with {@link java.util.Map} */
 @Deprecated
-@SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@SuppressWarnings("unused")
 public class ErrorBean {
   private final String stackTrace;
   private final String lastAction;

@@ -14,7 +14,7 @@ import org.junit.runners.model.Statement;
  * @author gregsh
  */
 @RunWith(JUnit4.class)
-public abstract class LightPlatformCodeInsightFixture4TestCase extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class LightPlatformCodeInsightFixture4TestCase extends BasePlatformTestCase {
   @Rule
   public TestRule rule = (base, description) -> new Statement() {
     @Override

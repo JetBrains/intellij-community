@@ -1,9 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class DefaultPluginDescriptor implements PluginDescriptor {
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Date;
+import java.util.List;
+
+public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   @NotNull
   private final PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
@@ -18,7 +27,7 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
     myPluginClassLoader = null;
   }
 
-  public DefaultPluginDescriptor(@NotNull PluginId pluginId, final ClassLoader pluginClassLoader) {
+  public DefaultPluginDescriptor(@NotNull PluginId pluginId, @Nullable ClassLoader pluginClassLoader) {
     myPluginId = pluginId;
     myPluginClassLoader = pluginClassLoader;
   }
@@ -32,5 +41,128 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   @Override
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
+  }
+
+  @Override
+  public File getPath() {
+    return null;
+  }
+
+  @Override
+  public Path getPluginPath() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDescription() {
+    return null;
+  }
+
+  @Override
+  public String getChangeNotes() {
+    return null;
+  }
+
+  @Override
+  public String getName() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getProductCode() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Date getReleaseDate() {
+    return null;
+  }
+
+  @Override
+  public boolean isLicenseOptional() {
+    return false;
+  }
+
+  @Override
+  public int getReleaseVersion() {
+    return 0;
+  }
+
+  @Override
+  public PluginId @NotNull [] getDependentPluginIds() {
+    return PluginId.EMPTY_ARRAY;
+  }
+
+  @Override
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
+    return PluginId.EMPTY_ARRAY;
+  }
+
+  @Override
+  public String getVendor() {
+    return null;
+  }
+
+  @Override
+  public String getVersion() {
+    return null;
+  }
+
+  @Override
+  public String getResourceBundleBaseName() {
+    return null;
+  }
+
+  @Override
+  public String getCategory() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public List<Element> getActionDescriptionElements() {
+    return null;
+  }
+
+  @Override
+  public String getVendorEmail() {
+    return null;
+  }
+
+  @Override
+  public String getVendorUrl() {
+    return null;
+  }
+
+  @Override
+  public String getUrl() {
+    return null;
+  }
+
+  @Override
+  public String getSinceBuild() {
+    return null;
+  }
+
+  @Override
+  public String getUntilBuild() {
+    return null;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return false;
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+  }
+
+  @Override
+  public Disposable getPluginDisposable() {
+    return null;
   }
 }

@@ -104,8 +104,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     @Override
-    @NotNull
-    public PsiReference[] getReferences() {
+    public PsiReference @NotNull [] getReferences() {
         final PrefixedName prefixedName = getQName();
         if (prefixedName != null && prefixedName.getPrefix() != null && getReference() != null) {
             return new PsiReference[]{ getReference(), new PrefixReferenceImpl(this, ((PrefixedNameImpl)prefixedName).getPrefixNode() )};
@@ -119,8 +118,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
 
         @Override
-        @NotNull
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
             // handled in XPathCompletionData
             return EMPTY_ARRAY;
         }

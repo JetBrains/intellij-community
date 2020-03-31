@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config.ui;
 
 import com.intellij.CvsBundle;
@@ -95,9 +95,8 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     final AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -122,7 +121,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private JComponent createListPanel() {
     final AnActionButton duplicateButton =
-      new DumbAwareActionButton(CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
+      new DumbAwareActionButton(CvsBundle.messagePointer("action.name.copy"), PlatformIcons.COPY_ICON) {
 
         @Override
         public void updateButton(@NotNull AnActionEvent e) {

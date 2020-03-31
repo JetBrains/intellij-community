@@ -39,7 +39,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPr
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Add qualifier";
+    return PyBundle.message("QFIX.add.qualifier");
   }
 
   @Override

@@ -44,6 +44,9 @@ cdef extern from "frameobject.h":
         char f_executing;           #/* whether the frame is still executing */
         PyObject *f_localsplus[1];
 
+cdef extern from "release_mem.h":
+    void release_co_extra(void *) 
+
 cdef extern from "code.h":
     ctypedef void freefunc(void *)
     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
@@ -55,6 +58,10 @@ cdef extern from "Python.h":
     object PyImport_ImportModule(char *name)
     PyObject* PyObject_CallFunction(PyObject *callable, const char *format, ...)
     object PyObject_GetAttrString(object o, char *attr_name)
+
+# To include the forward-declared structures used in `pystate.h` and set the `Py_BUILD_CORE` sentinel macro.
+cdef extern from "pycore_pystate.h":
+    pass
 
 cdef extern from "pystate.h":
     ctypedef PyObject* _PyFrameEvalFunction(PyFrameObject *frame, int exc)

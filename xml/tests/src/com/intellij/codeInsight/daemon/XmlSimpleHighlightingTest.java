@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 
-public class XmlSimpleHighlightingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlSimpleHighlightingTest extends BasePlatformTestCase {
 
   public void testCannotFindDeclaration() {
     checkValidation("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n" +

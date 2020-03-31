@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
@@ -28,16 +27,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Interface that should be implemented by the language in order to provide inline functionality and possibly
  * participate in inline of elements in other languages this language may reference.
+ *
  * @author ven
  * @see InlineHandlers#getInlineHandlers(com.intellij.lang.Language)
  */
 public interface InlineHandler {
-
-  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.inlineHandler");
-
   interface Settings {
     /**
-     * @return true if as a result of refactoring setup only the reference where refactoring
+     * @return {@code true} if as a result of refactoring setup only the reference where refactoring
      * was triggered should be inlined.
      */
     boolean isOnlyOneReferenceToInline();
@@ -58,13 +55,13 @@ public interface InlineHandler {
   }
 
   /**
-   * @param element element to be inlined
-   * @param invokedOnReference true if the user invoked the refactoring on an element reference
-   * @param editor in case refactoring has been called in the editor
-   * @return {@code Settings} object in case refactoring should be performed or null otherwise
-
+   * @param element            element to be inlined
+   * @param invokedOnReference {@code true} if the user invoked the refactoring on an element reference
+   * @param editor             in case refactoring has been called in the editor
+   * @return {@code Settings} object in case refactoring should be performed or {@code null} otherwise
    */
-  @Nullable Settings prepareInlineElement(@NotNull PsiElement element, @Nullable Editor editor, boolean invokedOnReference);
+  @Nullable
+  Settings prepareInlineElement(@NotNull PsiElement element, @Nullable Editor editor, boolean invokedOnReference);
 
   /**
    * @param element inlined element
@@ -72,25 +69,27 @@ public interface InlineHandler {
   void removeDefinition(@NotNull PsiElement element, @NotNull Settings settings);
 
   /**
-   * @param element inlined element
-   * @param settings
+   * @param element  inlined element
+   * @param settings inlining settings
    * @return Inliner instance to be used for inlining references in this language
    */
-  @Nullable Inliner createInliner(@NotNull PsiElement element, @NotNull Settings settings);
+  @Nullable
+  Inliner createInliner(@NotNull PsiElement element, @NotNull Settings settings);
 
   interface Inliner {
     /**
-     * @param reference reference to inlined element
+     * @param reference  reference to inlined element
      * @param referenced inlined element
      * @return set of conflicts inline of this element to the place denoted by reference would incur
-     * or null if no conflicts detected.
+     * or {@code null} if no conflicts detected.
      */
     @Nullable
     MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced);
 
     /**
-     * Perform actual inline of element to the point where it is referenced
-     * @param usage usage of inlined element
+     * Perform actual inline of element to the point where it is referenced.
+     *
+     * @param usage      usage of inlined element
      * @param referenced inlined element
      */
     void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced);

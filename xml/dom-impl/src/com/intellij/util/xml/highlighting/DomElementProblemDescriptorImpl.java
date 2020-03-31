@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
   private final DomElement myDomElement;
   private final HighlightSeverity mySeverity;
   private final String myMessage;
@@ -65,7 +65,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
@@ -74,7 +74,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -112,8 +112,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public LocalQuickFix[] getFixes() {
+  public LocalQuickFix @NotNull [] getFixes() {
     return myFixes;
   }
 

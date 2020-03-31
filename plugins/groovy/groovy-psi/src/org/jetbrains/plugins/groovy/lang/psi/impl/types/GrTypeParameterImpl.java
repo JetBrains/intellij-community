@@ -54,8 +54,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public GrMembersDeclaration[] getMemberDeclarations() {
+  public GrMembersDeclaration @NotNull [] getMemberDeclarations() {
     return GrMembersDeclaration.EMPTY_ARRAY;
   }
 
@@ -70,20 +69,17 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public GrMethod[] getCodeMethods() {
+  public GrMethod @NotNull [] getCodeMethods() {
     return GrMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsByName(this, name, checkBases);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -137,14 +133,12 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
     return getExtendsList().getReferencedTypes();
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {
     return PsiClassType.EMPTY_ARRAY;
   }
 
@@ -154,39 +148,33 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return GrClassImplUtil.getSuperClass(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInterfaces() {
+  public PsiClass @NotNull [] getInterfaces() {
     return PsiClass.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getSupers(boolean includeSynthetic) {
+  public PsiClass @NotNull [] getSupers(boolean includeSynthetic) {
     return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getSuperTypes(boolean includeSynthetic) {
     return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
   @Override
-  @NotNull
-  public GrField[] getFields() {
+  public GrField @NotNull [] getFields() {
     return GrField.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public GrField[] getCodeFields() {
+  public GrField @NotNull [] getCodeFields() {
     return GrField.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public GrMethod[] getCodeConstructors() {
+  public GrMethod @NotNull [] getCodeConstructors() {
     return GrMethod.EMPTY_ARRAY;
   }
 
@@ -196,44 +184,37 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public GrClassInitializer[] getInitializers() {
+  public GrClassInitializer @NotNull [] getInitializers() {
     return GrClassInitializer.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiField[] getAllFields() {
+  public PsiField @NotNull [] getAllFields() {
     return GrClassImplUtil.getAllFields(this);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getAllMethods() {
+  public PsiMethod @NotNull [] getAllMethods() {
     return GrClassImplUtil.getAllMethods(this);
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getAllInnerClasses() {
+  public PsiClass @NotNull [] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
@@ -250,14 +231,12 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsByName(this, name, checkBases);
   }
 
@@ -390,8 +369,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
@@ -410,8 +388,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
@@ -426,8 +403,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     throw new IncorrectOperationException();
   }
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 

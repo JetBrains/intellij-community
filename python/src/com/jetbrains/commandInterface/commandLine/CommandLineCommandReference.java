@@ -16,10 +16,8 @@
 package com.jetbrains.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineCommand;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
@@ -46,9 +44,8 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
   }
 
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final CommandLineFile file = getCommandLineFile();
     if (file == null) {
       return EMPTY_ARRAY;

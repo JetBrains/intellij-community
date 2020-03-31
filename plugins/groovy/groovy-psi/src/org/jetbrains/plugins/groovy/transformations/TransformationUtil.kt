@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import kotlin.reflect.jvm.javaField
 
 class TransformationResult(
   val methods: Array<PsiMethod>,
@@ -30,29 +21,42 @@ class TransformationResult(
   val extendsTypes: Array<PsiClassType>
 )
 
-private val ourTransformationContext = object : ThreadLocal<MutableSet<GrTypeDefinition>>() {
-  override fun initialValue(): MutableSet<GrTypeDefinition> = HashSet()
+private val emptyTransformationResult = TransformationResult(
+  PsiMethod.EMPTY_ARRAY,
+  GrField.EMPTY_ARRAY,
+  PsiClass.EMPTY_ARRAY,
+  PsiClassType.EMPTY_ARRAY,
+  PsiClassType.EMPTY_ARRAY
+)
+
+private val LOG: Logger = Logger.getInstance(::LOG.javaField!!.javaClass)
+private var ourAssertOnRecursion: Boolean = true
+
+fun disableAssertOnRecursion(disposable: Disposable) {
+  if (!ourAssertOnRecursion) {
+    return
+  }
+  RecursionManager.disableMissedCacheAssertions(disposable)
+  ourAssertOnRecursion = false
+  Disposer.register(disposable, Disposable {
+    ourAssertOnRecursion = true
+  })
 }
 
-private inline val transformationContext get() = ourTransformationContext.get()
-
 fun transformDefinition(definition: GrTypeDefinition): TransformationResult {
-  assert(transformationContext.add(definition))
-  try {
+  return RecursionManager.doPreventingRecursion(definition, false) {
     val transformationContext = TransformationContextImpl(definition)
     for (transformation in AstTransformationSupport.EP_NAME.extensions) {
       ProgressManager.checkCanceled()
       transformation.applyTransformation(transformationContext)
     }
-    return transformationContext.transformationResult
+    transformationContext.transformationResult
+  } ?: run {
+    if (ourAssertOnRecursion) {
+      LOG.error("recursion")
+    }
+    emptyTransformationResult
   }
-  finally {
-    transformationContext.remove(definition)
-  }
-}
-
-fun isUnderTransformation(clazz: PsiClass?): Boolean {
-  return clazz is GrTypeDefinition && clazz in transformationContext
 }
 
 infix operator fun TransformationContext.plusAssign(method: PsiMethod): Unit = addMethod(method)

@@ -41,7 +41,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
 
   public GrIntroduceLocalVariableProcessor(@NotNull GrIntroduceContext context,
                                            @NotNull GroovyIntroduceVariableSettings settings,
-                                           @NotNull PsiElement[] occurrences,
+                                           PsiElement @NotNull [] occurrences,
                                            @NotNull GrExpression expression,
                                            boolean processUsages) {
 

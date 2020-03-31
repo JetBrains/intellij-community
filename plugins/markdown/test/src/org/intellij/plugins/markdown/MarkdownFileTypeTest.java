@@ -3,14 +3,14 @@ package org.intellij.plugins.markdown;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 
 import java.io.File;
 import java.io.IOException;
 
-public class MarkdownFileTypeTest extends PlatformTestCase {
+public class MarkdownFileTypeTest extends HeavyPlatformTestCase {
   public void testMarkdownExtension() throws IOException {
     doTest(".markdown");
   }

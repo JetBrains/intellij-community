@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -37,7 +38,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   private static final String REMOVING_REDUNDANT_IMPORTS_TITLE = "Removing redundant imports";
 
   @Override
-  public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
+  public Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
@@ -50,7 +51,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   }
 
   @Override
-  public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
+  public void performOperation(@NotNull final Project project, final Set<PsiJavaFile> javaFiles) {
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
@@ -112,10 +113,6 @@ class OptimizeImportsTask implements SequentialTask {
   }
 
   @Override
-  public void prepare() {
-  }
-
-  @Override
   public boolean isDone() {
     return !myPointers.hasNext();
   }
@@ -156,9 +153,5 @@ class OptimizeImportsTask implements SequentialTask {
     }
 
     return isDone();
-  }
-
-  @Override
-  public void stop() {
   }
 }

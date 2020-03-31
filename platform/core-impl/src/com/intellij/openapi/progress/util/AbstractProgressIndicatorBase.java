@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
+  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
   private volatile String myText;
   private volatile double myFraction;
@@ -74,7 +74,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;
@@ -139,7 +139,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Nullable
   protected Throwable getCancellationTrace() {
     if (this instanceof Disposable) {
-      return ObjectUtils.tryCast(Disposer.getTree().getDisposalInfo((Disposable)this), Throwable.class);
+      return Disposer.getDisposalTrace((Disposable)this);
     }
     return null;
   }
@@ -251,7 +251,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     ModalityState modalityState = ModalityState.defaultModalityState();
 
     if (modalityProgress != null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }

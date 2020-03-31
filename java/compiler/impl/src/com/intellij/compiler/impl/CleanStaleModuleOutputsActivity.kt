@@ -9,11 +9,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.compiler.CompilerBundle
+import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -29,7 +28,7 @@ import java.io.File
  * Shows notification which suggests to delete stale output directories corresponding to renamed or deleted modules. Such directories may
  * be kept on disk because of a bug (https://youtrack.jetbrains.com/issue/IDEA-185574) in previous IntelliJ IDEA versions.
  */
-class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
+class CleanStaleModuleOutputsActivity : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     val markerFile = File(BuildManager.getInstance().getProjectSystemDirectory(project), "stale_outputs_checked")
     if (markerFile.exists()) return
@@ -47,15 +46,15 @@ class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
     runReadAction {
       val outputPath = CompilerProjectExtension.getInstance(project)!!.compilerOutput!!.presentableUrl
       val notification = Notification(
-        "Build", CompilerBundle.message("notification.title.delete.old.output.directories"),
-        CompilerBundle.message("notification.content.delete.old.output.directories", staleOutputs.size, outputPath),
+        "Build", JavaCompilerBundle.message("notification.title.delete.old.output.directories"),
+        JavaCompilerBundle.message("notification.content.delete.old.output.directories", staleOutputs.size, outputPath),
         NotificationType.INFORMATION
-      ).addAction(object : NotificationAction(CompilerBundle.message("notification.action.text.cleanup")) {
+      ).addAction(object : NotificationAction(JavaCompilerBundle.message("notification.action.text.cleanup")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
           runCleanup(staleOutputs, project, ::createMarker)
         }
-      }).addAction(object : NotificationAction(CompilerBundle.message("notification.action.text.do.not.ask")) {
+      }).addAction(object : NotificationAction(JavaCompilerBundle.message("notification.action.text.do.not.ask")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
           createMarker()
@@ -80,23 +79,24 @@ class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
     }
 
     //until IDEA-186296 is fixed we need to use IDEA's message dialog for potentially long messages
-    val answer = Messages.showIdeaMessageDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
-                                             CompilerBundle.message("dialog.title.delete.old.outputs"),
-                                             arrayOf(CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText()), 0,null, null)
+    val answer = Messages.showIdeaMessageDialog(project, JavaCompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
+                                                JavaCompilerBundle.message("dialog.title.delete.old.outputs"),
+                                                arrayOf(
+                                                  JavaCompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText()), 0, null, null)
     if (answer == Messages.CANCEL) return
 
     val filesToDelete = outputs.map { VfsUtil.virtualToIoFile(it) }
-    object : Task.Backgroundable(project, CompilerBundle.message("dialog.title.delete.old.outputs")) {
+    object : Task.Backgroundable(project, JavaCompilerBundle.message("dialog.title.delete.old.outputs")) {
       override fun run(indicator: ProgressIndicator) {
         indicator.isIndeterminate = false
         filesToDelete.forEachIndexed { i, file ->
           indicator.checkCanceled()
           indicator.fraction = i.toDouble() / filesToDelete.size
-          indicator.text = CompilerBundle.message("progress.text.deleting.directory", file.absolutePath)
+          indicator.text = JavaCompilerBundle.message("progress.text.deleting.directory", file.absolutePath)
           FileUtil.delete(file)
         }
         onSuccess()
-        indicator.text = CompilerBundle.message("progress.text.synchronizing.output.directories")
+        indicator.text = JavaCompilerBundle.message("progress.text.synchronizing.output.directories")
         LocalFileSystem.getInstance().refreshIoFiles(filesToDelete, true, false, null)
       }
     }.queue()

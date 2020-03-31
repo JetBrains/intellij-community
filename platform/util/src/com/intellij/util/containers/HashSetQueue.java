@@ -58,7 +58,8 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof QueueEntry && t.equals(((QueueEntry)obj).t);
+      //noinspection unchecked
+      return obj instanceof QueueEntry && t.equals(((QueueEntry<T>)obj).t);
     }
   }
 
@@ -209,7 +210,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
     @Override
     public int compareTo(@NotNull PositionalIterator.IteratorPosition<T> o) {
-      return Long.compare(count, ((MyIteratorPosition)o).count);
+      return Long.compare(count, ((MyIteratorPosition<T>)o).count);
     }
   }
 

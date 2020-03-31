@@ -4,12 +4,12 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author cdr
  */
-public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
+public class GuardBlockTest extends BasePlatformTestCase {
   private RangeMarker createGuard(final int start, final int end) {
     final Document document = myFixture.getEditor().getDocument();
     return document.createGuardedBlock(start, end);

@@ -4,12 +4,15 @@ package com.intellij.codeInsight.hint;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
-import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
@@ -33,6 +36,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author cdr
@@ -55,23 +59,54 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   protected final int myCurrentWidth;
 
   @FunctionalInterface
-  protected interface TooltipReloader {
+  public interface TooltipReloader {
     void reload(boolean toExpand);
   }
 
-  public LineTooltipRenderer(@Nullable String text, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable String text, Object @NotNull [] comparable) {
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final String text, final int width, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable final String text, final int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;
   }
 
   @NotNull
-  private static JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane, @NotNull JEditorPane editorPane) {
-    JPanel grid = new JPanel(new GridBagLayout()) {
+  private static JPanel createMainPanel(@NotNull final HintHint hintHint,
+                                        @NotNull JComponent pane,
+                                        @NotNull JEditorPane editorPane,
+                                        boolean newLayout,
+                                        boolean highlightActions,
+                                        boolean hasSeparators) {
+    int leftBorder = newLayout ? 10 : 8;
+    int rightBorder = 12;
+    class MyPanel extends JPanel implements WidthBasedLayout {
+      private MyPanel() {
+        super(new GridBagLayout());
+      }
+
+      @Override
+      public int getPreferredWidth() {
+        return getPreferredSize().width;
+      }
+
+      @Override
+      public int getPreferredHeight(int width) {
+        Dimension size = editorPane.getSize();
+        int sideComponentsWidth = getSideComponentWidth();
+        editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
+        int height;
+        try {
+          height = getPreferredSize().height;
+        }
+        finally {
+          editorPane.setSize(size);
+        }
+        return height;
+      }
+
       @Override
       public AccessibleContext getAccessibleContext() {
         return new AccessibleContextDelegate(editorPane.getAccessibleContext()) {
@@ -81,7 +116,37 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
         };
       }
-    };
+
+      private int getSideComponentWidth() {
+        GridBagLayout layout = (GridBagLayout)getLayout();
+        Component sideComponent = null;
+        GridBagConstraints sideComponentConstraints = null;
+        boolean unsupportedLayout = false;
+        for (Component component : getComponents()) {
+          GridBagConstraints c = layout.getConstraints(component);
+          if (c.gridx > 0) {
+            if (sideComponent == null && c.gridy == 0) {
+              sideComponent = component;
+              sideComponentConstraints = c;
+            }
+            else {
+              unsupportedLayout = true;
+            }
+          }
+        }
+        if (unsupportedLayout) {
+          Logger.getInstance(LineTooltipRenderer.class).error("Unsupported tooltip layout");
+        }
+        if (sideComponent == null) {
+          return 0;
+        }
+        else {
+          Insets insets = sideComponentConstraints.insets;
+          return sideComponent.getPreferredSize().width + (insets == null ? 0 : insets.left + insets.right);
+        }
+      }
+    }
+    JPanel grid = new MyPanel();
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
       //weight is required for correct working scrollpane inside gridbaglayout
@@ -89,7 +154,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .weighty(1.0)
       .fillCell();
 
-    pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
+    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6,
+                                      leftBorder,
+                                      newLayout ? (highlightActions ? 10 : (hasSeparators ? 8 : 3)) : 6,
+                                      rightBorder));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -104,6 +172,26 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, Registry.is("editor.new.mouse.hover.popups"), true, true,
+                                      null);
+    if (hint != null) {
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
+                                                                        HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                        HintManager.HIDE_BY_OTHER_HINT |
+                                                                        HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
+    }
+    return hint;
+  }
+
+  public LightweightHint createHint(@NotNull final Editor editor,
+                                    @NotNull final Point p,
+                                    final boolean alignToRight,
+                                    @NotNull final TooltipGroup group,
+                                    @NotNull final HintHint hintHint,
+                                    boolean newLayout,
+                                    boolean highlightActions,
+                                    boolean limitWidthToScreen,
+                                    @Nullable TooltipReloader tooltipReloader) {
     if (myText == null) return null;
 
     //setup text
@@ -112,14 +200,16 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     final boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);
 
-    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
 
     final JComponent editorComponent = editor.getComponent();
     if (!editorComponent.isShowing()) return null;
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(dressedText).setKeepFont(true), hintHint, layeredPane);
+    String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane,
+                                                        limitWidthToScreen);
+    editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
@@ -137,13 +227,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
     scrollPane.setViewportBorder(null);
 
-    editorPane.setBorder(JBUI.Borders.emptyBottom(2));
+    if (!newLayout) editorPane.setBorder(JBUI.Borders.emptyBottom(2));
     if (hintHint.isRequestFocus()) {
       editorPane.setFocusable(true);
     }
 
-    ArrayList<AnAction> actions = new ArrayList<>();
-    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane);
+    List<AnAction> actions = new ArrayList<>();
+    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions, !textToDisplay.equals(dressedText));
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);
       grid.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
@@ -179,22 +269,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     };
 
 
-    TooltipReloader reloader = toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand);
+    TooltipReloader reloader = tooltipReloader == null
+                               ? toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand)
+                               : tooltipReloader;
 
-    actions.add(new AnAction() {
-      // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
-      {
-        registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
-        // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
-        hintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
-        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut", e.getInputEvent(), getClass());
-        reloader.reload(!expanded);
-      }
-    });
+    ReloadHintAction reloadAction = new ReloadHintAction(hintHint, reloader, expanded);
+    // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
+    reloadAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
+    actions.add(reloadAction);
 
     editorPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
@@ -219,59 +301,75 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
-          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink", e.getInputEvent(), getClass());
-
+          TooltipActionsLogger.INSTANCE.logShowDescription(editor.getProject(), "more.link", e.getInputEvent(), null);
           reloader.reload(!expanded);
         }
       }
     });
 
-    fillPanel(editor, grid, hint, hintHint, actions, reloader);
+    fillPanel(editor, grid, hint, hintHint, actions, reloader, newLayout, highlightActions);
 
+    if (!newLayout) {
+      grid.addMouseListener(new MouseAdapter() {
 
-    grid.addMouseListener(new MouseAdapter() {
+        // This listener makes hint transparent for mouse events. It means that hint is closed
+        // by MousePressed and this MousePressed goes into the underlying editor component.
+        @Override
+        public void mouseReleased(final MouseEvent e) {
+          if (!myActiveLink) {
+            MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+            hint.hide();
+            contentComponent.dispatchEvent(newMouseEvent);
+          }
+        }
+      });
 
-      // This listener makes hint transparent for mouse events. It means that hint is closed
-      // by MousePressed and this MousePressed goes into the underlying editor component.
-      @Override
-      public void mouseReleased(final MouseEvent e) {
-        if (!myActiveLink) {
-          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+      ListenerUtil.addMouseListener(grid, new MouseAdapter() {
+        @Override
+        public void mouseExited(final MouseEvent e) {
+          if (expanded) return;
+
+          Container parentContainer = grid;
+          //ComponentWithMnemonics is top balloon component
+          while (!(parentContainer instanceof ComponentWithMnemonics)) {
+            Container candidate = parentContainer.getParent();
+            if (candidate == null) break;
+            parentContainer = candidate;
+          }
+
+          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
+
+          if (parentContainer.contains(newMouseEvent.getPoint())) {
+            return;
+          }
+
           hint.hide();
-          contentComponent.dispatchEvent(newMouseEvent);
         }
-      }
-    });
+      });
+    }
 
-    ListenerUtil.addMouseListener(grid, new MouseAdapter() {
-
-      @Override
-      public void mouseExited(final MouseEvent e) {
-        if (expanded) return;
-
-        Container parentContainer = grid;
-        //ComponentWithMnemonics is top balloon component
-        while (!(parentContainer instanceof ComponentWithMnemonics)) {
-          Container candidate = parentContainer.getParent();
-          if (candidate == null) break;
-          parentContainer = candidate;
-        }
-
-        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
-
-        if (parentContainer.contains(newMouseEvent.getPoint())) {
-          return;
-        }
-
-        hint.hide();
-      }
-    });
-
-    hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
-                                                HintManager.HIDE_BY_TEXT_CHANGE |
-                                                HintManager.HIDE_BY_OTHER_HINT |
-                                                HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
+  }
+
+  // Java text components don't support specifying color for 'hr' tag, so we need to replace it with something else,
+  // if we need a separator with custom color
+  @NotNull
+  private static String colorizeSeparators(@NotNull String html) {
+    String body = UIUtil.getHtmlBody(html);
+    List<String> parts = StringUtil.split(body, UIUtil.BORDER_LINE, true, false);
+    if (parts.size() <= 1) return html;
+    StringBuilder b = new StringBuilder();
+    for (String part : parts) {
+      boolean addBorder = b.length() > 0;
+      b.append("<div");
+      if (addBorder) {
+        b.append(" style='margin-top:6; padding-top:6; border-top: thin solid #");
+        b.append(ColorUtil.toHex(UIUtil.getTooltipSeparatorColor()));
+        b.append("'");
+      }
+      b.append("'>").append(part).append("</div>");
+    }
+    return XmlStringUtil.wrapInHtml(b.toString());
   }
 
   protected boolean isContentAction(String dressedText) {
@@ -294,7 +392,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     hint.hide();
 
     hintHint.setShowImmediately(true);
-    TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3),
+    Point point = new Point(p);
+    if (!Registry.is("editor.new.mouse.hover.popups")) {
+      point.translate(-3, -3);
+    }
+    TooltipController.getInstance().showTooltip(editor, point,
                                                 createRenderer(myText, expand ? pane.getWidth() : 0), alignToRight, group,
                                                 hintHint);
   }
@@ -303,8 +405,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull JPanel component,
                            @NotNull LightweightHint hint,
                            @NotNull HintHint hintHint,
-                           @NotNull ArrayList<AnAction> actions,
-                           @NotNull TooltipReloader expandCallback) {
+                           @NotNull List<? super AnAction> actions,
+                           @NotNull TooltipReloader expandCallback,
+                           boolean newLayout,
+                           boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
     hintHint.setBorderInsets(JBUI.insets(0));
   }
@@ -405,7 +509,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
@@ -434,5 +538,25 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   @Nullable
   public String getText() {
     return myText;
+  }
+
+  private static class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    private final HintHint myHintHint;
+    private final TooltipReloader myReloader;
+    private final boolean myExpanded;
+
+    private ReloadHintAction(HintHint hintHint, TooltipReloader reloader, boolean expanded) {
+      myHintHint = hintHint;
+      myReloader = reloader;
+      myExpanded = expanded;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
+      myHintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
+      TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), "shortcut", e.getInputEvent(), e.getPlace());
+      myReloader.reload(!myExpanded);
+    }
   }
 }

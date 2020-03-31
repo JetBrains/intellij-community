@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -20,19 +22,16 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.io.*;
+import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,11 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * @author max
- */
 public class FSRecords {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
+  private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
          static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
@@ -58,7 +54,8 @@ public class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old` and use it's value for `ourSymlinkTargetAttr`
+  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
+  //             and drop path conversion from `readSymlinkTarget`
   private static final int VERSION = 53 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
@@ -114,6 +111,7 @@ public class FSRecords {
 
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
+  private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
   static {
     //noinspection ConstantConditions
@@ -157,7 +155,7 @@ public class FSRecords {
     private static Storage myAttributes;
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
-    private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
+    private static ContentHashEnumerator myContentHashesEnumerator;
     private static File myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
@@ -220,9 +218,21 @@ public class FSRecords {
     }
 
     private static void init() {
+      Exception exception = null;
+      for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
+        exception = tryInit();
+        if (exception == null) {
+          return;
+        }
+      }
+      throw new RuntimeException("Can't initialize filesystem storage", exception);
+    }
+
+    @Nullable
+    private static Exception tryInit() {
       final File basePath = basePath().getAbsoluteFile();
       if (!(basePath.isDirectory() || basePath.mkdirs())) {
-        throw new RuntimeException("Cannot create storage directory: " + basePath);
+        return new RuntimeException("Cannot create storage directory: " + basePath);
       }
 
       final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
@@ -245,7 +255,7 @@ public class FSRecords {
         }
 
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
-        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
+        myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
 
         myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
           @Override
@@ -263,11 +273,11 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
+        myRecords = new ResizeableMappedFile(recordsFile.toPath(), 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
 
         boolean initial = myRecords.length() == 0;
@@ -291,6 +301,7 @@ public class FSRecords {
         }
         scanFreeRecords();
         getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
+        return null;
       }
       catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
@@ -320,7 +331,7 @@ public class FSRecords {
               final String message = "Files in " + basePath.getPath() + " are locked.\n" +
                                      ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
               if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
               }
               else {
                 //noinspection UseOfSystemOutOrSystemErr
@@ -341,7 +352,7 @@ public class FSRecords {
           throw new RuntimeException("Can't rebuild filesystem storage ", e1);
         }
 
-        init();
+        return e;
       }
     }
 
@@ -526,7 +537,11 @@ public class FSRecords {
     }
   }
 
-  private FSRecords() {
+  private FSRecords() { }
+
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return VERSION;
   }
 
   static void connect() {
@@ -543,7 +558,7 @@ public class FSRecords {
     return records;
   }
 
-  private static PersistentBTreeEnumerator<byte[]> getContentHashesEnumerator() {
+  private static ContentHashEnumerator getContentHashesEnumerator() {
     return DbConnection.myContentHashesEnumerator;
   }
 
@@ -674,9 +689,8 @@ public class FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
-  @NotNull
   @TestOnly
-  static int[] listRoots() {
+  static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
@@ -696,7 +710,7 @@ public class FSRecords {
       }
 
       try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
         final int count = DataInputOutputUtil.readINT(input);
         int[] result = ArrayUtil.newIntArray(count);
         int prevId = 0;
@@ -758,8 +772,8 @@ public class FSRecords {
 
       int root = getNames().tryEnumerate(rootUrl);
 
-      int[] names = ArrayUtil.EMPTY_INT_ARRAY;
-      int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
+      int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
+      int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
       try (final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         if (input != null) {
           final int count = DataInputOutputUtil.readINT(input);
@@ -857,11 +871,10 @@ public class FSRecords {
     });
   }
 
-  @NotNull
-  static int[] list(int id) {
+  static int @NotNull [] list(int id) {
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
         final int count = DataInputOutputUtil.readINT(input);
         final int[] result = ArrayUtil.newIntArray(count);
         int prevId = id;
@@ -894,6 +907,7 @@ public class FSRecords {
       this.id = id;
       this.nameId = nameId;
       this.name = name;
+      if (id <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     }
 
     @Override
@@ -903,8 +917,8 @@ public class FSRecords {
   }
 
   // returns NameId[] sorted by NameId.id
-  @NotNull
-  public static NameId[] listAll(int parentId) {
+  public static NameId @NotNull [] listAll(int parentId) {
+    assert parentId > 0 : parentId;
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
         if (input == null) return NameId.EMPTY_ARRAY;
@@ -971,7 +985,8 @@ public class FSRecords {
     }
   }
 
-  static void updateList(int id, @NotNull int[] childIds) {
+  static void updateList(int id, int @NotNull [] childIds) {
+    assert id > 0 : id;
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {
       DbConnection.markDirty();
@@ -995,9 +1010,8 @@ public class FSRecords {
     });
   }
 
-  @Nullable
-  static String readSymlinkTarget(int id) {
-    return readAndHandleErrors(() -> {
+  static @Nullable String readSymlinkTarget(int id) {
+    String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
       }
@@ -1006,6 +1020,7 @@ public class FSRecords {
       }
       return null;
     });
+    return result != null ? FileUtil.toSystemIndependentName(result) : null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
@@ -1029,6 +1044,7 @@ public class FSRecords {
     DbConnection.markDirty();
     //noinspection NonAtomicOperationOnVolatileField
     ourLocalModificationCount++;
+    CachedFileType.clearCache();
   }
 
   static int getLocalModCount() {
@@ -1100,7 +1116,7 @@ public class FSRecords {
         if (!(parent instanceof VirtualDirectoryImpl)) {
           return null;
         }
-        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
+        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).doFindChildById(childId);
         if (child instanceof VirtualDirectoryImpl) {
           VirtualFileSystemEntry old = idToDirCache.putIfAbsent(childId, child);
           if (old != null) child = old;
@@ -1462,12 +1478,19 @@ public class FSRecords {
     return readAndHandleErrors(() -> getContentRecordId(fileId));
   }
 
+  static byte[] getContentHash(int fileId) {
+    if (!WE_HAVE_CONTENT_HASHES) return null;
+
+    return readAndHandleErrors(() -> {
+      int contentId = getContentRecordId(fileId);
+      return contentId <= 0 ? null : getContentHashesEnumerator().valueOf(contentId);
+    });
+  }
+
   @NotNull
   static DataOutputStream writeContent(int fileId, boolean readOnly) {
     return new ContentOutputStream(fileId, readOnly);
   }
-
-  private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
   static void writeContent(int fileId, ByteArraySequence bytes, boolean readOnly) {
     //noinspection IOResourceOpenedButNotSafelyClosed
@@ -1578,15 +1601,13 @@ public class FSRecords {
   private static int contents;
   private static int reuses;
 
+  private static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
+
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    myDigest.reset();
-    myDigest.update(String.valueOf(length - offset).getBytes(Charset.defaultCharset()));
-    myDigest.update("\0".getBytes(Charset.defaultCharset()));
-    myDigest.update(bytes, offset, length);
-    byte[] digest = myDigest.digest();
+    byte[] contentHash = DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
@@ -1596,9 +1617,10 @@ public class FSRecords {
     if (DUMP_STATISTICS && (contents & 0x3FFF) == 0) {
       LOG.info("Contents:" + contents + " of " + totalContents + ", reuses:" + reuses + " of " + totalReuses + " for " + time / 1000000);
     }
-    PersistentBTreeEnumerator<byte[]> hashesEnumerator = getContentHashesEnumerator();
+
+    ContentHashEnumerator hashesEnumerator = getContentHashesEnumerator();
     final int largestId = hashesEnumerator.getLargestId();
-    int page = hashesEnumerator.enumerate(digest);
+    int page = hashesEnumerator.enumerate(contentHash);
 
     if (page <= largestId) {
       ++reuses;

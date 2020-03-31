@@ -33,8 +33,8 @@
     <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
     <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
     <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
-    <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
     </extensionPoint>
@@ -47,8 +47,14 @@
     <extensionPoint qualifiedName="com.intellij.annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework"/>
+    <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
+                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
+                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>
@@ -60,8 +66,8 @@
                         serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
-                        serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
+                        serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
     <projectService serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
@@ -120,10 +126,13 @@
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
+    <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">

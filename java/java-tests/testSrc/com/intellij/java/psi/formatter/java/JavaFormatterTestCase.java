@@ -16,6 +16,7 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -34,8 +35,8 @@ public abstract class JavaFormatterTestCase extends FormatterTestCase {
 
   @NotNull
   @Override
-  protected ModuleType getModuleType() {
-    return StdModuleTypes.JAVA;
+  protected String getModuleTypeId() {
+    return ModuleTypeId.JAVA_MODULE;
   }
 
   @Override

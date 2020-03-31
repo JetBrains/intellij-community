@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -56,25 +42,15 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
   }
 
-  boolean isAssertEqualsThatCouldBeAssertLiteral(PsiMethodCallExpression expression) {
-    final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
-    if (assertHint == null) {
-      return false;
-    }
-    final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    final int argIndex = assertHint.getArgIndex();
-    final PsiExpression firstTestArgument = arguments[argIndex];
-    final PsiExpression secondTestArgument = arguments[argIndex + 1];
-    if (firstTestArgument == null || secondTestArgument == null) {
-      return false;
-    }
+  boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
+    final PsiExpression firstTestArgument = assertHint.getFirstArgument();
+    final PsiExpression secondTestArgument = assertHint.getSecondArgument();
     return isSimpleLiteral(firstTestArgument, secondTestArgument) ||
            isSimpleLiteral(secondTestArgument, firstTestArgument);
   }
 
   static boolean isSimpleLiteral(PsiExpression expression1, PsiExpression expression2) {
-    if (!(expression1 instanceof PsiLiteralExpression)) {
+    if (!(expression1 instanceof PsiLiteralExpression) || expression2 == null) {
       return false;
     }
     final String text = expression1.getText();
@@ -88,7 +64,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     return PsiType.BOOLEAN.equals(type);
   }
 
-  private static boolean isEqualityComparison(PsiExpression expression) {
+  static boolean isEqualityComparison(PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -106,12 +82,12 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     return EqualityCheck.from(expression) != null;
   }
 
-  private static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
-  private static boolean isArrayEqualityComparison(PsiExpression expression) {
+  static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
+  static boolean isArrayEqualityComparison(PsiExpression expression) {
     return expression instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)expression);
   }
 
-  private static boolean isIdentityComparison(PsiExpression expression) {
+  static boolean isIdentityComparison(PsiExpression expression) {
     if (!(expression instanceof PsiBinaryExpression)) {
       return false;
     }
@@ -148,45 +124,47 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)parent.getParent();
-      if (isAssertEqualsThatCouldBeAssertLiteral(callExpression)) {
-        replaceAssertEqualsWithAssertLiteral(callExpression);
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(callExpression, checkTestNG());
+      if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
+        replaceAssertEqualsWithAssertLiteral(assertHint);
       }
       else {
         final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(callExpression, checkTestNG());
         if (assertTrueFalseHint == null) {
           return;
         }
-        final boolean assertTrue = isAssertTrue(assertTrueFalseHint);
-        final PsiExpression position = assertTrueFalseHint.getPosition(callExpression.getArgumentList().getExpressions());
-        if (ComparisonUtils.isNullComparison(position)) {
-          replaceAssertWithAssertNull(callExpression, (PsiBinaryExpression)position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex());
+        final boolean assertTrue = assertTrueFalseHint.isAssertTrue();
+        final PsiExpression argument = assertTrueFalseHint.getFirstArgument();
+        if (ComparisonUtils.isNullComparison(argument)) {
+          replaceAssertWithAssertNull(assertTrueFalseHint);
         }
-        else if (isIdentityComparison(position)) {
-          replaceAssertWithAssertSame(callExpression, (PsiBinaryExpression)position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex());
+        else if (isIdentityComparison(argument)) {
+          replaceWithAssertSame(assertTrueFalseHint);
         }
-        else if (assertTrue && isEqualityComparison(position)) {
-          replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertEquals");
+        else if (assertTrue && isEqualityComparison(argument)) {
+          replaceWithAssertEquals(assertTrueFalseHint, "assertEquals");
         }
-        else if (isAssertThatCouldBeFail(position, !assertTrue)) {
-          replaceAssertWithFail(callExpression, assertTrueFalseHint.getMessage());
+        else if (isAssertThatCouldBeFail(argument, !assertTrue)) {
+          replaceWithFail(assertTrueFalseHint);
         }
-        else if (isEqualityComparison(position)) {
-          replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertNotEquals");
+        else if (isEqualityComparison(argument)) {
+          replaceWithAssertEquals(assertTrueFalseHint, "assertNotEquals");
         }
-        else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(position)) {
-          replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertArrayEquals");
+        else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(argument)) {
+          replaceWithAssertEquals(assertTrueFalseHint, "assertArrayEquals");
         }
-        else if (BoolUtils.isNegation(position)) {
-          replaceWithNegatedBooleanAssertion(callExpression, (PsiPrefixExpression) position, assertTrue ? "assertFalse" : "assertTrue");
+        else if (BoolUtils.isNegation(argument)) {
+          replaceWithNegatedBooleanAssertion(assertTrueFalseHint);
         }
       }
     }
 
-    private void addStaticImportOrQualifier(String methodName, PsiMethodCallExpression originalMethodCall, StringBuilder out) {
+    private void addStaticImportOrQualifier(String methodName, AssertHint assertHint, StringBuilder out) {
+      final PsiMethodCallExpression originalMethodCall = (PsiMethodCallExpression)assertHint.getOriginalExpression();
       final PsiReferenceExpression methodExpression = originalMethodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        final PsiMethod method = originalMethodCall.resolveMethod();
+        final PsiMethod method = assertHint.getMethod();
         if (method == null) {
           return;
         }
@@ -209,15 +187,16 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       }
     }
 
-    private void replaceAssertWithFail(PsiMethodCallExpression callExpression, PsiExpression message) {
+    private void replaceWithFail(AssertHint assertHint) {
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      addStaticImportOrQualifier("fail", callExpression, newExpression);
+      addStaticImportOrQualifier("fail", assertHint, newExpression);
       newExpression.append("fail(");
+      final PsiExpression message = assertHint.getMessage();
       if (message != null) {
         newExpression.append(message.getText());
       }
       newExpression.append(')');
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression.toString());
     }
 
     /**
@@ -226,27 +205,23 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
      * <code>assertFalse</code> -> <code>assertNotEquals</code> (do not replace for junit 5 Assertions
      * as there is no primitive overloads for <code>assertNotEquals</code> and boxing would be enforced if replaced)
      */
-    private void replaceAssertLiteralWithAssertEquals(PsiMethodCallExpression callExpression,
-                                                      final PsiExpression position,
-                                                      final PsiExpression message,
-                                                      final int positionIndex,
-                                                      final String methodName) {
-
+    private void replaceWithAssertEquals(AssertHint assertHint, final String methodName) {
+      final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
-      if (position instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)position;
+      if (firstArgument instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)firstArgument;
         lhs = binaryExpression.getLOperand();
         rhs = binaryExpression.getROperand();
       }
       else {
-        EqualityCheck check = EqualityCheck.from(position);
+        final EqualityCheck check = EqualityCheck.from(firstArgument);
         if (check != null) {
           lhs = check.getLeft();
           rhs = check.getRight();
         }
-        else if (position instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)position)) {
-          PsiExpression[] args = ((PsiMethodCallExpression)position).getArgumentList().getExpressions();
+        else if (firstArgument instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)firstArgument)) {
+          final PsiExpression[] args = ((PsiMethodCallExpression)firstArgument).getArgumentList().getExpressions();
           lhs = args[0];
           rhs = args[1];
         }
@@ -266,7 +241,6 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         rhs = temp;
       }
 
-      @NonNls final StringBuilder newExpression = new StringBuilder();
       final StringBuilder buf = new StringBuilder();
       final PsiType lhsType = lhs.getType();
       final PsiType rhsType = rhs.getType();
@@ -289,21 +263,22 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         buf.append(lhs.getText()).append(',').append(rhs.getText());
       }
 
+      final PsiExpression originalExpression = assertHint.getOriginalExpression();
       if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
           rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
           isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
-        StringBuilder noDelta = new StringBuilder();
-        compoundMethodCall(callExpression, methodName, message, positionIndex, buf.toString(), noDelta);
-        PsiExpression expression = methodName.equals("assertNotEquals")
-                                   ? null
-                                   : JavaPsiFacade.getElementFactory(callExpression.getProject()).createExpressionFromText(noDelta.toString(), callExpression);
-        PsiMethod method = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).resolveMethod() : null;
+        final String noDelta = compoundMethodCall(methodName, assertHint, buf.toString());
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
+        final PsiExpression expression = methodName.equals("assertNotEquals")
+                                         ? null
+                                         : factory.createExpressionFromText(noDelta, originalExpression);
+        final PsiMethod method = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).resolveMethod() : null;
         if (method == null || method.isDeprecated()) {
           buf.append(",0.0");
         }
       }
-      compoundMethodCall(callExpression, methodName, message, positionIndex, buf.toString(), newExpression);
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+      final String newExpression = compoundMethodCall(methodName, assertHint, buf.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(originalExpression, newExpression);
     }
 
     private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
@@ -318,21 +293,19 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
              (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
-    private void replaceWithNegatedBooleanAssertion(PsiMethodCallExpression callExpression, PsiPrefixExpression expression, String newMethodName) {
-      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
+    private void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
+      final PsiPrefixExpression expression = (PsiPrefixExpression)assertHint.getFirstArgument();
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
       if (operand == null) {
         return;
       }
-      StringBuilder builder = new StringBuilder();
-      addStaticImportOrQualifier(newMethodName, callExpression, builder);
-      builder.append(newMethodName).append("(").append(operand.getText()).append(")");
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, builder.toString());
+      final String newMethodName = assertHint.isAssertTrue() ? "assertFalse" : "assertTrue";
+      final String newExpression = compoundMethodCall(newMethodName, assertHint, operand.getText());
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression,
-                                             final PsiBinaryExpression binaryExpression,
-                                             final PsiExpression message,
-                                             final int positionIndex) {
+    private void replaceAssertWithAssertNull(AssertHint assertHint) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)assertHint.getFirstArgument();
       final PsiExpression lhs = binaryExpression.getLOperand();
       PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) {
@@ -342,9 +315,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
         rhs = lhs;
       }
-      @NonNls final StringBuilder newExpression = new StringBuilder();
-      final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = assertHint.getMethod().getName();
       @NonNls final String memberName;
       if ("assertFalse".equals(methodName) ^ tokenType.equals(JavaTokenType.NE)) {
         memberName = "assertNotNull";
@@ -352,33 +323,32 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       else {
         memberName = "assertNull";
       }
-      compoundMethodCall(callExpression, memberName, message, positionIndex, rhs.getText(), newExpression);
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+      final String newExpression = compoundMethodCall(memberName, assertHint, rhs.getText());
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void compoundMethodCall(PsiMethodCallExpression callExpression, String methodName, PsiExpression message,
-                                           int positionIndex,
-                                           String args,
-                                           StringBuilder newExpression) {
-      addStaticImportOrQualifier(methodName, callExpression, newExpression);
+    private String compoundMethodCall(String methodName, AssertHint assertHint, String args) {
+      final PsiExpression message = assertHint.getMessage();
+      final StringBuilder newExpression = new StringBuilder();
+      addStaticImportOrQualifier(methodName, assertHint, newExpression);
       newExpression.append(methodName).append('(');
-      if (message != null && positionIndex != 0) {
+      final int index = assertHint.getArgIndex();
+      if (message != null && index != 0) {
         newExpression.append(message.getText()).append(',');
       }
       newExpression.append(args);
-      if (message != null && positionIndex == 0) {
+      if (message != null && index == 0) {
         newExpression.append(',').append(message.getText());
       }
       newExpression.append(')');
+      return newExpression.toString();
     }
 
-    private void replaceAssertWithAssertSame(PsiMethodCallExpression callExpression,
-                                                    final PsiBinaryExpression position,
-                                                    final PsiExpression message,
-                                                    final int positionIndex) {
-      PsiExpression lhs = position.getLOperand();
-      PsiExpression rhs = position.getROperand();
-      final IElementType tokenType = position.getOperationTokenType();
+    private void replaceWithAssertSame(AssertHint assertHint) {
+      final PsiBinaryExpression firstArgument = (PsiBinaryExpression)assertHint.getFirstArgument();
+      PsiExpression lhs = firstArgument.getLOperand();
+      PsiExpression rhs = firstArgument.getROperand();
+      final IElementType tokenType = firstArgument.getOperationTokenType();
       if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
         final PsiExpression temp = lhs;
         lhs = rhs;
@@ -387,9 +357,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      @NonNls final StringBuilder newExpression = new StringBuilder();
-      final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = assertHint.getMethod().getName();
       @NonNls final String memberName;
       if ("assertFalse".equals(methodName) ^ tokenType.equals(JavaTokenType.NE)) {
         memberName = "assertNotSame";
@@ -397,19 +365,13 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       else {
         memberName = "assertSame";
       }
-      compoundMethodCall(callExpression, memberName, message, positionIndex, lhs.getText() + "," + rhs.getText(), newExpression);
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+      final String newExpression = compoundMethodCall(memberName, assertHint, lhs.getText() + "," + rhs.getText());
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertEqualsWithAssertLiteral(PsiMethodCallExpression callExpression) {
-      final AssertHint assertHint = AssertHint.createAssertEqualsHint(callExpression, checkTestNG());
-      if (assertHint == null) return;
-
-      final PsiExpressionList argumentList = callExpression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final int argIndex = assertHint.getArgIndex();
-      final PsiExpression firstTestArgument = arguments[argIndex];
-      final PsiExpression secondTestArgument = arguments[argIndex + 1];
+    private void replaceAssertEqualsWithAssertLiteral(AssertHint assertHint) {
+      final PsiExpression firstTestArgument = assertHint.getFirstArgument();
+      final PsiExpression secondTestArgument = assertHint.getSecondArgument();
       final String literalValue;
       final String compareValue;
       if (isSimpleLiteral(firstTestArgument, secondTestArgument)) {
@@ -421,15 +383,10 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         compareValue = firstTestArgument.getText();
       }
       final String uppercaseLiteralValue = Character.toUpperCase(literalValue.charAt(0)) + literalValue.substring(1);
-      @NonNls final StringBuilder newExpression = new StringBuilder();
       @NonNls final String methodName = "assert" + uppercaseLiteralValue;
-      compoundMethodCall(callExpression, methodName, assertHint.getMessage(), argIndex, compareValue, newExpression);
-      PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+      final String newExpression = compoundMethodCall(methodName, assertHint, compareValue);
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
-  }
-
-  private static boolean isAssertTrue(AssertHint assertTrueFalseHint) {
-    return "assertTrue".equals(assertTrueFalseHint.getMethod().getName());
   }
 
   private class SimplifiableJUnitAssertionVisitor extends BaseInspectionVisitor {
@@ -437,68 +394,64 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (isAssertEqualsThatCouldBeAssertLiteral(expression)) {
-        registerMethodCallError(expression, getReplacementMethodName(expression));
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
+      if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
+        registerMethodCallError(expression, getReplacementMethodName(assertHint));
       }
       else {
-
         final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(expression, checkTestNG());
         if (assertTrueFalseHint == null) {
           return;
         }
 
-        final boolean assertTrue = isAssertTrue(assertTrueFalseHint);
-        final PsiExpression position = assertTrueFalseHint.getPosition(expression.getArgumentList().getExpressions());
-        if (ComparisonUtils.isNullComparison(position)) {
-          registerMethodCallError(expression, assertTrue == hasEqEqExpressionArgument(position) ? "assertNull()" : "assertNotNull()");
+        final boolean assertTrue = assertTrueFalseHint.isAssertTrue();
+        final PsiExpression firstArgument = assertTrueFalseHint.getFirstArgument();
+        if (ComparisonUtils.isNullComparison(firstArgument)) {
+          registerMethodCallError(expression, assertTrue == isEqEqExpression(firstArgument) ? "assertNull()" : "assertNotNull()");
         }
-        else if (isIdentityComparison(position)) {
-          registerMethodCallError(expression, assertTrue == hasEqEqExpressionArgument(position) ? "assertSame()" : "assertNotSame()");
+        else if (isIdentityComparison(firstArgument)) {
+          registerMethodCallError(expression, assertTrue == isEqEqExpression(firstArgument) ? "assertSame()" : "assertNotSame()");
         }
         else {
-          if (isEqualityComparison(position)) {
+          if (isEqualityComparison(firstArgument)) {
             if (assertTrue) {
               registerMethodCallError(expression, "assertEquals()");
             }
-            else if (position instanceof PsiMethodCallExpression || hasPrimitiveOverload(expression)) {
+            else if (firstArgument instanceof PsiMethodCallExpression || hasPrimitiveOverload(assertTrueFalseHint)) {
               registerMethodCallError(expression, "assertNotEquals()");
             }
           }
-          else if (isAssertThatCouldBeFail(position, !assertTrue)) {
+          else if (isAssertThatCouldBeFail(firstArgument, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
           }
-          else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(position)) {
-            registerMethodCallError(expression, "assertArrayEquals");
+          else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(firstArgument)) {
+            registerMethodCallError(expression, "assertArrayEquals()");
           }
-          else if (BoolUtils.isNegation(position)) {
-            registerMethodCallError(expression, assertTrue ? "assertFalse()" :"assertTrue()");
+          else if (BoolUtils.isNegation(firstArgument)) {
+            registerMethodCallError(expression, assertTrue ? "assertFalse()" : "assertTrue()");
           }
         }
       }
     }
 
-    private boolean hasPrimitiveOverload(PsiMethodCallExpression expression) {
-      PsiMethod method = expression.resolveMethod();
-      if (method == null) return false;
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        PsiMethod primitiveOverload = CachedValuesManager.getCachedValue(containingClass, () -> {
-          PsiMethod patternMethod = JavaPsiFacade.getElementFactory(containingClass.getProject())
-            .createMethodFromText("public static void assertNotEquals(long a, long b){}", containingClass);
-          return new CachedValueProvider.Result<>(containingClass.findMethodBySignature(patternMethod, true),
-                                                  PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        });
-        return primitiveOverload != null;
+    private boolean hasPrimitiveOverload(AssertHint assertHint) {
+      final PsiClass containingClass = assertHint.getMethod().getContainingClass();
+      if (containingClass == null) {
+        return false;
       }
-      return false;
+      final PsiMethod primitiveOverload = CachedValuesManager.getCachedValue(containingClass, () -> {
+        final PsiMethod patternMethod = JavaPsiFacade.getElementFactory(containingClass.getProject())
+          .createMethodFromText("public static void assertNotEquals(long a, long b){}", containingClass);
+        return new CachedValueProvider.Result<>(containingClass.findMethodBySignature(patternMethod, true),
+                                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      });
+      return primitiveOverload != null;
     }
 
     @NonNls
-    private String getReplacementMethodName(PsiMethodCallExpression expression) {
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression firstArgument = arguments[0];
-      final PsiExpression secondArgument = arguments[1];
+    private String getReplacementMethodName(AssertHint assertHint) {
+      final PsiExpression firstArgument = assertHint.getFirstArgument();
+      final PsiExpression secondArgument = assertHint.getSecondArgument();
       final PsiLiteralExpression literalExpression;
       if (firstArgument instanceof PsiLiteralExpression) {
         literalExpression = (PsiLiteralExpression)firstArgument;
@@ -522,7 +475,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       return "";
     }
 
-    private boolean hasEqEqExpressionArgument(PsiExpression argument) {
+    private boolean isEqEqExpression(PsiExpression argument) {
       if (!(argument instanceof PsiBinaryExpression)) {
         return false;
       }

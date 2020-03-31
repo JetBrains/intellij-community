@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.util.DocumentUtil
 import com.intellij.util.SmartList
 import gnu.trove.TIntObjectHashMap
 
@@ -33,25 +32,23 @@ abstract class ElementProcessingHintPass(
 
     if (isAvailable(virtualFile)) {
       val traverser = SyntaxTraverser.psiTraverser(rootElement)
-      traverser.forEach { collectElementHints(it,
-                                              { offset, hint ->
-                                                var hintList = hints.get(offset)
-                                                if (hintList == null) {
-                                                  hintList = SmartList()
-                                                  hints.put(offset, hintList)
-                                                }
-                                                hintList.add(hint)
-                                              })
+      traverser.forEach { collectElementHints(it
+      ) { offset, hint ->
+        var hintList = hints.get(offset)
+        if (hintList == null) {
+          hintList = SmartList()
+          hints.put(offset, hintList)
+        }
+        hintList.add(hint)
+      }
       }
     }
   }
 
   override fun doApplyInformationToEditor() {
-    val keeper = CaretVisualPositionKeeper(myEditor)
-
-    applyHintsToEditor()
-
-    keeper.restoreOriginalLocation(false)
+    EditorScrollingPositionKeeper.perform(myEditor, false) {
+      applyHintsToEditor()
+    }
 
     if (rootElement === myFile) {
       modificationStampHolder.putCurrentModificationStamp(myEditor, myFile)
@@ -90,7 +87,7 @@ abstract class ElementProcessingHintPass(
         else false
       }
 
-    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.flatMap { it as SmartList<*> }.count() > 1000) {
+    myEditor.inlayModel.execute(toRemove.size + hints.values.flatMap { it as SmartList<*> }.count() > 1000) {
       toRemove.forEach { Disposer.dispose(it) }
 
       hints.forEachEntry { offset, hintTexts ->

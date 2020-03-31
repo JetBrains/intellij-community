@@ -37,7 +37,7 @@ import java.util.Map;
  * @author yole
  */
 public class FormReferenceProvider extends PsiReferenceProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormReferenceProvider");
+  private static final Logger LOG = Logger.getInstance(FormReferenceProvider.class);
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -51,8 +51,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   private static final Key<CachedValue<CachedFormData>> CACHED_DATA = Key.create("Cached form reference");
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof PsiPlainTextFile) {
       PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
       if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {

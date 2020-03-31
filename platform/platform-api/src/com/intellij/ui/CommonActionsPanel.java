@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -20,49 +19,68 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class CommonActionsPanel extends JPanel {
-  private final boolean myDecorateButtons;
   private final ActionToolbarPosition myPosition;
   private final ActionToolbar myToolbar;
 
   public enum Buttons {
-    ADD, REMOVE, EDIT,  UP, DOWN;
+    ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
+      @Override
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new AddButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
+      @Override
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new RemoveButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
+      @Override
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new EditButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    UP(IconUtil.getMoveUpIcon(), UIBundle.messagePointer("button.text.up")) {
+      @Override
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new UpButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    DOWN(IconUtil.getMoveDownIcon(), UIBundle.messagePointer("button.text.down")) {
+      @Override
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new DownButton(listener, name == null ? getText() : name, icon);
+      }
+    };
 
-    public static final Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
+    private final Icon myIcon;
+    private final @NotNull Supplier<String> myText;
 
+    Buttons(@NotNull Icon icon, @NotNull Supplier<String> text) {
+      myIcon = icon;
+      myText = text;
+    }
+
+    @NotNull
     public Icon getIcon() {
-      switch (this) {
-        case ADD:    return IconUtil.getAddIcon();
-        case EDIT:   return IconUtil.getEditIcon();
-        case REMOVE: return IconUtil.getRemoveIcon();
-        case UP:     return IconUtil.getMoveUpIcon();
-        case DOWN:   return IconUtil.getMoveDownIcon();
-      }
-      return null;
+      return myIcon;
     }
 
-    MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name, icon);
-    }
+    abstract @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon);
 
+    @NotNull
     public String getText() {
-      return StringUtil.capitalize(StringUtil.toLowerCase(name()));
-    }
-
-    public void performAction(Listener listener) {
-      switch (this) {
-        case ADD: listener.doAdd(); break;
-        case EDIT: listener.doEdit(); break;
-        case REMOVE: listener.doRemove(); break;
-        case UP: listener.doUp(); break;
-        case DOWN: listener.doDown(); break;
-      }
+      return myText.get();
     }
   }
+
   public interface Listener {
     default void doAdd() {
     }
@@ -80,14 +98,14 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  private final Map<Buttons, MyActionButton> myButtons = new HashMap<>();
+  private final Map<Buttons, AnActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
-  CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
-                     @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
+  CommonActionsPanel(@NotNull ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
+                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<? super AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
-                     Icon addIcon, Buttons... buttons) {
+                     Icon addIcon, Buttons @NotNull ... buttons) {
     super(new BorderLayout());
     myPosition = position;
     final Listener listener = factory.createListener(this);
@@ -96,13 +114,13 @@ public class CommonActionsPanel extends JPanel {
       Buttons button = buttons[i];
       String name = null;
       switch (button) {
-        case ADD:    name = addName;      break;        
+        case ADD:    name = addName;      break;
         case EDIT:   name = editName;     break;
         case REMOVE: name = removeName;   break;
         case UP:     name = moveUpName;   break;
         case DOWN:   name = moveDownName; break;
       }
-      final MyActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
+      AnActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -119,19 +137,17 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtilRt.newArrayList(myActions);
+    ArrayList<AnAction> toolbarActions = ContainerUtil.newArrayList(myActions);
     for (int i = 0; i < toolbarActions.size(); i++) {
         if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
         }
     }
-    myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
     myToolbar = mgr.createActionToolbar("ToolbarDecorator",
                                         new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
-                                        position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
-                                        myDecorateButtons);
+                                        position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
     myToolbar.getComponent().setBorder(null);
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
@@ -147,18 +163,6 @@ public class CommonActionsPanel extends JPanel {
     if (position == ActionToolbarPosition.LEFT) add(myToolbar.getComponent(), BorderLayout.EAST);
     else if (position == ActionToolbarPosition.RIGHT) add(myToolbar.getComponent(), BorderLayout.WEST);
     else add(myToolbar.getComponent(), BorderLayout.CENTER);
-  }
-
-  @Override
-  protected void paintComponent(Graphics g2) {
-    final Graphics2D g = (Graphics2D)g2;
-    if (myDecorateButtons) {
-      myToolbar.getComponent().setOpaque(false);
-      MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
-    }
-    else {
-      super.paintComponent(g);
-    }
   }
 
   public AnActionButton getAnActionButton(Buttons button) {
@@ -180,24 +184,33 @@ public class CommonActionsPanel extends JPanel {
             shortcut = customShortCut;
           }
         }
-        if (button instanceof MyActionButton
-            && ((MyActionButton)button).isAddButton()
-            && UIUtil.isDialogRootPane(pane)) {
+        if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
           button.registerCustomShortcutSet(shortcut, pane);
         } else {
           button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         }
-        if (button instanceof MyActionButton && ((MyActionButton)button).isRemoveButton()) {
+        if (button instanceof RemoveButton) {
           registerDeleteHook((MyActionButton)button);
         }
       }
     }
-    
+
     super.addNotify(); // call after all to construct actions tooltips properly
   }
 
+  @Override
+  public void removeNotify() {
+    final JRootPane pane = getRootPane();
+    for (AnActionButton button : myActions) {
+      if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
+        button.unregisterCustomShortcutSet(pane);
+      }
+    }
+    super.removeNotify();
+  }
+
   private static void registerDeleteHook(final MyActionButton removeButton) {
-    new AnAction("Delete Hook") {
+    new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);
@@ -226,13 +239,13 @@ public class CommonActionsPanel extends JPanel {
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
-    final MyActionButton b = myButtons.get(button);
+    AnActionButton b = myButtons.get(button);
     if (b != null) {
       b.setEnabled(enabled);
     }
   }
 
-  public void setCustomShortcuts(@NotNull Buttons button, @Nullable ShortcutSet... shortcutSets) {
+  public void setCustomShortcuts(@NotNull Buttons button, ShortcutSet @Nullable ... shortcutSets) {
     if (shortcutSets != null) {
       if (myCustomShortcuts == null) myCustomShortcuts = new EnumMap<>(Buttons.class);
       myCustomShortcuts.put(button, new CompositeShortcutSet(shortcutSets));
@@ -251,19 +264,14 @@ public class CommonActionsPanel extends JPanel {
     return myPosition;
   }
 
-  static class MyActionButton extends AnActionButton implements DumbAware {
+  static abstract class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
-    private final Listener myListener;
+    protected final Listener myListener;
 
-    MyActionButton(Buttons button, Listener listener, String name, Icon icon) {
+    MyActionButton(@NotNull Buttons button, @NotNull Listener listener, @NotNull String name, @NotNull Icon icon) {
       super(name, name, icon);
       myButton = button;
       myListener = listener;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myButton.performAction(myListener);
     }
 
     @Override
@@ -278,68 +286,133 @@ public class CommonActionsPanel extends JPanel {
 
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
-        if (myButton == Buttons.EDIT) {
-          InputEvent inputEvent = e.getInputEvent();
-          if (inputEvent instanceof KeyEvent &&
-              c instanceof JTable &&
-              ((JTable)c).isEditing() &&
-              !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
-            ) {
-            e.getPresentation().setEnabled(false);
-            return;
-          }
-        }
-
-        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 
+        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel()
                                                              : ((JList)c).getSelectionModel();
-        final int size = c instanceof JTable ? ((JTable)c).getRowCount()  
+        final int size = c instanceof JTable ? ((JTable)c).getRowCount()
                                              : ((JList)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();
         final int max = model.getMaxSelectionIndex();
-
-        if ((myButton == Buttons.UP && min < 1)
-            || (myButton == Buttons.DOWN && max == size - 1)
-            || (myButton != Buttons.ADD && size == 0)
-            || (myButton == Buttons.EDIT && (min != max || min == -1))) {
-          e.getPresentation().setEnabled(false);
-        }
-        else {
-          e.getPresentation().setEnabled(isEnabled());
-        }
+        e.getPresentation().setEnabled(isEnabled() && isEnabled(size, min, max));
       }
     }
 
-    //@Override
-    //public boolean isEnabled() {
-    //  if (myButton == Buttons.REMOVE) {
-    //    final JComponent c = getContextComponent();
-    //    if (c instanceof JTable && ((JTable)c).isEditing()) return false;
-    //  }
-    //  return super.isEnabled();
-    //}
+    protected abstract boolean isEnabled(int size, int min, int max);
+  }
 
-    boolean isAddButton() {
-      return myButton == Buttons.ADD;
+  static class AddButton extends MyActionButton {
+    AddButton(Listener listener, String name, Icon icon) {
+      super(Buttons.ADD, listener, name, icon);
     }
 
-    boolean isRemoveButton() {
-      return myButton == Buttons.REMOVE;
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return true;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doAdd();
     }
   }
 
-  @Contract("!null -> !null")
-  public static ShortcutSet getCommonShortcut(Buttons button) {
+  static class RemoveButton extends MyActionButton {
+    RemoveButton(Listener listener, String name, Icon icon) {
+      super(Buttons.REMOVE, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doRemove();
+    }
+  }
+
+  static class EditButton extends MyActionButton {
+    EditButton(Listener listener, String name, Icon icon) {
+      super(Buttons.EDIT, listener, name, icon);
+    }
+
+    @Override
+    public void updateButton(@NotNull AnActionEvent e) {
+      final JComponent c = getContextComponent();
+      if (c == null || !c.isShowing() || !c.isEnabled()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+
+      InputEvent inputEvent = e.getInputEvent();
+      if (inputEvent instanceof KeyEvent &&
+          c instanceof JTable &&
+          ((JTable)c).isEditing() &&
+          !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
+      ) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      super.updateButton(e);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && min == max && min >= 0;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doEdit();
+    }
+  }
+
+  static class UpButton extends MyActionButton {
+    UpButton(Listener listener, String name, Icon icon) {
+      super(Buttons.UP, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && min >= 1;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doUp();
+    }
+  }
+
+  static class DownButton extends MyActionButton {
+    DownButton(Listener listener, String name, Icon icon) {
+      super(Buttons.DOWN, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && max < size-1;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doDown();
+    }
+  }
+
+  public static @NotNull ShortcutSet getCommonShortcut(@NotNull Buttons button) {
     switch (button) {
       case ADD: return CommonShortcuts.getNewForDialogs();
       case EDIT: return CustomShortcutSet.fromString("ENTER");
       case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
       case UP: return CommonShortcuts.MOVE_UP;
       case DOWN: return CommonShortcuts.MOVE_DOWN;
+      default:
+        throw new IllegalStateException("Unexpected value: " + button);
     }
-    return null;
   }
 
   interface ListenerFactory {
-    Listener createListener(CommonActionsPanel panel);
+    @NotNull
+    Listener createListener(@NotNull CommonActionsPanel panel);
   }
 }

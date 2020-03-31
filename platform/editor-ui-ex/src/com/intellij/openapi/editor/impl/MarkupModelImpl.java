@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
+  private static final Logger LOG = Logger.getInstance(MarkupModelImpl.class);
   private final DocumentEx myDocument;
 
   private RangeHighlighter[] myCachedHighlighters;
@@ -87,8 +87,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   // NB: Can return invalid highlighters
   @Override
-  @NotNull
-  public RangeHighlighter[] getAllHighlighters() {
+  public RangeHighlighter @NotNull [] getAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCachedHighlighters == null) {
       int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
@@ -152,7 +151,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     treeFor(marker).addInterval(marker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
-  private RangeHighlighterTree treeFor(RangeHighlighter marker) {
+  RangeHighlighterTree treeFor(RangeHighlighter marker) {
     return marker.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
 
@@ -269,6 +268,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return IntervalTreeImpl
       .mergingOverlappingIterator(myHighlighterTree, new TextRangeInterval(startOffset, endOffset), myHighlighterTreeForLines,
                                   roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+  }
+
+  @NotNull
+  @Override
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                int endOffset,
+                                                                boolean onlyRenderedInGutter,
+                                                                boolean onlyRenderedInScrollBar) {
+    startOffset = Math.max(0,startOffset);
+    endOffset = Math.max(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> exact = myHighlighterTree
+      .overlappingIterator(new TextRangeInterval(startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar);
+    MarkupIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines
+      .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar);
+    return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull

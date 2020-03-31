@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -30,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AnnotationParamListElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnnotationParamListElement");
+  private static final Logger LOG = Logger.getInstance(AnnotationParamListElement.class);
   private static final TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(JavaElementType.NAME_VALUE_PAIR);
 
   public AnnotationParamListElement() {
@@ -75,52 +61,51 @@ public class AnnotationParamListElement extends CompositeElement {
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
-      ASTNode lparenth = findChildByType(JavaTokenType.LPARENTH);
-      if (lparenth == null) {
-        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, treeCharTab, getManager());
-        super.addInternal(created, created, getFirstChildNode(), true);
-      }
+    ASTNode lparenth = findChildByType(JavaTokenType.LPARENTH);
+    if (lparenth == null) {
+      CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement created = Factory.createSingleLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, treeCharTab, getManager());
+      super.addInternal(created, created, getFirstChildNode(), true);
+    }
 
-      ASTNode rparenth = findChildByType(JavaTokenType.RPARENTH);
-      if (rparenth == null) {
-        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, treeCharTab, getManager());
-        super.addInternal(created, created, getLastChildNode(), false);
-      }
+    ASTNode rparenth = findChildByType(JavaTokenType.RPARENTH);
+    if (rparenth == null) {
+      CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement created = Factory.createSingleLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, treeCharTab, getManager());
+      super.addInternal(created, created, getLastChildNode(), false);
+    }
 
-      ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
-      if (nodes.length == 1) {
-        ASTNode node = nodes[0];
-        if (node instanceof PsiNameValuePair) {
-          PsiNameValuePair pair = (PsiNameValuePair)node;
-          if (pair.getName() == null) {
-            PsiAnnotationMemberValue value = pair.getValue();
-            if (value != null) {
-              try {
-                PsiElementFactory factory = JavaPsiFacade.getElementFactory(getPsi().getProject());
-                PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
-                replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+    ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
+    if (nodes.length == 1) {
+      ASTNode node = nodes[0];
+      if (node instanceof PsiNameValuePair) {
+        PsiNameValuePair pair = (PsiNameValuePair)node;
+        if (pair.getName() == null) {
+          PsiAnnotationMemberValue value = pair.getValue();
+          if (value != null) {
+            try {
+              PsiElementFactory factory = JavaPsiFacade.getElementFactory(getPsi().getProject());
+              PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
+              replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
         }
       }
-
-      if (anchor == null && before != null) {
-        anchor = findChildByType(before ? JavaTokenType.RPARENTH : JavaTokenType.LPARENTH);
-      }
-
-      TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-      JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
-      return firstAdded;
     }
 
-    return super.addInternal(first, last, anchor, before);
+    if (anchor == null) {
+      if (before == null) before = Boolean.TRUE;
+      anchor = findChildByType(before ? JavaTokenType.RPARENTH : JavaTokenType.LPARENTH);
+    }
+
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+      JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
+    }
+    return firstAdded;
   }
 
   @Override

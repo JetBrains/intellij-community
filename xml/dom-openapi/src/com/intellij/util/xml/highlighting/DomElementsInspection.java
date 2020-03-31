@@ -30,11 +30,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -43,12 +41,12 @@ import java.util.Set;
  * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementsInspection");
+  private static final Logger LOG = Logger.getInstance(DomElementsInspection.class);
 
   private final Set<Class<? extends T>> myDomClasses;
 
-  public DomElementsInspection(Class<? extends T> domClass, @NotNull Class<? extends T>... additionalClasses) {
-    myDomClasses = new THashSet<>(Arrays.asList(additionalClasses));
+  public DomElementsInspection(Class<? extends T> domClass, Class<? extends T> @NotNull ... additionalClasses) {
+    myDomClasses = ContainerUtil.set(additionalClasses);
     myDomClasses.add(domClass);
   }
 
@@ -110,8 +108,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
       for (Class<? extends T> domClass: myDomClasses) {
         final DomFileElement<? extends T> fileElement = DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, domClass);
@@ -138,10 +135,9 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   /**
    * not intended to be overridden or called by implementors
    */
-  @Nullable
-  protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
-                                             @NotNull final InspectionManager manager,
-                                             final boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
+                                                        @NotNull final InspectionManager manager,
+                                                        final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
     final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this, isOnTheFly);

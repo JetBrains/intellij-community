@@ -19,14 +19,15 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
     new ExtensionPointName<>("com.intellij.runConfigurationExtension");
 
   @ApiStatus.Experimental
-  public <T extends RunConfigurationBase> void updateJavaParameters(final T configuration,
-                                                                    final JavaParameters params,
+  public <T extends RunConfigurationBase> void updateJavaParameters(@NotNull final T configuration,
+                                                                    @NotNull final JavaParameters params,
                                                                     RunnerSettings runnerSettings,
                                                                     @NotNull final Executor executor) throws ExecutionException {
-    updateJavaParameters(configuration,params,runnerSettings);
+    updateJavaParameters(configuration, params, runnerSettings);
   }
 
-  public abstract <T extends RunConfigurationBase> void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
+  public abstract <T extends RunConfigurationBase> void updateJavaParameters(@NotNull final T configuration,
+                                                                             @NotNull final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
 
   @Override
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,

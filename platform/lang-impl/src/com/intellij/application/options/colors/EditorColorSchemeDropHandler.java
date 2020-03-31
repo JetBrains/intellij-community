@@ -4,11 +4,11 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.ide.actions.QuickChangeColorSchemeAction;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -36,6 +36,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
+
+  public static final String ADDED = "Color scheme added";
+
   @Override
   public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
     return getColorSchemeFile(t) != null;
@@ -54,11 +57,12 @@ public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
     VirtualFile file = getColorSchemeFile(t);
     assert file != null;
 
-    if (Messages.YES == Messages.showYesNoDialog("Would you like to install and apply '" + file.getName() + "' editor color scheme?",
-                                                 "Install Color Scheme?",
-                                                 "Install",
-                                                 "Open in Editor",
-                                                 null)) {
+    if (Messages.YES == Messages.showYesNoDialog(
+      LangBundle.message("message.would.you.like.to.install.and.apply.0.editor.color.scheme", file.getName()),
+      LangBundle.message("dialog.title.install.color.scheme"),
+      LangBundle.message("button.install"),
+      LangBundle.message("button.open.in.editor"),
+      null)) {
       try {
         ColorSchemeImporter importer = new ColorSchemeImporter();
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -81,14 +85,17 @@ public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
           }
 
           colorsManager.setGlobalScheme(imported);
-          Notification notification = new Notification("", "Color scheme added", message, NotificationType.INFORMATION);
+          Notification notification = new Notification("", ADDED, message, NotificationType.INFORMATION);
           QuickChangeColorSchemeAction.changeLafIfNecessary(imported,
                                                             () -> new Alarm().addRequest(
                                                               () -> Notifications.Bus.notify(notification, project), 300));
         }
       }
       catch (SchemeImportException e) {
-        Logger.getInstance(getClass()).error(e);
+        String title = e.isWarning() ? ADDED : "Color scheme import failed";
+        NotificationType type = e.isWarning() ? NotificationType.WARNING : NotificationType.ERROR;
+        Notification notification = new Notification("", title, e.getMessage(), type);
+        notification.notify(project);
       }
       return true;
     }

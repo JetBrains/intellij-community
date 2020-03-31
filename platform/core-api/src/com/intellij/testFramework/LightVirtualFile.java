@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -59,6 +61,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);
+    setCharset(CharsetToolkit.UTF8_CHARSET);
   }
 
   public Language getLanguage() {
@@ -100,8 +103,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
     final String s = getContent().toString();
     return s.getBytes(charset.name());
@@ -116,6 +118,10 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @NotNull
   public CharSequence getContent() {
     return myContent;
+  }
+
+  public @NotNull ThreeState isTooLargeForIntelligence() {
+    return ThreeState.UNSURE;
   }
 
   @Override

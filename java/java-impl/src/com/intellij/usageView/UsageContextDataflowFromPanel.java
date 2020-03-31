@@ -16,6 +16,7 @@
 
 package com.intellij.usageView;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
@@ -34,7 +35,7 @@ public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Dataflow from Here";
+      return JavaBundle.message("dataflow.from.here");
     }
   }
 

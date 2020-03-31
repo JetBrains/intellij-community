@@ -37,9 +37,9 @@ public class AsyncProcessIcon extends AnimatedIcon {
     super(name, icons, passive, CYCLE_LENGTH);
   }
 
-  @Deprecated
-  public AsyncProcessIcon setUseMask(boolean useMask) {
-    return this;
+  @Override
+  protected Dimension calcPreferredSize() {
+    return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
   }
 
   @Override

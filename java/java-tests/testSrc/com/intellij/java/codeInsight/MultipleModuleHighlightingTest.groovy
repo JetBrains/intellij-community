@@ -181,7 +181,7 @@ public class Factory {
     myFixture.addFileToProject "mod2/Usage.java", '''
 public class Usage {
   {
-    <error descr="Cannot access Class0">Factory.create</error>();
+    Factory.create();
   }
 }
 '''
@@ -213,7 +213,7 @@ public class B extends A {
 class Class3 {
   {
     new B().m1();
-    new B().<error descr="Cannot resolve method 'm2()'">m2</error>();
+    new B().<error descr="Cannot resolve method 'm2' in 'B'">m2</error>();
   }
 }
 

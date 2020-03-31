@@ -18,14 +18,12 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.EmptyIntHashSet;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-@ApiStatus.Experimental
 public class InvertedIndexUtil {
   @NotNull
   public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,

@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +31,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class JdkPopupAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.JDKPopupAction");
+  private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
-    super("Show Quick list", "", AllIcons.General.AddJdk);
+    super(JavaBundle.messagePointer("action.text.show.quick.list"), () -> "", AllIcons.General.AddJdk);
   }
 
   @Override
@@ -74,7 +75,7 @@ public class JdkPopupAction extends AnAction {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
-    }, "Looking for JDK locations...", false, e.getProject(), component);
+    }, JavaBundle.message("progress.title.looking.for.jdk.locations"), false, e.getProject(), component);
   }
 
   private static boolean isEnabledInCurrentOS() {
@@ -87,9 +88,8 @@ public class JdkPopupAction extends AnAction {
                              JComponent component) {
     ActionPopupMenu menu =
       ActionManager.getInstance().createActionPopupMenu(e.getPlace(), new ActionGroup() {
-        @NotNull
         @Override
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           List<AnAction> result = new ArrayList<>();
           for (final Pair<File, String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {

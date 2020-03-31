@@ -21,13 +21,13 @@ import com.intellij.codeInspection.capitalization.TitleCapitalizationInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCase {
+public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testTitleCapitalization() {
     doTest(true);
@@ -58,6 +58,17 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
   }
 
   public void testSuperConstructorArgument() {
+    doTest(false);
+  }
+
+  public void testPropertyTest() {
+    String props = "property.lowercase=hello world\n" +
+                   "property.titlecase=Hello World\n" +
+                   "property.parameterized=Hello {0}\n" +
+                   "property.choice.title=Hello {0,choice,0#World|1#Universe}\n" +
+                   "property.choice.mixed=Hello {0,choice,0#World|1#universe}\n" +
+                   "property.choice.lower=Hello {0,choice,0#world|1#universe}\n";
+    myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
   }
 

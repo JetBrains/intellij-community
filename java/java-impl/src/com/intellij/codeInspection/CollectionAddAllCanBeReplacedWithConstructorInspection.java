@@ -157,7 +157,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     for (PsiMethod psiMethod : psiClass.getConstructors()) {
       PsiParameterList parameterList = psiMethod.getParameterList();
       if(parameterList.getParametersCount() == 1) {
-        PsiParameter parameter = parameterList.getParameters()[0];
+        PsiParameter parameter = Objects.requireNonNull(parameterList.getParameter(0));
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
           PsiType type = typeElement.getType();
@@ -180,7 +180,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(resolved)) {
           PsiVariable variable = (PsiVariable) resolved;
           final LocalSearchScope useScope = (LocalSearchScope)variable.getUseScope();
           if (!useScope.containsRange(newExpressionContainingFile, newExpressionTextRange)) {

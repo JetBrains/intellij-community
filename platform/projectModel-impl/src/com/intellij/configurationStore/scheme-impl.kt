@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
@@ -13,6 +14,8 @@ import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
@@ -30,9 +33,9 @@ interface SchemeDataHolder<in T> {
    */
   fun read(): Element
 
-  fun updateDigest(scheme: T)
+  fun updateDigest(scheme: T) = Unit
 
-  fun updateDigest(data: Element?)
+  fun updateDigest(data: Element?) = Unit
 }
 
 /**
@@ -51,7 +54,7 @@ interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
   fun schemeContentChanged(scheme: MUTABLE_SCHEME, name: String, dataHolder: SchemeDataHolder<MUTABLE_SCHEME>)
 }
 
-abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+abstract class LazySchemeProcessor<SCHEME : Any, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   open fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     return attributeProvider.apply(nameAttribute)
   }
@@ -162,3 +165,7 @@ fun SchemeManager<*>.save() {
   save(errors)
   CompoundRuntimeException.throwIfNotEmpty(errors)
 }
+
+@ApiStatus.Internal
+@TestOnly
+val LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE = Key.create<Boolean>("LISTEN_VFS_CHANGES_IN_TEST_MODE")

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -37,14 +23,24 @@ public final class FileChooserUtil {
 
   @Nullable
   public static VirtualFile getLastOpenedFile(@Nullable Project project) {
-    if (project == null) return null;
-    String path = PropertiesComponent.getInstance(project).getValue(LAST_OPENED_FILE_PATH);
+    String path;
+    if (project == null) {
+      path = PropertiesComponent.getInstance().getValue(LAST_OPENED_FILE_PATH);
+    }
+    else {
+      path = PropertiesComponent.getInstance(project).getValue(LAST_OPENED_FILE_PATH);
+    }
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
 
   public static void setLastOpenedFile(@Nullable Project project, @Nullable VirtualFile file) {
-    if (project == null || project.isDisposed() || file == null) return;
-    PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, file.getPath());
+    if (file == null) return;
+    if (project == null) {
+      PropertiesComponent.getInstance().setValue(LAST_OPENED_FILE_PATH, file.getPath());
+    }
+    else if (!project.isDisposed()) {
+      PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, file.getPath());
+    }
   }
 
   @Nullable

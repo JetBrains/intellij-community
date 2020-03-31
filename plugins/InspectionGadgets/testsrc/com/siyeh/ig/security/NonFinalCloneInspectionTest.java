@@ -16,13 +16,13 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NonFinalCloneInspectionTest extends LightInspectionTestCase {
+public class NonFinalCloneInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNonFinalClone() {
     doTest();

@@ -60,7 +60,7 @@ public class ArtifactRepositoryManager {
   private final DefaultRepositorySystemSession mySession;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
-    "central", "http://repo1.maven.org/maven2/"
+    "central", "https://repo1.maven.org/maven2/"
   );
   private static final RemoteRepository JBOSS_COMMUNITY_REPOSITORY = createRemoteRepository(
     "jboss.community", "https://repository.jboss.org/nexus/content/repositories/public/"
@@ -130,7 +130,7 @@ public class ArtifactRepositoryManager {
    * Returns list of classes corresponding to classpath entries for this this module.
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static List<Class> getClassesFromDependencies() {
+  public static List<Class<?>> getClassesFromDependencies() {
     return Arrays.asList(
       org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
       org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider

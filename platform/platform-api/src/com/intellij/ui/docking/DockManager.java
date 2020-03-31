@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
@@ -26,22 +12,27 @@ import java.awt.event.MouseEvent;
 import java.util.Set;
 
 public abstract class DockManager {
+  /**
+   * @deprecated Use {@link #register(DockContainer, Disposable)}
+   */
+  @Deprecated
+  public abstract void register(@NotNull DockContainer container);
 
-  public abstract void register(DockContainer container);
-  public abstract void register(String id, DockContainerFactory factory);
+  public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
 
-  public static DockManager getInstance(Project project) {
-    return ServiceManager.getService(project, DockManager.class);
+  public abstract void register(@NotNull String id, @NotNull DockContainerFactory factory, @NotNull Disposable parentDisposable);
+
+  public static DockManager getInstance(@NotNull Project project) {
+    return project.getService(DockManager.class);
   }
 
-  public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content);
+  public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent<?> content);
 
-  public abstract Set<DockContainer> getContainers();
+  public abstract @NotNull Set<@NotNull DockContainer> getContainers();
 
-  public abstract IdeFrame getIdeFrame(DockContainer container);
+  public abstract IdeFrame getIdeFrame(@NotNull DockContainer container);
 
   public abstract String getDimensionKeyForFocus(@NotNull String key);
 
-  @Nullable
-  public abstract DockContainer getContainerFor(Component c);
+  public abstract @Nullable DockContainer getContainerFor(Component c);
 }

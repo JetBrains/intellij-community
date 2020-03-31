@@ -1,5 +1,7 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <name>Coverage</name>
+<idea-plugin>
+  <name>Code Coverage for Java</name>
+  <id>Coverage</id>
+  <category>Code Coverage</category>
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
   <depends>com.intellij.modules.coverage</depends>
@@ -7,15 +9,12 @@
 
   <description>
       <![CDATA[
-     Supports gathering coverage information and presenting it right in
-     the editor and in the Project view.
-        The following features are available:
-        <ul>
-        <li>Coverage tab in the run/debug configurations.</li>
-        <li>Run with coverage command.</li>
-        <li>Ability to generate standalone HTML reports for external use.</li>
-        </ul>
-      ]]>
+Collects and displays coverage information for Java.
+<p>
+To run your code with coverage, open the <b>Run</b> menu and click <b>Run with Coverage</b>.
+Results are displayed in the <b>Coverage</b> tool window, in the <b>Project</b> tool window, and in the editor.
+<p>
+To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Coverage</b>.]]>
    </description>
   <vendor>JetBrains</vendor>
 
@@ -31,16 +30,11 @@
     <projectService serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
     <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
+    <notificationWhitelist groupIds="Coverage"/>
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
+    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension" dynamic="true"/>
   </extensionPoints>
-  <actions>
-    <group id="IDEACoverageMenu" popup="false">
-      <reference ref="CoverageMenu"/>
-      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="AnalyzeActions"/>
-    </group>
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="CoveragePlatformMenu"/>
-  </actions>
+  <resource-bundle>messages.JavaCoverageBundle</resource-bundle>
 </idea-plugin>

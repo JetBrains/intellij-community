@@ -30,7 +30,7 @@ public class ListWrappingTableModel extends AbstractTableModel implements ItemRe
   private final List<String> columnNames = new ArrayList<>();
 
   public ListWrappingTableModel(@NotNull List<List<String>> list,
-                                @NotNull String... columnNames) {
+                                String @NotNull ... columnNames) {
     this.list = list;
     ContainerUtil.addAll(this.columnNames, columnNames);
   }

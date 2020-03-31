@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
@@ -961,15 +961,15 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     }
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && sdk != null && PythonSdkType.isStdLib(vFile, sdk)) {
+    if (vFile != null && sdk != null && PythonSdkUtil.isStdLib(vFile, sdk)) {
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       return getStdlibUrlFor(element, qName, sdk);
     }
     return null;
   }
 
-  @Override
-  public String getExternalDocumentationRoot(Sdk sdk) {
+  @NotNull
+  private static String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
     if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
       return "http://jython.org/docs/library/";

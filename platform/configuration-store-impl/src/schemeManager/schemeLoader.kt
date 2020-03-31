@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
@@ -16,7 +16,6 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import org.xmlpull.mxp1.MXParser
 import org.xmlpull.v1.XmlPullParser
-import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -26,12 +25,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                         private val oldSchemes: ConcurrentList<T>,
+                                                         private val oldSchemes: List<T>,
                                                          private val preScheduledFilesToDelete: MutableSet<String>,
                                                          private val isDuringLoad: Boolean) {
-  private val filesToDelete: MutableSet<String> = THashSet<String>()
+  private val filesToDelete: MutableSet<String> = THashSet()
 
-  private val schemes = oldSchemes.toMutableList()
+  private val schemes: MutableList<T> = oldSchemes.toMutableList()
   private var newSchemesOffset = schemes.size
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
@@ -55,7 +54,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
-    if (!filesToDelete.isEmpty() || !preScheduledFilesToDelete.isEmpty()) {
+    if (filesToDelete.isNotEmpty() || preScheduledFilesToDelete.isNotEmpty()) {
       LOG.debug { "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})" }
       schemeManager.filesToDelete.addAll(filesToDelete)
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
@@ -174,14 +173,14 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
 
         val externalInfo = createInfo(schemeKey, null)
         scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider)
-        schemeToInfo.put(scheme, externalInfo)
+        schemeToInfo.put(scheme!!, externalInfo)
         retainProbablyScheduledForDeleteFile(fileName)
       }
     }
     else {
       val element = when (preloadedBytes) {
-        null -> JDOMUtil.load(input!!.bufferedReader())
-        else -> JDOMUtil.load(ByteArrayInputStream(preloadedBytes))
+        null -> JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(input!!.buffered()))
+        else -> JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(preloadedBytes.inputStream()))
       }
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, isDuringLoad) ?: return null
       val schemeKey = processor.getSchemeKey(scheme!!)
@@ -189,11 +188,11 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
         return null
       }
 
-      schemeToInfo.put(scheme, createInfo(schemeKey, element))
+      schemeToInfo.put(scheme!!, createInfo(schemeKey, element))
       retainProbablyScheduledForDeleteFile(fileName)
     }
 
-    schemes.add(scheme)
+    schemes.add(scheme!!)
     return scheme
   }
 

@@ -4,18 +4,15 @@ package com.intellij.structuralsearch;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
+public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTestCase {
   public void testAll() {
     final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));
@@ -144,34 +141,130 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
            "}",
            "<T> X(String s) {}", "<T extends U, V> X(int i) {}");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy")),
-           "class X {}",
+           "class X {}", StdFileTypes.JAVA,
            PsiElement::getText,
            "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.with.final.parameters")),
            "class X {" +
+           "  int myI;" +
+           "  X(final int i) {" +
+           "    myI = i;" +
+           "  }" +
            "  public void m(final int i, int j, int k) {" +
            "    System.out.println(i);" +
            "  }" +
            "  void n() {}" +
            "  void o(String s) {}" +
            "}",
-           "public void m(final int i, int j, int k) {    System.out.println(i);  }");
-    //assertTrue("untested configurations: " + configurationMap.keySet(), configurationMap.isEmpty());
+           "X(final int i) {    myI = i;  }", "public void m(final int i, int j, int k) {    System.out.println(i);  }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.of.the.class")),
+           "abstract class X {" +
+           "  X() {}" +
+           "  X(String s) {}" +
+           "  abstract void x();" +
+           "  int x(int i) {}" +
+           "  boolean x(double d, Object o) {}" +
+           "}",
+           "X() {}", "X(String s) {}", "abstract void x();", "int x(int i) {}", "boolean x(double d, Object o) {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.class.static.blocks")),
+           "class X {" +
+           "  static {}" +
+           "  static {" +
+           "    System.out.println();" +
+           "  }" +
+           "  {" +
+           "    {}" +
+           "  }" +
+           "}",
+           "static {}", "static {    System.out.println();  }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.class.any.initialization.blocks")),
+           "class X {" +
+           "  static {}" +
+           "  static {" +
+           "    System.out.println();" +
+           "  }" +
+           "  {" +
+           "    {}" +
+           "  }" +
+           "}",
+           "static {}", "static {    System.out.println();  }", "{    {}  }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.static.fields.without.final")),
+           "class X {" +
+           "  int i1 = 1;" +
+           "  static int i2 = 2;" +
+           "  static final int i3 = 3;" +
+           "}",
+           "static int i2 = 2;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.annotated.fields")),
+           "class X {" +
+           "  @SuppressWarnings(\"All\") @Deprecated" +
+           "  private static final int YES = 0;" +
+           "  @Deprecated" +
+           "  String text = null;" +
+           "  public static final int NO = 1;" +
+           "}",
+           "@SuppressWarnings(\"All\") @Deprecated  private static final int YES = 0;",
+           "@Deprecated  String text = null;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.annotated.methods")),
+           "class X {" +
+           "  /** constructor */" +
+           "  X() {}" +
+           "" +
+           "  /** */" +
+           "  void x() {}" +
+           "" +
+           "  /** @deprecated */" +
+           "  void y() {}" +
+           "" +
+           "  /**" +
+           "   * important" +
+           "   * method" +
+           "   * @param i  the value that will be returned" +
+           "   */" +
+           "   int z(int i) {" +
+           "     return i;" +
+           "   }" +
+           "" +
+           "  void a() {}" +
+           "}",
+           "/** constructor */" +
+           "  X() {}",
+           "/** */" +
+           "  void x() {}",
+           "/** @deprecated */" +
+           "  void y() {}",
+           "/**" +
+           "   * important" +
+           "   * method" +
+           "   * @param i  the value that will be returned" +
+           "   */" +
+           "   int z(int i) {" +
+           "     return i;" +
+           "   }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.switches")),
+           "class X {{" +
+           "  int i = switch (1) {" +
+           "            default -> {}" +
+           "          }" +
+           "  switch (2) {" +
+           "    case 1,2:" +
+           "      break;" +
+           "    default:" +
+           "  }" +
+           "}}",
+           "switch (1) {" +
+           "            default -> {}" +
+           "          }",
+           "switch (2) {" +
+           "    case 1,2:" +
+           "      break;" +
+           "    default:" +
+           "  }");
+    //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
+    //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 
-  private void doTest(Configuration template, String source, String... results) {
-    doTest(template, source, e -> StructuralSearchUtil.getPresentableElement(e).getText(), results);
-  }
-
-  private void doTest(Configuration template, String source, Function<? super PsiElement, String> resultConverter, String... expectedResults) {
-    if (!(template instanceof SearchConfiguration)) fail();
-    final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
-    options = searchConfiguration.getMatchOptions();
-    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, null, false);
-    assertEquals(template.getName(), expectedResults.length, matches.size());
-    String[] actualResults = matches.stream().map(MatchResult::getMatch).map(resultConverter).toArray(String[]::new);
-    for (int i = 0; i < actualResults.length; i++) {
-      assertEquals(template.getName(), expectedResults[i], actualResults[i]);
-    }
+  protected void doTest(Configuration template, String source, String... results) {
+    doTest(template, source, StdFileTypes.JAVA, results);
   }
 }

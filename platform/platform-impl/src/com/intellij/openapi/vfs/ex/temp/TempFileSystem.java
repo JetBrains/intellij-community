@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author max
- */
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem {
   private static final String TEMP_PROTOCOL = "temp";
   private final FSItem myRoot = new FSDir(null, "/");
@@ -36,7 +34,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull final String path) {
+  protected String extractRootPath(@NotNull String normalizedPath) {
     return "/";
   }
 
@@ -151,8 +149,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   @Override
-  @NotNull
-  public String[] list(@NotNull final VirtualFile file) {
+  public String @NotNull [] list(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
     return fsItem.list();
@@ -198,8 +195,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
     assert fsItem instanceof FSFile : fsItem;
@@ -223,7 +219,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       public void close() throws IOException {
         super.close();
         final FSItem fsItem = convert(file);
-        assert fsItem instanceof FSFile;
+        assert fsItem instanceof FSFile : fsItem;
 
         ((FSFile)fsItem).myContent = toByteArray();
         setTimeStamp(file, modStamp);
@@ -271,9 +267,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       return myParent;
     }
 
-    @NotNull
-    public String[] list() {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+    public String @NotNull [] list() {
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Override
@@ -311,10 +306,9 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       myChildren.remove(fsItem.myName);
     }
 
-    @NotNull
     @Override
-    public String[] list() {
-      return ArrayUtil.toStringArray(myChildren.keySet());
+    public String @NotNull [] list() {
+      return ArrayUtilRt.toStringArray(myChildren.keySet());
     }
   }
 
@@ -323,7 +317,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       super(parent, name);
     }
 
-    private byte[] myContent = new byte[0];
+    private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
 
     @Override
     public boolean isDirectory() {

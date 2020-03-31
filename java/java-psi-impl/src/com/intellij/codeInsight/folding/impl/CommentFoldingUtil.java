@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,9 @@ public final class CommentFoldingUtil {
 
     if (prefix == null || suffix == null || linePrefix == null) return null;
 
-    final String header = getCommentHeader(document, suffix, linePrefix, commentRange);
+    final String header = getCommentHeader(document, suffix, prefix, linePrefix, commentRange);
+    final String fullText = getCommentText(document, suffix, prefix, linePrefix, commentRange);
+    if (StringUtil.equalsIgnoreWhitespaces(header, fullText)) replacement = "";
 
     return getCommentPlaceholder(prefix, suffix, header, replacement);
   }
@@ -229,7 +232,9 @@ public final class CommentFoldingUtil {
   }
 
   /**
-   * Get second line from comment excluding comment suffix and comment line prefix.
+   * Get first non-blank line from comment.
+   * If line with comment prefix contains text then it will be used as header, otherwise second line will be used.
+   * If both lines are blank or comment contains only one line then empty string is returned.
    *
    * @param document      document with comment
    * @param commentSuffix doc comment suffix
@@ -239,24 +244,90 @@ public final class CommentFoldingUtil {
   @NotNull
   public static String getCommentHeader(@NotNull Document document,
                                         @NotNull String commentSuffix,
+                                        @NotNull String commentPrefix,
                                         @NotNull String linePrefix,
                                         @NotNull TextRange commentRange) {
     final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
-    final int nSecondCommentLine = nFirstCommentLine + 1;
+    for (int i = 0; i <= 1; i++) {
+      final String line = getCommentLine(i, nFirstCommentLine, document, commentSuffix, commentPrefix, linePrefix, commentRange);
+      if (line == null) return "";
+      if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
+    }
+    return "";
+  }
 
-    if (nSecondCommentLine >= document.getLineCount()) return "";
+  /**
+   * Get comment text excluding prefixes and suffixes.
+   * If line contains whitespaces they will be included as well.
+   *
+   * @param document      document with comment
+   * @param commentSuffix doc comment suffix
+   * @param commentPrefix doc comment prefix
+   * @param linePrefix    prefix for doc comment line
+   * @param commentRange  comment text range in document
+   */
+  @NotNull
+  public static String getCommentText(@NotNull Document document,
+                                      @NotNull String commentSuffix,
+                                      @NotNull String commentPrefix,
+                                      @NotNull String linePrefix,
+                                      @NotNull TextRange commentRange) {
+    final StringBuilder sb = new StringBuilder();
+    final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
+    for (int i = 0; ; i++) {
+      final String line = getCommentLine(i, nFirstCommentLine, document, commentSuffix, commentPrefix, linePrefix, commentRange);
+      if (line == null) break;
+      sb.append(line);
+    }
+    return sb.toString();
+  }
 
-    final int endOffset = document.getLineEndOffset(nSecondCommentLine);
-    if (endOffset > commentRange.getEndOffset()) return "";
+  @NotNull
+  @Contract("_, _ -> new")
+  private static TextRange getLineRange(@NotNull Document document, int nLine) {
+    int startOffset = document.getLineStartOffset(nLine);
+    int endOffset = document.getLineEndOffset(nLine);
+    return new TextRange(startOffset, endOffset);
+  }
 
-    final int startOffset = document.getLineStartOffset(nSecondCommentLine);
+  @Nullable
+  private static String getCommentLine(int lineOffset,
+                                       int nFirstCommentLine,
+                                       @NotNull Document document,
+                                       @NotNull String commentSuffix,
+                                       @NotNull String commentPrefix,
+                                       @NotNull String linePrefix,
+                                       @NotNull TextRange commentRange) {
+    if (lineOffset == 0) {
+      final TextRange lineRange = getLineRange(document, nFirstCommentLine);
+      return getCommentLine(document, lineRange, commentRange, commentPrefix, commentSuffix);
+    }
+    final int nCommentLine = nFirstCommentLine + lineOffset;
+    if (nCommentLine >= document.getLineCount()) return null;
 
-    String line = document.getText(new TextRange(startOffset, endOffset));
-    line = line.trim();
+    final TextRange lineRange = getLineRange(document, nCommentLine);
+    if (lineRange.getEndOffset() > commentRange.getEndOffset()) return null;
 
-    line = StringUtil.trimEnd(line, commentSuffix);
-    line = StringUtil.trimStart(line, linePrefix);
+    return getCommentLine(document, lineRange, commentRange, linePrefix, commentSuffix);
+  }
 
-    return line;
+  @NotNull
+  private static String getCommentLine(@NotNull Document document,
+                                       @NotNull TextRange lineRange,
+                                       @NotNull TextRange commentRange,
+                                       @NotNull String prefix,
+                                       @NotNull String suffix) {
+    int startOffset = Math.max(lineRange.getStartOffset(), commentRange.getStartOffset());
+    int endOffset = Math.min(lineRange.getEndOffset(), commentRange.getEndOffset());
+
+    String commentPart = document.getText(new TextRange(startOffset, endOffset));
+
+    int suffixIdx = commentPart.indexOf(suffix);
+    if (suffixIdx != -1) commentPart = commentPart.substring(0, suffixIdx).trim();
+
+    int prefixIdx = commentPart.indexOf(prefix);
+    if (prefixIdx != -1) commentPart = commentPart.substring(prefixIdx + prefix.length());
+
+    return commentPart;
   }
 }

@@ -60,7 +60,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
                     @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor("Save Patch to", ""), myProject);
     VirtualFileWrapper targetFile = dialog.save(myProject.getBaseDir(), "TheirsChanges.patch");
 

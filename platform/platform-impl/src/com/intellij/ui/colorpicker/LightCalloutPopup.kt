@@ -20,10 +20,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.BalloonImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -33,13 +35,15 @@ import javax.swing.JComponent
  *
  * The popup is automatically dismissed when the user clicks outside.
  */
-class LightCalloutPopup(
+class LightCalloutPopup(val content: JComponent,
   val closedCallback: (() -> Unit)? = null,
   val cancelCallBack: (() -> Unit)? = null,
   val beforeShownCallback: (() -> Unit)? = null
 ) {
 
   private var balloon: Balloon? = null
+
+  fun getBalloon(): Balloon? = balloon
 
   /**
    * @param content The content in Popup Window
@@ -50,8 +54,7 @@ class LightCalloutPopup(
    */
   @JvmOverloads
   fun show(
-    content: JComponent,
-    parentComponent: JComponent?,
+    parentComponent: JComponent? = null,
     location: Point,
     position: Balloon.Position = Balloon.Position.below
   ) {
@@ -77,6 +80,13 @@ class LightCalloutPopup(
         }
       })
 
+      if (this is BalloonImpl) {
+        setHideListener {
+          closedCallback?.invoke()
+          hide()
+        }
+      }
+
       val relativePoint = if (parentComponent != null) {
         RelativePoint(parentComponent, location)
       }
@@ -95,9 +105,27 @@ class LightCalloutPopup(
     balloon?.hide(false)
   }
 
+  fun getPointerColor(showingPoint: RelativePoint, component: JComponent): Color? {
+    val saturationBrightnessComponent = UIUtil.findComponentOfType(component, SaturationBrightnessComponent::class.java)
+    if (saturationBrightnessComponent != null) {
+      val point = showingPoint.getPoint(saturationBrightnessComponent)
+      val size = saturationBrightnessComponent.size
+      val location = saturationBrightnessComponent.location
+      val x1 = location.x
+      val y1 = location.y
+      val x2 = x1 + size.width
+      val y2 = y1 + size.height
+      val x = if (point.x < x1) x1 else if (point.x > x2) x2 else point.x
+      val y = if (point.y < y1) y1 else if (point.y > y2) y2 else point.y
+      if (y == y2) return null
+      return saturationBrightnessComponent.getColorByPoint(Point(x,y))
+    }
+    return null
+  }
+
   private fun createPopup(component: JComponent) =
     JBPopupFactory.getInstance().createBalloonBuilder(component)
-      .setFillColor(JBColor(0xfcfcfc, 0x313435))
+      .setFillColor(PICKER_BACKGROUND_COLOR)
       .setBorderColor(JBColor.border())
       .setBorderInsets(JBUI.insets(1))
       .setAnimationCycle(Registry.intValue("ide.tooltip.animationCycle"))

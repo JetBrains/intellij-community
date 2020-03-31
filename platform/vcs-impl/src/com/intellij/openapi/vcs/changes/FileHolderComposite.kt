@@ -1,0 +1,46 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.AbstractVcs
+
+internal class FileHolderComposite private constructor(
+  private val project: Project,
+  val unversionedFileHolder: FilePathHolder = FilePathHolder(project),
+  val ignoredFileHolder: IgnoredFilesCompositeHolder = IgnoredFilesCompositeHolder(project),
+  val modifiedWithoutEditingFileHolder: VirtualFileHolder = VirtualFileHolder(project),
+  val lockedFileHolder: VirtualFileHolder = VirtualFileHolder(project),
+  val logicallyLockedFileHolder: LogicallyLockedHolder = LogicallyLockedHolder(project),
+  val rootSwitchFileHolder: SwitchedFileHolder = SwitchedFileHolder(project),
+  val switchedFileHolder: SwitchedFileHolder = SwitchedFileHolder(project),
+  val deletedFileHolder: DeletedFilesHolder = DeletedFilesHolder()
+) : FileHolder {
+
+  private val fileHolders
+    get() = listOf(unversionedFileHolder, ignoredFileHolder, modifiedWithoutEditingFileHolder, lockedFileHolder, logicallyLockedFileHolder,
+                   rootSwitchFileHolder, switchedFileHolder, deletedFileHolder)
+
+  override fun cleanAll() = fileHolders.forEach { it.cleanAll() }
+  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = fileHolders.forEach { it.cleanAndAdjustScope(scope) }
+
+  override fun copy(): FileHolderComposite =
+    FileHolderComposite(project, unversionedFileHolder.copy(), ignoredFileHolder.copy(), modifiedWithoutEditingFileHolder.copy(),
+                        lockedFileHolder.copy(), logicallyLockedFileHolder.copy(), rootSwitchFileHolder.copy(), switchedFileHolder.copy(),
+                        deletedFileHolder.copy())
+
+  override fun notifyVcsStarted(vcs: AbstractVcs) = fileHolders.forEach { it.notifyVcsStarted(vcs) }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is FileHolderComposite) return false
+
+    return fileHolders == other.fileHolders
+  }
+
+  override fun hashCode(): Int = fileHolders.hashCode()
+
+  companion object {
+    @JvmStatic
+    fun create(project: Project): FileHolderComposite = FileHolderComposite(project)
+  }
+}

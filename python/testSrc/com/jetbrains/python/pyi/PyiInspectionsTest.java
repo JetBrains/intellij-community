@@ -24,6 +24,8 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -138,5 +140,10 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testPyiRelativeImports() {
     myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
+  }
+
+  // PY-16868
+  public void testPropertyDefinition() {
+    doPyiTest(PyPropertyDefinitionInspection.class);
   }
 }

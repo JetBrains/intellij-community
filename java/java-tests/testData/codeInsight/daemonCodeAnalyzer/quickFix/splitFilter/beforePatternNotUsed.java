@@ -1,0 +1,8 @@
+// "Split into filter chain" "true"
+import java.util.List;
+
+class X {
+  void test(List<?> list) {
+    list.stream().filter(x -> x instanceof String s && !s.isEmpty() &<caret>& x.hashCode() > 0).forEach(System.out::println);
+  }
+}

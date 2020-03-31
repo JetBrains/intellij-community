@@ -5,11 +5,14 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
-import com.intellij.sh.lexer.ShTokenTypes;
+import com.intellij.sh.ShTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +27,22 @@ public class ShFile extends PsiFileBase {
     return ShFileType.INSTANCE;
   }
 
-  @Nullable
-  private String findShebangInner() {
-    ASTNode shebang = getNode().findChildByType(ShTokenTypes.SHEBANG);
-    return shebang != null ? shebang.getText() : null;
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return ResolveUtil.processChildren(this, processor, state, lastParent, place);
   }
 
   @Nullable
   public String findShebang() {
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(findShebangInner(), this));
+  }
+
+  @Nullable
+  private String findShebangInner() {
+    ASTNode shebang = getNode().findChildByType(ShTypes.SHEBANG);
+    return shebang != null ? shebang.getText() : null;
   }
 }

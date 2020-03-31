@@ -28,7 +28,6 @@ import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import gnu.trove.TIntArrayList;
@@ -42,7 +41,7 @@ import java.util.*;
  * @author db
  */
 public class ResolverTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree");
+  private static final Logger LOG = Logger.getInstance(ResolverTree.class);
 
   private ResolverTree[] mySons = new ResolverTree[0];
   private final BindingFactory myBindingFactory;
@@ -81,7 +80,7 @@ public class ResolverTree {
     final Set<PsiTypeVariable> mySet = new HashSet<>();
 
     @Override
-    public Object visitTypeVariable(final PsiTypeVariable var) {
+    public Object visitTypeVariable(@NotNull final PsiTypeVariable var) {
       mySet.add(var);
 
       return null;
@@ -224,7 +223,7 @@ public class ResolverTree {
         final Set<PsiTypeVariable> in = ins.get(n);
 
         if (in == null) {
-          return EmptyIterator.getInstance();
+          return Collections.emptyIterator();
         }
 
         return in.iterator();
@@ -236,7 +235,7 @@ public class ResolverTree {
         final Set<PsiTypeVariable> out = outs.get(n);
 
         if (out == null) {
-          return EmptyIterator.getInstance();
+          return Collections.emptyIterator();
         }
 
         return out.iterator();

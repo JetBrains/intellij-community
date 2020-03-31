@@ -34,7 +34,7 @@ public interface Storage {
   String get(String key);
 
   class PropertiesComponentStorage implements Storage {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.util.config.Storage.PropertiesComponentStorage");
+    private static final Logger LOG = Logger.getInstance(PropertiesComponentStorage.class);
 
     private final PropertiesComponent myPropertiesComponent;
     private final String myPrefix;

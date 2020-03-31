@@ -16,12 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InstanceofIncompatibleInterfaceInspectionTest extends LightInspectionTestCase {
+public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testHashMap() {
     doTest("import java.util.HashMap;" +

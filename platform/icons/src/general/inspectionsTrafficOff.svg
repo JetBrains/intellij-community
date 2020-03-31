@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-  <g fill="none" fill-rule="evenodd">
-    <path fill="#6E6E6E" d="M2.5,4 C3.88071187,4 5,5.11928813 5,6.5 L5,7.5 C5,8.88071187 3.88071187,10 2.5,10 C1.11928813,10 1.69088438e-16,8.88071187 0,7.5 L0,6.5 C-1.69088438e-16,5.11928813 1.11928813,4 2.5,4 Z M2.5,5 C1.67157288,5 1,5.67157288 1,6.5 L1,7.5 C1,8.32842712 1.67157288,9 2.5,9 C3.32842712,9 4,8.32842712 4,7.5 L4,6.5 C4,5.67157288 3.32842712,5 2.5,5 Z"/>
-    <rect width="1" height="6" x="6" y="4" fill="#6E6E6E"/>
-    <rect width="3" height="1" x="6" y="4" fill="#6E6E6E"/>
-    <rect width="3" height="1" x="6" y="6.5" fill="#6E6E6E"/>
-    <rect width="1" height="6" x="10" y="4" fill="#6E6E6E"/>
-    <rect width="3" height="1" x="10" y="4" fill="#6E6E6E"/>
-    <rect width="3" height="1" x="10" y="6.5" fill="#6E6E6E"/>
-  </g>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="idea/community/platform/icons/src/general/inspectionsTrafficOff">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M3.5 5C2.11929 5 1 6.11929 1 7.5V8.5C1 9.88071 2.11929 11 3.5 11C4.88071 11 6 9.88071 6 8.5V7.5C6 6.11929 4.88071 5 3.5 5ZM3.5 6C2.67157 6 2 6.67157 2 7.5V8.5C2 9.32843 2.67157 10 3.5 10C4.32843 10 5 9.32843 5 8.5V7.5C5 6.67157 4.32843 6 3.5 6Z" fill="#6E6E6E"/>
+<rect id="Rectangle 46" x="7" y="5" width="1" height="6" fill="#6E6E6E"/>
+<rect id="Rectangle 47" x="7" y="5" width="3" height="1" fill="#6E6E6E"/>
+<rect id="Rectangle 47_2" x="7" y="7.5" width="3" height="1" fill="#6E6E6E"/>
+<rect id="Rectangle 46_2" x="11" y="5" width="1" height="6" fill="#6E6E6E"/>
+<rect id="Rectangle 47_3" x="11" y="5" width="3" height="1" fill="#6E6E6E"/>
+<rect id="Rectangle 47_4" x="11" y="7.5" width="3" height="1" fill="#6E6E6E"/>
+</g>
 </svg>

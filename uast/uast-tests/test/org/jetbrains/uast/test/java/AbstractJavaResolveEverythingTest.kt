@@ -7,14 +7,13 @@ import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UReferenceExpression
-import org.jetbrains.uast.test.common.IndentedPrintingVisitor
+import org.jetbrains.uast.util.IndentedPrintingVisitor
 import org.jetbrains.uast.test.common.visitUFileAndGetResult
 import org.jetbrains.uast.test.env.assertEqualsToFile
 import org.jetbrains.uast.toUElementOfType
 import java.io.File
 
 abstract class AbstractJavaResolveEverythingTest : AbstractJavaUastTest() {
-
   private fun UFile.resolvableWithTargets() = object : IndentedPrintingVisitor(PsiCodeBlock::class, PsiModifierListOwner::class) {
     override fun render(element: PsiElement): CharSequence? =
       element
@@ -34,11 +33,7 @@ abstract class AbstractJavaResolveEverythingTest : AbstractJavaUastTest() {
   }.visitUFileAndGetResult(this)
 
   override fun check(testName: String, file: UFile) {
-    assertEqualsToFile("resolved", getTestFile(testName, "resolved.txt"), file.resolvableWithTargets())
+    val expected = File(testDataPath, testName.substringBeforeLast('.') + ".resolved.txt")
+    assertEqualsToFile("resolved", expected, file.resolvableWithTargets())
   }
-
-  private fun getTestFile(testName: String, ext: String) =
-    File(File(TEST_JAVA_MODEL_DIR, testName).canonicalPath.substringBeforeLast('.') + '.' + ext)
-
-
 }

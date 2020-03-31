@@ -924,6 +924,9 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="JavaScript:INJECTED_LANGUAGE_FRAGMENT">
+      <value/>
+    </option>
     <option name="LESS_INJECTED_CODE">
       <value>
         <option name="BACKGROUND" value="0" />

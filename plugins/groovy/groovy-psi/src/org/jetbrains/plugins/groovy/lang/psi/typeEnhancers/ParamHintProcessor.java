@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                  @NotNull PsiSubstitutor substitutor,
-                                                 @NotNull String[] options) {
+                                                 String @NotNull [] options) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (myParam < parameters.length) {
       PsiParameter parameter = parameters[myParam];
@@ -52,7 +52,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
         }
       }
     }
-    return ContainerUtilRt.emptyList();
+    return ContainerUtil.emptyList();
   }
 
   @NotNull

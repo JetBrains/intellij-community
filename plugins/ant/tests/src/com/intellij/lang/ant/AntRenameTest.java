@@ -24,10 +24,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class AntRenameTest extends LightCodeInsightTestCase {
+public class AntRenameTest extends LightJavaCodeInsightTestCase {
 
   public void testSimpleProperty() {
     doTest();
@@ -142,7 +142,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     final int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
     configureFromFileText(filename, text);
-    assertNotNull(myFile);
+    assertNotNull(getFile());
     PsiElement element = TargetElementUtil.getInstance().findTargetElement(
       getEditor(), 
       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED,

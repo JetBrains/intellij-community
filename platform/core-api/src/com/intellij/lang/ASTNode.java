@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang;
 
@@ -46,6 +32,8 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the text of this node.
+   * <p></p>
+   * Note: This call requires traversing whole subtree, so it can be expensive for composite nodes, and should be avoided if possible.
    *
    * @return the node text.
    */
@@ -54,8 +42,12 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns same text getText() returns but might be more effective eliminating toString() transformation from internal CharSequence representation
+   * <p></p>
+   * Note: This call requires traversing whole subtree, so it can be expensive for composite nodes, and should be avoided if possible.
    *
    * @return the node text.
+   * @see PsiElement#textMatches
+   * @see #textContains
    */
   @NotNull
   CharSequence getChars();
@@ -70,10 +62,22 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the starting offset of the node text in the document.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the start offset.
    */
   int getStartOffset();
+
+  /**
+   * Returns the starting offset of the node text relative to {@link #getTreeParent}.
+   *
+   * @return the start offset relative to node parent
+   */
+  default int getStartOffsetInParent() {
+    ASTNode parent = getTreeParent();
+    return getStartOffset() - (parent == null ? 0 : parent.getStartOffset());
+  }
 
   /**
    * Returns the length of the node text.
@@ -84,6 +88,8 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the text range (a combination of starting offset in the document and length) for this node.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the text range.
    */
@@ -132,8 +138,7 @@ public interface ASTNode extends UserDataHolder {
    *               all children should be returned.
    * @return the children array.
    */
-  @NotNull
-  ASTNode[] getChildren(@Nullable TokenSet filter);
+  ASTNode @NotNull [] getChildren(@Nullable TokenSet filter);
 
   /**
    * Adds the specified child node as the last child of this node.

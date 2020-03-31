@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -46,9 +45,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibraryProjectStructureElement extends ProjectStructureElement {
   private final Library myLibrary;
 
@@ -83,7 +79,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     if (!invalidUrls.isEmpty()) {
       final String description = createInvalidRootsDescription(invalidUrls, rootName, library.getName());
       final PlaceInProjectStructure place = createPlace();
-      final String message = ProjectBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size());
+      final String message = JavaUiBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size());
       ProjectStructureProblemDescription.ProblemLevel level = library.getTable().getTableLevel().equals(LibraryTablesRegistrar.PROJECT_LEVEL)
                                                               ? ProjectStructureProblemDescription.ProblemLevel.PROJECT : ProjectStructureProblemDescription.ProblemLevel.GLOBAL;
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
@@ -134,7 +130,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final InvocationHandler invocationHandler = Proxy.isProxyClass(myLibrary.getClass()) ? Proxy.getInvocationHandler(myLibrary) : null;
     final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor ?
                                 (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler).getDelegate() : myLibrary;
-    final Library source = realLibrary instanceof LibraryImpl? ((LibraryImpl)realLibrary).getSource() : null;
+    final Library source = realLibrary instanceof LibraryEx? ((LibraryEx)realLibrary).getSource() : null;
     return source != null ? source : myLibrary;
   }
 

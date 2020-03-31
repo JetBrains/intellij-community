@@ -2,7 +2,6 @@
 package git4idea.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -13,6 +12,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -50,7 +50,8 @@ public class GitConflictsToolWindowManager {
     boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
                                                 repo -> !repo.getConflictsHolder().getConflicts().isEmpty());
     if (hasConflicts && myContent == null) {
-      GitConflictsView panel = new GitConflictsView(myProject);
+      GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
+      GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
       myContent = ContentFactory.SERVICE.getInstance().createContent(panel.getComponent(), TAB_NAME, false);
       myContent.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
                             ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);
@@ -65,7 +66,7 @@ public class GitConflictsToolWindowManager {
     }
   }
 
-  public static class Starter implements StartupActivity, DumbAware {
+  public static class Starter implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       new GitConflictsToolWindowManager(project).init();

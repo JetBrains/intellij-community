@@ -416,16 +416,17 @@ public class SplitterTest {
     assertEquals(0, words.size());
   }
 
+  @NotNull
   private static List<String> wordsToCheck(Splitter splitter, final String text) {
     final List<String> words = new ArrayList<>();
     splitter.split(text, TextRange.allOf(text), textRange -> words.add(textRange.substring(text)));
     return words;
   }
 
-  private static void correctListToCheck(Splitter splitter, String text, @NotNull String... expected) {
+  private static void correctListToCheck(Splitter splitter, String text, String @NotNull ... expected) {
     List<String> words = wordsToCheck(splitter, text);
     List<String> expectedWords = Arrays.asList(expected);
-    assertEquals("Splitting:'" + text + "'", expectedWords.toString(), words != null ? words.toString() : "[]");
+    assertEquals("Splitting:'" + text + "'", expectedWords.toString(), words.toString());
   }
 
   private static String convertStreamToString(InputStream is) {

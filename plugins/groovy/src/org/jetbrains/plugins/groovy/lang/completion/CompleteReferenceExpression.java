@@ -14,7 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -537,9 +537,8 @@ public class CompleteReferenceExpression {
       }
     }
 
-    @NotNull
     @Override
-    public GroovyResolveResult[] getCandidates() {
+    public GroovyResolveResult @NotNull [] getCandidates() {
       if (!hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
       List<GroovyResolveResult> list = new ArrayList<>(results.length);

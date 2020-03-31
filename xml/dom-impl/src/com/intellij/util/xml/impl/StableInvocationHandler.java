@@ -35,7 +35,7 @@ import java.util.Set;
 class StableInvocationHandler<T> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
-  private final Set<Class> myClasses;
+  private final Set<Class<?>> myClasses;
   private final Factory<? extends T> myProvider;
   private final Condition<? super T> myValidator;
 
@@ -44,8 +44,8 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     myCachedValue = initial;
     myOldValue = initial;
     myValidator = validator;
-    final Class superClass = initial.getClass().getSuperclass();
-    final Set<Class> classes = new HashSet<>();
+    final Class<?> superClass = initial.getClass().getSuperclass();
+    final Set<Class<?>> classes = new HashSet<>();
     ContainerUtil.addAll(classes, initial.getClass().getInterfaces());
     ContainerUtil.addIfNotNull(classes, superClass);
     classes.remove(MergedObject.class);

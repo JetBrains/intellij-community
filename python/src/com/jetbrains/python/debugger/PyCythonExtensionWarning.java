@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ExecutionException;
@@ -39,10 +25,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -50,7 +37,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class PyCythonExtensionWarning {
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.python.debugger.PyCythonExtensionWarning");
+  private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
+
   public static final String ERROR_TITLE = "Compile Cython Extensions Error";
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
   private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
@@ -62,7 +50,7 @@ public class PyCythonExtensionWarning {
       return;
     }
     Notification notification =
-      new Notification(CYTHON_WARNING_GROUP_ID, "Python Debugger Extension Available", WARNING_MESSAGE,
+      new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"), WARNING_MESSAGE,
                        NotificationType.INFORMATION);
     notification.addAction(createInstallAction(notification, project));
     notification.addAction(createDocsAction());
@@ -70,7 +58,7 @@ public class PyCythonExtensionWarning {
   }
 
   private static AnAction createInstallAction(@NotNull Notification notification, @NotNull Project project) {
-    return new DumbAwareAction("Install") {
+    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.install")) {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -81,7 +69,7 @@ public class PyCythonExtensionWarning {
   }
 
   private static AnAction createDocsAction() {
-    return new DumbAwareAction("How does it work") {
+    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.help")) {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -102,7 +90,7 @@ public class PyCythonExtensionWarning {
     }
     AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
-    return PySdkUtil.isRemote(runConfiguration.getSdk());
+    return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
 
   private static void showErrorDialog(Project project, String message) {
@@ -153,7 +141,7 @@ public class PyCythonExtensionWarning {
         process = commandLine.createProcess();
       }
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Compile Cython Extensions") {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("compile.cython.extensions.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final CapturingProcessHandler handler =

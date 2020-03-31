@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -19,15 +20,22 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
   @Nullable
   @Override
   protected PsiExpression getExpressionFromEditor() {
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      return IntroduceVariableBase.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    }
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
       return expression;
@@ -43,6 +51,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   public void testFromExpression() {
      doTest(introducer -> type("expr"));
+  }
+
+  public void testFromSelection() {
+     doTest(introducer -> type("a"));
   }
 
   public void testConflictingInnerClassName() {
@@ -61,6 +73,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      type("expr");
    });
   }
+  
+  public void testNoNameSuggested() {
+    doTest(introducer -> type("xyz"));
+  }
 
   public void testPlaceInsideLoopAndRename() {
     doTest(introducer -> type("expr"));
@@ -71,19 +87,19 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, introducer -> type("expr"));
+    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("expr"));
   }
 
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, introducer -> type("expr"));
+    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("expr"));
   }
 
   public void testReplaceAllIntroduceFieldInLocalClass() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, introducer -> type("smth"));
+    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("smth"));
   }
 
   public void testReplaceAllWithScopeInvalidation() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, introducer -> type("newType"));
+    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("newType"));
   }
 
   public void testRanges() {
@@ -125,31 +141,31 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testWritable() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)");
   }
   
   public void testNoWritable() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.NO_WRITE);
+    doTestReplaceChoice("Replace all occurrences but write");
   }
   
   public void testAllInsertFinal() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace all 0 occurrences");
   }
   
   public void testAllIncomplete() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace all 0 occurrences");
   }
 
   public void testStreamSimple() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
+    doTestReplaceChoice("Extract as 'map' operation");
   }
 
   public void testStreamMultiple() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN_ALL);
+    doTestReplaceChoice("Replace all 0 occurrences and extract as 'mapToInt' operation");
   }
 
   public void testStreamMultiline() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
+    doTestReplaceChoice("Extract as 'map' operation");
   }
 
   public void testBrokenFormattingWithInValidation() {
@@ -162,6 +178,26 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
      invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
    });
+  }
+  
+  public void testInBlock1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'else' block");
+  }
+  
+  public void testInBlock2() {
+    doTestReplaceChoice("Replace 0 occurrences in 'if-then' block");
+  }
+  
+  public void testInBlock3() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+  
+  public void testInBlockLambda1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'lambda' block");
+  }
+  
+  public void testInBlockLambda2() {
+    doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
   }
 
   private void doTestStopEditing(Consumer<AbstractInplaceIntroducer> pass) {
@@ -207,11 +243,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice) {
-    doTestReplaceChoice(choice, null);
+  private void doTestReplaceChoice(String choiceText) {
+    doTestReplaceChoice(choiceText, null);
   }
 
-  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice, Consumer<AbstractInplaceIntroducer> pass) {
+  private void doTestReplaceChoice(String choiceText, Consumer<AbstractInplaceIntroducer<?, ?>> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -220,8 +256,8 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       MyIntroduceHandler handler = createIntroduceHandler();
-      ((MyIntroduceVariableHandler)handler).setChoice(choice);
-      final AbstractInplaceIntroducer introducer = invokeRefactoring(handler);
+      UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(choiceText)));
+      final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
       if (pass != null) {
         pass.accept(introducer);
       }
@@ -235,7 +271,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private static void invokeEditorAction(String actionId) {
+  private void invokeEditorAction(String actionId) {
     EditorActionManager.getInstance().getActionHandler(actionId)
       .execute(getEditor(), getEditor().getCaretModel().getCurrentCaret(), new MapDataContext());
   }
@@ -252,12 +288,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public static class MyIntroduceVariableHandler extends IntroduceVariableHandler implements MyIntroduceHandler {
-    private JavaReplaceChoice myChoice = null;
-
-    public void setChoice(JavaReplaceChoice choice) {
-      myChoice = choice;
-    }
-
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);
@@ -266,11 +296,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     @Override
     public boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
       return super.invokeImpl(project, localVariable, editor);
-    }
-
-    @Override
-    protected JavaReplaceChoice getOccurrencesChoice() {
-      return myChoice;
     }
 
     @Override

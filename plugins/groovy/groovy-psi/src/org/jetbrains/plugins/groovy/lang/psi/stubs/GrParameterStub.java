@@ -18,7 +18,7 @@ public class GrParameterStub extends GrVariableStubBase<GrParameter> {
 
   public GrParameterStub(StubElement parent,
                          @NotNull StringRef name,
-                         @NotNull final String[] annotations,
+                         final String @NotNull [] annotations,
                          @Nullable String typeText,
                          int flags) {
     super(parent, GroovyStubElementTypes.PARAMETER, name, annotations, typeText);

@@ -5,13 +5,13 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightInspectionTestCase {
+public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("interface /*Interface 'Simple' may be annotated with @FunctionalInterface*/Simple/**/ {" +

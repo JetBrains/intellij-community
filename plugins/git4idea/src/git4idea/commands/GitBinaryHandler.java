@@ -24,6 +24,7 @@ import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -44,6 +45,10 @@ public class GitBinaryHandler extends GitHandler {
 
   public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
+  }
+
+  public GitBinaryHandler(@NotNull File directory, @NotNull String pathToExecutable, @NotNull GitCommand command) {
+    super(null, directory, pathToExecutable, command, Collections.emptyList());
   }
 
   @Override
@@ -117,7 +122,7 @@ public class GitBinaryHandler extends GitHandler {
    * @return the binary data
    * @throws VcsException in case of the problem with running git
    */
-  public byte[] run() throws VcsException {
+  public byte @NotNull [] run() throws VcsException {
     Project project = project();
     GitVcsConsoleWriter vcsConsoleWriter = project != null
                                            ? GitVcsConsoleWriter.getInstance(project)
@@ -129,7 +134,7 @@ public class GitBinaryHandler extends GitHandler {
         if (exitCode != 0) {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
-          if (message.length() == 0) {
+          if (message.isEmpty()) {
             if (myException.get() != null) {
               message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }
