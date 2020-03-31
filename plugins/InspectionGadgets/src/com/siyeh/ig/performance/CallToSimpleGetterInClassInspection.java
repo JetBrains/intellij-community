@@ -56,6 +56,13 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
   }
 
   @Override
+  public boolean runForWholeFile() {
+    // Changes in another method (making getter more complicated) may affect 
+    // the inspection result at call sites
+    return true;
+  }
+
+  @Override
   @NotNull
   public String getID() {
     return "CallToSimpleGetterFromWithinClass";
