@@ -142,10 +142,7 @@ public final class ConfigImportHelper {
         log.info("No configs imported, starting with clean configs at " + newConfigDir);
       }
 
-      if (vmOptionFileChanged || doesVmOptionFileExist(newConfigDir)) {
-        log.info("The vmoptions file has changed, restarting...");
-        restart();
-      }
+      vmOptionFileChanged |= doesVmOptionFileExist(newConfigDir);
     }
     finally {
       if (tempBackup != null) {
@@ -157,6 +154,11 @@ public final class ConfigImportHelper {
                                  tempBackup, getBackupPath()), e);
         }
       }
+    }
+
+    if (vmOptionFileChanged) {
+      log.info("The vmoptions file has changed, restarting...");
+      restart();
     }
   }
 
