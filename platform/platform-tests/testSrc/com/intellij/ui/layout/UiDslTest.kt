@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.ProjectRule
-import org.junit.After
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.TestName
 import javax.swing.JPanel
 import javax.swing.JTable
@@ -124,6 +122,8 @@ abstract class UiDslTest {
 
   @Test
   fun `checkbox rows with big components`() {
+    // ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints
+    Assume.assumeTrue(!SystemInfo.isMac)
     doTest { checkboxRowsWithBigComponents() }
   }
 
