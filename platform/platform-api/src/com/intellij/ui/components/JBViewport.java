@@ -4,6 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,7 +33,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug",
+                                                                                             PluginId.getId("com.intellij"));
   private static final int NOTIFICATION_TIMEOUT = 1500;
 
   private Notification myPreviousNotification;

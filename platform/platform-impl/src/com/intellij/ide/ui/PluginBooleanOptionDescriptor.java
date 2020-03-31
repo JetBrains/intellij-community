@@ -26,9 +26,9 @@ import java.util.stream.Stream;
  */
 final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription implements BooleanOptionDescription.RequiresRebuild {
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
-    new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false);
+    new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false, null, null, PluginManagerCore.CORE_ID);
   private static final NotificationGroup PLUGINS_AUTO_SWITCH_GROUP =
-    new NotificationGroup("Plugins AutoSwitch", NotificationDisplayType.BALLOON, false);
+    new NotificationGroup("Plugins AutoSwitch", NotificationDisplayType.BALLOON, false, null, null, PluginManagerCore.CORE_ID);
 
   private static final Notifier ourRestartNeededNotifier = new Notifier();
 
