@@ -26,17 +26,13 @@ internal class PSampleModifiableEntity(original: PSampleEntityData,
   var fileProperty: VirtualFileUrl by Another(original)
 }
 
-inline fun <reified M : PModifiableTypedEntity<T>, T : PTypedEntity<T>> TypedEntityStorageBuilder.addPEntity(source: EntitySource,
-                                                                                                             noinline initializer: M.() -> Unit): T = addEntity(
-  M::class.java, source, initializer)
-
 internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
                                                         source: EntitySource = PSampleEntitySource("test"),
                                                         booleanProperty: Boolean = false,
                                                         stringListProperty: MutableList<String> = ArrayList(),
                                                         fileProperty: VirtualFileUrl = VirtualFileUrlManager.fromUrl(
                                                           "file:///tmp")): PSampleEntity {
-  return addPEntity<PSampleModifiableEntity, PSampleEntity>(source) {
+  return addEntity(PSampleModifiableEntity::class.java, source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
     this.stringListProperty = stringListProperty
