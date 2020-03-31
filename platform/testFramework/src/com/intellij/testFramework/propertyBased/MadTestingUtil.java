@@ -305,7 +305,7 @@ public final class MadTestingUtil {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
 
-      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/").matcher(path);
+      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/|/onair/").matcher(path);
       if (rootPackageMatcher.find()) {
         path = path.substring(rootPackageMatcher.start() + 1);
       }
