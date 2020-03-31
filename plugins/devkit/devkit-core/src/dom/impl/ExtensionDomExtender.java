@@ -35,6 +35,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final LanguageResolvingConverter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
+  private static final ActionOrGroupResolveConverter ACTION_CONVERTER = new ActionOrGroupResolveConverter.OnlyActions();
 
   @Override
   public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
@@ -106,6 +107,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
           if ("language".equals(attributeName)) {
             extension.setConverter(LANGUAGE_CONVERTER);
+          }
+          else if ("action".equals(attributeName)) {
+            extension.setConverter(ACTION_CONVERTER);
           }
         }
         else if (clazz == PsiClass.class) {
