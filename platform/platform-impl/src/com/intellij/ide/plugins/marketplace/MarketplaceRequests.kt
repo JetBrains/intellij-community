@@ -92,7 +92,8 @@ object MarketplaceRequests {
         object : TypeReference<List<MarketplaceSearchPluginData>>() {}
       )
     }
-    return marketplaceSearchPluginData.map { it.toPluginNode() }
+    // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
+    return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
   }
 
   //TODO: send request to MarketPlace
