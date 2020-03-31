@@ -145,6 +145,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
               val unloadedModulesSetOriginal = unloadedModules.keys.toList()
               val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
               val oldModuleNames = mutableMapOf<Module, String>()
+              val modulesForModuleAddedEvent = mutableListOf<ModuleEx>()
 
               nextChange@ for (change in changes) when (change) {
                 is EntityChange.Removed -> {
@@ -175,9 +176,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                     else continue@nextChange
                   }
 
-                  if (project.isOpen) {
-                    fireModuleAddedInWriteAction(module)
-                  }
+                  if (project.isOpen) modulesForModuleAddedEvent.add(module)
                 }
 
                 is EntityChange.Replaced -> {
@@ -219,6 +218,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 is EntityChange.Removed -> Unit
               }.let {  } // exhaustive when
 
+              modulesForModuleAddedEvent.forEach { module -> fireModuleAddedInWriteAction(module) }
               if (oldModuleNames.isNotEmpty()) {
                 project.messageBus
                   .syncPublisher(ProjectTopics.MODULES)
