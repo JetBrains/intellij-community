@@ -40,7 +40,7 @@ class PFolderEntityData : PEntityData<PFolderEntity> {
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, PId(id, PFolderEntity::class), data, snapshot)
+  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, id, data, snapshot)
 
   override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
 
@@ -55,9 +55,7 @@ class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
 
-  override fun createEntity(snapshot: PEntityStorage): PSoftSubFolder {
-    return PSoftSubFolder(entitySource, PId(id, PSoftSubFolder::class), snapshot)
-  }
+  override fun createEntity(snapshot: PEntityStorage) = PSoftSubFolder(entitySource, id, snapshot)
 
   override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<PSoftSubFolder> {
     return PSoftSubFolderModifiableEntity(this, diff)
@@ -74,9 +72,7 @@ class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage): PSubFolderEntity {
-    return PSubFolderEntity(entitySource, PId(id, PSubFolderEntity::class), data, snapshot)
-  }
+  override fun createEntity(snapshot: PEntityStorage) = PSubFolderEntity(entitySource, id, data, snapshot)
 
   override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
     return PSubFolderModifiableEntity(this, diff)
@@ -91,10 +87,12 @@ class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
 
 class PFolderEntity(
   override val entitySource: EntitySource,
-  override val id: PId<PFolderEntity>,
+  arrayId: Int,
   val data: String,
   val snapshot: PEntityStorage
 ) : PTypedEntity<PFolderEntity> {
+
+  override val id: PId<PFolderEntity> = PId(arrayId, this.javaClass.kotlin)
 
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
   val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::class)
@@ -106,9 +104,11 @@ class PFolderEntity(
 
 class PSoftSubFolder(
   override val entitySource: EntitySource,
-  override val id: PId<PSoftSubFolder>,
+  arrayId: Int,
   val snapshot: PEntityStorage
 ) : PTypedEntity<PSoftSubFolder> {
+
+  override val id: PId<PSoftSubFolder> = PId(arrayId, this.javaClass.kotlin)
 
   val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
 
@@ -121,10 +121,12 @@ class PSoftSubFolder(
 
 class PSubFolderEntity(
   override val entitySource: EntitySource,
-  override val id: PId<PSubFolderEntity>,
+  arrayId: Int,
   val data: String,
   val snapshot: PEntityStorage
 ) : PTypedEntity<PSubFolderEntity> {
+
+  override val id: PId<PSubFolderEntity> = PId(arrayId, this.javaClass.kotlin)
 
   val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
 
