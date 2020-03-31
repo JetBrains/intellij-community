@@ -18,24 +18,18 @@ internal class PSampleEntity(
   val stringProperty: String,
   val stringListProperty: List<String>,
   val fileProperty: VirtualFileUrl
-) : PTypedEntity<PSampleEntity>() {
+) : PTypedEntity<PSampleEntity>(arrayId) {
   override val id: PId<PSampleEntity> = PId(arrayId, this.javaClass.kotlin)
 }
 
 @PEntityDataClass(PSampleEntityData::class)
 @PEntityClass(PSampleEntity::class)
-internal class PSampleModifiableEntity(val original: PSampleEntityData,
-                                       val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSampleEntity>() {
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
+internal class PSampleModifiableEntity(original: PSampleEntityData,
+                                       diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSampleEntity>(original, diff) {
   var booleanProperty: Boolean by Another(original)
   var stringProperty: String by Another(original)
   var stringListProperty: MutableList<String> by Another(original)
   var fileProperty: VirtualFileUrl by Another(original)
-
-  override val id: PId<PSampleEntity> = PId(original.id, PSampleEntity::class)
-
-  override val entitySource = original.entitySource
 }
 
 inline fun <reified M : PModifiableTypedEntity<T>, T : PTypedEntity<T>> TypedEntityStorageBuilder.addPEntity(source: EntitySource,

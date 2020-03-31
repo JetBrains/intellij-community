@@ -4,6 +4,7 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.ModifiableTypedEntity
 import com.intellij.workspace.api.TypedEntity
+import java.lang.reflect.ParameterizedType
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
@@ -12,10 +13,11 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
-internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
-  abstract val id: PId<E>
+internal abstract class PTypedEntity<E : TypedEntity>(arrayId: Int) : TypedEntity, Any() {
+  open val id: PId<E> = PId(arrayId, this.javaClass.kotlin as KClass<E>)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
@@ -43,7 +45,17 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>(), ModifiableTypedEntity<T>
+internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>(val original: PEntityData<T>, val diff: PEntityStorageBuilder)
+  : PTypedEntity<T>(original.id), ModifiableTypedEntity<T> {
+
+  override val id: PId<T> = PId(original.id, getEntityClass())
+
+  internal fun getEntityClass(): KClass<T> = ((this::class.supertypes.find {
+    PModifiableTypedEntity::class.java.isAssignableFrom((it.classifier as KClass<*>).java)
+  }!!.javaType as ParameterizedType).actualTypeArguments.first() as Class<T>).kotlin
+
+  override val entitySource = original.entitySource
+}
 
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
   init {
@@ -114,9 +126,7 @@ internal class PFolderEntity(
   arrayId: Int,
   val snapshot: PEntityStorage,
   val data: String
-) : PTypedEntity<PFolderEntity>() {
-
-  override val id: PId<PFolderEntity> = PId(arrayId, this.javaClass.kotlin)
+) : PTypedEntity<PFolderEntity>(arrayId) {
 
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
   val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::class)
@@ -126,9 +136,7 @@ internal class PSoftSubFolder(
   override val entitySource: EntitySource,
   arrayId: Int,
   val snapshot: PEntityStorage
-) : PTypedEntity<PSoftSubFolder>() {
-
-  override val id: PId<PSoftSubFolder> = PId(arrayId, this.javaClass.kotlin)
+) : PTypedEntity<PSoftSubFolder>(arrayId) {
 
   val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
 }
@@ -138,44 +146,28 @@ internal class PSubFolderEntity(
   arrayId: Int,
   val snapshot: PEntityStorage,
   val data: String
-) : PTypedEntity<PSubFolderEntity>() {
-
-  override val id: PId<PSubFolderEntity> = PId(arrayId, this.javaClass.kotlin)
+) : PTypedEntity<PSubFolderEntity>(arrayId) {
 
   val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
 }
 
 @PEntityDataClass(PFolderEntityData::class)
 @PEntityClass(PFolderEntity::class)
-internal class PFolderModifiableEntity(val original: PFolderEntityData,
-                                       val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>() {
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
-  override var entitySource: EntitySource = original.entitySource
-
+internal class PFolderModifiableEntity(original: PFolderEntityData,
+                                       diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>(original, diff) {
   var data: String by Another(original)
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::class, PSubFolderEntity::class)
   var softChildren: Sequence<PSoftSubFolder> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolder::class)
-
-  override val id: PId<PFolderEntity> = PId(original.id, PFolderEntity::class)
 }
 
 @PEntityDataClass(PSubFolderEntityData::class)
 @PEntityClass(PSubFolderEntity::class)
-internal class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
-                                          val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>() {
-  override val id: PId<PSubFolderEntity> = PId(original.id, PSubFolderEntity::class)
-
+internal class PSubFolderModifiableEntity(original: PSubFolderEntityData,
+                                          diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>(original, diff) {
   var data: String by Another(original)
 
   var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::class, PFolderEntity::class)
-
-  override val entitySource: EntitySource = original.entitySource
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
 }
 
 internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
@@ -191,19 +183,11 @@ internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
 @PEntityDataClass(PSoftSubFolderEntityData::class)
 @PEntityClass(PSoftSubFolder::class)
 internal class PSoftSubFolderModifiableEntity(
-  val original: PSoftSubFolderEntityData,
-  val diff: PEntityStorageBuilder
-) : PModifiableTypedEntity<PSoftSubFolder>() {
+  original: PSoftSubFolderEntityData,
+  diff: PEntityStorageBuilder
+) : PModifiableTypedEntity<PSoftSubFolder>(original, diff) {
 
   var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolder::class, PFolderEntity::class)
-
-  override val id: PId<PSoftSubFolder> = PId(original.id, PSoftSubFolder::class)
-
-  override val entitySource: EntitySource = original.entitySource
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
 }
 
 internal object MySource : EntitySource

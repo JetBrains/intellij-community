@@ -680,6 +680,7 @@ internal class PEntityStorageBuilder(
 fun main() {
   val pStoreBuilder = PEntityStorage.create()
   val createdEntity = pStoreBuilder.addEntity(PFolderModifiableEntity::class.java, MySource) {
+    this.id
     this.data = "xxxx"
   }
   pStoreBuilder.addEntity(PSubFolderModifiableEntity::class.java, MySource) {
