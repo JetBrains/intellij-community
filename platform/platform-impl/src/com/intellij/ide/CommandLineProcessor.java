@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,13 @@ public final class CommandLineProcessor {
     assert file != null;
 
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+    if (PlatformUtils.isDataGrip() && !tempProject && projects.length == 0) {
+      RecentProjectsManager recentProjectsManager = RecentProjectsManager.getInstance();
+      if (recentProjectsManager.willReopenProjectOnStart() &&
+          recentProjectsManager.reopenLastProjectsOnStart()) {
+        projects = ProjectUtil.getOpenProjects();
+      }
+    }
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
