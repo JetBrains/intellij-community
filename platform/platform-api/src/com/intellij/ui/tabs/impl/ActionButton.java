@@ -2,7 +2,12 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
@@ -10,9 +15,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.TimedDeadzone;
-
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 class ActionButton extends IconButton implements ActionListener {
@@ -100,7 +109,7 @@ class ActionButton extends IconButton implements ActionListener {
   private static boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
-    return Comparing.equal(p1.getText(), p2.getText())
+    return Objects.equals(p1.getText(), p2.getText())
            && Comparing.equal(p1.getIcon(), p2.getIcon())
            && Comparing.equal(p1.getHoveredIcon(), p2.getHoveredIcon())
            && p1.isEnabled() == p2.isEnabled()

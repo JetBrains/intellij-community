@@ -22,7 +22,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
@@ -542,8 +541,7 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
     // stage two: try to get content from descriptor itself
     val attachedContent = descriptor.attachedContent
     if (attachedContent != null && attachedContent.isValid
-        && contentManager.getIndexOfContent(attachedContent) != -1 && (Comparing.equal(descriptor.displayName,
-                                                                                       attachedContent.displayName) || !attachedContent.isPinned)) {
+        && contentManager.getIndexOfContent(attachedContent) != -1 && (descriptor.displayName == attachedContent.displayName || !attachedContent.isPinned)) {
       content = attachedContent
     }
   }

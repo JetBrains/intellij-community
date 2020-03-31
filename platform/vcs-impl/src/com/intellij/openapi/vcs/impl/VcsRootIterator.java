@@ -5,21 +5,24 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Processor;
 import com.intellij.util.StringLenComparator;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VcsRootIterator {
   // folder path to files to be excluded
@@ -75,7 +78,7 @@ public class VcsRootIterator {
 
       for (VcsRoot root : allRoots) {
         final AbstractVcs vcs = root.getVcs();
-        if (vcs == null || Comparing.equal(vcs.getName(), myVcsName)) continue;
+        if (vcs == null || Objects.equals(vcs.getName(), myVcsName)) continue;
         final String url = root.getPath().getUrl();
         if (url.startsWith(ourPath)) {
           myExcludedByOthers.add(url);

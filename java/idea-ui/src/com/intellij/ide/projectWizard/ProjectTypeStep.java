@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
@@ -131,8 +130,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         if (index < 1) return false;
         TemplatesGroup upper = groups.get(index - 1);
         if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;
-        return !Comparing.equal(upper.getParentGroup(), value.getParentGroup()) &&
-               !Comparing.equal(upper.getName(), value.getParentGroup());
+        return !Objects.equals(upper.getParentGroup(), value.getParentGroup()) &&
+               !Objects.equals(upper.getName(), value.getParentGroup());
       }
     }) {
       @Override
@@ -601,7 +600,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           for (ProjectTemplate template : templates) {
             String id = ((ArchivedProjectTemplate)template).getCategory();
             for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
-              if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
+              if (Objects.equals(id, templatesGroup.getId()) || Objects.equals(group, templatesGroup.getName())) {
                 myTemplatesMap.putValue(templatesGroup, template);
               }
             }

@@ -87,7 +87,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
       String fqn = ReadAction.compute(subClass::getQualifiedName);
 
-      if (currentFQN != null && Comparing.equal(fqn, currentFQN)) {
+      if (currentFQN != null && Objects.equals(fqn, currentFQN)) {
         VirtualFile currentJarFile = getJarFile(subClass);
         if (baseClassJarFile == null) {
           baseClassJarFile = getJarFile(baseClass);

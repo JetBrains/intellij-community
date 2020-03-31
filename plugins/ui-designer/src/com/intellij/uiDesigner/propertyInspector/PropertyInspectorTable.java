@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -242,7 +242,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     if (mySelection.size() == 0) return null;
     String className = mySelection.get(0).getComponentClassName();
     for(int i=1; i<mySelection.size(); i++) {
-      if (!Comparing.equal(mySelection.get(i).getComponentClassName(), className)) {
+      if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
         return null;
       }
     }
@@ -488,7 +488,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
             continue;
           }
           for(int childIndex=0; childIndex<children.length; childIndex++) {
-            if (!Comparing.equal(children [childIndex].getName(), otherChildren [childIndex].getName())) {
+            if (!Objects.equals(children[childIndex].getName(), otherChildren[childIndex].getName())) {
               myProperties.remove(propIndex);
               break;
             }

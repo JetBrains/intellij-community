@@ -51,10 +51,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
@@ -234,7 +232,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     final int caret = field.getCaretPosition();
     myFilterString = field.getText();
 
-    if (!force && Comparing.equal(myFilterString, prevFilter)) return;
+    if (!force && Objects.equals(myFilterString, prevFilter)) return;
     int prevSize = myShownItems.size();
     myShownItems.clear();
 

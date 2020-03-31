@@ -8,7 +8,6 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
@@ -19,12 +18,23 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import gnu.trove.THashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -74,7 +84,7 @@ public class ResourceBundlePropertiesUpdateManager {
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
       final String oldValue = property.getValue();
-      if (!Comparing.equal(oldValue, value)) {
+      if (!Objects.equals(oldValue, value)) {
         property.setValue(value);
         myCodeStyleManager.reformat(property.getPsiElement());
       }

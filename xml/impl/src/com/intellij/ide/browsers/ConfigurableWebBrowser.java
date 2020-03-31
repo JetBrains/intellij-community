@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -5,12 +6,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.XmlBundle;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.List;
-import java.util.UUID;
 
 final class ConfigurableWebBrowser extends WebBrowser {
   private final UUID id;
@@ -133,7 +134,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
            family.equals(browser.family) &&
            active == browser.active &&
            Comparing.strEqual(name, browser.name) &&
-           Comparing.equal(path, browser.path) &&
+           Objects.equals(path, browser.path) &&
            Comparing.equal(specificSettings, browser.specificSettings);
   }
 

@@ -10,7 +10,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1212,7 +1211,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenDomMojo mojo : pluginModel.getMojos().getMojos()) {
         final XmlElement xmlElement = mojo.getGoal().getXmlElement();
 
-        if (xmlElement instanceof Navigatable && Comparing.equal(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
+        if (xmlElement instanceof Navigatable && Objects.equals(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
           return new NavigatableAdapter() {
             @Override
             public void navigate(boolean requestFocus) {

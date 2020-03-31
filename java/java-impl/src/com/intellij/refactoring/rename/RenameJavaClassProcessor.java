@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -6,7 +6,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -186,7 +185,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
       if (owner != null) {
         for (PsiTypeParameter typeParameter : owner.getTypeParameters()) {
-          if (Comparing.equal(newName, typeParameter.getName())) {
+          if (Objects.equals(newName, typeParameter.getName())) {
             result.add(new UnresolvableCollisionUsageInfo(aClass, typeParameter) {
               @Override
               public String getDescription() {
@@ -271,7 +270,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       }
       final PsiFile containingFile = referenceElement.getContainingFile();
       final String text = referenceElement.getText();
-      if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
+      if (Objects.equals(myRenamedClassQualifiedName, removeSpaces(text))) return;
       if (myProcessedFiles.contains(containingFile)) return;
       for (PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(containingFile))) {
         final PsiElement collisionReferenceElement = reference.getElement();

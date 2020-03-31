@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.rename;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -13,9 +12,9 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -59,7 +58,7 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
         PyParameter[] parameters = pyFunction.getParameterList().getParameters();
         for (PyParameter parameter : parameters) {
           PyNamedParameter named = parameter.getAsNamed();
-          if (named != null && Comparing.equal(named.getName(), element.getName())) {
+          if (named != null && Objects.equals(named.getName(), element.getName())) {
             myElements.add(named);
           }
         }

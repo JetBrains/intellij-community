@@ -3,15 +3,20 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import java.util.Objects;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -224,7 +229,7 @@ final class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
 
   private void afterLibraryAdded(@NotNull Library newLibrary) {
     if (myLibrary == null) {
-      if (Comparing.equal(myLibraryName, newLibrary.getName())) {
+      if (Objects.equals(myLibraryName, newLibrary.getName())) {
         myLibrary = newLibrary;
         myLibraryName = null;
         myLibraryLevel = null;

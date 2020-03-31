@@ -27,19 +27,23 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
+import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.Icon;
+import javax.swing.tree.DefaultMutableTreeNode;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -352,7 +356,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       int index = 0;
       if (groupPath.size() <= actionUrl.getGroupPath().size()) {
         while (index < groupPath.size()) {
-          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
+          if (!Objects.equals(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
             break;
           }
           index++;

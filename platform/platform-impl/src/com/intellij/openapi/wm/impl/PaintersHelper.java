@@ -1,5 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_CENTER;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_LEFT;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.BOTTOM_RIGHT;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.CENTER;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.MIDDLE_LEFT;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_CENTER;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_LEFT;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.TOP_RIGHT;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.SCALE;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.TILE;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -18,22 +28,42 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.ImageCapabilities;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.*;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageFilter;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ColorModel;
+import java.awt.image.ImageFilter;
+import java.awt.image.VolatileImage;
 import java.io.File;
 import java.net.URL;
-import java.util.*;
-
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.*;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.SCALE;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.TILE;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
@@ -174,7 +204,7 @@ final class PaintersHelper implements Painter.Listener {
         IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
         Project project = frame == null ? null : frame.getProject();
         String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
-        if (!Comparing.equal(value, current)) {
+        if (!Objects.equals(value, current)) {
           current = value;
           loadImageAsync(value);
           // keep the current image for a while
@@ -183,7 +213,7 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       private void resetImage(String value, Image newImage, float newAlpha, IdeBackgroundUtil.Fill newFill, IdeBackgroundUtil.Anchor newAnchor) {
-        if (!Comparing.equal(current, value)) return;
+        if (!Objects.equals(current, value)) return;
         boolean prevOk = image != null;
         clearImages(-1);
         image = newImage;

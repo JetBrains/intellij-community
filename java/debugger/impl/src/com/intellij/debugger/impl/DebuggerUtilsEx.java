@@ -275,7 +275,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
 
-      if (!Comparing.equal(attr1.getName(), aL2.getName()) || !Comparing.equal(attr1.getValue(), aL2.getValue())) {
+      if (!Objects.equals(attr1.getName(), aL2.getName()) || !Objects.equals(attr1.getValue(), aL2.getValue())) {
         return false;
       }
     }
@@ -286,7 +286,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (e1 == null) {
       return e2 == null;
     }
-    if (!Comparing.equal(e1.getName(), e2.getName())) {
+    if (!Objects.equals(e1.getName(), e2.getName())) {
       return false;
     }
     if (!elementListsEqual(e1.getChildren(), e2.getChildren())) {

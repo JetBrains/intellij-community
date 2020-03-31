@@ -1020,7 +1020,7 @@ public class PsiClassImplUtil {
       if (stub != null) {
         // groovy etc
         for (PsiClassType type : list.getReferencedTypes()) {
-          if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+          if (Objects.equals(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
             return true;
           }
         }
@@ -1040,7 +1040,7 @@ public class PsiClassImplUtil {
     }
 
     for (PsiClassType type : list.getReferencedTypes()) {
-      if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+      if (Objects.equals(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
         return true;
       }
     }
@@ -1175,7 +1175,7 @@ public class PsiClassImplUtil {
     visited.add(type2.getCanonicalText());
 
     if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
-      if (!(Comparing.equal(class1.getName(), class2.getName()) && ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex())) return false;
+      if (!(Objects.equals(class1.getName(), class2.getName()) && ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex())) return false;
       final PsiClassType[] eTypes1 = class1.getExtendsListTypes();
       final PsiClassType[] eTypes2 = class2.getExtendsListTypes();
       if (eTypes1.length != eTypes2.length) return false;

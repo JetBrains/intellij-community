@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
@@ -456,7 +457,7 @@ public class RadContainer extends RadComponent implements IContainer {
     Color borderColor = (myBorderColor != null) ? myBorderColor.getResolvedColor() : null;
     getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
                                                      font, titleColor, myBorderSize, borderColor));
-    return myBorderTitle != null && !Comparing.equal(oldTitle, myBorderTitle.getResolvedValue());
+    return myBorderTitle != null && !Objects.equals(oldTitle, myBorderTitle.getResolvedValue());
   }
 
   public RadLayoutManager getLayoutManager() {

@@ -7,7 +7,6 @@ package org.jetbrains.java.generate.template;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +91,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
 
   public @Nullable TemplateResource findTemplateByName(String templateName) {
     for (TemplateResource template : getAllTemplates()) {
-      if (Comparing.equal(template.getFileName(), templateName)) {
+      if (Objects.equals(template.getFileName(), templateName)) {
         return template;
       }
     }

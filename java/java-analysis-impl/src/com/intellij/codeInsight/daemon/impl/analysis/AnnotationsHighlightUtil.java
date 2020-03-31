@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -32,10 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -99,7 +96,7 @@ public class AnnotationsHighlightUtil {
     for (PsiNameValuePair attribute : attributes) {
       if (attribute == pair) break;
       String name = pair.getName();
-      if (Comparing.equal(attribute.getName(), name)) {
+      if (Objects.equals(attribute.getName(), name)) {
         String description = JavaErrorBundle.message("annotation.duplicate.attribute",
                                                        name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
@@ -253,7 +250,7 @@ public class AnnotationsHighlightUtil {
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
       if (nameRef == null) continue;
       PsiElement resolved = nameRef.resolve();
-      if (!(resolved instanceof PsiClass) || !Comparing.equal(qualifiedName, ((PsiClass)resolved).getQualifiedName())) continue;
+      if (!(resolved instanceof PsiClass) || !Objects.equals(qualifiedName, ((PsiClass)resolved).getQualifiedName())) continue;
       if (++count == 2) return true;
     }
     return false;

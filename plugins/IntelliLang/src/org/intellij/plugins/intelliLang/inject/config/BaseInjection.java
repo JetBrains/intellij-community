@@ -33,6 +33,13 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -41,13 +48,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
@@ -228,7 +228,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   public boolean intersectsWith(final BaseInjection template) {
-    if (!Comparing.equal(getInjectedLanguageId(), template.getInjectedLanguageId())) return false;
+    if (!Objects.equals(getInjectedLanguageId(), template.getInjectedLanguageId())) return false;
     for (InjectionPlace other : template.getInjectionPlaces()) {
       if (ArrayUtil.contains(other, myPlaces)) return true;
     }
@@ -255,7 +255,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
     final BaseInjection that = (BaseInjection)o;
 
-    if (!Comparing.equal(getDisplayName(), that.getDisplayName())) return false;
+    if (!Objects.equals(getDisplayName(), that.getDisplayName())) return false;
     if (!sameLanguageParameters(that)) return false;
     if (myPlaces.length != that.myPlaces.length) return false;
     for (int i = 0, len = myPlaces.length; i < len; i++) {
@@ -455,7 +455,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public void setPlaceEnabled(@Nullable final String text, final boolean enabled) {
     for (int i = 0; i < myPlaces.length; i++) {
       final InjectionPlace cur = myPlaces[i];
-      if (text == null || Comparing.equal(text, cur.getText())) {
+      if (text == null || Objects.equals(text, cur.getText())) {
         if (cur.isEnabled() != enabled) {
           myPlaces[i] = cur.enabled(enabled);
         }
