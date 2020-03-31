@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -416,6 +417,9 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       });
       busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, () -> {
+        if (myChangeProcessor != null) myChangeProcessor.fireDiffSettingsChanged();
+      });
 
       scheduleRefresh();
       myDiffPreview.updatePreview(false);

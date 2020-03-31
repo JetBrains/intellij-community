@@ -37,6 +37,10 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
     context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
+    fireDiffSettingsChanged()
+  }
+
+  fun fireDiffSettingsChanged() {
     dropCaches()
     updateRequest(true)
   }
