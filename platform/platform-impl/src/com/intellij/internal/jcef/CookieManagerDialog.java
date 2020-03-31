@@ -13,6 +13,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 
 class CookieManagerDialog extends JDialog {
@@ -29,7 +30,7 @@ class CookieManagerDialog extends JDialog {
     add(new JScrollPane(cookieTable));
   }
 
-  public void update(ArrayList<CefCookie> cefCookies) {
+  public void update(List<CefCookie> cefCookies) {
     myTableModel.clear();
     myTableModel.show(cefCookies);
   }
@@ -39,7 +40,7 @@ class CookieManagerDialog extends JDialog {
       new String[]{"Name", "Value", "Domain", "Path", "Secure", "HTTP only", "Created", "Last Access", "Expires"};
     private ArrayList<Object[]> rowData = new ArrayList<>();
 
-    private void show(@NotNull ArrayList<CefCookie> cefCookies) {
+    private void show(@NotNull List<CefCookie> cefCookies) {
       for (CefCookie cookie : cefCookies) {
         Object[] entry = {
           cookie.name,
