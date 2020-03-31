@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -23,7 +22,6 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -47,9 +45,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.ui.MessageDialogBuilder.yesNo;
+import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -81,7 +82,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
                                  @NotNull TreeConflictDescription description,
                                  @NotNull Change change,
                                  SvnRevisionNumber revision) {
-    super(vcs.getProject(), TreeConflictRefreshablePanel.TITLE);
+    super(vcs.getProject(), message("progress.title.resolve.tree.conflict"));
     myVcs = vcs;
     myDescription = description;
     myChange = change;
@@ -102,22 +103,22 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     String messageKey =
       myChange.isMoved() ? "confirmation.resolve.tree.conflict.merge.moved" : "confirmation.resolve.tree.conflict.merge.renamed";
     String message = message(messageKey, myOldPresentation, myNewPresentation);
-    int ok = Messages.showOkCancelDialog(myVcs.getProject(), message, TreeConflictRefreshablePanel.TITLE, Messages.getQuestionIcon());
+    int ok = showOkCancelDialog(myVcs.getProject(), message, message("dialog.title.resolve.tree.conflict"), Messages.getQuestionIcon());
     if (Messages.OK != ok) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    runInBackground("Getting base and theirs revisions content", indicator -> preloadContent());
+    runInBackground(message("progress.title.getting.base.and.theirs.revisions.content"), indicator -> preloadContent());
     runInEdt(this::convertTextPaths);
-    runInBackground("Creating patch for theirs changes", indicator -> createPatches());
+    runInBackground(message("progress.title.creating.patch.for.theirs.changes"), indicator -> createPatches());
     runInEdt(() -> selectPatchesInApplyPatchDialog(exception -> {
       if (exception == null) {
-        runInBackground("Accepting working state", indicator -> resolveConflicts());
+        runInBackground(message("progress.title.accepting.working.state"), indicator -> resolveConflicts());
         if (myThereAreCreations) {
-          runInBackground("Adding " + myOldPresentation + " to Subversion", indicator -> addDirectories());
+          runInBackground(message("progress.title.adding.file.to.subversion", myOldPresentation), indicator -> addDirectories());
         }
         runInEdt(this::selectBinaryFiles);
-        runInBackground("Applying binary changes", indicator -> applyBinaryChanges());
+        runInBackground(message("progress.title.applying.binary.changes"), indicator -> applyBinaryChanges());
         runInEdt(this::notifyMergeIsFinished);
       }
       else {
@@ -128,7 +129,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void notifyMergeIsFinished() {
-    VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Theirs changes merged for " + myOldPresentation, MessageType.INFO);
+    showOverChangesView(myVcs.getProject(), message("message.theirs.changes.merged.for.file", myOldPresentation), MessageType.INFO);
     showErrors();
   }
 
@@ -170,7 +171,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
     @Override
     public String getName() {
-      return "Apply Patch";
+      return VcsBundle.message("button.apply.patch");
     }
 
     @Override
@@ -295,21 +296,23 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @Nullable
   private Collection<FilePath> chooseBinaryFiles(@NotNull List<Change> changes, @NotNull Set<FilePath> paths) {
-    String singleMessage = "";
-    if (changes.size() == 1) {
-      FileStatus status = changes.get(0).getFileStatus();
-      FilePath path = getFilePath(changes.get(0));
-      String prefix = FileStatus.DELETED.equals(status)
-                      ? "Delete"
-                      : FileStatus.ADDED.equals(status)
-                        ? "Create"
-                        : "Apply changes to";
-
-      singleMessage = prefix + "binary file " + TreeConflictRefreshablePanel.filePath(path) + " (according to theirs changes)?";
-    }
     return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(
-      new ArrayList<>(paths), TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
-      singleMessage, VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
+      new ArrayList<>(paths),
+      message("dialog.title.resolve.tree.conflict"), message("dialog.message.select.binary.files.to.patch"),
+      message("dialog.title.resolve.tree.conflict"), changes.size() == 1 ? getSingleBinaryFileMessage(changes.get(0)) : "",
+      VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION
+    );
+  }
+
+  @NotNull
+  private static String getSingleBinaryFileMessage(@NotNull Change change) {
+    String singleMessageKey = FileStatus.DELETED.equals(change.getFileStatus())
+                              ? "dialog.message.merge.from.theirs.delete.binary.file"
+                              : FileStatus.ADDED.equals(change.getFileStatus())
+                                ? "dialog.message.merge.from.theirs.create.binary.file"
+                                : "dialog.message.merge.from.theirs.modify.binary.file";
+
+    return message(singleMessageKey, TreeConflictRefreshablePanel.filePath(getFilePath(change)));
   }
 
   @CalledInAwt
@@ -433,37 +436,40 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
       return false;
     }
     return Messages.YES ==
-           MessageDialogBuilder.yesNo(TreeConflictRefreshablePanel.TITLE, "Keep newly created file(s) in their original place?")
-             .yesText("Keep").noText("Move").doNotAsk(
-             new DialogWrapper.DoNotAskOption() {
-               @Override
-               public boolean isToBeShown() {
-                 return true;
-               }
-
-               @Override
-               public void setToBeShown(boolean value, int exitCode) {
-                 if (!value) {
-                   configuration.setKeepNewFilesAsIsForTreeConflictMerge(exitCode == 0);
+           yesNo(message("dialog.title.resolve.tree.conflict"), message("dialog.message.keep.newly.created.files.in.their.original.place"))
+             .yesText(message("button.keep"))
+             .noText(message("button.move"))
+             .doNotAsk(
+               new DialogWrapper.DoNotAskOption() {
+                 @Override
+                 public boolean isToBeShown() {
+                   return true;
                  }
-               }
 
-               @Override
-               public boolean canBeHidden() {
-                 return true;
-               }
+                 @Override
+                 public void setToBeShown(boolean value, int exitCode) {
+                   if (!value) {
+                     configuration.setKeepNewFilesAsIsForTreeConflictMerge(exitCode == 0);
+                   }
+                 }
 
-               @Override
-               public boolean shouldSaveOptionsOnCancel() {
-                 return true;
-               }
+                 @Override
+                 public boolean canBeHidden() {
+                   return true;
+                 }
 
-               @NotNull
-               @Override
-               public String getDoNotShowMessage() {
-                 return UIBundle.message("dialog.options.do.not.ask");
-               }
-             }).show();
+                 @Override
+                 public boolean shouldSaveOptionsOnCancel() {
+                   return true;
+                 }
+
+                 @NotNull
+                 @Override
+                 public String getDoNotShowMessage() {
+                   return UIBundle.message("dialog.options.do.not.ask");
+                 }
+               })
+             .show();
   }
 
   private static boolean containAdditions(@NotNull List<Change> changes) {
