@@ -27,11 +27,9 @@ import java.awt.event.WindowEvent;
  * @author tav
  */
 public class WebBrowser extends AnAction implements DumbAware {
-  private final JFrame frame = new IdeFrameImpl();
-  private final JTextField myUrlBar = new JTextField(URL);
-  protected final JButton myShowCookies = new JButton("Show Cookies");
   private static final String URL = "http://maps.google.com";
   private static final String myTitle = "Web Browser - JCEF";
+  private static final String myShowCookiesButtonText = "Show Cookies";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -49,6 +47,7 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
+    final JFrame frame = new IdeFrameImpl();
     frame.setTitle(myTitle);
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
@@ -73,11 +72,14 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     frame.add(myJBCefBrowser.getComponent(), BorderLayout.CENTER);
 
+    final JTextField myUrlBar = new JTextField(URL);
     myUrlBar.addActionListener(event -> myJBCefBrowser.loadURL(myUrlBar.getText()));
     frame.add(myUrlBar, BorderLayout.NORTH);
 
     JPanel controlPanel = new JPanel();
     controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
+
+    final JButton myShowCookies = new JButton(myShowCookiesButtonText);
     myShowCookies.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
