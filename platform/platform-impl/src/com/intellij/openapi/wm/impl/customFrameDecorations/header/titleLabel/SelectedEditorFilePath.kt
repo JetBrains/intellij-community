@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -39,7 +41,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
-open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
+open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null) {
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
 
@@ -52,9 +54,18 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
-      updateTitlePaths()
-      update()
+      updatePaths()
     }
+  }
+
+  private fun updateProjectPath() {
+    updateTitlePaths()
+    updateProjectName()
+  }
+
+  private fun updatePaths() {
+    updateTitlePaths()
+    update()
   }
 
   protected val label = object : JLabel() {
@@ -104,7 +115,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = Registry.get("ide.borderless.title.project.path").asBoolean() || multipleSameNamed
+    projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
     classTitle.active = Registry.get("ide.borderless.title.classpath").asBoolean() || classPathNeeded
   }
 
@@ -115,7 +126,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private var disposable: Disposable? = null
   var project: Project? = null
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
       installListeners()
@@ -123,11 +134,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   var multipleSameNamed = false
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
-      updateTitlePaths()
-      update()
+      updateProjectPath()
     }
 
 
@@ -136,8 +146,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       if (field == value) return
       field = value
 
-      updateTitlePaths()
-      update()
+      updatePaths()
     }
 
   private var simpleExtensions: List<TitleInfoProvider>? = null
@@ -158,13 +167,16 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       Disposer.register(it, disp)
       disposable = disp
 
-      Registry.get("ide.borderless.title.project.path").addListener(registryListener, disp)
+      it.messageBus.connect(disp).subscribe(UISettingsListener.TOPIC,
+                                            UISettingsListener {
+                                              updateProjectPath()
+                                            })
       Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
 
       simpleExtensions = getProviders(it)
       simplePaths = simpleExtensions?.map { ex ->
         val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
-        ex.addUpdateListener (disp) {
+        ex.addUpdateListener(disp) {
           partTitle.active = it.isActive
           partTitle.longText = it.value
 
@@ -174,7 +186,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       }
 
       val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
-      simplePaths?.let{ sp -> shrinkingPaths.addAll(sp) }
+      simplePaths?.let { sp -> shrinkingPaths.addAll(sp) }
       components = shrinkingPaths
       updateTitlePaths()
 
@@ -236,7 +248,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  private val ancestorListener = object: AncestorListenerAdapter() {
+  private val ancestorListener = object : AncestorListenerAdapter() {
     override fun ancestorMoved(event: AncestorEvent?) {
       HelpTooltip.hide(label)
     }
@@ -274,6 +286,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   protected var isClipped = false
   var titleString = ""
+
   data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
 
   private fun update() {
