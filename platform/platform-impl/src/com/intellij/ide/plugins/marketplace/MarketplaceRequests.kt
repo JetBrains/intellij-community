@@ -38,9 +38,15 @@ object MarketplaceRequests {
 
   private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
-  private val MARKETPLACE_ORGANIZATIONS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/vendors"
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests())
 
-  private val MARKETPLACE_TAGS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/organizations"
+  private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded(
+    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/organizations"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
+  private val MARKETPLACE_TAGS_URL = Urls.newFromEncoded(
+    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/tags"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd(
     '/')}/api/search/compatibleUpdates"
@@ -57,10 +63,7 @@ object MarketplaceRequests {
 
   private fun createSearchUrl(query: String, count: Int): Url {
     val repoUrl = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl
-    return Urls.newFromEncoded(
-      repoUrl + "/api/search/plugins?" + query + "&build=" +
-      URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests()) + "&max=" + count
-    )
+    return Urls.newFromEncoded("$repoUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
   }
 
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
