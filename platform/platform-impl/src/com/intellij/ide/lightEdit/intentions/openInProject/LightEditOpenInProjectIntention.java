@@ -17,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.NlsUI.ListItem;
+import static com.intellij.openapi.util.NlsContexts.ListItem;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
   @ListItem

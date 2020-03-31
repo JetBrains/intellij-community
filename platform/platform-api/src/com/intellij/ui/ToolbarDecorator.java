@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
@@ -559,20 +559,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@NlsUI.Button String text,
-                               @NlsUI.Tooltip String description,
+    public ElementActionButton(@NlsContexts.Button String text,
+                               @NlsContexts.Tooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@NlsUI.Button String text, Icon icon) {
+    public ElementActionButton(@NlsContexts.Button String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@NlsUI.Button String text) {
+    public ElementActionButton(@NlsContexts.Button String text) {
       super(text);
     }
   }

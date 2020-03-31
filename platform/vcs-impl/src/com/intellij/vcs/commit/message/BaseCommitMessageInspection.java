@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -132,7 +132,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     implements LowPriorityAction, IntentionAction, ShortcutProvider {
 
     @Override
-    public @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsContexts.ListItem @NotNull String getFamilyName() {
       return ReformatCommitMessageAction.NAME;
     }
 

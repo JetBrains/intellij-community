@@ -19,10 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ParserError;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class XPathParser implements PsiParser {
@@ -596,7 +595,7 @@ public class XPathParser implements PsiParser {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @ParserError String message) {
+  protected static void checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @NlsContexts.ParserError String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
     } else {
@@ -604,7 +603,7 @@ public class XPathParser implements PsiParser {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokens, @NotNull @ParserError String message) {
+  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokens, @NotNull @NlsContexts.ParserError String message) {
     if (tokens.contains(builder.getTokenType())) {
       builder.advanceLexer();
     } else {

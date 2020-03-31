@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
@@ -44,7 +43,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
   public CertificateWarningDialog(@NotNull X509Certificate certificate,
                                   @NotNull @NlsContexts.DialogTitle String title,
-                                  @NotNull @NlsUI.Text String message) {
+                                  @NotNull @NlsContexts.Text String message) {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));

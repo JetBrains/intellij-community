@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.util.NlsContexts;
@@ -26,11 +25,11 @@ class VcsConfirmationDialog extends OptionsDialog {
 
   VcsConfirmationDialog(@NotNull Project project,
                         @NotNull @NlsContexts.DialogTitle String title,
-                        @NotNull @NlsUI.Button String okText,
-                        @NotNull @NlsUI.Button String cancelText,
+                        @NotNull @NlsContexts.Button String okText,
+                        @NotNull @NlsContexts.Button String cancelText,
                         @NotNull VcsShowConfirmationOption option,
-                        @NotNull @NlsUI.Label String message,
-                        @NotNull @NlsUI.Checkbox String doNotShowMessage) {
+                        @NotNull @NlsContexts.Label String message,
+                        @NotNull @NlsContexts.Checkbox String doNotShowMessage) {
     super(project);
     myOkText = okText;
     myCancelText = cancelText;

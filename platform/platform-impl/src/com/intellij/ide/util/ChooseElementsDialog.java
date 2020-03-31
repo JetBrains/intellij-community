@@ -3,7 +3,6 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,11 +23,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
   private final String myDescription;
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsUI.Label String description) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     this(project, items, title, description, false);
   }
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsUI.Label String description, boolean sort) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description, boolean sort) {
     super(project, true);
     myDescription = description;
     initializeDialog(items, title, sort);
@@ -38,7 +37,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nullable @NlsUI.Label String description, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nullable @NlsContexts.Label String description, final boolean sort) {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);

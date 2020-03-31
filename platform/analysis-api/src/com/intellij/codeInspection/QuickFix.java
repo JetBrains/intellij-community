@@ -3,10 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.util.NlsUI.ListItem;
+import static com.intellij.openapi.util.NlsContexts.ListItem;
 
 /**
  * Common base interface for quick fixes provided by local and global inspections.

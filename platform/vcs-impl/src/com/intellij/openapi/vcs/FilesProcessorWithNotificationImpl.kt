@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.util.NlsContexts
@@ -39,8 +38,8 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract fun rememberForAllProjects()
 
   protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
-  protected open val viewFilesDialogOkActionName: @NlsUI.Button String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: @NlsUI.Button String = CommonBundle.getCancelButtonText()
+  protected open val viewFilesDialogOkActionName: @NlsContexts.Button String = CommonBundle.getAddButtonText()
+  protected open val viewFilesDialogCancelActionName: @NlsContexts.Button String = CommonBundle.getCancelButtonText()
 
   protected open fun rememberForCurrentProject() {
     setForCurrentProject(true)

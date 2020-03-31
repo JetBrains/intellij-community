@@ -11,7 +11,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +31,6 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -577,7 +576,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   public LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[]{new LocalQuickFix() {
       @Override
-      public @NlsUI.ListItem @NotNull String getFamilyName() {
+      public @NlsContexts.ListItem @NotNull String getFamilyName() {
         return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
       }
 

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.*;
 
-import static com.intellij.openapi.util.NlsUI.Label;
+import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
  * @author yole

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -259,7 +258,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull @NlsUI.LinkLabel String dropDownText) {
+  public Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

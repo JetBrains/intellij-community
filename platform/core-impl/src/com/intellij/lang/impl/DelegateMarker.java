@@ -17,9 +17,8 @@ package com.intellij.lang.impl;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesAndCommentsBinder;
-import com.intellij.openapi.util.ParserError;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,17 +67,17 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   }
 
   @Override
-  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before, @NotNull @ParserError String errorMessage) {
+  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before, @NotNull @NlsContexts.ParserError String errorMessage) {
     myDelegate.doneBefore(type, before, errorMessage);
   }
 
   @Override
-  public void error(@NotNull @ParserError String message) {
+  public void error(@NotNull @NlsContexts.ParserError String message) {
     myDelegate.error(message);
   }
 
   @Override
-  public void errorBefore(@NotNull @ParserError String message, @NotNull PsiBuilder.Marker before) {
+  public void errorBefore(@NotNull @NlsContexts.ParserError String message, @NotNull PsiBuilder.Marker before) {
     myDelegate.errorBefore(message, before);
   }
 

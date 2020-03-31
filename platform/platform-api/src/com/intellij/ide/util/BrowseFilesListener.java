@@ -18,7 +18,6 @@ package com.intellij.ide.util;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +44,7 @@ public class BrowseFilesListener implements ActionListener {
 
   public BrowseFilesListener(JTextField textField,
                              @NlsContexts.DialogTitle String title,
-                             @NlsUI.Label String description,
+                             @NlsContexts.Label String description,
                              FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;
     myTitle = title;

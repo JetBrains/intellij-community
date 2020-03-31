@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +48,6 @@ public interface GutterMark {
    * @return the tooltip text, or null if no tooltip is required.
    */
   @Nullable
-  @NlsUI.Tooltip
+  @NlsContexts.Tooltip
   String getTooltipText();
 }

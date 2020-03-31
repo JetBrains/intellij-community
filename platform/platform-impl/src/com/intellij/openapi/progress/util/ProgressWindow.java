@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -77,7 +77,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project,
-                        @Nullable @NlsUI.Button String cancelText) {
+                        @Nullable @NlsContexts.Button String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
@@ -85,7 +85,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         boolean shouldShowBackground,
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
-                        @Nullable @NlsUI.Button String cancelText) {
+                        @Nullable @NlsContexts.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;

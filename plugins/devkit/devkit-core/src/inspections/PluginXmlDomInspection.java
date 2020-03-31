@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -494,7 +491,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
                                new LocalQuickFix() {
                                  @Override
-                                 public @NlsUI.ListItem @NotNull String getFamilyName() {
+                                 public @NlsContexts.ListItem @NotNull String getFamilyName() {
                                    return DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix");
                                  }
 

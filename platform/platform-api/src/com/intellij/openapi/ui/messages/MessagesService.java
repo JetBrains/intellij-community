@@ -6,7 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
@@ -39,7 +39,7 @@ public interface MessagesService {
   int showMoreInfoMessageDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
-                                @NlsUI.Text String moreInfo,
+                                @Text String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
@@ -48,7 +48,7 @@ public interface MessagesService {
   int showTwoStepConfirmationDialog(@DialogMessage String message,
                                     @DialogTitle String title,
                                     String[] options,
-                                    @NlsUI.Checkbox String checkboxText,
+                                    @NlsContexts.Checkbox String checkboxText,
                                     boolean checked,
                                     int defaultOptionIndex,
                                     int focusedOptionIndex,
@@ -75,7 +75,7 @@ public interface MessagesService {
                          @Nullable @InputDialogInitialValue String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @NlsUI.Text String comment);
+                         @Nullable @Text String comment);
 
   String showMultilineInputDialog(Project project,
                                   @DialogMessage String message,
@@ -86,7 +86,7 @@ public interface MessagesService {
 
   Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
                                                     @DialogTitle String title,
-                                                    @NlsUI.Checkbox String checkboxText,
+                                                    @NlsContexts.Checkbox String checkboxText,
                                                     boolean checked,
                                                     boolean checkboxEnabled,
                                                     Icon icon,

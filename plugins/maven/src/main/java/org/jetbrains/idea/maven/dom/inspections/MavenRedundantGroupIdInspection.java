@@ -5,13 +5,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -61,7 +60,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
 
             LocalQuickFix fix = new LocalQuickFix() {
               @Override
-              public @NlsUI.ListItem @NotNull String getFamilyName() {
+              public @NlsContexts.ListItem @NotNull String getFamilyName() {
                 return MavenDomBundle.message("inspection.redundant.groupId.fix");
               }
 

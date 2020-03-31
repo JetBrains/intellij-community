@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.openapi.util.NlsProgress.ProgressTitle;
+import static com.intellij.openapi.util.NlsContexts.ProgressTitle;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);

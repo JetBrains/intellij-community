@@ -101,4 +101,103 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface ConfigurationErrorTitle {
   }
+
+  @NlsContext(prefix = "parser.error")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public static @interface ParserError {
+  }
+
+  @NlsContext(prefix = "system.notification.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public static @interface SystemNotificationTitle {
+  }
+
+  @NlsContext(prefix = "system.notification.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public static @interface SystemNotificationText {
+  }
+
+  @NlsContext(prefix = "command.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public static @interface Command {
+  }
+
+  /**
+   * Swing components
+   */
+  @NlsContext(prefix = "label")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Label {
+  }
+
+  @NlsContext(prefix = "link.label")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface LinkLabel {
+  }
+
+  @NlsContext(prefix = "checkbox")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Checkbox {
+  }
+
+  @NlsContext(prefix = "titled.border")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface TitledBorder {
+  }
+
+  @NlsContext(prefix = "tooltip")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Tooltip {
+  }
+
+  @NlsContext(prefix = "separator")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Separator {
+  }
+
+  @NlsContext(prefix = "button")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Button {
+  }
+
+  @NlsContext(prefix = "text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Text {
+  }
+
+  @NlsContext(prefix = "list.item")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ListItem {
+  }
+
+  @NlsContext(prefix = "progress.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressText {
+  }
+
+  @NlsContext(prefix = "progress.details")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressDetails {
+  }
+
+  @NlsContext(prefix = "progress.title")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressTitle {
+  }
 }
