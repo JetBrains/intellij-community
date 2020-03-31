@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -606,6 +607,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     private final boolean myIsFirst;
 
     private IdeGlassPane myGlassPane;
+    private Disposable myGlassPaneDisposable;
 
     private class MyMouseAdapter extends MouseAdapter implements Weighted {
       @Override
@@ -664,10 +666,15 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myIsFirst = isFirst;
       setOrientation(myVerticalSplit);
 
-      new UiNotifyConnector.Once(this, new Activatable() {
+      new UiNotifyConnector(this, new Activatable() {
         @Override
         public void showNotify() {
-          init(parentDisposable);
+          findGlassPane(parentDisposable);
+        }
+
+        @Override
+        public void hideNotify() {
+          releaseGlassPane();
         }
       });
     }
@@ -711,6 +718,27 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myGlassPane = IdeGlassPaneUtil.find(this);
       myGlassPane.addMouseMotionPreprocessor(myListener, parentDisposable);
       myGlassPane.addMousePreprocessor(myListener, parentDisposable);
+    }
+
+    private void findGlassPane(@NotNull Disposable parentDisposable) {
+      IdeGlassPane glassPane = IdeGlassPaneUtil.find(this);
+      if (glassPane == myGlassPane) {
+        return;
+      }
+      releaseGlassPane();
+      myGlassPane = glassPane;
+      myGlassPaneDisposable = Disposer.newDisposable();
+      Disposer.register(parentDisposable, myGlassPaneDisposable);
+      myGlassPane.addMouseMotionPreprocessor(myListener, myGlassPaneDisposable);
+      myGlassPane.addMousePreprocessor(myListener, myGlassPaneDisposable);
+    }
+
+    private void releaseGlassPane() {
+      if (myGlassPaneDisposable != null) {
+        Disposer.dispose(myGlassPaneDisposable);
+        myGlassPaneDisposable = null;
+        myGlassPane = null;
+      }
     }
 
     private void setOrientation(boolean isVerticalSplit) {
