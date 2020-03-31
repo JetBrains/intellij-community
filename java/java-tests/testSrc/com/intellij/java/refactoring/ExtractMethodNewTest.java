@@ -618,6 +618,18 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testParameterFormatting() throws Exception {
+    doTest();
+  }
+
+  public void testNoExpressionFormatting1() throws Exception {
+    doTest();
+  }
+
+  public void testNoExpressionFormatting2() throws Exception {
+    doTest();
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }

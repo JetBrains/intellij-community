@@ -3,7 +3,7 @@ class Test {
      for(int i = 0; i < ss.length; i++) {
        <selection>
        System.out.println(ss[i]);
-       System.out.println(ss[i+1]);
+       System.out.println(ss[i + 1]);
        </selection>
      }
   }

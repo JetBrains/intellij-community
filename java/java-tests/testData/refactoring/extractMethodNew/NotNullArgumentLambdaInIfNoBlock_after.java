@@ -9,7 +9,7 @@ class C {
 
     @NotNull
     private Runnable newMethod(@NotNull Object o) {
-        return (Runnable)(() -> bar(o));
+        return (Runnable) (() -> bar(o));
     }
 
     void bar(@NotNull Object o) {

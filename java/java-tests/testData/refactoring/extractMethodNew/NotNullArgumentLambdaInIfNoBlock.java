@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 class C {
     void foo(@Nullable Object o) {
         if (o != null)
-            <selection>((Runnable)(() -> bar(o)))</selection>.run();
+            <selection>((Runnable) (() -> bar(o)))</selection>.run();
     }
 
     void bar(@NotNull Object o) {
