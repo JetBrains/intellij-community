@@ -6,10 +6,7 @@ import com.intellij.workspace.api.ModifiableTypedEntity
 import com.intellij.workspace.api.TypedEntity
 import java.lang.reflect.ParameterizedType
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
+import kotlin.reflect.*
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -28,6 +25,7 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
 
     this::class.memberProperties.forEach {
       if (it.name == PTypedEntity<*>::id.name) return@forEach
+      if (it.name == PTypedEntity<*>::idImpl.name) return@forEach
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
@@ -85,7 +83,8 @@ internal abstract class PEntityData<E : TypedEntity> {
     val params = returnClass.primaryConstructor!!.parameters
       .filterNot { it.name == "snapshot" }
       .associateWith { param ->
-        this::class.memberProperties.first { it.name == param.name }.getter.call(this)
+        val value = this::class.memberProperties.first { it.name == param.name }.getter.call(this)
+        if (param.type.isList()) ArrayList(value as List<*>) else value
       }.toMutableMap()
     val snapshotParameter = returnClass.primaryConstructor!!.parameters.find { it.name == "snapshot" }
     if (snapshotParameter != null) {
@@ -112,7 +111,7 @@ internal abstract class PEntityData<E : TypedEntity> {
   fun clone(): PEntityData<E> {
     val copied = this::class.primaryConstructor!!.call()
     this::class.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach {
-      if (it.isList()) {
+      if (it.returnType.isList()) {
         it.setter.call(copied, ArrayList(it.getter.call(this) as List<*>))
       }
       else {
@@ -122,7 +121,7 @@ internal abstract class PEntityData<E : TypedEntity> {
     return copied
   }
 
-  private fun KMutableProperty<*>.isList() = List::class.java.isAssignableFrom(returnType.jvmErasure.java)
+  private fun KType.isList() = List::class.java.isAssignableFrom(jvmErasure.java)
 
   companion object {
     fun <T : TypedEntity> fromImmutableClass(imm: Class<T>): Class<PEntityData<T>> {
