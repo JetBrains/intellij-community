@@ -12,8 +12,6 @@ internal class PSampleEntityData : PEntityData<PSampleEntity> {
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PModifiableSampleEntity(this, diff)
 }
 
 internal class PSampleEntity(
@@ -29,7 +27,7 @@ internal class PSampleEntity(
 
 @PEntityDataClass(PSampleEntityData::class)
 @PEntityClass(PSampleEntity::class)
-internal class PModifiableSampleEntity(val original: PSampleEntityData,
+internal class PSampleModifiableEntity(val original: PSampleEntityData,
                                        val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSampleEntity>() {
   override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
 
@@ -53,7 +51,7 @@ internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
                                                         stringListProperty: MutableList<String> = ArrayList(),
                                                         fileProperty: VirtualFileUrl = VirtualFileUrlManager.fromUrl(
                                                           "file:///tmp")): PSampleEntity {
-  return addPEntity<PModifiableSampleEntity, PSampleEntity>(source) {
+  return addPEntity<PSampleModifiableEntity, PSampleEntity>(source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
     this.stringListProperty = stringListProperty
@@ -90,7 +88,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
   fun `modify entity`() {
     val builder = PEntityStorage.create()
     val original = builder.addPSampleEntity("hello")
-    val modified = builder.modifyEntity(PModifiableSampleEntity::class.java, original) {
+    val modified = builder.modifyEntity(PSampleModifiableEntity::class.java, original) {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
@@ -115,7 +113,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
     val builder = PEntityStorageBuilder.from(storage)
 
     assertEquals("hello", builder.singlePSampleEntity().stringProperty)
-    builder.modifyEntity(PModifiableSampleEntity::class.java, builder.singlePSampleEntity()) {
+    builder.modifyEntity(PSampleModifiableEntity::class.java, builder.singlePSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -133,7 +131,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
     assertEquals("hello", builder.singlePSampleEntity().stringProperty)
     assertEquals("hello", snapshot.singlePSampleEntity().stringProperty)
 
-    builder.modifyEntity(PModifiableSampleEntity::class.java, builder.singlePSampleEntity()) {
+    builder.modifyEntity(PSampleModifiableEntity::class.java, builder.singlePSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -152,13 +150,13 @@ class PSimplePropertiesInProxyBasedStorageTest {
     assertTrue(foo1.hasEqualProperties(foo2))
     assertFalse(foo1.hasEqualProperties(bar))
 
-    val bar2 = builder.modifyEntity(PModifiableSampleEntity::class.java, bar) {
+    val bar2 = builder.modifyEntity(PSampleModifiableEntity::class.java, bar) {
       stringProperty = "bar2"
     }
     assertTrue(bar == bar2)
     assertFalse(bar.hasEqualProperties(bar2))
 
-    val foo2a = builder.modifyEntity(PModifiableSampleEntity::class.java, foo2) {
+    val foo2a = builder.modifyEntity(PSampleModifiableEntity::class.java, foo2) {
       stringProperty = "foo2"
     }
     assertFalse(foo1.hasEqualProperties(foo2a))

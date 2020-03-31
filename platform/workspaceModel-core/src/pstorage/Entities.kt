@@ -72,7 +72,17 @@ internal interface PEntityData<E : TypedEntity> {
     return returnClass.primaryConstructor!!.callBy(params) as E
   }
 
-  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E>
+  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
+    val returnClass = Class.forName(this::class.qualifiedName!!.dropLast(10) + "ModifiableEntity").kotlin
+    val params = returnClass.primaryConstructor!!.parameters.associateWith {
+      when (it.name) {
+        "original" -> this
+        "diff" -> diff
+        else -> error("")
+      }
+    }
+    return returnClass.primaryConstructor!!.callBy(params) as ModifiableTypedEntity<E>
+  }
 
   fun clone(): PEntityData<E> {
     val copied = this::class.primaryConstructor!!.call()
@@ -94,27 +104,17 @@ internal class PFolderEntityData : PEntityData<PFolderEntity> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
   lateinit var data: String
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
 }
 
 internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<PSoftSubFolder> {
-    return PSoftSubFolderModifiableEntity(this, diff)
-  }
 }
 
 internal class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
   lateinit var data: String
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
-    return PSubFolderModifiableEntity(this, diff)
-  }
 }
 
 internal class PFolderEntity(
