@@ -18,8 +18,6 @@ internal class PSampleEntity(
   val fileProperty: VirtualFileUrl
 ) : PTypedEntity<PSampleEntity>()
 
-@PEntityDataClass(PSampleEntityData::class)
-@PEntityClass(PSampleEntity::class)
 internal class PSampleModifiableEntity(original: PSampleEntityData,
                                        diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSampleEntity>(original, diff) {
   var booleanProperty: Boolean by Another(original)

@@ -97,8 +97,8 @@ internal class PEntityStorageBuilder(
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>,
                                                                          source: EntitySource,
                                                                          initializer: M.() -> Unit): T {
-    val entityDataClass = clazz.kotlin.annotations.filterIsInstance<PEntityDataClass>().first().clazz
-    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz.java as Class<T>
+    val unmodifiableEntityClass = PModifiableTypedEntity.getEntityClass(clazz.kotlin)
+    val entityDataClass = PEntityData.fromImmutableClass(unmodifiableEntityClass).kotlin
 
     val pEntityData = entityDataClass.primaryConstructor!!.call() as PEntityData<T>
 
@@ -704,7 +704,7 @@ fun main() {
 private fun printStorage(pStoreBuilder: TypedEntityStorageBuilder) {
   println(pStoreBuilder.entities(PFolderEntity::class.java).toList())
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).toList())
-  println(pStoreBuilder.entities(PSoftSubFolder::class.java).toList())
+  println(pStoreBuilder.entities(PSoftSubFolderEntity::class.java).toList())
 
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).firstOrNull()?.parent)
   println(pStoreBuilder.entities(PFolderEntity::class.java).firstOrNull()?.children?.toList())

@@ -54,11 +54,17 @@ internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>(val original
 
   override val id: PId<T> = PId(original.id, getEntityClass())
 
-  internal fun getEntityClass(): KClass<T> = ((this::class.supertypes.find {
-    PModifiableTypedEntity::class.java.isAssignableFrom((it.classifier as KClass<*>).java)
-  }!!.javaType as ParameterizedType).actualTypeArguments.first() as Class<T>).kotlin
+  internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
 
   override val entitySource = original.entitySource
+
+  companion object {
+    fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getEntityClass(clazz: KClass<M>): Class<T> {
+      return (clazz.supertypes.find {
+        PModifiableTypedEntity::class.java.isAssignableFrom((it.classifier as KClass<*>).java)
+      }!!.javaType as ParameterizedType).actualTypeArguments.first() as Class<T>
+    }
+  }
 }
 
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
@@ -117,13 +123,19 @@ internal abstract class PEntityData<E : TypedEntity> {
   }
 
   private fun KMutableProperty<*>.isList() = List::class.java.isAssignableFrom(returnType.jvmErasure.java)
+
+  companion object {
+    fun <T : TypedEntity> fromImmutableClass(imm: Class<T>): Class<PEntityData<T>> {
+      return Class.forName(imm.name + "Data") as Class<PEntityData<T>>
+    }
+  }
 }
 
 internal class PFolderEntityData : PEntityData<PFolderEntity>() {
   lateinit var data: String
 }
 
-internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder>()
+internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolderEntity>()
 
 internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
   lateinit var data: String
@@ -133,15 +145,13 @@ internal class PFolderEntity(
   val snapshot: PEntityStorage,
   val data: String
 ) : PTypedEntity<PFolderEntity>() {
-
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
-  val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::class)
+  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(snapshot, PSoftSubFolderEntity::class)
 }
 
-internal class PSoftSubFolder(
+internal class PSoftSubFolderEntity(
   val snapshot: PEntityStorage
-) : PTypedEntity<PSoftSubFolder>() {
-
+) : PTypedEntity<PSoftSubFolderEntity>() {
   val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
 }
 
@@ -149,27 +159,30 @@ internal class PSubFolderEntity(
   val snapshot: PEntityStorage,
   val data: String
 ) : PTypedEntity<PSubFolderEntity>() {
-
   val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
 }
 
-@PEntityDataClass(PFolderEntityData::class)
-@PEntityClass(PFolderEntity::class)
 internal class PFolderModifiableEntity(original: PFolderEntityData,
                                        diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>(original, diff) {
   var data: String by Another(original)
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::class, PSubFolderEntity::class)
-  var softChildren: Sequence<PSoftSubFolder> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolder::class)
+  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 
-@PEntityDataClass(PSubFolderEntityData::class)
-@PEntityClass(PSubFolderEntity::class)
 internal class PSubFolderModifiableEntity(original: PSubFolderEntityData,
                                           diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>(original, diff) {
   var data: String by Another(original)
 
   var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::class, PFolderEntity::class)
+}
+
+internal class PSoftSubFolderModifiableEntity(
+  original: PSoftSubFolderEntityData,
+  diff: PEntityStorageBuilder
+) : PModifiableTypedEntity<PSoftSubFolderEntity>(original, diff) {
+
+  var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolderEntity::class, PFolderEntity::class)
 }
 
 internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
@@ -182,17 +195,4 @@ internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
   }
 }
 
-@PEntityDataClass(PSoftSubFolderEntityData::class)
-@PEntityClass(PSoftSubFolder::class)
-internal class PSoftSubFolderModifiableEntity(
-  original: PSoftSubFolderEntityData,
-  diff: PEntityStorageBuilder
-) : PModifiableTypedEntity<PSoftSubFolder>(original, diff) {
-
-  var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolder::class, PFolderEntity::class)
-}
-
 internal object MySource : EntitySource
-
-internal annotation class PEntityDataClass(val clazz: KClass<out PEntityData<*>>)
-internal annotation class PEntityClass(val clazz: KClass<out PTypedEntity<*>>)
