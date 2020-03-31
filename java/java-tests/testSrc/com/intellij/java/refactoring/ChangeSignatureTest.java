@@ -561,6 +561,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
   
+  public void testRecordCanonicalConstructorMissingHeader() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(-1).withName("x").withType(PsiType.INT)
+      };
+    }, false);
+  }
+  
   public void testRemoveAnnotation() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT)
