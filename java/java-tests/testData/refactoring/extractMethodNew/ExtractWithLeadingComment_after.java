@@ -1,6 +1,7 @@
 class Test {
     public void method2() {
       if (true) {
+
           newMethod();
 
       } else {

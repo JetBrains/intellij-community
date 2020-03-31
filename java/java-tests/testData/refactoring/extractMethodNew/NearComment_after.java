@@ -1,5 +1,6 @@
 public class ExtractMethods {
   public void processLine(String line) {
+
       newMethod(line);
 
   }
