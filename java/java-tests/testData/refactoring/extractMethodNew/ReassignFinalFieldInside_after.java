@@ -8,7 +8,7 @@ class X {
   }
 
     private int newMethod() {
-        int i;
+        final int i;
         i = 0;
         System.out.println(i);
         return i;
