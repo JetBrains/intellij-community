@@ -121,7 +121,8 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * TODO:
+   * Plugin update unique ID from Marketplace database.
+   * Needed for getting Plugin meta information.
    */
   @Nullable
   public String getExternalUpdateId() {
@@ -131,6 +132,11 @@ public class PluginNode implements IdeaPluginDescriptor {
   public void setExternalUpdateId(String externalUpdateId) {
     this.externalUpdateId = externalUpdateId;
   }
+
+  /**
+   * Plugin unique ID from Marketplace storage.
+   * Needed for getting Plugin meta information.
+   */
   @Nullable
   public String getExternalPluginId() {
     return externalPluginId;
