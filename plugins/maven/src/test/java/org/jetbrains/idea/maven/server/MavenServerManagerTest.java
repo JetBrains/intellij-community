@@ -26,15 +26,15 @@ import java.util.concurrent.TimeoutException;
 public class MavenServerManagerTest extends MavenTestCase {
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
-    MavenServerManager.getInstance().getOrCreateWrappee();
+    MavenServerManager.getInstance().getConnector(myProject);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       Future result = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenServerManager.getInstance().shutdown(true);
         try {
-          MavenServerManager.getInstance().getOrCreateWrappee();
+          MavenServerManager.getInstance().getConnector(myProject);
         }
-        catch (RemoteException e) {
+        catch (Exception e) {
           throw new RuntimeException(e);
         }
       });

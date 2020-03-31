@@ -18,7 +18,7 @@ public abstract class MavenRemoteObjectWrapper<T> extends RemoteObjectWrapper<T>
     super(parent);
   }
 
-  protected <Some extends MavenRemoteObject> Some doWrapAndExport(Some object) {
+  static <Some extends MavenRemoteObject> Some doWrapAndExport(Some object) {
     try {
       Remote remote = UnicastRemoteObject
         .exportObject(object, 0);
@@ -32,7 +32,7 @@ public abstract class MavenRemoteObjectWrapper<T> extends RemoteObjectWrapper<T>
     }
   }
 
-  protected MavenServerProgressIndicator wrapAndExport(final MavenProgressIndicator indicator) {
+  public static MavenServerProgressIndicator wrapAndExport(final MavenProgressIndicator indicator) {
     return doWrapAndExport(new RemoteMavenServerProgressIndicator(indicator));
   }
 
