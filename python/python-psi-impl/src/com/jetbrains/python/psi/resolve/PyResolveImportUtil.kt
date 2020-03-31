@@ -271,9 +271,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 
   when {
     context.visitAllModules -> {
-      ModuleManager.getInstance(context.project).modules.forEach {
-        RootVisitorHost.visitRoots(it, true, visitor)
-      }
+      RootVisitorHost.visitRootsInAllModules(context.project, visitor)
       when {
         sdk != null ->
           RootVisitorHost.visitSdkRoots(sdk, visitor)
