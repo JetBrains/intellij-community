@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Interface for actions activated by keystrokes in the editor.
+ * Interface for actions invoked in the editor.
  * Implementations should override {@link #doExecute(Editor, Caret, DataContext)}.
  * <p>
  * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be

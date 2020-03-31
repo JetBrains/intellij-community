@@ -12,7 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Registers action activated by keystrokes in the editor.
+ * Registers action invoked in the editor.
  *
  * @author yole
  */
