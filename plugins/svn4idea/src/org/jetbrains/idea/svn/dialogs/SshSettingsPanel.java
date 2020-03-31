@@ -6,6 +6,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PortField;
@@ -16,7 +18,6 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnConfigurationState;
 import org.jetbrains.idea.svn.commandLine.SshTunnelRuntimeModule;
@@ -25,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
   private JBRadioButton myPasswordChoice;
@@ -68,8 +71,8 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
 
     enableOptions(mySubversionConfigChoice);
 
-    registerBrowseDialog(myExecutablePathField, SvnBundle.message("ssh.settings.browse.executable.dialog.title"));
-    registerBrowseDialog(myPrivateKeyPathField, SvnBundle.message("ssh.settings.browse.private.key.dialog.title"));
+    registerBrowseDialog(myExecutablePathField, message("dialog.title.ssh.settings.browse.executable"));
+    registerBrowseDialog(myPrivateKeyPathField, message("dialog.title.ssh.settings.browse.private.key"));
 
     mySshTunnelField.getEmptyText().setText(SshTunnelRuntimeModule.DEFAULT_SSH_TUNNEL_VALUE);
     mySshTunnelField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -88,7 +91,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     });
   }
 
-  private void registerBrowseDialog(@NotNull TextFieldWithBrowseButton component, @NotNull String dialogTitle) {
+  private void registerBrowseDialog(@NotNull TextFieldWithBrowseButton component, @NlsContexts.DialogTitle @NotNull String dialogTitle) {
     component.addBrowseFolderListener(dialogTitle, null, mySvnConfiguration.getProject(),
                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
   }
@@ -173,7 +176,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     updateSshTunnelDependentValues(tunnelSetting);
   }
 
-  private void updateSshTunnelDependentValues(@Nullable String tunnelSetting) {
+  private void updateSshTunnelDependentValues(@NlsSafe @Nullable String tunnelSetting) {
     String svnSshVariableName = SshTunnelRuntimeModule.getSvnSshVariableName(
       !StringUtil.isEmpty(tunnelSetting) ? tunnelSetting : SshTunnelRuntimeModule.DEFAULT_SSH_TUNNEL_VALUE);
     String svnSshVariableValue = StringUtil.notNullize(EnvironmentUtil.getValue(svnSshVariableName));

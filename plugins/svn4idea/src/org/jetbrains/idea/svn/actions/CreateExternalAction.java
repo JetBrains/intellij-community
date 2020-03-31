@@ -30,6 +30,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
 import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
@@ -52,7 +53,7 @@ public class CreateExternalAction extends DumbAwareAction {
       boolean checkout = dialog.isCheckout();
       String target = dialog.getLocalTarget().trim();
 
-      new Task.Backgroundable(project, "Creating External") {
+      new Task.Backgroundable(project, message("progress.title.creating.external")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           doInBackground(project, file, url, checkout, target);
@@ -78,7 +79,7 @@ public class CreateExternalAction extends DumbAwareAction {
       }
     }
     catch (VcsException e) {
-      AbstractVcsHelper.getInstance(project).showError(e, "Create External");
+      AbstractVcsHelper.getInstance(project).showError(e, message("tab.title.create.external"));
     }
   }
 
@@ -93,7 +94,7 @@ public class CreateExternalAction extends DumbAwareAction {
       String externalsForTarget = parseExternalsProperty(propertyValue.toString()).get(target);
 
       if (externalsForTarget != null) {
-        throw new VcsException("Selected destination conflicts with existing: " + externalsForTarget);
+        throw new VcsException(message("error.selected.destination.conflicts.with.existing", externalsForTarget));
       }
 
       newExternals = propertyValue.toString().trim() + "\n";

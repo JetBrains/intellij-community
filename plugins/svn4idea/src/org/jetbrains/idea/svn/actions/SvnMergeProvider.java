@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnMergeProvider implements MergeProvider {
 
@@ -67,7 +68,7 @@ public class SvnMergeProvider implements MergeProvider {
       data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
     }
     else {
-      throw new VcsException("Could not get info for " + file.getPath());
+      throw new VcsException(message("error.could.not.get.info.for.path", file.getPath()));
     }
     if (oldFile == null || newFile == null || workingFile == null) {
       ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +15,7 @@ import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 public class RemoveFromIgnoreListAction extends BasicAction {
-  private String myActionName;
+  private @ActionText String myActionName;
   private final boolean myUseCommonExtension;
   @NotNull private final IgnoreInfoGetter myInfoGetter;
 
@@ -23,7 +24,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
     myInfoGetter = getter;
   }
 
-  public void setActionText(String name) {
+  public void setActionText(@ActionText @NotNull String name) {
     myActionName = name;
   }
 

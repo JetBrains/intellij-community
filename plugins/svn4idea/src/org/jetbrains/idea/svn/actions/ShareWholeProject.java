@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +20,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
@@ -137,7 +139,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       success = ShareProjectAction.share(project, baseDir);
     }
     catch (VcsException exc) {
-      AbstractVcsHelper.getInstance(project).showError(exc, "Failed to Share Project");
+      AbstractVcsHelper.getInstance(project).showError(exc, message("tab.title.failed.to.share.project"));
       excThrown = true;
     }
     finally {

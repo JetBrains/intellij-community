@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.ide.ui.ProductIcons;
@@ -120,8 +120,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       try {
         Url url = createUrl(myToURLText.getText(), false);
         String dstName = mySrcURL.getTail();
-        Url destination = SelectLocationDialog
-          .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
+        Url destination = SelectLocationDialog.selectCopyDestination(myProject, removePathTail(url), dstName);
 
         if (destination != null) {
           myToURLText.setText(destination.toDecodedString());

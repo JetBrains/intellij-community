@@ -149,7 +149,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return null;
   }
 
-  public void setSeparatorText(@NotNull @NlsContexts.Label String text) {
+  public void setSeparatorText(@NotNull @NlsContexts.Separator String text) {
     if (mySeparator != null) {
       mySeparator.setText(text);
     }
