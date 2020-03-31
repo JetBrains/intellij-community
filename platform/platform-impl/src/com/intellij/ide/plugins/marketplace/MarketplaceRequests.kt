@@ -38,6 +38,10 @@ object MarketplaceRequests {
 
   private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
+  private val MARKETPLACE_ORGANIZATIONS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/vendors"
+
+  private val MARKETPLACE_TAGS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/organizations"
+
   private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd(
     '/')}/api/search/compatibleUpdates"
 
@@ -96,13 +100,27 @@ object MarketplaceRequests {
     return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
   }
 
-  //TODO: send request to MarketPlace
   @JvmStatic
-  fun getAllPluginsVendors() = listOf("JetBrains", "Prendota", "Chirkov")
+  fun getAllPluginsVendors(): List<String> = HttpRequests
+    .request(MARKETPLACE_ORGANIZATIONS_URL)
+    .productNameAsUserAgent()
+    .connect {
+      objectMapper.readValue(
+        it.inputStream,
+        object : TypeReference<List<String>>() {}
+      )
+    }
 
-  //TODO: send request to MarketPlace
   @JvmStatic
-  fun getAllPluginsTags() = listOf("Tools integration", "Languages", "Theme", "Paid")
+  fun getAllPluginsTags(): List<String> = HttpRequests
+    .request(MARKETPLACE_TAGS_URL)
+    .productNameAsUserAgent()
+    .connect {
+      objectMapper.readValue(
+        it.inputStream,
+        object : TypeReference<List<String>>() {}
+      )
+    }
 
   fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
     return readOrUpdateFile(
