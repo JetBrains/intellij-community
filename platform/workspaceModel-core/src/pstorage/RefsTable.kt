@@ -6,7 +6,7 @@ import com.intellij.workspace.api.pstorage.containers.IntIntBiMap
 import com.intellij.workspace.api.pstorage.containers.IntIntMultiMap
 import kotlin.reflect.KClass
 
-data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
+internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val toSingleClass: KClass<T>,
   val toSequenceClass: KClass<SUBT>,
   var isHard: Boolean
@@ -21,7 +21,7 @@ data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor
   }
 }
 
-open class RefsTable internal constructor(
+internal open class RefsTable internal constructor(
   internal open val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap>
 ) {
 
@@ -80,7 +80,7 @@ open class RefsTable internal constructor(
   }
 }
 
-class MutableRefsTable : RefsTable() {
+internal class MutableRefsTable : RefsTable() {
   override val oneToManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap> = HashMap()
   private val copiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
 

@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 
-open class PEntityStorage constructor(
+internal open class PEntityStorage constructor(
   open val entitiesByType: EntitiesBarrel,
   open val refs: RefsTable
 ) : TypedEntityStorage {
@@ -67,7 +67,7 @@ open class PEntityStorage constructor(
   }
 }
 
-class PEntityStorageBuilder(
+internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
   override var entitiesByType: MutableEntitiesBarrel,
   override var refs: MutableRefsTable

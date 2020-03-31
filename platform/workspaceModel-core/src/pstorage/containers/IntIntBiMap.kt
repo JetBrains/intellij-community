@@ -3,7 +3,7 @@ package com.intellij.workspace.api.pstorage.containers
 
 import com.intellij.util.containers.IntIntHashMap
 
-class IntIntBiMap(
+internal class IntIntBiMap(
   private var key2Value: IntIntHashMap,
   private var value2Keys: IntIntMultiMap.ByList
 ) {

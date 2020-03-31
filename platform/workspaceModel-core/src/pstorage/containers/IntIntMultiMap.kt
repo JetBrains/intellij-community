@@ -7,7 +7,7 @@ import com.intellij.util.containers.IntIntHashMap
  * @author Alex Plate
  */
 
-sealed class IntIntMultiMap(
+internal sealed class IntIntMultiMap(
   private var values: IntArray,
   private val links: IntIntHashMap,
   private val distinctValues: Boolean

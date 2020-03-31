@@ -6,7 +6,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+internal sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   protected val snapshot: PEntityStorage
 ) : ReadOnlyProperty<T, Sequence<SUBT>> {
 
@@ -35,7 +35,7 @@ sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   }
 }
 
-sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+internal sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   private val snapshot: PEntityStorage
 ) : ReadOnlyProperty<SUBT, T?> {
 
@@ -64,7 +64,7 @@ sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = snapshot.extractManyToOneRef(connectionId, thisRef.id)
 }
 
-sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
+internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
   protected val snapshot: PEntityStorageBuilder
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
 
@@ -101,7 +101,7 @@ sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
   }
 }
 
-sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+internal sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
   private val snapshot: PEntityStorageBuilder
 ) : ReadWriteProperty<MODSUBT, T?> {
 

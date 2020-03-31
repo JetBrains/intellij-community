@@ -3,7 +3,7 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
 
-open class EntitiesBarrel internal constructor(
+internal open class EntitiesBarrel internal constructor(
   entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
 ) : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
 
@@ -25,7 +25,7 @@ open class EntitiesBarrel internal constructor(
   fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(entitiesByType + other.entitiesByType)
 }
 
-class MutableEntitiesBarrel : EntitiesBarrel() {
+internal class MutableEntitiesBarrel : EntitiesBarrel() {
   override val entitiesByType: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = mutableMapOf()
 
   override operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?

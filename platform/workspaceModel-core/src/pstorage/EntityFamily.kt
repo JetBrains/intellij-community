@@ -4,7 +4,7 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import gnu.trove.TIntHashSet
 
-open class EntityFamily<E : TypedEntity> internal constructor(
+internal open class EntityFamily<E : TypedEntity> internal constructor(
   protected open val entities: List<PEntityData<E>?>,
   protected val emptySlots: TIntHashSet
 ) {
@@ -28,7 +28,7 @@ open class EntityFamily<E : TypedEntity> internal constructor(
   }
 }
 
-class MutableEntityFamily<E : TypedEntity>(
+internal class MutableEntityFamily<E : TypedEntity>(
   override val entities: MutableList<PEntityData<E>?>,
   var familyCopiedToModify: Boolean
 ) : EntityFamily<E>(
