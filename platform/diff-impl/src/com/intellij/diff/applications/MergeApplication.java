@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 class MergeApplication extends DiffApplicationBase {
   MergeApplication() {
@@ -58,13 +60,18 @@ class MergeApplication extends DiffApplicationBase {
     if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
+    AtomicReference<CliResult> resultRef = new AtomicReference<>(new CliResult(127, null));
     ApplicationManager.getApplication().invokeLater(() -> {
-      MergeRequestProducer requestProducer = new MyMergeRequestProducer(project, outputFile, contents, future);
+      MergeRequestProducer requestProducer = new MyMergeRequestProducer(project, outputFile, contents, resultRef);
 
       WindowWrapper.Mode mode = project != null ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
       DiffDialogHints dialogHints = new DiffDialogHints(mode, null, wrapper -> {
         Window window = wrapper.getWindow();
         SplashManager.hideBeforeShow(window);
+
+        UIUtil.runWhenWindowClosed(window, () -> {
+          future.complete(resultRef.get());
+        });
       });
       DiffManagerEx.getInstance().showMergeBuiltin(project, requestProducer, dialogHints);
     });
@@ -75,12 +82,12 @@ class MergeApplication extends DiffApplicationBase {
     private final Project myProject;
     private final VirtualFile myOutputFile;
     private final List<VirtualFile> myContents;
-    private final CompletableFuture<CliResult> myResultRef;
+    private final AtomicReference<CliResult> myResultRef;
 
     private MyMergeRequestProducer(@Nullable Project project,
                                    @NotNull VirtualFile outputFile,
                                    @NotNull List<VirtualFile> contents,
-                                   @NotNull CompletableFuture<CliResult> resultRef) {
+                                   @NotNull AtomicReference<CliResult> resultRef) {
       myProject = project;
       myOutputFile = outputFile;
       myContents = contents;
@@ -103,12 +110,12 @@ class MergeApplication extends DiffApplicationBase {
           }
           finally {
             int exitCode = result != MergeResult.CANCEL ? 0 : 1;
-            myResultRef.complete(new CliResult(exitCode, null));
+            myResultRef.set(new CliResult(exitCode, null));
           }
         });
       }
       catch (Throwable e) {
-        myResultRef.complete(new CliResult(127, e.getMessage()));
+        myResultRef.set(new CliResult(127, e.getMessage()));
         throw new DiffRequestProducerException(e);
       }
     }
