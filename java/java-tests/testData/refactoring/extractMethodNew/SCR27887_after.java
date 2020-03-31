@@ -9,9 +9,9 @@ public class SCR27887 {
     public int publishx(OutputStream out, boolean includeCode) throws IOException {
         if (VERBOSE) System.err.println("PUBLISH: publishing subsystem '" + subsystem.refQualifiedIdentifyingName() + "' with" + (includeCode ? "" : "out") + " code");
         ZippingXMLGeneratorFactory genFac = new ZippingXMLGeneratorFactory(out);
-        //========
+//========
         RefObjectUList included = newMethod(genFac);
-        //========
+//========
         if (includeCode) {
             for (Iterator i = subsystem.getModule().iterator(); i.hasNext();) {
                 OptimalModule module = (OptimalModule) i.next();
