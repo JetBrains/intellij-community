@@ -4,7 +4,12 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.ModifiableTypedEntity
 import com.intellij.workspace.api.TypedEntity
+import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
 
 interface PTypedEntity<E : TypedEntity> : TypedEntity {
   val id: PId<E>
@@ -138,11 +143,7 @@ class PFolderModifiableEntity(val original: PFolderEntityData,
 
   override var entitySource: EntitySource = original.entitySource
 
-  var data: String
-    get() = original.data
-    set(value) {
-      original.data = value
-    }
+  var data: String by Another(original)
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::class, PSubFolderEntity::class)
   var softChildren: Sequence<PSoftSubFolder> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolder::class)
@@ -156,11 +157,7 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
                                  val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity> {
   override val id: PId<PSubFolderEntity> = PId(original.id, PSubFolderEntity::class)
 
-  var data: String
-    get() = original.data
-    set(value) {
-      original.data = value
-    }
+  var data: String by Another(original)
 
   var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::class, PFolderEntity::class)
 
@@ -168,6 +165,16 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     TODO("Not yet implemented")
+  }
+}
+
+class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
+  override fun getValue(thisRef: A, property: KProperty<*>): B {
+    return ((original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(original) as B
+  }
+
+  override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
+    ((original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(original, value)
   }
 }
 
