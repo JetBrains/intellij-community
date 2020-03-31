@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -33,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 @State(name = "EqualsHashCodeTemplates", storages = @Storage("equalsHashCodeTemplates.xml"))
-public class EqualsHashCodeTemplatesManager extends TemplatesManager {
+public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
   private static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";
 
@@ -44,12 +30,12 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String APACHE_EQUALS = "/com/intellij/codeInsight/generation/apacheEqualsBuilder.vm";
   private static final String APACHE_HASH_CODE = "/com/intellij/codeInsight/generation/apacheHashCodeBuilder.vm";
   private static final String APACHE_BUILDER = "org.apache.commons.lang.builder.EqualsBuilder";
-  
+
 
   private static final String GUAVA_EQUALS = "/com/intellij/codeInsight/generation/guavaEquals.vm";
   private static final String GUAVA_HASH_CODE = "/com/intellij/codeInsight/generation/guavaHashCode.vm";
   private static final String GUAVA_BUILDER = "com.google.common.base.Objects";
-  
+
   private static final String OBJECTS_EQUALS = "/com/intellij/codeInsight/generation/objectsEquals.vm";
   private static final String OBJECTS_HASH_CODE = "/com/intellij/codeInsight/generation/objectsHashCode.vm";
   private static final String OBJECTS_BUILDER = "java.util.Objects";
@@ -69,7 +55,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   }
 
   @Override
-  public TemplateResource[] getDefaultTemplates() {
+  public @NotNull TemplateResource @NotNull [] getDefaultTemplates() {
     try {
       return new TemplateResource[] {
         new TemplateResource(toEqualsName(INTELLI_J_DEFAULT), readFile(DEFAULT_EQUALS), true),
@@ -113,8 +99,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
   }
 
-  @NotNull
-  public static String getTemplateBaseName(TemplateResource resource) {
+  public static @NotNull String getTemplateBaseName(TemplateResource resource) {
     return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
   }
 
@@ -129,7 +114,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
         return resource;
       }
     }
-    assert false : selfSuffix + " template for " + fileName + " not found"; 
+    assert false : selfSuffix + " template for " + fileName + " not found";
     return null;
   }
 
@@ -155,7 +140,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   public static String toEqualsName(String name) {
     return name + " " + EQUALS_SUFFIX;
   }
-  
+
   public static String toHashCodeName(String name) {
     return name + " " + HASH_CODE_SUFFIX;
   }
