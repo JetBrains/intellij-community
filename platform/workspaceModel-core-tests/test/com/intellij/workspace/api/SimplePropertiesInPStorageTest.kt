@@ -12,15 +12,11 @@ internal class PSampleEntityData : PEntityData<PSampleEntity>() {
 }
 
 internal class PSampleEntity(
-  override val entitySource: EntitySource,
-  arrayId: Int,
   val booleanProperty: Boolean,
   val stringProperty: String,
   val stringListProperty: List<String>,
   val fileProperty: VirtualFileUrl
-) : PTypedEntity<PSampleEntity>(arrayId) {
-  override val id: PId<PSampleEntity> = PId(arrayId, this.javaClass.kotlin)
-}
+) : PTypedEntity<PSampleEntity>()
 
 @PEntityDataClass(PSampleEntityData::class)
 @PEntityClass(PSampleEntity::class)

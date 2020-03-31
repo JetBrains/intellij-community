@@ -16,8 +16,12 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
-internal abstract class PTypedEntity<E : TypedEntity>(arrayId: Int) : TypedEntity, Any() {
-  open val id: PId<E> = PId(arrayId, this.javaClass.kotlin as KClass<E>)
+internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
+  internal lateinit var entitySourceImpl: EntitySource
+  override val entitySource: EntitySource by lazy { entitySourceImpl }
+
+  lateinit var idImpl: PId<E>
+  open val id: PId<E> by lazy { idImpl }
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
@@ -46,7 +50,7 @@ internal abstract class PTypedEntity<E : TypedEntity>(arrayId: Int) : TypedEntit
 }
 
 internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>(val original: PEntityData<T>, val diff: PEntityStorageBuilder)
-  : PTypedEntity<T>(original.id), ModifiableTypedEntity<T> {
+  : PTypedEntity<T>(), ModifiableTypedEntity<T> {
 
   override val id: PId<T> = PId(original.id, getEntityClass())
 
@@ -70,17 +74,21 @@ internal abstract class PEntityData<E : TypedEntity> {
   var id: Int = -1
 
   fun createEntity(snapshot: PEntityStorage): E {
-    val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>)
-    val params = this::class.memberProperties.associateWith { it.getter.call(this) }
-      .mapKeys { (k, _) ->
-        returnClass.primaryConstructor!!.parameters.first { if (k.name != "id") it.name == k.name else it.name == "arrayId" }
-      }
-      .mapValues { (_, v) -> if (List::class.java.isAssignableFrom(v!!.javaClass)) ArrayList(v as List<*>) else v }.toMutableMap()
+    val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>) as KClass<E>
+
+    val params = returnClass.primaryConstructor!!.parameters
+      .filterNot { it.name == "snapshot" }
+      .associateWith { param ->
+        this::class.memberProperties.first { it.name == param.name }.getter.call(this)
+      }.toMutableMap()
     val snapshotParameter = returnClass.primaryConstructor!!.parameters.find { it.name == "snapshot" }
     if (snapshotParameter != null) {
       params[snapshotParameter] = snapshot
     }
-    return returnClass.primaryConstructor!!.callBy(params) as E
+    val res = returnClass.primaryConstructor!!.callBy(params)
+    (res as PTypedEntity<E>).entitySourceImpl = entitySource
+    (res as PTypedEntity<E>).idImpl = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass)
+    return res
   }
 
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
@@ -122,31 +130,25 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
 }
 
 internal class PFolderEntity(
-  override val entitySource: EntitySource,
-  arrayId: Int,
   val snapshot: PEntityStorage,
   val data: String
-) : PTypedEntity<PFolderEntity>(arrayId) {
+) : PTypedEntity<PFolderEntity>() {
 
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
   val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::class)
 }
 
 internal class PSoftSubFolder(
-  override val entitySource: EntitySource,
-  arrayId: Int,
   val snapshot: PEntityStorage
-) : PTypedEntity<PSoftSubFolder>(arrayId) {
+) : PTypedEntity<PSoftSubFolder>() {
 
   val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
 }
 
 internal class PSubFolderEntity(
-  override val entitySource: EntitySource,
-  arrayId: Int,
   val snapshot: PEntityStorage,
   val data: String
-) : PTypedEntity<PSubFolderEntity>(arrayId) {
+) : PTypedEntity<PSubFolderEntity>() {
 
   val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
 }
