@@ -274,6 +274,12 @@ public class GenerateMembersUtil {
       PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
+      PsiTypeElement typeElement = resultMethod.getReturnTypeElement();
+      if (typeElement != null && typeElement.getText().startsWith("@")) {
+        // If return type is annotated, substituteReturnType will add the annotation into type element,
+        // so the method should be reparsed to move it to the modifier list
+        resultMethod = factory.createMethodFromText(resultMethod.getText(), target);
+      }
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
       copyDocComment(sourceMethod, resultMethod, factory);
       GlobalSearchScope scope = sourceMethod.getResolveScope();
