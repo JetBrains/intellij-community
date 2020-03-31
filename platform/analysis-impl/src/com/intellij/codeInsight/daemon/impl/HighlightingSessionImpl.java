@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -53,7 +52,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
-    myDocument = FileDocumentManager.getInstance().getDocument(psiFile.getOriginalFile().getViewProvider().getVirtualFile());
+    myDocument = psiFile.getOriginalFile().getViewProvider().getDocument();
     myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;

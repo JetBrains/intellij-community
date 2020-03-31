@@ -105,7 +105,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testNamesHighlightingInsideCompiledFile() {
+  fun testNameHighlightingInsideCompiledFile() {
     myFixture.setReadEditorMarkupModel(true)
     myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {

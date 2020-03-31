@@ -202,10 +202,10 @@ public class Alarm implements Disposable {
   protected void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
-      final Request requestToSchedule = new Request(request, modalityState, delayMillis);
+      Request requestToSchedule = new Request(request, modalityState, delayMillis);
 
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
-        _add(requestToSchedule);
+        add(requestToSchedule);
       }
       else if (!myPendingRequests.contains(requestToSchedule)) {
         myPendingRequests.add(requestToSchedule);
@@ -214,7 +214,7 @@ public class Alarm implements Disposable {
   }
 
   // must be called under LOCK
-  private void _add(@NotNull Request requestToSchedule) {
+  private void add(@NotNull Request requestToSchedule) {
     requestToSchedule.schedule();
     myRequests.add(requestToSchedule);
   }
@@ -222,7 +222,7 @@ public class Alarm implements Disposable {
   private void flushPending() {
     synchronized (LOCK) {
       for (Request each : myPendingRequests) {
-        _add(each);
+        add(each);
       }
 
       myPendingRequests.clear();
@@ -252,7 +252,7 @@ public class Alarm implements Disposable {
   public int cancelAllRequests() {
     synchronized (LOCK) {
       return cancelAllRequests(myRequests) +
-      cancelAllRequests(myPendingRequests);
+             cancelAllRequests(myPendingRequests);
     }
   }
 
@@ -387,18 +387,17 @@ public class Alarm implements Disposable {
 
     /**
      * @return task if not yet executed
+     * must be called under LOCK
      */
     private @Nullable Runnable cancel() {
-      synchronized (LOCK) {
-        Future<?> future = myFuture;
-        if (future != null) {
-          future.cancel(false);
-          myFuture = null;
-        }
-        Runnable task = myTask;
-        myTask = null;
-        return task;
+      Future<?> future = myFuture;
+      if (future != null) {
+        future.cancel(false);
+        myFuture = null;
       }
+      Runnable task = myTask;
+      myTask = null;
+      return task;
     }
 
     @Override
