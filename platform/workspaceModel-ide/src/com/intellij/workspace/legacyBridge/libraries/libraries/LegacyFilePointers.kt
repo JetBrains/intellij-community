@@ -71,17 +71,7 @@ class LegacyModelRootsFilePointers(val project: Project) {
     // Here the workspace model updates its state without notification to the message bus
     //   because in the original implementation moving of roots doesn't fire any events.
     WorkspaceModel.getInstance(project).updateProjectModelSilent { diff ->
-      for (pointer in pointers) {
-        val updateChain: Map<out TypedEntity, TypedEntity> = pointer.onVfsChange(oldUrl, newUrl, diff)
-        if (pointer is TypedEntityFileWatcher<*, *, *>) {
-          pointers.filterIsInstance<TypedEntityFileWatcher<*, *, *>>().forEach {
-            // Update stored entities to the last snapshot
-            if (it.entityClass == pointer.entityClass) {
-              it.update(updateChain)
-            }
-          }
-        }
-      }
+      pointers.forEach { it.onVfsChange(oldUrl, newUrl, diff) }
     }
   }
 
@@ -95,7 +85,7 @@ class LegacyModelRootsFilePointers(val project: Project) {
 }
 
 private interface LegacyFileWatcher<E : TypedEntity> {
-  fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E>
+  fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder)
 }
 
 private class EntitySourceFileWatcher<T : EntitySource>(
@@ -103,7 +93,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
   val containerToUrl: (T) -> String,
   val createNewSource: (T, VirtualFileUrl) -> T
 ) : LegacyFileWatcher<TypedEntity> {
-  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<TypedEntity, TypedEntity> {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder) {
     val entities = diff.entitiesBySource { it::class == entitySource }
     for ((entitySource, mapOfEntities) in entities) {
       @Suppress("UNCHECKED_CAST")
@@ -115,7 +105,6 @@ private class EntitySourceFileWatcher<T : EntitySource>(
 
       mapOfEntities.values.flatten().forEach { diff.changeSource(it, newEntitySource) }
     }
-    return emptyMap()
   }
 }
 
@@ -162,22 +151,11 @@ private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableType
   // A multimap the associates the "url container" to the typed entity
   private val savedContainers = ArrayListMultimap.create<T, E>()
 
-  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E> {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder) {
     val toAdd = mutableListOf<Pair<T, E>>()
     val toRemove = mutableListOf<Pair<T, E>>()
 
-    // The updateChain is a map "TypedEntity to TypedEntity". It contains the association of the entity before the update
-    //   to the updated version. E.g.: let's say we're updating `MyEntity v.1` and we'll get `MyEntity v.2`. We should put these two
-    //   entities to the map (`MyEntity v.1` -> `MyEntity v.2`). So, when the next time (e.g. on the next iteration) `MyEntity` should be
-    //   updated, we search in the map the latest version of `MyEntity` and work with it. After the next update we put the updated version
-    //   back to the map (`MyEntity v.1` -> `MyEntity v.3`).
-    // This chain is created because in case [savedContainers] contains two instances of `MyEntity`, the second one won't be updated after
-    //   the first update. Of course, we can search in the EntityStore for the latest version, but it can take some time since not every
-    //   TypedEntity has an id.
-    val updateChain = mutableMapOf<E, E>()
-
     savedContainers.forEach { existingUrlContainer, entity ->
-      val entityCurrentVersion: E = updateChain[entity] ?: entity
       val savedUrl = containerToUrl(existingUrlContainer)   // Get the url as a String
       if (FileUtil.startsWith(savedUrl, oldUrl)) {     // Check if the tracked url contains the updated file
         toRemove.add(existingUrlContainer to entity)
@@ -188,16 +166,14 @@ private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableType
         val newTrackedUrl = newUrl + savedUrl.substring(oldUrl.length)
 
         val newContainer = urlToContainer(existingUrlContainer, newTrackedUrl)
-        val modifiedEntity = diff.modifyEntity(modifiableEntityClass.java, entityCurrentVersion) {
+        val modifiedEntity = diff.modifyEntity(modifiableEntityClass.java, entity) {
           this.modificator(existingUrlContainer, newContainer)
         }
-        updateChain[entity] = modifiedEntity
         toAdd.add(newContainer to modifiedEntity)
       }
     }
     toRemove.forEach { savedContainers.remove(it.first, it.second) }
     toAdd.forEach { savedContainers.put(it.first, it.second) }
-    return updateChain
   }
 
   fun onModelChange(newStorage: TypedEntityStorage) {
@@ -207,22 +183,6 @@ private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableType
         savedContainers.put(container, it)
       }
     }
-  }
-
-  /** See the comments in [onVfsChange] for the information about updateChain */
-  fun update(chain: Map<*, *>) {
-    val toAdd = mutableListOf<Pair<T, E>>()
-    val toRemove = mutableListOf<Pair<T, E>>()
-    savedContainers.forEach { key, value ->
-      @Suppress("UNCHECKED_CAST")
-      val updatedEntity: E? = chain[value] as? E? ?: return@forEach
-      if (updatedEntity != null) {
-        toRemove.add(key to value)
-        toAdd.add(key to updatedEntity)
-      }
-    }
-    toRemove.forEach { savedContainers.remove(it.first, it.second) }
-    toAdd.forEach { savedContainers.put(it.first, it.second) }
   }
 
   fun clear() = savedContainers.clear()
