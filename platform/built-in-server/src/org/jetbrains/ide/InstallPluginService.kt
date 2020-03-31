@@ -77,10 +77,10 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginId: String): Nothing? {
-    if (isAvailable) {
-      isAvailable = false
-      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-      PluginId.findId(pluginId)?.let {
+    PluginId.findId(pluginId)?.let {
+      if (isAvailable) {
+        isAvailable = false
+        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         ApplicationManager.getApplication().invokeLater(Runnable {
           AppIcon.getInstance().requestAttention(effectiveProject, true)
           PluginsAdvertiser.installAndEnable(setOf(it)) { }
