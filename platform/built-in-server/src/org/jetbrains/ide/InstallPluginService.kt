@@ -125,10 +125,9 @@ internal class InstallPluginService : RestService() {
       return false
     }
 
-    return (originHost != null &&
-            (originHost == "plugins.jetbrains.com" ||
-             originHost.endsWith(".dev.marketplace.intellij.net") ||
-             NetUtils.isLocalhost(originHost))) ||
-           super.isHostTrusted(request, urlDecoder)
+    return (originHost != null && (
+      listOf("plugins.jetbrains.com", "package-search.services.jetbrains.com", "package-search.jetbrains.com").contains(originHost) ||
+      originHost.endsWith(".dev.marketplace.intellij.net") ||
+      NetUtils.isLocalhost(originHost))) || super.isHostTrusted(request, urlDecoder)
   }
 }
