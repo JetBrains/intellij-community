@@ -272,7 +272,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return;
     }
 
-    ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
+    DiffPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closePreview();
     }
@@ -302,7 +302,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     private ChangesViewDiffPreviewProcessor myChangeProcessor;
-    private ChangesViewPreview myDiffPreview;
+    private DiffPreview myDiffPreview;
     @NotNull private final Wrapper myProgressLabel = new Wrapper();
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
@@ -576,7 +576,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void configurePreview() {
-      myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+      myChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
     }
 
     private void setCommitSplitOrientation() {

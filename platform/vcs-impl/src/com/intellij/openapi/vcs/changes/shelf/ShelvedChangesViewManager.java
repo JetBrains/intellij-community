@@ -294,7 +294,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
-    ChangesViewPreview diffPreview = myPanel.myDiffPreview;
+    DiffPreview diffPreview = myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closePreview();
     }
@@ -621,7 +621,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull private final JPanel myRootPanel = new JPanel(new BorderLayout());
 
     private MyShelvedPreviewProcessor myChangeProcessor;
-    private ChangesViewPreview myDiffPreview;
+    private DiffPreview myDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
       myProject = project;
