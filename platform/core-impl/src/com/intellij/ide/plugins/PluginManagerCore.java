@@ -1649,7 +1649,11 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder));
+      ClassLoader classLoader = createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder);
+      if (classLoader instanceof PluginClassLoader) {
+        ((PluginClassLoader)classLoader).setCoreLoader(coreLoader);
+      }
+      rootDescriptor.setLoader(classLoader);
     }
   }
 

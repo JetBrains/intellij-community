@@ -51,6 +51,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   private final AtomicLong backgroundTime = new AtomicLong();
 
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
+  private ClassLoader myCoreLoader;
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            ClassLoader @NotNull [] parents,
@@ -111,7 +112,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> c = tryLoadingClass(name, resolve, null);
+    Class<?> c = tryLoadingClass(name, resolve, null, true);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -129,18 +130,34 @@ public final class PluginClassLoader extends UrlClassLoader {
                    ParameterType parameter) {
       Result resource = doExecute(name, classloader, parameter);
       if (resource != null) return resource;
-      return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter);
+      return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter, false);
     }
 
     protected abstract Result doExecute(String name, PluginClassLoader classloader, ParameterType parameter);
+
   }
 
   @Nullable
   private <Result, ParameterType> Result processResourcesInParents(String name,
                                                                    ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
                                                                    ActionWithClassloader<Result, ParameterType> actionWithClassloader,
-                                                                   Set<ClassLoader> visited, ParameterType parameter) {
+                                                                   ParameterType parameter) {
+    return processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, null, parameter, true);
+  }
+
+  public void setCoreLoader(ClassLoader loader) {
+    myCoreLoader = loader;
+  }
+
+  @Nullable
+  private <Result, ParameterType> Result processResourcesInParents(String name,
+                                                                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
+                                                                   ActionWithClassloader<Result, ParameterType> actionWithClassloader,
+                                                                   Set<ClassLoader> visited,
+                                                                   ParameterType parameter,
+                                                                   boolean withRoot) {
     for (ClassLoader parent : myParents) {
+      if (parent == myCoreLoader) continue;
       if (visited == null) {
         visited = new THashSet<>();
         visited.add(this);
@@ -163,6 +180,10 @@ public final class PluginClassLoader extends UrlClassLoader {
       if (resource != null) return resource;
     }
 
+    if (withRoot && myCoreLoader != null && (visited == null || visited.add(myCoreLoader))) {
+      return actionWithClassloader.execute(name, myCoreLoader, parameter);
+    }
+
     return null;
   }
 
@@ -174,7 +195,7 @@ public final class PluginClassLoader extends UrlClassLoader {
                      ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
                      ActionWithClassloader<Class<?>, Void> actionWithClassloader,
                      Void parameter) {
-      return classloader.tryLoadingClass(name, false, visited);
+      return classloader.tryLoadingClass(name, false, visited, false);
     }
 
     @Override
@@ -199,7 +220,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited, boolean withRoot) {
     long startTime = StartUpMeasurer.getCurrentTime();
     Class<?> c = null;
     if (!mustBeLoadedByPlatform(name)) {
@@ -207,7 +228,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
 
     if (c == null) {
-      c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null);
+      c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null, withRoot);
     }
 
     if (c != null) {
@@ -289,7 +310,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     URL resource = findOwnResource(name);
     if (resource != null) return resource;
 
-    return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null, null);
+    return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null);
   }
 
   @Nullable
@@ -319,7 +340,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     InputStream stream = getOwnResourceAsStream(name);
     if (stream != null) return stream;
 
-    return processResourcesInParents(name, getResourceAsStreamInPluginCL, getResourceAsStreamInCl, null, null);
+    return processResourcesInParents(name, getResourceAsStreamInPluginCL, getResourceAsStreamInCl, null);
   }
 
   @Nullable
@@ -361,7 +382,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   public Enumeration<URL> findResources(String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(findOwnResources(name));
-    processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, null, resources);
+    processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, resources);
     //noinspection unchecked,ToArrayCallWithZeroLengthArrayArgument
     return new DeepEnumeration(resources.toArray(new Enumeration[resources.size()]));
   }
