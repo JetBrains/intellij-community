@@ -17,7 +17,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
@@ -28,13 +31,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class PyPsiPep8NamingInspection extends PyInspection {
+/**
+ * User : ktisha
+ */
+public class PyPep8NamingInspection extends PyInspection {
+
   protected static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
@@ -54,12 +63,127 @@ public class PyPsiPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
   public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel rootPanel = new JPanel(new BorderLayout());
+    JCheckBox checkBox = PythonUiService.getInstance()
+      .createInspectionCheckBox(PyPsiBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions");
+    if (checkBox != null) {
+      rootPanel.add(checkBox, BorderLayout.NORTH);
+    }
+
+    JComponent classes = PythonUiService.getInstance().createListEditForm("Excluded base classes", ignoredBaseClasses);
+    JComponent errors = PythonUiService.getInstance().createListEditForm("Ignored errors", ignoredErrors);
+
+    if (classes != null && errors != null) {
+      JComponent splitter = PythonUiService.getInstance().onePixelSplitter(false, classes, errors);
+
+      if (splitter != null) {
+        rootPanel.add(splitter, BorderLayout.CENTER);
+      }
+    }
+
+    return rootPanel;
+  }
+
+  protected void addFunctionQuickFixes(ProblemsHolder holder,
+                                       PyClass containingClass,
+                                       ASTNode nameNode,
+                                       List<LocalQuickFix> quickFixes, TypeEvalContext typeEvalContext) {
+    if (holder != null && holder.isOnTheFly()) {
+      LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(nameNode.getPsi());
+      if (qf != null) {
+        quickFixes.add(qf);
+      }
+    }
+
+    if (containingClass != null) {
+      quickFixes.add(new PyPep8NamingInspection.IgnoreBaseClassQuickFix(containingClass, typeEvalContext));
+    }
+  }
+
+  protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
+                                                                 String errorCode) {
+    List<LocalQuickFix> fixes = Lists.newArrayList();
+    if (node != null) {
+      LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(node);
+      if (qf != null) {
+        fixes.add(qf);
+      }
+      fixes.add(new IgnoreErrorFix(errorCode));
+    }
+    return fixes.toArray(new LocalQuickFix[fixes.size()]);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, session);
+  }
+
+  private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
+    private final List<String> myBaseClassNames;
+
+    IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
+      myBaseClassNames = new ArrayList<>();
+      ContainerUtil.addIfNotNull(getBaseClassNames(), baseClass.getQualifiedName());
+      for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
+        ContainerUtil.addIfNotNull(getBaseClassNames(), ancestor.getQualifiedName());
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return PyPsiBundle.message("INSP.pep8.ignore.method.names.for.descendants.of.class");
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      PythonUiService.getInstance().showPopup(project, getBaseClassNames(), PyPsiBundle.message("INSP.pep8.ignore.base.class"),
+                                              (selectedValue) -> InspectionProfileModifiableModelKt
+                                                .modifyAndCommitProjectProfile(project, it -> {
+                                                  PyPep8NamingInspection inspection =
+                                                    (PyPep8NamingInspection)it
+                                                      .getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(),
+                                                                        descriptor.getPsiElement());
+                                                  ContainerUtil.addIfNotNull(inspection.ignoredBaseClasses, selectedValue);
+                                                }));
+    }
+
+    public List<String> getBaseClassNames() {
+      return myBaseClassNames;
+    }
+  }
+
+  protected static class IgnoreErrorFix implements LocalQuickFix {
+    private final String myCode;
+    private static final String myText = "Ignore errors like this";
+
+    IgnoreErrorFix(String code) {
+      myCode = code;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myText;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiFile file = descriptor.getStartElement().getContainingFile();
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
+        PyPep8NamingInspection tool = (PyPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
+        if (!tool.ignoredErrors.contains(myCode)) {
+          tool.ignoredErrors.add(myCode);
+        }
+      });
+    }
   }
 
   public class Visitor extends PyInspectionVisitor {
@@ -175,7 +299,7 @@ public class PyPsiPep8NamingInspection extends PyInspection {
 
     private boolean isContextManager(PyClass node) {
       final String[] contextManagerFunctionNames = {PyNames.ENTER, PyNames.EXIT};
-      for (String name: contextManagerFunctionNames) {
+      for (String name : contextManagerFunctionNames) {
         if (node.findMethodByName(name, false, myTypeEvalContext) == null) {
           return false;
         }
@@ -216,45 +340,5 @@ public class PyPsiPep8NamingInspection extends PyInspection {
         }
       }
     }
-  }
-
-  protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
-                                                               String errorCode) {
-    //TODO: extract PyRenameElementQuickFix
-    return new LocalQuickFix[]{new IgnoreErrorFix(errorCode)};
-  }
-
-  protected static class IgnoreErrorFix implements LocalQuickFix {
-    private final String myCode;
-    private static final String myText = "Ignore errors like this";
-
-    IgnoreErrorFix(String code) {
-      myCode = code;
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return myText;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-        PyPsiPep8NamingInspection tool = (PyPsiPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
-        if (!tool.ignoredErrors.contains(myCode)) {
-          tool.ignoredErrors.add(myCode);
-        }
-      });
-    }
-  }
-
-
-  protected void addFunctionQuickFixes(ProblemsHolder holder,
-                                       PyClass containingClass,
-                                       ASTNode nameNode,
-                                       List<LocalQuickFix> quickFixes, TypeEvalContext typeEvalContext) {
   }
 }

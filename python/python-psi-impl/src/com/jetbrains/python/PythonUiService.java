@@ -42,7 +42,11 @@ public class PythonUiService {
     return null;
   }
 
-  public void runRenameProcessor(Project project, PsiElement element, String newName, boolean searchInComments, boolean searchTextOccurrences) {}
+  public void runRenameProcessor(Project project,
+                                 PsiElement element,
+                                 String newName,
+                                 boolean searchInComments,
+                                 boolean searchTextOccurrences) {}
 
   public LocalQuickFix createPyChangeSignatureQuickFixForMismatchingMethods(PyFunction function, PyFunction method) {
     return null;
@@ -66,11 +70,11 @@ public class PythonUiService {
 
   @NotNull
   public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                            String defaultEncoding,
-                                                            String[] possibleFormats,
-                                                            int formatIndex,
-                                                            Consumer<String> encodingChanged,
-                                                            Consumer<Integer> formatIndexChanged) {
+                                                String defaultEncoding,
+                                                String[] possibleFormats,
+                                                int formatIndex,
+                                                Consumer<String> encodingChanged,
+                                                Consumer<Integer> formatIndexChanged) {
     return null;
   }
 
@@ -90,6 +94,10 @@ public class PythonUiService {
     return null;
   }
 
+  public JComponent onePixelSplitter(boolean b, JComponent first, JComponent second) {
+    return null;
+  }
+
   public static PythonUiService getInstance() {
     return ServiceManager.getService(PythonUiService.class);
   }
@@ -105,5 +113,8 @@ public class PythonUiService {
                                             final String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     return null;
+  }
+
+  public void showPopup(Project project, List<String> items, String title, Consumer<String> callback) {
   }
 }

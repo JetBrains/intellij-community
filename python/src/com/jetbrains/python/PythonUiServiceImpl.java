@@ -3,9 +3,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -13,15 +16,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.PyMandatoryEncodingInspection;
+import com.jetbrains.python.inspections.PyPep8NamingInspection;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -230,5 +236,25 @@ public class PythonUiServiceImpl extends PythonUiService {
     final JPanel root = new JPanel(new BorderLayout());
     root.add(option, BorderLayout.PAGE_START);
     return root;
+  }
+
+  @Override
+  public JComponent onePixelSplitter(boolean vertical, JComponent first, JComponent second) {
+    final OnePixelSplitter splitter = new OnePixelSplitter(vertical);
+
+    splitter.setFirstComponent(first);
+    splitter.setSecondComponent(second);
+
+    return splitter;
+  }
+
+  public void showPopup(Project project, List<String> items, String title, Consumer<String> callback) {
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
+      JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+        .setTitle(title)
+        .setItemChosenCallback(callback)
+        .setNamerForFiltering(o -> o)
+        .createPopup()
+        .showInBestPositionFor(dataContext));
   }
 }
