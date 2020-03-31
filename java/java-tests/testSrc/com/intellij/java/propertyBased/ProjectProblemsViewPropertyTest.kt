@@ -4,8 +4,7 @@ package com.intellij.java.propertyBased
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.ReportedChange
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.getReportedChanges
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
 import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
 import com.intellij.codeInsight.hints.presentation.OnClickPresentation
@@ -95,14 +94,12 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     for (changedFile in changedFiles) {
       val psiFile = psiManager.findFile(changedFile)!!
       rehighlight(psiFile)
-      val reportedChanges = getReportedChanges(psiFile)
-      for ((pointer, reportedChange) in reportedChanges) {
-        val inlay = reportedChange.inlay
+      val reportedChanges = ProjectProblemPassUtils.getInlays(psiFile)
+      for ((member, inlay) in reportedChanges) {
         if (inlay != null) {
           TestCase.fail("Problems are still reported even after the fix. " +
                         "File: ${changedFile.name}, " +
-                        "Member: ${JavaDocUtil.getReferenceText(myProject, pointer.element)}, " +
-                        "Previous member: ${reportedChange.prevMember}, " +
+                        "Member: ${JavaDocUtil.getReferenceText(myProject, member)}, " +
                         "Reported problems: ${extractProblems(changedFile, inlay)}")
         }
       }
@@ -281,11 +278,10 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun getFilesReportedByProblemSearch(psiFile: PsiFile): Set<VirtualFile> {
-    val reportedChanges: Map<SmartPsiElementPointer<PsiMember>, ReportedChange> = getReportedChanges(psiFile)
+    val reportedChanges: Map<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(psiFile)
     val virtualFile = psiFile.virtualFile
     val filesWithProblems = mutableSetOf<VirtualFile>()
-    for (change in reportedChanges.values) {
-      val inlay = change.inlay ?: continue
+    for (inlay in reportedChanges.values) {
       clickOnInlay(inlay)
       val openedFile = FileEditorManager.getInstance(myProject).selectedEditor!!.file!!
       if (openedFile != virtualFile) {

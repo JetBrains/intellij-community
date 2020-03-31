@@ -183,11 +183,12 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       val factory = JavaPsiFacade.getElementFactory(project)
       WriteCommandAction.runWriteCommandAction(project) {
         val psiField = factory.createFieldFromText("static final String field = \"foo\";", null)
-        targetClass.add(psiField) as PsiField
+        targetClass.add(psiField)
       }
       myFixture.checkHighlighting()
 
       assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
+      myFixture.checkHighlighting()
       assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
 
       changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }

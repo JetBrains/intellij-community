@@ -2,26 +2,33 @@
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.problems.ChangeSet;
+import com.intellij.codeInsight.daemon.problems.FileState;
+import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.daemon.problems.ProblemCollector;
 import com.intellij.codeInsight.daemon.problems.ScopedMember;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.codeInspection.SmartHashMap;
+import com.intellij.openapi.editor.BlockInlayPriority;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.problems.SnapshotUpdater.collectChanges;
-import static com.intellij.codeInsight.daemon.problems.SnapshotUpdater.updateSnapshot;
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.*;
 
 public class ProjectProblemPass extends TextEditorHighlightingPass {
@@ -29,9 +36,7 @@ public class ProjectProblemPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
   private final PsiJavaFile myFile;
 
-  private final SmartPointerManager myPointerManager = SmartPointerManager.getInstance(myProject);
-
-  private Map<Change, List<SmartPsiElementPointer<PsiElement>>> myProblems = null;
+  private Map<PsiMember, Problem> myProblems = null;
   private Map<SmartPsiElementPointer<PsiMember>, ScopedMember> mySnapshot = null;
 
   ProjectProblemPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiJavaFile file) {
@@ -42,88 +47,68 @@ public class ProjectProblemPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    ChangeSet changeSet = collectChanges(myFile);
-    if (changeSet == null) return;
-    Map<PsiMember, ScopedMember> changes = mergeWithOldChanges(myFile, changeSet.getChanges());
-    myProblems = ReadAction.nonBlocking(() -> collectProblems(changes)).executeSynchronously();
-    mySnapshot = changeSet.getNewSnapshot();
-  }
-
-  private @Nullable Map<Change, List<SmartPsiElementPointer<PsiElement>>> collectProblems(@NotNull Map<PsiMember, ScopedMember> changes) {
-    if (changes.isEmpty()) return Collections.emptyMap();
-    Map<Change, List<SmartPsiElementPointer<PsiElement>>> problems = new HashMap<>();
-    for (Map.Entry<PsiMember, ScopedMember> entry : changes.entrySet()) {
-      if (myProject.isDisposed()) return null;
-      PsiMember curMember = entry.getKey();
-      ScopedMember prevMember = entry.getValue();
-      Set<PsiElement> memberProblems = ProblemCollector.collect(prevMember, curMember);
-      if (memberProblems == null) memberProblems = Collections.emptySet();
-      SmartPsiElementPointer<PsiMember> curMemberPointer = myPointerManager.createSmartPsiElementPointer(curMember);
-      Change change = new Change(curMemberPointer, prevMember);
-      problems.put(change, ContainerUtil.map(memberProblems, p -> myPointerManager.createSmartPsiElementPointer(p)));
-    }
-    return problems;
+    FileState prevState = FileStateUpdater.getState(myFile);
+    if (prevState == null) return;
+    FileState curState = FileStateUpdater.findState(myFile, prevState.getSnapshot());
+    myProblems = collectProblems(curState.getChanges(), prevState.getChanges());
+    mySnapshot = curState.getSnapshot();
   }
 
   @Override
   public void doApplyInformationToEditor() {
-    Document document = myDocument;
-    if (document == null) return;
     Map<SmartPsiElementPointer<PsiMember>, ScopedMember> snapshot = mySnapshot;
     if (snapshot == null) return;
-    Map<Change, List<SmartPsiElementPointer<PsiElement>>> problems = myProblems;
+    Map<PsiMember, Problem> problems = myProblems;
     if (problems == null) return;
-    InlayModel inlayModel = myEditor.getInlayModel();
+
     PresentationFactory factory = new PresentationFactory((EditorImpl)myEditor);
-    Map<SmartPsiElementPointer<PsiMember>, ReportedChange> reportedChanges = new HashMap<>();
-    problems.forEach((change, changeProblems) -> {
-      ScopedMember prevMember = change.prevMember;
-      SmartPsiElementPointer<PsiMember> memberPointer = change.curMemberPointer;
-      PsiMember member = memberPointer.getElement();
-      if (member == null) return;
-      reportedChanges.computeIfAbsent(memberPointer, (k) -> {
-        if (changeProblems.isEmpty()) return new ReportedChange(prevMember, null);
-        int offset = getMemberOffset(member);
-        InlayPresentation presentation = getPresentation(myProject, myEditor, document, factory, offset, member, changeProblems);
-        BlockInlayRenderer renderer = createBlockRenderer(presentation);
-        Inlay<?> newInlay = inlayModel.addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
-        return new ReportedChange(prevMember, newInlay);
-      });
+    Map<PsiMember, Inlay<?>> inlays = getInlays(myFile);
+    Map<PsiMember, ScopedMember> changes = new SmartHashMap<>();
+    problems.forEach((curMember, problem) -> {
+      ScopedMember prevMember = problem.prevMember;
+      Set<PsiElement> brokenUsages = problem.brokenUsages;
+      changes.put(curMember, prevMember);
+      if (brokenUsages != null) addInlay(factory, curMember, brokenUsages, inlays);
     });
-    reportChanges(myFile, reportedChanges);
-    updateSnapshot(myFile, snapshot);
+    updateInlays(myFile, inlays);
+
+    FileState fileState = new FileState(snapshot, changes);
+    FileStateUpdater.updateState(myFile, fileState);
   }
 
-  private static class Change {
+  private void addInlay(PresentationFactory factory,
+                        PsiMember psiMember,
+                        @NotNull Set<PsiElement> brokenUsages,
+                        @NotNull Map<PsiMember, Inlay<?>> inlays) {
+    Inlay<?> oldInlay = inlays.remove(psiMember);
+    if (oldInlay != null) Disposer.dispose(oldInlay);
+    if (brokenUsages.isEmpty()) return;
+    int offset = getMemberOffset(psiMember);
+    InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);
+    BlockInlayRenderer renderer = createBlockRenderer(presentation);
+    Inlay<?> newInlay = myEditor.getInlayModel().addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
+    inlays.put(psiMember, newInlay);
+  }
 
-    private final SmartPsiElementPointer<PsiMember> curMemberPointer;
+  private static @NotNull Map<PsiMember, Problem> collectProblems(@NotNull Map<PsiMember, ScopedMember> curChanges,
+                                                                  @NotNull Map<PsiMember, ScopedMember> oldChanges) {
+    Map<PsiMember, Problem> problems = ContainerUtil.map2Map(oldChanges.entrySet(),
+                                                             e -> Pair.create(e.getKey(), new Problem(e.getValue(), null)));
+    curChanges.forEach((curMember, prevMember) -> {
+      Set<PsiElement> changeProblems = ProblemCollector.collect(prevMember, curMember);
+      if (changeProblems == null) changeProblems = Collections.emptySet();
+      problems.put(curMember, new Problem(prevMember, changeProblems));
+    });
+    return problems;
+  }
+
+  private static class Problem {
     private final ScopedMember prevMember;
+    private final Set<PsiElement> brokenUsages;
 
-    private Change(SmartPsiElementPointer<PsiMember> curMemberPointer, ScopedMember prevMember) {
-      this.curMemberPointer = curMemberPointer;
+    private Problem(ScopedMember prevMember, Set<PsiElement> brokenUsages) {
       this.prevMember = prevMember;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Change change = (Change)o;
-      return Objects.equals(curMemberPointer, change.curMemberPointer) &&
-             Objects.equals(prevMember, change.prevMember);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(curMemberPointer, prevMember);
-    }
-
-    @Override
-    public String toString() {
-      return "Change{" +
-             "curMemberPointer=" + curMemberPointer +
-             ", prevMember=" + prevMember +
-             '}';
+      this.brokenUsages = brokenUsages;
     }
   }
 }
