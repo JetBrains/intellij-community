@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -85,13 +88,6 @@ fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
   LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
   return EmptyStatisticsEventLoggerProvider(recorderId)
 }
-
-/**
- * Best practices:
- * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each.
- * - Prefer shorter group names; avoid common prefixes (such as "statistics.").
- */
-class EventLogGroup(val id: String, val version: Int)
 
 @Deprecated("Use EventLogGroup instead")
 class FeatureUsageGroup(val id: String, val version: Int)

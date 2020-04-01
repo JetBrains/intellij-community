@@ -87,8 +87,13 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     final FeatureUsageData data = new FeatureUsageData();
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
     data.addPluginInfo(info);
-    data.addData("file_type", info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID);
+    data.addData("file_type", getSafeFileTypeName(type));
     return data;
+  }
+
+  public static String getSafeFileTypeName(@NotNull FileType fileType) {
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(fileType.getClass());
+    return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
   public static class ValidationRule extends CustomWhiteListRule {

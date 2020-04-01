@@ -2,36 +2,31 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TipsOfTheDayUsagesCollector {
-  private static final String GROUP_ID = "ui.tips";
+  private static final EventLogGroup GROUP = EventLogGroup.byId("ui.tips");
+
+  public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
+  public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
+  public static final EventId1<String> DIALOG_SHOWN =
+    GROUP.registerEvent("dialog.shown", EventFields.String("type"));
+
+  private static final EventId2<String, String> TIP_SHOWN =
+    GROUP.registerEvent("tip.shown", EventFields.String("feature_id"), EventFields.String("filename"));
+
   private static final String NO_FEATURE_ID = "no.feature.id";
 
-  public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, feature);
-  }
-
-  public static void triggerShow(@NotNull String type) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, "dialog.shown", new FeatureUsageData().addData("type", type));
-  }
-
   public static void triggerTipShown(@NotNull TipAndTrickBean tip) {
-    FeatureUsageData usageData = new FeatureUsageData();
-
     String featureId = tip.featureId;
-    usageData.addData("feature_id", featureId != null ? featureId : NO_FEATURE_ID);
-    usageData.addData("filename", tip.fileName);
-
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, "tip.shown", usageData);
+    TIP_SHOWN.log(featureId != null ? featureId : NO_FEATURE_ID, tip.fileName);
   }
 
   public static class TipInfoWhiteListRule extends CustomWhiteListRule {

@@ -165,7 +165,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      TipsOfTheDayUsagesCollector.trigger("previous.tip");
+      TipsOfTheDayUsagesCollector.PREVIOUS_TIP.log();
       showNext(false);
     }
   }
@@ -179,7 +179,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      TipsOfTheDayUsagesCollector.trigger("next.tip");
+      TipsOfTheDayUsagesCollector.NEXT_TIP.log();
       showNext(true);
     }
   }

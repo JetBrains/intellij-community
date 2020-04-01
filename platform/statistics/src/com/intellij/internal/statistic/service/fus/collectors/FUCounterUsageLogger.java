@@ -5,10 +5,8 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -55,8 +53,6 @@ import java.util.concurrent.TimeUnit;
  * @see ProjectUsagesCollector
  */
 public class FUCounterUsageLogger {
-  private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
-
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
@@ -107,13 +103,6 @@ public class FUCounterUsageLogger {
     if (StringUtil.isNotEmpty(id)) {
       register(new EventLogGroup(id, ep.version));
     }
-  }
-
-  /**
-   * @deprecated Don't call this method directly, register counter group in XML as <statistics.counterUsagesCollector groupId="ID" version="VERSION"/>
-   */
-  @Deprecated
-  public void register(@NotNull FeatureUsageGroup group) {
   }
 
   private void register(@NotNull EventLogGroup group) {
@@ -221,12 +210,12 @@ public class FUCounterUsageLogger {
     }
   }
 
-  @Nullable
-  private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
+  @NotNull
+  public EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
-      LOG.warn("Cannot record event because group '" + groupId + "' is not registered. " +
-               "To fix it add '<statistics.counterUsagesCollector groupId=\"" + groupId + "\" version=\"1\"/>' in plugin.xml");
-      return null;
+      throw new IllegalStateException(
+        "Cannot record event because group '" + groupId + "' is not registered. " +
+        "To fix it add '<statistics.counterUsagesCollector groupId=\"" + groupId + "\" version=\"1\"/>' in plugin.xml");
     }
     return myGroups.get(groupId);
   }
