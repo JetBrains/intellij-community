@@ -1,18 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,14 +22,16 @@ public class AnnotationDocGenerator {
   private static final Logger LOG = Logger.getInstance(AnnotationDocGenerator.class);
   @NotNull private final PsiAnnotation myAnnotation;
   @NotNull private final PsiJavaCodeReferenceElement myNameReference;
-  @NotNull private final PsiModifierListOwner myOwner;
+  @NotNull private final PsiElement myContext;
   @Nullable private final PsiClass myTargetClass;
   private final boolean myResolveNotPossible;
 
-  private AnnotationDocGenerator(@NotNull PsiAnnotation annotation, @NotNull PsiJavaCodeReferenceElement nameReference, @NotNull PsiModifierListOwner owner) {
-     myAnnotation = annotation;
-     myNameReference = nameReference;
-     myOwner = owner;
+  private AnnotationDocGenerator(@NotNull PsiAnnotation annotation,
+                                 @NotNull PsiJavaCodeReferenceElement nameReference,
+                                 @NotNull PsiElement context) {
+    myAnnotation = annotation;
+    myNameReference = nameReference;
+    myContext = context;
 
     boolean indexNotReady = false;
     PsiElement target = null;
@@ -65,16 +68,12 @@ public class AnnotationDocGenerator {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
 
-  public boolean isInferredFromSource() {
-    return isInferred() && !(PsiUtil.preferCompiledElement(myOwner) instanceof PsiCompiledElement);
-  }
-
   void generateAnnotation(StringBuilder buffer, AnnotationFormat format) {
     String qualifiedName = myAnnotation.getQualifiedName();
-    PsiClassType type =
-      myTargetClass != null && qualifiedName != null && JavaDocUtil.findReferenceTarget(myOwner.getManager(), qualifiedName, myOwner) != null
-      ? JavaPsiFacade.getElementFactory(myOwner.getProject()).createType(myTargetClass, PsiSubstitutor.EMPTY)
-      : null;
+    PsiClassType type = myTargetClass != null && qualifiedName != null &&
+                        JavaDocUtil.findReferenceTarget(myContext.getManager(), qualifiedName, myContext) != null
+                        ? JavaPsiFacade.getElementFactory(myContext.getProject()).createType(myTargetClass, PsiSubstitutor.EMPTY)
+                        : null;
 
     boolean red = type == null && !myResolveNotPossible && !isInferred() && !isExternal();
 
@@ -169,25 +168,37 @@ public class AnnotationDocGenerator {
 
     buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
+  
+  public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiAnnotationOwner owner, @NotNull PsiElement context) {
+    if (owner instanceof PsiModifierList) {
+      return getAnnotationsToShow(((PsiModifierListOwner)((PsiModifierList)owner).getParent()));
+    }
+    Set<String> shownAnnotations = new HashSet<>();
+    return ContainerUtil.mapNotNull(owner.getAnnotations(),
+                                    annotation -> forAnnotation(context, shownAnnotations, annotation));
+  }
 
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
-    List<AnnotationDocGenerator> infos = new ArrayList<>();
-
     Set<String> shownAnnotations = new HashSet<>();
+    return StreamEx.of(AnnotationUtil.getAllAnnotations(owner, false, null))
+      .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? anno -> true 
+                                                                          : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
+      .map(annotation -> forAnnotation(owner, shownAnnotations, annotation))
+      .nonNull()
+      .toList();
+  }
 
-    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null)) {
-      PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
-      if (nameReferenceElement == null) continue;
+  private static @Nullable AnnotationDocGenerator forAnnotation(@NotNull PsiElement context,
+                                                                @NotNull Set<String> shownAnnotations,
+                                                                @NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+    if (nameReferenceElement == null) return null;
 
-      AnnotationDocGenerator anno = new AnnotationDocGenerator(annotation, nameReferenceElement, owner);
+    AnnotationDocGenerator anno = new AnnotationDocGenerator(annotation, nameReferenceElement, context);
+    if (anno.isNonDocumentedAnnotation()) return null;
 
-      if (anno.isNonDocumentedAnnotation()) continue;
-
-      if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) continue;
-
-      infos.add(anno);
-    }
-    return infos;
+    if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) return null;
+    return anno;
   }
 }
 

@@ -881,6 +881,17 @@ public class JavaDocInfoGenerator {
     return modifiers.length();
   }
 
+  private static void generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+    List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
+    if (leadingSpace && !generators.isEmpty()) {
+      buffer.append(NBSP);
+    }
+    for (AnnotationDocGenerator anno : generators) {
+      anno.generateAnnotation(buffer, AnnotationFormat.JavaDocShort);
+      buffer.append(NBSP);
+    }
+  }
+  
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           SignaturePlace place,
@@ -1820,14 +1831,10 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink, boolean useShortNames) {
-    if (type instanceof PsiPrimitiveType) {
-      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
-      buffer.append(text);
-      return text.length();
-    }
-
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
+
+      generateTypeAnnotations(buffer, type, context, true);
       if (type instanceof PsiEllipsisType) {
         buffer.append("...");
         return rest + 3;
@@ -1836,6 +1843,14 @@ public class JavaDocInfoGenerator {
         buffer.append("[]");
         return rest + 2;
       }
+    }
+
+    generateTypeAnnotations(buffer, type, context, false);
+    
+    if (type instanceof PsiPrimitiveType) {
+      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
+      buffer.append(text);
+      return text.length();
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -1982,6 +1997,8 @@ public class JavaDocInfoGenerator {
 
       for (int i = 0; i < parameters.length; i++) {
         PsiTypeParameter p = parameters[i];
+        
+        generateTypeAnnotations(buffer, p, p, false);
 
         buffer.append(p.getName());
 
