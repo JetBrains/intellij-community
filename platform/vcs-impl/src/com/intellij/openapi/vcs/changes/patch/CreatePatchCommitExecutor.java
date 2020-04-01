@@ -108,6 +108,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myPanel.setCommonParentPath(commonAncestor);
       myPanel.selectBasePath(PatchWriter.calculateBaseForWritingPatch(myProject, changes));
       myPanel.setReversePatch(false);
+      myPanel.setReverseEnabledAndVisible(myPatchBuilder.isReverseSupported());
 
       JComponent panel = myPanel.getPanel();
       panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, "Patch File Settings");
@@ -189,6 +190,9 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   }
 
   public interface PatchBuilder {
+
+    default boolean isReverseSupported() {return true;}
+
     List<FilePatch> buildPatches(String baseDir,
                                  @NotNull Collection<? extends Change> changes,
                                  boolean reversePatch, boolean honorExcludedFromCommit) throws VcsException;
@@ -220,6 +224,11 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myProject = project;
       myShelvedChangeList = shelvedChangeList;
       mySelectedPaths = selectedPaths;
+    }
+
+    @Override
+    public boolean isReverseSupported() {
+      return false;
     }
 
     @Override
