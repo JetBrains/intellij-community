@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.ObjectUtils
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -21,11 +20,8 @@ class LayoutGenerator {
       for (PluginLayout plugin : plugins) {
         Set<String> modules = new LinkedHashSet<>()
         modules.add(plugin.getMainModule())
-        MultiValuesMap<String, String> moduleJars = plugin.getModuleJars()
-        for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
-          if (entry.getKey().contains("/")) continue
-          modules.addAll(new LinkedHashSet<>(entry.getValue()))
-        }
+
+        plugin.moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany(modules) {it.value}
 
         modules.remove("intellij.platform.commercial.verifier")
         if (modules.size() == 1) continue
