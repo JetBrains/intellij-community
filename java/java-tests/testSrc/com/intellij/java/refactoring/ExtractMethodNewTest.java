@@ -631,6 +631,58 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testIgnoreSwitchBreak() throws Exception {
+    doTest();
+  }
+
+  public void testExtractSwitchVariable() throws Exception {
+    doTest();
+  }
+
+  public void testReturnVariablesResolved() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBranchedPrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testExtractSwitchNotNullVariable() throws Exception {
+    doTest();
+  }
+
+  public void testAvoidContinueInsideMethod() throws Exception {
+    doTest();
+  }
+
+  public void testLocalVariablesAreNotExposed() throws Exception {
+    doTest();
+  }
+
+  public void testExtractConditionalContinue() throws Exception {
+    doTest();
+  }
+
+  public void testExtractConditionalBreak() throws Exception {
+    doTest();
+  }
+
+  public void testDontMissReturn() throws Exception {
+    doTest();
+  }
+
+  public void testNoRedundantContinue() throws Exception {
+    doTest();
+  }
+
+  public void testDontReplaceThrowWithReturn() throws Exception {
+    doTest();
+  }
+
+  public void testDontMissReturnDueToThrowable() throws Exception {
+    doTest();
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }
