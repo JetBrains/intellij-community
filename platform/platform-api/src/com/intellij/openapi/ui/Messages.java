@@ -1147,7 +1147,7 @@ public class Messages {
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable @InputDialogInitialValue String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
   }
@@ -1157,7 +1157,7 @@ public class Messages {
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable @InputDialogInitialValue String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     return showInputDialog(project, message, title, icon, initialValue, validator, selection, null);
@@ -1169,7 +1169,7 @@ public class Messages {
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable @InputDialogInitialValue String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
                                        @Nullable @DetailedDescription String comment) {
@@ -1181,7 +1181,7 @@ public class Messages {
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable @InputDialogInitialValue String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
   }
@@ -1196,7 +1196,7 @@ public class Messages {
   public static String showInputDialog(@DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable @InputDialogInitialValue String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
@@ -1205,7 +1205,7 @@ public class Messages {
   public static String showMultilineInputDialog(Project project,
                                                 @DialogMessage String message,
                                                 @DialogTitle String title,
-                                                @Nullable @InputDialogInitialValue String initialValue,
+                                                @Nullable String initialValue,
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
     return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
@@ -1218,7 +1218,7 @@ public class Messages {
                                                                   boolean checked,
                                                                   boolean checkboxEnabled,
                                                                   @Nullable Icon icon,
-                                                                  @InputDialogInitialValue String initialValue,
+                                                                  String initialValue,
                                                                   @Nullable InputValidator validator) {
     return MessagesService.getInstance()
       .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
@@ -1229,7 +1229,7 @@ public class Messages {
                                                 @DialogTitle String title,
                                                 @Nullable Icon icon,
                                                 String[] values,
-                                                @InputDialogInitialValue String initialValue,
+                                                String initialValue,
                                                 @Nullable InputValidator validator) {
     return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
   }
@@ -1241,7 +1241,7 @@ public class Messages {
   public static int showChooseDialog(@DialogMessage String message,
                                      @DialogTitle String title,
                                      String[] values,
-                                     @InputDialogInitialValue String initialValue,
+                                     String initialValue,
                                      @Nullable Icon icon) {
     return MessagesService.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
   }
@@ -1254,7 +1254,7 @@ public class Messages {
                                      @DialogMessage String message,
                                      @DialogTitle String title,
                                      String[] values,
-                                     @InputDialogInitialValue String initialValue,
+                                     String initialValue,
                                      Icon icon) {
     return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
   }
@@ -1269,7 +1269,7 @@ public class Messages {
                                      @DialogTitle String title,
                                      Icon icon,
                                      String[] values,
-                                     @InputDialogInitialValue String initialValue) {
+                                     String initialValue) {
     return MessagesService.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
   }
 
@@ -1364,7 +1364,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable @InputDialogInitialValue String initialValue,
+                       @Nullable String initialValue,
                        @Nullable InputValidator validator,
                        String @NotNull @NlsContexts.Button [] options,
                        int defaultOption,
@@ -1381,7 +1381,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable @InputDialogInitialValue String initialValue,
+                       @Nullable String initialValue,
                        @Nullable InputValidator validator,
                        String @NotNull @NlsContexts.Button [] options,
                        int defaultOption) {
@@ -1392,7 +1392,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable @InputDialogInitialValue String initialValue,
+                       @Nullable String initialValue,
                        @Nullable InputValidator validator) {
       this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0);
     }
@@ -1401,7 +1401,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable @InputDialogInitialValue String initialValue,
+                       @Nullable String initialValue,
                        @Nullable InputValidator validator) {
       super(null, parent, message, title, new String[]{getOkButton(), getCancelButton()}, -1, 0, icon, null, true);
       myValidator = validator;
@@ -1413,7 +1413,7 @@ public class Messages {
     public InputDialog(@DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable @InputDialogInitialValue String initialValue,
+                       @Nullable String initialValue,
                        @Nullable InputValidator validator) {
       super(null, null, message, title, new String[]{getOkButton(), getCancelButton()}, 0, -1, icon, null, true);
       myValidator = validator;
@@ -1550,7 +1550,7 @@ public class Messages {
                                 @DialogMessage String message,
                                 @DialogTitle String title,
                                 @Nullable Icon icon,
-                                @Nullable @InputDialogInitialValue String initialValue,
+                                @Nullable String initialValue,
                                 @Nullable InputValidator validator,
                                 String @NotNull @NlsContexts.Button [] options,
                                 int defaultOption) {

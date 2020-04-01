@@ -24,12 +24,6 @@ public class NlsContexts {
   public @interface DialogMessage {
   }
 
-  @NlsContext(prefix = "input.dialog.initial.value")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface InputDialogInitialValue {
-  }
-
   /**
    * Popups
    */
