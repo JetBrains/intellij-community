@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
@@ -14,12 +14,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+
+import static com.intellij.openapi.actionSystem.Presentation.NULL_STRING;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class MergeSourceDetailsAction extends AnAction implements DumbAware {
 
   public MergeSourceDetailsAction() {
-    super("Show merge sources details", null, AllIcons.Vcs.Branch);
+    super(messagePointer("action.Subversion.ShowMergeSourceDetails.text"), NULL_STRING, AllIcons.Vcs.Branch);
   }
 
   @Override
@@ -28,7 +32,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   }
 
   public void registerSelf(final JComponent comp) {
-    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)), comp);
+    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_MASK | InputEvent.CTRL_MASK)), comp);
   }
 
   private boolean enabled(final AnActionEvent e) {

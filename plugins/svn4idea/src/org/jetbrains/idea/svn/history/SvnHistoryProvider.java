@@ -32,7 +32,6 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
@@ -49,6 +48,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
@@ -96,7 +96,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         }
 
         {
-          statusText.setText("Merge sources");
+          statusText.setText(message("status.text.merge.sources"));
           setWrapStyleWord(true);
           setLineWrap(true);
         }
@@ -229,7 +229,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final Ref<Boolean> sessionReported = new Ref<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));
+      indicator.setText(message("progress.text2.collecting.history", path.getName()));
     }
     final Consumer<VcsFileRevision> consumer = vcsFileRevision -> {
       if (!Boolean.TRUE.equals(sessionReported.get())) {
@@ -298,11 +298,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected void preliminary() {
       myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootUrl() == null) {
-        myException = new VcsException("File " + myFile.getPath() + " is not under version control");
+        myException = new VcsException(message("error.file.is.not.under.version.control", myFile.getPath()));
         return;
       }
       if (myInfo.getUrl() == null) {
-        myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
+        myException = new VcsException(message("error.file.is.not.under.subversion", myFile.getPath()));
         return;
       }
       myUrl = myInfo.getUrl();
@@ -314,7 +314,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
 
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
+        myPI.setText2(message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
       final Revision pegRevision = myInfo.getRevision();
       final Target target = Target.on(myFile.getIOFile(), myPeg);
@@ -354,7 +354,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     @Override
     protected void load() {
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
+        myPI.setText2(message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
 
       try {
@@ -371,7 +371,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         // TODO: non-interactive mode)
         final Url rootURL = getRepositoryRoot(myVcs, myUrl);
         if (rootURL == null) {
-          throw new VcsException("Could not find repository root for URL: " + myUrl.toDecodedString());
+          throw new VcsException(message("error.can.not.find.repository.root.for.url", myUrl.toDecodedString()));
         }
         String relativeUrl = getRelativeUrl(rootURL, myUrl);
         Target target = Target.on(myUrl, myPeg == null ? myFrom : myPeg);
@@ -392,7 +392,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
       if (info == null || info.getRepositoryRootUrl() == null) {
-        throw new VcsException("Could not find repository root for URL: " + svnurl + " in revision " + myPeg);
+        throw new VcsException(message("error.can.not.find.repository.root.for.url.in.revision", svnurl, myPeg));
       }
 
       Url rootURL = info.getRepositoryRootUrl();
@@ -471,7 +471,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
         if (myIndicator != null) {
           myIndicator.checkCanceled();
-          myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+          myIndicator.setText2(message("progress.text2.revision.processed", logEntry.getRevision()));
         }
         LogEntryPath entryPath = null;
         String copyPath = null;
@@ -638,7 +638,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final SvnHistorySession session) {
-      super("Merge Sources");
+      super(message("column.name.merge.sources"));
       myRenderer = new MergeSourceRenderer(session);
     }
 
@@ -789,7 +789,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                            final int column) {
         if (value instanceof String && ((String)value).length() > 0) {
           setIcon(myIcon);
-          setToolTipText(SvnBundle.message("copy.column.tooltip", value));
+          setToolTipText(message("copy.column.tooltip", value));
         }
         else {
           setToolTipText("");
@@ -798,7 +798,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     };
 
     CopyFromColumnInfo() {
-      super(SvnBundle.message("copy.column.title"));
+      super(message("copy.column.title"));
     }
 
     @Override
@@ -813,7 +813,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     @Override
     public String getMaxStringValue() {
-      return SvnBundle.message("copy.column.title");
+      return message("copy.column.title");
     }
 
     @Override

@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBaseContentRevision;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
@@ -27,6 +26,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements PropertyRevision {
   private final static String ourPropertiesDelimiter = "\n";
@@ -71,10 +72,10 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       boolean completed = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true,
+        .runProcessWithProgressSynchronously(runnable, message("progress.title.loading.file.properties"), true,
                                              myVcs.getProject());
       if (!completed) {
-        throw new VcsException("Properties load for revision " + getRevisionNumber().asString() + " was canceled.");
+        throw new VcsException(message("error.properties.loading.for.revision.canceled", getRevisionNumber().asString()));
       }
     }
     else {
@@ -106,7 +107,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
-      indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
+      indicator.setText(message("show.properties.diff.progress.text.revision.information", revision.toString()));
     }
 
     return new PropertyConsumer() {
@@ -128,7 +129,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
       private void registerProperty(@NotNull PropertyData property) {
         if (indicator != null) {
           indicator.checkCanceled();
-          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
+          indicator.setText2(message("show.properties.diff.progress.text2.property.information", property.getName()));
         }
         lines.add(property);
       }
