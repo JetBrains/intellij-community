@@ -2611,7 +2611,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long typingElapsed = typing - start;
         long highlightElapsed = end - typing;
         assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
-                   typingElapsed > 1000 && highlightElapsed > 2000);
+                   typingElapsed > 1000 && highlightElapsed >= 2000);
       })
     );
   }
