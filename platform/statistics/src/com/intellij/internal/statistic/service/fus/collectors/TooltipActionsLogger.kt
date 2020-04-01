@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.InputEventPlace
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
@@ -11,15 +10,21 @@ import java.awt.event.InputEvent
 object TooltipActionsLogger {
   private val GROUP = EventLogGroup.byId("tooltip.action.events")
 
+  enum class Source(private val text: String) {
+    Shortcut("shortcut"), Gear("gear"), MoreLink("more.link");
+
+    override fun toString() = text
+  }
+
   private val executeEvent = GROUP.registerEvent("execute", EventFields.Project, EventFields.InputEvent)
   val showAllEvent = GROUP.registerEvent("show.all", EventFields.Project)
-  private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Project, EventFields.String("source"), EventFields.InputEvent)
+  private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Project, EventFields.Enum<Source>("source"), EventFields.InputEvent)
 
   fun logExecute(project: Project?, inputEvent: InputEvent?) {
     executeEvent.log(project, InputEventPlace(inputEvent, null))
   }
 
-  fun logShowDescription(project: Project?, source: String, inputEvent: InputEvent?, place: String?) {
+  fun logShowDescription(project: Project?, source: Source, inputEvent: InputEvent?, place: String?) {
     showDescriptionEvent.log(project, source, InputEventPlace(inputEvent, place))
   }
 }

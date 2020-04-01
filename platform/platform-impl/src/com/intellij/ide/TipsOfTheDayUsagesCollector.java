@@ -14,13 +14,17 @@ import org.jetbrains.annotations.Nullable;
 public class TipsOfTheDayUsagesCollector {
   private static final EventLogGroup GROUP = EventLogGroup.byId("ui.tips");
 
+  public enum DialogType { automatically, manually }
+
   public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
   public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
-  public static final EventId1<String> DIALOG_SHOWN =
-    GROUP.registerEvent("dialog.shown", EventFields.String("type"));
+  public static final EventId1<DialogType> DIALOG_SHOWN =
+    GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
 
   private static final EventId2<String, String> TIP_SHOWN =
-    GROUP.registerEvent("tip.shown", EventFields.String("feature_id"), EventFields.String("filename"));
+    GROUP.registerEvent("tip.shown",
+                        EventFields.String("feature_id").withCustomRule("tip_info"),
+                        EventFields.String("filename").withCustomRule("tip_info"));
 
   private static final String NO_FEATURE_ID = "no.feature.id";
 

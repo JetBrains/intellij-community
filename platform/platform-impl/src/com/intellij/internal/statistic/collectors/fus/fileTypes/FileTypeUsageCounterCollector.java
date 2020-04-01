@@ -44,8 +44,8 @@ public class FileTypeUsageCounterCollector {
   private static final EventLogGroup GROUP = EventLogGroup.byId("file.types.usage");
 
   private static class FileTypeEventId extends VarargEventId {
-    public static final EventField<String> FILE_TYPE = EventFields.String("file_type");
-    public static final EventField<String> SCHEMA = EventFields.String("schema");
+    public static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
+    public static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
 
     private FileTypeEventId(@NotNull String eventId) {
       super(GROUP, eventId, EventFields.Project, EventFields.PluginInfo, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);

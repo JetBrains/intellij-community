@@ -305,7 +305,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
-          TooltipActionsLogger.INSTANCE.logShowDescription(editor.getProject(), "more.link", e.getInputEvent(), null);
+          TooltipActionsLogger.INSTANCE.logShowDescription(editor.getProject(), TooltipActionsLogger.Source.MoreLink, e.getInputEvent(), null);
           reloader.reload(!expanded);
         }
       }
@@ -559,7 +559,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     public void actionPerformed(@NotNull final AnActionEvent e) {
       // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
       myHintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
-      TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), "shortcut", e.getInputEvent(), e.getPlace());
+      TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), TooltipActionsLogger.Source.Shortcut, e.getInputEvent(), e.getPlace());
       myReloader.reload(!myExpanded);
     }
   }

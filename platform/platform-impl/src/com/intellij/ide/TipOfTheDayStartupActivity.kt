@@ -27,7 +27,7 @@ internal class TipOfTheDayStartupActivity : StartupActivity.DumbAware {
       Disposer.dispose(disposable)
 
       if (!project.isDisposed && TipDialog.canBeShownAutomaticallyNow()) {
-        TipsOfTheDayUsagesCollector.DIALOG_SHOWN.log("automatically")
+        TipsOfTheDayUsagesCollector.DIALOG_SHOWN.log(TipsOfTheDayUsagesCollector.DialogType.automatically)
         TipDialog.showForProject(project)
       }
     }, 5, TimeUnit.SECONDS)

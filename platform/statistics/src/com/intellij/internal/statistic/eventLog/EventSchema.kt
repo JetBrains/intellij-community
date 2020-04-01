@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.openapi.project.Project
@@ -17,18 +19,40 @@ abstract class EventField<T> {
 
 data class EventPair<T>(val field: EventField<T>, val data: T)
 
-private data class StringEventField(private val name: String): EventField<String?>() {
+data class StringEventField(private val name: String): EventField<String?>() {
+  private var customRuleId: String? = null
+
   override fun addData(fuData: FeatureUsageData, value: String?) {
     if (value != null) {
       fuData.addData(name, value)
     }
   }
+
+  fun withCustomRule(id: String): StringEventField {
+    customRuleId = id
+    return this
+  }
+}
+
+data class EnumEventField<T : Enum<*>>(private val name: String, private val enumClass: Class<T>): EventField<T>() {
+  override fun addData(fuData: FeatureUsageData, value: T) {
+    fuData.addData(name, value.toString())
+  }
 }
 
 object EventFields {
   @JvmStatic
-  fun String(name: String): EventField<String?> {
+  fun String(name: String): StringEventField {
     return StringEventField(name)
+  }
+
+  @JvmStatic
+  fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>): EnumEventField<T> {
+    return EnumEventField(name, enumClass)
+  }
+
+  inline fun <reified T : Enum<*>> Enum(name: String): EnumEventField<T> {
+    return EnumEventField(name, T::class.java)
   }
 
   @JvmField
