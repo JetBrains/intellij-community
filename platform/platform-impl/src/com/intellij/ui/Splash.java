@@ -24,22 +24,21 @@ import java.awt.*;
 public final class Splash extends Window {
   private static final float JBUI_INIT_SCALE = JBUIScale.scale(1f);
 
-  private final ApplicationInfoEx myInfo;
   private final int myWidth;
   private final int myHeight;
   private final int myProgressHeight;
   private final int myProgressY;
   private double myProgress;
+  private final Color myProgressColor;
   private int myProgressLastPosition = 0;
   private final Icon myProgressTail;
-  private final ProgressSlidePainter myProgressSlidePainter;
+  private final @Nullable ProgressSlidePainter myProgressSlidePainter;
   private final Image myImage;
 
   public Splash(@NotNull ApplicationInfoEx info) {
     super(null);
 
-    myInfo = info;
-    myProgressSlidePainter = new ProgressSlidePainter(myInfo);
+    myProgressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
     myProgressHeight = uiScale(info.getProgressHeight());
     myProgressY = uiScale(info.getProgressY());
 
@@ -50,14 +49,17 @@ public final class Splash extends Window {
     myImage = loadImage(info.getSplashImageUrl());
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
+    long rgba = info.getProgressColor();
+    //noinspection UseJBColor
+    myProgressColor = rgba == -1 ? null :new Color((int)rgba, rgba > 0xffffff);
+
     Dimension size = new Dimension(myWidth, myHeight);
     setAutoRequestFocus(false);
     setSize(size);
     setLocationInTheCenterOfScreen();
   }
 
-  @Nullable
-  private static Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
+  private static @Nullable Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
     String progressTailIconName = info.getProgressTailIcon();
     Icon progressTail = null;
     if (progressTailIconName != null) {
@@ -74,7 +76,9 @@ public final class Splash extends Window {
   }
 
   public void initAndShow(Boolean visible) {
-    myProgressSlidePainter.startPreloading();
+    if (myProgressSlidePainter != null) {
+      myProgressSlidePainter.startPreloading();
+    }
     StartUpMeasurer.addInstantEvent("splash shown");
     Activity activity = StartUpMeasurer.startActivity("splash set visible");
     setVisible(visible);
@@ -90,8 +94,7 @@ public final class Splash extends Window {
     super.dispose();
   }
 
-  @NotNull
-  private static Image loadImage(@NotNull String path) {
+  private static @NotNull Image loadImage(@NotNull String path) {
     Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
@@ -101,9 +104,10 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    if (myProgress < 0.10 || !myProgressSlidePainter.hasSlides) {
+    if (myProgress < 0.10 || myProgressSlidePainter == null) {
       StartupUiUtil.drawImage(g, myImage, 0, 0, null);
-    } else {
+    }
+    else {
       paintProgress(g);
     }
   }
@@ -117,7 +121,7 @@ public final class Splash extends Window {
   }
 
   public void showProgress(double progress) {
-    if (myInfo.getProgressColor() == null) {
+    if (myProgressColor == null) {
       return;
     }
 
@@ -132,14 +136,16 @@ public final class Splash extends Window {
   }
 
   private void paintProgress(@Nullable Graphics g) {
-    if (g == null) return;
+    if (g == null) {
+      return;
+    }
 
-    if (myProgressSlidePainter.hasSlides) {
+    if (myProgressSlidePainter != null) {
       myProgressSlidePainter.paintSlides(g, myProgress);
     }
 
-    Color color = myInfo.getProgressColor();
-    if (color == null) {
+    Color progressColor = myProgressColor;
+    if (progressColor == null) {
       return;
     }
 
@@ -149,8 +155,8 @@ public final class Splash extends Window {
       return;
     }
 
-    g.setColor(color);
-    int y = myProgressSlidePainter.hasSlides ? myHeight - myProgressHeight : myProgressY;
+    g.setColor(progressColor);
+    int y = myProgressSlidePainter == null ? myProgressY : myHeight - myProgressHeight;
     g.fillRect(myProgressLastPosition, y, currentWidth, myProgressHeight);
     if (myProgressTail != null) {
       int tx = (int)(currentWidth - (myProgressTail.getIconWidth() / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE));

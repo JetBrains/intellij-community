@@ -72,8 +72,7 @@ public final class SplashManager {
     });
   }
 
-  @Nullable
-  private static IdeFrameImpl createFrameIfPossible() throws IOException {
+  private static @Nullable IdeFrameImpl createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
@@ -156,8 +155,7 @@ public final class SplashManager {
     }
   }
 
-  @Nullable
-  public static ProgressIndicator getProgressIndicator() {
+  public static @Nullable ProgressIndicator createProgressIndicator() {
     if (SPLASH_WINDOW == null) {
       return null;
     }
@@ -170,8 +168,7 @@ public final class SplashManager {
     };
   }
 
-  @Nullable
-  public static JFrame getAndUnsetProjectFrame() {
+  public static @Nullable JFrame getAndUnsetProjectFrame() {
     JFrame frame = PROJECT_FRAME;
     PROJECT_FRAME = null;
     return frame;
@@ -190,8 +187,7 @@ public final class SplashManager {
     }
   }
 
-  @Nullable
-  public static Runnable getHideTask() {
+  public static @Nullable Runnable getHideTask() {
     Window window = SPLASH_WINDOW;
     if (window == null) {
       window = PROJECT_FRAME;

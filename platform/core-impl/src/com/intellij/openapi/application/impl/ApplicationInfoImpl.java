@@ -13,19 +13,12 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
-import java.io.File;
-import java.net.URL;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -48,10 +41,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private Color myProgressColor;
-  private Color myCopyrightForeground;
-  private Color myAboutForeground;
-  private Color myAboutLinkColor;
+  private long myProgressColor = -1;
+  private long myCopyrightForeground = -1;
+  private long myAboutForeground = -1;
+  private long myAboutLinkColor = -1;
   // don't use Rectangle to avoid dependency on awt
   private int[] myAboutLogoRect;
   private String myProgressTailIconName;
@@ -513,9 +506,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myPatchVersion;
   }
 
-  @NotNull
   @Override
-  public String getFullVersion() {
+  public @NotNull String getFullVersion() {
     String result;
     if (myFullVersionFormat != null) {
       result = MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
@@ -529,9 +521,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return result;
   }
 
-  @NotNull
   @Override
-  public String getStrictVersion() {
+  public @NotNull String getStrictVersion() {
     return myMajorVersion + "." + myMinorVersion + "." + StringUtilRt.notNullize(myMicroVersion, "0") + "." + StringUtilRt.notNullize(myPatchVersion, "0");
   }
 
@@ -570,12 +561,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public Color getProgressColor() {
+  public long getProgressColor() {
     return myProgressColor;
   }
 
-  public Color getCopyrightForeground() {
-    return ObjectUtils.notNull(myCopyrightForeground, JBColor.BLACK);
+  public long getCopyrightForeground() {
+    return myCopyrightForeground;
   }
 
   @Override
@@ -589,8 +580,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  @Nullable
-  public String getProgressTailIcon() {
+  public @Nullable String getProgressTailIcon() {
     return myProgressTailIconName;
   }
 
@@ -599,41 +589,24 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myIconUrl;
   }
 
-  @NotNull
   @Override
-  public String getSmallIconUrl() {
+  public @NotNull String getSmallIconUrl() {
     return mySmallIconUrl;
   }
 
   @Override
-  @Nullable
-  public String getBigIconUrl() {
+  public @Nullable String getBigIconUrl() {
     return myBigIconUrl;
   }
 
   @Override
-  @Nullable
-  public String getApplicationSvgIconUrl() {
+  public @Nullable String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
 
-  @Nullable
   @Override
-  public String getSmallApplicationSvgIconUrl() {
+  public @Nullable String getSmallApplicationSvgIconUrl() {
     return isEAP() && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
-  }
-
-  @Nullable
-  @Override
-  public File getApplicationSvgIconFile() {
-    String svgIconUrl = getApplicationSvgIconUrl();
-    if (svgIconUrl == null) return null;
-
-    URL url = getClass().getResource(svgIconUrl);
-    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      return URLUtil.urlToFile(url);
-    }
-    return null;
   }
 
   @Override
@@ -646,9 +619,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myWelcomeScreenLogoUrl;
   }
 
-  @Nullable
   @Override
-  public String getCustomizeIDEWizardStepsProvider() {
+  public @Nullable String getCustomizeIDEWizardStepsProvider() {
     return myCustomizeIDEWizardStepsProvider;
   }
 
@@ -753,12 +725,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public Color getAboutForeground() {
-    return ObjectUtils.notNull(myAboutForeground, JBColor.BLACK);
+  public long getAboutForeground() {
+    return myAboutForeground;
   }
 
-  @Nullable
-  public Color getAboutLinkColor() {
+  public long getAboutLinkColor() {
     return myAboutLinkColor;
   }
 
@@ -826,9 +797,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionTipsAvailable;
   }
 
-  @Nullable
   @Override
-  public String getSubscriptionAdditionalFormData() {
+  public @Nullable String getSubscriptionAdditionalFormData() {
     return mySubscriptionAdditionalFormData;
   }
 
@@ -911,8 +881,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  @NotNull
-  private static List<Element> getChildren(@NotNull Element parentNode, @NotNull String name) {
+  private static @NotNull List<Element> getChildren(@NotNull Element parentNode, @NotNull String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
@@ -952,10 +921,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return calendar;
   }
 
-  @SuppressWarnings("UseJBColor")
-  private static @NotNull Color parseColor(@NotNull String colorString) {
-    long rgb = Long.parseLong(colorString, 16);
-    return new Color((int)rgb, rgb > 0xffffff);
+  public static long parseColor(@NotNull String colorString) {
+    return Long.parseLong(colorString, 16);
   }
 
   @Override
@@ -968,8 +935,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
-  @NotNull
-  public List<PluginId> getEssentialPluginsIds() {
+  public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
   }
 
