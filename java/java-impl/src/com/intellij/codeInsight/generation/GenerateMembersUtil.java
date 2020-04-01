@@ -693,7 +693,7 @@ public class GenerateMembersUtil {
     catch (GenerateCodeException e) {
       if (ignoreInvalidTemplate) {
         LOG.info(e);
-        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates()[0].getTemplate());
+        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates().get(0).getTemplate());
       }
       else {
         throw e;
