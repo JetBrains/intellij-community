@@ -44,4 +44,9 @@ public class TodoIndexEntry {
     result = 31 * result + (caseSensitive ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "TodoIndexEntry[pattern=" + pattern + ", caseSensitive=" + caseSensitive + "]";
+  }
 }
