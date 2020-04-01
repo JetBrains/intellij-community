@@ -676,38 +676,3 @@ internal class PEntityStorageBuilder(
     }
   }
 }
-
-fun main() {
-  val pStoreBuilder = PEntityStorage.create()
-  val createdEntity = pStoreBuilder.addEntity(PFolderModifiableEntity::class.java, MySource) {
-    this.id
-    this.data = "xxxx"
-  }
-  pStoreBuilder.addEntity(PSubFolderModifiableEntity::class.java, MySource) {
-    this.data = "XYZ"
-    this.parent = createdEntity
-  }
-  pStoreBuilder.addEntity(PSubFolderModifiableEntity::class.java, MySource) {
-    this.data = "XYZ2"
-    this.parent = createdEntity
-  }
-  pStoreBuilder.addEntity(PSoftSubFolderModifiableEntity::class.java, MySource) {
-    this.parent = createdEntity
-  }
-
-  printStorage(pStoreBuilder)
-  println("---------------")
-  pStoreBuilder.removeEntity(pStoreBuilder.entities(PFolderEntity::class.java).first())
-  printStorage(pStoreBuilder)
-}
-
-private fun printStorage(pStoreBuilder: TypedEntityStorageBuilder) {
-  println(pStoreBuilder.entities(PFolderEntity::class.java).toList())
-  println(pStoreBuilder.entities(PSubFolderEntity::class.java).toList())
-  println(pStoreBuilder.entities(PSoftSubFolderEntity::class.java).toList())
-
-  println(pStoreBuilder.entities(PSubFolderEntity::class.java).firstOrNull()?.parent)
-  println(pStoreBuilder.entities(PFolderEntity::class.java).firstOrNull()?.children?.toList())
-  println(pStoreBuilder.entities(PFolderEntity::class.java).firstOrNull()?.softChildren?.toList())
-}
-

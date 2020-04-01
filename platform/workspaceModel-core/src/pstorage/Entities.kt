@@ -130,56 +130,6 @@ internal abstract class PEntityData<E : TypedEntity> {
   }
 }
 
-internal class PFolderEntityData : PEntityData<PFolderEntity>() {
-  lateinit var data: String
-}
-
-internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolderEntity>()
-
-internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
-  lateinit var data: String
-}
-
-internal class PFolderEntity(
-  val data: String
-) : PTypedEntity<PFolderEntity>() {
-  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class)
-  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(PSoftSubFolderEntity::class)
-}
-
-internal class PSoftSubFolderEntity : PTypedEntity<PSoftSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.SoftRef(PFolderEntity::class)
-}
-
-internal class PSubFolderEntity(
-  val data: String
-) : PTypedEntity<PSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.HardRef(PFolderEntity::class)
-}
-
-internal class PFolderModifiableEntity(original: PFolderEntityData,
-                                       diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>(original, diff) {
-  var data: String by Another(original)
-
-  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
-  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
-}
-
-internal class PSubFolderModifiableEntity(original: PSubFolderEntityData,
-                                          diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>(original, diff) {
-  var data: String by Another(original)
-
-  var parent: PFolderEntity? by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
-}
-
-internal class PSoftSubFolderModifiableEntity(
-  original: PSoftSubFolderEntityData,
-  diff: PEntityStorageBuilder
-) : PModifiableTypedEntity<PSoftSubFolderEntity>(original, diff) {
-
-  var parent: PFolderEntity? by MutableManyToOne.SoftRef(PSoftSubFolderEntity::class, PFolderEntity::class)
-}
-
 internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
     return ((original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(original) as B
@@ -190,4 +140,3 @@ internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
   }
 }
 
-internal object MySource : EntitySource
