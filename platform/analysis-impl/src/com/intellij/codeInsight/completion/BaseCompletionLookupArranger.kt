@@ -166,9 +166,6 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
   }
 
   @Synchronized
-  override fun clear() = super.clear()
-
-  @Synchronized
   override fun itemPattern(element: LookupElement): String = super.itemPattern(element)
 
   @Synchronized
