@@ -63,7 +63,7 @@ public class CleanupWorker extends Task.Backgroundable {
         File path = virtualToIoFile(root);
         File pathOrParent = virtualToIoFile(root.isDirectory() ? root : root.getParent());
 
-        indicator.setText(message("action.Subversion.cleanup.progress.text", path));
+        indicator.setText(message("progress.text.performing.path.cleanup", path));
         myVcs.getFactory(path).createCleanupClient().cleanup(pathOrParent, new SvnProgressCanceller(indicator));
       }
       catch (VcsException e) {

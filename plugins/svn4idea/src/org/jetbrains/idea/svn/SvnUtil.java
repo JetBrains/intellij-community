@@ -344,7 +344,8 @@ public final class SvnUtil {
 
   private static void notifyDatabaseError() {
     VcsBalloonProblemNotifier.NOTIFICATION_GROUP
-      .createNotification("Some errors occurred while accessing svn working copy database.", NotificationType.ERROR).notify(null);
+      .createNotification(SvnBundle.message("notification.content.can.not.access.working.copy.database"), NotificationType.ERROR)
+      .notify(null);
   }
 
   private static File resolveDatabase(final File path) {
@@ -489,9 +490,13 @@ public final class SvnUtil {
     return info != null && info.getDepth() != null ? info.getDepth() : Depth.UNKNOWN;
   }
 
-  public static boolean seemsLikeVersionedDir(final VirtualFile file) {
+  public static boolean seemsLikeVersionedDir(@NotNull VirtualFile file) {
     final VirtualFile child = file.findChild(SVN_ADMIN_DIR_NAME);
     return child != null && child.isDirectory();
+  }
+
+  public static boolean seemsLikeVersionedDir(@NotNull File file) {
+    return new File(file, SVN_ADMIN_DIR_NAME).isDirectory();
   }
 
   public static boolean isAdminDirectory(final VirtualFile file) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +48,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
       if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
-        throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format);
+        throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format.getDisplayName());
       }
     }
 
