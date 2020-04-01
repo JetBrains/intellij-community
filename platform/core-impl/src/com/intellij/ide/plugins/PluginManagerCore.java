@@ -97,6 +97,8 @@ public final class PluginManagerCore {
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
+  @ApiStatus.Internal
+  static final boolean usePluginClassLoader = Boolean.getBoolean("idea.from.sources.plugins.class.loader");
 
   @SuppressWarnings("StaticNonFinalField") @ApiStatus.Internal
   public static String ourPluginError;
@@ -1077,7 +1079,7 @@ public final class PluginManagerCore {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        descriptor.setUseCoreClassLoader();
+        if (!usePluginClassLoader) descriptor.setUseCoreClassLoader();
         result.add(descriptor, context.parentContext, /* overrideUseIfCompatible = */ false);
       }
     }
