@@ -1698,6 +1698,10 @@ public abstract class DialogWrapper {
   }
 
   private void doShow() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      LOG.error("Must not show dialog under write acton", new IllegalStateException());
+    }
+
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
