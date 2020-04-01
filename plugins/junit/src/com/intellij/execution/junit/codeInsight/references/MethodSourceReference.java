@@ -70,7 +70,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
       }
       PsiMethod[] methods = cls.findMethodsByName(methodName, true);
       return Arrays.stream(methods)
-        .filter(MethodSourceReference::staticNoParams)
+        .filter(MethodSourceReference::staticOrOneInstancePerClassNoParams)
         .findFirst()
         .orElse(methods.length == 0 ? null : methods[0]);
     }
@@ -86,7 +86,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
       final PsiMethod[] methods = topLevelClass.getMethods();
       for (PsiMethod method : methods) {
         if (current != null && method.getName().equals(current.getName())) continue;
-        if (!staticNoParams(method)) continue;
+        if (!staticOrOneInstancePerClassNoParams(method)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
         list.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT));
       }
@@ -94,7 +94,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return list.toArray();
   }
 
-  private static boolean staticNoParams(PsiMethod method) {
+  private static boolean staticOrOneInstancePerClassNoParams(PsiMethod method) {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     return (TestUtils.testInstancePerClass(Objects.requireNonNull(method.getContainingClass())) != isStatic) && method.getParameterList().isEmpty();
   }
