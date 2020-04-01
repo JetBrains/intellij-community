@@ -75,6 +75,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridx = 0;
     c.gridy = 0;
     myPrimaryLabel = new JLabel(ApplicationBundle.message("primary.font"));
+    myPrimaryLabel.setLabelFor(myPrimaryCombo);
     fontPanel.add(myPrimaryLabel, c);
 
     c.gridx = 1;
@@ -88,6 +89,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridy = 1;
     c.insets = baseInsets;
     mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
+    mySizeLabel.setLabelFor(myEditorFontSizeField);
     fontPanel.add(mySizeLabel, c);
 
     c.gridx = 1;

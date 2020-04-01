@@ -72,6 +72,9 @@ public class OptionGroup implements PanelWithAnchor {
         panel.add(first, new GridBagConstraints(0, i, 1, 1, 1, 0, WEST, getFill(first), JBUI.insets(top, left, 0, 0), 0, 0));
         JComponent second = (JComponent)((Pair)option).second;
         panel.add(second, new GridBagConstraints(1, i, 1, 1, 1, 0, EAST, HORIZONTAL, JBUI.insets(top, UIUtil.DEFAULT_HGAP, 0, 0), 0, 0));
+        if (first instanceof JLabel) {
+          ((JLabel)first).setLabelFor(second);
+        }
       }
     }
 
