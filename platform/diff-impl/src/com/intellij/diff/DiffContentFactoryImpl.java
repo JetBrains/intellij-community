@@ -358,7 +358,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     VirtualFile file;
     if (useTemporalFile) {
-      file = createTemporalFile(project, "tmp", path.getName(), content);
+      file = createTemporalFile(path.getName(), content);
     }
     else {
       file = new MyBinaryLightVirtualFile(path, type, content);
@@ -438,12 +438,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
 
   @NotNull
-  private static VirtualFile createTemporalFile(@Nullable Project project,
-                                                @NonNls @NotNull String prefix,
-                                                @NonNls @NotNull String suffix,
-                                                byte @NotNull [] content) throws IOException {
-    File tempFile = FileUtil.createTempFile(PathUtil.suggestFileName(prefix + "_", true, false),
-                                            PathUtil.suggestFileName("_" + suffix, true, false), true);
+  private static VirtualFile createTemporalFile(@NonNls @NotNull String suffix, byte @NotNull [] content) throws IOException {
+    File tempFile = FileUtil.createTempFile("tmp_", PathUtil.suggestFileName("_" + suffix, true, false), true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }
