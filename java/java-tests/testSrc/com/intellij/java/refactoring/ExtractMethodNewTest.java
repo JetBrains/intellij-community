@@ -683,6 +683,18 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testDontExtractInsideSwitch() throws Exception {
+    try {
+      doTest();
+      fail("Should fail inside switch");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testExtractSingleLabelFromSwitch() throws Exception {
+    doTest();
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }
