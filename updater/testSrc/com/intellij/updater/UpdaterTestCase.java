@@ -34,8 +34,9 @@ public abstract class UpdaterTestCase {
 
     TEST_UI = new TestUpdaterUI();
 
-    boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
-    CHECKSUMS = new CheckSums(windowsLineEnds);
+    CHECKSUMS = new CheckSums(
+      new File(dataDir, "Readme.txt").length() == 7132,
+      File.separatorChar == '\\');
   }
 
   @After
@@ -65,10 +66,10 @@ public abstract class UpdaterTestCase {
     public final long LINK_TO_README_TXT = 2305843011042707672L;
     public final long LINK_TO_DOT_README_TXT;
 
-    public CheckSums(boolean windowsSeparators) {
-      README_TXT = windowsSeparators ? 1272723667L : 7256327L;
-      IDEA_BAT = windowsSeparators ? 3088608749L : 1493936069L;
-      LINK_TO_DOT_README_TXT = windowsSeparators ? 2305843009503057206L : 2305843011210142148L;
+    public CheckSums(boolean crLfs, boolean backwardSlashes) {
+      README_TXT = crLfs ? 1272723667L : 7256327L;
+      IDEA_BAT = crLfs ? 3088608749L : 1493936069L;
+      LINK_TO_DOT_README_TXT = backwardSlashes ? 2305843011210142148L : 2305843009503057206L;
     }
   }
 }
