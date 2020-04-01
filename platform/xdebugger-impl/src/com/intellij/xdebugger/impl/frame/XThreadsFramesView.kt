@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -40,6 +41,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   private var myFramesManager: FramesManager
   private var myThreadsContainer: ThreadsContainer
 
+  private val myFramesPresentationCache = mutableMapOf<Any, String>()
+
   val mainPanel = JPanel(BorderLayout())
   val defaultFocusedComponent: JComponent = myFramesList
 
@@ -62,11 +65,39 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
     private fun <T> T.withSpeedSearch(
       shouldMatchFromTheBeginning: Boolean = false,
-      shouldMatchCamelCase: Boolean = true
+      shouldMatchCamelCase: Boolean = true,
+      converter: ((Any?) -> String?)? = null
     ): T where T : JList<*> {
-      ListSpeedSearch(this).comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
+      val search = if (converter != null) ListSpeedSearch(this, converter) else ListSpeedSearch(this)
+      search.comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
       return this
     }
+  }
+
+  private fun XDebuggerFramesList.withSpeedSearch(
+    shouldMatchFromTheBeginning: Boolean = false,
+    shouldMatchCamelCase: Boolean = true
+  ): XDebuggerFramesList {
+
+    val coloredStringBuilder = TextTransferable.ColoredStringBuilder()
+    fun getPresentation(element: Any?): String? {
+      element ?: return null
+
+      return myFramesPresentationCache.getOrPut(element) {
+        when (element) {
+          is XStackFrame -> {
+            element.customizePresentation(coloredStringBuilder)
+            val value = coloredStringBuilder.builder.toString()
+            coloredStringBuilder.builder.clear()
+            value
+          }
+
+          else -> toString()
+        }
+      }
+    }
+
+    return withSpeedSearch(shouldMatchFromTheBeginning, shouldMatchCamelCase, ::getPresentation)
   }
 
   fun setThreadsVisible(visible: Boolean) {
@@ -87,7 +118,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
         minimumSize = Dimension(JBUI.scale(26), 0)
       }
-      secondComponent = myFramesList.toScrollPane()
+      secondComponent = myFramesList.withSpeedSearch().toScrollPane()
     }
 
     mainPanel.add(mySplitter, BorderLayout.CENTER)
@@ -226,6 +257,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     myPauseDisposables.terminateCurrent()
     myThreadsList.clear()
     myFramesList.clear()
+    myFramesPresentationCache.clear()
   }
 
   override fun dispose() = Unit
