@@ -48,14 +48,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     myLightEditService = service;
   }
 
-  @NotNull
-  private LightEditorInfo doCreateEditor(@NotNull VirtualFile file) {
+  private @Nullable LightEditorInfo doCreateEditor(@NotNull VirtualFile file) {
     Project project = Objects.requireNonNull(LightEditUtil.getProject());
     Pair<FileEditorProvider, FileEditor> pair = createFileEditor(project, file);
     if (pair == null) {
-      TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      FileEditor fileEditor = textEditorProvider.createEditor(project, file);
-      pair = Pair.create(textEditorProvider, fileEditor);
+      return null;
     }
     LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, pair.second, file);
     ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
@@ -67,14 +64,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     return editorInfo;
   }
 
-  @Nullable
-  private static Pair<FileEditorProvider, FileEditor> createFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @Nullable Pair<FileEditorProvider, FileEditor> createFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
     for (FileEditorProvider provider : providers) {
-      if (provider.accept(project, file)) {
-        FileEditor editor = provider.createEditor(project, file);
-        return Pair.create(provider, editor);
-      }
+      FileEditor editor = provider.createEditor(project, file);
+      return Pair.create(provider, editor);
     }
     return null;
   }
@@ -84,19 +78,20 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
    *
    * @return The newly created editor info.
    */
-  @NotNull
-  public LightEditorInfo createEditor() {
+  public @NotNull LightEditorInfo createEditor() {
     LightVirtualFile file = new LightVirtualFile(getUniqueName());
     file.setFileType(PlainTextFileType.INSTANCE);
-    return doCreateEditor(file);
+    return Objects.requireNonNull(doCreateEditor(file));
   }
 
   @Override
-  @NotNull
-  public LightEditorInfo createEditor(@NotNull VirtualFile file) {
+  public @Nullable LightEditorInfo createEditor(@NotNull VirtualFile file) {
     LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
     disableImplicitSave(file);
     LightEditorInfo editorInfo = doCreateEditor(file);
+    if (editorInfo == null) {
+      return null;
+    }
     Editor editor = LightEditorInfoImpl.getEditor(editorInfo);
     if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
     return editorInfo;
