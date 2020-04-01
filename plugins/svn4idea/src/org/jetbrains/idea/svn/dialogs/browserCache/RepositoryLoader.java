@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Queue;
 
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
@@ -54,9 +55,9 @@ class RepositoryLoader extends Loader {
     refreshNode(data.first, children, data.second);
   }
 
-  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull String message) {
-    myCache.put(data.first.getURL(), message);
-    refreshNodeError(data.first, message);
+  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull VcsException error) {
+    myCache.put(data.first.getURL(), error);
+    refreshNodeError(data.first, error);
   }
 
   private void startNext() {
@@ -88,10 +89,10 @@ class RepositoryLoader extends Loader {
   private final class LoadTask extends Task.Backgroundable {
     @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
     @NotNull private final List<DirectoryEntry> entries = new ArrayList<>();
-    @Nullable private String error;
+    @Nullable private VcsException error;
 
     private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {
-      super(data.first.getVcs().getProject(), "Loading Child Entries");
+      super(data.first.getVcs().getProject(), message("progress.title.loading.child.entries"));
       myData = data;
     }
 
@@ -105,7 +106,7 @@ class RepositoryLoader extends Loader {
         vcs.getFactoryFromSettings().createBrowseClient().list(target, Revision.HEAD, Depth.IMMEDIATES, entries::add);
       }
       catch (VcsException e) {
-        error = e.getMessage();
+        error = e;
       }
     }
 

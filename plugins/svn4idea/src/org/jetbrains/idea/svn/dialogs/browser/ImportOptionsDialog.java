@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -11,11 +11,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Url;
 
@@ -25,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;
 
 public class ImportOptionsDialog extends DialogWrapper implements ActionListener {
@@ -33,7 +35,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
   private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
-  private JCheckBox myIncludeIgnoredCheckbox;
+  private JBCheckBox myIncludeIgnoredCheckbox;
   private JTextArea myCommitMessage;
   private final Project myProject;
 
@@ -42,7 +44,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     myURL = url;
     myFile = target;
     myProject = project;
-    setTitle("SVN Import Options");
+    setTitle(message("dialog.title.svn.import.options"));
     init();
   }
 
@@ -84,12 +86,12 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.weightx = 0;
     gc.weighty = 0;
 
-    panel.add(new JLabel("Import to:"), gc);
+    panel.add(new JBLabel(message("label.import.to")), gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
     gc.weightx = 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    JLabel urlLabel = new JLabel(myURL.toDecodedString());
+    JBLabel urlLabel = new JBLabel(myURL.toDecodedString());
     urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
     panel.add(urlLabel, gc);
 
@@ -98,7 +100,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridx = 0;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    panel.add(new JLabel("Import from:"), gc);
+    panel.add(new JBLabel(message("label.import.from")), gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
     gc.weightx = 1;
@@ -116,8 +118,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridwidth = 3;
     gc.fill = GridBagConstraints.NONE;
 
-    final JLabel depthLabel = new JLabel(SvnBundle.message("label.depth.text"));
-    depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
+    final JBLabel depthLabel = new JBLabel(message("label.depth.text"));
+    depthLabel.setToolTipText(message("label.depth.description"));
     panel.add(depthLabel, gc);
     ++gc.gridx;
     myDepth = new DepthCombo(false);
@@ -126,11 +128,11 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
 
     gc.gridx = 0;
     gc.gridy += 1;
-    myIncludeIgnoredCheckbox = new JCheckBox("Include ignored resources");
+    myIncludeIgnoredCheckbox = new JBCheckBox(message("checkbox.include.ignored.resources"));
     myIncludeIgnoredCheckbox.setSelected(true);
     panel.add(myIncludeIgnoredCheckbox, gc);
     gc.gridy += 1;
-    panel.add(new JLabel("Commit Message:"), gc);
+    panel.add(new JBLabel(message("label.commit.message")), gc);
     gc.gridy += 1;
     gc.gridwidth = 3;
     gc.gridx = 0;
@@ -151,7 +153,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.weighty = 0;
     gc.anchor = GridBagConstraints.NORTH;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(new JLabel("Recent Messages: "), gc);
+    panel.add(new JBLabel(message("label.recent.messages")), gc);
     gc.gridy += 1;
 
 
@@ -180,8 +182,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     // choose directory here/
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
-    fcd.setTitle("Checkout Directory");
-    fcd.setDescription("Select directory to checkout from subversion");
+    fcd.setTitle(message("checkout.directory.chooser.title"));
+    fcd.setDescription(message("checkout.directory.chooser.prompt"));
     fcd.setHideIgnored(false);
     VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), myProject, null);
     if (file == null) {

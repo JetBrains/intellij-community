@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.project.Project;
@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
@@ -51,7 +52,10 @@ public class MkdirOptionsDialog extends DialogWrapper {
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull final DocumentEvent e) {
-        updateURL();
+        Url newUrl = getNewFolderUrl();
+
+        myURLLabel.setText(notNull(newUrl, myOriginalURL).toDecodedString());
+        getOKAction().setEnabled(newUrl != null);
       }
     });
 
@@ -110,20 +114,15 @@ public class MkdirOptionsDialog extends DialogWrapper {
     return myNameField;
   }
 
-  private void updateURL() {
+  private @Nullable Url getNewFolderUrl() {
     String newName = myNameField.getText();
-    if (isEmpty(newName)) {
-      myURLLabel.setText(myOriginalURL.toDecodedString());
-      getOKAction().setEnabled(false);
-      return;
-    }
+    if (isEmpty(newName)) return null;
+
     try {
-      myURLLabel.setText(append(myOriginalURL, newName).toDecodedString());
-      getOKAction().setEnabled(true);
+      return append(myOriginalURL, newName);
     }
-    catch (SvnBindException e) {
-      myURLLabel.setText(myOriginalURL.toDecodedString());
-      getOKAction().setEnabled(false);
+    catch (SvnBindException ignored) {
+      return null;
     }
   }
 }
