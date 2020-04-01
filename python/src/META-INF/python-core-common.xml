@@ -500,8 +500,7 @@
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor" language="Python"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             displayName="Python External Documentation"/>
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
