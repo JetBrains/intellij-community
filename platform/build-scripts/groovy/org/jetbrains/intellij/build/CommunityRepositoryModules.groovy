@@ -183,8 +183,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
-      mainJarName = "testGuiFramework"
-      withModule("intellij.platform.testGuiFramework")
+      mainJarName = "testGuiFramework.jar"
       withProjectLibrary("fest")
       withProjectLibrary("fest-swing")
     },
