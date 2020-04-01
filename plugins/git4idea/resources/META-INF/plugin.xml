@@ -306,7 +306,7 @@
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
     <statusBarWidgetFactory id="gitWidget"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
-                            order="after selectionModeWidget,before notificationsWidget"/>
+                            order="after codeStyleWidget,before readOnlyWidget"/>
   </extensions>
 
   <extensionPoints>
