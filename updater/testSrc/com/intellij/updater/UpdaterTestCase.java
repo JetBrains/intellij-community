@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -63,11 +63,12 @@ public abstract class UpdaterTestCase {
     public final long BOOTSTRAP_JAR_BIN = 2745721972L;
     public final long BOOTSTRAP_DELETED_JAR = 544883981L;
     public final long LINK_TO_README_TXT = 2305843011042707672L;
-    public final long LINK_TO_DOT_README_TXT = 2305843009503057206L;
+    public final long LINK_TO_DOT_README_TXT;
 
-    public CheckSums(boolean windowsLineEnds) {
-      README_TXT = windowsLineEnds ? 1272723667L : 7256327L;
-      IDEA_BAT = windowsLineEnds ? 3088608749L : 1493936069L;
+    public CheckSums(boolean windowsSeparators) {
+      README_TXT = windowsSeparators ? 1272723667L : 7256327L;
+      IDEA_BAT = windowsSeparators ? 3088608749L : 1493936069L;
+      LINK_TO_DOT_README_TXT = windowsSeparators ? 2305843009503057206L : 2305843011210142148L;
     }
   }
 }
