@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
@@ -34,6 +35,12 @@ data class StringEventField(private val name: String): EventField<String?>() {
   }
 }
 
+data class IntEventField(private val name: String): EventField<Int>() {
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, value)
+  }
+}
+
 data class EnumEventField<T : Enum<*>>(private val name: String, private val enumClass: Class<T>): EventField<T>() {
   override fun addData(fuData: FeatureUsageData, value: T) {
     fuData.addData(name, value.toString())
@@ -44,6 +51,11 @@ object EventFields {
   @JvmStatic
   fun String(name: String): StringEventField {
     return StringEventField(name)
+  }
+
+  @JvmStatic
+  fun Int(name: String): IntEventField {
+    return IntEventField(name)
   }
 
   @JvmStatic
@@ -73,6 +85,13 @@ object EventFields {
   val PluginInfo = object : EventField<PluginInfo>() {
     override fun addData(fuData: FeatureUsageData, value: PluginInfo) {
       fuData.addPluginInfo(value)
+    }
+  }
+
+  @JvmField
+  val PluginInfoFromInstance = object : EventField<Any>() {
+    override fun addData(fuData: FeatureUsageData, value: Any) {
+      fuData.addPluginInfo(getPluginInfo(value::class.java))
     }
   }
 
@@ -123,8 +142,12 @@ class EventLogGroup(val id: String, val version: Int) {
   }
 
   companion object {
-    @JvmStatic fun byId(id: String): EventLogGroup {
+    @JvmStatic fun counter(id: String): EventLogGroup {
       return FUCounterUsageLogger.getInstance().findRegisteredGroupById(id)
+    }
+
+    @JvmStatic fun project(collector: ProjectUsagesCollector): EventLogGroup {
+      return EventLogGroup(collector.groupId, collector.version)
     }
   }
 }
@@ -137,28 +160,52 @@ class EventId(private val group: EventLogGroup, private val eventId: String) {
 
 class EventId1<T>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T>) {
   fun log(value1: T) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1).build())
+  }
+
+  fun metric(value1: T): MetricEvent {
+    return MetricEvent(eventId, buildUsageData(value1))
+  }
+
+  private fun buildUsageData(value1: T): FeatureUsageData {
     val data = FeatureUsageData()
     field1.addData(data, value1)
-    FeatureUsageLogger.log(group, eventId, data.build())
+    return data
   }
 }
 
 class EventId2<T1, T2>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>) {
   fun log(value1: T1, value2: T2) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).build())
+  }
+
+  fun metric(value1: T1, value2: T2): MetricEvent {
+    return MetricEvent(eventId, buildUsageData(value1, value2))
+  }
+
+  private fun buildUsageData(value1: T1, value2: T2): FeatureUsageData {
     val data = FeatureUsageData()
     field1.addData(data, value1)
     field2.addData(data, value2)
-    FeatureUsageLogger.log(group, eventId, data.build())
+    return data
   }
 }
 
 class EventId3<T1, T2, T3>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>, private val field3: EventField<T3>) {
   fun log(value1: T1, value2: T2, value3: T3) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).build())
+  }
+
+  fun metric(value1: T1, value2: T2, value3: T3): MetricEvent {
+    return MetricEvent(eventId, buildUsageData(value1, value2, value3))
+  }
+
+  private fun buildUsageData(value1: T1, value2: T2, value3: T3): FeatureUsageData {
     val data = FeatureUsageData()
     field1.addData(data, value1)
     field2.addData(data, value2)
     field3.addData(data, value3)
-    FeatureUsageLogger.log(group, eventId, data.build())
+    return data
   }
 }
 
@@ -168,12 +215,20 @@ open class VarargEventId(private val group: EventLogGroup, private val eventId: 
   }
 
   fun log(vararg pairs: EventPair<*>) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
+  }
+
+  fun metric(vararg pairs: EventPair<*>): MetricEvent {
+    return MetricEvent(eventId, buildUsageData(*pairs))
+  }
+
+  private fun buildUsageData(vararg pairs: EventPair<*>): FeatureUsageData {
     val data = FeatureUsageData()
     for (pair in pairs) {
       if (pair.field !in fields) throw IllegalArgumentException("Field not in fields for this event ID")
       @Suppress("UNCHECKED_CAST")
       (pair.field as EventField<Any?>).addData(data, pair.data)
     }
-    FeatureUsageLogger.log(group, eventId, data.build())
+    return data
   }
 }

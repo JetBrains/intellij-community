@@ -33,7 +33,7 @@ class AntSettingsCollector : ProjectUsagesCollector() {
 }
 
 object AntActionsUsagesCollector {
-  val group = EventLogGroup.byId("build.ant.actions")
+  val group = EventLogGroup.counter("build.ant.actions")
 
   @JvmField
   val runSelectedBuildAction = group.registerEvent("RunSelectedBuild", EventFields.Project)

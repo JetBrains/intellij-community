@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventId;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 
 public class AccessibilityUsageTrackerCollector {
-  private static final EventLogGroup group = EventLogGroup.byId("accessibility");
+  private static final EventLogGroup group = EventLogGroup.counter("accessibility");
 
   /**
    * Enabled screen reader is detected in OS

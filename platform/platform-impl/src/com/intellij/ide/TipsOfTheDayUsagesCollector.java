@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TipsOfTheDayUsagesCollector {
-  private static final EventLogGroup GROUP = EventLogGroup.byId("ui.tips");
+  private static final EventLogGroup GROUP = EventLogGroup.counter("ui.tips");
 
   public enum DialogType { automatically, manually }
 

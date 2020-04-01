@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
 object TooltipActionsLogger {
-  private val GROUP = EventLogGroup.byId("tooltip.action.events")
+  private val GROUP = EventLogGroup.counter("tooltip.action.events")
 
   enum class Source(private val text: String) {
     Shortcut("shortcut"), Gear("gear"), MoreLink("more.link");

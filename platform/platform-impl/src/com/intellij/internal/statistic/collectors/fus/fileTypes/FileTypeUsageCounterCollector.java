@@ -41,20 +41,20 @@ public class FileTypeUsageCounterCollector {
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = EventLogGroup.byId("file.types.usage");
+  private static final EventLogGroup GROUP = EventLogGroup.counter("file.types.usage");
 
   private static class FileTypeEventId extends VarargEventId {
     public static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
     public static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
 
     private FileTypeEventId(@NotNull String eventId) {
-      super(GROUP, eventId, EventFields.Project, EventFields.PluginInfo, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
+      super(GROUP, eventId, EventFields.Project, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
     }
 
     public void log(@NotNull Project project, @NotNull VirtualFile file) {
       FileType fileType = file.getFileType();
       log(EventFields.Project.with(project),
-          EventFields.PluginInfo.with(getPluginInfo(fileType.getClass())),
+          EventFields.PluginInfoFromInstance.with(fileType),
           FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
           EventFields.AnonymizedPath.with(file.getPath()),
           SCHEMA.with(findSchema(file)));

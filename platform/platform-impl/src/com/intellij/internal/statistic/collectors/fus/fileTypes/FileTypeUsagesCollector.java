@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -45,6 +45,15 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return 3;
   }
 
+  private final EventLogGroup GROUP = EventLogGroup.project(this);
+
+  private final EventId3<Object, String, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
+    "file.in.project",
+    EventFields.PluginInfoFromInstance,
+    EventFields.String("file_type").withCustomRule("file_type"),
+    EventFields.Int("count")
+  );
+
   @NotNull
   @Override
   public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
@@ -73,9 +82,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
         Integer count = counter.get();
         if (count != 0) {
-          FeatureUsageData data = newFeatureUsageData(fileType);
-          data.addCount(StatisticsUtil.getNextPowerOfTwo(count));
-          events.add(new MetricEvent("file.in.project", data));
+          events.add(FILE_IN_PROJECT.metric(fileType, getSafeFileTypeName(fileType), StatisticsUtil.getNextPowerOfTwo(count)));
         }
       }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
