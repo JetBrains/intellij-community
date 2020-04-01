@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
+
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.MultiMap
 import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -128,7 +129,7 @@ class DistributionJARsBuilder {
       }
 
       productLayout.moduleExcludes.entrySet().each {
-        layout.moduleExcludes.putAll(it.key, it.value)
+        layout.moduleExcludes.putValues(it.key, it.value)
       }
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
@@ -847,7 +848,7 @@ class DistributionJARsBuilder {
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiValuesMap<String, String> moduleExcludes) {
+  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiMap<String, String> moduleExcludes) {
     def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
@@ -896,7 +897,7 @@ class DistributionJARsBuilder {
    */
   private void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
                              ProjectStructureMapping mapping, boolean copyFiles,
-                             MultiValuesMap<String, String> moduleJars,
+                             MultiMap<String, String> moduleJars,
                              List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
@@ -905,11 +906,11 @@ class DistributionJARsBuilder {
     if (copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
     }
-    MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
+    MultiMap<String, String> actualModuleJars = MultiMap.createLinked()
     moduleJars.entrySet().each {
       def modules = it.value
       def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
-      actualModuleJars.putAll(jarPath, modules)
+      actualModuleJars.putValues(jarPath, modules)
     }
     layoutBuilder.process(targetDirectory, mapping, copyFiles) {
       dir("lib") {
@@ -931,13 +932,13 @@ class DistributionJARsBuilder {
                   ant.exclude(name: "**/icon-robots.txt")
                 }
 
-                layout.moduleExcludes.get(moduleName)?.each {
+                layout.moduleExcludes.get(moduleName).each {
                   //noinspection GrUnresolvedAccess
                   ant.exclude(name: it)
                 }
               }
             }
-            layout.projectLibrariesToUnpack.get(jarPath)?.each {
+            layout.projectLibrariesToUnpack.get(jarPath).each {
               buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
                 if (copyFiles) {
                   ant.zipfileset(src: it.absolutePath)
@@ -946,11 +947,11 @@ class DistributionJARsBuilder {
             }
           }
         }
-        def outputResourceJars = new MultiValuesMap<String, String>(true)
+        MultiMap<String, String> outputResourceJars = MultiMap.createLinked()
         actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {
-            outputResourceJars.put(resourcesJarName, it)
+            outputResourceJars.putValue(resourcesJarName, it)
           }
         }
         if (!outputResourceJars.empty) {
@@ -961,7 +962,7 @@ class DistributionJARsBuilder {
                   ant.patternset(refid: resourcesIncluded)
                 }
                 module(moduleName) {
-                  layout.moduleExcludes.get(moduleName)?.each {
+                  layout.moduleExcludes.get(moduleName).each {
                     //noinspection GrUnresolvedAccess
                     ant.exclude(name: "$it/**")
                   }
@@ -987,7 +988,7 @@ class DistributionJARsBuilder {
         //include all module libraries from the plugin modules added to IDE classpath to layout
         actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
-          def excluded = layout.excludedModuleLibraries.get(moduleName) ?: Collections.emptyList()
+          def excluded = layout.excludedModuleLibraries.get(moduleName)
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
@@ -1043,7 +1044,7 @@ class DistributionJARsBuilder {
     }
   }
 
-  private void checkModuleExcludes(MultiValuesMap<String, String> moduleExcludes) {
+  private void checkModuleExcludes(MultiMap<String, String> moduleExcludes) {
     moduleExcludes.entrySet().each { entry ->
       String module = entry.key
       entry.value.each { pattern ->

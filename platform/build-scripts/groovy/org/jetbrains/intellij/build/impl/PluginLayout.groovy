@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -64,14 +63,6 @@ class PluginLayout extends BaseLayout {
   String toString() {
     return "Plugin '$mainModule'"
   }
-
-  /**
-   * @deprecated use{@link #moduleJars} instead
-   */
-  MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
-    moduleJars
-  }
-
 
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
