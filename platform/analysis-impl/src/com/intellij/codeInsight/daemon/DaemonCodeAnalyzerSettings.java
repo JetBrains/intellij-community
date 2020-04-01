@@ -31,8 +31,8 @@ public class DaemonCodeAnalyzerSettings {
     return myAutoReparseDelay;
   }
 
-  public void setAutoReparseDelay(int value) {
-    myAutoReparseDelay = value;
+  public void setAutoReparseDelay(int millis) {
+    myAutoReparseDelay = millis;
   }
 
   @OptionTag("ERROR_STRIPE_MARK_MIN_HEIGHT")
@@ -46,14 +46,14 @@ public class DaemonCodeAnalyzerSettings {
 
   protected boolean myShowAddImportHints = true;
   public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
-  public boolean SHOW_METHOD_SEPARATORS = false;
+  public boolean SHOW_METHOD_SEPARATORS;
 
   @Transient
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     return false;
   }
 
-  @OptionTag(value = "SHOW_ADD_IMPORT_HINTS")
+  @OptionTag("SHOW_ADD_IMPORT_HINTS")
   public boolean isImportHintEnabled() {
     return myShowAddImportHints;
   }
@@ -62,7 +62,7 @@ public class DaemonCodeAnalyzerSettings {
     myShowAddImportHints = isImportHintEnabled;
   }
 
-  @OptionTag(value = "SUPPRESS_WARNINGS")
+  @OptionTag("SUPPRESS_WARNINGS")
   public boolean isSuppressWarnings() {
     return mySuppressWarnings;
   }
