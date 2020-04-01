@@ -20,6 +20,9 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   lateinit var idImpl: PId<E>
   open val id: PId<E> by lazy { idImpl }
 
+  lateinit var snapshotImpl: PEntityStorage
+  open val snapshot: PEntityStorage by lazy { snapshotImpl }
+
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
 
@@ -86,13 +89,10 @@ internal abstract class PEntityData<E : TypedEntity> {
         val value = this::class.memberProperties.first { it.name == param.name }.getter.call(this)
         if (param.type.isList()) ArrayList(value as List<*>) else value
       }.toMutableMap()
-    val snapshotParameter = returnClass.primaryConstructor!!.parameters.find { it.name == "snapshot" }
-    if (snapshotParameter != null) {
-      params[snapshotParameter] = snapshot
-    }
     val res = returnClass.primaryConstructor!!.callBy(params)
     (res as PTypedEntity<E>).entitySourceImpl = entitySource
     (res as PTypedEntity<E>).idImpl = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass)
+    (res as PTypedEntity<E>).snapshotImpl = snapshot
     return res
   }
 
@@ -141,39 +141,35 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
 }
 
 internal class PFolderEntity(
-  val snapshot: PEntityStorage,
   val data: String
 ) : PTypedEntity<PFolderEntity>() {
-  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
-  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(snapshot, PSoftSubFolderEntity::class)
+  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class)
+  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(PSoftSubFolderEntity::class)
 }
 
-internal class PSoftSubFolderEntity(
-  val snapshot: PEntityStorage
-) : PTypedEntity<PSoftSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
+internal class PSoftSubFolderEntity : PTypedEntity<PSoftSubFolderEntity>() {
+  val parent: PFolderEntity? by ManyToOne.SoftRef(PFolderEntity::class)
 }
 
 internal class PSubFolderEntity(
-  val snapshot: PEntityStorage,
   val data: String
 ) : PTypedEntity<PSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
+  val parent: PFolderEntity? by ManyToOne.HardRef(PFolderEntity::class)
 }
 
 internal class PFolderModifiableEntity(original: PFolderEntityData,
                                        diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>(original, diff) {
   var data: String by Another(original)
 
-  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::class, PSubFolderEntity::class)
-  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolderEntity::class)
+  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
+  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 
 internal class PSubFolderModifiableEntity(original: PSubFolderEntityData,
                                           diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>(original, diff) {
   var data: String by Another(original)
 
-  var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::class, PFolderEntity::class)
+  var parent: PFolderEntity? by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
 }
 
 internal class PSoftSubFolderModifiableEntity(
@@ -181,7 +177,7 @@ internal class PSoftSubFolderModifiableEntity(
   diff: PEntityStorageBuilder
 ) : PModifiableTypedEntity<PSoftSubFolderEntity>(original, diff) {
 
-  var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolderEntity::class, PFolderEntity::class)
+  var parent: PFolderEntity? by MutableManyToOne.SoftRef(PSoftSubFolderEntity::class, PFolderEntity::class)
 }
 
 internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
