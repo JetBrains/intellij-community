@@ -75,20 +75,13 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
            ((PsiClassStubImpl)stub).isLocalClassInner();
   }
 
-  public boolean isAnonymousClass() {
-    PsiClassStub<?> stub = getStub();
-    return stub instanceof PsiClassStubImpl &&
-           ((PsiClassStubImpl)stub).isAnonymousInner();
-  }
-
   private boolean isAnonymousOrLocalClass() {
-    return isAnonymousClass() || isLocalClass();
+    return this instanceof PsiAnonymousClass || isLocalClass();
   }
 
   @Override
   @Nullable
   public PsiModifierList getModifierList() {
-    if (isAnonymousClass()) return null;
     return getModifierListInternal();
   }
 
