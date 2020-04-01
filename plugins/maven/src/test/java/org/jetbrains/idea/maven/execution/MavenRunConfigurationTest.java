@@ -54,7 +54,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     s.myGeneralSettings = new MavenGeneralSettings();
     s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
     s.myGeneralSettings.setFailureBehavior(MavenExecutionOptions.FailureMode.AT_END);
-    s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.FATAL);
+    s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.WARN);
     s.myGeneralSettings.setThreads("1.5C");
 
     s.myRunnerSettings = new MavenRunnerSettings();

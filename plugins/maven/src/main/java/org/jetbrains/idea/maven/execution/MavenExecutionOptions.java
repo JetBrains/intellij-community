@@ -23,9 +23,7 @@ public class MavenExecutionOptions {
     DEBUG("Debug", MavenServerConsole.LEVEL_DEBUG),
     INFO("Info", MavenServerConsole.LEVEL_INFO),
     WARN("Warn", MavenServerConsole.LEVEL_WARN),
-    ERROR("Error", MavenServerConsole.LEVEL_ERROR),
-    FATAL("Fatal", MavenServerConsole.LEVEL_FATAL),
-    DISABLED("Disabled", MavenServerConsole.LEVEL_DISABLED);
+    ERROR("Error", MavenServerConsole.LEVEL_ERROR);
 
     private final String myDisplayString;
     private final int myLevel;

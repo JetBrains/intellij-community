@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.project.MavenConsole;
 
 public class NullMavenConsole extends MavenConsole {
   public NullMavenConsole() {
-    super(MavenExecutionOptions.LoggingLevel.DISABLED, false);
+    super(MavenExecutionOptions.LoggingLevel.WARN, false);
   }
 
   @Override
