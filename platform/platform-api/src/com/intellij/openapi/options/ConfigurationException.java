@@ -28,7 +28,7 @@ public class ConfigurationException extends Exception {
   /**
    * @param message the detail message describing the problem
    */
-  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message) {
+  public ConfigurationException(@NlsContexts.DialogMessage String message) {
     super(message);
   }
 
@@ -36,13 +36,13 @@ public class ConfigurationException extends Exception {
    * @param message the detailed message describing the problem
    * @param title   the title describing the problem in short
    */
-  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
+  public ConfigurationException(@NlsContexts.DialogMessage String message,
                                 @NlsContexts.DialogTitle String title) {
     super(message);
     myTitle = title;
   }
 
-  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
+  public ConfigurationException(@NlsContexts.DialogMessage String message,
                                 Throwable cause,
                                 @NlsContexts.DialogTitle String title) {
     super(message, cause);
