@@ -11,6 +11,10 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 
+internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : EntityReference<E>() {
+  override fun resolve(storage: TypedEntityStorage): E = (storage as AbstractPEntityStorage).entityDataById(id)?.createEntity(storage)!!
+}
+
 internal open class PEntityStorage constructor(
   entitiesByType: EntitiesBarrel,
   override val refs: RefsTable
@@ -164,9 +168,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  override fun <E : TypedEntity> createReference(e: E): EntityReference<E> {
-    TODO("Not yet implemented")
-  }
+  override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = PEntityReference((e as PTypedEntity<E>).id)
 
   private fun PEntityData<*>.persistentId() =
     (this.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId()
@@ -594,7 +596,7 @@ internal class PEntityStorageBuilder(
     refs = MutableRefsTable.from(origStorage.refs)
   }
 
-  override fun toStorage(): TypedEntityStorage {
+  override fun toStorage(): PEntityStorage {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     return PEntityStorage(newEntities, newRefs)
@@ -624,15 +626,24 @@ internal class PEntityStorageBuilder(
 
   companion object {
     fun from(storage: TypedEntityStorage): PEntityStorageBuilder {
-      storage as PEntityStorage
-      val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
-      val copiedRefs = MutableRefsTable.from(storage.refs)
-      return PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
+      storage as AbstractPEntityStorage
+      return when (storage) {
+        is PEntityStorage -> {
+          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
+          val copiedRefs = MutableRefsTable.from(storage.refs)
+          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
+        }
+        is PEntityStorageBuilder -> {
+          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
+          val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
+          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs)
+        }
+      }
     }
   }
 }
 
-internal open class AbstractPEntityStorage constructor(
+internal sealed class AbstractPEntityStorage constructor(
   open val entitiesByType: EntitiesBarrel,
   open val refs: AbstractRefsTable
 ) : TypedEntityStorage {
