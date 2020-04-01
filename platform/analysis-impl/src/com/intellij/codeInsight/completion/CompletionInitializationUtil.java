@@ -166,7 +166,9 @@ public class CompletionInitializationUtil {
       copy.setOriginalFile(origin);
     } else {
       PsiUtilCore.ensureValid(currentOrigin);
-      LOG.assertTrue(currentOrigin == origin);
+      if (currentOrigin != origin) {
+        LOG.error(currentOrigin + " != " + origin + "\n" + currentOrigin.getViewProvider() + " != " + origin.getViewProvider());
+      }
     }
   }
 
