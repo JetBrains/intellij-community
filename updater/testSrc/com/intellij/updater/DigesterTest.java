@@ -74,7 +74,7 @@ public class DigesterTest extends UpdaterTestCase {
     assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
 
     File testFile = new File(tempDir.getRoot(), "idea.bat");
-    Utils.copy(new File(dataDir, "bin/idea.bat"), testFile);
+    Utils.copy(new File(dataDir, "bin/idea.bat"), testFile, false);
     assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
     Utils.setExecutable(testFile);
     assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
