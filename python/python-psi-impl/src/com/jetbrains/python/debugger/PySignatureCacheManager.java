@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class PySignatureCacheManager {
+  @NonNls
   static final String RETURN_TYPE = "<RETURN_TYPE>";
 
   public static PySignatureCacheManager getInstance(Project project) {

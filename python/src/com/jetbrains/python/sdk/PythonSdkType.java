@@ -369,7 +369,7 @@ public final class PythonSdkType extends SdkType {
             restartAction.run();
           }
         };
-      notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
+      notificationMessage = e.getMessage() + "\n<a href=\"#\">" + PyBundle.message("python.vagrant.refresh.skeletons") + "</a>";
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
