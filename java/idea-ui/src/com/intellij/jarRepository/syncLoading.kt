@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.eclipse.aether.artifact.Artifact
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -30,7 +31,7 @@ internal class LoadResult(val artifacts: Collection<Artifact>?,
 
 internal fun loadDependenciesSync(project: Project) {
   val toSync = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
-
+  if (toSync.size == 0) return
   val queue = ArrayBlockingQueue<LoadResult>(toSync.size)
   val submitted = submitLoadJobs(project, toSync, queue)
   LOG.info("Submitted $submitted jobs for downloading maven dependencies")
@@ -49,7 +50,9 @@ internal fun loadDependenciesSync(project: Project) {
     val artifacts = result.artifacts
     if (artifacts != null && !artifacts.isEmpty()) {
       LOG.info("Creating roots started for - " + result.library?.name)
-      WriteAction.computeAndWait<List<OrderRoot>, Throwable> { JarRepositoryManager.createRoots(artifacts, null) }
+      WriteAction.computeAndWait<List<OrderRoot>, Throwable> {
+        JarRepositoryManager.createRoots(artifacts, RepositoryUtils.getStorageRoot(result.library, project))
+      }
       LOG.info("Create roots finished for - " + result.library?.name)
     }
   }
