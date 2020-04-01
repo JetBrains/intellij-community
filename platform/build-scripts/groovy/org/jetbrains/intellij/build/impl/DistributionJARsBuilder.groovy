@@ -85,7 +85,7 @@ class DistributionJARsBuilder {
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
-      plugin.getActualModules(enabledPluginModules).values().collectMany {
+      plugin.moduleJars.values().collectMany {
         def module = buildContext.findRequiredModule(it)
         def libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
@@ -323,8 +323,7 @@ class DistributionJARsBuilder {
   }
 
   List<String> getModulesForPluginsToPublish() {
-    def enabledModulesSet = enabledPluginModules
-    platformModules + (pluginsToPublish.collect { it.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
+    platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
   }
 
   void reorderJARs(String loadingOrderFilePath) {
@@ -763,9 +762,8 @@ class DistributionJARsBuilder {
 
   static List<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
-    def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    (modules - allOptionalModules).collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
+    modules.collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory,
@@ -774,7 +772,7 @@ class DistributionJARsBuilder {
     pluginsToInclude.each { plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
+        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars.values(), plugin.moduleExcludes)
         patchPluginXml(layoutBuilder, plugin)
       }
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
@@ -826,7 +824,7 @@ class DistributionJARsBuilder {
   private void processPluginLayout(PluginLayout plugin, LayoutBuilder layoutBuilder, String targetDir,
                                    List<Pair<File, String>> generatedResources, ProjectStructureMapping parentMapping, boolean copyFiles) {
     def mapping = new ProjectStructureMapping()
-    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.getActualModules(enabledPluginModules), generatedResources)
+    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.moduleJars, generatedResources)
     if (parentMapping != null) {
       parentMapping.mergeFrom(mapping, "plugins/${getActualPluginDirectoryName(plugin, buildContext)}")
     }
