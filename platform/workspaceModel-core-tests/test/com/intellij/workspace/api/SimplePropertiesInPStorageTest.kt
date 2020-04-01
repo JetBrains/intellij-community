@@ -1,6 +1,7 @@
 package com.intellij.workspace.api
 
 import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.EntityData
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -18,12 +19,11 @@ internal class PSampleEntity(
   val fileProperty: VirtualFileUrl
 ) : PTypedEntity<PSampleEntity>()
 
-internal class PSampleModifiableEntity(original: PSampleEntityData,
-                                       diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSampleEntity>(original, diff) {
-  var booleanProperty: Boolean by Another(original)
-  var stringProperty: String by Another(original)
-  var stringListProperty: MutableList<String> by Another(original)
-  var fileProperty: VirtualFileUrl by Another(original)
+internal class PSampleModifiableEntity : PModifiableTypedEntity<PSampleEntity>() {
+  var booleanProperty: Boolean by EntityData()
+  var stringProperty: String by EntityData()
+  var stringListProperty: MutableList<String> by EntityData()
+  var fileProperty: VirtualFileUrl by EntityData()
 }
 
 internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,

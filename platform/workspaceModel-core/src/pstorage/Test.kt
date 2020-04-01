@@ -44,6 +44,7 @@ internal class PFolderEntityData : PEntityData<PFolderEntity>() {
 }
 
 internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolderEntity>()
+
 internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
   lateinit var data: String
 }
@@ -51,53 +52,35 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
 internal class PFolderEntity(
   val data: String
 ) : PTypedEntity<PFolderEntity>() {
-  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(
-    PSubFolderEntity::class)
-  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(
-    PSoftSubFolderEntity::class)
+  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class)
+  val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(PSoftSubFolderEntity::class)
 }
 
 internal class PSoftSubFolderEntity : PTypedEntity<PSoftSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.SoftRef(
-    PFolderEntity::class)
+  val parent: PFolderEntity? by ManyToOne.SoftRef(PFolderEntity::class)
 }
 
 internal class PSubFolderEntity(
   val data: String
 ) : PTypedEntity<PSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.HardRef(
-    PFolderEntity::class)
+  val parent: PFolderEntity? by ManyToOne.HardRef(PFolderEntity::class)
 }
 
-internal class PFolderModifiableEntity(original: PFolderEntityData,
-                                       diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity>(original, diff) {
-  var data: String by Another(original)
+internal class PFolderModifiableEntity : PModifiableTypedEntity<PFolderEntity>() {
+  var data: String by EntityData()
 
-  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(
-    PFolderEntity::class,
-    PSubFolderEntity::class)
-  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(
-    PFolderEntity::class,
-    PSoftSubFolderEntity::class)
+  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
+  var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 
-internal class PSubFolderModifiableEntity(original: PSubFolderEntityData,
-                                          diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity>(original, diff) {
-  var data: String by Another(original)
+internal class PSubFolderModifiableEntity : PModifiableTypedEntity<PSubFolderEntity>() {
+  var data: String by EntityData()
 
-  var parent: PFolderEntity? by MutableManyToOne.HardRef(
-    PSubFolderEntity::class,
-    PFolderEntity::class)
+  var parent: PFolderEntity? by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
 }
 
-internal class PSoftSubFolderModifiableEntity(
-  original: PSoftSubFolderEntityData,
-  diff: PEntityStorageBuilder
-) : PModifiableTypedEntity<PSoftSubFolderEntity>(original, diff) {
-
-  var parent: PFolderEntity? by MutableManyToOne.SoftRef(
-    PSoftSubFolderEntity::class,
-    PFolderEntity::class)
+internal class PSoftSubFolderModifiableEntity : PModifiableTypedEntity<PSoftSubFolderEntity>() {
+  var parent: PFolderEntity? by MutableManyToOne.SoftRef(PSoftSubFolderEntity::class, PFolderEntity::class)
 }
 
 internal object MySource : EntitySource

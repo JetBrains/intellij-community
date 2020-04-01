@@ -50,14 +50,17 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>(val original: PEntityData<T>, val diff: PEntityStorageBuilder)
+internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>
   : PTypedEntity<T>(), ModifiableTypedEntity<T> {
 
-  override val id: PId<T> = PId(original.id, getEntityClass())
+  internal lateinit var original: PEntityData<T>
+  internal lateinit var diff: PEntityStorageBuilder
+
+  override val id: PId<T> by lazy { PId(original.id, getEntityClass()) }
 
   internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
 
-  override val entitySource = original.entitySource
+  override val entitySource by lazy { original.entitySource }
 
   companion object {
     fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getEntityClass(clazz: KClass<M>): Class<T> {
@@ -98,14 +101,11 @@ internal abstract class PEntityData<E : TypedEntity> {
 
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
     val returnClass = Class.forName(this::class.qualifiedName!!.dropLast(10) + "ModifiableEntity").kotlin
-    val params = returnClass.primaryConstructor!!.parameters.associateWith {
-      when (it.name) {
-        "original" -> this
-        "diff" -> diff
-        else -> error("")
-      }
-    }
-    return returnClass.primaryConstructor!!.callBy(params) as ModifiableTypedEntity<E>
+    val res = returnClass.primaryConstructor!!.call() as ModifiableTypedEntity<E>
+    res as PModifiableTypedEntity
+    res.original = this
+    res.diff = diff
+    return res
   }
 
   fun clone(): PEntityData<E> {
@@ -130,13 +130,14 @@ internal abstract class PEntityData<E : TypedEntity> {
   }
 }
 
-internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
+internal class EntityData<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
-    return ((original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(original) as B
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
-    ((original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(original, value)
+    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original,
+                                                                                                                       value)
   }
 }
 
