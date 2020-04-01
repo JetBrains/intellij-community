@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 
 internal typealias Snapshot = Map<SmartPsiElementPointer<PsiMember>, ScopedMember>
@@ -35,13 +34,12 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
 
   companion object {
 
-    private val FILE_STATE_KEY = Key.create<PrivateFileState>("ProjectProblemFileStateKey")
-
     @JvmStatic
     @JvmName("getState")
     internal fun getState(psiFile: PsiFile): FileState? {
-      val storedState = psiFile.getUserData(FILE_STATE_KEY)?.toFileState()
-      if (storedState != null || DumbService.isDumb(psiFile.project)) return storedState
+      if (DumbService.isDumb(psiFile.project)) return null
+      val storedState = FileStateCache.SERVICE.getInstance(psiFile.project).getState(psiFile)
+      if (storedState != null) return storedState
       val updater = FileStateUpdater(null)
       publicApi(psiFile).forEach { it.accept(updater) }
       val snapshot = updater.snapshot
@@ -68,20 +66,23 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
     @JvmStatic
     @JvmName("setPreviousState")
     internal fun setPreviousState(psiFile: PsiFile) {
-      val (snapshot, changes) = psiFile.getUserData(FILE_STATE_KEY) ?: return
+      val project = psiFile.project
+      val fileStateCache = FileStateCache.SERVICE.getInstance(project)
+      val (snapshot, changes) = fileStateCache.getState(psiFile) ?: return
+      val manager = SmartPointerManager.getInstance(project)
       val oldSnapshot = snapshot.toMutableMap()
-      changes.forEach { (memberPointer, prevMember) ->
-        if (memberPointer.element == null) return@forEach
+      changes.forEach { (psiMember, prevMember) ->
+        val memberPointer = manager.createSmartPsiElementPointer(psiMember)
         if (prevMember == null) oldSnapshot.remove(memberPointer)
         else oldSnapshot[memberPointer] = prevMember
       }
-      psiFile.putUserData(FILE_STATE_KEY, PrivateFileState(oldSnapshot, emptyMap()))
+      fileStateCache.setState(psiFile, oldSnapshot, emptyMap())
     }
 
     @JvmStatic
     @JvmName("updateState")
     internal fun updateState(psiFile: PsiFile, fileState: FileState) {
-      psiFile.putUserData(FILE_STATE_KEY, PrivateFileState.create(fileState.snapshot, fileState.changes))
+      FileStateCache.SERVICE.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
     }
 
     private fun collectRelatedChanges(
@@ -109,27 +110,6 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
               publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, null) }
             }
           }
-        }
-      }
-    }
-
-    private data class PrivateFileState(
-      val snapshot: Snapshot,
-      val changePointers: Map<SmartPsiElementPointer<PsiMember>, ScopedMember?>
-    ) {
-      fun toFileState(): FileState {
-        val changes: Map<PsiMember, ScopedMember?> = changePointers.asSequence()
-          .mapNotNull { (memberPointer, prevMember) -> memberPointer.element?.let { it to prevMember } }
-          .toMap()
-        return FileState(snapshot, changes)
-      }
-
-      companion object {
-        fun create(snapshot: Snapshot, changes: Map<PsiMember, ScopedMember?>): PrivateFileState {
-          val changePointers: Map<SmartPsiElementPointer<PsiMember>, ScopedMember?> = changes.entries.asSequence()
-            .map { (psiMember, prevMember) -> SmartPointerManager.createPointer(psiMember) to prevMember }
-            .toMap()
-          return PrivateFileState(snapshot, changePointers)
         }
       }
     }
