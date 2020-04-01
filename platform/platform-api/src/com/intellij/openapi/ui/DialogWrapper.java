@@ -174,6 +174,7 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<? extends Point> myInitialLocationCallback;
   private Dimension  myActualSize;
+  @NotNull
   private List<ValidationInfo> myInfo = Collections.emptyList();
   private @Nullable DoNotAskOption myDoNotAsk;
   private Action myYesAction;
@@ -181,7 +182,7 @@ public abstract class DialogWrapper {
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress;
   private ComponentAdapter myResizeListener;
-  private DialogPanel myDialogPanel = null;
+  private DialogPanel myDialogPanel;
   private ErrorText myErrorText;
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
@@ -386,12 +387,12 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
-  @SuppressWarnings({"WeakerAccess", "SSBasedInspection"})
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
                            !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
         setErrorInfoAll(info);
@@ -547,7 +548,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  protected JButton createHelpButton(Insets insets) {
+  protected JButton createHelpButton(@NotNull Insets insets) {
     JButton helpButton = new JButton(getHelpAction());
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
@@ -561,7 +562,7 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
-  protected void setHelpTooltip(JButton helpButton) {
+  protected void setHelpTooltip(@NotNull JButton helpButton) {
     helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
   }
 
@@ -588,10 +589,6 @@ public abstract class DialogWrapper {
 
   protected boolean toBeShown() {
     return !myCheckBoxDoNotShowDialog.isSelected();
-  }
-
-  public boolean isTypeAheadEnabled() {
-    return false;
   }
 
   @NotNull
@@ -1328,7 +1325,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
-        dialogPanel.registerValidators(myDisposable, (map) -> {
+        dialogPanel.registerValidators(myDisposable, map -> {
           setOKActionEnabled(map.isEmpty());
           return Unit.INSTANCE;
         });
@@ -1441,33 +1438,6 @@ public abstract class DialogWrapper {
     else {
       myValidationAlarm.addRequest(validateRequest, myValidationDelay);
     }
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isNorthStrictedToPreferredSize() {
-    return true;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isCenterStrictedToPreferredSize() {
-    return false;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isSouthStrictedToPreferredSize() {
-    return true;
   }
 
   @NotNull
@@ -1782,16 +1752,6 @@ public abstract class DialogWrapper {
       .findFirst();
   }
 
-  public long getTypeAheadTimeoutMs() {
-    return 0L;
-  }
-
-  /** @deprecated unused (equals {@link #isOK}) */
-  @Deprecated
-  public boolean isToDispatchTypeAhead() {
-    return isOK();
-  }
-
   private void logCloseDialogEvent(int exitCode) {
     final boolean canRecord = canRecordDialogId();
     if (canRecord) {
@@ -2084,7 +2044,7 @@ public abstract class DialogWrapper {
       add(pane, BorderLayout.CENTER);
     }
 
-    private Border createErrorTextBorder() {
+    private @NotNull Border createErrorTextBorder() {
       Border border = createContentPaneBorder();
       Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
       Insets baseInsets = JBInsets.create(16, 13);

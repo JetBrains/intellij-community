@@ -101,7 +101,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  protected void setHelpTooltip(JButton helpButton) {
+  protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
     if (Registry.is("ide.helptooltip.enabled")) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
@@ -128,11 +128,6 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getPreferredFocusedComponent();
-  }
-
-  @Override
-  public boolean isTypeAheadEnabled() {
-    return true;
   }
 
   @NotNull
