@@ -36,12 +36,12 @@ class SubmissionTracker {
         if (count != null && count > 10) {
           LOG.error(TOO_MANY_SUBMISSIONS);
         }
-        else if (currentCount % 107 == 0) {
+        else if (currentCount % 127 == 0) {
           reportTooManyUnidentifiedSubmissions(traces);
         }
       }
     }
-    else if (traces != null) {
+    if (traces != null) {
       String trace = callerTrace();
       traces.merge(trace, 1, Integer::sum);
       return trace;
