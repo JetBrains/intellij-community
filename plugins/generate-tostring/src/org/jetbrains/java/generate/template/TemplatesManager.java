@@ -47,20 +47,24 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
   }
 
   @Override
-  public TemplatesState getState() {
+  public @NotNull TemplatesState getState() {
     return myState;
   }
 
   @Override
   public void loadState(@NotNull TemplatesState state) {
+    if (StringUtil.isEmpty(state.defaultTemplateName) && !StringUtil.isEmpty(state.oldDefaultTemplateName)) {
+      state.defaultTemplateName = state.oldDefaultTemplateName;
+    }
+    state.oldDefaultTemplateName = null;
     myState = state;
   }
 
-  public void addTemplate(TemplateResource template) {
+  public void addTemplate(@NotNull TemplateResource template) {
     myState.templates.add(template);
   }
 
-  public Collection<TemplateResource> getAllTemplates() {
+  public @NotNull Collection<TemplateResource> getAllTemplates() {
     Set<String> names = new HashSet<>();
     Collection<TemplateResource> templates = new LinkedHashSet<>(Arrays.asList(getDefaultTemplates()));
     for (TemplateResource template : myState.templates) {
