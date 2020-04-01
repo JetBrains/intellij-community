@@ -4,8 +4,11 @@ package com.intellij.notification;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +87,21 @@ public interface Notifications {
           app.getMessageBus().syncPublisher(TOPIC).notify(notification);
         }
       }
+    }
+
+    @ApiStatus.Experimental
+    public static void notifyAndHide(@NotNull final Notification notification) {
+      notifyAndHide(notification, null);
+    }
+
+    @ApiStatus.Experimental
+    public static void notifyAndHide(@NotNull final Notification notification, @Nullable Project project) {
+      notify(notification);
+      Alarm alarm = new Alarm(project == null ? ApplicationManager.getApplication() : project);
+      alarm.addRequest(() -> {
+        notification.expire();
+        Disposer.dispose(alarm);
+      }, 5000);
     }
   }
 }
