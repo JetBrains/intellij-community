@@ -14,7 +14,6 @@ import com.intellij.openapi.application.constraints.ConstrainedExecution.Context
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -50,7 +49,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -72,7 +70,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   private static final Set<NonBlockingReadActionImpl<?>.Submission> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<Object>, NonBlockingReadActionImpl<?>.Submission> ourTasksByEquality = new HashMap<>();
-  private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
+  private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
     this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
@@ -206,6 +204,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   private class Submission extends AsyncPromise<T> {
     @NotNull private final Executor backendExecutor;
+    private @Nullable final String myStartTrace;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
     @Nullable private NonBlockingReadActionImpl<?>.Submission myReplacement;
@@ -229,9 +228,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         LOG.trace("Creating " + this);
       }
 
-      if (hasUnboundedExecutor()) {
-        preventTooManySubmissions();
-      }
+      myStartTrace = hasUnboundedExecutor() ? ourUnboundedSubmissionTracker.preventTooManySubmissions() : null;
       if (shouldTrackInTests()) {
         ourTasks.add(this);
       }
@@ -257,20 +254,6 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
     private boolean hasUnboundedExecutor() {
       return backendExecutor == AppExecutorUtil.getAppExecutorService();
-    }
-
-    private void preventTooManySubmissions() {
-      if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
-        String dump = "Thread dump:\n" + ThreadDumper.dumpThreadsToString();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(dump);
-        }
-        Attachment attachment = new Attachment("threadDump.txt", dump);
-        attachment.setIncluded(true);
-        LOG.error("Too many non-blocking read actions submitted at once. " +
-                  "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.",
-                  attachment);
-      }
     }
 
     @Override
@@ -319,7 +302,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         Disposer.dispose(disposable);
       }
       if (hasUnboundedExecutor()) {
-        ourUnboundedSubmissionCount.decrementAndGet();
+        ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
       if (shouldTrackInTests()) {
         ourTasks.remove(this);

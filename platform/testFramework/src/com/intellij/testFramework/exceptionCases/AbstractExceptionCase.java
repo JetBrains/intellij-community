@@ -30,8 +30,4 @@ public abstract class AbstractExceptionCase<T extends Throwable> {
    * @throws T
    */
     public abstract void tryClosure() throws T;
-
-    public String getAssertionErrorMessage() {
-        return getExpectedExceptionClass().getName() + " must be thrown.";
-    }
 }
