@@ -85,7 +85,7 @@ object MarketplaceRequests {
       BuildNumber.fromStringWithProductCode(
         compatibleBuild,
         instance.build.productCode
-      ).asString()
+      )!!.asString()
     }
     else instance.apiVersion
   }
