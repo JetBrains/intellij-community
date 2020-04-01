@@ -27,13 +27,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
-  private int nextAvailableId;
+  private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles;
   private final Project myProject;
   private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
@@ -65,7 +66,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     synchronized (this) {
       checkedForCycles = false;
       myRegisteredPassFactories.clear();
-      nextAvailableId = Pass.LAST_PASS + 1;
+      nextAvailableId.set(Pass.LAST_PASS + 1);
       myDirtyScopeTrackingFactories.clear();
     }
     for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
@@ -112,7 +113,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                                                                       : runAfterCompletionOf,
                                      runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY
                                                                                                       : runAfterOfStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
+    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -122,7 +123,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     return passId;
   }
 
-  synchronized int getNextAvailableId() {
+  @NotNull
+  AtomicInteger getNextAvailableId() {
     return nextAvailableId;
   }
 

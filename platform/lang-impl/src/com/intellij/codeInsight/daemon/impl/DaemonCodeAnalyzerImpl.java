@@ -134,7 +134,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
-    myPassExecutorService.resetNextPassId();
   }
 
   @Override
@@ -997,7 +996,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       TextEditorHighlightingPassRegistrarImpl registrar =
         (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
       registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
-      myPassExecutorService.resetNextPassId();
     }
     finally {
       setUpdateByTimerEnabled(true);
