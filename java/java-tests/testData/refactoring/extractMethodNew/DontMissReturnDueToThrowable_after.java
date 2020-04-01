@@ -10,9 +10,9 @@ class Test {
     }
 
     @NotNull
-    private String newMethod() {
+    private String newMethod() throws IOException {
         String s = "result";
-        new ReturnIssues().withError();
+        new Test().withError();
         return s;
     }
 

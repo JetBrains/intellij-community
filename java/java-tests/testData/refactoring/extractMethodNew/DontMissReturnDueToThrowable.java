@@ -3,7 +3,7 @@ import java.io.IOException;
 class Test {
     void test(String name) throws IOException {
         <selection>String s = "result";
-        new ReturnIssues().withError();</selection>
+        new Test().withError();</selection>
 
         System.out.println(s);
     }
