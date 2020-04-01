@@ -53,12 +53,7 @@ internal class InstallPluginService : RestService() {
     pluginId: String
   ): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val buildNumber = MarketplaceRequests.getBuildForPluginRepositoryRequests()
-    val compatibleUpdateExists = MarketplaceRequests.getLastCompatiblePluginUpdate(
-      listOf(pluginId),
-      BuildNumber.fromString(buildNumber)
-    ).isNotEmpty()
-
+    val compatibleUpdateExists = MarketplaceRequests.getLastCompatiblePluginUpdate(pluginId) != null
     val out = BufferExposingByteArrayOutputStream()
 
     val writer = createJsonWriter(out)
