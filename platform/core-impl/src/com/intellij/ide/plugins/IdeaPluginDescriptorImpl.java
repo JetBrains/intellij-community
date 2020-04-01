@@ -855,14 +855,21 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     List<Path> result = new ArrayList<>();
-    Path productionDirectory = myPath.getParent();
-    if (productionDirectory.endsWith("production")) {
-      result.add(myPath);
-      String moduleName = myPath.toFile().getName();
-      String[] additionalPaths = ourAdditionalLayoutMap.get(moduleName);
-      if (additionalPaths != null) {
-        for (String path : additionalPaths) {
-          result.add(productionDirectory.resolve(path));
+    Path classesDir = myPath.resolve("classes");
+    if (Files.exists(classesDir)) {
+      result.add(classesDir);
+    }
+
+    if (PluginManagerCore.usePluginClassLoader) {
+      Path productionDirectory = myPath.getParent();
+      if (productionDirectory.endsWith("production")) {
+        result.add(myPath);
+        String moduleName = myPath.toFile().getName();
+        String[] additionalPaths = ourAdditionalLayoutMap.get(moduleName);
+        if (additionalPaths != null) {
+          for (String path : additionalPaths) {
+            result.add(productionDirectory.resolve(path));
+          }
         }
       }
     }
