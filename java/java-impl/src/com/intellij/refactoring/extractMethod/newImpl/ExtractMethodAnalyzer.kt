@@ -25,6 +25,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Processor
 import java.util.*
 
@@ -137,7 +138,9 @@ private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
 }
 
 private fun findOutputFromReturn(flowOutput: FlowOutput): ExpressionOutput? {
-  val returnExpressions = flowOutput.statements.mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
+  val returnExpressions = flowOutput.statements
+    .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
+    .sortedBy { returnStatement -> returnStatement.startOffset }
   val returnType = returnExpressions.asSequence().mapNotNull { expression -> expression.type }.firstOrNull()
   val variableName = returnExpressions.asSequence().map { expression -> guessName(expression) }.firstOrNull() ?: "x"
   val nullability = CodeFragmentAnalyzer.inferNullability(returnExpressions)
