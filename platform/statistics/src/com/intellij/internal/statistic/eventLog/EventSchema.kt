@@ -66,20 +66,36 @@ object EventFields {
  * - Prefer shorter group names; avoid common prefixes (such as "statistics.").
  */
 class EventLogGroup(val id: String, val version: Int) {
+  private val registeredEventIds = mutableSetOf<String>()
+
+  internal fun registerEventId(eventId: String) {
+    registeredEventIds.add(eventId)
+  }
+
   fun registerEvent(eventId: String): EventId {
+    registeredEventIds.add(eventId)
     return EventId(this, eventId)
   }
 
   fun <T1> registerEvent(eventId: String, eventField1: EventField<T1>): EventId1<T1> {
+    registeredEventIds.add(eventId)
     return EventId1(this, eventId, eventField1)
   }
 
   fun <T1, T2> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
+    registeredEventIds.add(eventId)
     return EventId2(this, eventId, eventField1, eventField2)
   }
 
   fun <T1, T2, T3> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
+    registeredEventIds.add(eventId)
     return EventId3(this, eventId, eventField1, eventField2, eventField3)
+  }
+
+  internal fun validateEventId(eventId: String) {
+    if (registeredEventIds.isNotEmpty() && eventId !in registeredEventIds) {
+      throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
+    }
   }
 
   companion object {
@@ -123,6 +139,10 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, private val eventId
 }
 
 open class VarargEventId(private val group: EventLogGroup, private val eventId: String, private vararg val fields: EventField<*>) {
+  init {
+    group.registerEventId(eventId)
+  }
+
   fun log(vararg pairs: EventPair<*>) {
     val data = FeatureUsageData()
     for (pair in pairs) {

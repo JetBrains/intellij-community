@@ -24,6 +24,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
+    group.validateEventId(eventId)
     val eventTime = System.currentTimeMillis()
     logExecutor.execute(Runnable {
       val context = EventContext.create(eventId, data)
