@@ -81,7 +81,7 @@ public class NlsContexts {
   @NlsContext(prefix = "configurable.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface Configurable {
+  public @interface ConfigurableName {
   }
 
   @NlsContext(prefix = "validation.info")
